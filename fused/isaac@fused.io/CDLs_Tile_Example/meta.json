@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "CDLs_Tile_Example_copy",
+          "name": "CDLs_Tile_Example",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
