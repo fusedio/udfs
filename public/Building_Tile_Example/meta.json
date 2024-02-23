@@ -88,15 +88,25 @@
               "zoom": 13.86305489861478,
               "pitch": 0,
               "bearing": 0
-            }
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/79d0e6a45c000cb1d99f1a7772c8babc0113afcd/public/Building_Tile_Example/",
+            "fused:gitPath": "public/Building_Tile_Example",
+            "fused:gitRef": "79d0e6a45c000cb1d99f1a7772c8babc0113afcd",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk"
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4"
+            ]
           },
           "source": "Building_Tile_Example.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],
