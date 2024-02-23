@@ -31,7 +31,7 @@
                 "label": "tutorial"
               }
             ],
-            "fused:description": "# Display name\n\n## Overview\n\nThis UDF shows how to open NYC yellow taxi trip dataset using DuckDB.\n\n## External links\n\n- [TLC Trip Record Data] (https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)",
+            "fused:description": "## Overview\n\nThis UDF shows how to open NYC yellow taxi trip dataset using DuckDB.\n\n## External links\n\n- [TLC Trip Record Data] (https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
