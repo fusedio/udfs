@@ -1,0 +1,105 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Building_Tile_Example",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Building_Tile_Example.png",
+            "fused:defaultParameters": [],
+            "fused:datasets": "Microsoft Building Footprint",
+            "fused:tags": [
+              {
+                "id": "US",
+                "label": "US",
+                "isCreatable": true
+              },
+              {
+                "id": "buildings",
+                "label": "buildings"
+              },
+              {
+                "id": "Footprint",
+                "label": "Footprint",
+                "isCreatable": true
+              },
+              {
+                "id": "geoparquet",
+                "label": "geoparquet",
+                "isCreatable": true
+              },
+              {
+                "id": "Microsoft",
+                "label": "Microsoft",
+                "isCreatable": true
+              }
+            ],
+            "fused:description": "\nMachine learning detected buildings footprints for United State using Bing Maps imagery. \n[Link](https://github.com/microsoft/USBuildingFootprints)",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer"
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    255,
+                    0,
+                    255
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "Building_Tile_Example",
+            "fused:name": "Building_Tile_Example",
+            "fused:id": null,
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 40.70909212247495,
+              "longitude": -74.00713486324823,
+              "zoom": 13.86305489861478,
+              "pitch": 0,
+              "bearing": 0
+            }
+          },
+          "source": "Building_Tile_Example.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
