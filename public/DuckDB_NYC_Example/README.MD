@@ -6,4 +6,4 @@ This UDF shows how to open NYC yellow taxi trip dataset using DuckDB.
 
 ## External links
 
-- [TLC Trip Record Data] (https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)
+- [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)
