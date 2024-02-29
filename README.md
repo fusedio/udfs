@@ -85,7 +85,7 @@ Build any scale workflows with the [Fused Python SDK](python-sdk/overview.md) an
 
 ## Documentation
 
-Fused documentation is in [www.docs.fused.io](www.docs.fused.io).
+Fused documentation is in [docs.fused.io](https://docs.fused.io/).
 
 ## Contribution guidelines
 
