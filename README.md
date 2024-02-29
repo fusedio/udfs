@@ -15,6 +15,16 @@ Fused is the glue layer that interfaces data platforms and data tools via a mana
 
 ## Quickstart
 
+### 1. Install Fused Python SDK
+
+The Fused Python SDK is available at [PyPI](https://pypi.org/project/fused/). Use the standard Python [installation tools](https://packaging.python.org/en/latest/tutorials/installing-packages/). UDFs this repo expect a version `>=1.2.0`.
+
+```bash
+pip install fused
+```
+
+### 2. Import a UDF into a workflow
+
 This snippet shows how to all a UDF from a Python environment and their modules from a public GitHub URL. The URL must be of a directory that contains a UDF generated with Fused. This example shows how to import a UDF.
 
 ```python
@@ -46,9 +56,7 @@ Files relevant to each UDF are:
 - `meta.json` This file contains metadata needed to render the UDF in the Fused explorer and for the UDF to run correctly.
 - `utils.py` This Python file contains helper functions the UDF (optionally) imports and references.
 
-### Install Fused Python SDK
 
-The Fused Python SDK is available at [PyPI](https://pypi.org/project/fused/). Use the standard Python [installation tools](https://packaging.python.org/en/latest/tutorials/installing-packages/). UDFs this repo expect a version `>=1.2.0`.
 
 ### Contribute a UDF
 
@@ -78,7 +86,7 @@ Clone this repo to your local system and introduce the UDF folder under `public`
 
 ## Ecosystem
 
-Build any scale workflows with the [Fused Python SDK](python-sdk/overview.md) and [Workbench webapp](workbench/overview.md), and integrate them into your stack with the [Fused Hosted API](hosted-api/overview.md).
+Build any scale workflows with the [Fused Python SDK](https://docs.fused.io/python-sdk/overview) and [Workbench webapp](https://docs.fused.io/workbench/overview), and integrate them into your stack with the [Fused Hosted API](https://docs.fused.io/hosted-api/overview).
 
 ![alt text](https://fused-magic.s3.us-west-2.amazonaws.com/docs_assets/ecosystem_diagram.png)
 
