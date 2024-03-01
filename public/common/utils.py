@@ -137,6 +137,7 @@ def table_to_tile(bbox, table="s3://fused-asset/imagery/naip/", min_zoom=12, cen
 from typing import Dict, Tuple
 from affine import Affine
 from numpy.typing import NDArray
+import numpy as np
 def rasterize_geometry(
     geom: Dict, shape: Tuple[int, int], affine: Affine, all_touched: bool = False
 ) -> NDArray[np.uint8]:
@@ -151,8 +152,6 @@ def rasterize_geometry(
     Returns:
         numpy array with input geometries burned in.
     """
-    
-    import numpy as np
     from rasterio import features
 
     geoms = [(geom, 1)]
