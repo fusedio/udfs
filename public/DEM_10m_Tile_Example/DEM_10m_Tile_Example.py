@@ -1,6 +1,6 @@
 def udf(bbox, collection='3dep-seamless', band='data'):
+    arr_to_plasma = fused.core.import_from_github('https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/').utils.arr_to_plasma
     from pystac.extensions.eo import EOExtension as eo
-    common = fused.public.common
     import pystac_client
     import odc.stac   
     import planetary_computer
@@ -22,4 +22,4 @@ def udf(bbox, collection='3dep-seamless', band='data'):
         bbox=bbox.total_bounds,   
     ).astype(float) 
     arr = ds[band].max(dim='time')
-    return common.arr_to_plasma(arr.values, min_max=(0,100), reverse=False)
+    return arr_to_plasma(arr.values, min_max=(0,100), reverse=False)

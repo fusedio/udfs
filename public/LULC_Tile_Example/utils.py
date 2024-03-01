@@ -1,7 +1,7 @@
 import numpy as np
 import fused
-read_tiff = fused.public.common.read_tiff
-mosaic_tiff = fused.public.common.mosaic_tiff
+read_tiff = fused.core.import_from_github('https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/').utils.read_tiff
+mosaic_tiff = fused.core.import_from_github('https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/').utils.mosaic_tiff
 LULC_IO_COLORS = {1:( 65, 155, 223), #Water
                   2:( 57, 125, 73), #Trees
                   4:( 57, 125, 73), #Flooded vegetation
