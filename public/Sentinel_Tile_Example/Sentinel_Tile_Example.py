@@ -1,10 +1,9 @@
 def udf(bbox, provider='AWS', time_of_interest = "2023-11-01/2023-12-30"):
-    from utils import arr_to_plasma 
+    arr_to_plasma = fused.core.import_from_github('https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/').utils.arr_to_plasma
     from pystac.extensions.eo import EOExtension as eo
     import pystac_client
-    import odc.stac  
+    import odc.stac
     if provider=='AWS':
-        # odc.stac.configure_s3_access(requester_pays=True)
         red_band='red'
         nir_band='nir'
         catalog = pystac_client.Client.open("https://earth-search.aws.element84.com/v1")
@@ -22,7 +21,6 @@ def udf(bbox, provider='AWS', time_of_interest = "2023-11-01/2023-12-30"):
     query={"eo:cloud_cover": {"lt": 10}},
     ).item_collection()
     # least_cloudy_item = min(items, key=lambda item: eo.ext(item).cloud_cover)
-    # print(least_cloudy_item.assets.keys())
     print(f"Returned {len(items)} Items")
     resolution = int(5*2**(15-bbox.z[0]))
     print(f'{resolution=}')
@@ -37,4 +35,4 @@ def udf(bbox, provider='AWS', time_of_interest = "2023-11-01/2023-12-30"):
     print(ndvi.shape)
     arr = ndvi.max(dim='time')
     # arr = ndvi.groupby("time.month").median()[0]
-    return arr_to_plasma(arr.values, min_max=(0,.8))
+    return arr_to_plasma(arr.values, min_max=(0,.8), reverse=False)
