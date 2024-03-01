@@ -1,0 +1,99 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Get_Isochrone",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer"
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    255,
+                    255,
+                    0,
+                    100
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  50
+                ]
+              }
+            },
+            "fused:udfType": "vector_single",
+            "fused:slug": "Get_Isochrone",
+            "fused:name": "Get_Isochrone",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Get_Isochrone.png",
+            "fused:defaultParameters": [
+              {
+                "parameter": "costing",
+                "value": "[\"auto\", \"pedestrian\", \"bicycle\", \"truck\", \"bus\", \"motor_scooter\"]"
+              }
+            ],
+            "fused:tags": [
+              {
+                "id": "vector",
+                "label": "vector"
+              },
+              {
+                "id": "osm",
+                "label": "osm",
+                "isCreatable": true
+              },
+              {
+                "id": "tutorial",
+                "label": "tutorial"
+              }
+            ],
+            "fused:description": "# Overview\n\nThis UDF is using Valhalla API to create an isochrone. Valhalla, an open-source routing engine, and its accompanying libraries are designed for OpenStreetMap data, offering features such as time+distance matrix computation, isochrones, elevation sampling, map matching, and tour optimization (Travelling Salesman).\n\n# External links\n\n- [Valhalla Github repo](https://github.com/valhalla/valhalla)",
+            "fused:id": null,
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 40.80720563114003,
+              "longitude": -73.84687500006956,
+              "zoom": 8.74116447522721,
+              "pitch": 0,
+              "bearing": 0
+            }
+          },
+          "source": "Get_Isochrone.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
