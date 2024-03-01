@@ -1,6 +1,26 @@
-# to use this, run the following command in your udf:
-# common = fused.public.common
+# To use these functions, add the following command in your UDF:
+# `common = fused.public.common`
+
+# Standard library imports
 from __future__ import annotations
+import random
+
+# Third party imports
+from loguru import logger
+
+# Import for type hints
+from affine import Affine
+from numpy.typing import NDArray
+from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
+
+# Potentially expensive imports
+import numpy as np
+import geopandas as gpd
+import pandas as pd
+import pyproj
+import shapely
+
+# Local application/library specific imports
 import fused
 
 
@@ -151,9 +171,10 @@ def table_to_tile(
     use_columns=["geometry"],
     clip=False,
 ):
-    version = "0.2.3"
     import fused
     import pandas as pd
+
+    version = "0.2.3"
 
     try:
         x, y, z = bbox[["x", "y", "z"]].iloc[0]
@@ -193,12 +214,6 @@ def table_to_tile(
             return df.clip(bbox).explode()
         else:
             return df
-
-
-from typing import Dict, Tuple
-from affine import Affine
-from numpy.typing import NDArray
-import numpy as np
 
 
 def rasterize_geometry(
@@ -270,12 +285,13 @@ def read_tiff(
     return_transform=False,
     cred=None,
 ):
-    version = "0.2.0"
     import os
     import rasterio
     import numpy as np
     from scipy.ndimage import zoom
     from contextlib import ExitStack
+
+    version = "0.2.0"
 
     if not cred:
         context = rasterio.Env()
@@ -378,8 +394,8 @@ def mosaic_tiff(
 
 
 def arr_resample(arr, dst_shape=(512, 512), order=0):
-    from scipy.ndimage import zoom
     import numpy as np
+    from scipy.ndimage import zoom
 
     zoom_factors = np.array(dst_shape) / np.array(arr.shape[-2:])
     if len(arr.shape) == 2:
@@ -535,17 +551,16 @@ def run_udf_png(bbox, context, input_tiff_path, chip_len="256", requester_pays=0
 def run_async(fn, arr_args, delay=0, max_workers=32):
     import asyncio
     import nest_asyncio
-
-    nest_asyncio.apply()
     import numpy as np
     import concurrent.futures
+
+    nest_asyncio.apply()
 
     loop = asyncio.get_event_loop()
     pool = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
 
     async def fn_async(pool, fn, *args):
         try:
-
             result = await loop.run_in_executor(pool, fn, *args)
             return result
         except OSError as error:
@@ -610,18 +625,6 @@ def read_module(url, remove_strings=[]):
 # url='https://raw.githubusercontent.com/stac-utils/stac-geoparquet/main/stac_geoparquet/stac_geoparquet.py'
 # remove_strings=['from stac_geoparquet.utils import fix_empty_multipolygon']
 # to_geodataframe = read_module(url,remove_strings)['to_geodataframe']
-
-
-import random
-from typing import List, Literal, Optional, Sequence, Tuple, Union
-
-import geopandas as gpd
-import numpy as np
-import pandas as pd
-import pyproj
-import shapely
-from loguru import logger
-from numpy.typing import NDArray
 
 __all__ = (
     "geo_convert",
