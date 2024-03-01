@@ -1,5 +1,6 @@
 # to use this, run the following command in your udf:
 #common = fused.public.common
+from __future__ import annotations
 import fused
 @fused.cache 
 def acs_5yr_bbox(bounds, census_variable='population', type='bbox', suffix='simplify'):
@@ -427,7 +428,6 @@ def read_module(url, remove_strings=[]):
 
 
 
-from __future__ import annotations
 
 import random
 from typing import List, Literal, Optional, Sequence, Tuple, Union
