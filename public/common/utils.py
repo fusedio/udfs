@@ -170,6 +170,7 @@ def rasterize_geometry(
 
 @fused.cache(path="geom_stats")
 def geom_stats(gdf, arr,  chip_len=255):
+    import numpy as np
     df_3857 = gdf.to_crs(3857)
     df_tile = df_3857.dissolve()
     minx, miny, maxx, maxy = df_tile.total_bounds
@@ -177,7 +178,7 @@ def geom_stats(gdf, arr,  chip_len=255):
     transform=[d, 0.0, minx, 0., -d, maxy, 0., 0., 1.]
     geom_masks = [rasterize_geometry(geom, arr.shape[-2:], transform) 
                     for geom in df_3857.geometry]
-    gdf['stats']=[arr[geom_mask].mean() for geom_mask in geom_masks]
+    gdf['stats']=[np.nanmean(arr.data[geom_mask]) for geom_mask in geom_masks]
     gdf['count']=[geom_mask.sum() for geom_mask in geom_masks]
     return gdf
 
