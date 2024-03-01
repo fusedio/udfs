@@ -1,4 +1,4 @@
-@fused.udf
+@fused.udf 
 def udf(bbox, year='2022', crop_type='', chip_len=256):
     read_tiff = fused.core.import_from_github('https://github.com/fusedio/udfs/tree/a63664f4a4451d07efd003e318a1413c51a54889/public/common').utils.read_tiff
     from utils import filter_crops, crop_counts
