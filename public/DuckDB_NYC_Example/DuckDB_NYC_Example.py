@@ -9,7 +9,7 @@ def udf(bbox=None, agg_factor=3, min_count=5):
     con.sql("""SET home_directory='/tmp/';
     install 'httpfs';
     load 'httpfs';
-    """)
+    """) 
     df = con.sql(f"""
     SELECT round(pickup_longitude*{agg_factor},3)/{agg_factor} lng, 
            round(pickup_latitude*{agg_factor},3)/{agg_factor} lat, 
