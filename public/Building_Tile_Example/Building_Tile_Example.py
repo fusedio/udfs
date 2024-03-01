@@ -1,8 +1,8 @@
 @fused.udf
-def udf(bbox, table_path="s3://fused-asset/infra/building_msft_us"):
+def udf(bbox):
     table_to_tile = fused.core.import_from_github(
-        "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
+        "https://github.com/fusedio/udfs/tree/a63664f4a4451d07efd003e318a1413c51a54889/public/common"
     ).utils.table_to_tile
-    df = table_to_tile(bbox, table=table_path)
-    # df.geometry = df.geometry.buffer(0.0001)
+    table_path="s3://fused-asset/infra/building_msft_us/"
+    df=table_to_tile(bbox, table=table_path)
     return df

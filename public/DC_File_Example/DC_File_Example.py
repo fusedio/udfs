@@ -4,6 +4,6 @@ def udf(
 ):
     import geopandas as gpd
 
-    df = gpd.read_file(url)
-    # df.geometry = df.geometry.buffer(0.001)
-    return df
+    gdf = gpd.read_file(url)
+    # gdf.geometry = df.geometry.buffer(0.001)
+    return gdf
