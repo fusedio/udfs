@@ -1,0 +1,70 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "NAIP_Tile_Example",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "@@type": "TileLayer",
+              "minZoom": 0,
+              "maxZoom": 19,
+              "tileSize": 256,
+              "pickable": true,
+              "subLayerConfig": {
+                "@@type": "BitmapLayer"
+              }
+            },
+            "fused:udfType": "raster",
+            "fused:slug": "NAIP_Tile_Example",
+            "fused:name": "NAIP_Tile_Example",
+            "fused:id": null,
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/NAIP_Tile_Example.png",
+            "fused:tags": [
+              {
+                "id": "high-res",
+                "label": "high-res"
+              },
+              {
+                "id": "raster",
+                "label": "raster"
+              },
+              {
+                "id": "aws",
+                "label": "AWS"
+              },
+              {
+                "id": "bbox",
+                "label": "bbox"
+              }
+            ],
+            "fused:description": "# Overview\n\nNAIP imagery, obtained seasonally in the U.S., aims to deliver digital ortho photography to the government and the public within a year of acquisition.\n\n# External links\n\n- [Name of link](https://example.com)\n- [Name of link](https://example.com)",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.78859906367361,
+              "longitude": -122.39950821441626,
+              "zoom": 13.690647419290904,
+              "pitch": 0,
+              "bearing": 0
+            }
+          },
+          "source": "NAIP_Tile_Example.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
