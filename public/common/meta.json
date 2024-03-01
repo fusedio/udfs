@@ -89,7 +89,7 @@
             "fused:id": null,
             "fused:name": "common",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Fused_Logo.png",
-            "fused:description": "## Overview\n\nThis UDF contains common utils that are being used for many public udfs. \n\n\nTo import common utils in your udf run the following command:\n\n`utils = fused.public.common.utils`\n\n\n## External links\n\n- [Name of link](https://example.com)\n- [Name of link](https://example.com)",
+            "fused:description": "## Overview\n\nThis UDF contains common utils that are being used for many public udfs. \n\n\nTo import common utils in your udf run the following command:\n\n`common = fused.public.common`",
             "fused:defaultViewState": {
               "enable": false,
               "latitude": 0,
@@ -97,7 +97,23 @@
               "zoom": 0,
               "pitch": 0,
               "bearing": 0
-            }
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/68319eef3dca0224668a13b278e96d2d051dff8e/public/common/",
+            "fused:gitPath": "public/common",
+            "fused:gitRef": "68319eef3dca0224668a13b278e96d2d051dff8e",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk"
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4"
+            ],
+            "fused:gitLastModified": "2024-02-23T01:13:33+00:00"
           },
           "source": "common.py",
           "headers": [
