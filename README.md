@@ -32,7 +32,7 @@ utils = fused.core.import_from_github('https://github.com/fusedio/udfs/tree/main
 udf(...)
 ```
 
-## Walktrough
+## Walkthrough
 
 ### Repo structure
 
