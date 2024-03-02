@@ -57,7 +57,7 @@ def acs_5yr_bbox(bounds, census_variable="population", type="bbox", suffix="simp
 def acs_5yr_meta():
     import pandas as pd
 
-    # Filter only records with cencus block groups data
+    # Filter only records with census block groups data
     tmp = pd.read_excel(
         "https://www2.census.gov/programs-surveys/acs/summary_file/2021/sequence-based-SF/documentation/tech_docs/ACS_2021_SF_5YR_Appendices.xlsx"
     )
@@ -198,7 +198,7 @@ def table_to_tile(
             rows_df = pd.concat(
                 [fused.get_chunk_from_table(table, fc[0], fc[1]) for fc in List]
             )
-            print("avaiable columns:", list(rows_df.columns))
+            print("available columns:", list(rows_df.columns))
         df = rows_df[rows_df.intersects(bbox.geometry[0])]
         df.crs = bbox.crs
         if (
