@@ -1,0 +1,97 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "REM_with_HyRiver",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    255,
+                    0,
+                    255
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_single",
+            "fused:slug": "REM_with_HyRiver",
+            "fused:name": "REM_with_HyRiver",
+            "fused:id": null,
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 39.27005267499223,
+              "longitude": -119.53004625266792,
+              "zoom": 11.652921831374451,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:description": "## Overview\n\nRelative Elevation Model (REM) detrends a DEM based on the water surface of a stream. It’s especially useful for visualization of floodplains. This UDF computes REM for a segment of Carson River and visualizes the results using `xarray-spatial` and `datashader`.\n\nWe use HyRiver software stack to download the required Digital Elevation Model (DEM) and river flowlines within a bounding box.\n\n## External links\n\n- [HyRiver](https://docs.hyriver.io/)\n- [REM](https://wadnr.maps.arcgis.com/apps/Cascade/index.html?appid=36b4887370d141fcbb35392f996c82d9)",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/REM_with_HyRiver.png",
+            "fused:tags": [
+              {
+                "id": "dem",
+                "label": "dem"
+              },
+              {
+                "id": "10-meter",
+                "label": "10-meter"
+              },
+              {
+                "id": "tutorial",
+                "label": "tutorial"
+              },
+              {
+                "id": "river",
+                "label": "river",
+                "isCreatable": true
+              }
+            ]
+          },
+          "source": "REM_with_HyRiver.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
