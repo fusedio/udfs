@@ -60,7 +60,7 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:description": "## Overview\n\nHeight Above River (HAR) rasters, also known as Relative Elevation Models, are normalized rasters created by detrending a DEM and then subtracting this from the bare-earth DEM. These models facilitate the visualization of fluvial landforms, which might be difficult to identify using only an aerial image or a standard DEM. This UDF computes REM for a segment of Carson River and visualizes the results using `xarray-spatial` and `datashader`.\n\nWe use HyRiver software stack to download the required Digital Elevation Model (DEM) and river flowlines within a bounding box.\n\n## External links\n\n- [HyRiver](https://docs.hyriver.io/)\n- [REM](https://wadnr.maps.arcgis.com/apps/Cascade/index.html?appid=36b4887370d141fcbb35392f996c82d9)",
+            "fused:description": "## Overview\n\nRelative Elevation Model (REM) detrends a DEM based on the water surface of a stream. It’s especially useful for visualization of floodplains. This UDF computes REM for a segment of Carson River and visualizes the results using `xarray-spatial` and `datashader`.\n\nWe use HyRiver software stack to download the required Digital Elevation Model (DEM) and river flowlines within a bounding box.\n\n## External links\n\n- [HyRiver](https://docs.hyriver.io/)\n- [REM](https://wadnr.maps.arcgis.com/apps/Cascade/index.html?appid=36b4887370d141fcbb35392f996c82d9)",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/REM_with_HyRiver.png",
             "fused:tags": [
               {

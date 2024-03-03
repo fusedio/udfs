@@ -1,4 +1,4 @@
-# todo: investigate why sometime configure_s3_access get cahched
+# todo: investigate why sometime configure_s3_access get cached
 def udf(
     bbox,
     time_of_interest="2023-09-01/2023-10-30",
