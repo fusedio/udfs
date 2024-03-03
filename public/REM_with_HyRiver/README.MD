@@ -7,7 +7,7 @@ Tags: `dem` `10-meter` `tutorial` `river`
 <!--fused:readme-->
 ## Overview
 
-Relative Elevation Model (REM) detrends a DEM based on the water surface of a stream. It’s especially useful for visualization of floodplains. This UDF computes REM for a segment of Carson River and visualizes the results using `xarray-spatial` and `datashader`.
+Height Above River (HAR) rasters, also known as Relative Elevation Models, are normalized rasters created by detrending a DEM and then subtracting this from the bare-earth DEM. These models facilitate the visualization of fluvial landforms, which might be difficult to identify using only an aerial image or a standard DEM. This UDF computes REM for a segment of Carson River and visualizes the results using `xarray-spatial` and `datashader`.
 
 We use HyRiver software stack to download the required Digital Elevation Model (DEM) and river flowlines within a bounding box.
 
