@@ -1,10 +1,10 @@
 import numpy as np
 import fused
 
-read_tiff = fused.core.import_from_github(
+read_tiff = fused.core.load_udf_from_github(
     "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
 ).utils.read_tiff
-mosaic_tiff = fused.core.import_from_github(
+mosaic_tiff = fused.core.load_udf_from_github(
     "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
 ).utils.mosaic_tiff
 LULC_IO_COLORS = {
