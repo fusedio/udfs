@@ -12,6 +12,8 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
+            "fused:description": "## Overview\n\nThree channel Sentinel 2 satellite imaging: pseudo RGB bands composed from the original 13 Sentinel 2 bands: the defaults are: pseudoRed = Glacier Index = (B3 – B4) / (B3 + B4), \npseudoGreen= B8 (Near InfraRed), \npseudoBlue = B11 (Short Wave InfraRed) \n",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/s2_explorer_udf.png",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
