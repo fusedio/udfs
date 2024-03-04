@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "Building_Tile_Example_copy",
+          "name": "Building_Tile_Example",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -78,8 +78,8 @@
               }
             },
             "fused:udfType": "vector_tile",
-            "fused:slug": "Building_Tile_Example_copy",
-            "fused:name": "Building_Tile_Example_copy",
+            "fused:slug": "Building_Tile_Example",
+            "fused:name": "Building_Tile_Example",
             "fused:id": null,
             "fused:defaultViewState": {
               "enable": true,
@@ -119,7 +119,7 @@
             "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/cf0454d/public/Building_Tile_Example/",
             "fused:gitLastModified": "2024-03-04T20:39:10+00:00"
           },
-          "source": "Building_Tile_Example_copy.py",
+          "source": "Building_Tile_Example.py",
           "headers": []
         }
       }

@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "S2_explorer_copy",
+          "name": "S2_explorer",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -51,8 +51,8 @@
               }
             },
             "fused:udfType": "vector_tile",
-            "fused:slug": "S2_explorer_copy",
-            "fused:name": "S2_explorer_copy",
+            "fused:slug": "S2_explorer",
+            "fused:name": "S2_explorer",
             "fused:id": null,
             "fused:gitUrl": "https://github.com/fusedio/udfs/tree/cf0454d921646973fdf180ca8c38c81b5c7624f9/public/S2_explorer/",
             "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/cf0454d/public/S2_explorer/",
@@ -72,7 +72,7 @@
             ],
             "fused:gitLastModified": "2024-03-04T20:50:18+00:00"
           },
-          "source": "S2_explorer_copy.py",
+          "source": "S2_explorer.py",
           "headers": [
             {
               "module_name": "gabeutils",
