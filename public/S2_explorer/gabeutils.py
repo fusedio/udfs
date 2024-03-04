@@ -21,10 +21,6 @@ channel_band_dict = {
 
 reverse_channel_band_dict = {v:k for k,v in channel_band_dict.items()}
 
-def norm(band, eps = 0.):
-    band_min, band_max = np.min(band), np.max(band)
-    return ((band - band_min)/(band_max - band_min+eps*np.ones_like(band)))
-
 def normalize(band, max_, min_, eps = 0., sqrt_ = False, clip_ = True):
     band = np.array(band, 'float')
     norm =  (np.clip(band,min_,max_) - min_)/(max_ - min_ + eps*np.ones_like(band))
