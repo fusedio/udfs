@@ -5,7 +5,7 @@ def udf(
     chip_len="256",
     buffer_degree=0.000,
 ):
-    utils = fused.core.import_from_github(
+    utils = fused.core.load_udf_from_github(
         "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
     ).utils
     min_zoom = 15

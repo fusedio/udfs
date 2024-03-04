@@ -28,7 +28,7 @@ pip install fused
 This snippet shows how to import a UDF from a Python environment and their modules from a public GitHub URL. The URL must be of a directory that contains a UDF generated with Fused. This example shows how to import a UDF.
 
 ```python
-utils = fused.core.import_from_github('https://github.com/fusedio/udfs/tree/main/public/common/').udf
+utils = fused.core.load_udf_from_github('https://github.com/fusedio/udfs/tree/main/public/common/').udf
 udf(...)
 ```
 
