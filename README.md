@@ -72,7 +72,7 @@ Files relevant to each UDF are:
 import fused
 
 @fused.udf
-def my_udf():
+def my_udf(bbox=None):
     import pandas as pd
     return pd.DataFrame({'Hello': ['from Fused']})
 
