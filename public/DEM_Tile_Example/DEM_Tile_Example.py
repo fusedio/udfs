@@ -1,5 +1,5 @@
 def udf(bbox, provider="AWS"):
-    arr_to_plasma = fused.core.import_from_github(
+    arr_to_plasma = fused.core.load_udf_from_github(
         "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
     ).utils.arr_to_plasma
     # collection = 'cop-dem-glo-90'
