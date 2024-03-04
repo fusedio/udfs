@@ -1,5 +1,5 @@
 def udf(bbox, provider="AWS", time_of_interest="2023-11-01/2023-12-30"):
-    arr_to_plasma = fused.core.import_from_github(
+    arr_to_plasma = fused.core.load_udf_from_github(
         "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
     ).utils.arr_to_plasma
     from pystac.extensions.eo import EOExtension as eo

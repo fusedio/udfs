@@ -7,3 +7,4 @@
 Three channel Sentinel 2 satellite imaging: pseudo RGB bands composed from the original 13 Sentinel 2 bands: the defaults are: pseudoRed = Glacier Index = (B3 – B4) / (B3 + B4), 
 pseudoGreen= B8 (Near InfraRed), 
 pseudoBlue = B11 (Short Wave InfraRed) 
+
