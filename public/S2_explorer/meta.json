@@ -12,8 +12,8 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:description": "## Overview\n\nThree channel Sentinel 2 satellite imaging: pseudo RGB bands composed from the original 13 Sentinel 2 bands: the defaults are: pseudoRed = Glacier Index = (B3 – B4) / (B3 + B4), \npseudoGreen= B8 (Near InfraRed), \npseudoBlue = B11 (Short Wave InfraRed) \n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\nimport geopandas as gpd\n\nudf_url = \"https://github.com/fusedio/udfs/tree/main/public/S2_explorer\"\nudf = fused.load(udf_url)\n\nbbox = gpd.GeoDataFrame.from_features(\n    {\"type\": \"FeatureCollection\", \"features\": [{\"id\": \"0\", \"type\": \"Feature\", \"properties\": {\"x\": 1270, \"y\": 3048, \"z\": 13}, \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[[-124.1455078125, 41.77131167976406], [-124.1455078125, 41.73852846935915], [-124.189453125, 41.73852846935915], [-124.189453125, 41.77131167976406], [-124.1455078125, 41.77131167976406]]]}}]}\n)\n\ndf = fused.run(udf, bbox=bbox)\ndf.image.isel(band=0).plot()\n```\n",
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/s2_explorer_udf.png",
+            "fused:description": "## Overview\n\nThree channel Sentinel 2 satellite imaging: pseudo RGB bands composed from the original 13 Sentinel 2 bands: the defaults are: pseudoRed = Glacier Index = (B3 – B4) / (B3 + B4), \npseudoGreen= B8 (Near InfraRed), \npseudoBlue = B11 (Short Wave InfraRed) \n",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/s3_explorer_udf_2.png",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",

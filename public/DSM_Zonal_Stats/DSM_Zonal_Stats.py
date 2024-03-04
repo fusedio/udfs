@@ -4,13 +4,13 @@ def udf(
 ):
     if bbox.z[0] >= min_zoom:
         table_to_tile = fused.core.load_udf_from_github(
-            "https://github.com/fusedio/udfs/tree/6891a7a189b4143bf412242bc62e99a02f66277f/public/common/"
+            "https://github.com/fusedio/udfs/tree/f928ee1bd5cbf72573b587c63a7cbfa4a24b8dfe/public/common/"
         ).utils.table_to_tile
         geom_stats = fused.core.load_udf_from_github(
-            "https://github.com/fusedio/udfs/tree/6891a7a189b4143bf412242bc62e99a02f66277f/public/common"
+            "https://github.com/fusedio/udfs/tree/f928ee1bd5cbf72573b587c63a7cbfa4a24b8dfe/public/common"
         ).utils.geom_stats
         dsm_to_tile = fused.core.load_udf_from_github(
-            "https://github.com/fusedio/udfs/tree/8b5bae2f522eda16d9dbc134112321209430fc35/public/DSM_JAXA_Example"
+            "https://github.com/fusedio/udfs/tree/f928ee1bd5cbf72573b587c63a7cbfa4a24b8dfe/public/DSM_JAXA_Example"
         ).utils.dsm_to_tile
         gdf = table_to_tile(bbox, table, min_zoom)
         arr = dsm_to_tile(bbox, z_levels=[4, 6, 9, 11], verbose=False)

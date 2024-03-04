@@ -1163,3 +1163,50 @@ def geo_samples(
         for _ in range(n_samples)
     ]
     return geo_convert(pd.DataFrame(points, columns=["lng", "lat"]))[["geometry"]]
+
+def bbox_stac_items(bbox, table):
+    import fused
+    import pyarrow.parquet as pq
+    import pandas as pd
+    import geopandas as gpd
+    import shapely
+
+    df = fused.get_chunks_metadata(table)
+    df = df[df.intersects(bbox)]
+    if len(df) > 10 or len(df) == 0:
+        return None  # fault
+    matching_images = []
+    for idx, row in df.iterrows():
+        file_url = table + row["file_id"] + ".parquet"
+        chunk_table = pq.ParquetFile(file_url).read_row_group(row["chunk_id"])
+        chunk_gdf = gpd.GeoDataFrame(chunk_table.to_pandas())
+        if "geometry" in chunk_gdf:
+            chunk_gdf.geometry = shapely.from_wkb(chunk_gdf.geometry)
+        matching_images.append(chunk_gdf)
+
+    ret_gdf = pd.concat(matching_images)
+    ret_gdf = ret_gdf[ret_gdf.intersects(bbox)]
+    return ret_gdf
+
+# todo: switch to read_tiff with requester_pays option
+def read_tiff_naip(
+    bbox, input_tiff_path, crs, buffer_degree, output_shape, resample_order=0
+):
+    from rasterio.session import AWSSession
+    import rasterio
+    from scipy.ndimage import zoom
+    from io import BytesIO
+
+    out_buf = BytesIO()
+    with rasterio.Env(AWSSession(requester_pays=True)):
+        with rasterio.open(input_tiff_path) as src:
+            if buffer_degree != 0:
+                bbox.geometry = bbox.geometry.buffer(buffer_degree)
+            bbox_projected = bbox.to_crs(crs)
+            window = src.window(*bbox_projected.total_bounds)
+            data = src.read(window=window, boundless=True)
+            zoom_factors = np.array(output_shape) / np.array(data[0].shape)
+            rgb = np.array(
+                [zoom(arr, zoom_factors, order=resample_order) for arr in data]
+            )
+        return rgb

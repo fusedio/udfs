@@ -20,23 +20,28 @@ def udf(bbox, provider='AWS',channels = ['B11','veg','snow'],time_of_interest = 
     
     #overwrite default channel set, can be 1D or 3D
     #channels = ['water']
-    channels = ['B11','veg','snow']
+    #channels = ['B11','veg','snow']
+    channels = ['glacier','B08','B11']
+    decoded_channels = []
     for b in channels:
         if b in reverse_channel_band_dict.keys():
             band_list+=[b]
             raw_channels += [b]
+            decoded_channels += [b]
         elif b in ['burn','glacier','moisture','snow','veg','water']:
             band_list+=index_name_dict[b]
-            vis_stats_keys+= ['-'.join(index_name_dict[b])]
+            c = '-'.join(index_name_dict[b])
+            vis_stats_keys+= [c]
+            decoded_channels += [c]
+    print('original channels:',channels) 
+    print('decoded channels:',decoded_channels) 
     band_list = list(set(band_list))
     print('raw channels:',raw_channels)
     print('nd channels:',vis_stats_keys)
-    composite_channels = vis_stats_keys + raw_channels
-    print('composite channels:',composite_channels)
     s2_bands = [reverse_channel_band_dict[el] for el in band_list]
     print('all channels:',band_list)
-    print('s2 bands:',s2_bands)
-    #norm_dict
+    print('s2 bands used:',s2_bands)
+
     from pystac.extensions.eo import EOExtension as eo
 
     if provider=='AWS':
@@ -73,15 +78,15 @@ def udf(bbox, provider='AWS',channels = ['B11','veg','snow'],time_of_interest = 
 
     ch_set = []
     ds_band_dict = {channel_band_dict[b]:ds[b] for b in s2_bands}
-    for el in composite_channels:
+    for el in decoded_channels:
         stats_dict = norm_dict[el]
         
         if el in raw_channels:
+            ch_set += [255.*normalize(ds_band_dict[el], stats_dict['p99'],0.5*(stats_dict['p01']+stats_dict['p02']), eps = 0., sqrt_ = False, clip_ = True)] 
             
-            ch_set += [255.*normalize(ds_band_dict[el], 0.5*(stats_dict['p99']+stats_dict['p99']),0.5*(stats_dict['p01']+stats_dict['min']), eps = 0., sqrt_ = False, clip_ = True)] 
         elif el in vis_stats_keys:
             el_pair = el.split('-')
-            ch_set += [255.*normalize(np.array((ds_band_dict[el_pair[0]] - ds_band_dict[el_pair[1]]) / (ds_band_dict[el_pair[0]] + ds_band_dict[el_pair[1]] +1.e-10),'float'), 0.5*(stats_dict['p99']+stats_dict['max']),0.5*(stats_dict['p01']+stats_dict['p01']), eps = 0., sqrt_ = False, clip_ = True)] 
+            ch_set += [255.*normalize(np.array((ds_band_dict[el_pair[0]] - ds_band_dict[el_pair[1]]) / (ds_band_dict[el_pair[0]] + ds_band_dict[el_pair[1]] +1.e-10),'float'), 0.5*(stats_dict['p99']+stats_dict['p99']),0.5*(stats_dict['p01']+stats_dict['p02']), eps = 0., sqrt_ = False, clip_ = True)] 
     #overwrite default percentiles
     perc_arr = [25]*3
     if len(channels)==3:
@@ -91,7 +96,7 @@ def udf(bbox, provider='AWS',channels = ['B11','veg','snow'],time_of_interest = 
 
         print('max pixel:',np.max(Ch0_agg))
         print('min pixel:',np.min(Ch0_agg))
-        img_arr = np.stack([Ch2_agg,Ch0_agg,Ch1_agg])
+        img_arr = np.stack([Ch0_agg,Ch1_agg,Ch2_agg])
         img_arr = np.array(img_arr,'float')
         print('array shape',img_arr.shape)
         return np.array(np.clip(brightness*img_arr,0,252),'uint8') 
