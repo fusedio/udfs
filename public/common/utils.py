@@ -637,30 +637,6 @@ def fs_list_hls(path='lp-prod-protected/HLSL30.020/HLS.L30.T10SEG.2023086T184554
         fs = s3fs.S3FileSystem(key=aws_session['aws_access_key_id'], secret=aws_session['aws_secret_access_key'], token=aws_session['aws_session_token'])
         return fs.ls(path)
 
-#TODO combine run_udf_png & run_udf and use **kwarg
-def run_udf(name, x, y ,z, context, dtype_out='geojson'):
-        import requests
-        import geopandas as gpd
-        access_token=context.auth_token
-        url = f"https://du0iv5kype.execute-api.us-west-2.amazonaws.com/api/v1/run/udf/saved/{name}/tiles/{z}/{x}/{y}?dtype_out={dtype_out}"
-        headers = {"Authorization": f"Bearer {access_token}"}
-        response = requests.get(url, headers=headers)
-        gdf = gpd.GeoDataFrame.from_features(response.json())
-        return gdf
-
-def run_udf_png(bbox, context, input_tiff_path, chip_len='256', requester_pays=0):
-        x,y,z=bbox[['x','y','z']].iloc[0]
-        import requests
-        import rasterio
-        from io import BytesIO
-        url = f"https://du0iv5kype.execute-api.us-west-2.amazonaws.com/api/v1/run/udf/saved/sina@fused.io/tiff_tiler/tiles/{z}/{x}/{y}?dtype_out=png&chip_len={chip_len}&input_tiff_path={input_tiff_path}&requester_pays={requester_pays}"
-        headers = {"Authorization": f"Bearer {context.auth_token}"}
-        response = requests.get(url, headers=headers)
-        with rasterio.open(BytesIO(response.content)) as dataset:
-                data = dataset.read()
-                # tile_transform = dataset.transform
-        return data
-
 def cache_data(func, *args_hash, verbose=False, reset_cache=False, cache_path='tmp', 
                cache_function=True, base_path='/mnt/cache/sina/', retry=True, **kwargs_hash, ):
     class HashableLambda: 
