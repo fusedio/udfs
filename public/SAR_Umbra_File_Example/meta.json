@@ -1,0 +1,89 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "SAR_Umbra_File_Example",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "opacity": 0.95
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    255,
+                    0,
+                    255
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_single",
+            "fused:slug": "SAR_Umbra_File_Example",
+            "fused:name": "SAR_Umbra_File_Example",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/SAR_Umbra_File_Example.png",
+            "fused:tags": [
+              {
+                "id": "SAR",
+                "label": "SAR",
+                "isCreatable": true
+              },
+              {
+                "id": "raster",
+                "label": "raster"
+              },
+              {
+                "id": "high-res",
+                "label": "high-res"
+              },
+              {
+                "id": "file",
+                "label": "file"
+              }
+            ],
+            "fused:description": "# Overview\n\nUmbra satellites provide high-resolution Synthetic Aperture Radar (SAR) imagery, with up to 16-cm resolution, capable of capturing images at night and in adverse weather conditions. \n\n# External links\n\n- [stac link](https://radiantearth.github.io/stac-browser/#/external/s3.us-west-2.amazonaws.com/umbra-open-data-catalog/stac/catalog.json)\n- [aws open data](https://registry.opendata.aws/umbra-open-data/)",
+            "fused:id": null
+          },
+          "source": "SAR_Umbra_File_Example.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

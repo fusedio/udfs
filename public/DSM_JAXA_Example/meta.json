@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "common",
+          "name": "DSM_JAXA_Example",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -16,7 +16,7 @@
               "tileLayer": {
                 "@@type": "TileLayer",
                 "minZoom": 0,
-                "maxZoom": 19,
+                "maxZoom": 12,
                 "tileSize": 256,
                 "pickable": true
               },
@@ -36,15 +36,14 @@
                   "present": "@@=[properties.r, properties.g, properties.b]",
                   "absent": [
                     255,
-                    255,
-                    255,
-                    40
+                    0,
+                    255
                   ]
                 },
                 "getFillColor": [
                   255,
-                  255,
-                  255,
+                  0,
+                  0,
                   40
                 ]
               },
@@ -53,16 +52,7 @@
                 "stroked": true,
                 "filled": true,
                 "pickable": true,
-                "lineWidthMinPixels": 1,
-                "getLineColor": {
-                  "@@function": "themeColor",
-                  "key": "backgroundAccent"
-                },
-                "getFillColor": {
-                  "@@function": "themeColor",
-                  "key": "backgroundAccent",
-                  "alpha": 50
-                }
+                "lineWidthMinPixels": 1
               },
               "errorLayer": {
                 "@@type": "GeoJsonLayer",
@@ -85,37 +75,29 @@
               }
             },
             "fused:udfType": "vector_tile",
-            "fused:slug": "common",
+            "fused:slug": "DSM_JAXA_Example",
+            "fused:name": "DSM_JAXA_Example",
             "fused:id": null,
-            "fused:name": "common",
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Fused_Logo.png",
-            "fused:description": "## Overview\n\nThis UDF contains common utils that are being used for many public udfs. \n\n\nTo import common utils in your udf run the following command:\n\n`common = fused.public.common`",
-            "fused:defaultViewState": {
-              "enable": false,
-              "latitude": 0,
-              "longitude": 0,
-              "zoom": 0,
-              "pitch": 0,
-              "bearing": 0
-            },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/68319eef3dca0224668a13b278e96d2d051dff8e/public/common/",
-            "fused:gitPath": "public/common",
-            "fused:gitRef": "68319eef3dca0224668a13b278e96d2d051dff8e",
-            "fused:gitAuthorNames": [
-              "Sina Kashuk"
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DSM_JAXA_Example.png",
+            "fused:description": "## Overview\n\nALOS Global Digital Surface Model \"ALOS World 3D - 30m (AW3D30)\" captured by the PRISM optical sensor on the ALOS satellite, with a 30-meter horizontal resolution.\n\n## External links\n- [JAXA Digital Surface Model](https://data.earth.jaxa.jp/en/datasets/#/id/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global)\n- [STAC Collection File](https://s3.ap-northeast-1.wasabisys.com/je-pds/cog/v1/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global/collection.json)",
+            "fused:tags": [
+              {
+                "id": "raster",
+                "label": "raster"
+              },
+              {
+                "id": "elevation",
+                "label": "elevation",
+                "isCreatable": true
+              },
+              {
+                "id": "30-meter",
+                "label": "30-meter"
+              }
             ],
-            "fused:gitAuthorUsernames": [
-              "kashuk"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/kashuk"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/12432685?v=4"
-            ],
-            "fused:gitLastModified": "2024-02-23T01:13:33+00:00"
+            "fused:defaultParameters": []
           },
-          "source": "common.py",
+          "source": "DSM_JAXA_Example.py",
           "headers": [
             {
               "module_name": "utils",

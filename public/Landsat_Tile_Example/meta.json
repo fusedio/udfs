@@ -1,0 +1,80 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Landsat_Tile_Example",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    255,
+                    0,
+                    255
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "Landsat_Tile_Example",
+            "fused:name": "Landsat_Tile_Example",
+            "fused:defaultParameters": [],
+            "fused:tags": [
+              {
+                "id": "raster",
+                "label": "raster"
+              },
+              {
+                "id": "30-meter",
+                "label": "30 meter"
+              },
+              {
+                "id": "aws",
+                "label": "AWS"
+              }
+            ],
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Landsat_Tile_Example.png",
+            "fused:description": "\n## Overview\n\nLandsat Collection 2 offers global Level-2 surface reflectance and temperature products. These are generated from Collection 2 Level-1 inputs meeting specific criteria, including a Solar Zenith Angle constraint of <76 degrees and required auxiliary data inputs.\n\n## External links\n\n- [Landsat Official Website](https://www.usgs.gov/landsat-missions/landsat-collection-2-level-2-science-products)",
+            "fused:id": null
+          },
+          "source": "Landsat_Tile_Example.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

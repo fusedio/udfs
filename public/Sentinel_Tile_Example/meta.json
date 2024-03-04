@@ -15,14 +15,14 @@
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
-                "minZoom": 8,
-                "maxZoom": 15,
+                "minZoom": 0,
+                "maxZoom": 19,
                 "tileSize": 256,
                 "pickable": true
               },
               "rasterLayer": {
                 "@@type": "BitmapLayer",
-                "opacity": 0.5
+                "pickable": true
               },
               "vectorLayer": {
                 "@@type": "GeoJsonLayer",
@@ -77,15 +77,26 @@
               }
             ],
             "fused:datasets": "Sentinel 2",
-            "fused:id": null
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/3fa504812a66db5bb0f2bd209b87ace3d9a1582a/public/Sentinel_Tile_Example/",
+            "fused:gitPath": "public/Sentinel_Tile_Example",
+            "fused:gitRef": "3fa504812a66db5bb0f2bd209b87ace3d9a1582a",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk"
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4"
+            ],
+            "fused:gitLastModified": "2024-02-26T16:04:03+00:00"
           },
           "source": "Sentinel_Tile_Example.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],

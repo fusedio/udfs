@@ -84,7 +84,23 @@
               "zoom": 9.474375639374612,
               "pitch": 0,
               "bearing": 0
-            }
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/bd826a4fcaec82fb4655715027372033bcff397e/public/CDLs_Tile_Example/",
+            "fused:gitPath": "public/CDLs_Tile_Example",
+            "fused:gitRef": "bd826a4fcaec82fb4655715027372033bcff397e",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk"
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4"
+            ],
+            "fused:gitLastModified": "2024-02-23T00:52:45+00:00"
           },
           "source": "CDLs_Tile_Example.py",
           "headers": [

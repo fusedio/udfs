@@ -1,0 +1,47 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "DC_File_Example",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "@@type": "GeoJsonLayer",
+              "stroked": true,
+              "filled": true,
+              "pickable": true,
+              "lineWidthMinPixels": 1,
+              "getLineColor": [
+                220,
+                255,
+                0
+              ],
+              "getFillColor": [
+                220,
+                255,
+                0,
+                30
+              ]
+            },
+            "fused:udfType": "vector_single",
+            "fused:slug": "DC_File_Example",
+            "fused:name": "DC_File_Example",
+            "fused:id": null,
+            "fused:description": "# Overview\n\nThis UDF is an example of how to load data from Census [TIGER/Line Shapefiles](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html).\n\n# External links\n\n- [source](https://www2.census.gov/geo/tiger/TIGER_RD18/STATE/11_DISTRICT_OF_COLUMBIA/11/)\n",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DC_File_Example.png"
+          },
+          "source": "DC_File_Example.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
