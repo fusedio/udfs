@@ -7,7 +7,7 @@ Tags: `30-meter` `aws` `tutorial` `buildings`
 <!--fused:readme-->
 ## Overview
 
-This UDF calculate average DSM for every buildings in the United States. ALOS Global Digital Surface Model "ALOS World 3D - 30m (AW3D30)" captured by the PRISM optical sensor on the ALOS satellite, with a 30-meter horizontal resolution.
+This UDF calculates average DSM (Digital Surface Model) for every building in the United States. ALOS Global Digital Surface Model "ALOS World 3D - 30m (AW3D30)" captured by the PRISM optical sensor on the ALOS satellite, with a 30-meter horizontal resolution.
 
 ## External links
 - [JAXA Digital Surface Model](https://data.earth.jaxa.jp/en/datasets/#/id/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global)

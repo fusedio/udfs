@@ -7,9 +7,8 @@ Tags: `high-res` `raster` `aws` `bbox`
 <!--fused:readme-->
 # Overview
 
-NAIP imagery, obtained seasonally in the U.S., aims to deliver digital ortho photography to the government and the public within a year of acquisition.
+NAIP aerial imagery, obtained seasonally in the U.S., aims to deliver digital ortho photography to the government and the public within a year of acquisition.
 
 # External links
 
-- [Name of link](https://example.com)
-- [Name of link](https://example.com)
+- [National Agriculture Imagery Program (NAIP)](https://naip-usdaonline.hub.arcgis.com/)
