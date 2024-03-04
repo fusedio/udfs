@@ -12,8 +12,11 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
+<<<<<<< HEAD
             "fused:description": "## Overview\n\nThree channel Sentinel 2 satellite imaging: pseudo RGB bands composed from the original 13 Sentinel 2 bands: the defaults are: pseudoRed = Glacier Index = (B3 – B4) / (B3 + B4), \npseudoGreen= B8 (Near InfraRed), \npseudoBlue = B11 (Short Wave InfraRed) \n",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/s3_explorer_udf_2.png",
+=======
+>>>>>>> 801216c (i added the s2 index example)
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -53,6 +56,7 @@
             "fused:udfType": "vector_tile",
             "fused:slug": "S2_explorer",
             "fused:name": "S2_explorer",
+<<<<<<< HEAD
             "fused:id": null,
             "fused:gitUrl": "https://github.com/fusedio/udfs/tree/cf0454d921646973fdf180ca8c38c81b5c7624f9/public/S2_explorer/",
             "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/cf0454d/public/S2_explorer/",
@@ -71,6 +75,9 @@
               "https://avatars.githubusercontent.com/u/8119745?v=4"
             ],
             "fused:gitLastModified": "2024-03-04T20:50:18+00:00"
+=======
+            "fused:id": null
+>>>>>>> 801216c (i added the s2 index example)
           },
           "source": "S2_explorer.py",
           "headers": [

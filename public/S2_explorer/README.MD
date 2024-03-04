@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!--fused:preview-->
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/s3_explorer_udf_2.png" width="600" alt="UDF preview image"></p>
 
@@ -19,3 +20,8 @@ udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/S2_explorer")
 df = fused.run(udf, x=1270, y=3048, z=13)
 df.image.isel(band=0).plot()
 ```
+=======
+<!--fused:readme-->
+Exported from Fused UDF Workbench
+
+>>>>>>> 801216c (i added the s2 index example)
