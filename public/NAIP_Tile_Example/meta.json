@@ -53,15 +53,43 @@
               "zoom": 13.690647419290904,
               "pitch": 0,
               "bearing": 0
-            }
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/f928ee1bd5cbf72573b587c63a7cbfa4a24b8dfe/public/NAIP_Tile_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/f928ee1/public/NAIP_Tile_Example/",
+            "fused:gitPath": "public/NAIP_Tile_Example",
+            "fused:gitRef": "f928ee1bd5cbf72573b587c63a7cbfa4a24b8dfe",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk",
+              "Tyler Erickson",
+              "Marko Letic",
+              "Kyle Barron",
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk",
+              "tylere",
+              "mletic",
+              "kylebarron",
+              "charlesfused"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk",
+              "https://github.com/tylere",
+              "https://github.com/mletic",
+              "https://github.com/kylebarron",
+              "https://github.com/charlesfused"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/u/92862?v=4",
+              "https://avatars.githubusercontent.com/u/7241522?v=4",
+              "https://avatars.githubusercontent.com/u/15164633?v=4",
+              "https://avatars.githubusercontent.com/u/148997493?v=4"
+            ],
+            "fused:gitLastModified": "2024-03-04T20:06:50+00:00"
           },
           "source": "NAIP_Tile_Example.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],

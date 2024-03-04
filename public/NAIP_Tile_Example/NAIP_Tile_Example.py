@@ -6,7 +6,7 @@ def udf(
     buffer_degree=0.000,
 ):
     utils = fused.core.load_udf_from_github(
-        "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
+        "https://github.com/fusedio/udfs/tree/f928ee1bd5cbf72573b587c63a7cbfa4a24b8dfe/public/common/"
     ).utils
     min_zoom = 15
     if bbox.z[0] >= min_zoom:
@@ -21,7 +21,7 @@ def udf(
         if len(matching_items) < max_matching_items:
             input_tiff_path = matching_items.iloc[0].assets["naip-analytic"]["href"]
             crs = matching_items.iloc[0]["proj:epsg"]
-            arr = utils.read_tiff(
+            arr = utils.read_tiff_naip(
                 bbox, input_tiff_path, crs, buffer_degree, output_shape
             )
             if var == "RGB":
@@ -37,7 +37,7 @@ def udf(
                 raise ValueError(
                     f'{var=} does not exist. var options are "RGB" and "NDVI"'
                 )
-            return utils.arr_to_png(arr)
+            return arr
         else:
             print(
                 f"{matching_items} images exceeded max of {max_matching_items}. "
