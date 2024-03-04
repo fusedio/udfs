@@ -6,7 +6,6 @@
 </h3>
 <br><br>
 
-
 ![alt text](https://fused-magic.s3.us-west-2.amazonaws.com/docs_assets/github_udfs_repo/readme_udf_explorer.png)
 
 This repo is a public collection of Fused User Defined Functions (UDFs). 
@@ -17,7 +16,9 @@ Fused is the glue layer that interfaces data platforms and data tools via a mana
 
 ### 1. Install Fused Python SDK
 
-The Fused Python SDK is available at [PyPI](https://pypi.org/project/fused/). Use the standard Python [installation tools](https://packaging.python.org/en/latest/tutorials/installing-packages/). UDFs this repo expect a version `>=1.2.0`.
+[![PyPI Version](https://img.shields.io/pypi/v/fused.svg)](https://pypi.python.org/pypi/fused)
+
+The Fused Python SDK is available at [PyPI](https://pypi.org/project/fused/). Use the standard Python [installation tools](https://packaging.python.org/en/latest/tutorials/installing-packages/). UDFs this repo expect the most recent version.
 
 ```bash
 pip install fused
@@ -28,8 +29,13 @@ pip install fused
 This snippet shows how to import a UDF from a Python environment and their modules from a public GitHub URL. The URL must be of a directory that contains a UDF generated with Fused. This example shows how to import a UDF.
 
 ```python
-utils = fused.core.load_udf_from_github('https://github.com/fusedio/udfs/tree/main/public/common/').udf
-udf(...)
+import fused
+common = fused.core.load_udf_from_github('https://github.com/fusedio/udfs/tree/main/public/common/')
+
+import geopandas as gpd
+gdf = gpd.read_file('https://www2.census.gov/geo/tiger/TIGER_RD18/STATE/11_DISTRICT_OF_COLUMBIA/11/tl_rd22_11_bg.zip')
+gdf2 = common.utils.geo_buffer(gdf, 10)
+print(gdf2)
 ```
 
 ## Walkthrough
@@ -66,30 +72,32 @@ Files relevant to each UDF are:
 import fused
 
 @fused.udf
-def my_udf():
-    return "Hello from Fused!"
+def my_udf(bbox=None):
+    import pandas as pd
+    return pd.DataFrame({'Hello': ['from Fused']})
+
+# Run locally
+print(fused.run(my_udf))
 
 # Save locally
-my_udf.save('my_udf', where='local')
+my_udf.to_directory('my_udf')
+# or for zip file: my_udf.to_file('my_udf.zip')
 
 # Save remotely to Fused
-my_udf.save('my_udf', where='remote')
+my_udf.to_fused('my_udf')
 ```
 
 "Save locally" generates the UDF folder on your local system, which you'll use in the following step.
 
 2. Open a PR
 
-
-Clone this repo to your local system and introduce the UDF folder under `public`. Create a PR on this repo. 
-
+Clone this repo to your local system and add the UDF folder under `public` or `community`. Create a PR on this repo. 
 
 ## Ecosystem
 
 Build any scale workflows with the [Fused Python SDK](https://docs.fused.io/python-sdk/overview) and [Workbench webapp](https://docs.fused.io/workbench/overview), and integrate them into your stack with the [Fused Hosted API](https://docs.fused.io/hosted-api/overview).
 
 ![alt text](https://fused-magic.s3.us-west-2.amazonaws.com/docs_assets/ecosystem_diagram.png)
-
 
 ## Documentation
 
@@ -101,5 +109,5 @@ All UDF contributions, bug reports, bug fixes, documentation improvements, enhan
 
 ## License
 
-MIT
+[MIT License](./LICENSE)
 
