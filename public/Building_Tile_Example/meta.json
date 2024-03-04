@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "Building_Tile_Example",
+          "name": "Building_Tile_Example_copy",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -41,7 +41,7 @@
                 "isCreatable": true
               }
             ],
-            "fused:description": "\nMachine learning detected buildings footprints for United State using Bing Maps imagery. \n[Link](https://github.com/microsoft/USBuildingFootprints)",
+            "fused:description": "\nMachine learning detected buildings footprints for United State using Bing Maps imagery. \n[Link](https://github.com/microsoft/USBuildingFootprints)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\nimport geopandas as gpd\n\nudf_url = \"https://github.com/fusedio/udfs/tree/main/public/Building_Tile_Example\"\nudf = fused.load(udf_url)\n\nbbox = gpd.GeoDataFrame.from_features(\n    {\"type\": \"FeatureCollection\", \"features\": [{\"id\": \"0\", \"type\": \"Feature\", \"properties\": {\"x\": 1270, \"y\": 3048, \"z\": 20}, \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[[-124.1455078125, 41.77131167976406], [-124.1455078125, 41.73852846935915], [-124.189453125, 41.73852846935915], [-124.189453125, 41.77131167976406], [-124.1455078125, 41.77131167976406]]]}}]}\n)\n\ngdf = udf.run_local(bbox=bbox)\ngdf = gpd.GeoDataFrame(gdf, geometry='geometry', crs='epsg:4326')\ngdf.plot()\n```\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -78,8 +78,8 @@
               }
             },
             "fused:udfType": "vector_tile",
-            "fused:slug": "Building_Tile_Example",
-            "fused:name": "Building_Tile_Example",
+            "fused:slug": "Building_Tile_Example_copy",
+            "fused:name": "Building_Tile_Example_copy",
             "fused:id": null,
             "fused:defaultViewState": {
               "enable": true,
@@ -89,23 +89,37 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/79d0e6a45c000cb1d99f1a7772c8babc0113afcd/public/Building_Tile_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/cf0454d921646973fdf180ca8c38c81b5c7624f9/public/Building_Tile_Example/",
             "fused:gitPath": "public/Building_Tile_Example",
-            "fused:gitRef": "79d0e6a45c000cb1d99f1a7772c8babc0113afcd",
+            "fused:gitRef": "cf0454d921646973fdf180ca8c38c81b5c7624f9",
             "fused:gitAuthorNames": [
-              "Sina Kashuk"
+              "Sina Kashuk",
+              "Christopher Helm",
+              null,
+              "Tyler Erickson"
             ],
             "fused:gitAuthorUsernames": [
-              "kashuk"
+              "kashuk",
+              "chelm",
+              "charlesfused",
+              "tylere"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/kashuk"
+              "https://github.com/kashuk",
+              "https://github.com/chelm",
+              "https://github.com/charlesfused",
+              "https://github.com/tylere"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/12432685?v=4"
-            ]
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/u/351164?v=4",
+              "https://avatars.githubusercontent.com/u/148997493?v=4",
+              "https://avatars.githubusercontent.com/u/92862?v=4"
+            ],
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/cf0454d/public/Building_Tile_Example/",
+            "fused:gitLastModified": "2024-03-04T20:39:10+00:00"
           },
-          "source": "Building_Tile_Example.py",
+          "source": "Building_Tile_Example_copy.py",
           "headers": []
         }
       }

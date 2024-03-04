@@ -8,11 +8,11 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "S2_explorer",
+          "name": "S2_explorer_copy",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:description": "## Overview\n\nThree channel Sentinel 2 satellite imaging: pseudo RGB bands composed from the original 13 Sentinel 2 bands: the defaults are: pseudoRed = Glacier Index = (B3 – B4) / (B3 + B4), \npseudoGreen= B8 (Near InfraRed), \npseudoBlue = B11 (Short Wave InfraRed) \n",
+            "fused:description": "## Overview\n\nThree channel Sentinel 2 satellite imaging: pseudo RGB bands composed from the original 13 Sentinel 2 bands: the defaults are: pseudoRed = Glacier Index = (B3 – B4) / (B3 + B4), \npseudoGreen= B8 (Near InfraRed), \npseudoBlue = B11 (Short Wave InfraRed) \n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\nimport geopandas as gpd\n\nudf_url = \"https://github.com/fusedio/udfs/tree/main/public/S2_explorer\"\nudf = fused.load(udf_url)\n\nbbox = gpd.GeoDataFrame.from_features(\n    {\"type\": \"FeatureCollection\", \"features\": [{\"id\": \"0\", \"type\": \"Feature\", \"properties\": {\"x\": 1270, \"y\": 3048, \"z\": 13}, \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[[-124.1455078125, 41.77131167976406], [-124.1455078125, 41.73852846935915], [-124.189453125, 41.73852846935915], [-124.189453125, 41.77131167976406], [-124.1455078125, 41.77131167976406]]]}}]}\n)\n\ndf = fused.run(udf, bbox=bbox)\ndf.image.isel(band=0).plot()\n```\n",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/s2_explorer_udf.png",
             "fused:vizConfig": {
               "tileLayer": {
@@ -51,11 +51,28 @@
               }
             },
             "fused:udfType": "vector_tile",
-            "fused:slug": "S2_explorer",
-            "fused:name": "S2_explorer",
-            "fused:id": null
+            "fused:slug": "S2_explorer_copy",
+            "fused:name": "S2_explorer_copy",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/cf0454d921646973fdf180ca8c38c81b5c7624f9/public/S2_explorer/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/cf0454d/public/S2_explorer/",
+            "fused:gitPath": "public/S2_explorer",
+            "fused:gitRef": "cf0454d921646973fdf180ca8c38c81b5c7624f9",
+            "fused:gitAuthorNames": [
+              "Gabriel Durkin"
+            ],
+            "fused:gitAuthorUsernames": [
+              "gdurkin"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/gdurkin"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/8119745?v=4"
+            ],
+            "fused:gitLastModified": "2024-03-04T20:50:18+00:00"
           },
-          "source": "S2_explorer.py",
+          "source": "S2_explorer_copy.py",
           "headers": [
             {
               "module_name": "gabeutils",
