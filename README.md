@@ -21,8 +21,15 @@ Fused is the glue layer that interfaces data platforms and data tools via a mana
 The Fused Python SDK is available at [PyPI](https://pypi.org/project/fused/). Use the standard Python [installation tools](https://packaging.python.org/en/latest/tutorials/installing-packages/). UDFs this repo expect the most recent version.
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install fused
 ```
+
+It's possible the local environment might require additional packages not found locally. If that is the case, this command installs all required dependencies.
+```bash
+!pip install fused==1.3.1 odc-stac duckdb numba xarray-spatial planetary-computer 'odc-stac[botocore]' py3dep stackstac pynhd boto3
+``` 
 
 ### 2. Import a UDF into a workflow
 
