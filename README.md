@@ -31,7 +31,7 @@ It's possible that to run UDFs locally the local environment might require addit
 !pip install fused==1.3.1 odc-stac duckdb numba xarray-spatial planetary-computer 'odc-stac[botocore]' py3dep stackstac pynhd boto3
 ``` 
 
-### 2. Import a UDF into a workflow
+### 2. Load a UDF into a workflow
 
 This snippet shows how to import a UDF from this repo into a Python environment. The URL is of the directory that contains a UDF generated with Fused. 
 
@@ -43,10 +43,10 @@ gdf = udf.run_local()
 gdf
 ```
 
-Or as a bash oneliner.
+Similarly, as a bash oneliner.
 
 ```python
-python -c "import fused; udf = fused.load('https://github.com/fusedio/udfs/tree/main/public/DuckDB_NYC_Example'); gdf = udf.run_local(); print(gdf)"
+python -c "import fused; gdf = fused.load('https://github.com/fusedio/udfs/tree/main/public/DuckDB_NYC_Example').run_local(); print(gdf);"
 ```
 
 ## Walkthrough
