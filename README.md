@@ -33,7 +33,7 @@ It's possible that to run UDFs locally the local environment might require addit
 
 ### 2. Import a UDF into a workflow
 
-This snippet shows how to import a UDF from a Python environment and their modules from a public GitHub URL. The URL must be of a directory that contains a UDF generated with Fused. This example shows how to import a UDF.
+This snippet shows how to import a UDF from this repo into a Python environment. The URL is of the directory that contains a UDF generated with Fused. 
 
 ```python
 import fused
