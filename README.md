@@ -43,6 +43,12 @@ gdf = udf.run_local()
 gdf
 ```
 
+Or as a bash oneliner.
+
+```python
+python -c "import fused; udf = fused.load('https://github.com/fusedio/udfs/tree/main/public/DuckDB_NYC_Example'); gdf = udf.run_local(); print(gdf)"
+```
+
 ## Walkthrough
 
 ### Repo structure
