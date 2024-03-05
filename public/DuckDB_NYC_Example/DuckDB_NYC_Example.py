@@ -1,11 +1,7 @@
 # Note: This UDF is only for demo purposes. You may get `HTTP GET error` after several times calling it. This is the data retrieval issue caused by Cloudfront servers not responding.
 @fused.udf
 def udf(bbox=None, agg_factor=3, min_count=5):
-    import fused
-
-    geo_convert = fused.core.load_udf_from_github(
-        "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common"
-    ).utils.geo_convert
+    utils = fused.load("https://github.com/fusedio/udfs/tree/f928ee1/public/common/").utils
     import duckdb
 
     con = duckdb.connect()
@@ -28,5 +24,5 @@ def udf(bbox=None, agg_factor=3, min_count=5):
     """
     ).df()
     print("number of trips:", df.cnt.sum())
-    gdf = geo_convert(df)
+    gdf = utils.geo_convert(df)
     return gdf

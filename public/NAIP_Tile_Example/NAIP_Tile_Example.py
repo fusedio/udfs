@@ -5,9 +5,7 @@ def udf(
     chip_len="256",
     buffer_degree=0.000,
 ):
-    utils = fused.core.load_udf_from_github(
-        "https://github.com/fusedio/udfs/tree/f928ee1bd5cbf72573b587c63a7cbfa4a24b8dfe/public/common/"
-    ).utils
+    utils = fused.load("https://github.com/fusedio/udfs/tree/f928ee1/public/common/").utils
     min_zoom = 15
     if bbox.z[0] >= min_zoom:
         import numpy as np

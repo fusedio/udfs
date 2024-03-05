@@ -1,9 +1,6 @@
 @fused.udf
 def udf(bbox, year="2022", crop_type="", chip_len=256):
-    read_tiff = fused.core.load_udf_from_github(
-        "https://github.com/fusedio/udfs/tree/a63664f4a4451d07efd003e318a1413c51a54889/public/common"
-    ).utils.read_tiff
-    from utils import filter_crops, crop_counts
+    from utils import read_tiff, filter_crops, crop_counts
     import numpy as np
 
     input_tiff_path = f"s3://fused-asset/data/cdls/{year}_30m_cdls.tif"
