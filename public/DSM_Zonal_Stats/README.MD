@@ -12,3 +12,21 @@ This UDF calculates average DSM (Digital Surface Model) for every building in th
 ## External links
 - [JAXA Digital Surface Model](https://data.earth.jaxa.jp/en/datasets/#/id/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global)
 - [STAC Collection File](https://s3.ap-northeast-1.wasabisys.com/je-pds/cog/v1/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global/collection.json)
+
+## Run this in any Jupyter Notebook
+
+```python
+import fused
+import geopandas as gpd
+
+udf_url = "https://github.com/fusedio/udfs/tree/main/public/DSM_Zonal_Stats"
+udf = fused.load(udf_url)
+
+bbox = gpd.GeoDataFrame.from_features(
+    {"type": "FeatureCollection", "features": [{"id": "0", "type": "Feature", "properties": {"x": 5241, "y": 12667, "z": 15}, "geometry": {"type": "Polygon", "coordinates": [[[-124.1455078125, 41.77131167976406], [-124.1455078125, 41.73852846935915], [-124.189453125, 41.73852846935915], [-124.189453125, 41.77131167976406], [-124.1455078125, 41.77131167976406]]]}}]},
+    crs="EPSG:4326"
+)
+
+gdf = udf.run_local(bbox=bbox)
+gdf
+```

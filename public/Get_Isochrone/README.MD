@@ -12,3 +12,14 @@ This UDF is using Valhalla API to create an isochrone. Valhalla, an open-source 
 # External links
 
 - [Valhalla Github repo](https://github.com/valhalla/valhalla)
+
+## Run this in any Jupyter Notebook
+
+```python
+import fused
+
+udf_url = "https://github.com/fusedio/udfs/tree/main/public/Get_Isochrone"
+udf = fused.load(udf_url)
+gdf = udf.run_local()
+gdf
+```
