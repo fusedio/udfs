@@ -26,7 +26,7 @@ source .venv/bin/activate
 pip install fused
 ```
 
-It's possible the local environment might require additional packages not found locally. If that is the case, this command installs all required dependencies.
+It's possible that to run UDFs locally the local environment might require additional packages not found locally. If that is the case, this command installs all required dependencies.
 ```bash
 !pip install fused==1.3.1 odc-stac duckdb numba xarray-spatial planetary-computer 'odc-stac[botocore]' py3dep stackstac pynhd boto3
 ``` 
@@ -37,12 +37,10 @@ This snippet shows how to import a UDF from a Python environment and their modul
 
 ```python
 import fused
-common = fused.core.load_udf_from_github('https://github.com/fusedio/udfs/tree/main/public/common/')
 
-import geopandas as gpd
-gdf = gpd.read_file('https://www2.census.gov/geo/tiger/TIGER_RD18/STATE/11_DISTRICT_OF_COLUMBIA/11/tl_rd22_11_bg.zip')
-gdf2 = common.utils.geo_buffer(gdf, 10)
-print(gdf2)
+udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/DuckDB_NYC_Example")
+gdf = udf.run_local()
+gdf
 ```
 
 ## Walkthrough
