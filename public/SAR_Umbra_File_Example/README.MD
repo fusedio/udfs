@@ -13,3 +13,14 @@ Umbra satellites provide high-resolution Synthetic Aperture Radar (SAR) imagery,
 
 - [stac link](https://radiantearth.github.io/stac-browser/#/external/s3.us-west-2.amazonaws.com/umbra-open-data-catalog/stac/catalog.json)
 - [aws open data](https://registry.opendata.aws/umbra-open-data/)
+
+## Run this in any Jupyter Notebook
+
+```python
+import fused
+
+udf_url = "https://github.com/fusedio/udfs/tree/main/public/SAR_Umbra_File_Example"
+udf = fused.load(udf_url)
+arr = udf.run_local()
+arr
+```

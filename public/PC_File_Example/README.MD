@@ -12,3 +12,14 @@ This udf uses Xarray-Spatial's surface tools on Planetary Computer data to quant
 # External links
 
 - [source](https://github.com/microsoft/PlanetaryComputerExamples/blob/main/tutorials/surface_analysis.ipynb)
+
+## Run this in any Jupyter Notebook
+
+```python
+import fused
+
+udf_url = "https://github.com/fusedio/udfs/tree/main/public/PC_File_Example"
+udf = fused.load(udf_url)
+arr = udf.run_local()
+arr
+```

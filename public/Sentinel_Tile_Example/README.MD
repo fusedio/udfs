@@ -13,3 +13,21 @@ The [Sentinel-2](https://sentinel.esa.int/web/sentinel/missions/sentinel-2) prog
 * [Reference](https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a)
 * [AWS Earth Search STAC](https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a)
 * [Microsoft Planetary Computer STAC](https://planetarycomputer.microsoft.com/api/stac/v1/collections/sentinel-2-l2a)
+
+## Run this in any Jupyter Notebook
+
+```python
+import fused
+import geopandas as gpd
+
+udf_url = "https://github.com/fusedio/udfs/tree/main/public/Sentinel_Tile_Example"
+udf = fused.load(udf_url)
+
+bbox = gpd.GeoDataFrame.from_features(
+    {"type": "FeatureCollection", "features": [{"id": "0", "type": "Feature", "properties": {"x": 5241, "y": 12667, "z": 15}, "geometry": {"type": "Polygon", "coordinates": [[[-124.1455078125, 41.77131167976406], [-124.1455078125, 41.73852846935915], [-124.189453125, 41.73852846935915], [-124.189453125, 41.77131167976406], [-124.1455078125, 41.77131167976406]]]}}]},
+    crs="EPSG:4326"
+)
+
+arr = udf.run_local(bbox=bbox)
+arr
+```

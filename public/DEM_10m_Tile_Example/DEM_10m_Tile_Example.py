@@ -1,11 +1,14 @@
+@fused.udf
 def udf(bbox, collection="3dep-seamless", band="data"):
-    arr_to_plasma = fused.core.load_udf_from_github(
-        "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
-    ).utils.arr_to_plasma
+    import fused
     from pystac.extensions.eo import EOExtension as eo
     import pystac_client
     import odc.stac
     import planetary_computer
+
+    arr_to_plasma = fused.core.load_udf_from_github(
+        "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
+    ).utils.arr_to_plasma
 
     catalog = pystac_client.Client.open(
         "https://planetarycomputer.microsoft.com/api/stac/v1",

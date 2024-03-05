@@ -12,3 +12,20 @@ This UDF shows how to open [Cropland Data Layer](https://www.nass.usda.gov/Resea
 # External links
 
 - [Original Download Links](https://www.nass.usda.gov/Research_and_Science/Cropland/Release/index.php)
+
+## Run this in any Jupyter Notebook
+
+```python
+import fused
+import geopandas as gpd
+
+udf_url = "https://github.com/fusedio/udfs/tree/main/public/CDLs_Tile_Example"
+udf = fused.load(udf_url)
+
+bbox = gpd.GeoDataFrame.from_features(
+    {"type": "FeatureCollection", "features": [{"id": "0", "type": "Feature", "properties": {"x": 1270, "y": 3048, "z": 20}, "geometry": {"type": "Polygon", "coordinates": [[[-124.1455078125, 41.77131167976406], [-124.1455078125, 41.73852846935915], [-124.189453125, 41.73852846935915], [-124.189453125, 41.77131167976406], [-124.1455078125, 41.77131167976406]]]}}]}
+)
+
+arr = udf.run_local(bbox=bbox)
+arr
+```
