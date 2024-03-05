@@ -1,6 +1,7 @@
-import xarray as xr
 import numpy as np
+import xarray as xr
 from scipy.spatial import KDTree
+
 
 def idw(riv_dem: xr.DataArray, dem: xr.DataArray, n_nb: int) -> xr.DataArray:
     """Interpolate grid DEM from river DEM using Inverse Distance Weighting."""

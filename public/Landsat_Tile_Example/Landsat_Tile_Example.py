@@ -6,10 +6,12 @@ def udf(
     nir_band="nir08",
     collection="landsat-c2-l2",
 ):
-    utils = fused.load("https://github.com/fusedio/udfs/tree/f928ee1/public/common/").utils
-    from pystac.extensions.eo import EOExtension as eo
-    import pystac_client
+    utils = fused.load(
+        "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
+    ).utils
     import odc.stac
+    import pystac_client
+    from pystac.extensions.eo import EOExtension as eo
 
     odc.stac.configure_s3_access(requester_pays=True)
     catalog = pystac_client.Client.open("https://earth-search.aws.element84.com/v1")

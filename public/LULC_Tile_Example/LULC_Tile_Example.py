@@ -2,11 +2,11 @@
 def udf(bbox, context, year="2022"):
     if bbox.z[0] >= 5:
         from utils import (
-            mosaic_tiff,
-            bbox_stac_items,
-            s3_to_https,
-            arr_to_color,
             LULC_IO_COLORS,
+            arr_to_color,
+            bbox_stac_items,
+            mosaic_tiff,
+            s3_to_https,
         )
 
         matching_items = bbox_stac_items(

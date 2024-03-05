@@ -1,10 +1,12 @@
 def udf(bbox, provider="AWS"):
-    utils = fused.load("https://github.com/fusedio/udfs/tree/f928ee1/public/common/").utils
+    utils = fused.load(
+        "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
+    ).utils
     # collection = 'cop-dem-glo-90'
     collection = "cop-dem-glo-30"
-    from pystac.extensions.eo import EOExtension as eo
-    import pystac_client
     import odc.stac
+    import pystac_client
+    from pystac.extensions.eo import EOExtension as eo
 
     if provider == "AWS":
         odc.stac.configure_s3_access(aws_unsigned=True)

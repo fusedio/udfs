@@ -1,8 +1,10 @@
 def udf(bbox, provider="AWS", time_of_interest="2023-11-01/2023-12-30"):
-    utils = fused.load("https://github.com/fusedio/udfs/tree/f928ee1/public/common/").utils
-    from pystac.extensions.eo import EOExtension as eo
-    import pystac_client
+    utils = fused.load(
+        "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
+    ).utils
     import odc.stac
+    import pystac_client
+    from pystac.extensions.eo import EOExtension as eo
 
     if provider == "AWS":
         red_band = "red"
