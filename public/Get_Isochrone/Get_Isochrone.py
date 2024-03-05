@@ -6,5 +6,5 @@ def udf(
     from utils import get_isochrone
 
     gdf = get_isochrone(lat, lng, costing="auto", time_steps=[1, 5, 10, 15, 20, 25, 30])
-    print("Please go to New York City to see your resutls.")
+    print("Please go to New York City to see your results.")
     return gdf
