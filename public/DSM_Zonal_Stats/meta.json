@@ -102,10 +102,44 @@
               "zoom": 14.101653480876822,
               "pitch": 54.31525094227026,
               "bearing": 260
-            }
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/feb5f6e959f7ac2e506cf7705ffc879d1236550f/public/DSM_Zonal_Stats/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/feb5f6e/public/DSM_Zonal_Stats/",
+            "fused:gitPath": "public/DSM_Zonal_Stats",
+            "fused:gitRef": "feb5f6e959f7ac2e506cf7705ffc879d1236550f",
+            "fused:gitAuthorNames": [
+              "Tyler Erickson",
+              "Marko Letic",
+              null,
+              "Sina Kashuk"
+            ],
+            "fused:gitAuthorUsernames": [
+              "tylere",
+              "mletic",
+              "charlesfused",
+              "kashuk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/tylere",
+              "https://github.com/mletic",
+              "https://github.com/charlesfused",
+              "https://github.com/kashuk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/92862?v=4",
+              "https://avatars.githubusercontent.com/u/7241522?v=4",
+              "https://avatars.githubusercontent.com/u/148997493?v=4",
+              "https://avatars.githubusercontent.com/u/12432685?v=4"
+            ],
+            "fused:gitLastModified": "2024-03-04T22:56:41+00:00"
           },
           "source": "DSM_Zonal_Stats.py",
-          "headers": []
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
         }
       }
     ],
