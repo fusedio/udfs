@@ -1,12 +1,8 @@
 import numpy as np
 import fused
 
-read_tiff = fused.core.load_udf_from_github(
-    "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
-).utils.read_tiff
-mosaic_tiff = fused.core.load_udf_from_github(
-    "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
-).utils.mosaic_tiff
+read_tiff = fused.load("https://github.com/fusedio/udfs/tree/f928ee1/public/common/").utils.read_tiff
+mosaic_tiff = fused.load("https://github.com/fusedio/udfs/tree/f928ee1/public/common/").utils.mosaic_tiff
 LULC_IO_COLORS = {
     1: (65, 155, 223),  # Water
     2: (57, 125, 73),  # Trees

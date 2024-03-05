@@ -1,7 +1,5 @@
 def udf(bbox, collection="3dep-seamless", band="data"):
-    arr_to_plasma = fused.core.load_udf_from_github(
-        "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
-    ).utils.arr_to_plasma
+    utils = fused.load("https://github.com/fusedio/udfs/tree/f928ee1/public/common/").utils
     from pystac.extensions.eo import EOExtension as eo
     import pystac_client
     import odc.stac
@@ -27,4 +25,4 @@ def udf(bbox, collection="3dep-seamless", band="data"):
         bbox=bbox.total_bounds,
     ).astype(float)
     arr = ds[band].max(dim="time")
-    return arr_to_plasma(arr.values, min_max=(0, 100), reverse=False)
+    return utils.arr_to_plasma(arr.values, min_max=(0, 100), reverse=False)

@@ -1,3 +1,5 @@
+import fused
+read_tiff = fused.load("https://github.com/fusedio/udfs/tree/f928ee1/public/common/").utils.read_tiff
 def filter_crops(arr, crop_type, verbose=True):
     import numpy as np
 
