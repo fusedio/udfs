@@ -1,7 +1,7 @@
 @fused.udf
 def udf(bbox, year="2022", crop_type="", chip_len=256):
-    from utils import read_tiff, filter_crops, crop_counts
     import numpy as np
+    from utils import crop_counts, filter_crops, read_tiff
 
     input_tiff_path = f"s3://fused-asset/data/cdls/{year}_30m_cdls.tif"
     arr, color_map = read_tiff(

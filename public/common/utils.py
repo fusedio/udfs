@@ -1,34 +1,28 @@
 # To use these functions, add the following command in your UDF:
 # `common = fused.public.common`
 
-# Standard library imports
 from __future__ import annotations
+
 import random
-
-# Third party imports
-from loguru import logger
-
-# Import for type hints
-from affine import Affine
-from numpy.typing import NDArray
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
 
-# Potentially expensive imports
-import numpy as np
+import fused
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 import pyproj
 import shapely
-
-# Local application/library specific imports
-import fused
+from affine import Affine
+from loguru import logger
+from numpy.typing import NDArray
 
 
 @fused.cache
 def acs_5yr_bbox(bounds, census_variable="population", type="bbox", suffix="simplify"):
     import json
-    import shapely
+
     import geopandas as gpd
+    import shapely
 
     if type == "bbox":
         bounds = (
@@ -95,10 +89,11 @@ def acs_5yr_table(tid, year=2022):
 
 
 def url_to_arr(url, return_colormap=False):
-    import requests
-    import rasterio
-    from rasterio.plot import show
     from io import BytesIO
+
+    import rasterio
+    import requests
+    from rasterio.plot import show
 
     response = requests.get(url)
     print(response.status_code)
@@ -113,6 +108,7 @@ def url_to_arr(url, return_colormap=False):
 def read_shape_zip(url, file_index=0, name_prefix=""):
     """This function opens any zipped shapefile"""
     import zipfile
+
     import geopandas as gpd
 
     path = fused.core.download(url, name_prefix + url.split("/")[-1])
@@ -126,8 +122,8 @@ def read_shape_zip(url, file_index=0, name_prefix=""):
 @fused.cache
 def get_collection_bbox(collection):
     import geopandas as gpd
-    import pystac_client
     import planetary_computer
+    import pystac_client
 
     catalog = pystac_client.Client.open(
         "https://planetarycomputer.microsoft.com/api/stac/v1",
@@ -142,8 +138,9 @@ def get_collection_bbox(collection):
 
 @fused.cache
 def get_pc_token(url):
-    import requests
     from urllib.parse import urlparse
+
+    import requests
 
     parsed_url = urlparse(url.rstrip("/"))
     account_name = parsed_url.netloc.split(".")[0]
@@ -263,8 +260,8 @@ def geom_stats(gdf, arr, chip_len=255):
 
 
 def earth_session(cred):
-    from rasterio.session import AWSSession
     from job2.credentials import get_session
+    from rasterio.session import AWSSession
 
     aws_session = get_session(
         cred["env"],
@@ -286,10 +283,11 @@ def read_tiff(
     cred=None,
 ):
     import os
-    import rasterio
-    import numpy as np
-    from scipy.ndimage import zoom
     from contextlib import ExitStack
+
+    import numpy as np
+    import rasterio
+    from scipy.ndimage import zoom
 
     version = "0.2.0"
 
@@ -307,7 +305,7 @@ def read_tiff(
         stack.enter_context(context)
         with rasterio.open(input_tiff_path, OVERVIEW_LEVEL=overview_level) as src:
             # with rasterio.Env():
-            from rasterio.warp import reproject, Resampling
+            from rasterio.warp import Resampling, reproject
 
             bbox = bbox.to_crs(3857)
             # transform_bounds = rasterio.warp.transform_bounds(3857, src.crs, *bbox["geometry"].bounds.iloc[0])
@@ -473,8 +471,8 @@ def arr_to_plasma(
 
 
 def run_cmd(cmd, cwd=".", shell=False, communicate=False):
-    import subprocess
     import shlex
+    import subprocess
 
     if type(cmd) == str:
         cmd = shlex.split(cmd)
@@ -505,8 +503,8 @@ def fs_list_hls(
     earthdatalogin_username="",
     earthdatalogin_password="",
 ):
-    from job2.credentials import get_credentials
     import s3fs
+    from job2.credentials import get_credentials
 
     aws_session = get_credentials(
         env,
@@ -523,9 +521,10 @@ def fs_list_hls(
 
 def run_async(fn, arr_args, delay=0, max_workers=32):
     import asyncio
+    import concurrent.futures
+
     import nest_asyncio
     import numpy as np
-    import concurrent.futures
 
     nest_asyncio.apply()
 
@@ -571,8 +570,8 @@ def install_module(
     packages_path="/lib/python3.11/site-packages",
 ):
     import_env(env, mnt_path, packages_path)
-    import sys
     import os
+    import sys
 
     path = f"{mnt_path}{env}{packages_path}"
     sys.path.append(path)
@@ -1164,11 +1163,12 @@ def geo_samples(
     ]
     return geo_convert(pd.DataFrame(points, columns=["lng", "lat"]))[["geometry"]]
 
+
 def bbox_stac_items(bbox, table):
     import fused
-    import pyarrow.parquet as pq
-    import pandas as pd
     import geopandas as gpd
+    import pandas as pd
+    import pyarrow.parquet as pq
     import shapely
 
     df = fused.get_chunks_metadata(table)
@@ -1188,14 +1188,16 @@ def bbox_stac_items(bbox, table):
     ret_gdf = ret_gdf[ret_gdf.intersects(bbox)]
     return ret_gdf
 
+
 # todo: switch to read_tiff with requester_pays option
 def read_tiff_naip(
     bbox, input_tiff_path, crs, buffer_degree, output_shape, resample_order=0
 ):
-    from rasterio.session import AWSSession
-    import rasterio
-    from scipy.ndimage import zoom
     from io import BytesIO
+
+    import rasterio
+    from rasterio.session import AWSSession
+    from scipy.ndimage import zoom
 
     out_buf = BytesIO()
     with rasterio.Env(AWSSession(requester_pays=True)):

@@ -14,7 +14,9 @@ def udf(
 ):
     z = bbox.z[0]
     if z >= 9:
-        utils = fused.load("https://github.com/fusedio/udfs/tree/f928ee1/public/common/").utils
+        utils = fused.load(
+            "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
+        ).utils
         import numpy as np
         from pystac_client import Client
 

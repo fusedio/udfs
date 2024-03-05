@@ -1,15 +1,16 @@
 @fused.udf
 def udf(bbox=None):
+    import nest_asyncio
     import numpy as np
+    import py3dep
+    import pynhd
     import shapely.ops as ops
     import xarray as xr
     import xrspatial as xs
-    import py3dep
-    import pynhd
-    import nest_asyncio
-    from utils import idw
     from datashader import transfer_functions as tf
     from datashader.colors import Greys9, inferno
+    from utils import idw
+
     nest_asyncio.apply()
 
     @fused.cache
@@ -36,5 +37,5 @@ def udf(bbox=None):
         tf.shade(dem, cmap=Greys9, how="linear"),
         tf.shade(illuminated, cmap=["black", "white"], how="linear", alpha=180),
         tf.shade(rem, cmap=inferno[::-1], span=[0, 7], how="log", alpha=200),
-    )    
+    )
     return img[::-1]
