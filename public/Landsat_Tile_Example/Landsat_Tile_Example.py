@@ -6,9 +6,7 @@ def udf(
     nir_band="nir08",
     collection="landsat-c2-l2",
 ):
-    arr_to_plasma = fused.core.load_udf_from_github(
-        "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
-    ).utils.arr_to_plasma
+    utils = fused.load("https://github.com/fusedio/udfs/tree/f928ee1/public/common/").utils
     from pystac.extensions.eo import EOExtension as eo
     import pystac_client
     import odc.stac
@@ -37,4 +35,4 @@ def udf(
     print(ndvi.shape)
     arr = ndvi.max(dim="time")
     # arr = ndvi.groupby("time.month").median()[0]
-    return arr_to_plasma(arr.values, min_max=(0, 0.5))
+    return utils.arr_to_plasma(arr.values, min_max=(0, 0.5))
