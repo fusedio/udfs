@@ -14,3 +14,21 @@ The USGS 3D Elevation Program (3DEP) Datasets from the National Map are the prim
 DEM layers are available nationally at grid spacings of 1 arc-second (approximately 30 meters) for the conterminous United States, and at approximately 1, 3, and 9 meters for parts of the United States. Most seamless DEM data for Alaska is available at a resolution of approximately 60 meters, where only lower resolution source data exist.
 #### STAC Collections
 * [Microsoft Planetary Computer](https://planetarycomputer.microsoft.com/api/stac/v1/collections/3dep-seamless)
+
+
+## Run this in any Jupyter Notebook
+
+```python
+import fused
+import geopandas as gpd
+
+udf_url = "https://github.com/fusedio/udfs/tree/main/public/DEM_10m_Tile_Example"
+udf = fused.load(udf_url)
+
+bbox = gpd.GeoDataFrame.from_features(
+    {"type": "FeatureCollection", "features": [{"id": "0", "type": "Feature", "properties": {"x": 1270, "y": 3048, "z": 20}, "geometry": {"type": "Polygon", "coordinates": [[[-124.1455078125, 41.77131167976406], [-124.1455078125, 41.73852846935915], [-124.189453125, 41.73852846935915], [-124.189453125, 41.77131167976406], [-124.1455078125, 41.77131167976406]]]}}]}
+)
+
+arr = udf.run_local(bbox=bbox)
+arr
+```

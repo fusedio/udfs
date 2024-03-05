@@ -15,3 +15,15 @@ We use HyRiver software stack to download the required Digital Elevation Model (
 
 - [HyRiver](https://docs.hyriver.io/)
 - [REM](https://wadnr.maps.arcgis.com/apps/Cascade/index.html?appid=36b4887370d141fcbb35392f996c82d9)
+
+## Run this in any Jupyter Notebook
+
+```python
+import fused
+import geopandas as gpd
+
+udf_url = "https://github.com/fusedio/udfs/tree/main/public/REM_with_HyRiver"
+udf = fused.load(udf_url)
+img = udf.run_local()
+img
+```

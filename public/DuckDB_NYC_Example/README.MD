@@ -12,3 +12,14 @@ This UDF shows how to open NYC yellow taxi trip dataset using DuckDB.
 ## External links
 
 - [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)
+
+## Run this in any Jupyter Notebook
+
+```python
+import fused
+
+udf_url = "https://github.com/fusedio/udfs/tree/main/public/DuckDB_NYC_Example"
+udf = fused.load(udf_url)
+gdf = udf.run_local()
+gdf
+```

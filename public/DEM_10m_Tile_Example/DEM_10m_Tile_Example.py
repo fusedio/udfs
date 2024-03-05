@@ -1,10 +1,11 @@
+@fused.udf
 def udf(bbox, collection="3dep-seamless", band="data"):
     utils = fused.load("https://github.com/fusedio/udfs/tree/f928ee1/public/common/").utils
     from pystac.extensions.eo import EOExtension as eo
     import pystac_client
     import odc.stac
     import planetary_computer
-
+    
     catalog = pystac_client.Client.open(
         "https://planetarycomputer.microsoft.com/api/stac/v1",
         modifier=planetary_computer.sign_inplace,
