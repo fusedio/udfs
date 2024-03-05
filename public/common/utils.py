@@ -1,26 +1,18 @@
 # To use these functions, add the following command in your UDF:
 # `common = fused.public.common`
 
-# Standard library imports
 from __future__ import annotations
 
 import random
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
 
-# Local application/library specific imports
 import fused
 import geopandas as gpd
-
-# Potentially expensive imports
 import numpy as np
 import pandas as pd
 import pyproj
 import shapely
-
-# Import for type hints
 from affine import Affine
-
-# Third party imports
 from loguru import logger
 from numpy.typing import NDArray
 
