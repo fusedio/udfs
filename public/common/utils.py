@@ -167,6 +167,7 @@ def table_to_tile(
     centorid_zoom_offset=0,
     use_columns=["geometry"],
     clip=False,
+    print_xyz=False,
 ):
     import fused
     import pandas as pd
@@ -175,13 +176,17 @@ def table_to_tile(
 
     try:
         x, y, z = bbox[["x", "y", "z"]].iloc[0]
-        print(x, y, z)
+        if print_xyz:
+            print(x, y, z)
     except:
         z = min_zoom
     df = fused.get_chunks_metadata(table)
     df = df[df.intersects(bbox.geometry[0])]
-    if z >= min_zoom:  # z>=12:
+    if z >= min_zoom:
         List = df[["file_id", "chunk_id"]].values
+        if not len(List):
+            # No results at this area
+            return pd.DataFrame()
         if use_columns:
             if "geometry" not in use_columns:
                 use_columns += ["geometry"]

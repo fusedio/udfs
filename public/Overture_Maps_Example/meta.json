@@ -1,0 +1,196 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Overture_Maps_Example",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Overture_Map_Example.png",
+            "fused:defaultParameters": [
+              {
+                "parameter": "release",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "2024-02-15-alpha.0"
+                ]
+              },
+              {
+                "parameter": "theme",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "buildings",
+                  "base",
+                  "places",
+                  "transportation",
+                  "admins"
+                ]
+              },
+              {
+                "parameter": "type",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "landUse",
+                  "water",
+                  "administrativeBoundary",
+                  "place",
+                  "connector",
+                  "segment",
+                  "building"
+                ]
+              },
+              {
+                "parameter": "use_columns",
+                "value": [],
+                "type": "array",
+                "suggestedValues": [
+                  "geometry",
+                  "id",
+                  "names",
+                  "sources",
+                  "updateTime",
+                  "categories"
+                ]
+              }
+            ],
+            "fused:tags": [
+              {
+                "id": "buildings",
+                "label": "buildings"
+              },
+              {
+                "id": "footprint",
+                "label": "footprint"
+              },
+              {
+                "id": "geoparquet",
+                "label": "geoparquet"
+              },
+              {
+                "id": "global",
+                "label": "global",
+                "isCreatable": true
+              },
+              {
+                "id": "places",
+                "label": "places",
+                "isCreatable": true
+              },
+              {
+                "id": "overture",
+                "label": "overture",
+                "isCreatable": true
+              },
+              {
+                "id": "vector",
+                "label": "vector"
+              },
+              {
+                "id": "admin",
+                "label": "admin",
+                "isCreatable": true
+              }
+            ],
+            "fused:description": "Buildings footprints, places of interest (POIs), admin boundaries, and transportation globally from [Overture Maps](https://overturemaps.org/).\n\n## Parameters\n\n- `release`: Overture release ID. Defaults to `2024-02-15-alpha.0`.\n- `theme`: One of `buildings` (default), `base`, `places`, `transportation`, `admins`.\n- `type`: One of `landUse`, `water`, `administrativeBoundary`, `place`, `connector`, `segment`, `building`. If not specified, the default type for the theme will be used.\n- `use_columns`: Load only these columns if specified. Default is to load all columns.\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\nimport geopandas as gpd\n\nudf_url = \"https://github.com/fusedio/udfs/tree/main/public/Overture_Maps_Example\"\nudf = fused.load(udf_url)\n\ngdf = fused.run(udf, x=1270, y=3048, z=20)\ngdf = gpd.GeoDataFrame(gdf, geometry='geometry', crs='epsg:4326')\ngdf.plot()\n```\n",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer"
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    255,
+                    2,
+                    255
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "Overture_Maps_Example",
+            "fused:name": "Overture_Maps_Example",
+            "fused:id": null,
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 51.49486489678403,
+              "longitude": -0.07013087870662585,
+              "zoom": 11.640674701442673,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/4949681a93ed014c815d597665c6cfe1361476be/public/Building_Tile_Example/",
+            "fused:gitPath": "public/Building_Tile_Example",
+            "fused:gitRef": "4949681a93ed014c815d597665c6cfe1361476be",
+            "fused:gitAuthorNames": [
+              "Christopher Helm",
+              null,
+              "Tyler Erickson",
+              "Fabion Kauker",
+              "Sina Kashuk",
+              "Plinio Guzman"
+            ],
+            "fused:gitAuthorUsernames": [
+              "chelm",
+              "charlesfused",
+              "tylere",
+              "fhk",
+              "kashuk",
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/chelm",
+              "https://github.com/charlesfused",
+              "https://github.com/tylere",
+              "https://github.com/fhk",
+              "https://github.com/kashuk",
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/351164?v=4",
+              "https://avatars.githubusercontent.com/u/148997493?v=4",
+              "https://avatars.githubusercontent.com/u/92862?v=4",
+              "https://avatars.githubusercontent.com/u/4031392?v=4",
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/4949681/public/Building_Tile_Example/",
+            "fused:gitLastModified": "2024-03-05T11:36:20+00:00"
+          },
+          "source": "Overture_Maps_Example.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
