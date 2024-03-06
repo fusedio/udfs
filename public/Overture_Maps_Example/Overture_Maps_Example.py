@@ -13,7 +13,7 @@ def udf(
     import concurrent.futures
 
     utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
+        "https://github.com/fusedio/udfs/tree/f8f0c0f/public/common/"
     ).utils
 
     if use_columns:
