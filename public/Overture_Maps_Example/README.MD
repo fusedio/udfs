@@ -23,7 +23,7 @@ import geopandas as gpd
 udf_url = "https://github.com/fusedio/udfs/tree/main/public/Overture_Maps_Example"
 udf = fused.load(udf_url)
 
-gdf = fused.run(udf, x=1270, y=3048, z=20)
+gdf = fused.run(udf, x=2622, y=6333, z=14)
 gdf = gpd.GeoDataFrame(gdf, geometry='geometry', crs='epsg:4326')
 gdf.plot()
 ```
