@@ -18,6 +18,6 @@ bbox = gpd.GeoDataFrame.from_features(
     crs="EPSG:4326"
 )
 
-arr = udf.run_local(bbox=bbox)
-arr
+gdf = udf.run_local(bbox=bbox)
+gdf
 ```
