@@ -44,7 +44,7 @@ def udf(
     if not type:
         type = default_type_per_theme[theme]
 
-    table_path = f"s3://fused-asset/overture/{release}/theme={theme}/type={type}"
+    table_path = f"s3://us-west-2.opendata.source.coop/fused/overture/{release}/theme={theme}/type={type}"
     table_path = table_path.rstrip("/")
 
     def get_part(part):
