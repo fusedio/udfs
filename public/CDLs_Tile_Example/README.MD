@@ -25,7 +25,7 @@ udf = fused.load(udf_url)
 bbox = gpd.GeoDataFrame.from_features(
     {"type": "FeatureCollection", "features": [{"id": "0", "type": "Feature", "properties": {"x": 1270, "y": 3048, "z": 20}, "geometry": {"type": "Polygon", "coordinates": [[[-124.1455078125, 41.77131167976406], [-124.1455078125, 41.73852846935915], [-124.189453125, 41.73852846935915], [-124.189453125, 41.77131167976406], [-124.1455078125, 41.77131167976406]]]}}]}
 )
-
+bbox.crs=4326
 arr = udf.run_local(bbox=bbox)
 arr
 ```
