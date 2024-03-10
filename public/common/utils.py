@@ -1231,6 +1231,37 @@ def image_server_bbox(image_url, time=None, bbox=None, height=512, width=512, bb
         if imageSR:
             url_template += f'&imageSR={imageSR}'
     if height and width:
-        url_template += f'&size={height},{width}'
+        url_template += f'&size={width},{height}'
     url_template += f'&format={image_format}'
     return url_to_arr(url_template, return_colormap=return_colormap)
+
+def arr_to_stats(arr, gdf, type='nominal'):
+    import numpy as np 
+    minx, miny, maxx, maxy = gdf.total_bounds
+    d = (maxx - minx) / arr.shape[-1:]
+    transform = [d, 0.0, minx, 0.0, -d, maxy, 0.0, 0.0, 1.0]
+    geom_masks = [rasterize_geometry(geom, arr.shape[-2:], transform) for geom in gdf.geometry]
+    if type=='nominal':
+        counts_per_mask = []
+        for geom_mask in geom_masks:
+            masked_arr = arr[geom_mask]
+            unique_values, counts = np.unique(masked_arr, return_counts=True)
+            counts_dict = {value: count for value, count in zip(unique_values, counts)}
+            counts_per_mask.append(counts_dict)
+        gdf["stats"] = counts_per_mask
+        return gdf
+    elif type=='numerical':
+        stats_per_mask = []
+        for geom_mask in geom_masks:
+            masked_arr = arr[geom_mask]
+            stats_per_mask.append({
+                'min': np.nanmin(masked_arr),
+                'max': np.nanmax(masked_arr),
+                'mean': np.nanmean(masked_arr),
+                'median': np.nanmedian(masked_arr),
+                'std': np.nanstd(masked_arr)
+            })
+        gdf["stats"] = stats_per_mask
+        return gdf
+    else:
+        raise ValueError(f'{type} is not supported. Type options are "nominal" and "numerical"')
