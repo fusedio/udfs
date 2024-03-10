@@ -1218,7 +1218,7 @@ def read_tiff_naip(
             )
         return rgb
     
-def image_server_bbox(image_url, time=None, bbox=None, height=512, width=512, bboxSR=4326, imageSR=3857, image_format='tiff'):
+def image_server_bbox(image_url, time=None, bbox=None, height=512, width=512, bboxSR=4326, imageSR=3857, image_format='tiff', return_colormap=False):
     image_url = image_url.strip('/')    
     url_template = f'{image_url}?f=image'
     if time:
@@ -1233,4 +1233,4 @@ def image_server_bbox(image_url, time=None, bbox=None, height=512, width=512, bb
     if height and width:
         url_template += f'&size={height},{width}'
     url_template += f'&format={image_format}'
-    return url_template
+    return url_to_arr(url_template, return_colormap=return_colormap)
