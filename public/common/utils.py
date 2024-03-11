@@ -1218,20 +1218,24 @@ def read_tiff_naip(
             )
         return rgb
     
-def image_server_bbox(image_url, time=None, bbox=None, height=512, width=512, bboxSR=4326, imageSR=3857, image_format='tiff', return_colormap=False):
+def image_server_bbox(image_url, bbox=None, time=None, size=512, bbox_crs=4326, image_crs=3857, image_format='tiff', return_colormap=False):
+    if bbox_crs and bbox_crs != image_crs:
+        import geopandas as gpd
+        import shapely
+        gdf = gpd.GeoDataFrame(geometry=[shapely.box(*bbox)], crs=bbox_crs).to_crs(image_crs)
+        print(gdf)
+        minx, miny, maxx, maxy = gdf.total_bounds
+    else:
+        minx, miny, maxx, maxy = list(bbox)
     image_url = image_url.strip('/')    
     url_template = f'{image_url}?f=image'
+    url_template += f'&bbox={minx},{miny},{maxx},{maxy}'
     if time:
         url_template += f'&time={time}'
-    if bbox and len(bbox) == 4:
-        minx, miny, maxx, maxy = bbox
-        url_template += f'&bbox={minx},{miny},{maxx},{maxy}'
-        if bboxSR:
-            url_template += f'&bboxSR={bboxSR}'
-        if imageSR:
-            url_template += f'&imageSR={imageSR}'
-    if height and width:
-        url_template += f'&size={width},{height}'
+    if image_crs:
+        url_template += f'&imageSR={image_crs}&bboxSR={image_crs}'
+    if size:
+        url_template += f'&size={size},{size*(miny-maxy)/(minx-maxx)}'
     url_template += f'&format={image_format}'
     return url_to_arr(url_template, return_colormap=return_colormap)
 
