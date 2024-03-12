@@ -1,7 +1,7 @@
 @fused.udf
 def udf(
     bbox,
-    release="2024-02-15-alpha.0",
+    release="2024-02-15-alpha-0",
     theme="buildings",
     type=None,
     use_columns=None,

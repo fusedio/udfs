@@ -19,7 +19,7 @@
                 "value": "",
                 "type": "string",
                 "suggestedValues": [
-                  "2024-02-15-alpha.0"
+                  "2024-02-15-alpha-0"
                 ]
               },
               {
@@ -100,7 +100,7 @@
                 "isCreatable": true
               }
             ],
-            "fused:description": "Buildings footprints, places of interest (POIs), admin boundaries, and transportation globally from [Overture Maps](https://overturemaps.org/).\n\n## Parameters\n\n- `release`: Overture release ID. Defaults to `2024-02-15-alpha.0`.\n- `theme`: One of `buildings` (default), `base`, `places`, `transportation`, `admins`.\n- `type`: One of `landUse`, `water`, `administrativeBoundary`, `place`, `connector`, `segment`, `building`. If not specified, the default type for the theme will be used.\n- `use_columns`: Load only these columns if specified. Default is to load all columns.\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\nimport geopandas as gpd\n\nudf_url = \"https://github.com/fusedio/udfs/tree/main/public/Overture_Maps_Example\"\nudf = fused.load(udf_url)\n\ngdf = fused.run(udf, x=1270, y=3048, z=20)\ngdf = gpd.GeoDataFrame(gdf, geometry='geometry', crs='epsg:4326')\ngdf.plot()\n```\n",
+            "fused:description": "Buildings footprints, places of interest (POIs), admin boundaries, and transportation globally from [Overture Maps](https://overturemaps.org/).\n\n## Parameters\n\n- `release`: Overture release ID. Defaults to `2024-02-15-alpha-0`.\n- `theme`: One of `buildings` (default), `base`, `places`, `transportation`, `admins`.\n- `type`: One of `landUse`, `water`, `administrativeBoundary`, `place`, `connector`, `segment`, `building`. If not specified, the default type for the theme will be used.\n- `use_columns`: Load only these columns if specified. Default is to load all columns.\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\nimport geopandas as gpd\n\nudf_url = \"https://github.com/fusedio/udfs/tree/main/public/Overture_Maps_Example\"\nudf = fused.load(udf_url)\n\ngdf = fused.run(udf, x=1270, y=3048, z=20)\ngdf = gpd.GeoDataFrame(gdf, geometry='geometry', crs='epsg:4326')\ngdf.plot()\n```\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
