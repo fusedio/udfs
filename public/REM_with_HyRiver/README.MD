@@ -20,10 +20,8 @@ We use HyRiver software stack to download the required Digital Elevation Model (
 
 ```python
 import fused
-import geopandas as gpd
 
-udf_url = "https://github.com/fusedio/udfs/tree/main/public/REM_with_HyRiver"
-udf = fused.load(udf_url)
-img = udf.run_local()
+udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/REM_with_HyRiver")
+img = fused.run(udf=udf)
 img
 ```

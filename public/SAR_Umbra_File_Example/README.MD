@@ -19,8 +19,7 @@ Umbra satellites provide high-resolution Synthetic Aperture Radar (SAR) imagery,
 ```python
 import fused
 
-udf_url = "https://github.com/fusedio/udfs/tree/main/public/SAR_Umbra_File_Example"
-udf = fused.load(udf_url)
-arr = udf.run_local()
+udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/SAR_Umbra_File_Example")
+arr = fused.run(udf=udf)
 arr
 ```

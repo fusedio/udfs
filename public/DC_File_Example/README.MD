@@ -15,8 +15,7 @@ This UDF is an example of how to load data from Census [TIGER/Line Shapefiles](h
 ```python
 import fused
 
-udf_url = "https://github.com/fusedio/udfs/tree/main/public/DC_File_Example"
-udf = fused.load(udf_url)
-gdf = udf.run_local()
+udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/DC_File_Example")
+gdf = fused.run(udf=udf)
 gdf
 ```

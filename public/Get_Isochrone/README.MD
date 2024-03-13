@@ -18,8 +18,7 @@ This UDF is using Valhalla API to create an isochrone. Valhalla, an open-source 
 ```python
 import fused
 
-udf_url = "https://github.com/fusedio/udfs/tree/main/public/Get_Isochrone"
-udf = fused.load(udf_url)
-gdf = udf.run_local()
+udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/Get_Isochrone")
+gdf = fused.run(udf=udf)
 gdf
 ```

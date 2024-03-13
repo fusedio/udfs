@@ -20,10 +20,8 @@ Buildings footprints, places of interest (POIs), admin boundaries, and transport
 import fused
 import geopandas as gpd
 
-udf_url = "https://github.com/fusedio/udfs/tree/main/public/Overture_Maps_Example"
-udf = fused.load(udf_url)
-
-gdf = fused.run(udf, x=2622, y=6333, z=14)
-gdf = gpd.GeoDataFrame(gdf, geometry='geometry', crs='epsg:4326')
+udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/Overture_Maps_Example")
+gdf_output = fused.run(udf, x=2622, y=6333, z=14)
+gdf = gpd.GeoDataFrame(gdf_output, geometry='geometry', crs='epsg:4326')
 gdf.plot()
 ```
