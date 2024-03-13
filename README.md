@@ -39,14 +39,14 @@ This snippet shows how to import a UDF from this repo into a Python environment.
 import fused
 
 udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/DuckDB_NYC_Example")
-gdf = udf.run_local()
+gdf = fused.run(udf=udf)
 gdf
 ```
 
 Similarly, as a bash oneliner.
 
 ```python
-python -c "import fused; gdf = fused.load('https://github.com/fusedio/udfs/tree/main/public/DuckDB_NYC_Example').run_local(); print(gdf);"
+python -c "import fused; udf = fused.load('https://github.com/fusedio/udfs/tree/main/public/DuckDB_NYC_Example'); print(fused.run(udf=udf));"
 ```
 
 ## Walkthrough
