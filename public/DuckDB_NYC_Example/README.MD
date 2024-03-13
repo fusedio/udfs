@@ -18,8 +18,7 @@ This UDF shows how to open NYC yellow taxi trip dataset using DuckDB.
 ```python
 import fused
 
-udf_url = "https://github.com/fusedio/udfs/tree/main/public/DuckDB_NYC_Example"
-udf = fused.load(udf_url)
-gdf = udf.run_local()
+udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/DuckDB_NYC_Example")
+gdf = fused.run(udf=udf)
 gdf
 ```

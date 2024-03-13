@@ -15,9 +15,7 @@ Sentinel 2 satellite imaging pseudo RGB bands composed from the original 13 Sent
 ```python
 import fused
 
-udf_url = "https://github.com/fusedio/udfs/tree/main/public/S2_explorer"
-udf = fused.load(udf_url)
-
+udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/S2_explorer")
 df = fused.run(udf, x=1270, y=3048, z=13)
 df.image.isel(band=0).plot()
 ```
