@@ -28,7 +28,7 @@ pip install fused
 
 It's possible that to run UDFs locally the local environment might require additional packages not found locally. If that is the case, this command installs all required dependencies.
 ```bash
-!pip install fused==1.3.1 odc-stac duckdb numba xarray-spatial planetary-computer 'odc-stac[botocore]' py3dep stackstac pynhd boto3
+!pip install fused odc-stac duckdb numba xarray-spatial planetary-computer 'odc-stac[botocore]' py3dep stackstac pynhd boto3
 ``` 
 
 ### 2. Load a UDF into a workflow
