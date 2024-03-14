@@ -19,6 +19,7 @@
                 "value": "",
                 "type": "string",
                 "suggestedValues": [
+                  "2024-03-12-alpha-0",
                   "2024-02-15-alpha-0"
                 ]
               },
@@ -39,9 +40,9 @@
                 "value": "",
                 "type": "string",
                 "suggestedValues": [
-                  "landUse",
+                  "land_use",
                   "water",
-                  "administrativeBoundary",
+                  "administrative_boundary",
                   "place",
                   "connector",
                   "segment",

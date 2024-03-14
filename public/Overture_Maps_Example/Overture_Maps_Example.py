@@ -1,12 +1,12 @@
 @fused.udf
 def udf(
-    bbox,
-    release="2024-02-15-alpha-0",
-    theme="buildings",
-    type=None,
-    use_columns=None,
-    num_parts=None,
-    min_zoom=None,
+    bbox: fused.types.TileGDF,
+    release: str="2024-03-12-alpha-0",
+    theme: str=None,
+    type: str="building",
+    use_columns: list=None,
+    num_parts: int=None,
+    min_zoom: int=None,
 ):
     import json
     import pandas as pd
@@ -16,33 +16,43 @@ def udf(
         "https://github.com/fusedio/udfs/tree/f8f0c0f/public/common/"
     ).utils
 
-    if use_columns:
-        use_columns = json.loads(use_columns)
+    if num_parts is None:
+        num_parts = 1 if type != "building" else 5
 
-    if num_parts:
-        # Override the num_parts detection logic (shouldn't be needed)
-        num_parts = int(num_parts)
+    if release == "2024-02-15-alpha-0":
+        if type == "administrative_boundary":
+            type = "administrativeBoundary"
+        elif type == "land_use":
+            type = "landUse"
+        theme_per_type = {
+            "building": "buildings",
+            "administrativeBoundary": "admins",
+            "place": "places",
+            "landUse": "base",
+            "water": "base",
+            "segment": "transportation",
+            "connector": "transportation",
+        }
     else:
-        num_parts = 1 if theme != "buildings" else 5
+        theme_per_type = {
+            "building": "buildings",
+            "administrative_boundary": "admins",
+            "place": "places",
+            "land_use": "base",
+            "water": "base",
+            "segment": "transportation",
+            "connector": "transportation",
+        }
+    if not theme:
+        theme = theme_per_type[type]
 
-    if min_zoom:
-        min_zoom = int(min_zoom)
-    elif theme == "admins":
-        min_zoom = 7
-    elif theme == "base":
-        min_zoom = 9
-    else:
-        min_zoom = 12
-
-    default_type_per_theme = {
-        "buildings": "building",
-        "admins": "administrativeBoundary",
-        "places": "place",
-        "base": "landUse",
-        "transportation": "segment",
-    }
-    if not type:
-        type = default_type_per_theme[theme]
+    if min_zoom is None:
+        if theme == "admins":
+            min_zoom = 7
+        elif theme == "base":
+            min_zoom = 9
+        else:
+            min_zoom = 12
 
     table_path = f"s3://us-west-2.opendata.source.coop/fused/overture/{release}/theme={theme}/type={type}"
     table_path = table_path.rstrip("/")
