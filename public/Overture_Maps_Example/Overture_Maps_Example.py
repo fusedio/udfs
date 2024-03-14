@@ -1,9 +1,9 @@
 @fused.udf
 def udf(
-    bbox,
-    release="2024-03-12-alpha-0",
-    theme=None,
-    type="building",
+    bbox: fused.types.TileGDF,
+    release: str="2024-03-12-alpha-0",
+    theme: str=None,
+    type: str="building",
     use_columns: list=None,
     num_parts: int=None,
     min_zoom: int=None,
