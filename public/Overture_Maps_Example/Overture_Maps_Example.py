@@ -4,9 +4,9 @@ def udf(
     release="2024-03-12-alpha-0",
     theme=None,
     type="building",
-    use_columns: list | None=None,
-    num_parts: int | None=None,
-    min_zoom: int | None=None,
+    use_columns: list=None,
+    num_parts: int=None,
+    min_zoom: int=None,
 ):
     import json
     import pandas as pd
