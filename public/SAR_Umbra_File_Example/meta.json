@@ -74,6 +74,21 @@
             "fused:description": "# Overview\n\nUmbra satellites provide high-resolution Synthetic Aperture Radar (SAR) imagery, with up to 16-cm resolution, capable of capturing images at night and in adverse weather conditions. \n\n# External links\n\n- [stac link](https://radiantearth.github.io/stac-browser/#/external/s3.us-west-2.amazonaws.com/umbra-open-data-catalog/stac/catalog.json)\n- [aws open data](https://registry.opendata.aws/umbra-open-data/)",
             "fused:id": null
           },
+          "fused:defaultParameters": [
+            {
+              "parameter": "name",
+              "value": "",
+              "type": "string",
+              "suggestedValues": [
+                "washington",
+                "panama_canal",
+                "mexico_sanmartin",
+                "colombia_taparal",
+                "mexico_acapulco"
+              ]
+            }
+          ]
+        },
           "source": "SAR_Umbra_File_Example.py",
           "headers": [
             {
