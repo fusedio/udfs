@@ -70,7 +70,7 @@ CATALOG = {
     "washington": {
         "meta_url": "http://umbra-open-data-catalog.s3.amazonaws.com/stac/2023/2023-12/2023-12-22/1a74966a-1dbf-4241-abc4-01b43a519b9a/1a74966a-1dbf-4241-abc4-01b43a519b9a.json",
         "tiff_url": "https://umbra-open-data-catalog.s3.amazonaws.com/sar-data/tasks/ad%20hoc/WashingtonDC_50cm_12xML/4b4886d7-35a1-43c8-b114-546eb87b2f74/2023-12-22-02-58-04_UMBRA-08/2023-12-22-02-58-04_UMBRA-08_GEC.tif",
-        "rotation": 90,
+        "rotation": -90,
     },
     "panama_canal": {
         "meta_url": "https://umbra-open-data-catalog.s3.us-west-2.amazonaws.com/stac/2023/2023-04/2023-04-16/5e71b39b-6f8b-46e4-a4f5-3225216b24e3/5e71b39b-6f8b-46e4-a4f5-3225216b24e3.json",
@@ -85,7 +85,7 @@ CATALOG = {
     "colombia_taparal": {
         "meta_url": "https://umbra-open-data-catalog.s3.us-west-2.amazonaws.com/stac/2024/2024-02/2024-02-09/a0090fe3-7c8f-495d-bb3f-e40f9293ef7b/a0090fe3-7c8f-495d-bb3f-e40f9293ef7b.json",
         "tiff_url": "https://umbra-open-data-catalog.s3.amazonaws.com/sar-data/tasks/Taparal,%20Colombia/3b906f59-63e9-42e3-b6c1-ef574943a9f9/2024-02-09-03-18-50_UMBRA-06/2024-02-09-03-18-50_UMBRA-06_GEC.tif",
-        "rotation": 90,
+        "rotation": -90,
     },
     "mexico_acapulco": {
         "meta_url": "https://umbra-open-data-catalog.s3.us-west-2.amazonaws.com/stac/2023/2023-10/2023-10-25/c9cdc9d2-70b3-4d83-9cb4-6848a5a80477/c9cdc9d2-70b3-4d83-9cb4-6848a5a80477.json",
