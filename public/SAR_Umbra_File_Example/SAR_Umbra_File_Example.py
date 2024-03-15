@@ -1,7 +1,9 @@
 @fused.udf
 def udf(name="colombia_taparal"):
 
-    rotation = 90
+    import geopandas as gpd
+    import shapely
+    from utils import rio_transform_bbox
 
     CATALOG = {
         "washington": {
@@ -30,10 +32,6 @@ def udf(name="colombia_taparal"):
             "rotation": 110,
         },
     }
-
-    import geopandas as gpd
-    import shapely
-    from utils import rio_transform_bbox
 
     @fused.cache
     def get_image(meta_url, tiff_url, overview_level=1, do_tranform=True, rotation=0):
