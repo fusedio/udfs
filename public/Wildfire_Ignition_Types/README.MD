@@ -1,13 +1,10 @@
-https://landfire.gov/version_download.php#
-
 <!--fused:preview-->
-<p align="center"><img src="./landfire-fused.png' width="600" alt="UDF preview image"></p>
+<p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Wildfire_Ignition_Types.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
 Tags: `dem` `elevation` `raster` `10-meter`
 
 <!--fused:readme-->
-
 Exported from Fused UDF Workbench
 
 #### Overview
