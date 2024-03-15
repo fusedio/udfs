@@ -87,9 +87,4 @@ CATALOG = {
         "tiff_url": "https://umbra-open-data-catalog.s3.amazonaws.com/sar-data/tasks/Taparal,%20Colombia/3b906f59-63e9-42e3-b6c1-ef574943a9f9/2024-02-09-03-18-50_UMBRA-06/2024-02-09-03-18-50_UMBRA-06_GEC.tif",
         "rotation": -90,
     },
-    "mexico_acapulco": {
-        "meta_url": "https://umbra-open-data-catalog.s3.us-west-2.amazonaws.com/stac/2023/2023-10/2023-10-25/c9cdc9d2-70b3-4d83-9cb4-6848a5a80477/c9cdc9d2-70b3-4d83-9cb4-6848a5a80477.json",
-        "tiff_url": "https://umbra-open-data-catalog.s3.amazonaws.com/sar-data/tasks/ad%20hoc/Acapulco%20Flooding/328c176c-f99a-4e48-b08d-0be0021c4d86/2023-10-25-04-29-02_UMBRA-04/2023-10-25-04-29-02_UMBRA-04_GEC.tif",
-        "rotation": 110,
-    },
 }
