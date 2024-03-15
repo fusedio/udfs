@@ -21,5 +21,5 @@ import fused
 
 udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/SAR_Umbra_File_Example")
 arr = fused.run(udf=udf)
-arr
+arr.image.plot()
 ```
