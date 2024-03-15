@@ -66,7 +66,6 @@ def rio_transform_bbox(raster_url, geo_extend, do_tranform=True, overview_level=
     return destination_data, geo_extend.bounds
 
 
-# Mapping of metadata and tiff urls from `s3://umbra-open-data-catalog/`
 CATALOG = {
     "washington": {
         "meta_url": "http://umbra-open-data-catalog.s3.amazonaws.com/stac/2023/2023-12/2023-12-22/1a74966a-1dbf-4241-abc4-01b43a519b9a/1a74966a-1dbf-4241-abc4-01b43a519b9a.json",

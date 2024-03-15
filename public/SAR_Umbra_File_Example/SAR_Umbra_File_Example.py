@@ -3,7 +3,7 @@ def udf(name="colombia_taparal"):
 
     import geopandas as gpd
     import shapely
-    from utils import rio_transform_bbox, CATALOG
+    from utils import CATALOG, rio_transform_bbox
 
     @fused.cache
     def get_image(meta_url, tiff_url, overview_level=1, do_tranform=True, rotation=0):
