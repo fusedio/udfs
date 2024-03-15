@@ -1,5 +1,8 @@
 @fused.udf
-def udf(name="colombia_taparal"):
+def udf(
+    name = 'colombia_taparal'
+):
+
 
     import geopandas as gpd
     import shapely
@@ -18,12 +21,12 @@ def udf(name="colombia_taparal"):
         return arr, bbox
 
     arr, bbox = get_image(
-        meta_url=CATALOG[name]["meta_url"],
-        tiff_url=CATALOG[name]["tiff_url"],
+        meta_url=CATALOG[name]['meta_url'], 
+        tiff_url=CATALOG[name]['tiff_url'], 
         overview_level=1,
-        rotation=CATALOG[name]["rotation"],
+        rotation=CATALOG[name]['rotation']
     )
-
+    
     bounds = (
         gpd.GeoDataFrame(geometry=[shapely.box(*bbox)], crs="32618")
         .to_crs(4326)
