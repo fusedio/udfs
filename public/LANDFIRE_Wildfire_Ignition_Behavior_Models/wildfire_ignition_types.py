@@ -1,8 +1,6 @@
 @fused.udf
 def udf(
-    lat=35.6679783,
-    lng=-101.4011159,
-    radius=1609
+    bbox: fused.types.TileGDF,
 ):
     import rasterio
     import numpy as np
@@ -12,13 +10,7 @@ def udf(
     from shapely.geometry import shape
     import pandas as pd
 
-    point = shapely.Point(lng, lat)
-    gdf = gpd.GeoDataFrame({'geometry': [point]}, crs = 'EPSG:4326')
-    gdf = gdf.to_crs('EPSG:3857')
-    gdf['geometry'] = gdf['geometry'][0].buffer(radius)
-    gdf = gdf.to_crs('EPSG:4326')
-    envelope = gdf['geometry'].envelope
-
+    envelope = bbox.geometry.envelope
 
     cog_url = "https://storage.googleapis.com/fire-cog/fire-cog.tif"
 
@@ -26,8 +18,6 @@ def udf(
         with rasterio.open(file_path) as src:
             src_crs = src.crs
             src_transform = src.transform
-
-
 
         X, Y = rasterio.warp.transform({'init': 'EPSG:4326'}, src_crs, [ll[0], ur[0]], [ll[1], ur[1]])
 
@@ -69,7 +59,6 @@ def udf(
                  'Water',
                  'Barren']
         })
-
 
         merged_df = gdf.merge(names, on='band1', how='left')
         final_df = merged_df.drop('band1', axis=1).to_crs('EPSG:4326')
