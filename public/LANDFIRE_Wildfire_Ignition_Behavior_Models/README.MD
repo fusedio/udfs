@@ -7,8 +7,6 @@ https://landfire.gov/version_download.php#
 Tags: `dem` `elevation` `raster` `10-meter`
 
 <!--fused:readme-->
-Exported from Fused UDF Workbench
-
 #### Overview
 LANDFIRE provides a dataset across the United States that provides detailed data useful for wildfire analysis and prevention. Here is a more detailed description from [their website](https://landfire.gov/data_overviews.php):
 
