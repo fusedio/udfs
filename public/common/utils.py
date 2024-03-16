@@ -1269,3 +1269,22 @@ def arr_to_stats(arr, gdf, type='nominal'):
         return gdf
     else:
         raise ValueError(f'{type} is not supported. Type options are "nominal" and "numerical"')
+    
+def ask_openai(prompt, openai_api_key, role="user", model="gpt-4-turbo-preview"):
+    # ref: https://github.com/openai/openai-python
+    # ref: https://platform.openai.com/docs/models/gpt-4-and-gpt-4-turbo
+    from openai import OpenAI
+    client = OpenAI(
+        api_key=openai_api_key,
+    )
+    messages = [
+            {
+                "role": role,
+                "content": prompt,
+            }
+        ]
+    chat_completion = client.chat.completions.create(
+        messages=messages,
+        model=model,
+    )
+    return [i.message.content for i in chat_completion.choices]
