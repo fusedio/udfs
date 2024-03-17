@@ -51,6 +51,7 @@
             "fused:udfType": "vector_single",
             "fused:slug": "wildfire_ignition_types",
             "fused:name": "wildfire_ignition_types",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/landfire-fused.png",
             "fused:id": null
           },
           "source": "wildfire_ignition_types.py",
