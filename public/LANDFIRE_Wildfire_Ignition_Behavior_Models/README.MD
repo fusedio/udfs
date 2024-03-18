@@ -1,7 +1,7 @@
 https://landfire.gov/version_download.php#
 
 <!--fused:preview-->
-<p align="center"><img src="./landfire-fused.png" width="600" alt="UDF preview image"></p>
+<p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/landfire-fused.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
 Tags: `dem` `elevation` `raster` `10-meter`
@@ -20,6 +20,6 @@ These raster files are provided at 30 meter resolution, but are quite large to w
 import fused
 
 udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/LANDFIRE_Wildfire_Ignition_Behavior_Models")
-gdf = fused.run(udf=udf, lat=35.6679783, lng=-101.4011159, radius=1609)
+gdf = fused.run(udf=udf, lat=35.6679783, lng=-101.4011159, z=12)
 gdf
 ```

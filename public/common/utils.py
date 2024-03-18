@@ -17,77 +17,6 @@ from loguru import logger
 from numpy.typing import NDArray
 
 
-@fused.cache
-def acs_5yr_bbox(bounds, census_variable="population", type="bbox", suffix="simplify"):
-    import json
-
-    import geopandas as gpd
-    import shapely
-
-    if type == "bbox":
-        bounds = (
-            "{"
-            + f'"west": {bounds[0]}, "north": {bounds[3]}, "east": {bounds[2]}, "south": {bounds[1]}'
-            + "}"
-        )
-    bounds = json.loads(bounds)
-    box = shapely.box(bounds["west"], bounds["south"], bounds["east"], bounds["north"])
-    bbox = gpd.GeoDataFrame(geometry=[box], crs=4326)
-    tid = search_title(census_variable)
-    df = acs_5yr_table(tid)
-    df["GEOID"] = df.GEO_ID.map(lambda x: x.split("US")[-1])
-    table_path = "s3://fused-asset/infra/census_bg_us"
-    if suffix:
-        table_path += f"_{suffix}"
-    print(table_path)
-    gdf = table_to_tile(
-        bbox, table_path, use_columns=["GEOID", "geometry"], min_zoom=12
-    )
-    gdf2 = gdf.merge(df)
-    return gdf2
-
-
-@fused.cache
-def acs_5yr_meta():
-    import pandas as pd
-
-    # Filter only records with census block groups data
-    tmp = pd.read_excel(
-        "https://www2.census.gov/programs-surveys/acs/summary_file/2021/sequence-based-SF/documentation/tech_docs/ACS_2021_SF_5YR_Appendices.xlsx"
-    )
-    table_ids_cbgs = tmp[tmp["Geography Restrictions"].isna()]["Table Number"]
-    # Get the list of tables and filter by only totals (the first row of each table)
-    df_tables = pd.read_csv(
-        "https://www2.census.gov/programs-surveys/acs/summary_file/2022/table-based-SF/documentation/ACS20225YR_Table_Shells.txt",
-        delimiter="|",
-    )
-    df_tables2 = df_tables.drop_duplicates("Table ID")
-    df_tables2 = df_tables2[df_tables2["Table ID"].isin(table_ids_cbgs)]
-    return df_tables2
-
-
-def search_title(title):
-    df_meta = acs_5yr_meta()
-    # search for title in the list of tables
-    search_column = "Title"  #'Title' #'Topics'
-    meta_dict = (
-        df_meta[["Table ID", search_column]]
-        .set_index(search_column)
-        .to_dict()["Table ID"]
-    )
-    List = [[meta_dict[i], i] for i in meta_dict.keys() if title.lower() in i.lower()]
-    print(f"Chosen: {List[0]}\nfrom: {List[:20]}")
-    return List[0][0]
-
-
-@fused.cache
-def acs_5yr_table(tid, year=2022):
-    import pandas as pd
-
-    url = f"https://www2.census.gov/programs-surveys/acs/summary_file/{year}/table-based-SF/data/5YRData/acsdt5y{year}-{tid.lower()}.dat"
-    return pd.read_csv(url, delimiter="|")
-
-
 def url_to_arr(url, return_colormap=False):
     from io import BytesIO
 
@@ -119,7 +48,6 @@ def read_shape_zip(url, file_index=0, name_prefix=""):
     return df
 
 
-@fused.cache
 def get_collection_bbox(collection):
     import geopandas as gpd
     import planetary_computer
@@ -136,7 +64,6 @@ def get_collection_bbox(collection):
     return df[["assets", "datetime", "geometry"]]
 
 
-@fused.cache
 def get_pc_token(url):
     from urllib.parse import urlparse
 
@@ -151,7 +78,6 @@ def get_pc_token(url):
     return response.json()
 
 
-@fused.cache
 def read_tiff_pc(bbox, tiff_url, cache_id=2):
     tiff_url = f"{tiff_url}?{get_pc_token(tiff_url,_cache_id=cache_id)['token']}"
     print(tiff_url)
@@ -276,7 +202,7 @@ def earth_session(cred):
     return AWSSession(aws_session, requester_pays=False)
 
 
-@fused.cache(path="read_tiff2")
+@fused.cache(path="read_tiff")
 def read_tiff(
     bbox,
     input_tiff_path,
@@ -361,7 +287,6 @@ def read_tiff(
         return destination_data
 
 
-@fused.cache(path="mosaic_tiff")
 def mosaic_tiff(
     bbox,
     tiff_list,
@@ -1269,3 +1194,22 @@ def arr_to_stats(arr, gdf, type='nominal'):
         return gdf
     else:
         raise ValueError(f'{type} is not supported. Type options are "nominal" and "numerical"')
+    
+def ask_openai(prompt, openai_api_key, role="user", model="gpt-4-turbo-preview"):
+    # ref: https://github.com/openai/openai-python
+    # ref: https://platform.openai.com/docs/models/gpt-4-and-gpt-4-turbo
+    from openai import OpenAI
+    client = OpenAI(
+        api_key=openai_api_key,
+    )
+    messages = [
+            {
+                "role": role,
+                "content": prompt,
+            }
+        ]
+    chat_completion = client.chat.completions.create(
+        messages=messages,
+        model=model,
+    )
+    return [i.message.content for i in chat_completion.choices]
