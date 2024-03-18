@@ -1,6 +1,7 @@
 @fused.udf
 def udf(
     bbox: fused.types.TileGDF,
+    cmap_name: str = None, # 'tab20c'
 ):
     import rasterio
     import numpy as np
@@ -39,7 +40,18 @@ def udf(
 
         # Swap in text values from the LANDFIRE data dictionary: https://landfire.gov/documents/LF_Data_Dictionary.pdf
 
-        names = pd.DataFrame({ 'band1': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 91, 92, 93, 98, 99],
+        valid_band1_values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 91, 92, 93, 98, 99]
+        if cmap_name:
+            from matplotlib import colormaps
+            cmap = colormaps[cmap_name]
+            r_channel = [c[0][0] * 255 for c in zip(cmap.colors, valid_band1_values)]
+            g_channel = [c[0][1] * 255 for c in zip(cmap.colors, valid_band1_values)]
+            b_channel = [c[0][2] * 255 for c in zip(cmap.colors, valid_band1_values)]
+        else:
+            r_channel = [255 * (i / len(valid_band1_values)) for i in range(len(valid_band1_values))]
+            g_channel = [128 * (i / len(valid_band1_values)) for i in range(len(valid_band1_values))]
+            b_channel = [128 * (i / len(valid_band1_values)) for i in range(len(valid_band1_values))]
+        names = pd.DataFrame({ 'band1': valid_band1_values,
                  'definitions': ['Surface fires that burn fine herbaceous fuels, cured and curing fuels, little shrubor timber present, primarily grasslands and savanna.',
                  'Burns fine, herbaceous fuels, stand is curing or dead, may produce fire brands on oak or pine stands.',
                  'Most intense fire of grass group, spreads quickly with wind, one third of stand dead or cured, stands average 3 feet tall.',
@@ -57,10 +69,13 @@ def udf(
                  'Snow/Ice',
                  'Agriculture',
                  'Water',
-                 'Barren']
+                 'Barren'],
+            'r': r_channel,
+            'g': g_channel,
+            'b': b_channel,
         })
 
         merged_df = gdf.merge(names, on='band1', how='left')
-        final_df = merged_df.drop('band1', axis=1).to_crs('EPSG:4326')
-
+        final_df = merged_df.to_crs('EPSG:4326')
+    
     return final_df

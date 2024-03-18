@@ -40,12 +40,7 @@
                     0
                   ]
                 },
-                "getFillColor": [
-                  255,
-                  128,
-                  128,
-                  40
-                ]
+                "getFillColor": "@@=[properties.r, properties.g, properties.b, 120]"
               }
             },
             "fused:udfType": "auto",
