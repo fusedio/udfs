@@ -47,7 +47,26 @@
             "fused:slug": "wildfire_ignition_types",
             "fused:name": "wildfire_ignition_types",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/landfire-fused.png",
-            "fused:id": null
+            "fused:id": null,
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 35.668115056435326,
+              "longitude": -101.40132916783223,
+              "zoom": 13.416970736944371,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:defaultParameters": [
+              {
+                "parameter": "cmap_name",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "tab20",
+                  "tab20c"
+                ]
+              }
+            ]
           },
           "source": "wildfire_ignition_types.py",
           "headers": []
