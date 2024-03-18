@@ -7,9 +7,6 @@ https://landfire.gov/version_download.php#
 Tags: `dem` `elevation` `raster` `10-meter`
 
 <!--fused:readme-->
-
-Exported from Fused UDF Workbench
-
 #### Overview
 LANDFIRE provides a dataset across the United States that provides detailed data useful for wildfire analysis and prevention. Here is a more detailed description from [their website](https://landfire.gov/data_overviews.php):
 
@@ -23,6 +20,6 @@ These raster files are provided at 30 meter resolution, but are quite large to w
 import fused
 
 udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/LANDFIRE_Wildfire_Ignition_Behavior_Models")
-gdf = fused.run(udf=udf, lat=35.6679783, lng=-101.4011159, radius=1609)
+gdf = fused.run(udf=udf, lat=35.6679783, lng=-101.4011159, z=12)
 gdf
 ```
