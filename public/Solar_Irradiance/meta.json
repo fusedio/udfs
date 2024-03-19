@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "Solar_Radiance",
+          "name": "Solar_Irradiance",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -49,11 +49,11 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "Solar_Radiance",
-            "fused:name": "Solar_Radiance",
+            "fused:slug": "Solar_Irradiance",
+            "fused:name": "Solar_Irradiance",
             "fused:id": null
           },
-          "source": "Solar_Radiance.py",
+          "source": "Solar_Irradiance.py",
           "headers": [
             {
               "module_name": "utils",
