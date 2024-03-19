@@ -51,7 +51,20 @@
             "fused:udfType": "auto",
             "fused:slug": "Solar_Irradiance",
             "fused:name": "Solar_Irradiance",
-            "fused:id": null
+            "fused:id": null,
+            "fused:assetUrl": "https://sunlightdatabucket.s3.ap-northeast-1.amazonaws.com/fused-screenshot(2).png",
+            "fused:tags": [
+              {
+                "id": "solar-irradiance",
+                "label": "solar-irradiance",
+                "isCreatable": true
+              },
+              {
+                "id": "sunlight",
+                "label": "sunlight",
+                "isCreatable": true
+              }
+            ]
           },
           "source": "Solar_Irradiance.py",
           "headers": [
