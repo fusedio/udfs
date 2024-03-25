@@ -107,6 +107,10 @@ def table_to_tile(
     except:
         z = min_zoom
     df = fused.get_chunks_metadata(table)
+    if len(bbox)>1:
+        bbox = bbox.dissolve().reset_index(drop=True)
+    else:
+        bbox=bbox.reset_index(drop=True)
     df = df[df.intersects(bbox.geometry[0])]
     if z >= min_zoom:
         List = df[["file_id", "chunk_id"]].values
@@ -448,6 +452,14 @@ def fs_list_hls(
     )
     return fs.ls(path)
 
+def get_s3_list(path, suffix=None):
+    import s3fs
+    fs = s3fs.S3FileSystem()
+    if suffix:
+        return ['s3://'+i for i in fs.ls(path) if i[-len(suffix):] == suffix]
+    else:
+        return ['s3://'+i for i in fs.ls(path)]        
+    
 
 def run_async(fn, arr_args, delay=0, max_workers=32):
     import asyncio
@@ -482,6 +494,10 @@ def run_async(fn, arr_args, delay=0, max_workers=32):
 
     return loop.run_until_complete(fn_async_exec(fn, arr_args, delay))
 
+def run_pool(fn, arg_list, max_workers=36):
+    import concurrent.futures 
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as pool:
+        return list(pool.map(fn, arg_list))  
 
 def import_env(
     env="testxenv",
