@@ -97,6 +97,7 @@ def table_to_tile(
 ):
     import fused
     import pandas as pd
+    import geopandas as gpd
 
     version = "0.2.3"
 
@@ -116,7 +117,7 @@ def table_to_tile(
         List = df[["file_id", "chunk_id"]].values
         if not len(List):
             # No results at this area
-            return pd.DataFrame()
+            return gpd.GeoDataFrame(geometry=[])
         if use_columns:
             if "geometry" not in use_columns:
                 use_columns += ["geometry"]
