@@ -1,15 +1,21 @@
 @fused.udf
 def udf(
-    bbox: fused.types.TileGDF,
+    bbox: fused.types.TileGDF=None,
     release: str="2024-03-12-alpha-0",
     theme: str=None,
     type: str="building",
     use_columns: list=None,
     num_parts: int=None,
     min_zoom: int=None,
+    polygon: str=None,
+    point_convert: str=None
 ):
     import json
+    import urllib.parse
+
     import pandas as pd
+    import geopandas as gpd
+    from shapely.geometry import shape, box
     import concurrent.futures
 
     utils = fused.load(
@@ -57,6 +63,14 @@ def udf(
     table_path = f"s3://us-west-2.opendata.source.coop/fused/overture/{release}/theme={theme}/type={type}"
     table_path = table_path.rstrip("/")
 
+    if polygon is not None:
+        decoded_string = urllib.parse.unquote(polygon)
+        geom = json.loads(decoded_string)
+        poly_gdf = gpd.GeoDataFrame({'geometry':[shape(geom['geometry'])]}, geometry="geometry", crs="EPSG:4326")
+        bounds = poly_gdf.geometry.bounds
+        print(bounds)
+        bbox = gpd.GeoDataFrame({'geometry': [box(bounds.minx.loc[0], bounds.miny.loc[0], bounds.maxx.loc[0], bounds.maxy.loc[0])]})
+
     def get_part(part):
         part_path = f"{table_path}/part={part}/" if num_parts != 1 else table_path
         try:
@@ -77,12 +91,16 @@ def udf(
 
     if len(dfs):
         df = pd.concat(dfs)
-        print(df.columns)
+        #print(df.columns)
         for col in df.columns:
             # Some overture columns do not serialize nicely and can have compatability
             # issues with some Parquet implementations.
             # Here we coerce to string to work around that.
             if col != "geometry":
                 df[col] = df[col].apply(str)
+            if point_convert is not None:
+                gdf = gpd.GeoDataFrame(df)
+                gdf['geometry'] = gdf.geometry.centroid
+                df = gdf
         return df
     return None
