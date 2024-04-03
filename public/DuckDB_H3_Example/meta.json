@@ -1,0 +1,119 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "DuckDB_H3_Example",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Duckdb_H3_Example.png",
+            "fused:tags": [
+              {
+                "id": "file",
+                "label": "file"
+              },
+              {
+                "id": "vector",
+                "label": "vector"
+              },
+              {
+                "id": "aws",
+                "label": "aws"
+              },
+              {
+                "id": "tutorial",
+                "label": "tutorial"
+              }
+            ],
+            "fused:description": "## Overview\n\nThis UDF shows how to open NYC yellow taxi trip dataset using DuckDB.\n\n## External links\n\n- [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/DuckDB_NYC_Example\")\ngdf = fused.run(udf=udf)\ngdf\n```\n",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "opacity": 5,
+                "@@type": "GeoJsonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "getRadius": 10,
+                "getFillColor": "@@=[properties.cnt/3+200, properties.cnt/5+50, properties.cnt/20]"
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "DuckDB_H3_Example",
+            "fused:name": "DuckDB_H3_Example",
+            "fused:id": null,
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 40.746878986881775,
+              "longitude": -73.91048113436547,
+              "zoom": 9.887562594810294,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/19b5240c705ab8d6bec6bf747278dd2b50da7fff/public/DuckDB_NYC_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/19b5240/public/DuckDB_NYC_Example/",
+            "fused:gitPath": "public/DuckDB_NYC_Example",
+            "fused:gitRef": "19b5240c705ab8d6bec6bf747278dd2b50da7fff",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk",
+              "Isaac Brodsky",
+              "Tyler Erickson",
+              "Mehran Ghandehari",
+              null,
+              "Plinio Guzman"
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk",
+              "isaacbrodsky",
+              "tylere",
+              "mehran66",
+              "charlesfused",
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk",
+              "https://github.com/isaacbrodsky",
+              "https://github.com/tylere",
+              "https://github.com/mehran66",
+              "https://github.com/charlesfused",
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/u/9139378?v=4",
+              "https://avatars.githubusercontent.com/u/92862?v=4",
+              "https://avatars.githubusercontent.com/u/10367311?v=4",
+              "https://avatars.githubusercontent.com/u/148997493?v=4",
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitLastModified": "2024-03-13T17:22:21+00:00"
+          },
+          "source": "DuckDB_H3_Example.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
