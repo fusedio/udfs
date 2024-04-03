@@ -5,7 +5,7 @@ def udf(
     bbox: fused.types.TileGDF=None,
     release: str="2024-03-12-alpha-0",
     theme: str=None,
-    osm_type: str="building",
+    osm_type: str=None,
     use_columns: list=None,
     num_parts: int=None,
     min_zoom: int=None,
@@ -23,9 +23,6 @@ def udf(
     utils = fused.load(
         "https://github.com/fusedio/udfs/tree/f8f0c0f/public/common/"
     ).utils
-
-    if num_parts is None:
-        num_parts = 1 if osm_type != "building" else 5
 
     if release == "2024-02-15-alpha-0":
         if osm_type == "administrative_boundary":
@@ -51,8 +48,16 @@ def udf(
             "segment": "transportation",
             "connector": "transportation",
         }
-    if not theme:
-        theme = theme_per_type[osm_type]
+
+    if theme is None:
+        theme = theme_per_type.get(osm_type, "buildings")
+
+    if osm_type is None:
+        type_per_theme = {v: k for k, v in theme_per_type.items()}
+        osm_type = type_per_theme[theme]
+
+    if num_parts is None:
+        num_parts = 1 if osm_type != "building" else 5
 
     if min_zoom is None:
         if theme == "admins":
@@ -64,7 +69,7 @@ def udf(
 
     table_path = f"s3://us-west-2.opendata.source.coop/fused/overture/{release}/theme={theme}/type={osm_type}"
     table_path = table_path.rstrip("/")
-
+    print(table_path)
     if polygon is not None:
         bounds = polygon.geometry.bounds
         bbox = gpd.GeoDataFrame({'geometry': [box(bounds.minx.loc[0], bounds.miny.loc[0], bounds.maxx.loc[0], bounds.maxy.loc[0])]})
