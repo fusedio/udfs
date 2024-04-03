@@ -99,7 +99,6 @@ def udf(
         return None
 
     if point_convert is not None:
-        gdf = gpd.GeoDataFrame(df)
         gdf['geometry'] = gdf.geometry.centroid
 
     return gdf
