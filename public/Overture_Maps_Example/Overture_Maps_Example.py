@@ -97,7 +97,13 @@ def udf(
         # Some overture columns do not serialize nicely and can have compatability
         # issues with some Parquet implementations.
         # Here we coerce to string to work around that.
-        gdf = gpd.GeoDataFrame(pd.concat([df[[c for c in df.columns if c != "geometry"]].astype(str), df[["geometry"]]], axis=1))
+        if "categories" in df.columns:
+            df['category'] = df['categories'].get('main', -1)
+        extra_cols = ["geometry", "category"]
+        gdf = gpd.GeoDataFrame(
+            pd.concat([
+                df[[c for c in df.columns if c not in extra_cols]].astype(str),
+                df[[extra for extra in extra_cols if extra in df.columns]]], axis=1))
 
     else:
         logging.warn("Failed to get any data")
