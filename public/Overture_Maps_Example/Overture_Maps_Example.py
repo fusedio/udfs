@@ -5,7 +5,7 @@ def udf(
     bbox: fused.types.TileGDF=None,
     release: str="2024-03-12-alpha-0",
     theme: str=None,
-    type: str="building",
+    osm_type: str="building",
     use_columns: list=None,
     num_parts: int=None,
     min_zoom: int=None,
@@ -25,13 +25,13 @@ def udf(
     ).utils
 
     if num_parts is None:
-        num_parts = 1 if type != "building" else 5
+        num_parts = 1 if osm_type != "building" else 5
 
     if release == "2024-02-15-alpha-0":
-        if type == "administrative_boundary":
-            type = "administrativeBoundary"
-        elif type == "land_use":
-            type = "landUse"
+        if osm_type == "administrative_boundary":
+            osm_type = "administrativeBoundary"
+        elif osm_type == "land_use":
+            osm_type = "landUse"
         theme_per_type = {
             "building": "buildings",
             "administrativeBoundary": "admins",
@@ -52,7 +52,7 @@ def udf(
             "connector": "transportation",
         }
     if not theme:
-        theme = theme_per_type[type]
+        theme = theme_per_type[osm_type]
 
     if min_zoom is None:
         if theme == "admins":
@@ -62,7 +62,7 @@ def udf(
         else:
             min_zoom = 12
 
-    table_path = f"s3://us-west-2.opendata.source.coop/fused/overture/{release}/theme={theme}/type={type}"
+    table_path = f"s3://us-west-2.opendata.source.coop/fused/overture/{release}/theme={theme}/type={osm_type}"
     table_path = table_path.rstrip("/")
 
     if polygon is not None:
