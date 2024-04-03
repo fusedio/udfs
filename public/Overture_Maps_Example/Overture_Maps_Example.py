@@ -69,7 +69,7 @@ def udf(
 
     table_path = f"s3://us-west-2.opendata.source.coop/fused/overture/{release}/theme={theme}/type={osm_type}"
     table_path = table_path.rstrip("/")
-    print(table_path)
+
     if polygon is not None:
         bounds = polygon.geometry.bounds
         bbox = gpd.GeoDataFrame({'geometry': [box(bounds.minx.loc[0], bounds.miny.loc[0], bounds.maxx.loc[0], bounds.maxy.loc[0])]})
