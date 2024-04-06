@@ -1,5 +1,5 @@
 <!--fused:preview-->
-<p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Duckdb_H3_Example.png" width="600" alt="UDF preview image"></p>
+<p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DuckDB_H3_Example_Tile.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
 Tags: `file` `vector` `aws` `tutorial`
