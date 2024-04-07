@@ -1,0 +1,132 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "DEM_Raster_to_Vector_Example",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DEM_Tile_Example.png",
+            "fused:defaultParameters": [
+              {
+                "parameter": "min_elevation",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "250",
+                  "500",
+                  "1000",
+                  "2000"
+                ]
+              }
+            ],
+            "fused:datasets": "Digital Elevation Model",
+            "fused:tags": [
+              {
+                "id": "dem",
+                "label": "dem"
+              },
+              {
+                "id": "elevation",
+                "label": "elevation"
+              },
+              {
+                "id": "raster",
+                "label": "raster"
+              },
+              {
+                "id": "30-meter",
+                "label": "30-meter"
+              }
+            ],
+            "fused:description": "#### Overview\n\nThis UDF shows an example of vectorizing a raster image, based on a minimum elevation threshold.\n\nThe data for this UDF comes from the [Copernicus DEM](https://github.com/fusedio/udfs/tree/main/public/DEM_Tile_Example) example UDF.\n\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/DEM_Raster_to_Vector_Example\")\ngdf = fused.run(udf=udf)\ngdf\n```\n",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    255,
+                    178,
+                    0
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  178,
+                  0,
+                  80
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "DEM_Raster_to_Vector_Example",
+            "fused:name": "DEM_Raster_to_Vector_Example",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/bbd1171cfa023b0b67950f98de05eb60d1a758aa/public/DEM_Tile_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/bbd1171/public/DEM_Tile_Example/",
+            "fused:gitPath": "public/DEM_Tile_Example",
+            "fused:gitRef": "bbd1171cfa023b0b67950f98de05eb60d1a758aa",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk",
+              "Tyler Erickson",
+              null,
+              "Plinio Guzman"
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk",
+              "tylere",
+              "charlesfused",
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk",
+              "https://github.com/tylere",
+              "https://github.com/charlesfused",
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/u/92862?v=4",
+              "https://avatars.githubusercontent.com/u/148997493?v=4",
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitLastModified": "2024-03-05T11:36:20+00:00"
+          },
+          "source": "DEM_Raster_to_Vector_Example.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

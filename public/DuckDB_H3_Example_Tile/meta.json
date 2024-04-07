@@ -1,0 +1,99 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "DuckDB_H3_Example_Tile",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Duckdb_H3_Example.png",
+            "fused:tags": [
+              {
+                "id": "file",
+                "label": "file"
+              },
+              {
+                "id": "vector",
+                "label": "vector"
+              },
+              {
+                "id": "aws",
+                "label": "aws"
+              },
+              {
+                "id": "tutorial",
+                "label": "tutorial"
+              }
+            ],
+            "fused:description": "## Overview\n\nThis UDF shows how to open NYC yellow taxi trip dataset using DuckDB and aggregate the pickups using [H3-DuckDB](https://github.com/isaacbrodsky/h3-duckdb) as tiles.\n\n## External links\n\n- [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/DuckDB_H3_Example_Tile\")\ngdf = fused.run(udf=udf, x=2412, y=3078, z=13)\ngdf\n```\n",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "opacity": 5,
+                "@@type": "GeoJsonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "getRadius": 10,
+                "getFillColor": "@@=[properties.cnt/3+200, properties.cnt/5+50, properties.cnt/20]"
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "DuckDB_H3_Example_Tile",
+            "fused:name": "DuckDB_H3_Example_Tile",
+            "fused:id": null,
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 40.746878986881775,
+              "longitude": -73.91048113436547,
+              "zoom": 9.887562594810294,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/bbd1171cfa023b0b67950f98de05eb60d1a758aa/public/DuckDB_H3_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/bbd1171/public/DuckDB_H3_Example/",
+            "fused:gitPath": "public/DuckDB_H3_Example",
+            "fused:gitRef": "bbd1171cfa023b0b67950f98de05eb60d1a758aa",
+            "fused:gitAuthorNames": [
+              "Isaac Brodsky"
+            ],
+            "fused:gitAuthorUsernames": [
+              "isaacbrodsky"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/isaacbrodsky"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/9139378?v=4"
+            ],
+            "fused:gitLastModified": "2024-04-03T20:54:55+00:00"
+          },
+          "source": "DuckDB_H3_Example_Tile.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
