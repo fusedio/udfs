@@ -85,12 +85,7 @@
             "fused:gitLastModified": "2024-04-03T20:54:55+00:00"
           },
           "source": "DuckDB_H3_Example_Tile.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],
