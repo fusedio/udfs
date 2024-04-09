@@ -3,7 +3,6 @@ def udf(bbox: fused.types.TileGDF=None, resolution: int = 11, min_count: int = 1
     import duckdb
     import shapely
     import geopandas as gpd
-    import h3
 
     tile_bbox_gdf = gpd.GeoDataFrame.from_features({"type":"FeatureCollection","features":[{"type":"Feature","properties":{"shape":"Rectangle"},"geometry":{"type":"Polygon","coordinates":[[[-73.99322955922597,40.76627870054801],[-73.96753345042097,40.76627870054801],[-73.96753345042097,40.74825844008337],[-73.99322955922597,40.74825844008337],[-73.99322955922597,40.76627870054801]]]}}]})
     default_bbox = tile_bbox_gdf.iloc[0].geometry

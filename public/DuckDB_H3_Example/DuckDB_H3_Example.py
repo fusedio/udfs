@@ -5,7 +5,6 @@ def udf(bbox=None, resolution: int = 9, min_count: int = 10):
     from utils import load_h3_duckdb
     import shapely
     import geopandas as gpd
-    import h3
 
     utils = fused.load(
         "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
