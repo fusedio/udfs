@@ -1,7 +1,6 @@
 @fused.udf
 def udf(bbox: fused.types.TileGDF=None, resolution: int = 11, min_count: int = 10):
     import duckdb
-    from utils import load_h3_duckdb
     import shapely
     import geopandas as gpd
     import h3
@@ -10,17 +9,18 @@ def udf(bbox: fused.types.TileGDF=None, resolution: int = 11, min_count: int = 1
     default_bbox = tile_bbox_gdf.iloc[0].geometry
     tile_bbox_geom = bbox if bbox is not None else default_bbox
 
-
     bounds = bbox.bounds.values[0] if bbox is not None else default_bbox.bounds
     print(bounds)
-
 
     utils = fused.load(
         "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
     ).utils
+    h3_utils = fused.load(
+        "https://github.com/fusedio/udfs/tree/main/public/DuckDB_H3_Example/"
+    ).utils
     con = duckdb.connect(config = {'allow_unsigned_extensions': True})
 
-    load_h3_duckdb(con)
+    h3_utils.load_h3_duckdb(con)
     con.sql(f"""INSTALL httpfs; LOAD httpfs;""")
     
     @fused.cache
