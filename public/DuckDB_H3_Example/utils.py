@@ -7,7 +7,7 @@ def load_h3_duckdb(con, *, cache_ungzipped_path = True):
 
     con.sql("SET home_directory='/tmp';")
     system = platform.system()
-    arch = platform.platform()
+    arch = platform.machine()
     arch = 'amd64' if arch == 'x86_64' else arch
 
     detected_os = f'macos_{arch}' if system == 'Darwin' else f'linux_{arch}'
