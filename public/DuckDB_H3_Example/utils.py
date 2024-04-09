@@ -10,7 +10,7 @@ def load_h3_duckdb(con, *, cache_ungzipped_path = True):
     arch = platform.machine()
     arch = 'amd64' if arch == 'x86_64' else arch
 
-    detected_os = f'macos_{arch}' if system == 'Darwin' else f'linux_{arch}'
+    detected_os = f'osx_{arch}' if system == 'Darwin' else f'linux_{arch}'
     if detected_os == 'linux_amd64':
         detected_os = 'linux_amd64_gcc4'
     url = f'https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev/v{duckdb.__version__}/{detected_os}/h3ext.duckdb_extension.gz'
