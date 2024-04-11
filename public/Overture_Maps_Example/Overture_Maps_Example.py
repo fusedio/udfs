@@ -1,16 +1,17 @@
 import geopandas as gpd
 
+
 @fused.udf
 def udf(
-    bbox: fused.types.TileGDF=None,
-    release: str="2024-03-12-alpha-0",
-    theme: str=None,
-    osm_type: str=None,
-    use_columns: list=None,
-    num_parts: int=None,
-    min_zoom: int=None,
-    polygon: gpd.GeoDataFrame=None,
-    point_convert: str=None
+    bbox: fused.types.TileGDF = None,
+    release: str = "2024-03-12-alpha-0",
+    theme: str = None,
+    osm_type: str = None,
+    use_columns: list = None,
+    num_parts: int = None,
+    min_zoom: int = None,
+    polygon: gpd.GeoDataFrame = None,
+    point_convert: str = None,
 ):
     import logging
     import concurrent.futures
@@ -18,7 +19,6 @@ def udf(
     import pandas as pd
     import geopandas as gpd
     from shapely.geometry import shape, box
-
 
     utils = fused.load(
         "https://github.com/fusedio/udfs/tree/f8f0c0f/public/common/"
@@ -72,7 +72,18 @@ def udf(
 
     if polygon is not None:
         bounds = polygon.geometry.bounds
-        bbox = gpd.GeoDataFrame({'geometry': [box(bounds.minx.loc[0], bounds.miny.loc[0], bounds.maxx.loc[0], bounds.maxy.loc[0])]})
+        bbox = gpd.GeoDataFrame(
+            {
+                "geometry": [
+                    box(
+                        bounds.minx.loc[0],
+                        bounds.miny.loc[0],
+                        bounds.maxx.loc[0],
+                        bounds.maxy.loc[0],
+                    )
+                ]
+            }
+        )
 
     def get_part(part):
         part_path = f"{table_path}/part={part}/" if num_parts != 1 else table_path
@@ -100,25 +111,30 @@ def udf(
 
         # Note we also assume that there can't be an alternate value if there is no main value
         if "categories" in df.columns:
-            df['categories'] = [
-                {'main': [c['main']],
-                 'alternate': c.get('alternate', -1).tolist()} if
-                    c is not None and c['alternate'] is not None else
-                 {'main': [c['main']], 'alternate': []} if
-                    c is not None else 
-                {'main': [], 'alternate': []} 
-                for c in df['categories']]
+            df["categories"] = [
+                {"main": [c["main"]], "alternate": c.get("alternate", -1).tolist()}
+                if c is not None and c["alternate"] is not None
+                else {"main": [c["main"]], "alternate": []}
+                if c is not None
+                else {"main": [], "alternate": []}
+                for c in df["categories"]
+            ]
         extra_cols = ["geometry", "categories"]
         gdf = gpd.GeoDataFrame(
-            pd.concat([
-                df[[c for c in df.columns if c not in extra_cols]].astype(str),
-                df[[extra for extra in extra_cols if extra in df.columns]]], axis=1))
+            pd.concat(
+                [
+                    df[[c for c in df.columns if c not in extra_cols]].astype(str),
+                    df[[extra for extra in extra_cols if extra in df.columns]],
+                ],
+                axis=1,
+            )
+        )
 
     else:
         logging.warn("Failed to get any data")
         return None
 
     if point_convert is not None:
-        gdf['geometry'] = gdf.geometry.centroid
+        gdf["geometry"] = gdf.geometry.centroid
 
     return gdf
