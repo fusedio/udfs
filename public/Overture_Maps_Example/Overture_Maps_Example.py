@@ -50,7 +50,7 @@ def udf(
         }
 
     if theme is None:
-        theme = theme_per_type.get(osm_type, "buildings")
+        theme = theme_per_type.get(osm_type, "places")
 
     if osm_type is None:
         type_per_theme = {v: k for k, v in theme_per_type.items()}
@@ -97,9 +97,15 @@ def udf(
         # Some overture columns do not serialize nicely and can have compatability
         # issues with some Parquet implementations.
         # Here we coerce to string to work around that.
+
+        # Note we also assume that there can't be an alternate value if there is no main value
         if "categories" in df.columns:
-            df['category'] = df['categories'].get('main', -1)
-        extra_cols = ["geometry", "category"]
+            df['categories'] = [
+                {'main': [c['main']],
+                 'alternate': c.get('alternate', -1).tolist()} if
+                    c is not None and c['alternate'] is not None 
+                else {'main': [], 'alternate': []} for c in df['categories']]
+        extra_cols = ["geometry", "categories"]
         gdf = gpd.GeoDataFrame(
             pd.concat([
                 df[[c for c in df.columns if c not in extra_cols]].astype(str),
