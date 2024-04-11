@@ -36,7 +36,7 @@
                 ]
               },
               {
-                "parameter": "type",
+                "parameter": "osm_type",
                 "value": "",
                 "type": "string",
                 "suggestedValues": [
