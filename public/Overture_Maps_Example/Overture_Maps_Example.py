@@ -103,8 +103,11 @@ def udf(
             df['categories'] = [
                 {'main': [c['main']],
                  'alternate': c.get('alternate', -1).tolist()} if
-                    c is not None and c['alternate'] is not None 
-                else {'main': [], 'alternate': []} for c in df['categories']]
+                    c is not None and c['alternate'] is not None else
+                 {'main': [c['main']], 'alternate': []} if
+                    c is not None else 
+                {'main': [], 'alternate': []} 
+                for c in df['categories']]
         extra_cols = ["geometry", "categories"]
         gdf = gpd.GeoDataFrame(
             pd.concat([
