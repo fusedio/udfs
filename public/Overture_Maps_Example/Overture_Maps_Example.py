@@ -50,7 +50,7 @@ def udf(
         }
 
     if theme is None:
-        theme = theme_per_type.get(osm_type, "places")
+        theme = theme_per_type.get(osm_type, "buildings")
 
     if osm_type is None:
         type_per_theme = {v: k for k, v in theme_per_type.items()}
