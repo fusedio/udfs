@@ -1,0 +1,83 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Point_Cloud_Layer_Example",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "PointCloudLayer",
+                "pointSize": 2,
+                "coordinateOrigin": [
+                  -122.4,
+                  37.74
+                ],
+                "coordinateSystem": 2,
+                "pickable": true,
+                "getColor": "@@=[properties.color0,properties.color1,properties.color2]",
+                "getNormal": "@@=[properties.normal0,properties.normal1,properties.normal2]",
+                "getPosition": "@@=[properties.position0,properties.position1,properties.position2]"
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Point_Cloud_Layer_Example",
+            "fused:name": "Point_Cloud_Layer_Example",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Point_Cloud_Layer_Example.png",
+            "fused:tags": [
+              {
+                "id": "vector",
+                "label": "vector"
+              },
+              {
+                "id": "point-cloud",
+                "label": "point-cloud",
+                "isCreatable": true
+              },
+              {
+                "id": "tutorial",
+                "label": "tutorial"
+              },
+              {
+                "id": "3d",
+                "label": "3d",
+                "isCreatable": true
+              }
+            ],
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.7554940900308,
+              "longitude": -122.39826286146923,
+              "zoom": 12.760403117547355,
+              "pitch": 60,
+              "bearing": 4.642857142857142
+            },
+            "fused:description": "This UDF shows how to use the [PointCloudLayer](https://deck.gl/docs/api-reference/layers/point-cloud-layer) to render 3D sample data within Fused Workbench.",
+            "fused:id": null
+          },
+          "source": "Point_Cloud_Layer_Example.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
