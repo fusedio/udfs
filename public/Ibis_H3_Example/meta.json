@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "DuckDB_H3_Example",
+          "name": "Ibis_H3_Example",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -55,8 +55,8 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "DuckDB_H3_Example",
-            "fused:name": "DuckDB_H3_Example",
+            "fused:slug": "Ibis_H3_Example",
+            "fused:name": "Ibis_H3_Example",
             "fused:id": null,
             "fused:defaultViewState": {
               "enable": true,
@@ -104,7 +104,7 @@
             ],
             "fused:gitLastModified": "2024-03-13T17:22:21+00:00"
           },
-          "source": "DuckDB_H3_Example.py",
+          "source": "Ibis_H3_Example.py",
           "headers": [
             {
               "module_name": "utils",
