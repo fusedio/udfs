@@ -2,16 +2,15 @@
 @fused.udf
 def udf(bbox=None, resolution: int = 9, min_count: int = 10):
     import duckdb
-    from utils import load_h3_duckdb
+    from utils import duckdb_with_h3
     import shapely
     import geopandas as gpd
 
     utils = fused.load(
         "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
     ).utils
-    con = duckdb.connect(config = {'allow_unsigned_extensions': True})
+    con = duckdb_with_h3()
 
-    load_h3_duckdb(con)
     con.sql(f"""INSTALL httpfs; LOAD httpfs;""")
     
     @fused.cache
