@@ -1,0 +1,106 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "H3_Hexagon_Layer_Example",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/H3_Hexagon_Layer_Example.png",
+            "fused:tags": [
+              {
+                "id": "file",
+                "label": "file"
+              },
+              {
+                "id": "vector",
+                "label": "vector"
+              },
+              {
+                "id": "tutorial",
+                "label": "tutorial"
+              },
+              {
+                "id": "h3",
+                "label": "h3"
+              },
+              {
+                "id": "duckdb",
+                "label": "duckdb"
+              },
+              {
+                "id": "taxi",
+                "label": "taxi",
+                "isCreatable": true
+              }
+            ],
+            "fused:description": "## Overview\n\nThis UDF shows how to open NYC yellow taxi trip dataset using DuckDB and aggregate the pickups using [H3-DuckDB](https://github.com/isaacbrodsky/h3-duckdb). Results are visualized as [hexagons](https://deck.gl/docs/api-reference/geo-layers/h3-hexagon-layer).\n\n## External links\n\n- [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/H3_Hexagon_Layer_Example\")\ngdf = fused.run(udf=udf)\ngdf\n```\n",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "opacity": 5,
+                "@@type": "H3HexagonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "getHexagon": "@@=cell_id",
+                "getFillColor": "@@=[cnt/3+200, cnt/5+50, cnt/20]",
+                "getElevation": "@@=cnt",
+                "elevationScale": 0.05
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "H3_Hexagon_Layer_Example",
+            "fused:name": "H3_Hexagon_Layer_Example",
+            "fused:id": null,
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 40.746878986881775,
+              "longitude": -73.91048113436547,
+              "zoom": 9.887562594810294,
+              "pitch": 60,
+              "bearing": -13.670886075949367
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/441bf2420f44c5edbe957ed2d6a03638425ac038/public/DuckDB_H3_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/441bf24/public/DuckDB_H3_Example/",
+            "fused:gitPath": "public/DuckDB_H3_Example",
+            "fused:gitRef": "441bf2420f44c5edbe957ed2d6a03638425ac038",
+            "fused:gitAuthorNames": [
+              "Isaac Brodsky"
+            ],
+            "fused:gitAuthorUsernames": [
+              "isaacbrodsky"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/isaacbrodsky"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/9139378?v=4"
+            ],
+            "fused:gitLastModified": "2024-04-09T16:44:12+00:00",
+            "fused:explorerTab": "public"
+          },
+          "source": "H3_Hexagon_Layer_Example.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
