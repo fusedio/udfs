@@ -8,7 +8,6 @@ def duckdb_with_h3(extra_config=None, extra_connect_args=None):
     con = duckdb.connect(
         config={
             "allow_unsigned_extensions": True,
-            "allow_extensions_metadata_mismatch": True,
             **(extra_config if extra_config is not None else {}),
         },
         **(extra_connect_args if extra_connect_args is not None else {}),
