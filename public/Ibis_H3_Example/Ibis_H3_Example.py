@@ -9,15 +9,17 @@ def udf(bbox=None, resolution: int = 9, min_count: int = 10):
     import duckdb
     import ibis
     from ibis import _
-    from utils import load_h3_duckdb
 
     # DuckDB is only used to download extension
     utils = fused.load(
         "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
     ).utils
+    h3_utils = fused.load(
+        "https://github.com/fusedio/udfs/tree/fb65aff/public/DuckDB_H3_Example/"
+    ).utils
 
     con = duckdb.connect(config={'allow_unsigned_extensions': True})
-    load_h3_duckdb(con)
+    h3_utils.load_h3_duckdb(con)
 
     # We use the duckdb extension h3ext
     # con.sql(f"""INSTALL httpfs; LOAD httpfs;""")

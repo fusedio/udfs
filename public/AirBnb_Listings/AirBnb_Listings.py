@@ -1,13 +1,16 @@
 @fused.udf
 def udf(city='Paris', resolution=11):
     import duckdb
-    from utils import load_h3_duckdb
     import shapely
     import geopandas as gpd
     import requests
     import re
     # set a resolution limit 
     if resolution > 11:resolution=11
+
+    h3_utils = fused.load(
+        "https://github.com/fusedio/udfs/tree/fb65aff/public/DuckDB_H3_Example/"
+    ).utils
         
     @fused.cache
     def get_city_data(city):
@@ -36,7 +39,7 @@ def udf(city='Paris', resolution=11):
         csv_file = fused.core.download(url=url, file_path=out_path)
         
         con = duckdb.connect(config = {'allow_unsigned_extensions': True})
-        load_h3_duckdb(con)
+        h3_utils.load_h3_duckdb(con)
         con.sql(f"""INSTALL httpfs; LOAD httpfs;""")
         # reading data with duckDB and generating H3 cells
         @fused.cache

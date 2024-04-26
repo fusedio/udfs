@@ -105,12 +105,7 @@
             "fused:gitLastModified": "2024-03-13T17:22:21+00:00"
           },
           "source": "Ibis_H3_Example.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],

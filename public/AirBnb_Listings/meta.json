@@ -112,12 +112,7 @@
             ]
           },
           "source": "AirBnb_Listings.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],
