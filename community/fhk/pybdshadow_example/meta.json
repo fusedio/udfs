@@ -49,7 +49,7 @@
                 ]
               }
             },
-            "fused:udfType": "auto",
+            "fused:udfType": "vector_single",
             "fused:slug": "pybdshadow_example",
             "fused:name": "pybdshadow_example",
             "fused:id": null

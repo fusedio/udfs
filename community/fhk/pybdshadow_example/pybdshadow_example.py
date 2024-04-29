@@ -1,7 +1,7 @@
 import geopandas as gpd
 @fused.udf
 def udf(
-    bbox: fused.types.Bbox=None,
+    bbox: fused.types.Bbox= None,
     polygon: gpd.GeoDataFrame = None,
     day: str = '2024-04-24',
     height: float = None):
@@ -9,7 +9,7 @@ def udf(
     import matplotlib.pyplot as plt
     from matplotlib import cm
     import pybdshadow
-    import shapely
+    from shapely.geometry import box
 
     if polygon is None:
         gdf = gpd.read_file("s3://fused-users/fused/empirestate_ny.geojson", driver="GeoJSON")
@@ -21,9 +21,21 @@ def udf(
             gdf['height'] = 10.0
     else:
         gdf['height'] = height
-            
+
     #define analysis area
-    bounds = bbox.exterior.bounds
+    if bbox is None:
+        buffed = gdf.buffer(0.01)
+        bounds = buffed.bounds
+        bounds = [
+            bounds.minx.loc[0],
+            bounds.miny.loc[0],
+            bounds.maxx.loc[0],
+            bounds.maxy.loc[0],
+        ]
+
+    else:
+        buffed = bbox.buffer(0.01)
+        bounds = buffed.exterior.bounds
 
     #filter the buildings
     gdf['x'] = gdf.centroid.x
@@ -38,7 +50,7 @@ def udf(
     sunshine = pybdshadow.cal_sunshine(buildings_analysis,
                                        day=day,
                                        roof=False,
-                                       accuracy=1,
+                                       accuracy='vector',
                                        precision=900)
 
     cmap = plt.get_cmap('plasma')
@@ -52,7 +64,7 @@ def udf(
     # Add RGB values as new columns
     sunshine['r'], sunshine['g'], sunshine['b'] = rgb_values[:, 0], rgb_values[:, 1], rgb_values[:, 2]
 
-    return sunshine
+    return sunshine[['Hour', 'r', 'g', 'b', 'geometry']]
     
 
     
