@@ -1,9 +1,6 @@
 <!--fused:preview-->
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/LULC_Tile_Example.png" width="600" alt="UDF preview image"></p>
 
-<!--fused:tags-->
-Tags: `10-meter` `pc` `lulc` `raster` `bbox`
-
 <!--fused:readme-->
 #### Overview
 This User-Defined Function (UDF) operates on a given bounding box (`bbox`) and context to retrieve land use and land cover (LULC) data for a specified year, defaulting to 2022. If the zoom level of the bounding box is equal to or greater than 5, it imports necessary utilities such as `get_lulc` and `get_overture`, along with essential libraries like NumPy, rasterio, shapely, and geopandas. It then fetches LULC data for the given bounding box and year, transforms it into vector geometries, and creates a GeoDataFrame representing water bodies. 
