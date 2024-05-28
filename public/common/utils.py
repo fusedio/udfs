@@ -6,6 +6,7 @@ from __future__ import annotations
 import random
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
 
+import ee
 import fused
 import geopandas as gpd
 import numpy as np
@@ -96,8 +97,8 @@ def table_to_tile(
     print_xyz=False,
 ):
     import fused
-    import pandas as pd
     import geopandas as gpd
+    import pandas as pd
 
     version = "0.2.3"
 
@@ -108,10 +109,10 @@ def table_to_tile(
     except:
         z = min_zoom
     df = fused.get_chunks_metadata(table)
-    if len(bbox)>1:
+    if len(bbox) > 1:
         bbox = bbox.dissolve().reset_index(drop=True)
     else:
-        bbox=bbox.reset_index(drop=True)
+        bbox = bbox.reset_index(drop=True)
     df = df[df.intersects(bbox.geometry[0])]
     if z >= min_zoom:
         List = df[["file_id", "chunk_id"]].values
@@ -453,14 +454,16 @@ def fs_list_hls(
     )
     return fs.ls(path)
 
+
 def get_s3_list(path, suffix=None):
     import s3fs
+
     fs = s3fs.S3FileSystem()
     if suffix:
-        return ['s3://'+i for i in fs.ls(path) if i[-len(suffix):] == suffix]
+        return ["s3://" + i for i in fs.ls(path) if i[-len(suffix) :] == suffix]
     else:
-        return ['s3://'+i for i in fs.ls(path)]        
-    
+        return ["s3://" + i for i in fs.ls(path)]
+
 
 def run_async(fn, arr_args, delay=0, max_workers=32):
     import asyncio
@@ -495,10 +498,13 @@ def run_async(fn, arr_args, delay=0, max_workers=32):
 
     return loop.run_until_complete(fn_async_exec(fn, arr_args, delay))
 
+
 def run_pool(fn, arg_list, max_workers=36):
-    import concurrent.futures 
+    import concurrent.futures
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as pool:
-        return list(pool.map(fn, arg_list))  
+        return list(pool.map(fn, arg_list))
+
 
 def import_env(
     env="testxenv",
@@ -1159,35 +1165,52 @@ def read_tiff_naip(
                 [zoom(arr, zoom_factors, order=resample_order) for arr in data]
             )
         return rgb
-    
-def image_server_bbox(image_url, bbox=None, time=None, size=512, bbox_crs=4326, image_crs=3857, image_format='tiff', return_colormap=False):
+
+
+def image_server_bbox(
+    image_url,
+    bbox=None,
+    time=None,
+    size=512,
+    bbox_crs=4326,
+    image_crs=3857,
+    image_format="tiff",
+    return_colormap=False,
+):
     if bbox_crs and bbox_crs != image_crs:
         import geopandas as gpd
         import shapely
-        gdf = gpd.GeoDataFrame(geometry=[shapely.box(*bbox)], crs=bbox_crs).to_crs(image_crs)
+
+        gdf = gpd.GeoDataFrame(geometry=[shapely.box(*bbox)], crs=bbox_crs).to_crs(
+            image_crs
+        )
         print(gdf)
         minx, miny, maxx, maxy = gdf.total_bounds
     else:
         minx, miny, maxx, maxy = list(bbox)
-    image_url = image_url.strip('/')    
-    url_template = f'{image_url}?f=image'
-    url_template += f'&bbox={minx},{miny},{maxx},{maxy}'
+    image_url = image_url.strip("/")
+    url_template = f"{image_url}?f=image"
+    url_template += f"&bbox={minx},{miny},{maxx},{maxy}"
     if time:
-        url_template += f'&time={time}'
+        url_template += f"&time={time}"
     if image_crs:
-        url_template += f'&imageSR={image_crs}&bboxSR={image_crs}'
+        url_template += f"&imageSR={image_crs}&bboxSR={image_crs}"
     if size:
-        url_template += f'&size={size},{size*(miny-maxy)/(minx-maxx)}'
-    url_template += f'&format={image_format}'
+        url_template += f"&size={size},{size*(miny-maxy)/(minx-maxx)}"
+    url_template += f"&format={image_format}"
     return url_to_arr(url_template, return_colormap=return_colormap)
 
-def arr_to_stats(arr, gdf, type='nominal'):
-    import numpy as np 
+
+def arr_to_stats(arr, gdf, type="nominal"):
+    import numpy as np
+
     minx, miny, maxx, maxy = gdf.total_bounds
     d = (maxx - minx) / arr.shape[-1:]
     transform = [d, 0.0, minx, 0.0, -d, maxy, 0.0, 0.0, 1.0]
-    geom_masks = [rasterize_geometry(geom, arr.shape[-2:], transform) for geom in gdf.geometry]
-    if type=='nominal':
+    geom_masks = [
+        rasterize_geometry(geom, arr.shape[-2:], transform) for geom in gdf.geometry
+    ]
+    if type == "nominal":
         counts_per_mask = []
         for geom_mask in geom_masks:
             masked_arr = arr[geom_mask]
@@ -1196,37 +1219,66 @@ def arr_to_stats(arr, gdf, type='nominal'):
             counts_per_mask.append(counts_dict)
         gdf["stats"] = counts_per_mask
         return gdf
-    elif type=='numerical':
+    elif type == "numerical":
         stats_per_mask = []
         for geom_mask in geom_masks:
             masked_arr = arr[geom_mask]
-            stats_per_mask.append({
-                'min': np.nanmin(masked_arr),
-                'max': np.nanmax(masked_arr),
-                'mean': np.nanmean(masked_arr),
-                'median': np.nanmedian(masked_arr),
-                'std': np.nanstd(masked_arr)
-            })
+            stats_per_mask.append(
+                {
+                    "min": np.nanmin(masked_arr),
+                    "max": np.nanmax(masked_arr),
+                    "mean": np.nanmean(masked_arr),
+                    "median": np.nanmedian(masked_arr),
+                    "std": np.nanstd(masked_arr),
+                }
+            )
         gdf["stats"] = stats_per_mask
         return gdf
     else:
-        raise ValueError(f'{type} is not supported. Type options are "nominal" and "numerical"')
-    
+        raise ValueError(
+            f'{type} is not supported. Type options are "nominal" and "numerical"'
+        )
+
+
 def ask_openai(prompt, openai_api_key, role="user", model="gpt-4-turbo-preview"):
     # ref: https://github.com/openai/openai-python
     # ref: https://platform.openai.com/docs/models/gpt-4-and-gpt-4-turbo
     from openai import OpenAI
+
     client = OpenAI(
         api_key=openai_api_key,
     )
     messages = [
-            {
-                "role": role,
-                "content": prompt,
-            }
-        ]
+        {
+            "role": role,
+            "content": prompt,
+        }
+    ]
     chat_completion = client.chat.completions.create(
         messages=messages,
         model=model,
     )
     return [i.message.content for i in chat_completion.choices]
+
+
+def ee_initialize(service_account_name="", key_path=""):
+    """
+    Authenticate with Google Earth Engine using service account credentials.
+
+    This function initializes the Earth Engine API by authenticating with the
+    provided service account credentials. The authenticated session allows for
+    accessing and manipulating data within Google Earth Engine.
+
+    Args:
+        service_account_name (str): The email address of the service account.
+        key_path (str): The path to the private key file for the service account.
+
+    See documentation: https://docs.fused.io/basics/in/gee/
+
+    Example:
+        ee_initialize('your-service-account@your-project.iam.gserviceaccount.com', 'path/to/your-private-key.json')
+    """
+    credentials = ee.ServiceAccountCredentials(service_account_name, key_path)
+    ee.Initialize(
+        opt_url="https://earthengine-highvolume.googleapis.com", credentials=credentials
+    )
