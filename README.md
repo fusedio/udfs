@@ -8,7 +8,7 @@
 
 ![alt text](https://fused-magic.s3.us-west-2.amazonaws.com/docs_assets/github_udfs_repo/readme_udf_explorer.png)
 
-This repo is a public collection of Fused User Defined Functions (UDFs). 
+This repo is a public collection of Fused User Defined Functions (UDFs).
 
 Fused is the glue layer that interfaces data platforms and data tools via a managed serverless API. With Fused, you can write, share, or discover UDFs which are the building blocks of serverless geospatial operations. UDFs are Python functions that turn into live HTTP endpoints that load their output into any tools that can call an API.
 
@@ -29,11 +29,11 @@ pip install fused
 It's possible that to run UDFs locally the local environment might require additional packages not found locally. If that is the case, this command installs all required dependencies.
 ```bash
 !pip install fused odc-stac duckdb numba xarray-spatial planetary-computer 'odc-stac[botocore]' py3dep stackstac pynhd boto3
-``` 
+```
 
 ### 2. Load a UDF into a workflow
 
-This snippet shows how to import a UDF from this repo into a Python environment. The URL is of the directory that contains a UDF generated with Fused. 
+This snippet shows how to import a UDF from this repo into a Python environment. The URL is of the directory that contains a UDF generated with Fused.
 
 ```python
 import fused
@@ -53,7 +53,7 @@ python -c "import fused; udf = fused.load('https://github.com/fusedio/udfs/tree/
 
 ### Repo structure
 
-This repository is structured to facilitate easy access of UDFs and their supporting files. Each UDF, like `Sample_UDF`, is contained within its own subdirectory within the `public` directory - along with its documentation, code, metadata, and utility function code. 
+This repository is structured to facilitate easy access of UDFs and their supporting files. Each UDF, like `Sample_UDF`, is contained within its own subdirectory within the `public` directory - along with its documentation, code, metadata, and utility function code.
 
 Each UDF can be thought of as a standalone Python package.
 
@@ -102,7 +102,7 @@ my_udf.to_fused('my_udf')
 
 2. Open a PR
 
-Clone this repo to your local system and add the UDF folder under `public` or `community`. Create a PR on this repo. 
+Clone this repo to your local system and add the UDF folder under `public` or `community`. Create a PR on this repo.
 
 ## Ecosystem
 
@@ -118,7 +118,16 @@ Fused documentation is in [docs.fused.io](https://docs.fused.io/).
 
 All UDF contributions, bug reports, bug fixes, documentation improvements, enhancements, and ideas are welcome.
 
+
+### Pre commit
+
+Please run pre-commit hooks on your UDF prior to submitting.
+
+```
+pre-commit install
+pre-commit run --files public/PC_Sentinel2/*
+```
+
 ## License
 
 [MIT License](./LICENSE)
-

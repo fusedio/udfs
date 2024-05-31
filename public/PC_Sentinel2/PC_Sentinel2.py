@@ -56,6 +56,7 @@ def udf(
     blue_normalized = ((data["blue"] - vmin_blue) / (vmax_blue - vmin_blue)) * 256
 
     # Stack the normalized bands to form an RGB image
+
     arr = np.stack([red_normalized, green_normalized, blue_normalized], axis=0).astype(
         np.uint8
     )
