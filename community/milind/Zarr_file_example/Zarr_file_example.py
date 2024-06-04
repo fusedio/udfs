@@ -38,8 +38,6 @@ def udf(bbox: fused.types.Bbox = None, layer: str = "ndvi", time: int = 2):
 
     ds = ds.sel(latitude=slice(maxy, miny), longitude=slice(minx, maxx)).isel(time=time)
 
-    ds = ds.sel(latitude=slice(maxy, miny), longitude=slice(minx, maxx)).isel(time=time)
-
     data_array = ds[layer].values.squeeze()
     print(data_array)
 
