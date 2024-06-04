@@ -1,0 +1,148 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Zarr_file_example",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultParameters": [
+              {
+                "parameter": "layer",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "area",
+                  "biomes",
+                  "cams_co2fire",
+                  "cams_frpfire",
+                  "drought_code_max",
+                  "drought_code_mean",
+                  "fcci_ba",
+                  "fcci_ba_valid_mask",
+                  "fcci_fraction_of_burnable_area",
+                  "fcci_fraction_of_observed_area",
+                  "fcci_number_of_patches",
+                  "fwi_max",
+                  "fwi_mean",
+                  "gfed_ba",
+                  "gfed_ba_valid_mask",
+                  "gfed_region",
+                  "gwis_ba",
+                  "gwis_ba_valid_mask",
+                  "lai",
+                  "lccs_class_0",
+                  "lccs_class_1",
+                  "lccs_class_2",
+                  "lccs_class_3",
+                  "lccs_class_4",
+                  "lccs_class_5",
+                  "lccs_class_6",
+                  "lccs_class_7",
+                  "lccs_class_8",
+                  "lsm",
+                  "lst_day",
+                  "mslp",
+                  "ndvi",
+                  "oci_ao",
+                  "oci_censo",
+                  "oci_ea",
+                  "oci_epo",
+                  "oci_gmsst",
+                  "oci_nao",
+                  "oci_nina34_anom",
+                  "oci_pdo",
+                  "oci_pna",
+                  "oci_soi",
+                  "oci_wp",
+                  "pop_dens",
+                  "rel_hum",
+                  "skt",
+                  "ssr",
+                  "ssrd",
+                  "sst",
+                  "swvl1",
+                  "swvl2",
+                  "swvl3",
+                  "swvl4",
+                  "t2m_max",
+                  "t2m_mean",
+                  "t2m_min",
+                  "tp",
+                  "vpd",
+                  "ws10"
+                ]
+              }
+            ],
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 10,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "g",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    0,
+                    0,
+                    0
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ],
+                "getLineWidth": {
+                  "@@function": "hasValue",
+                  "property": "value",
+                  "fallback": 0
+                },
+                "getRadius": {
+                  "@@function": "hasValue",
+                  "property": "value",
+                  "fallback": 0
+                },
+                "visible": {
+                  "@@function": "checkValue",
+                  "property": "value",
+                  "valid": true,
+                  "invalid": false
+                }
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Zarr_file_example",
+            "fused:name": "Zarr_file_example",
+            "fused:id": null
+          },
+          "source": "Zarr_file_example.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
