@@ -18,26 +18,19 @@
                 "value": "",
                 "type": "string",
                 "suggestedValues": [
-                  "area",
                   "biomes",
-                  "cams_co2fire",
-                  "cams_frpfire",
                   "drought_code_max",
                   "drought_code_mean",
                   "fcci_ba",
-                  "fcci_ba_valid_mask",
                   "fcci_fraction_of_burnable_area",
                   "fcci_fraction_of_observed_area",
                   "fcci_number_of_patches",
                   "fwi_max",
                   "fwi_mean",
                   "gfed_ba",
-                  "gfed_ba_valid_mask",
                   "gfed_region",
                   "gwis_ba",
-                  "gwis_ba_valid_mask",
                   "lai",
-                  "lccs_class_0",
                   "lccs_class_1",
                   "lccs_class_2",
                   "lccs_class_3",
@@ -50,17 +43,6 @@
                   "lst_day",
                   "mslp",
                   "ndvi",
-                  "oci_ao",
-                  "oci_censo",
-                  "oci_ea",
-                  "oci_epo",
-                  "oci_gmsst",
-                  "oci_nao",
-                  "oci_nina34_anom",
-                  "oci_pdo",
-                  "oci_pna",
-                  "oci_soi",
-                  "oci_wp",
                   "pop_dens",
                   "rel_hum",
                   "skt",
@@ -83,8 +65,8 @@
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
-                "minZoom": 0,
-                "maxZoom": 10,
+                "minZoom": 3,
+                "maxZoom": 17,
                 "tileSize": 256,
                 "pickable": true
               },
@@ -136,7 +118,36 @@
             "fused:udfType": "auto",
             "fused:slug": "Zarr_file_example",
             "fused:name": "Zarr_file_example",
-            "fused:id": null
+            "fused:id": null,
+            "fused:assetUrl": "https://raw.githubusercontent.com/fusedio/udfs/main/community/milind/Zarr_file_example/fused-screenshot(26).png",
+            "fused:tags": [
+              {
+                "id": "zarr",
+                "label": "zarr",
+                "isCreatable": true
+              },
+              {
+                "id": "ndvi",
+                "label": "ndvi",
+                "isCreatable": true
+              },
+              {
+                "id": "firewatch",
+                "label": "firewatch",
+                "isCreatable": true
+              },
+              {
+                "id": "forestfire",
+                "label": "forestfire",
+                "isCreatable": true
+              },
+              {
+                "id": "seasfire",
+                "label": "seasfire",
+                "isCreatable": true
+              }
+            ],
+            "fused:description": "This UDF shows how to access and view the [Seasfire-Dataset](https://seasfire.hua.gr/earth-as-a-graph/) in the Workbench.\n"
           },
           "source": "Zarr_file_example.py",
           "headers": []
