@@ -123,31 +123,53 @@
             "fused:tags": [
               {
                 "id": "zarr",
-                "label": "zarr",
-                "isCreatable": true
+                "label": "zarr"
               },
               {
                 "id": "ndvi",
-                "label": "ndvi",
-                "isCreatable": true
+                "label": "ndvi"
               },
               {
                 "id": "firewatch",
-                "label": "firewatch",
-                "isCreatable": true
+                "label": "firewatch"
               },
               {
                 "id": "forestfire",
-                "label": "forestfire",
-                "isCreatable": true
+                "label": "forestfire"
               },
               {
                 "id": "seasfire",
-                "label": "seasfire",
-                "isCreatable": true
+                "label": "seasfire"
               }
             ],
-            "fused:description": "This UDF shows how to access and view the [Seasfire-Dataset](https://seasfire.hua.gr/earth-as-a-graph/) in the Workbench.\n"
+            "fused:description": "This UDF shows how to access and view the [Seasfire-Dataset](https://seasfire.hua.gr/earth-as-a-graph/) in the Workbench.\n",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/f17bd02324dc6a239eec766639edbaa140cc6bf2/community/milind/Zarr_file_example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/f17bd02/community/milind/Zarr_file_example/",
+            "fused:gitPath": "community/milind/Zarr_file_example",
+            "fused:gitRef": "f17bd02324dc6a239eec766639edbaa140cc6bf2",
+            "fused:gitAuthorNames": [
+              "Milind Soni"
+            ],
+            "fused:gitAuthorUsernames": [
+              "milind-soni"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/milind-soni"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
+            ],
+            "fused:gitLastModified": "2024-06-04T20:45:32+00:00",
+            "fused:explorerTab": "community",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 21.932266976283955,
+              "longitude": 75.78150420155161,
+              "zoom": 1.9067527966901476,
+              "pitch": 0,
+              "bearing": 0
+            }
           },
           "source": "Zarr_file_example.py",
           "headers": []
