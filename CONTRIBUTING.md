@@ -75,7 +75,7 @@ These are some of our most loved UDFs created by the community:
 
 </table>
 
-Explore more UDFs for your usecases or develop one using your own data source in the workbench
+Explore more UDFs for your usecases or develop one using your own data source in the workbench.
 
 ## 1. Join the community
 
