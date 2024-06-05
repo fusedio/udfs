@@ -1,6 +1,6 @@
 # Fused UDFs - Contributing Guide
 
-Welcome to Fused! If you are reading this guide you are about to start creating your first UDF and start contributing to the Community UDFs . This guide highlights all the best practices to create an impactful UDF . Lets Dive in information.
+Welcome to Fused! If you are reading this guide you are about to start creating your first UDF and start contributing to the Community UDFs. This guide highlights all the best practices to create an impactful UDF. Lets Dive in information.
 
 ## Table of contents
 
@@ -34,7 +34,7 @@ These are some of our most loved UDFs created by the community:
           <li>This UDF shows how to open NYC yellow taxi trip dataset using DuckDB and aggregate the pickups using H3-DuckDB. Results are visualized as hexagons.</li>
         </ul>
     </td>
-    <td>H3 , Hexagon, NYC.</td>
+    <td>H3, Hexagon, NYC.</td>
     <td>Isaac Brodsky</td>
 
   </tr>
@@ -53,11 +53,7 @@ These are some of our most loved UDFs created by the community:
     <td>3</td>
     <td><a href="https://github.com/fusedio/udfs/tree/contribute-md/community/fhk/data_center_location_model">Data Center Location Model</a></td>
     <td><ul>
-          <li>Build a e2e optimization / operations research solution.
-
-Show that it's possible to dynamically model the network design problem interactively.
-
-Build this for the US Azure Data Center locations</li>
+          <li>Showing that it's possible to dynamically model the network design problem interactively.</li>
 
 </ul>
 </td>
@@ -69,7 +65,7 @@ Build this for the US Azure Data Center locations</li>
     <td>4</td>
     <td><a href="https://github.com/fusedio/udfs/tree/contribute-md/community/samlalwani/Ibis_H3_Example">Ibis H3 Example</a></td>
     <td><ul>
-          <li>This UDF shows how to open NYC yellow taxi trip dataset using Ibis with a DuckDB backend and aggregate the pickups using H3-DuckDB extension.s</li>
+          <li>This UDF shows how to open NYC yellow taxi trip dataset using Ibis with a DuckDB backend and aggregate the pickups using H3-DuckDB extension.</li>
         </ul>
     </td>
     <td> h3, duck-db, ibis </td>
