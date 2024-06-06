@@ -52,7 +52,53 @@
             "fused:udfType": "vector_single",
             "fused:slug": "pybdshadow_example",
             "fused:name": "pybdshadow_example",
-            "fused:id": null
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/89b2f4994f17015408eae2440d35543d6ebc8b8c/community/fhk/pybdshadow_example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/89b2f49/community/fhk/pybdshadow_example/",
+            "fused:gitPath": "community/fhk/pybdshadow_example",
+            "fused:gitRef": "89b2f4994f17015408eae2440d35543d6ebc8b8c",
+            "fused:description": "## Overview\n\nThis UDF shows how to analyze and visualize the amount of sunlight received by buildings within a specified geographic area.\n",
+            "fused:gitAuthorNames": [
+              "Fabion Kauker"
+            ],
+            "fused:gitAuthorUsernames": [
+              "fhk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/fhk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/4031392?v=4"
+            ],
+            "fused:gitLastModified": "2024-04-29T23:54:49+00:00",
+            "fused:explorerTab": "community",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:assetUrl": "https://raw.githubusercontent.com/fusedio/udfs/community-format/community/fhk/pybdshadow_example/fused-screenshot-pydbshadow.png",
+            "fused:tags": [
+              {
+                "id": "sunlight",
+                "label": "sunlight",
+                "isCreatable": true
+              },
+              {
+                "id": "shadow",
+                "label": "shadow",
+                "isCreatable": true
+              },
+              {
+                "id": "building-shadow",
+                "label": "building-shadow",
+                "isCreatable": true
+              }
+            ],
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 40.74399326281434,
+              "longitude": -73.99471141092455,
+              "zoom": 12.060147871821393,
+              "pitch": 0,
+              "bearing": 0
+            }
           },
           "source": "pybdshadow_example.py",
           "headers": []
