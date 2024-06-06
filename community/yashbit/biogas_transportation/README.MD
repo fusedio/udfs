@@ -1,5 +1,5 @@
 <!--fused:preview-->
-<p align="center"><img src="https://raw.githubusercontent.com/fusedio/udfs/community-format/community/yashbit/biogas_transportation/fused-screenshot-biogas_transportation_copy.png" width="600" alt="UDF preview image"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/fusedio/udfs/main/community/yashbit/biogas_transportation/fused-screenshot-biogas_transportation_copy.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
 
