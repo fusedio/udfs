@@ -1,5 +1,5 @@
 <!--fused:preview-->
-<p align="center"><img src="https://raw.githubusercontent.com/fusedio/udfs/community-format/community/fhk/pybdshadow_example/fused-screenshot-pydbshadow.png" width="600" alt="UDF preview image"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/fusedio/udfs/main/community/fhk/pybdshadow_example/fused-screenshot-pydbshadow.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
 
