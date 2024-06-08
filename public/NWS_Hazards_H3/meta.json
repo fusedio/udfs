@@ -1,0 +1,87 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "NWS_Hazards_H3",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "getFillColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b, 128]",
+                  "absent": [
+                    255,
+                    0,
+                    255,
+                    128
+                  ]
+                }
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "NWS_Hazards_H3",
+            "fused:name": "NWS_Hazards_H3",
+            "fused:description": "# Overview\nThis Fused.io UDF fetches National Weather Service (NWS) / National Oceanic and Atmospheric Admin (NOAA) weather & hazard boundary polygons, converts their geometries to h3 cells at the users desired resolution (default res=7), and returns a GeoDataFrame.\n\n# Terminology\n\n**Watch**\n: A watch is used when the risk of a hazardous weather or hydrologic event has increased significantly, but its occurrence, location, and/or timing is still uncertain.\n: It is intended to provide enough lead time so that those who need to set their plans in motion can do so.\n\n**Warning**\n: A warning is issued when a hazardous weather or hydrologic event is occurring, is imminent, or has a very high probability of occurring.\n: A warning is used for conditions posing a threat to life or property.\n\n**Advisory**\n: The expected weather condition has a pretty good chance of occurring, even a likely chance of occurring, but typically an advisory is used for less severe type of weather conditions.\n: A Wind Advisory might be issued or a Freezing Rain Advisory issued instead of a High Wind Warning or an ice Storm Warning.\n\n# External links\n* [NWS Weather & Hazard Data Viewer](https://www.wrh.noaa.gov/map/)\n* [NWS Watch/Warning/Advisory (WWA) MapServer](https://mapservices.weather.noaa.gov/eventdriven/rest/services/WWA/watch_warn_adv/MapServer)\n* [NWS Hazard Map FAQ](https://www.weather.gov/help-map)\n* [h3-py Polygon Tutorial](https://uber.github.io/h3-py/polygon_tutorial.html)",
+            "fused:tags": [
+              {
+                "id": "nws",
+                "label": "nws",
+                "isCreatable": true
+              },
+              {
+                "id": "noaa",
+                "label": "noaa"
+              },
+              {
+                "id": "vector",
+                "label": "vector"
+              },
+              {
+                "id": "h3",
+                "label": "h3",
+                "isCreatable": true
+              }
+            ],
+            "fused:assetUrl": "https://github.com/alexlowellmartin/nws-hazards-udf/blob/main/nws_hazard_preview.png",
+            "fused:id": null
+          },
+          "source": "NWS_Hazards_H3.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
