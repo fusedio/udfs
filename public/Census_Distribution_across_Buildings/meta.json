@@ -1,0 +1,106 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Census_Distribution_across_Buildings",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultParameters": [
+              {
+                "parameter": "release",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "2024-02-15-alpha-0",
+                  "2024-03-12-alpha-0"
+                ]
+              }
+            ],
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 40.779884303572246,
+              "longitude": -73.96453426313244,
+              "zoom": 12.08646398175605,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:tags": [
+              {
+                "id": "population",
+                "label": "population",
+                "isCreatable": true
+              },
+              {
+                "id": "buildings",
+                "label": "buildings"
+              },
+              {
+                "id": "overture",
+                "label": "overture",
+                "isCreatable": true
+              },
+              {
+                "id": "census",
+                "label": "census",
+                "isCreatable": true
+              },
+              {
+                "id": "usa",
+                "label": "usa",
+                "isCreatable": true
+              },
+              {
+                "id": "h3",
+                "label": "h3",
+                "isCreatable": true
+              }
+            ],
+            "fused:description": "## Overview\n\nThis UDF calculates and displays the approximate population distribution from the ACS (American Community Survey) population census dataset across building footprints in the United States, using the Overture Maps Building Footprint Dataset. By integrating H3 index, it spatially joins census population data with building footprint geometries to provide a detailed analysis of population distribution at a granular level.\n\n## External links\n\n- [ACS official Website](https://www.census.gov/programs-surveys/acs/)\n- Buildings footprints [Overture Maps](https://overturemaps.org/) \n",
+            "fused:assetUrl": "https://raw.githubusercontent.com/fusedio/udfs/main/public/Census_Distribution_across_Buildings/fused-screenshot-overture-ACS.png",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "opacity": 5,
+                "@@type": "GeoJsonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "getRadius": 10,
+                "getFillColor": "@@=[properties.cnt/3+200, properties.cnt/5, properties.cnt/20]"
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Census_Distribution_across_Buildings",
+            "fused:name": "Census_Distribution_across_Buildings",
+            "fused:id": null
+          },
+          "source": "Census_Distribution_across_Buildings.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
