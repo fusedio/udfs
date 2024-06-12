@@ -14,7 +14,7 @@ def udf(bbox: fused.types.TileGDF = None, crs="EPSG:4326", res=7):
         "outFields": "*",
         "f": "geojson",
         "geometryType": "esriGeometryEnvelope",
-        "geometry": bbox,
+        # "geometry": bbox,
         "inSR": "4326",
         "spatialRel": "esriSpatialRelEnvelopeIntersects",
     }
