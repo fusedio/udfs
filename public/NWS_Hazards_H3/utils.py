@@ -125,12 +125,15 @@ CMAP = {
     "Administrative Message": [192, 192, 192],
     "Test": [240, 255, 255],
     "Child Abduction Emergency": [255, 255, 255],
-    "Blue Alert": [255, 255, 255]
-    }
+    "Blue Alert": [255, 255, 255],
+}
+
 
 @fused.cache
 def add_rgb_cmap(gdf, key_field, cmap_dict):
-    """ Apply a colormap dictionary to a geodataframe based on a specified key field."""
-    
-    gdf[['r', 'g', 'b']] = gdf[key_field].apply(lambda key_field: pd.Series(cmap_dict.get(key_field, [255, 0, 255])))
+    """Apply a colormap dictionary to a geodataframe based on a specified key field."""
+
+    gdf[["r", "g", "b"]] = gdf[key_field].apply(
+        lambda key_field: pd.Series(cmap_dict.get(key_field, [255, 0, 255]))
+    )
     return gdf
