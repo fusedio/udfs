@@ -72,7 +72,7 @@
                 "label": "h3"
               }
             ],
-            "fused:assetUrl": "https://raw.githubusercontent.com/fusedio/udfs/main/public/NWS_Hazards_H3/nws_hazard_preview.png",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/nws_hazard_preview.png",
             "fused:id": null,
             "fused:gitUrl": "https://github.com/fusedio/udfs/tree/78fdfa3f3c8a4a66630a3b600a5ffa84ccb87fac/public/NWS_Hazards_H3/",
             "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/78fdfa3/public/NWS_Hazards_H3/",
