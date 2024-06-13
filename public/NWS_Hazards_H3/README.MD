@@ -1,12 +1,12 @@
 <!--fused:preview-->
-<p align="center"><img src="https://github.com/fusedio/udfs/blob/main/public/NWS_Hazards_H3/nws_hazard_preview.png" width="600" alt="UDF preview image"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/fusedio/udfs/main/public/NWS_Hazards_H3/nws_hazard_preview.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
 Tags: `nws` `noaa` `vector` `h3`
 
 <!--fused:readme-->
 # Overview
-This Fused.io UDF fetches National Weather Service (NWS) / National Oceanic and Atmospheric Admin (NOAA) weather & hazard boundary polygons, converts their geometries to h3 cells at the users desired resolution (default res=7), and returns a GeoDataFrame.
+This Fused.io UDF fetches National Weather Service (NWS) / National Oceanic and Atmospheric Admin (NOAA) weather & hazard boundary polygons, converts their geometries to h3 cells at the users desired resolution (default `res=7`), and returns a GeoDataFrame.
 
 # Terminology
 
@@ -24,3 +24,16 @@ This Fused.io UDF fetches National Weather Service (NWS) / National Oceanic and 
 * [NWS Watch/Warning/Advisory (WWA) MapServer](https://mapservices.weather.noaa.gov/eventdriven/rest/services/WWA/watch_warn_adv/MapServer)
 * [NWS Hazard Map FAQ](https://www.weather.gov/help-map)
 * [h3-py Polygon Tutorial](https://uber.github.io/h3-py/polygon_tutorial.html)
+
+## Run this in any Jupyter Notebook
+**NOTE:** This UDF utilizes features introduced in the h3-py v4.0.0 beta release. Install the latest beta version with `pip install h3 --pre` or with `pip install 'h3==4.0.0b3'`.
+
+```python
+import fused
+import geopandas as gpd
+import h3
+
+udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/NWS_Hazards_H3")
+gdf = fused.run(udf=udf, res=7) # Pass desired h3 cell resolution
+gdf
+```
