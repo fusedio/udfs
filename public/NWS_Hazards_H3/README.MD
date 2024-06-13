@@ -1,5 +1,5 @@
 <!--fused:preview-->
-<p align="center"><img src="https://github.com/fusedio/udfs/blob/main/public/NWS_Hazards_H3/nws_hazard_preview.png" width="600" alt="UDF preview image"></p>
+<p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/nws_hazard_preview.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
 Tags: `nws` `noaa` `vector` `h3`
