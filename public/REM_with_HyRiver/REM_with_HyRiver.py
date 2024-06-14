@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox=None):
+def udf(bounds=None):
     import nest_asyncio
     import numpy as np
     import py3dep
@@ -14,11 +14,11 @@ def udf(bbox=None):
     nest_asyncio.apply()
 
     @fused.cache
-    def fn(bbox, res=10):
+    def fn(bounds, res=10):
         # Get the DEM and the river network
-        dem = py3dep.get_dem(bbox, res)
+        dem = py3dep.get_dem(bounds, res)
         wd = pynhd.WaterData("nhdflowline_network")
-        flw = wd.bybox(bbox)
+        flw = wd.bybox(bounds)
 
         # Prepare the river network by removing isolated nodes and selecting the main stem
         flw = pynhd.prepare_nhdplus(flw, 0, 0, 0, remove_isolated=True)
@@ -29,8 +29,8 @@ def udf(bbox=None):
         rem = dem - elevation
         return rem, dem
 
-    bbox = (-119.59, 39.24, -119.47, 39.30) if bbox is None else bbox
-    rem, dem = fn(bbox)
+    bounds = (-119.59, 39.24, -119.47, 39.30) if bounds is None else bounds
+    rem, dem = fn(bounds)
     illuminated = xs.hillshade(dem, angle_altitude=10, azimuth=90)
     tf.Image.border = 0
     img = tf.stack(
