@@ -1282,22 +1282,3 @@ def ee_initialize(service_account_name="", key_path=""):
     ee.Initialize(
         opt_url="https://earthengine-highvolume.googleapis.com", credentials=credentials
     )
-
-
-def run_pool(func, arg_list, max_workers=36):
-    """
-    Executes a given function on a list of arguments using a thread pool.
-
-    Args:
-        func (callable): The function to execute. It should take one argument.
-        arg_list (list): A list of arguments to pass to the function.
-        max_workers (int, optional): The maximum number of worker threads to use. Defaults to 36.
-
-    Returns:
-        list: A list of results from applying the function to each argument in arg_list.
-    """
-    import concurrent.futures
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as pool:
-        result = list(pool.map(func, arg_list))
-    return result
