@@ -1,6 +1,64 @@
 import fused
 import pandas as pd
+import geopandas as gpd
+import requests
 
+@fused.cache
+def fetch_all_features(url, params):
+    """
+    Fetch all features from a paginated API. Makes multiple requests if the number of features exceeds maxRecordCount of a single call.
+
+    Args:
+    url (str): The API endpoint URL.
+    params (dict): The query parameters for the API call, including 'maxRecordCount'.
+
+    Returns:
+    list: A list of all features retrieved from the API.
+    """
+    
+    all_features = []
+    max_record_count = params["maxRecordCount"]
+    
+    while True:
+        response = requests.get(url, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            if "features" in data and data["features"]:
+                all_features.extend(data["features"])
+                if len(data["features"]) < max_record_count:
+                    break
+                # Update params for the next page
+                params['resultOffset'] = params.get('resultOffset', 0) + max_record_count
+            else:
+                break
+        else:
+            print(f"Error {response.status_code}: {response.text}")
+            return None
+    return all_features
+
+@fused.cache
+def add_rgb_cmap(gdf, key_field, cmap_dict):
+    """
+    Apply a colormap dictionary to a GeoDataFrame based on a specified key field.
+
+    This function adds 'r', 'g', and 'b' columns to a GeoDataFrame, where the values
+    are determined by a colormap dictionary based on the values in a specified key field.
+
+    Args:
+    gdf (GeoDataFrame): The GeoDataFrame to which the colormap will be applied.
+    key_field (str): The column in the GeoDataFrame whose values will be used to look up the colormap.
+    cmap_dict (dict): A dictionary mapping key_field values to RGB color lists.
+
+    Returns:
+    GeoDataFrame: The input GeoDataFrame with additional 'r', 'g', and 'b' columns.
+    """
+    
+    gdf[["r", "g", "b"]] = gdf[key_field].apply(
+        lambda key_field: pd.Series(cmap_dict.get(key_field, [255, 0, 255]))
+    )
+    return gdf
+
+"""NWS Hazard Type Colormap"""
 CMAP = {
     "Tsunami Warning": [253, 99, 71],
     "Tornado Warning": [255, 0, 0],
@@ -127,13 +185,3 @@ CMAP = {
     "Child Abduction Emergency": [255, 255, 255],
     "Blue Alert": [255, 255, 255],
 }
-
-
-@fused.cache
-def add_rgb_cmap(gdf, key_field, cmap_dict):
-    """Apply a colormap dictionary to a geodataframe based on a specified key field."""
-
-    gdf[["r", "g", "b"]] = gdf[key_field].apply(
-        lambda key_field: pd.Series(cmap_dict.get(key_field, [255, 0, 255]))
-    )
-    return gdf
