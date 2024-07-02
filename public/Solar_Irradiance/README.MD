@@ -2,7 +2,7 @@
 <p align="center"><img src="https://sunlightdatabucket.s3.ap-northeast-1.amazonaws.com/fused-screenshot(2).png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `solar-irradiance` `sunlight`
+Tags: `tiff`
 
 <!--fused:readme-->
 
@@ -13,4 +13,3 @@ The Solargis DNI (Direct Normal Irradiance) data provides a comprehensive view o
 
 #### Data Source
 * [SolarGIS](https://solargis.com/maps-and-gis-data/download/world)
-

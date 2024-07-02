@@ -2,7 +2,7 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Overture_Map_Example2.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `buildings` `footprint` `geoparquet` `global` `places` `overture` `vector` `admin`
+Tags: `Overture` `CooP`
 
 <!--fused:readme-->
 Buildings footprints, places of interest (POIs), admin boundaries, and transportation globally from [Overture Maps](https://overturemaps.org/).

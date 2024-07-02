@@ -2,7 +2,7 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DEM_Raster_to_Vector_Example.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `dem` `elevation` `raster` `30-meter`
+Tags:  `STAC` `MSFT-PC` `AWS` `Band algebra` `Raster-to-vector`
 
 <!--fused:readme-->
 #### Overview

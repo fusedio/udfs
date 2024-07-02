@@ -2,7 +2,7 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/NAIP_Tile_Example.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `high-res` `raster` `aws` `bbox`
+Tags:   `Band algebra` `S3` `tiff` `Fused` `STAC`
 
 <!--fused:readme-->
 # Overview

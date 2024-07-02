@@ -4,7 +4,7 @@ https://landfire.gov/version_download.php#
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/landfire-fused.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `dem` `elevation` `raster` `10-meter`
+Tags:  `Rasterio` `tiff` `Band algebra`
 
 <!--fused:readme-->
 #### Overview

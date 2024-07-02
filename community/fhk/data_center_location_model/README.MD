@@ -2,7 +2,7 @@
 <p align="center"><img src="https://fused-asset.s3.amazonaws.com/misc/data-centers.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `tutorial` `h3` `data-center` `pozibl` `highspy` `optimization` `hub-selection` `assignment-model`
+Tags: `H3-polygon` `Network analysis`
 
 <!--fused:readme-->
 ## Overview
@@ -22,4 +22,3 @@ https://pozibl.com/work/data-center-site-selection/
 https://blog.wesleyac.com/posts/ping-lightspeed
 https://datacenters.microsoft.com/globe/explore/
 https://github.com/ergo-code/highs
-

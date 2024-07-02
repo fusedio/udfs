@@ -2,7 +2,7 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/HLS_Tile_Example.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `30-meter` `aws` `nasa` `raster`
+Tags:  `STAC` `Remove-clouds` `NASA` `S3` `Mosaic`
 
 <!--fused:readme-->
 
