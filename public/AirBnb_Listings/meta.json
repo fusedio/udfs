@@ -14,23 +14,24 @@
           "metadata": {
             "fused:tags": [
               {
-                "id": "vector",
-                "label": "vector"
+                "id": "H3-vector",
+                "label": "H3-vector"
               },
               {
                 "id": "airbnb",
-                "label": "airbnb",
-                "isCreatable": true
+                "label": "airbnb"
               },
               {
-                "id": "h3",
-                "label": "h3",
-                "isCreatable": true
+                "id": "Aggregation",
+                "label": "Aggregation"
               },
               {
-                "id": "duckdb",
-                "label": "duckdb",
-                "isCreatable": true
+                "id": "DuckDB",
+                "label": "DuckDB"
+              },
+              {
+                "id": "csv",
+                "label": "csv"
               }
             ],
             "fused:vizConfig": {
