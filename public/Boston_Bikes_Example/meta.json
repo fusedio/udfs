@@ -14,21 +14,13 @@
           "metadata": {
             "fused:tags": [
               {
-                "id": "vector",
-                "label": "vector"
-              },
-              {
-                "id": "transportation",
-                "label": "transportation"
-              },
-              {
-                "id": "bikes",
-                "label": "bikes",
+                "id": "lyft",
+                "label": "lyft",
                 "isCreatable": true
               },
               {
-                "id": "real-time",
-                "label": "real-time",
+                "id": "geojson",
+                "label": "geojson",
                 "isCreatable": true
               }
             ],

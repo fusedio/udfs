@@ -17,20 +17,6 @@
             "fused:datasets": "Microsoft Building Footprint",
             "fused:tags": [
               {
-                "id": "US",
-                "label": "US",
-                "isCreatable": true
-              },
-              {
-                "id": "buildings",
-                "label": "buildings"
-              },
-              {
-                "id": "Footprint",
-                "label": "Footprint",
-                "isCreatable": true
-              },
-              {
                 "id": "geoparquet",
                 "label": "geoparquet",
                 "isCreatable": true

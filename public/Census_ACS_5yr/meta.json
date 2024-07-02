@@ -12,6 +12,24 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
+            "fused:tags": [
+              {
+                "id": "xlsx",
+                "label": "xslx"
+              },
+              {
+                "id": "csv",
+                "label": "csv"
+              },
+              {
+                "id": "Fused",
+                "label": "Fused"
+              },
+              {
+                "id": "Aggregation",
+                "label": "Aggregation"
+              }
+            ],
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",

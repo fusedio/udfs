@@ -15,24 +15,16 @@
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/CDLS_Tile_Example.png",
             "fused:tags": [
               {
-                "id": "raster",
-                "label": "raster"
+                "id": "Filter",
+                "label": "Filter"
               },
               {
-                "id": "aws",
+                "id": "AWS",
                 "label": "AWS"
               },
               {
-                "id": "bbox",
-                "label": "bbox"
-              },
-              {
-                "id": "lulc",
-                "label": "LULC"
-              },
-              {
-                "id": "30-meter",
-                "label": "30 meter"
+                "id": "Rasterio",
+                "label": "Rasterio"
               }
             ],
             "fused:description": "# Overview\n\nThis UDF shows how to open [Cropland Data Layer](https://www.nass.usda.gov/Research_and_Science/Cropland/SARS1a.php) (CDL) tiff files. The CDL is a categorical land cover dataset that provides information about the types of crops and land cover on agricultural lands in the United States. The CDL is produced by the United States Department of Agriculture (USDA) National Agricultural Statistics Service (NASS) on an annual basis.\n\n# External links\n\n- [Original Download Links](https://www.nass.usda.gov/Research_and_Science/Cropland/Release/index.php)",

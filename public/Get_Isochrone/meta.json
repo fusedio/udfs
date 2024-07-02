@@ -68,16 +68,12 @@
             ],
             "fused:tags": [
               {
-                "id": "vector",
-                "label": "vector"
+                "id": "Isochrone",
+                "label": "Isochrone"
               },
               {
-                "id": "osm",
-                "label": "osm"
-              },
-              {
-                "id": "tutorial",
-                "label": "tutorial"
+                "id": "Valhalla",
+                "label": "Valhalla"
               }
             ],
             "fused:description": "# Overview\n\nThis UDF is using Valhalla API to create an isochrone. Valhalla, an open-source routing engine, and its accompanying libraries are designed for OpenStreetMap data, offering features such as time+distance matrix computation, isochrones, elevation sampling, map matching, and tour optimization (Travelling Salesman).\n\n# External links\n\n- [Valhalla Github repo](https://github.com/valhalla/valhalla)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Get_Isochrone\")\ngdf = fused.run(udf=udf)\ngdf\n```",

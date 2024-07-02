@@ -55,13 +55,8 @@
             "fused:assetUrl": "https://sunlightdatabucket.s3.ap-northeast-1.amazonaws.com/fused-screenshot(2).png",
             "fused:tags": [
               {
-                "id": "solar-irradiance",
-                "label": "solar-irradiance",
-                "isCreatable": true
-              },
-              {
-                "id": "sunlight",
-                "label": "sunlight",
+                "id": "tiff",
+                "label": "tiff",
                 "isCreatable": true
               }
             ]

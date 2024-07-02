@@ -29,20 +29,24 @@
             "fused:datasets": "Digital Elevation Model",
             "fused:tags": [
               {
-                "id": "dem",
-                "label": "dem"
+                "id": "Raster-to-vector",
+                "label": "Raster-to-vector"
               },
               {
-                "id": "elevation",
-                "label": "elevation"
+                "id": "Band algebra",
+                "label": "Band algebra"
               },
               {
-                "id": "raster",
-                "label": "raster"
+                "id": "AWS",
+                "label": "AWS"
               },
               {
-                "id": "30-meter",
-                "label": "30-meter"
+                "id": "MSFT-PC",
+                "label": "MSFT-PC"
+              },
+              {
+                "id": "STAC",
+                "label": "STAC"
               }
             ],
             "fused:description": "#### Overview\n\nThis UDF shows an example of vectorizing a raster image, based on a minimum elevation threshold.\n\nThe data for this UDF comes from the [Copernicus DEM](https://github.com/fusedio/udfs/tree/main/public/DEM_Tile_Example) example UDF.\n\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/DEM_Raster_to_Vector_Example\")\ngdf = fused.run(udf=udf)\ngdf\n```\n",
