@@ -15,20 +15,16 @@
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Duckdb_H3_Example.png",
             "fused:tags": [
               {
-                "id": "file",
-                "label": "file"
+                "id": "Ibis",
+                "label": "Ibis"
               },
               {
-                "id": "vector",
-                "label": "vector"
+                "id": "H3-vector",
+                "label": "H3-vector"
               },
               {
-                "id": "aws",
-                "label": "aws"
-              },
-              {
-                "id": "tutorial",
-                "label": "tutorial"
+                "id": "Aggregation",
+                "label": "Aggregation"
               }
             ],
             "fused:description": "## Overview\n\nThis UDF shows how to open NYC yellow taxi trip dataset using DuckDB.\n\n## External links\n\n- [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/DuckDB_NYC_Example\")\ngdf = fused.run(udf=udf)\ngdf\n```\n",

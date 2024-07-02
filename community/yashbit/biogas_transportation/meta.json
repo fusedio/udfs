@@ -89,23 +89,16 @@
             },
             "fused:tags": [
               {
-                "id": "biogas",
-                "label": "biogas",
-                "isCreatable": true
+                "id": "GEE",
+                "label": "GEE"
               },
               {
-                "id": "methane",
-                "label": "methane",
-                "isCreatable": true
+                "id": "csv",
+                "label": "csv"
               },
               {
-                "id": "gee",
-                "label": "gee"
-              },
-              {
-                "id": "google-earth-engine",
-                "label": "google-earth-engine",
-                "isCreatable": true
+                "id": "geojson",
+                "label": "geojson"
               }
             ]
           },

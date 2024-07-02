@@ -18,11 +18,6 @@
                 "id": "huggingface",
                 "label": "huggingface",
                 "isCreatable": true
-              },
-              {
-                "id": "gpt",
-                "label": "gpt",
-                "isCreatable": true
               }
             ],
             "fused:description": "## Overview\n\nThis UDF illustrates how to run HuggingFace models with Fused. \n\nAs a simple example, it runs OpenAI GPT2-medium model on a prompt set with the `input_text` parameter.\n\nNote that GPT-2 is a large language model that generates short paragraphs of text. It debuted in 2019, and its accuracy and performance are considered below industry standards. This model is used to demonstrate use of HuggingFace within Fused - so expect the model's responses to be erroneous.\n\n## External links\n\n- [HuggingFace GPT2 profile card](https://huggingface.co/openai-community/gpt2)",

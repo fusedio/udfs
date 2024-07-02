@@ -56,8 +56,12 @@
             "fused:assetUrl": "https://luke2019-eng.github.io/Fused-LA_parking_occupancy/LA_Fused.png",
             "fused:tags": [
               {
-                "id": "transportation",
-                "label": "transportation"
+                "id": "Aggregation",
+                "label": "Aggregation"
+              },
+              {
+                "id": "json",
+                "label": "json"
               }
             ],
             "fused:defaultViewState": {

@@ -76,19 +76,16 @@
             "fused:assetUrl": "https://raw.githubusercontent.com/fusedio/udfs/main/community/fhk/pybdshadow_example/fused-screenshot-pydbshadow.png",
             "fused:tags": [
               {
-                "id": "sunlight",
-                "label": "sunlight",
-                "isCreatable": true
+                "id": "Viewshed",
+                "label": "Viewshed"
               },
               {
-                "id": "shadow",
-                "label": "shadow",
-                "isCreatable": true
+                "id": "geojson",
+                "label": "geojson"
               },
               {
-                "id": "building-shadow",
-                "label": "building-shadow",
-                "isCreatable": true
+                "id": "Buffer",
+                "label": "Buffer"
               }
             ],
             "fused:defaultViewState": {

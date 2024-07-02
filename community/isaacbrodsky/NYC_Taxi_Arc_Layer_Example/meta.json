@@ -41,21 +41,21 @@
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/NYC_Taxi_Arc_Layer_Example.png",
             "fused:tags": [
               {
-                "id": "file",
-                "label": "file"
+                "id": "OD",
+                "label": "OD"
               },
               {
-                "id": "vector",
-                "label": "vector"
+                "id": "Aggregation",
+                "label": "Aggregation"
               },
               {
-                "id": "arc",
-                "label": "arc",
+                "id": "parquet",
+                "label": "parquet",
                 "isCreatable": true
               },
               {
-                "id": "taxi",
-                "label": "taxi",
+                "id": "NYC Open Data",
+                "label": "NYC Open Data",
                 "isCreatable": true
               }
             ],

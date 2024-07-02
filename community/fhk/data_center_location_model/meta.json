@@ -15,42 +15,12 @@
             "fused:assetUrl": "https://fused-asset.s3.amazonaws.com/misc/data-centers.png",
             "fused:tags": [
               {
-                "id": "tutorial",
-                "label": "tutorial"
+                "id": "H3-polygon",
+                "label": "H3-polygon"
               },
               {
-                "id": "h3",
-                "label": "h3"
-              },
-              {
-                "id": "data-center",
-                "label": "data-center",
-                "isCreatable": true
-              },
-              {
-                "id": "pozibl",
-                "label": "pozibl",
-                "isCreatable": true
-              },
-              {
-                "id": "highspy",
-                "label": "highspy",
-                "isCreatable": true
-              },
-              {
-                "id": "optimization",
-                "label": "optimization",
-                "isCreatable": true
-              },
-              {
-                "id": "hub-selection",
-                "label": "hub-selection",
-                "isCreatable": true
-              },
-              {
-                "id": "assignment-model",
-                "label": "assignment-model",
-                "isCreatable": true
+                "id": "Network analysis",
+                "label": "Network analysis"
               }
             ],
             "fused:description": "## Overview\n\nBuild a e2e optimization / operations research solution.\n\nShow that it's possible to dynamically model the network design problem interactively.\n\nBuild this for the US Azure Data Center locations\n\n## Blog post\n\nhttps://pozibl.com/work/data-center-site-selection/\n\n## External links\n\nhttps://blog.wesleyac.com/posts/ping-lightspeed\nhttps://datacenters.microsoft.com/globe/explore/\nhttps://github.com/ergo-code/highs\n\n",
