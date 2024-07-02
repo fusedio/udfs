@@ -20,17 +20,13 @@ def pixel2deg(xtile, ytile, zoom, xpixel, ypixel, extent = 4096):
 
 
 @fused.udf
-def udf(bbox: fused.types.TileGDF=None):
+def udf(bbox: fused.types.TileGDF=None, token='{insert-mapbox-token}'):
     import geopandas as gpd
     import shapely
     import requests, mapbox_vector_tile, json
-    tile_x = bbox.x.iloc[0]
-    tile_y = bbox.y.iloc[0]
-    tile_z = bbox.z.iloc[0]
+    tile_x, tile_y, tile_z = bbox[['x', 'y', 'z']].iloc[0]
 
-    token = '{insert-mapbox-token}'
     r = requests.get(f'https://api.mapbox.com/v4/fhk.b3ivguut/{tile_z}/{tile_x}/{tile_y}.vector.pbf?sku=101JdYmJ0PpRQ&access_token={token}')
-
 
     vector3 = mapbox_vector_tile.decode(tile=r.content, 
         transformer = lambda x, y: pixel2deg(tile_x, tile_y, tile_z, x, y)
