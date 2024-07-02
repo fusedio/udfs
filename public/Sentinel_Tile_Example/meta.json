@@ -56,24 +56,24 @@
             "fused:description": "\n### Overview [link](https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a)\nThe [Sentinel-2](https://sentinel.esa.int/web/sentinel/missions/sentinel-2) program provides global imagery in thirteen spectral bands at 10m-60m resolution and a revisit time of approximately five days. This dataset represents the global Sentinel-2 archive, from 2016 to the present, processed to L2A (bottom-of-atmosphere) using Sen2Cor and converted to cloud-optimized GeoTIFF format.\n\n### External links\n* [Reference](https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a)\n* [AWS Earth Search STAC](https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a)\n* [Microsoft Planetary Computer STAC](https://planetarycomputer.microsoft.com/api/stac/v1/collections/sentinel-2-l2a)",
             "fused:tags": [
               {
-                "id": "10-meter",
-                "label": "10 meter"
+                "id": "Band algebra",
+                "label": "Band algebra"
               },
               {
-                "id": "aws",
+                "id": "Remove-clouds",
+                "label": "Remove-clouds"
+              },
+              {
+                "id": "MSFT-PC",
+                "label": "MSFT-PC"
+              },
+              {
+                "id": "AWS",
                 "label": "AWS"
               },
               {
-                "id": "pc",
-                "label": "PC"
-              },
-              {
-                "id": "bbox",
-                "label": "bbox"
-              },
-              {
-                "id": "raster",
-                "label": "raster"
+                "id": "STAC",
+                "label": "STAC"
               }
             ],
             "fused:datasets": "Sentinel 2",

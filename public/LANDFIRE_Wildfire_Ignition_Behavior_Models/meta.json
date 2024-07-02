@@ -12,6 +12,20 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
+            "fused:tags": [
+              {
+                "id": "Band algebra",
+                "label": "Band algebra"
+              },
+              {
+                "id": "Rasteria",
+                "label": "Rasteria"
+              },
+              {
+                "id": "tiff",
+                "label": "tiff"
+              }
+            ],
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",

@@ -12,6 +12,16 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
+            "fused:tags": [
+              {
+                "id": "USGS",
+                "label": "USGS"
+              },
+              {
+                "id": "Hillshade",
+                "label": "Hillshade"
+              }
+            ],
             "fused:defaultViewState": {
               "enable": false,
               "latitude": 33.93986525365819,

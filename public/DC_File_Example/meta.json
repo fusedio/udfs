@@ -12,6 +12,20 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
+            "fused:tags": [
+              {
+                "id": "Buffer",
+                "label": "Buffer"
+              },
+              {
+                "id": "shapefile",
+                "label": "shapefile"
+              },
+              {
+                "id": "GeoPandas",
+                "label": "GeoPandas"
+              }
+            ],
             "fused:vizConfig": {
               "@@type": "GeoJsonLayer",
               "stroked": true,

@@ -28,20 +28,24 @@
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/NAIP_Tile_Example.png",
             "fused:tags": [
               {
-                "id": "high-res",
-                "label": "high-res"
+                "id": "Band algebra",
+                "label": "Band algebra"
               },
               {
-                "id": "raster",
-                "label": "raster"
+                "id": "S3",
+                "label": "S3"
               },
               {
-                "id": "aws",
-                "label": "AWS"
+                "id": "tiff",
+                "label": "tiff"
               },
               {
-                "id": "bbox",
-                "label": "bbox"
+                "id": "Fused",
+                "label": "Fused"
+              },
+              {
+                "id": "STAC",
+                "label": "STAC"
               }
             ],
             "fused:description": "# Overview\n\nNAIP aerial imagery, obtained seasonally in the U.S., aims to deliver digital ortho photography to the government and the public within a year of acquisition.\n\n# External links\n\n- [National Agriculture Imagery Program (NAIP)](https://naip-usdaonline.hub.arcgis.com/)",
