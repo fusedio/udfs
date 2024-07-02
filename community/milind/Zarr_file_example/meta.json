@@ -126,20 +126,12 @@
                 "label": "zarr"
               },
               {
-                "id": "ndvi",
-                "label": "ndvi"
+                "id": "Band algebra",
+                "label": "Band algebra"
               },
               {
-                "id": "firewatch",
-                "label": "firewatch"
-              },
-              {
-                "id": "forestfire",
-                "label": "forestfire"
-              },
-              {
-                "id": "seasfire",
-                "label": "seasfire"
+                "id": "Xarray",
+                "label": "Xarray"
               }
             ],
             "fused:description": "This UDF shows how to access and view the [Seasfire-Dataset](https://seasfire.hua.gr/earth-as-a-graph/) in the Workbench.\n",

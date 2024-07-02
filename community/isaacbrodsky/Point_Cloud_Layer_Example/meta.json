@@ -44,21 +44,12 @@
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Point_Cloud_Layer_Example.png",
             "fused:tags": [
               {
-                "id": "vector",
-                "label": "vector"
+                "id": "Pont cloud",
+                "label": "Pont cloud"
               },
               {
-                "id": "point-cloud",
-                "label": "point-cloud",
-                "isCreatable": true
-              },
-              {
-                "id": "tutorial",
-                "label": "tutorial"
-              },
-              {
-                "id": "3d",
-                "label": "3d",
+                "id": "json",
+                "label": "json",
                 "isCreatable": true
               }
             ],

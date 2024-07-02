@@ -35,6 +35,9 @@ Operations:
     - Mask
     - Projection
     - Hillshade
+    - Point cloud
+    - OD
+    - Viewshed
 
 Data type:
   - attributes:
@@ -85,3 +88,4 @@ Connector:
     - GEE
     - Rasterio
     - GeoPandas
+    - Ibis
