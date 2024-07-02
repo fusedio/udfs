@@ -2,7 +2,7 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Sentinel_Tile_Example.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `10-meter` `aws` `pc` `bbox` `raster`
+Tags: `USGS` `Hillshade`
 
 <!--fused:readme-->
 

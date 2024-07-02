@@ -3,7 +3,7 @@
 
 <!--fused:tags-->
 
-Tags: `shadows` `sunlight` `buildings`
+Tags: `Viewshed` `geojson` `Buffer`
 
 <!--fused:readme-->
 

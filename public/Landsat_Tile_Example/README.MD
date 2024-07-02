@@ -2,7 +2,7 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Landsat_Tile_Example.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `raster` `30-meter` `aws`
+Tags:  `Element84` `S3` `Band algebra` `Remove-clouds` `STAC`
 
 <!--fused:readme-->
 

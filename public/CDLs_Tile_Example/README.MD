@@ -2,7 +2,7 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/CDLS_Tile_Example.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `raster` `aws` `bbox` `lulc` `30-meter`
+Tags: `Mask` `AWS` `Rasterio`
 
 <!--fused:readme-->
 # Overview

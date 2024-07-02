@@ -3,7 +3,7 @@
 
 <!--fused:tags-->
 
-Tags: `biogas` `methane` `gee` `google-earth-engine`
+Tags: `GEE` `csv` `geojson`
 
 <!--fused:readme-->
 

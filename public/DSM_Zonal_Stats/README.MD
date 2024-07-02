@@ -2,7 +2,7 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DSM_Zonal_Stats.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `30-meter` `aws` `tutorial` `buildings`
+Tags: `Zonal stats` `tiff` `S3`
 
 <!--fused:readme-->
 ## Overview
