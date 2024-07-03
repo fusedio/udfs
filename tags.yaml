@@ -2,42 +2,48 @@ Operations:
   - attributes:
     - optional: true
   - tags:
-    - Dissolve
-    - Point-to-line
-    - Zonal stats
-    - Change detection
-    - Band algebra
-    - Temporal analysis
-    - Merge
-    - Mosaic
-    - Super-resolution
-    - Clip
-    - XY Retrieval
-    - Point-to-polygon
-    - Proximity
-    - H3-Raster
-    - Raster-to-vector
-    - Remove-clouds
-    - Object detection
-    - Voronoi
-    - Buffer
-    - Calculate-area
-    - Calculate-distance
-    - Self-clip
-    - Dissolve
-    - Vector-to-raster
-    - H3-vector
-    - Isochrone
-    - Routing
-    - Reverse-geocode
-    - Aggregation
-    - Filter
-    - Mask
-    - Projection
-    - Hillshade
-    - Point cloud
-    - OD
-    - Viewshed
+    - Vector:
+      - Dissolve
+      - Point-to-line
+      - OD
+      - Point cloud
+      - Voronoi
+      - Buffer
+      - Calculate-area
+      - Calculate-distance
+      - Self-clip
+      - Dissolve
+      - Vector-to-raster
+      - Isochrone
+      - Routing
+      - Reverse-geocode
+      - Aggregation
+      - Filter
+      - Projection
+    - Vector-vector:
+      - Proximity
+      - Point-to-polygon
+      - Viewshed
+    - Vector-raster:
+      - Zonal stats
+      - Clip
+    - Raster-raster:
+      - Change detection
+      - Temporal analysis
+      - Merge
+      - Mosaic
+    - Raster:
+      - Band algebra
+      - Hillshade
+      - Mask
+      - Super-resolution
+      - Raster-to-vector
+      - XY Retrieval
+      - Object detection
+      - Remove-clouds
+    - H3:
+      - H3-Raster
+      - H3-vector
 
 Data type:
   - attributes:
@@ -55,6 +61,7 @@ Data type:
     - kml
     - zarr
     - xlsx
+    - pbf
 
 Data host:
   - attributes:
