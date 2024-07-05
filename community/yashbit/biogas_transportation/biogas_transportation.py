@@ -1,9 +1,9 @@
 @fused.udf
 def udf(bbox: fused.types.TileGDF = None, n=10):
     import json
-
+    x = 10
     import core_utils
-    import ee
+    import range
     import geopandas as gpd
     import pandas as pd
     import shapely
