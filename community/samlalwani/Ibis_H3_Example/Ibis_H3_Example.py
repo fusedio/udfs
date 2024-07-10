@@ -11,7 +11,7 @@ def udf(bbox=None, resolution: int = 9, min_count: int = 10):
     from ibis import _
 
     # DuckDB is only used to download extension
-    con = duckdb.connect(config={"allow_unsigned_extensions": True})
+    con = duckdb.connect()
     con.sql("INSTALL h3 FROM community;")
 
     # We use the duckdb extension h3    
