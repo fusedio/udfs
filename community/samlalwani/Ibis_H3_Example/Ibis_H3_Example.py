@@ -11,19 +11,11 @@ def udf(bbox=None, resolution: int = 9, min_count: int = 10):
     from ibis import _
 
     # DuckDB is only used to download extension
-    utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
-    ).utils
-    h3_utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/fb65aff/public/DuckDB_H3_Example/"
-    ).utils
+    con = duckdb.connect()
+    con.sql("INSTALL h3 FROM community;")
 
-    con = duckdb.connect(config={'allow_unsigned_extensions': True})
-    h3_utils.load_h3_duckdb(con)
-
-    # We use the duckdb extension h3ext
-    # con.sql(f"""INSTALL httpfs; LOAD httpfs;""")
-    con_ibis = ibis.duckdb.connect(temp_directory='/tmp', allow_unsigned_extensions=True, extensions=['h3ext'])
+    # We use the duckdb extension h3    
+    con_ibis = ibis.duckdb.connect(temp_directory='/tmp', allow_unsigned_extensions=True, extensions=['h3'])
 
     @fused.cache
     def read_data(url, resolution, min_count):
@@ -52,7 +44,7 @@ def udf(bbox=None, resolution: int = 9, min_count: int = 10):
         gdf = (con_ibis
                .read_parquet(url, table_name='tripdata_orig')
                .sql(sql_str_h3)
-               .group_by(by=['cell_id'])
+               .group_by(['cell_id'])
                .agg(cnt=_.cell_id.count())
                .filter(_.cnt > min_count)
                .alias('tripdata_h3')
@@ -68,6 +60,10 @@ def udf(bbox=None, resolution: int = 9, min_count: int = 10):
     gdf = read_data(url, resolution, min_count)
 
     print("number of trips using ibis:", gdf.cnt.sum())
+    print(gdf)
+
+    return gdf
+
     print(gdf)
 
     return gdf
