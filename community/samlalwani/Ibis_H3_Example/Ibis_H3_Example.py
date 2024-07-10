@@ -2,11 +2,11 @@
 # Note: This UDF is a copy of the DuckDB_H3_Example
 # Modified to use IBIS project. All the original code is kept as is, commented out.
 
+
 @fused.udf
 def udf(bbox=None, resolution: int = 9, min_count: int = 10):
-    import shapely
-    import geopandas as gpd
     import duckdb
+    import geopandas as gpd
     import ibis
     from ibis import _
 
@@ -14,8 +14,10 @@ def udf(bbox=None, resolution: int = 9, min_count: int = 10):
     con = duckdb.connect()
     con.sql("INSTALL h3 FROM community;")
 
-    # We use the duckdb extension h3    
-    con_ibis = ibis.duckdb.connect(temp_directory='/tmp', allow_unsigned_extensions=True, extensions=['h3'])
+    # We use the duckdb extension h3
+    con_ibis = ibis.duckdb.connect(
+        temp_directory="/tmp", allow_unsigned_extensions=True, extensions=["h3"]
+    )
 
     @fused.cache
     def read_data(url, resolution, min_count):
@@ -29,9 +31,9 @@ def udf(bbox=None, resolution: int = 9, min_count: int = 10):
         # """, params={'url': url, 'resolution': resolution, 'min_count': min_count}).df()
 
         sql_str_h3 = f"""
-                    SELECT 
-                    *, 
-                    h3_latlng_to_cell(pickup_latitude, pickup_longitude, {resolution}) AS cell_id,                    
+                    SELECT
+                    *,
+                    h3_latlng_to_cell(pickup_latitude, pickup_longitude, {resolution}) AS cell_id,
                     FROM tripdata_orig
                     """
         sql_str_boundary = f"""
@@ -41,29 +43,27 @@ def udf(bbox=None, resolution: int = 9, min_count: int = 10):
                             FROM tripdata_h3
                             """
 
-        gdf = (con_ibis
-               .read_parquet(url, table_name='tripdata_orig')
-               .sql(sql_str_h3)
-               .group_by(['cell_id'])
-               .agg(cnt=_.cell_id.count())
-               .filter(_.cnt > min_count)
-               .alias('tripdata_h3')
-               .sql(sql_str_boundary)
-               .to_pandas()
-               )
-        gdf = gpd.GeoDataFrame(gdf, geometry=gpd.GeoSeries.from_wkt(gdf.geometry), crs='epsg:4326')
+        gdf = (
+            con_ibis.read_parquet(url, table_name="tripdata_orig")
+            .sql(sql_str_h3)
+            .group_by(["cell_id"])
+            .agg(cnt=_.cell_id.count())
+            .filter(_.cnt > min_count)
+            .alias("tripdata_h3")
+            .sql(sql_str_boundary)
+            .to_pandas()
+        )
+        gdf = gpd.GeoDataFrame(
+            gdf, geometry=gpd.GeoSeries.from_wkt(gdf.geometry), crs="epsg:4326"
+        )
 
         return gdf
 
-    url = r'https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2010-01.parquet'
+    url = r"https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2010-01.parquet"
 
     gdf = read_data(url, resolution, min_count)
 
     print("number of trips using ibis:", gdf.cnt.sum())
-    print(gdf)
-
-    return gdf
-
     print(gdf)
 
     return gdf
