@@ -22,4 +22,13 @@ def udf(target_token: str = target_token, params_json: str = params_json):
     def fn(params):
         return fused.run(target_token, params=json.dumps(params))
 
-    return pd.concat(fused.utils.common.run_pool(fn, params_list))
+    output = [
+        each
+        for each in fused.utils.common.run_pool(fn, params_list)
+        if each is not None
+    ]
+
+    if len(output) == 0:
+        return None
+    else:
+        return pd.concat(output, ignore_index=True)
