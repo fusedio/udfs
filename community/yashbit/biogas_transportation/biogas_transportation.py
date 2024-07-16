@@ -1,7 +1,8 @@
 @fused.udf
 def udf(bbox: fused.types.TileGDF = None, n=10):
     import json
-
+    import numpy as np 
+    import pandas as pd
     import core_utils
     import ee
     import geopandas as gpd
