@@ -11,7 +11,7 @@ def udf(bbox=None, resolution: int = 9, min_count: int = 10):
     ).utils
     con = duckdb_with_h3()
 
-    con.sql(f"""INSTALL httpfs; LOAD httpfs;""")
+    con.sql("INSTALL httpfs; LOAD httpfs;")
     
     @fused.cache
     def read_data(url, resolution, min_count):
