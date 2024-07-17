@@ -32,16 +32,20 @@ def udf(
     bbox: fused.types.TileGDF = None,
     use_columns: list = None,
     providers=None, # e.g. ['AT&T'] Filter the data to show only these, a list of strings as shown in the data
-    unserved=[25,3], # The [download speed, upload speed]
-    underserved=[100,20], # The [download speed, upload speed]
+    unserved="[25,3]", # The [download speed, upload speed]
+    underserved="[100,20]", # The [download speed, upload speed]
     highlight='underserved', # "unserved" or "underserved" Change the color to red to show which blocks meet the above criteria
     exclude_providers=None, # e.g. ['Starlink'] Filter the data to exclude these
-    tech_codes=[10,11,12,20,30,40,41,42,43,50]): # Filter the data to only include these, https://www.fcc.gov/general/technology-codes-used-fixed-broadband-deployment-data
+    tech_codes="[10,11,12,20,30,40,41,42,43,50]"): # Filter the data to only include these, https://www.fcc.gov/general/technology-codes-used-fixed-broadband-deployment-data
     # 10,11,12,20,30,40,41,42,43,50,60,70,90,0
     import json
     utils = fused.load(
             "https://github.com/fusedio/udfs/tree/f8f0c0f/public/common/"
         ).utils
+
+    unserved = json.loads(unserved)
+    underserved = json.loads(underserved)
+    tech_codes = json.loads(tech_codes)
 
     table_path = f"s3://fused-asset/data/fcc_bdc_map_latest/"
     table_path = table_path.rstrip("/")
@@ -50,6 +54,8 @@ def udf(
 
     gdf['brand_info'] = gdf.brand_info.apply(json.loads)
 
+    gdf['brands'] = gdf['brand_info'].apply(lambda x: ', '.join([k for k in x.keys()]))
+
     if providers is not None:
         gdf['brand_info'] = gdf.brand_info.apply(lambda x: {k: v if k in providers else {'': ''} for k, v in x.items()})
     
@@ -57,16 +63,16 @@ def udf(
         gdf['brand_info'] = gdf.brand_info.apply(lambda x: {k: v if k not in exclude_providers else {'': ''} for k, v in x.items()})
 
     if tech_codes is not None:
-        test = gdf.brand_info.apply(lambda x: {k: v if len(set(v.get('tech_list', [])) & set(tech_codes)) > 0 else {'': ''} for k, v in x.items()})
+        test = gdf.brand_info.apply(lambda x: {k: v if len(set(v.get('tech_list', [])) & set([int(t) for t in tech_codes])) > 0 else {'': ''} for k, v in x.items()})
         gdf['brand_info'] = test
     gdf['max_down'] = gdf.brand_info.apply(lambda x: max([0] + [v.get('max_download_speed', 0) for v in x.values()]))
     gdf['max_up'] = gdf.brand_info.apply(lambda x: max([0] + [v.get('max_upload_speed', 0) for v in x.values()]))
 
     gdf['underserved'] = False
-    gdf.loc[(gdf['max_down'] < underserved[0])|(gdf['max_up'] < underserved[1]), 'underserved'] = True
+    gdf.loc[(gdf['max_down'] < int(underserved[0]))|(gdf['max_up'] < int(underserved[1])), 'underserved'] = True
 
     gdf['unserved'] = False
-    gdf.loc[(gdf['max_down'] < unserved[0])|(gdf['max_up'] < unserved[1]), 'unserved'] = True
+    gdf.loc[(gdf['max_down'] < int(unserved[0]))|(gdf['max_up'] < int(unserved[1])), 'unserved'] = True
 
     gdf['r'] = 0
     gdf['g'] = 0
@@ -74,4 +80,4 @@ def udf(
 
     gdf.loc[gdf[highlight] == True, 'r'] = 255
 
-    return gdf[['max_down', 'max_up', 'brand_info', 'unserved', 'underserved', 'r', 'g', 'b', 'geometry']]
+    return gdf[['max_down', 'max_up', 'brands', 'brand_info', 'unserved', 'underserved', 'r', 'g', 'b', 'geometry']]
