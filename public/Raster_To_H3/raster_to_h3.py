@@ -12,7 +12,7 @@ def udf(
     import pyarrow.parquet as pq
     import rasterio
     from shapely.geometry import box
-    from utils import chunked_tiff_to_points, run_query
+    from utils import chunked_tiff_to_points, get_chunk_slices_from_shape, run_query
 
     df_tiff = chunked_tiff_to_points(
         tiff_path, i=cell_id, x_chunks=x_chunks, y_chunks=y_chunks
