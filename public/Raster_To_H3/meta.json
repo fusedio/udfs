@@ -1,0 +1,73 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Raster_To_H3",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 5,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "vectorLayer": {
+                "opacity": 0.6,
+                "@@type": "H3HexagonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "getHexagon": "@@=hex",
+                "getFillColor": "@@=[metric*100, metric*30, metric*10]",
+                "getElevation": "@@=metric",
+                "elevationScale": 1
+              }
+            },
+            "fused:udfType": "vector_single",
+            "fused:slug": "Raster_To_H3",
+            "fused:name": "Raster_To_H3",
+            "fused:id": null,
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 9.990360508611749,
+              "longitude": 10.142004327038668,
+              "zoom": 11.242460654045457,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Raster_To_H3.png",
+            "fused:tags": [
+              {
+                "id": "raster",
+                "label": "raster"
+              },
+              {
+                "id": "h3",
+                "label": "h3",
+                "isCreatable": true
+              }
+            ],
+            "fused:description": "## Overview\n\nRaster to H3 Tile Converter\n\nConverts raster data to H3 hexagonal tiles. It processes a section of a GeoTIFF file and aggregates the data into H3 cells.\n\nThe function returns a pandas DataFrame with the following columns:\n- hex: H3 cell ID (as a hexadecimal string)\n- agg_data: Sum of data values in the cell\n- metric: Same as agg_data (for compatibility)\n\n"
+          },
+          "source": "Raster_To_H3.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
