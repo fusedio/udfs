@@ -6,7 +6,9 @@ def udf(
     y_chunks: int = 100,
     h3_size=12,
 ):
+    import geopandas as gpd
     import pandas as pd
+    from shapely.geometry import box
 
     utils = fused.load(
         "https://github.com/fusedio/udfs/tree/43656f6/public/common/"
