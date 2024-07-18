@@ -44,7 +44,7 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Raster_To_H3.png",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/raster_to_h3.png",
             "fused:tags": [
               {
                 "id": "raster",
