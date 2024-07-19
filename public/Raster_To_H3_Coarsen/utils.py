@@ -24,9 +24,8 @@ def chunked_tiff_to_points(
     from rasterio.enums import Resampling
 
     with rasterio.open(tiff_path) as src:
-        print(src.shape)
         if coarsen == 1:
-            shape = src.shape
+            shape0 = shape = src.shape
             transform = src.transform
         else:
             shape0 = src.shape
@@ -37,17 +36,17 @@ def chunked_tiff_to_points(
             transform = list(src.transform)
             transform[0] = transform[0] * coarsen
             transform[4] = transform[4] * coarsen
-        # print(transform[0]*1000)
+
         x_list, y_list = shape_transform_to_xycoor(shape[-2:], transform)
         x_slice, y_slice = get_chunk_slices_from_shape(
             shape[-2:], x_chunks, y_chunks, i
         )
-        # print(shape, x_list[0],x_list[-1], src.transform)
+
         x_list = x_list[x_slice]
         y_list = y_list[y_slice]
         X, Y = np.meshgrid(x_list, y_list)
         shape = (y_slice.stop - y_slice.start, x_slice.stop - x_slice.start)
-        print(shape, x_slice, y_slice)
+
         # todo: clean the xy slice
         x_slice, y_slice = get_chunk_slices_from_shape(
             shape0[-2:], x_chunks, y_chunks, i
