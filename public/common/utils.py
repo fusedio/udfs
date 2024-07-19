@@ -665,28 +665,45 @@ def infer_lonlat(columns: Sequence[str]) -> Optional[Tuple[str, str]]:
     return None
 
 
-def lonlat_to_geom(
-    df: pd.DataFrame,
-    cols_lonlat: Optional[Tuple[str, str]] = None,
-    verbose: bool = False,
-) -> NDArray[np.object_]:
-    """Convert longitude-latitude columns to an array of shapely points."""
+
+
+def df_to_gdf(df, cols_lonlat=None, verbose=False):
+    import json 
+    import pyarrow as pa 
+    import shapely
+    from geopandas.io.arrow import _arrow_to_geopandas
+    geo_metadata = {
+    "primary_column": "geometry",
+    "columns": {
+        "geometry": {
+            "encoding": "WKB",
+            "crs": 4326
+        }
+    },
+    "version": "1.0.0-beta.1"
+    }
+    arrow_geo_metadata = {b"geo": json.dumps(geo_metadata).encode()}
     if not cols_lonlat:
         cols_lonlat = infer_lonlat(list(df.columns))
         if not cols_lonlat:
             raise ValueError("no latitude and longitude columns were found.")
-
-    assert cols_lonlat[0] in df.columns, f"column name {cols_lonlat[0]} was not found."
-    assert cols_lonlat[1] in df.columns, f"column name {cols_lonlat[1]} was not found."
-
-    if verbose:
-        logger.debug(
-            f"Converting {cols_lonlat} to points({cols_lonlat[0]},{cols_lonlat[0]})."
-        )
-
-    return shapely.points(
-        list(zip(df[cols_lonlat[0]].astype(float), df[cols_lonlat[1]].astype(float)))
-    )
+    
+        assert cols_lonlat[0] in df.columns, f"column name {cols_lonlat[0]} was not found."
+        assert cols_lonlat[1] in df.columns, f"column name {cols_lonlat[1]} was not found."
+    
+        if verbose:
+            logger.debug(
+                f"Converting {cols_lonlat} to points({cols_lonlat[0]},{cols_lonlat[0]})."
+            )
+    geoms = shapely.points(df[cols_lonlat[0]], df[cols_lonlat[1]])
+    table = pa.Table.from_pandas(df)
+    table = table.append_column("geometry", pa.array(shapely.to_wkb(geoms)))
+    table = table.replace_schema_metadata(arrow_geo_metadata) 
+    try:
+        df=_arrow_to_geopandas(table)
+    except:
+        df=_arrow_to_geopandas(table.drop(['__index_level_0__']))     
+    return df
 
 
 def geo_convert(
@@ -704,8 +721,7 @@ def geo_convert(
                 "with cols_lonlat."
             )
 
-        shapely_points = lonlat_to_geom(data, cols_lonlat, verbose=verbose)
-        gdf = gpd.GeoDataFrame(data, geometry=shapely_points, crs=4326)
+        gdf = df_to_gdf(data, cols_lonlat, verbose=verbose)
 
         if verbose:
             logger.debug(
@@ -762,9 +778,7 @@ def geo_convert(
                     )
             # This is needed for Python 3.8 specifically, because otherwise creating the GeoDataFrame modifies the input DataFrame
             data = data.copy()
-            gdf = gpd.GeoDataFrame(
-                data, geometry=lonlat_to_geom(data, cols_lonlat, verbose=verbose)
-            ).set_crs(4326)
+            gdf = df_to_gdf(data, cols_lonlat, verbose=verbose)
         return gdf
     elif (
         isinstance(data, shapely.geometry.base.BaseGeometry)
