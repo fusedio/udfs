@@ -665,32 +665,31 @@ def infer_lonlat(columns: Sequence[str]) -> Optional[Tuple[str, str]]:
     return None
 
 
-
-
 def df_to_gdf(df, cols_lonlat=None, verbose=False):
-    import json 
-    import pyarrow as pa 
+    import json
+
+    import pyarrow as pa
     import shapely
     from geopandas.io.arrow import _arrow_to_geopandas
+
     geo_metadata = {
-    "primary_column": "geometry",
-    "columns": {
-        "geometry": {
-            "encoding": "WKB",
-            "crs": 4326
-        }
-    },
-    "version": "1.0.0-beta.1"
+        "primary_column": "geometry",
+        "columns": {"geometry": {"encoding": "WKB", "crs": 4326}},
+        "version": "1.0.0-beta.1",
     }
     arrow_geo_metadata = {b"geo": json.dumps(geo_metadata).encode()}
     if not cols_lonlat:
         cols_lonlat = infer_lonlat(list(df.columns))
         if not cols_lonlat:
             raise ValueError("no latitude and longitude columns were found.")
-    
-        assert cols_lonlat[0] in df.columns, f"column name {cols_lonlat[0]} was not found."
-        assert cols_lonlat[1] in df.columns, f"column name {cols_lonlat[1]} was not found."
-    
+
+        assert (
+            cols_lonlat[0] in df.columns
+        ), f"column name {cols_lonlat[0]} was not found."
+        assert (
+            cols_lonlat[1] in df.columns
+        ), f"column name {cols_lonlat[1]} was not found."
+
         if verbose:
             logger.debug(
                 f"Converting {cols_lonlat} to points({cols_lonlat[0]},{cols_lonlat[0]})."
@@ -698,11 +697,11 @@ def df_to_gdf(df, cols_lonlat=None, verbose=False):
     geoms = shapely.points(df[cols_lonlat[0]], df[cols_lonlat[1]])
     table = pa.Table.from_pandas(df)
     table = table.append_column("geometry", pa.array(shapely.to_wkb(geoms)))
-    table = table.replace_schema_metadata(arrow_geo_metadata) 
+    table = table.replace_schema_metadata(arrow_geo_metadata)
     try:
-        df=_arrow_to_geopandas(table)
+        df = _arrow_to_geopandas(table)
     except:
-        df=_arrow_to_geopandas(table.drop(['__index_level_0__']))     
+        df = _arrow_to_geopandas(table.drop(["__index_level_0__"]))
     return df
 
 
@@ -1435,3 +1434,86 @@ def run_query(query, return_arrow=False):
         return con.sql(query).fetch_arrow_table()
     else:
         return con.sql(query).df()
+
+
+def ds_to_tile(ds, variable, bbox, na_values=0):
+    da = ds[variable]
+    x_slice, y_slice = bbox_to_xy_slice(
+        bbox.total_bounds, ds.rio.shape, ds.rio.transform()
+    )
+    print("sina slice: ", x_slice, y_slice)
+    window = bbox_to_window(bbox.total_bounds, ds.rio.shape, ds.rio.transform())
+    py0 = py1 = px0 = px1 = 0
+    if window.col_off < 0:
+        px0 = -window.col_off
+    if window.col_off + window.width > da.shape[-2]:
+        px1 = window.col_off + window.width - da.shape[-2]
+    if window.row_off < 0:
+        py0 = -window.row_off
+    if window.row_off + window.height > da.shape[-1]:
+        py1 = window.row_off + window.height - da.shape[-1]
+    # data = da.isel(x=x_slice, y=y_slice, time=0).fillna(0)
+    data = da.isel(x=x_slice, y=y_slice).fillna(0)
+    data = data.pad(
+        x=(px0, px1), y=(py0, py1), mode="constant", constant_values=na_values
+    )
+    return data
+
+
+def bbox_to_xy_slice(bounds, shape, transform):
+    import rasterio
+    from affine import Affine
+
+    if transform[4] < 0:  # if pixel_height is negative
+        original_window = rasterio.windows.from_bounds(*bounds, transform=transform)
+        gridded_window = rasterio.windows.round_window_to_full_blocks(
+            original_window, [(1, 1)]
+        )
+        y_slice, x_slice = gridded_window.toslices()
+        return x_slice, y_slice
+    else:  # if pixel_height is not negative
+        original_window = rasterio.windows.from_bounds(
+            *bounds,
+            transform=Affine(
+                transform[0],
+                transform[1],
+                transform[2],
+                transform[3],
+                -transform[4],
+                -transform[5],
+            ),
+        )
+        gridded_window = rasterio.windows.round_window_to_full_blocks(
+            original_window, [(1, 1)]
+        )
+        y_slice, x_slice = gridded_window.toslices()
+        y_slice = slice(shape[0] - y_slice.stop, shape[0] - y_slice.start + 0)
+        return x_slice, y_slice
+
+
+def bbox_to_window(bounds, shape, transform):
+    import rasterio
+    from affine import Affine
+
+    if transform[4] < 0:  # if pixel_height is negative
+        original_window = rasterio.windows.from_bounds(*bounds, transform=transform)
+        gridded_window = rasterio.windows.round_window_to_full_blocks(
+            original_window, [(1, 1)]
+        )
+        return gridded_window
+    else:  # if pixel_height is not negative
+        original_window = rasterio.windows.from_bounds(
+            *bounds,
+            transform=Affine(
+                transform[0],
+                transform[1],
+                transform[2],
+                transform[3],
+                -transform[4],
+                -transform[5],
+            ),
+        )
+        gridded_window = rasterio.windows.round_window_to_full_blocks(
+            original_window, [(1, 1)]
+        )
+        return gridded_window
