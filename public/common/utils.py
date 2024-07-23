@@ -1441,7 +1441,6 @@ def ds_to_tile(ds, variable, bbox, na_values=0):
     x_slice, y_slice = bbox_to_xy_slice(
         bbox.total_bounds, ds.rio.shape, ds.rio.transform()
     )
-    print("sina slice: ", x_slice, y_slice)
     window = bbox_to_window(bbox.total_bounds, ds.rio.shape, ds.rio.transform())
     py0 = py1 = px0 = px1 = 0
     if window.col_off < 0:
