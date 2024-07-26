@@ -1,5 +1,6 @@
 import json
-
+import range
+import matplot
 import ee
 import geopandas as gpd
 import pandas as pd
