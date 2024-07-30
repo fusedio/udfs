@@ -1,12 +1,12 @@
 import fused
-import numpy as np
 import geopandas as gpd
+import numpy as np
 
 read_tiff = fused.load(
-    "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
+    "https://github.com/fusedio/udfs/tree/3c4bc47/public/common/"
 ).utils.read_tiff
 mosaic_tiff = fused.load(
-    "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
+    "https://github.com/fusedio/udfs/tree/3c4bc47/public/common/"
 ).utils.mosaic_tiff
 LULC_IO_COLORS = {
     1: (65, 155, 223),  # Water
@@ -52,24 +52,25 @@ def bbox_stac_items(bbox, table):
     )
     return rows_df[rows_df.intersects(bbox)]
 
+
 def get_lulc(bbox, year):
-    
-        matching_items = bbox_stac_items(
-            bbox.geometry[0], table="s3://fused-asset/lulc/io10m/"
-        )
-        mask = matching_items["datetime"].map(lambda x: str(x)[:4] == year)
-        tiff_list = (
-            matching_items[mask]
-            .assets.map(lambda x: s3_to_https(x["supercell"]["href"][:-17] + ".tif"))
-            .values
-        )
-        data = mosaic_tiff(
-            bbox,
-            tiff_list,
-            output_shape=(256, 256),
-            overview_level=min(max(12 - bbox.z[0], 0), 4),
-        )
-        return data
+    matching_items = bbox_stac_items(
+        bbox.geometry[0], table="s3://fused-asset/lulc/io10m/"
+    )
+    mask = matching_items["datetime"].map(lambda x: str(x)[:4] == year)
+    tiff_list = (
+        matching_items[mask]
+        .assets.map(lambda x: s3_to_https(x["supercell"]["href"][:-17] + ".tif"))
+        .values
+    )
+    data = mosaic_tiff(
+        bbox,
+        tiff_list,
+        output_shape=(256, 256),
+        overview_level=min(max(12 - bbox.z[0], 0), 4),
+    )
+    return data
+
 
 def get_overture(
     bbox: fused.types.TileGDF = None,
@@ -82,15 +83,14 @@ def get_overture(
     polygon: gpd.GeoDataFrame = None,
     point_convert: str = None,
 ):
-    import logging
     import concurrent.futures
-    import pandas as pd
-    import geopandas as gpd
-    from shapely.geometry import shape, box
+    import logging
 
-    utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/main/public/common/"
-    ).utils
+    import geopandas as gpd
+    import pandas as pd
+    from shapely.geometry import box, shape
+
+    utils = fused.load("https://github.com/fusedio/udfs/tree/main/public/common/").utils
 
     if release == "2024-02-15-alpha-0":
         if overture_type == "administrative_boundary":

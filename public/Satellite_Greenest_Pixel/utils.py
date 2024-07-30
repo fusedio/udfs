@@ -7,7 +7,7 @@ def run_pool_tiffs(bbox, df_tiffs, chip_len):
     @fused.cache
     def fn_read_tiff(tiff_url, bbox=bbox, chip_len=chip_len):
         read_tiff = fused.load(
-            "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
+            "https://github.com/fusedio/udfs/tree/3c4bc47/public/common/"
         ).utils.read_tiff
         return read_tiff(bbox, tiff_url, output_shape=(chip_len, chip_len))
 
