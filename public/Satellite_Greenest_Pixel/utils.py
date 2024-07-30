@@ -66,15 +66,37 @@ def create_tiffs_catalog(stac_items, band_list):
 def fn_read_tiff(tiff_url, bbox, chip_len):
     return read_tiff(bbox, tiff_url, output_shape=(chip_len, chip_len))
 
-    # TODO: Fused Team to streamline execution
-    # arr = fused.run(
-    #     "50400e341f90e9a288c7259630c200d296bf2a9b4b9edd63ff22ead08c6968f4",
-    #     bbox=bbox,
-    #     chip_len=chip_len,
-    #     tiff_url=tiff_url)
-    # data = arr.image.data.astype('uint16')
-    # arr = ma.masked_array(data, mask=data==0)
-    # return arr
 
+def get_greenest_pixel(arr_rgbi, how="median", fillna=True):
+    import numpy as np
+    import pandas as pd
 
-# band_list = ['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B11', 'B12']
+    # First 3 bands to visualize, last 2 bands to calculate NDVI
+    out = (arr_rgbi[-1] * 1.0 - arr_rgbi[-2] * 1.0) / (
+        arr_rgbi[-1] * 1.0 + arr_rgbi[-2] * 1.0
+    )
+    t_len = out.shape[0]
+    out_flat = out.reshape(out.shape[0], out.shape[1] * out.shape[2])
+    # Find greenest pixels
+    sorted_indices = np.argsort(out_flat, axis=0)
+    if how == "median":
+        median_index = sorted_indices[t_len // 2]
+    elif how == "min":
+        median_index = np.argmin(out_flat, axis=0)
+    else:
+        median_index = np.argmax(out_flat, axis=0)
+
+    out_flat = out_flat[median_index, np.arange(out.shape[1] * out.shape[2])]
+
+    output_bands = []
+
+    for b in [0, 1, 2]:
+        out_flat = arr_rgbi[b].reshape(t_len, out.shape[1] * out.shape[2])
+
+        # Replace 0s with NaNs
+        out_flat = np.where(out_flat == 0, np.nan, out_flat)
+        if fillna:
+            out_flat = pd.DataFrame(out_flat).ffill().bfill().values
+        out_flat = out_flat[median_index, np.arange(out.shape[1] * out.shape[2])]
+        output_bands.append(out_flat.reshape(out.shape[1], out.shape[2]))
+    return np.stack(output_bands)
