@@ -2,10 +2,10 @@ import fused
 import numpy as np
 
 read_tiff = fused.load(
-    "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
+    "https://github.com/fusedio/udfs/tree/3c4bc47/public/common/"
 ).utils.read_tiff
 mosaic_tiff = fused.load(
-    "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
+    "https://github.com/fusedio/udfs/tree/3c4bc47/public/common/"
 ).utils.mosaic_tiff
 LULC_IO_COLORS = {
     1: (65, 155, 223),  # Water
