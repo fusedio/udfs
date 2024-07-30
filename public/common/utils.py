@@ -260,8 +260,9 @@ def read_tiff(
             src_transform = src.window_transform(window)
             src_crs = src.crs
             minx, miny, maxx, maxy = bbox.total_bounds
-            d = (maxx - minx) / output_shape[-1]
-            dst_transform = [d, 0.0, minx, 0.0, -d, maxy, 0.0, 0.0, 1.0]
+            dx = (maxx - minx) / output_shape[-1]
+            dy = (maxy - miny) / output_shape[-2]
+            dst_transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
             dst_shape = output_shape
             dst_crs = bbox.crs
 
