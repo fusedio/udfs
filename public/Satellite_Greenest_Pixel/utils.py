@@ -1,3 +1,78 @@
+import json
+
+sentinel_params = json.dumps(
+    {
+        "collection": "sentinel-2-l2a",
+        "band_list": ["B02", "B03", "B04", "B08"],
+        "time_of_interest": "2021-09-01/2021-12-30",
+        "query": {"eo:cloud_cover": {"lt": 5}},
+        "scale": 0.1,
+    }
+)
+
+
+def run_udf(
+    bbox, collection_params=sentinel_params, chip_len=512, how="max", fillna=False
+):
+    import json
+
+    import numpy as np
+    import numpy.ma as ma
+    import pandas as pd
+
+    collection, band_list, time_of_interest, query, scale = json.loads(
+        collection_params
+    ).values()
+
+    print(collection, band_list, time_of_interest, query)
+
+    stac_items = search_pc_catalog(
+        bbox=bbox, time_of_interest=time_of_interest, query=query, collection=collection
+    )
+    if not stac_items:
+        return
+
+    print("Processing stac_items: ", len(stac_items))
+    print(stac_items[0].assets.keys())
+    df_tiff_catalog = create_tiffs_catalog(stac_items, band_list)
+    arrs_out = run_pool_tiffs(bbox, df_tiff_catalog, chip_len)
+
+    # Calculate NDVI
+    # First 3 bands to visualize, last 2 bands to calculate NDVI
+    out = (arrs_out[-1] * 1.0 - arrs_out[-2] * 1.0) / (
+        arrs_out[-1] * 1.0 + arrs_out[-2] * 1.0
+    )
+    t_len = out.shape[0]
+    out_flat = out.reshape(t_len, chip_len * chip_len)
+    # Find greenest pixels
+    sorted_indices = np.argsort(out_flat, axis=0)
+    if how == "median":
+        median_index = sorted_indices[t_len // 2]
+    elif how == "min":
+        median_index = np.argmin(out_flat, axis=0)
+    else:
+        median_index = np.argmax(out_flat, axis=0)
+
+    out_flat = out_flat[median_index, np.arange(chip_len * chip_len)]
+
+    output_bands = []
+
+    for b in [0, 1, 2]:
+        out_flat = arrs_out[b].reshape(t_len, chip_len * chip_len)
+
+        # Replace 0s with NaNs
+        out_flat = np.where(out_flat == 0, np.nan, out_flat)
+        if fillna:
+            out_flat = pd.DataFrame(out_flat).ffill().bfill().values
+        out_flat = out_flat[median_index, np.arange(chip_len * chip_len)]
+        output_bands.append(out_flat.reshape(chip_len, chip_len))
+
+    stacked = np.stack(output_bands) * 1.0 * scale
+    stacked = np.clip(stacked, 0, 255).astype("uint8")
+    # TODO: color correction https://custom-scripts.sentinel-hub.com/custom-scripts/sentinel-2/poor_mans_atcor/
+    return stacked
+
+
 @fused.cache
 def run_pool_tiffs(bbox, df_tiffs, chip_len):
     import numpy as np
