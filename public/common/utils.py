@@ -294,6 +294,20 @@ def read_tiff(
         return destination_data
 
 
+def gdf_to_mask_arr(gdf, shape):
+    from rasterio.features import geometry_mask
+
+    xmin, ymin, xmax, ymax = gdf.total_bounds
+    w = (xmax - xmin) / shape[-1]
+    h = (ymax - ymin) / shape[-2]
+    return ~geometry_mask(
+        gdf.geometry,
+        transform=(w, 0, xmin, 0, -h, ymax, 0, 0, 0),
+        invert=True,
+        out_shape=shape[-2:],
+    )
+
+
 def mosaic_tiff(
     bbox,
     tiff_list,
