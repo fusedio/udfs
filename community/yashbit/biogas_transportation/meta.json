@@ -12,43 +12,7 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:vizConfig": {
-              "tileLayer": {
-                "@@type": "TileLayer",
-                "minZoom": 0,
-                "maxZoom": 19,
-                "tileSize": 256,
-                "pickable": true
-              },
-              "rasterLayer": {
-                "@@type": "BitmapLayer",
-                "pickable": true
-              },
-              "vectorLayer": {
-                "@@type": "GeoJsonLayer",
-                "stroked": true,
-                "filled": false,
-                "pickable": true,
-                "lineWidthMinPixels": 1,
-                "pointRadiusMinPixels": 1,
-                "getLineColor": {
-                  "@@function": "hasProp",
-                  "property": "r",
-                  "present": "@@=[properties.r, properties.g, properties.b]",
-                  "absent": [
-                    255,
-                    0,
-                    255
-                  ]
-                },
-                "getFillColor": [
-                  255,
-                  0,
-                  0,
-                  40
-                ]
-              }
-            },
+            "fused:vizConfig": "{\n  \"tileLayer\": {\n    \"@@type\": \"TileLayer\",\n    \"minZoom\": 0,\n    \"maxZoom\": 19,\n    \"tileSize\": 256,\n    \"pickable\": true\n  },\n  \"rasterLayer\": {\n    \"@@type\": \"BitmapLayer\",\n    \"pickable\": true\n  },\n  \"vectorLayer\": {\n    \"@@type\": \"GeoJsonLayer\",\n    \"stroked\": true,\n    \"filled\": false,\n    \"pickable\": true,\n    \"lineWidthMinPixels\": 1,\n    \"pointRadiusMinPixels\": 1,\n    \"getLineColor\": {\n      \"@@function\": \"hasProp\",\n      \"property\": \"r\",\n      \"present\": \"@@=[properties.r, properties.g, properties.b]\",\n      \"absent\": [\n        255,\n        0,\n        255\n      ]\n    },\n    \"getFillColor\": [\n      255,\n      0,\n      0,\n      40\n    ]\n  }\n}",
             "fused:udfType": "auto",
             "fused:slug": "biogas_transportation",
             "fused:name": "biogas_transportation",
@@ -78,7 +42,6 @@
             "fused:explorerTab": "community",
             "fused:gitRepo": "fusedio/udfs",
             "fused:assetUrl": "https://raw.githubusercontent.com/fusedio/udfs/main/community/yashbit/biogas_transportation/fused-screenshot-biogas_transportation_copy.png",
-
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 31.45273437875386,
@@ -89,16 +52,23 @@
             },
             "fused:tags": [
               {
-                "id": "GEE",
-                "label": "GEE"
+                "id": "biogas",
+                "label": "biogas",
+                "isCreatable": true
               },
               {
-                "id": "csv",
-                "label": "csv"
+                "id": "methane",
+                "label": "methane",
+                "isCreatable": true
               },
               {
-                "id": "geojson",
-                "label": "geojson"
+                "id": "gee",
+                "label": "gee"
+              },
+              {
+                "id": "google-earth-engine",
+                "label": "google-earth-engine",
+                "isCreatable": true
               }
             ]
           },
