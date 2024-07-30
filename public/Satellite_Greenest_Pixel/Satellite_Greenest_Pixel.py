@@ -79,7 +79,7 @@ def udf(
     arrs_out = run_pool_tiffs(bbox, df_tiff_catalog, chip_len)
 
     # Generate arr with imagery
-    arr = get_greenest_pixel(arrs_out, how=how, fillna=fillna)
+    arr = get_greenest_pixel(arrs_out, how=how, fillna=fillna)[:3,:,:]
 
     arr_scaled = arr * 1.0 * scale
     arr_scaled = np.clip(arr_scaled, 0, 255).astype("uint8")

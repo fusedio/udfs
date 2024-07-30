@@ -90,7 +90,7 @@ def get_greenest_pixel(arr_rgbi, how="median", fillna=True):
 
     output_bands = []
 
-    for b in [0, 1, 2]:
+    for b in [0, 1, 2, 3]:
         out_flat = arr_rgbi[b].reshape(t_len, out.shape[1] * out.shape[2])
 
         # Replace 0s with NaNs
