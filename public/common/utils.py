@@ -260,8 +260,9 @@ def read_tiff(
             src_transform = src.window_transform(window)
             src_crs = src.crs
             minx, miny, maxx, maxy = bbox.total_bounds
-            d = (maxx - minx) / output_shape[-1]
-            dst_transform = [d, 0.0, minx, 0.0, -d, maxy, 0.0, 0.0, 1.0]
+            dx = (maxx - minx) / output_shape[-1]
+            dy = (maxy - miny) / output_shape[-2]
+            dst_transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
             dst_shape = output_shape
             dst_crs = bbox.crs
 
@@ -291,6 +292,20 @@ def read_tiff(
         return destination_data, dst_transform
     else:
         return destination_data
+
+
+def gdf_to_mask_arr(gdf, shape):
+    from rasterio.features import geometry_mask
+
+    xmin, ymin, xmax, ymax = gdf.total_bounds
+    w = (xmax - xmin) / shape[-1]
+    h = (ymax - ymin) / shape[-2]
+    return ~geometry_mask(
+        gdf.geometry,
+        transform=(w, 0, xmin, 0, -h, ymax, 0, 0, 0),
+        invert=True,
+        out_shape=shape[-2:],
+    )
 
 
 def mosaic_tiff(
