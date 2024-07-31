@@ -1,0 +1,113 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Nsi_Overture",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 15,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "extruded": true,
+                "getElevation": "@@=properties.stats*0.05",
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "stats",
+                  "present": "@@=[properties.stats*5, properties.stats*1, properties.stats/100]",
+                  "absent": [
+                    255,
+                    0,
+                    255
+                  ]
+                },
+                "getFillColor": "@@=[properties.stats*2, properties.stats*3, properties.stats*3]"
+              },
+              "loadingLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1
+              },
+              "errorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": [
+                  255,
+                  0,
+                  0,
+                  255
+                ],
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Nsi_Overture",
+            "fused:name": "Nsi_Overture",
+            "fused:id": null,
+            "fused:defaultParameters": [
+              {
+                "parameter": "return_object",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "gdf_overture",
+                  "gdf_nsi",
+                  "final"
+                ]
+              }
+            ],
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/overture_nsi.png",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 40.78098122464372,
+              "longitude": -73.97315088126248,
+              "zoom": 16.78251550387579,
+              "pitch": 60,
+              "bearing": -18.631003687741583
+            },
+            "fused:description": "## Overview\n\nSpatial join between Overture polygons and NSI points to generate risk indices for each building. \n\n"
+          },
+          "source": "Nsi_Overture.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
