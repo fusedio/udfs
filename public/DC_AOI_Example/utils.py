@@ -19,7 +19,6 @@ def get_arr(bbox, time_of_interest, chip_len, nth_item=None, max_items=30):
         arr = utils.get_greenest_pixel(arrs_out, how='median', fillna=True)
     return arr
     
-@fused.cache
 def rgbi_to_ndvi(arr_rgbi):
     import numpy as np
     ndvi = (arr_rgbi[-1] * 1.0 - arr_rgbi[-2] * 1.0) / (
