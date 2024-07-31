@@ -294,14 +294,18 @@ def read_tiff(
         return destination_data
 
 
-def gdf_to_mask_arr(gdf, shape):
+def gdf_to_mask_arr(gdf, shape, first_n=None):
     from rasterio.features import geometry_mask
 
     xmin, ymin, xmax, ymax = gdf.total_bounds
     w = (xmax - xmin) / shape[-1]
     h = (ymax - ymin) / shape[-2]
+    if first_n:
+        geom = gdf.geometry.iloc[:first_n]
+    else:
+        geom = gdf.geometry
     return ~geometry_mask(
-        gdf.geometry,
+        geom,
         transform=(w, 0, xmin, 0, -h, ymax, 0, 0, 0),
         invert=True,
         out_shape=shape[-2:],
