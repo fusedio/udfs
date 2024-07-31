@@ -1,8 +1,11 @@
 @fused.udf
 def udf(bbox: fused.types.TileGDF = None, n=10):
     import json
-
+    import numpy as np
+    import pandas as pd
+    import torch
     import core_utils
+    import range
     import ee
     import geopandas as gpd
     import pandas as pd
@@ -112,11 +115,11 @@ def udf(bbox: fused.types.TileGDF = None, n=10):
                     "b": 230,
                 },
             }
-            features.append(feature_dict)
+            
 
     geojson_data = {"type": "FeatureCollection", "features": features}
     gdf_from_features = gpd.GeoDataFrame.from_features(features)
     geojson_data = gdf_from_features.__geo_interface__
-    geojson_str = json.dumps(geojson_data)
+    x = 10
     combined_gdf = core_utils.combine_gdfs(gdf_from_features, gdf_from_features_2)
     return combined_gdf
