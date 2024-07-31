@@ -19,9 +19,14 @@ def get_arr(bbox, time_of_interest, chip_len, nth_item=None, max_items=30):
         arr = utils.get_greenest_pixel(arrs_out, how='median', fillna=True)
     return arr
     
-def rgbi_to_ndvi(arr_rgbi):
+def rgbi_to_ndvi(arr_rgbi, colormap='RdYlGn', reverse=False):
     import numpy as np
     ndvi = (arr_rgbi[-1] * 1.0 - arr_rgbi[-2] * 1.0) / (
         arr_rgbi[-1] * 1.0 + arr_rgbi[-2] * 1.0
     )
-    return  (np.clip(ndvi,0,1)*255).astype('uint8')
+    ndvi = (np.clip(ndvi,0,1)*255).astype('uint8')
+    if isinstance(ndvi, np.ma.MaskedArray):
+        arr = fused.utils.common.arr_to_plasma(ndvi.data, colormap=colormap, reverse=reverse)
+        return np.ma.masked_array(arr, [ndvi.mask]*3)
+    else:
+        return fused.utils.common.arr_to_plasma(ndvi, colormap=colormap, reverse=reverse)
