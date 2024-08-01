@@ -169,7 +169,7 @@ def rasterize_geometry(
     geoms = [(geom, 1)]
     rv_array = features.rasterize(
         geoms,
-        output_shape=shape,
+        out_shape=shape,
         transform=affine,
         fill=0,
         dtype="uint8",
