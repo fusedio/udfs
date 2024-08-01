@@ -52,22 +52,48 @@
             "fused:slug": "Solar_Irradiance",
             "fused:name": "Solar_Irradiance",
             "fused:id": null,
-            "fused:assetUrl": "https://sunlightdatabucket.s3.ap-northeast-1.amazonaws.com/fused-screenshot(2).png",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/solar_irradiance.png",
             "fused:tags": [
               {
                 "id": "tiff",
-                "label": "tiff",
-                "isCreatable": true
+                "label": "tiff"
               }
-            ]
+            ],
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/7ef573f0afb73aa584bc83fb73dd734357980cf4/public/Solar_Irradiance/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/7ef573f/public/Solar_Irradiance/",
+            "fused:gitPath": "public/Solar_Irradiance",
+            "fused:gitRef": "7ef573f0afb73aa584bc83fb73dd734357980cf4",
+            "fused:description": "#### Overview\nWorld - Solar Irradiance DNI(Direct Normal Irradiance) data.\n\nThe Solargis DNI (Direct Normal Irradiance) data provides a comprehensive view of the potential for solar energy generation across the world by focusing on the amount of solar radiation received per unit area by a surface that is perpendicular to the sun's rays.\n\n#### Data Source\n* [SolarGIS](https://solargis.com/maps-and-gis-data/download/world)\n",
+            "fused:gitAuthorNames": [
+              "Milind Soni",
+              "Plinio Guzman"
+            ],
+            "fused:gitAuthorUsernames": [
+              "milind-soni",
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/milind-soni",
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/46266943?v=4",
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitLastModified": "2024-07-30T19:49:03+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 17.50656453288313,
+              "longitude": 24.04074720996509,
+              "zoom": 2.3287175451117874,
+              "pitch": 0,
+              "bearing": 0
+            }
           },
           "source": "Solar_Irradiance.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],
