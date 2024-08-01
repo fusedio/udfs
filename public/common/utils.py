@@ -180,14 +180,15 @@ def rasterize_geometry(
 
 
 @fused.cache(path="geom_stats")
-def geom_stats(gdf, arr, chip_len=255):
+def geom_stats(gdf, arr, out_shape=(255,255)):
     import numpy as np
 
     df_3857 = gdf.to_crs(3857)
     df_tile = df_3857.dissolve()
     minx, miny, maxx, maxy = df_tile.total_bounds
-    d = (maxx - minx) / chip_len
-    transform = [d, 0.0, minx, 0.0, -d, maxy, 0.0, 0.0, 1.0]
+    dx = (maxx - minx) / out_shape[-1]
+    dy = (maxy - miny) / out_shape[-2]
+    transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
     geom_masks = [
         rasterize_geometry(geom, arr.shape[-2:], transform) for geom in df_3857.geometry
     ]
@@ -1237,8 +1238,9 @@ def arr_to_stats(arr, gdf, type="nominal"):
     import numpy as np
 
     minx, miny, maxx, maxy = gdf.total_bounds
-    d = (maxx - minx) / arr.shape[-1:]
-    transform = [d, 0.0, minx, 0.0, -d, maxy, 0.0, 0.0, 1.0]
+    dx = (maxx - minx) / arr.shape[-1]
+    dy = (maxy - miny) / arr.shape[-2]
+    transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
     geom_masks = [
         rasterize_geometry(geom, arr.shape[-2:], transform) for geom in gdf.geometry
     ]
@@ -1317,17 +1319,17 @@ def ee_initialize(service_account_name="", key_path=""):
 
 
 @fused.cache
-def run_pool_tiffs(bbox, df_tiffs, chip_len):
+def run_pool_tiffs(bbox, df_tiffs, output_shape):
     import numpy as np
 
     columns = df_tiffs.columns
 
     @fused.cache
-    def fn_read_tiff(tiff_url, bbox=bbox, chip_len=chip_len):
+    def fn_read_tiff(tiff_url, bbox=bbox, output_shape=output_shape):
         read_tiff = fused.load(
             "https://github.com/fusedio/udfs/tree/3c4bc47/public/common/"
         ).utils.read_tiff
-        return read_tiff(bbox, tiff_url, output_shape=(chip_len, chip_len))
+        return read_tiff(bbox, tiff_url, output_shape=output_shape)
 
     tiff_list = []
     for band in columns:
@@ -1336,7 +1338,7 @@ def run_pool_tiffs(bbox, df_tiffs, chip_len):
 
     arrs_tmp = fused.utils.common.run_pool(fn_read_tiff, tiff_list)
     arrs_out = np.stack(arrs_tmp)
-    arrs_out = arrs_out.reshape(len(columns), len(df_tiffs), chip_len, chip_len)
+    arrs_out = arrs_out.reshape(len(columns), len(df_tiffs), output_shape[0], output_shape[1])
     return arrs_out
 
 
