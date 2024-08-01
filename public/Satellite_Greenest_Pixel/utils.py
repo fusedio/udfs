@@ -1,15 +1,15 @@
 @fused.cache
-def run_pool_tiffs(bbox, df_tiffs, chip_len):
+def run_pool_tiffs(bbox, df_tiffs, output_shape):
     import numpy as np
 
     columns = df_tiffs.columns
 
     @fused.cache
-    def fn_read_tiff(tiff_url, bbox=bbox, chip_len=chip_len):
+    def fn_read_tiff(tiff_url, bbox=bbox, output_shape=output_shape):
         read_tiff = fused.load(
-            "https://github.com/fusedio/udfs/tree/3c4bc47/public/common/"
+            "https://github.com/fusedio/udfs/tree/eda5aec/public/common/"
         ).utils.read_tiff
-        return read_tiff(bbox, tiff_url, output_shape=(chip_len, chip_len))
+        return read_tiff(bbox, tiff_url, output_shape=output_shape)
 
     tiff_list = []
     for band in columns:
@@ -18,7 +18,7 @@ def run_pool_tiffs(bbox, df_tiffs, chip_len):
 
     arrs_tmp = fused.utils.common.run_pool(fn_read_tiff, tiff_list)
     arrs_out = np.stack(arrs_tmp)
-    arrs_out = arrs_out.reshape(len(columns), len(df_tiffs), chip_len, chip_len)
+    arrs_out = arrs_out.reshape(len(columns), len(df_tiffs), output_shape[-2], output_shape[-1])
     return arrs_out
 
 
@@ -60,11 +60,6 @@ def create_tiffs_catalog(stac_items, band_list):
         max_key_length = len(max(selected_item.assets, key=len))
         input_paths.append([selected_item.assets[band].href for band in band_list])
     return pd.DataFrame(input_paths, columns=band_list)
-
-
-@fused.cache
-def fn_read_tiff(tiff_url, bbox, chip_len):
-    return read_tiff(bbox, tiff_url, output_shape=(chip_len, chip_len))
 
 
 def get_greenest_pixel(arr_rgbi, how="median", fillna=True):
