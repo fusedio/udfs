@@ -15,8 +15,8 @@ def udf(bbox: fused.types.TileGDF=None, time_of_interest="2021-09-01/2021-12-30"
         return 
         
     # read sentinel data
-    udf_sentinel = fused.load('https://github.com/fusedio/udfs/tree/84656a1/public/DC_AOI_Example/')
-    arr = udf_sentinel.utils.get_arr(bbox, time_of_interest=time_of_interest, chip_len=chip_len)
+    udf_sentinel = fused.load('https://github.com/fusedio/udfs/tree/7b98f99/public/DC_AOI_Example/')
+    arr = udf_sentinel.utils.get_arr(bbox, time_of_interest=time_of_interest, output_shape=(chip_len, chip_len))
     arr = np.clip(arr *  scale, 0, 255).astype("uint8")[:3]
     
     # create a geom mask

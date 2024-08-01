@@ -76,7 +76,7 @@ def udf(
     print(stac_items[0].assets.keys())
     df_tiff_catalog = create_tiffs_catalog(stac_items, band_list)
 
-    arrs_out = run_pool_tiffs(bbox, df_tiff_catalog, chip_len)
+    arrs_out = run_pool_tiffs(bbox, df_tiff_catalog, output_shape=(chip_len, chip_len))
 
     # Generate arr with imagery
     arr = get_greenest_pixel(arrs_out, how=how, fillna=fillna)[:3,:,:]

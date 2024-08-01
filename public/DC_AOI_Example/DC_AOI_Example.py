@@ -16,7 +16,7 @@ def udf(time_of_interest= "2021-09-01/2021-12-30",chip_len:int=None, scale:float
         raise ValueError(f'THe image is too big ({chip_len=}>3000). Consider reducing your area of interest.')  
 
     # get the data
-    arr_rgbi = get_arr(gdf, time_of_interest, chip_len, nth_item=None)
+    arr_rgbi = get_arr(gdf, time_of_interest, output_shape=(chip_len, chip_len), nth_item=None)
 
     # Scale the values for visualization purpose
     if show_ndvi:
