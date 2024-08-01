@@ -14,12 +14,12 @@
           "metadata": {
             "fused:tags": [
               {
-                "id": "Band algebra",
-                "label": "Band algebra"
+                "id": "band algebra",
+                "label": "band algebra"
               },
               {
-                "id": "Rasterio",
-                "label": "Rasteria"
+                "id": "rasterio",
+                "label": "rasterio"
               },
               {
                 "id": "tiff",
