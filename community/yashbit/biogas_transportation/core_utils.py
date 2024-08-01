@@ -1,9 +1,11 @@
 import json
-
+import range
+import matplot
 import ee
 import geopandas as gpd
 import pandas as pd
 import shapely
+import numpy
 
 
 def combine_gdfs(gdf_from_features, gdf_from_features_2):
