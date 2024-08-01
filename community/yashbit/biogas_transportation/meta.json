@@ -15,8 +15,8 @@
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
-                "minZoom": 0,
-                "maxZoom": 19,
+                "minZoom": 12,
+                "maxZoom": 18,
                 "tileSize": 256,
                 "pickable": true
               },
@@ -78,7 +78,6 @@
             "fused:explorerTab": "community",
             "fused:gitRepo": "fusedio/udfs",
             "fused:assetUrl": "https://raw.githubusercontent.com/fusedio/udfs/main/community/yashbit/biogas_transportation/fused-screenshot-biogas_transportation_copy.png",
-
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 31.45273437875386,
@@ -89,16 +88,23 @@
             },
             "fused:tags": [
               {
-                "id": "GEE",
-                "label": "GEE"
+                "id": "biogas",
+                "label": "biogas",
+                "isCreatable": true
               },
               {
-                "id": "csv",
-                "label": "csv"
+                "id": "methane",
+                "label": "methane",
+                "isCreatable": true
               },
               {
-                "id": "geojson",
-                "label": "geojson"
+                "id": "gee",
+                "label": "gee"
+              },
+              {
+                "id": "google-earth-engine",
+                "label": "google-earth-engine",
+                "isCreatable": true
               }
             ]
           },
