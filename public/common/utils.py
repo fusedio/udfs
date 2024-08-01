@@ -309,7 +309,7 @@ def gdf_to_mask_arr(gdf, shape, first_n=None):
         geom,
         transform=(w, 0, xmin, 0, -h, ymax, 0, 0, 0),
         invert=True,
-        output_shape=shape[-2:],
+        out_shape=shape[-2:],
     )
 
 
