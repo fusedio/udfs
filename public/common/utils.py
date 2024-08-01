@@ -169,7 +169,7 @@ def rasterize_geometry(
     geoms = [(geom, 1)]
     rv_array = features.rasterize(
         geoms,
-        out_shape=shape,
+        output_shape=shape,
         transform=affine,
         fill=0,
         dtype="uint8",
@@ -180,14 +180,14 @@ def rasterize_geometry(
 
 
 @fused.cache(path="geom_stats")
-def geom_stats(gdf, arr, out_shape=(255,255)):
+def geom_stats(gdf, arr, output_shape=(255,255)):
     import numpy as np
 
     df_3857 = gdf.to_crs(3857)
     df_tile = df_3857.dissolve()
     minx, miny, maxx, maxy = df_tile.total_bounds
-    dx = (maxx - minx) / out_shape[-1]
-    dy = (maxy - miny) / out_shape[-2]
+    dx = (maxx - minx) / output_shape[-1]
+    dy = (maxy - miny) / output_shape[-2]
     transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
     geom_masks = [
         rasterize_geometry(geom, arr.shape[-2:], transform) for geom in df_3857.geometry
@@ -309,7 +309,7 @@ def gdf_to_mask_arr(gdf, shape, first_n=None):
         geom,
         transform=(w, 0, xmin, 0, -h, ymax, 0, 0, 0),
         invert=True,
-        out_shape=shape[-2:],
+        output_shape=shape[-2:],
     )
 
 
