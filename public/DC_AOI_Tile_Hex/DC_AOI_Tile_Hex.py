@@ -36,6 +36,10 @@ def udf(bbox: fused.types.TileGDF=None, time_of_interest="2021-09-01/2021-12-30"
         df[f'agg_{col}']=df[f'agg_{col}'].map(lambda x:x.mean())
         mask=mask*df[f'agg_{col}']>0
     df = df[mask]
+
+    # convert the h3_int to h3_hex
+    df['hex'] = df['hex'].map(lambda x:hex(x)[2:])
+    
     return df
 
 
