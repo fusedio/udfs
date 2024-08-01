@@ -11,7 +11,7 @@ def udf(bbox: fused.types.TileGDF=None, time_of_interest="2021-09-01/2021-12-30"
     gdf_clipped = gdf.dissolve().to_crs(4326).clip(bbox)
     gdf_w_bbox = pd.concat([gdf_clipped,bbox])
     if len(gdf_w_bbox)<=1:
-        print('No bbox is interesecting with the given geometry.')
+        print('No bbox is intersecting with the given geometry.')
         return 
         
     # read sentinel data
