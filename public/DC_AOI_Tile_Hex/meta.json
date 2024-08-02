@@ -64,8 +64,7 @@
             ],
             "fused:gitLastModified": "2024-07-31T23:48:03+00:00",
             "fused:explorerTab": "public",
-            "fused:gitRepo": "fusedio/udfs",
-            "fused:sharedToken": "fsh_DC_AOI_Tile"
+            "fused:gitRepo": "fusedio/udfs"
           },
           "source": "DC_AOI_Tile_Hex.py",
           "headers": [
