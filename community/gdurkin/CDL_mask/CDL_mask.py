@@ -1,5 +1,5 @@
 @fused.udf
-@fused.cache(path="read_tiff2")
+@fused.cache(path="read_tiff")
 def udf(west="-120.485537", south="34.879334",  east="-120.400163", north="34.951613",zoom="15", year="2022",crop_type=""):
     north=float(north);south=float(south);east=float(east);west=float(west);year=int(year);zoom=int(zoom);
     import numpy as np
