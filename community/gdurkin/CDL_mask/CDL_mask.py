@@ -1,5 +1,5 @@
 @fused.udf
-@fused.cache(path="read_tiff2")
+@fused.cache(path="read_tiff")
 def udf(west="-120.485537", south="34.879334",  east="-120.400163", north="34.951613",zoom="15", year="2022",crop_type=""):
     north=float(north);south=float(south);east=float(east);west=float(west);year=int(year);zoom=int(zoom);
     import numpy as np
@@ -33,6 +33,7 @@ def udf(west="-120.485537", south="34.879334",  east="-120.400163", north="34.95
         x_diff = int(dx / resolution)
         y_diff = int(dy / resolution)
         print('pixel dimensions:',x_diff, y_diff)
+        "hehe"
         if zoom == 14:
             dst_transform = [resolution/3, 0.0, minx, 0.0, -1*resolution/3, maxy, 0.0, 0.0, 1.0]
             destination_data = np.zeros((3*y_diff, 3*x_diff), src.dtypes[0])
@@ -56,7 +57,7 @@ def udf(west="-120.485537", south="34.879334",  east="-120.400163", north="34.95
                     dst_transform=dst_transform,
                     dst_crs=dst_crs,
                     resampling=Resampling.nearest,
-                )
+                ))
     arr = destination_data
     print('destination array size d:',arr.shape)
     return np.array(arr,'uint8'), bbox.total_bounds
