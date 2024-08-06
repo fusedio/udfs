@@ -4,6 +4,7 @@ def udf(bbox: fused.types.TileGDF=None, time_of_interest="2021-09-01/2021-12-30"
     import shapely
     import pandas as pd
     import numpy as np
+    import range
     from utils import tile_to_df, df_to_hex
     
     # find the tiles with intersecting geom
