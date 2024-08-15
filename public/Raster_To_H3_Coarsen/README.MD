@@ -1,3 +1,4 @@
+<!--fused:pin=5-->
 <!--fused:preview-->
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/raster_to_h3.png" width="600" alt="UDF preview image"></p>
 
