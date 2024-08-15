@@ -4,15 +4,7 @@ def udf(path: str):
 
     con = duckdb.connect()
 
-    con.sql(
-        """install 'httpfs';
-    load 'httpfs';
-    """
-    )
-    df = con.sql(
-        """
-    SELECT * FROM read_json('${path}')
-    """
-    ).df()
+    con.sql("install 'httpfs'; load 'httpfs';")
+    df = con.sql(f"SELECT * FROM read_json('{path}')").df()
     print(df)
     return df
