@@ -2,7 +2,7 @@
 def udf(path: str, preview: bool):
     import geopandas as gpd
 
-    extension = path.rsplit(".", maxsplit=1)
+    extension = path.rsplit(".", maxsplit=1)[-1]
     driver = (
         "GPKG"
         if extension == "gpkg"
