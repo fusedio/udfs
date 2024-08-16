@@ -1,4 +1,4 @@
-<!--fused:pin=1-->
+<!--fused:pin=6-->
 <!--fused:preview-->
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/overture_nsi.png" width="600" alt="UDF preview image"></p>
 

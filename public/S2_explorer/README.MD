@@ -1,4 +1,4 @@
-<!--fused:pin=6-->
+<!--fused:pin=7-->
 <!--fused:preview-->
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/s3_explorer_udf_2.png" width="600" alt="UDF preview image"></p>
 
