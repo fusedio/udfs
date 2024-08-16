@@ -9,4 +9,4 @@ This UDF contains common utils that are being used for many public udfs.
 
 To import common utils in your udf run the following command:
 
-`common = fused.utils.common`
+`common = fused.public.common`
