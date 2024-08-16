@@ -1,4 +1,4 @@
-<!--fused:pin=7-->
+<!--fused:pin=8-->
 <!--fused:preview-->
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Landsat_Tile_Example.png" width="600" alt="UDF preview image"></p>
 
