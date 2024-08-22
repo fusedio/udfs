@@ -112,7 +112,6 @@
             "fused:udfType": "vector_tile",
             "fused:slug": "Overture_Maps_Example",
             "fused:name": "Overture_Maps_Example",
-            "fused:id": null,
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 51.50786698991621,
@@ -121,30 +120,47 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/c96cbaaa0b79ed1d77573ba176ca7ec9b2d74ba9/public/Overture_Maps_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/a0092acfef6accedc87893b1b09db28accdbf062/public/Overture_Maps_Example/",
             "fused:gitPath": "public/Overture_Maps_Example",
-            "fused:gitRef": "c96cbaaa0b79ed1d77573ba176ca7ec9b2d74ba9",
+            "fused:gitRef": "a0092acfef6accedc87893b1b09db28accdbf062",
             "fused:gitAuthorNames": [
               "Isaac Brodsky",
-              "Plinio Guzman"
+              "Plinio Guzman",
+              "Sina Kashuk",
+              "Fabion Kauker"
             ],
             "fused:gitAuthorUsernames": [
               "isaacbrodsky",
-              "pgzmnk"
+              "pgzmnk",
+              "kashuk",
+              "fhk"
             ],
             "fused:gitAuthorUrls": [
               "https://github.com/isaacbrodsky",
-              "https://github.com/pgzmnk"
+              "https://github.com/pgzmnk",
+              "https://github.com/kashuk",
+              "https://github.com/fhk"
             ],
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/9139378?v=4",
-              "https://avatars.githubusercontent.com/u/27398253?v=4"
+              "https://avatars.githubusercontent.com/u/27398253?v=4",
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/u/4031392?v=4"
             ],
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/c96cbaa/public/Overture_Maps_Example/",
-            "fused:gitLastModified": "2024-03-15T15:54:37+00:00"
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/a0092ac/public/Overture_Maps_Example/",
+            "fused:gitLastModified": "2024-08-16T00:38:41+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:sharedToken": "UDF_Overture_Maps_Example",
+            "fused:id": null
           },
           "source": "Overture_Maps_Example.py",
-          "headers": []
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
         }
       }
     ],
