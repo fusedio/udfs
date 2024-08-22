@@ -1,5 +1,5 @@
 <!--fused:filePreview-->
-Filename: `_sample`
+File name: `_sample`
 Menu order: 1
 
 <!--fused:readme-->
