@@ -357,6 +357,60 @@ def arr_resample(arr, dst_shape=(512, 512), order=0):
     elif len(arr.shape) == 3:
         return np.asanyarray([zoom(i, zoom_factors, order=order) for i in arr])
 
+def arr_to_cog(arr, 
+               bounds = (-180, -90, 180, 90),
+               crs = 4326, 
+               output_path = 'output_cog.tif', 
+               blockxsize=256, blockysize=256,
+              overviews=[2, 4, 8, 16]):
+    import numpy as np
+    import rasterio
+    from rasterio.transform import from_bounds
+    from rasterio.crs import CRS
+    from rasterio.enums import Resampling
+
+    data = arr.squeeze() 
+    # Define the CRS (Coordinate Reference System)
+    crs = CRS.from_epsg(crs)
+
+    # Calculate transform
+    transform = from_bounds(*bounds, data.shape[-1], data.shape[-2])    
+    if len(data.shape)==2:
+        data = np.stack([data])
+        count=1
+    elif len(data.shape)==3:
+        if data.shape[0]==3:
+            count=3
+        elif data.shape[0]==4:
+            count=4
+        else:
+            print(data.shape)
+            return f'Wrong number of bands {data.shape[0]}. The options are: 1(gray) | 3 (RGB) | 4 (RGBA)'
+    else:
+        return f'wrong shape {data.shape}. Data shape options are: (ny,nx) | (1,ny,nx) | (3,ny,nx) | (4,ny,nx)'
+    # Write the numpy array to a Cloud-Optimized GeoTIFF file
+    with rasterio.open(
+        output_path,
+        'w',
+        driver='GTiff',
+        height=data.shape[-2],
+        width=data.shape[-1],
+        count=count,
+        dtype=data.dtype,
+        crs=crs,
+        transform=transform,
+        tiled=True,  # Enable tiling
+        blockxsize=blockxsize,  # Set block size
+        blockysize=blockysize,  # Set block size
+        compress='deflate',  # Use compression
+        interleave='band'  # Interleave bands
+    ) as dst:
+        dst.write(data)
+        # Build overviews (pyramid layers)
+        dst.build_overviews(overviews, Resampling.nearest)
+        # Update tags to comply with COG standards
+        dst.update_tags(ns='rio_overview', resampling='nearest')
+    return output_path
 
 def arr_to_color(arr, colormap, out_dtype="uint8"):
     import numpy as np
