@@ -1,12 +1,8 @@
 # To use these functions, add the following command in your UDF:
 # `common = fused.public.common`
-
 from __future__ import annotations
-
 import random
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
-
-import ee
 import fused
 import geopandas as gpd
 import numpy as np
@@ -1366,6 +1362,7 @@ def ee_initialize(service_account_name="", key_path=""):
     Example:
         ee_initialize('your-service-account@your-project.iam.gserviceaccount.com', 'path/to/your-private-key.json')
     """
+    import ee
     credentials = ee.ServiceAccountCredentials(service_account_name, key_path)
     ee.Initialize(
         opt_url="https://earthengine-highvolume.googleapis.com", credentials=credentials
