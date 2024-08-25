@@ -93,16 +93,7 @@ def load_nsi_gdf(bbox, min_zoom=8):
             "ground_elv",
             "geometry",
         ]
-        columns = [
-            "bid",
-            "st_damcat",
-            "occtype",
-            "med_yr_blt",
-            "val_struct",
-            "val_cont",
-            "val_vehic",
-            "geometry",
-        ]
+
 
         gdf = fused.utils.common.table_to_tile(
             bbox,
