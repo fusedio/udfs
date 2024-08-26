@@ -50,9 +50,9 @@
                 "stroked": true,
                 "filled": true,
                 "pickable": true,
-                "getHexagon": "@@=cell_id",
-                "getFillColor": "@@=[cnt/3+200, cnt/5+50, cnt/20]",
-                "getElevation": "@@=cnt",
+                "getHexagon": "@@=properties.cell_id",
+                "getFillColor": "@@=[properties.cnt/3+200, properties.cnt/5+50, properties.cnt/20]",
+                "getElevation": "@@=properties.cnt",
                 "elevationScale": 0.05
               }
             },
