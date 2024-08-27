@@ -57,8 +57,7 @@
             "fused:udfType": "auto",
             "fused:slug": "DuckDB_CSV",
             "fused:name": "DuckDB_CSV",
-            "fused:id": null,
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/file_explorer_udfs/read_csv_tsv.png"
+            "fused:id": null
           },
           "source": "duckdb_csv.py",
           "headers": []
