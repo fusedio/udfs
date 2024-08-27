@@ -261,7 +261,10 @@ def read_tiff(
             dx = (maxx - minx) / output_shape[-1]
             dy = (maxy - miny) / output_shape[-2]
             dst_transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
-            dst_shape = output_shape
+            if len(source_data.shape)==3 and source_data.shape[0]>1:
+                dst_shape = (source_data.shape[0], output_shape[-2], output_shape[-1])
+            else:
+                dst_shape = output_shape
             dst_crs = bbox.crs
 
             destination_data = np.zeros(dst_shape, src.dtypes[0])
