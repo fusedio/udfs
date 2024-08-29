@@ -1,3 +1,6 @@
+<!--fused:preview-->
+<p align="center"><img src="udf_example.png" width="600" alt="UDF preview image"></p>
+
 <!--fused:tags-->
 Tags: `computer-vision` `vegetation-analysis` `segmentation`
 
