@@ -30,4 +30,4 @@ def udf(
 
     mask = (vegetation_mask * 255).astype('uint8')
     import numpy as np
-    return np.stack([mask * 1, mask * 0, mask * 1, mask // 3])
+    return np.stack([mask * 1, mask * 0, mask * 1, mask // 2])

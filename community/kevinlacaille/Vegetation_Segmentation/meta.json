@@ -65,7 +65,25 @@
               "zoom": 16,
               "pitch": 0,
               "bearing": 0
-            }
+            },
+            "fused:description": "## Overview\n\nThis UDF performs scalable vegetation analysis using classical computer vision techniques. It allows users to choose a vegetation index, set threshold values, and dynamically process satellite imagery for real-time global vegetation segmentation, all without relying on machine learning models.\n\n## External links\n\n- [Visible Atmospherically Resistant Index (VARI)](https://space4water.org/space/visible-atmospherically-resistant-index-vari)",
+            "fused:tags": [
+              {
+                "id": "computer-vision",
+                "label": "computer-vision",
+                "isCreatable": true
+              },
+              {
+                "id": "vegetation-analysis",
+                "label": "vegetation-analysis",
+                "isCreatable": true
+              },
+              {
+                "id": "segmentation",
+                "label": "segmentation",
+                "isCreatable": true
+              }
+            ]
           },
           "source": "Vegetation_Segmentation.py",
           "headers": [
