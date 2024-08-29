@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox, year="2022", crop_type="", chip_len=256):
+def udf(bbox, year="2022", crop_type="", chip_len=256, colored:bool=True):
     import numpy as np
     from utils import crop_counts, filter_crops, read_tiff
 
@@ -7,6 +7,8 @@ def udf(bbox, year="2022", crop_type="", chip_len=256):
     arr, color_map = read_tiff(
         bbox, input_tiff_path, output_shape=(chip_len, chip_len), return_colormap=True
     )
+    if not colored:
+        return arr
     if crop_type:
         arr = filter_crops(arr, crop_type, verbose=False)
     print(crop_counts(arr).head(20))

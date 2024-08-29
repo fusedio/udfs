@@ -3,7 +3,7 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/CDLS_Tile_Example.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `Mask` `AWS` `Rasterio`
+Tags: `mask` `aws` `rasterio`
 
 <!--fused:readme-->
 # Overview
