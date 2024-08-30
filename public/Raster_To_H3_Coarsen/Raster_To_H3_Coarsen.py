@@ -5,7 +5,7 @@ def udf(
     x_chunks: int = 1,
     y_chunks: int = 1,
     coarsen: int = 100,
-    h3_size=6,
+    h3_size: int = 6,
 ):
     import geopandas as gpd
     import pandas as pd
@@ -21,7 +21,6 @@ def udf(
         FROM df_tiff
         group by 1
       --  order by 1
-
     """
 
     df = run_query(qr, return_arrow=True)
