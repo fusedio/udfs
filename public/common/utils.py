@@ -1221,7 +1221,7 @@ def bbox_stac_items(bbox, table):
         chunk_table = pq.ParquetFile(file_url).read_row_group(row["chunk_id"])
         chunk_gdf = gpd.GeoDataFrame(chunk_table.to_pandas())
         if "geometry" in chunk_gdf:
-            chunk_gdf.geometry = shapely.from_wkb(chunk_gdf.geometry)
+            chunk_gdf.geometry = shapely.from_wkb(chunk_gdf["geometry"])
         matching_images.append(chunk_gdf)
 
     ret_gdf = pd.concat(matching_images)
