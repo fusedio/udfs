@@ -72,8 +72,6 @@ def arr_to_discrete(data, color_array=flood_colors):
     mapped_colors = np.array([color_array[val] for val in data.flat])
     return mapped_colors.reshape(data.shape+(3,)).astype('uint8').transpose(2,0,1)
 
-fused.core.load_udf_from_github('https://github.com/fusedio/udfs/tree/6f4c981/public/S2_explorer/')
-
 S2_stats = {
     "B01": {
         "min": 1008.0,
