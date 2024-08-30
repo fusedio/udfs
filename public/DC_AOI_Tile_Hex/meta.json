@@ -28,7 +28,7 @@
                 "pickable": true,
                 "getHexagon": "@@=properties.hex",
                 "getFillColor": "@@=[properties.agg_band1, properties.agg_band2, properties.agg_band3]",
-                "getElevation": "@@=agg_band1",
+                "getElevation": "@@=properties.agg_band1",
                 "elevationScale": 0
               }
             },
