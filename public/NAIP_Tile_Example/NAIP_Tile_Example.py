@@ -2,17 +2,17 @@
 def udf(
     bbox,
     var="NDVI",
-    chip_len="256",
+    chip_len: int=256,
     buffer_degree=0.000,
 ):
     utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
+        "https://github.com/fusedio/udfs/tree/e0426b9/public/common/"
     ).utils
     min_zoom = 15
     if bbox.z[0] >= min_zoom:
         import numpy as np
 
-        output_shape = (int(chip_len), int(chip_len))
+        output_shape = (chip_len, chip_len)
         matching_items = utils.bbox_stac_items(
             bbox.geometry[0], table="s3://fused-asset/imagery/naip/"
         )
@@ -46,3 +46,4 @@ def udf(
             return None
     else:
         print(f"minimum_zoom is {min_zoom}. Please zoom in more.")
+
