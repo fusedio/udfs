@@ -22,6 +22,7 @@ def udf(
         group by 1
       --  order by 1
     """
+    # test
 
     df = run_query(qr, return_arrow=True)
     df = df.to_pandas()
