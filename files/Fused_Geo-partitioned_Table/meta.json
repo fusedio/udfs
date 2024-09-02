@@ -8,11 +8,11 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "Fused_Geo-partitioned_Table",
+          "name": "Revoy_Faf_Links",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:description": "Read a file with GeoPandas.",
+            "fused:description": "# FAF Links\n\nThe Freight Analysis Framework (FAF5) - Network Links dataset was created from 2017 base year data and was published on April 11, 2022 from the Bureau of Transportation Statistics (BTS) and is part of the U.S. Department of Transportation (USDOT)/Bureau of Transportation Statistics (BTS) National Transportation Atlas Database (NTAD). The FAF (Version 5) Network contains 487,384 link features. All link features are topologically connected to permit network pathbuilding and vehicle assignment using a variety of assignment algorithms. The FAF Link and the FAF Node datasets can be used together to create a network. \n\nhttps://data-usdot.opendata.arcgis.com/datasets/usdot::freight-analysis-framework-faf5-network-links/about",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -32,14 +32,21 @@
                 "pickable": true,
                 "lineWidthMinPixels": 1,
                 "pointRadiusMinPixels": 1,
-                "getLineColor": {
+                "getLineWidth": "@@=properties.TOTTrips_22All*3+100",
+                "getLineColor": [
+                  255,
+                  50,
+                  28,
+                  200
+                ],
+                "getLineColorD": {
                   "@@function": "colorContinuous",
-                  "attr": "value",
+                  "attr": "BATrips_22All",
                   "domain": [
                     0,
-                    10
+                    1000
                   ],
-                  "colors": "BurgYl",
+                  "colors": "Temps",
                   "nullColor": [
                     184,
                     184,
@@ -55,11 +62,39 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "Fused_Geo-partitioned_Table",
-            "fused:name": "Fused_Geo-partitioned_Table",
-            "fused:id": null
+            "fused:slug": "Revoy_Faf_Links",
+            "fused:name": "Revoy_Faf_Links",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/876e50afc65e383ae73bb58870d4923612b5fb26/files/Fused_Geo-partitioned_Table/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/876e50a/files/Fused_Geo-partitioned_Table/",
+            "fused:gitPath": "files/Fused_Geo-partitioned_Table",
+            "fused:gitRef": "876e50afc65e383ae73bb58870d4923612b5fb26",
+            "fused:gitAuthorNames": [
+              "Isaac Brodsky"
+            ],
+            "fused:gitAuthorUsernames": [
+              "isaacbrodsky"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/isaacbrodsky"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/9139378?v=4"
+            ],
+            "fused:gitLastModified": "2024-08-26T18:03:34+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 32.038920299042644,
+              "longitude": -97.67723478341736,
+              "zoom": 7.363963966749359,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/faf_edges.png"
           },
-          "source": "Fused_Geo-partitioned_Table.py",
+          "source": "Revoy_Faf_Links.py",
           "headers": []
         }
       }
