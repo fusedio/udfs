@@ -2,7 +2,7 @@
 <!--fused:preview-->
 
 
-<p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/veg_segmentation.png" width="600" alt="UDF preview image"></p>
+<p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/veg_segmentation_v2.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
 Tags: `computer-vision` `vegetation-analysis` `segmentation`
