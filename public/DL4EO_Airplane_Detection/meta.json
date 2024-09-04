@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "Dl4eo_Airplane_Detection",
+          "name": "DL4EO_Airplane_Detection",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -54,12 +54,12 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "Dl4eo_Airplane_Detection",
-            "fused:name": "Dl4eo_Airplane_Detection",
+            "fused:slug": "DL4EO_Airplane_Detection",
+            "fused:name": "DL4EO_Airplane_Detection",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/1338d39168418222f15c0e8abd9249ae6daba11d/Dl4eo_Airplane_Detection/",
-            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/1338d39/Dl4eo_Airplane_Detection/",
-            "fused:gitPath": "Dl4eo_Airplane_Detection",
+            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/1338d39168418222f15c0e8abd9249ae6daba11d/DL4EO_Airplane_Detection/",
+            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/1338d39/DL4EO_Airplane_Detection/",
+            "fused:gitPath": "DL4EO_Airplane_Detection",
             "fused:gitRef": "1338d39168418222f15c0e8abd9249ae6daba11d",
             "fused:gitAuthorNames": [],
             "fused:gitAuthorUsernames": [],
@@ -69,7 +69,7 @@
             "fused:explorerTab": "team",
             "fused:gitRepo": "fusedlabs/fusedudfs"
           },
-          "source": "Dl4eo_Airplane_Detection.py",
+          "source": "DL4EO_Airplane_Detection.py",
           "headers": [
             {
               "module_name": "utils",
