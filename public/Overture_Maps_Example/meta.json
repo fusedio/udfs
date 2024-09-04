@@ -20,7 +20,8 @@
                 "type": "string",
                 "suggestedValues": [
                   "2024-03-12-alpha-0",
-                  "2024-02-15-alpha-0"
+                  "2024-02-15-alpha-0",
+                  "2024-08-20-0"
                 ]
               },
               {
@@ -32,7 +33,8 @@
                   "base",
                   "places",
                   "transportation",
-                  "admins"
+                  "admins",
+                  "addresses"
                 ]
               },
               {
@@ -46,7 +48,13 @@
                   "place",
                   "connector",
                   "segment",
-                  "building"
+                  "building",
+                  "address",
+                  "infrastructure",
+                  "land",
+                  "division",
+                  "division_area",
+                  "division_boundary"
                 ]
               },
               {
@@ -65,15 +73,15 @@
             ],
             "fused:tags": [
               {
-                "id": "Overture",
-                "label": "Overture"
+                "id": "overture",
+                "label": "overture"
               },
               {
-                "id": "CooP",
-                "label": "CooP"
+                "id": "coop",
+                "label": "coop"
               }
             ],
-            "fused:description": "Buildings footprints, places of interest (POIs), admin boundaries, and transportation globally from [Overture Maps](https://overturemaps.org/).\n\n## Parameters\n\n- `release`: Overture release ID. Defaults to `2024-03-12-alpha-0`. Note that `.` should be replaced with `-` in the ID.\n- `type`: One of `land_use`, `water`, `administrative_boundary`, `place`, `connector`, `segment`, `building` (default).\n- `theme`: One of `buildings`, `base`, `places`, `transportation`, `admins`. If not specified, this will be inferred from the type.\n- `use_columns`: Load only these columns if specified. Default is to load all columns.\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\nimport geopandas as gpd\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Overture_Maps_Example\")\ngdf_output = fused.run(udf, x=2622, y=6333, z=14)\ngdf = gpd.GeoDataFrame(gdf_output, geometry='geometry', crs='epsg:4326')\ngdf.plot()\n```\n",
+            "fused:description": "Buildings footprints, places of interest (POIs), admin boundaries, and transportation globally from [Overture Maps](https://overturemaps.org/).\n\n## Parameters\n\n- `release`: Overture release ID. Defaults to `2024-08-20-0`. Note that `.` should be replaced with `-` in the ID.\n- `type`: One of `infrastructure`, `land`, `land_use`, `water`, `division`, `division_boundary`, `division_area`, `place`, `connector`, `segment`, `address`, `building` (default).\n- `theme`: One of `buildings`, `base`, `places`, `transportation`, `divisions`, `addresses`. If not specified, this will be inferred from the type.\n- `use_columns`: Load only these columns if specified. Default is to load all columns.\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\nimport geopandas as gpd\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Overture_Maps_Example\")\ngdf_output = fused.run(udf, x=2622, y=6333, z=14)\ngdf = gpd.GeoDataFrame(gdf_output, geometry='geometry', crs='epsg:4326')\ngdf.plot()\n```\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -120,39 +128,43 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/a0092acfef6accedc87893b1b09db28accdbf062/public/Overture_Maps_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/6b7aed80eb14119267bb187c56090ee9afefc7bb/public/Overture_Maps_Example/",
             "fused:gitPath": "public/Overture_Maps_Example",
-            "fused:gitRef": "a0092acfef6accedc87893b1b09db28accdbf062",
+            "fused:gitRef": "6b7aed80eb14119267bb187c56090ee9afefc7bb",
             "fused:gitAuthorNames": [
               "Isaac Brodsky",
               "Plinio Guzman",
               "Sina Kashuk",
-              "Fabion Kauker"
+              "Fabion Kauker",
+              null
             ],
             "fused:gitAuthorUsernames": [
               "isaacbrodsky",
               "pgzmnk",
               "kashuk",
-              "fhk"
+              "fhk",
+              "fused-io[bot]"
             ],
             "fused:gitAuthorUrls": [
               "https://github.com/isaacbrodsky",
               "https://github.com/pgzmnk",
               "https://github.com/kashuk",
-              "https://github.com/fhk"
+              "https://github.com/fhk",
+              "https://github.com/apps/fused-io"
             ],
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/9139378?v=4",
               "https://avatars.githubusercontent.com/u/27398253?v=4",
               "https://avatars.githubusercontent.com/u/12432685?v=4",
-              "https://avatars.githubusercontent.com/u/4031392?v=4"
+              "https://avatars.githubusercontent.com/u/4031392?v=4",
+              "https://avatars.githubusercontent.com/in/834700?v=4"
             ],
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/a0092ac/public/Overture_Maps_Example/",
-            "fused:gitLastModified": "2024-08-16T00:38:41+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/6b7aed8/public/Overture_Maps_Example/",
+            "fused:gitLastModified": "2024-08-22T22:42:26+00:00",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
-            "fused:sharedToken": "UDF_Overture_Maps_Example",
-            "fused:id": null
+            "fused:id": null,
+            "fused:explorerPin": "1"
           },
           "source": "Overture_Maps_Example.py",
           "headers": [

@@ -10,9 +10,9 @@ Buildings footprints, places of interest (POIs), admin boundaries, and transport
 
 ## Parameters
 
-- `release`: Overture release ID. Defaults to `2024-03-12-alpha-0`. Note that `.` should be replaced with `-` in the ID.
-- `type`: One of `land_use`, `water`, `administrative_boundary`, `place`, `connector`, `segment`, `building` (default).
-- `theme`: One of `buildings`, `base`, `places`, `transportation`, `admins`. If not specified, this will be inferred from the type.
+- `release`: Overture release ID. Defaults to `2024-08-20-0`. Note that `.` should be replaced with `-` in the ID.
+- `type`: One of `infrastructure`, `land`, `land_use`, `water`, `division`, `division_boundary`, `division_area`, `place`, `connector`, `segment`, `address`, `building` (default).
+- `theme`: One of `buildings`, `base`, `places`, `transportation`, `divisions`, `addresses`. If not specified, this will be inferred from the type.
 - `use_columns`: Load only these columns if specified. Default is to load all columns.
 
 ## Run this in any Jupyter Notebook
