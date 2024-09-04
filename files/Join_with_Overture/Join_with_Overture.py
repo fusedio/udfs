@@ -16,12 +16,13 @@ def udf(
         "division_area": "divisions",
         "division_boundary": "divisions",
     }
-    import geopandas as gpd
-
     try:
-        gdf = gpd.read_parquet(path).to_crs("EPSG:4326")
-    except:
-        print("This file does not contain geometry")
+        utils = fused.load(
+            "https://github.com/fusedio/udfs/tree/95872cd/public/common"
+        ).utils
+        gdf = utils.read_gdf_file(path).to_crs("EPSG:4326")
+    except Exception as e:
+        print("This file seems to not contain geometry.", str(e))
         return
 
     gdf_overture = fused.run(
