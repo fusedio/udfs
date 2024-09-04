@@ -13,7 +13,21 @@ from affine import Affine
 from loguru import logger
 from numpy.typing import NDArray
 
-
+def read_gdf_file(path):
+    import geopandas as gpd
+    extension = path.rsplit(".", maxsplit=1)[-1].lower()
+    if extension in ['gpkg','shp','geojson']:
+        driver = (
+            "GPKG"
+            if extension == "gpkg"
+            else ("ESRI Shapefile" if extension == "shp" else "GeoJSON")
+        )
+        return gpd.read_file(path, driver=driver)
+    elif extension=='zip':
+        return gpd.read_file(f"zip+{path}")
+    elif extension in ['parquet','pq']:
+        return gpd.read_parquet(path)
+        
 def url_to_arr(url, return_colormap=False):
     from io import BytesIO
 
