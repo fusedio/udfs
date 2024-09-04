@@ -33,7 +33,7 @@ def udf(
     )
     if len(gdf_overture) == 0:
         print(
-            "There is no data in this viewprot. Please move around to find your data."
+            "There is no data in this viewport. Please move around to find your data."
         )
         return
     if clip:
