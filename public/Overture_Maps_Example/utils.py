@@ -1,6 +1,6 @@
 def get_overture(
     bbox: fused.types.TileGDF = None,
-    release: str = "2024-03-12-alpha-0",
+    release: str = "2024-08-20-0",
     theme: str = None,
     overture_type: str = None,
     use_columns: list = None,
@@ -33,13 +33,28 @@ def get_overture(
             "segment": "transportation",
             "connector": "transportation",
         }
-    else:
+    elif release == "2024-03-12-alpha-0":
         theme_per_type = {
             "building": "buildings",
             "administrative_boundary": "admins",
             "place": "places",
             "land_use": "base",
             "water": "base",
+            "segment": "transportation",
+            "connector": "transportation",
+        }
+    else:
+        theme_per_type = {
+            "address": "addresses",
+            "building": "buildings",
+            "infrastructure": "base",
+            "land": "base",
+            "land_use": "base",
+            "water": "base",
+            "place": "places",
+            "division": "divisions",
+            "division_area": "divisions",
+            "division_boundary": "divisions",
             "segment": "transportation",
             "connector": "transportation",
         }
@@ -55,7 +70,7 @@ def get_overture(
         num_parts = 1 if overture_type != "building" else 5
 
     if min_zoom is None:
-        if theme == "admins":
+        if theme == "admins" or theme == "divisions":
             min_zoom = 7
         elif theme == "base":
             min_zoom = 9
