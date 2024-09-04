@@ -1,16 +1,17 @@
-import rasterio
-import numpy as np
 import json
-import rasterio
+
 import cv2
+import numpy as np
+import rasterio
 
 
 @fused.cache
 def url_to_arr(url, return_colormap=False):
-    import requests
-    import rasterio
-    from rasterio.plot import show
     from io import BytesIO
+
+    import rasterio
+    import requests
+    from rasterio.plot import show
 
     response = requests.get(url)
     print(response.status_code)
@@ -61,7 +62,7 @@ def get_gsd_from_zoom(zoom_level):
         0.15,  # Zoom level 20
         0.07,  # Zoom level 21
         0.04,  # Zoom level 22
-        0.02  # Zoom level 23
+        0.02,  # Zoom level 23
     ]
 
     # Validate the zoom level input
@@ -121,17 +122,18 @@ def morphological_operations(mask, kernel_size):
     return closing
 
 
-def get_vegetation_index(blue, green, red, index_type='VARI', normalize=True):
-    np.seterr(divide='ignore', invalid='ignore')
+def get_vegetation_index(blue, green, red, index_type="VARI", normalize=True):
+    np.seterr(divide="ignore", invalid="ignore")
 
-    if index_type == 'VARI':
+    if index_type == "VARI":
         index = (green.astype(float) - red.astype(float)) / (
-            green.astype(float) + red.astype(float) - blue.astype(float))
-    elif index_type == 'GLI':
-        index = (2 * green.astype(float) - red.astype(float) -
-                 blue.astype(float)) / (2 * green.astype(float) +
-                                        red.astype(float) + blue.astype(float))
-    elif index_type == 'RGRI':
+            green.astype(float) + red.astype(float) - blue.astype(float)
+        )
+    elif index_type == "GLI":
+        index = (2 * green.astype(float) - red.astype(float) - blue.astype(float)) / (
+            2 * green.astype(float) + red.astype(float) + blue.astype(float)
+        )
+    elif index_type == "RGRI":
         index = red.astype(float) / green.astype(float)
     else:
         raise ValueError(f"Unknown index type: {index_type}")
@@ -139,8 +141,7 @@ def get_vegetation_index(blue, green, red, index_type='VARI', normalize=True):
     return index
 
 
-def process_image(image_path, zoom_level, index_min, index_max,
-                  vegetation_index):
+def process_image(image_path, zoom_level, index_min, index_max, vegetation_index):
     """
     Process a geospatial image to segment vegetation areas.
 
@@ -154,7 +155,7 @@ def process_image(image_path, zoom_level, index_min, index_max,
         The minimum threshold value for the vegetation index.
     index_max : float
         The maximum threshold value for the vegetation index.
-    vegetation_index : str 
+    vegetation_index : str
         The vegetation index to use for segmentation (e.g., 'VARI', 'GLI', 'RGRI').
 
     Returns:
@@ -167,7 +168,7 @@ def process_image(image_path, zoom_level, index_min, index_max,
     if index_min is None:
         index_min = 0.1  # Default VARI minimum threshold
     if vegetation_index is None:
-        vegetation_index = 'VARI'
+        vegetation_index = "VARI"
 
     print(f"Processing image: {image_path}")
 
