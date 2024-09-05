@@ -24,12 +24,13 @@ def udf(
     except Exception as e:
         print("This file seems to not contain geometry.", str(e))
         return
-
+    overture_udf = fused.load('https://github.com/fusedio/udfs/tree/c8c3c40/public/Overture_Maps_Example/')
     gdf_overture = fused.run(
-        "UDF_Overture_Maps_Example",
+        overture_udf,
         theme=theme_type[overture_type],
         overture_type=overture_type,
         bbox=bbox,
+        engine='local'
     )
     if len(gdf_overture) == 0:
         print(
