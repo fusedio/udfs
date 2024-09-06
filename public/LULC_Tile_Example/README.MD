@@ -3,10 +3,9 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/LULC_Tile_Example.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags:  `STAC` `Mosaic` `tiff` `S3` `Projection` `Mask`
+Tags: `mask` `projection` `s3` `tiff` `mosaic` `stac`
 
 <!--fused:readme-->
-
 #### Overview
 Time series of annual global maps of land use and land cover (LULC). It currently has data from 2017-2022. The maps are derived from ESA Sentinel-2 imagery at 10m resolution. Each map is a composite of LULC predictions for 9 classes throughout the year in order to generate a representative snapshot of each year.
 
