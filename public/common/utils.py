@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 import pyproj
 import shapely
-from affine import Affine
 from loguru import logger
 from numpy.typing import NDArray
 
@@ -162,7 +161,7 @@ def table_to_tile(
 
 
 def rasterize_geometry(
-    geom: Dict, shape: Tuple[int, int], affine: Affine, all_touched: bool = False
+    geom: Dict, shape: Tuple[int, int], affine, all_touched: bool = False
 ) -> NDArray[np.uint8]:
     """Return an image array with input geometries burned in.
 
