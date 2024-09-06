@@ -1548,7 +1548,6 @@ def ds_to_tile(ds, variable, bbox, na_values=0):
     )
     return data
 
-
 def bbox_to_xy_slice(bounds, shape, transform):
     import rasterio
     from affine import Affine
@@ -1579,7 +1578,6 @@ def bbox_to_xy_slice(bounds, shape, transform):
         y_slice = slice(shape[0] - y_slice.stop, shape[0] - y_slice.start + 0)
         return x_slice, y_slice
 
-
 def bbox_to_window(bounds, shape, transform):
     import rasterio
     from affine import Affine
@@ -1606,3 +1604,51 @@ def bbox_to_window(bounds, shape, transform):
             original_window, [(1, 1)]
         )
         return gridded_window
+
+def bounds_to_gdf(bounds_list, crs = 4326):
+    import shapely
+    import geopandas as gpd
+    box = shapely.box(*bounds_list)
+    return gpd.GeoDataFrame(geometry=[box], crs=crs)
+
+def mercantile_polyfill(geom, zooms=[15], compact=True, k=None):
+    import mercantile
+    import shapely
+    import geopandas as gpd
+    tile_list = list(mercantile.tiles(*geom.bounds,zooms=zooms))
+    gdf_tiles = gpd.GeoDataFrame(tile_list, geometry=[shapely.box(*mercantile.bounds(i)) for i in tile_list], crs=4326)
+    gdf_tiles_intersecting = gdf_tiles[gdf_tiles.intersects(geom)]
+    if k:
+        temp_list = gdf_tiles_intersecting.apply(lambda row:mercantile.Tile(row.x,row.y,row.z),1)
+        clip_list = mercantile_kring_list(temp_list,k)
+        if not compact:
+            gdf = gpd.GeoDataFrame(clip_list, geometry=[shapely.box(*mercantile.bounds(i)) for i in clip_list], crs=4326)
+            return gdf
+    else:
+        if not compact:
+            return gdf_tiles_intersecting
+        clip_list = gdf_tiles_intersecting.apply(lambda row:mercantile.Tile(row.x,row.y,row.z),1)
+    simple_list = mercantile.simplify(clip_list)
+    gdf = gpd.GeoDataFrame(simple_list, geometry=[shapely.box(*mercantile.bounds(i)) for i in simple_list], crs=4326)
+    return gdf#.reset_index(drop=True)
+
+def mercantile_kring(tile, k):
+    #ToDo: Remove invalid tiles in the globe boundries (e.g. negative values)
+    import mercantile
+    result = []
+    for x in range(tile.x - k, tile.x + k + 1):
+        for y in range(tile.y - k, tile.y + k + 1):
+            result.append(mercantile.Tile(x, y, tile.z))
+    return result
+
+def mercantile_kring_list(tiles, k):
+    a = []
+    for tile in tiles:
+        a.extend(mercantile_kring(tile, k))
+    return list(set(a))
+
+def make_tiles_gdf(bounds,zoom = 14, k=0, compact=0):
+    import shapely
+    df_tiles = mercantile_polyfill(shapely.box(*bounds), zooms=[zoom], compact=compact, k=k)
+    df_tiles['bounds'] = df_tiles['geometry'].apply(lambda x:x.bounds,1)
+    return df_tiles
