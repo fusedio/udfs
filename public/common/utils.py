@@ -1,32 +1,23 @@
 # To use these functions, add the following command in your UDF:
 # `common = fused.public.common`
+
 from __future__ import annotations
+
 import random
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
+
+import ee
 import fused
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pyproj
 import shapely
+from affine import Affine
 from loguru import logger
 from numpy.typing import NDArray
 
-def read_gdf_file(path):
-    import geopandas as gpd
-    extension = path.rsplit(".", maxsplit=1)[-1].lower()
-    if extension in ['gpkg','shp','geojson']:
-        driver = (
-            "GPKG"
-            if extension == "gpkg"
-            else ("ESRI Shapefile" if extension == "shp" else "GeoJSON")
-        )
-        return gpd.read_file(path, driver=driver)
-    elif extension=='zip':
-        return gpd.read_file(f"zip+{path}")
-    elif extension in ['parquet','pq']:
-        return gpd.read_parquet(path)
-        
+
 def url_to_arr(url, return_colormap=False):
     from io import BytesIO
 
@@ -153,7 +144,6 @@ def table_to_tile(
         else:
             return df
     else:
-        df.crs = bbox.crs
         if clip:
             return df.clip(bbox).explode()
         else:
@@ -161,7 +151,7 @@ def table_to_tile(
 
 
 def rasterize_geometry(
-    geom: Dict, shape: Tuple[int, int], affine, all_touched: bool = False
+    geom: Dict, shape: Tuple[int, int], affine: Affine, all_touched: bool = False
 ) -> NDArray[np.uint8]:
     """Return an image array with input geometries burned in.
 
@@ -274,10 +264,7 @@ def read_tiff(
             dx = (maxx - minx) / output_shape[-1]
             dy = (maxy - miny) / output_shape[-2]
             dst_transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
-            if len(source_data.shape)==3 and source_data.shape[0]>1:
-                dst_shape = (source_data.shape[0], output_shape[-2], output_shape[-1])
-            else:
-                dst_shape = output_shape
+            dst_shape = output_shape
             dst_crs = bbox.crs
 
             destination_data = np.zeros(dst_shape, src.dtypes[0])
@@ -370,60 +357,6 @@ def arr_resample(arr, dst_shape=(512, 512), order=0):
     elif len(arr.shape) == 3:
         return np.asanyarray([zoom(i, zoom_factors, order=order) for i in arr])
 
-def arr_to_cog(arr, 
-               bounds = (-180, -90, 180, 90),
-               crs = 4326, 
-               output_path = 'output_cog.tif', 
-               blockxsize=256, blockysize=256,
-              overviews=[2, 4, 8, 16]):
-    import numpy as np
-    import rasterio
-    from rasterio.transform import from_bounds
-    from rasterio.crs import CRS
-    from rasterio.enums import Resampling
-
-    data = arr.squeeze() 
-    # Define the CRS (Coordinate Reference System)
-    crs = CRS.from_epsg(crs)
-
-    # Calculate transform
-    transform = from_bounds(*bounds, data.shape[-1], data.shape[-2])    
-    if len(data.shape)==2:
-        data = np.stack([data])
-        count=1
-    elif len(data.shape)==3:
-        if data.shape[0]==3:
-            count=3
-        elif data.shape[0]==4:
-            count=4
-        else:
-            print(data.shape)
-            return f'Wrong number of bands {data.shape[0]}. The options are: 1(gray) | 3 (RGB) | 4 (RGBA)'
-    else:
-        return f'wrong shape {data.shape}. Data shape options are: (ny,nx) | (1,ny,nx) | (3,ny,nx) | (4,ny,nx)'
-    # Write the numpy array to a Cloud-Optimized GeoTIFF file
-    with rasterio.open(
-        output_path,
-        'w',
-        driver='GTiff',
-        height=data.shape[-2],
-        width=data.shape[-1],
-        count=count,
-        dtype=data.dtype,
-        crs=crs,
-        transform=transform,
-        tiled=True,  # Enable tiling
-        blockxsize=blockxsize,  # Set block size
-        blockysize=blockysize,  # Set block size
-        compress='deflate',  # Use compression
-        interleave='band'  # Interleave bands
-    ) as dst:
-        dst.write(data)
-        # Build overviews (pyramid layers)
-        dst.build_overviews(overviews, Resampling.nearest)
-        # Update tags to comply with COG standards
-        dst.update_tags(ns='rio_overview', resampling='nearest')
-    return output_path
 
 def arr_to_color(arr, colormap, out_dtype="uint8"):
     import numpy as np
@@ -1234,7 +1167,7 @@ def bbox_stac_items(bbox, table):
         chunk_table = pq.ParquetFile(file_url).read_row_group(row["chunk_id"])
         chunk_gdf = gpd.GeoDataFrame(chunk_table.to_pandas())
         if "geometry" in chunk_gdf:
-            chunk_gdf.geometry = shapely.from_wkb(chunk_gdf["geometry"])
+            chunk_gdf.geometry = shapely.from_wkb(chunk_gdf.geometry)
         matching_images.append(chunk_gdf)
 
     ret_gdf = pd.concat(matching_images)
@@ -1379,7 +1312,6 @@ def ee_initialize(service_account_name="", key_path=""):
     Example:
         ee_initialize('your-service-account@your-project.iam.gserviceaccount.com', 'path/to/your-private-key.json')
     """
-    import ee
     credentials = ee.ServiceAccountCredentials(service_account_name, key_path)
     ee.Initialize(
         opt_url="https://earthengine-highvolume.googleapis.com", credentials=credentials
@@ -1547,6 +1479,7 @@ def ds_to_tile(ds, variable, bbox, na_values=0):
     )
     return data
 
+
 def bbox_to_xy_slice(bounds, shape, transform):
     import rasterio
     from affine import Affine
@@ -1577,6 +1510,7 @@ def bbox_to_xy_slice(bounds, shape, transform):
         y_slice = slice(shape[0] - y_slice.stop, shape[0] - y_slice.start + 0)
         return x_slice, y_slice
 
+
 def bbox_to_window(bounds, shape, transform):
     import rasterio
     from affine import Affine
@@ -1603,51 +1537,3 @@ def bbox_to_window(bounds, shape, transform):
             original_window, [(1, 1)]
         )
         return gridded_window
-
-def bounds_to_gdf(bounds_list, crs = 4326):
-    import shapely
-    import geopandas as gpd
-    box = shapely.box(*bounds_list)
-    return gpd.GeoDataFrame(geometry=[box], crs=crs)
-
-def mercantile_polyfill(geom, zooms=[15], compact=True, k=None):
-    import mercantile
-    import shapely
-    import geopandas as gpd
-    tile_list = list(mercantile.tiles(*geom.bounds,zooms=zooms))
-    gdf_tiles = gpd.GeoDataFrame(tile_list, geometry=[shapely.box(*mercantile.bounds(i)) for i in tile_list], crs=4326)
-    gdf_tiles_intersecting = gdf_tiles[gdf_tiles.intersects(geom)]
-    if k:
-        temp_list = gdf_tiles_intersecting.apply(lambda row:mercantile.Tile(row.x,row.y,row.z),1)
-        clip_list = mercantile_kring_list(temp_list,k)
-        if not compact:
-            gdf = gpd.GeoDataFrame(clip_list, geometry=[shapely.box(*mercantile.bounds(i)) for i in clip_list], crs=4326)
-            return gdf
-    else:
-        if not compact:
-            return gdf_tiles_intersecting
-        clip_list = gdf_tiles_intersecting.apply(lambda row:mercantile.Tile(row.x,row.y,row.z),1)
-    simple_list = mercantile.simplify(clip_list)
-    gdf = gpd.GeoDataFrame(simple_list, geometry=[shapely.box(*mercantile.bounds(i)) for i in simple_list], crs=4326)
-    return gdf#.reset_index(drop=True)
-
-def mercantile_kring(tile, k):
-    #ToDo: Remove invalid tiles in the globe boundries (e.g. negative values)
-    import mercantile
-    result = []
-    for x in range(tile.x - k, tile.x + k + 1):
-        for y in range(tile.y - k, tile.y + k + 1):
-            result.append(mercantile.Tile(x, y, tile.z))
-    return result
-
-def mercantile_kring_list(tiles, k):
-    a = []
-    for tile in tiles:
-        a.extend(mercantile_kring(tile, k))
-    return list(set(a))
-
-def make_tiles_gdf(bounds,zoom = 14, k=0, compact=0):
-    import shapely
-    df_tiles = mercantile_polyfill(shapely.box(*bounds), zooms=[zoom], compact=compact, k=k)
-    df_tiles['bounds'] = df_tiles['geometry'].apply(lambda x:x.bounds,1)
-    return df_tiles

@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "common",
+          "name": "common_copy",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -85,11 +85,10 @@
               }
             },
             "fused:udfType": "vector_tile",
-            "fused:slug": "common",
-            "fused:id": null,
-            "fused:name": "common",
+            "fused:slug": "common_copy",
+            "fused:name": "common_copy",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Fused_Logo.png",
-            "fused:description": "## Overview\n\nThis UDF contains common utils that are being used for many public udfs.\n\n\nTo import common utils in your udf run the following command:\n\n`common = fused.utils.common`\n",
+            "fused:description": "## Overview\n\nThis UDF contains common utils that are being used for many public udfs. \n\n\nTo import common utils in your udf run the following command:\n\n`common = fused.public.common`\n",
             "fused:defaultViewState": {
               "enable": false,
               "latitude": 0,
@@ -98,52 +97,173 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/ec2f2a7e56f9e28a1b62c158eeae73ce9189938a/public/common/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/dbf5961b80e060ec957f1873d99afcc2b3e9815d/dbf5961b80e060ec957f1873d99afcc2b3e9815d/",
             "fused:gitPath": "public/common",
-            "fused:gitRef": "ec2f2a7e56f9e28a1b62c158eeae73ce9189938a",
+            "fused:gitRef": "dbf5961b80e060ec957f1873d99afcc2b3e9815d",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
               "Mehran Ghandehari",
               "Isaac Brodsky",
-              "Plinio Guzman",
-              null,
-              null
+              "Plinio Guzman"
             ],
             "fused:gitAuthorUsernames": [
               "kashuk",
               "tylere",
               "mehran66",
               "isaacbrodsky",
-              "pgzmnk",
-              "fused-io-staging[bot]",
-              "fused-io[bot]"
+              "pgzmnk"
             ],
             "fused:gitAuthorUrls": [
               "https://github.com/kashuk",
               "https://github.com/tylere",
               "https://github.com/mehran66",
               "https://github.com/isaacbrodsky",
-              "https://github.com/pgzmnk",
-              "https://github.com/apps/fused-io-staging",
-              "https://github.com/apps/fused-io"
+              "https://github.com/pgzmnk"
             ],
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/12432685?v=4",
               "https://avatars.githubusercontent.com/u/92862?v=4",
               "https://avatars.githubusercontent.com/u/10367311?v=4",
               "https://avatars.githubusercontent.com/u/9139378?v=4",
-              "https://avatars.githubusercontent.com/u/27398253?v=4",
-              "https://avatars.githubusercontent.com/in/885821?v=4",
-              "https://avatars.githubusercontent.com/in/834700?v=4"
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
             ],
-            "fused:gitLastModified": "2024-09-06T00:39:49+00:00",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/ec2f2a7/public/common/",
+            "fused:gitLastModified": "2024-08-01T21:33:06+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/dbf5961/dbf5961b80e060ec957f1873d99afcc2b3e9815d/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
-            "fused:explorerPin": "90"
+            "fused:prBranch": "carmen.mitru@gmail.com-patch-add-new-metadata-prop",
+            "fused:prLink": "https://github.com/fusedio/udfs/pull/259",
+            "historyMetadata": [
+              {
+                "fused:vizConfig": {
+                  "tileLayer": {
+                    "@@type": "TileLayer",
+                    "minZoom": 0,
+                    "maxZoom": 19,
+                    "tileSize": 256,
+                    "pickable": true
+                  },
+                  "rasterLayer": {
+                    "@@type": "BitmapLayer",
+                    "pickable": true
+                  },
+                  "vectorLayer": {
+                    "@@type": "GeoJsonLayer",
+                    "stroked": true,
+                    "filled": false,
+                    "pickable": true,
+                    "lineWidthMinPixels": 1,
+                    "getLineColor": {
+                      "@@function": "hasProp",
+                      "property": "r",
+                      "present": "@@=[properties.r, properties.g, properties.b]",
+                      "absent": [
+                        255,
+                        255,
+                        255,
+                        40
+                      ]
+                    },
+                    "getFillColor": [
+                      255,
+                      255,
+                      255,
+                      40
+                    ]
+                  },
+                  "loadingLayer": {
+                    "@@type": "GeoJsonLayer",
+                    "stroked": true,
+                    "filled": true,
+                    "pickable": true,
+                    "lineWidthMinPixels": 1,
+                    "getLineColor": {
+                      "@@function": "themeColor",
+                      "key": "backgroundAccent"
+                    },
+                    "getFillColor": {
+                      "@@function": "themeColor",
+                      "key": "backgroundAccent",
+                      "alpha": 50
+                    }
+                  },
+                  "errorLayer": {
+                    "@@type": "GeoJsonLayer",
+                    "stroked": true,
+                    "filled": true,
+                    "pickable": true,
+                    "lineWidthMinPixels": 1,
+                    "getLineColor": [
+                      255,
+                      0,
+                      0,
+                      255
+                    ],
+                    "getFillColor": [
+                      255,
+                      0,
+                      0,
+                      40
+                    ]
+                  }
+                },
+                "fused:udfType": "vector_tile",
+                "fused:slug": "common",
+                "fused:id": null,
+                "fused:name": "common",
+                "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Fused_Logo.png",
+                "fused:description": "## Overview\n\nThis UDF contains common utils that are being used for many public udfs. \n\n\nTo import common utils in your udf run the following command:\n\n`common = fused.public.common`\n",
+                "fused:defaultViewState": {
+                  "enable": false,
+                  "latitude": 0,
+                  "longitude": 0,
+                  "zoom": 0,
+                  "pitch": 0,
+                  "bearing": 0
+                },
+                "fused:gitUrl": "https://github.com/fusedio/udfs/tree/690d568b2a2219a0b1585fe676e2697b1bd61e59/public/common/",
+                "fused:gitPath": "public/common",
+                "fused:gitRef": "690d568b2a2219a0b1585fe676e2697b1bd61e59",
+                "fused:gitAuthorNames": [
+                  "Sina Kashuk",
+                  "Tyler Erickson",
+                  "Mehran Ghandehari",
+                  "Isaac Brodsky",
+                  "Plinio Guzman"
+                ],
+                "fused:gitAuthorUsernames": [
+                  "kashuk",
+                  "tylere",
+                  "mehran66",
+                  "isaacbrodsky",
+                  "pgzmnk"
+                ],
+                "fused:gitAuthorUrls": [
+                  "https://github.com/kashuk",
+                  "https://github.com/tylere",
+                  "https://github.com/mehran66",
+                  "https://github.com/isaacbrodsky",
+                  "https://github.com/pgzmnk"
+                ],
+                "fused:gitAuthorAvatarUrls": [
+                  "https://avatars.githubusercontent.com/u/12432685?v=4",
+                  "https://avatars.githubusercontent.com/u/92862?v=4",
+                  "https://avatars.githubusercontent.com/u/10367311?v=4",
+                  "https://avatars.githubusercontent.com/u/9139378?v=4",
+                  "https://avatars.githubusercontent.com/u/27398253?v=4"
+                ],
+                "fused:gitLastModified": "2024-08-01T21:33:06+00:00",
+                "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/690d568/public/common/",
+                "fused:explorerTab": "public",
+                "fused:gitRepo": "fusedio/udfs",
+                "fused:prBranch": "carmen.mitru@gmail.com-patch-add-common",
+                "fused:prLink": "https://github.com/fusedio/udfs/pull/220"
+              }
+            ],
+            "fused:id": null
           },
-          "source": "common.py",
+          "source": "common_copy.py",
           "headers": [
             {
               "module_name": "utils",
