@@ -12,7 +12,7 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:description": "Read a Parquet or Geoparquet file and join with Overture.\n",
+            "fused:description": "Load Addresscloud data and join with Overture.",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
