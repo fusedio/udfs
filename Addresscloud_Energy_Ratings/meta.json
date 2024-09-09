@@ -1,0 +1,62 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Addresscloud_Energy_Ratings",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 0.1,
+                "pointRadiusMinPixels": 1,
+                "getFillColor": {
+                  "@@function": "colorCategories",
+                  "attr": "POTENTIAL_ENERGY_RATING",
+                  "domain": [
+                    "A",
+                    "B",
+                    "C",
+                    "D",
+                    "E",
+                    "F",
+                    "G"
+                  ],
+                  "colors": "Bold"
+                }
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Addresscloud_Energy_Ratings",
+            "fused:name": "Addresscloud_Energy_Ratings",
+            "fused:id": null
+          },
+          "source": "Addresscloud_Energy_Ratings.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
