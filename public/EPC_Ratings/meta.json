@@ -8,11 +8,11 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "Addresscloud_Energy_Ratings",
+          "name": "EPC_Ratings",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:description": "Load Addresscloud data and join with Overture.",
+            "fused:description": "EPC Ratings\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -48,9 +48,9 @@
                 }
               }
             },
-            "fused:udfType": "auto",
-            "fused:slug": "Addresscloud_Energy_Ratings",
-            "fused:name": "Addresscloud_Energy_Ratings",
+            "fused:udfType": "vector_tile",
+            "fused:slug": "EPC_Ratings",
+            "fused:name": "EPC_Ratings",
             "fused:id": null,
             "fused:gitUrl": "https://github.com/fusedio/udfs/tree/0600bffd764cb1f88bc1862823c2f2239d132270/files/Join_with_Overture/",
             "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/0600bff/files/Join_with_Overture/",
@@ -82,7 +82,7 @@
             },
             "fused:defaultParameters": []
           },
-          "source": "Addresscloud_Energy_Ratings.py",
+          "source": "EPC_Ratings.py",
           "headers": []
         }
       }
