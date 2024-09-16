@@ -202,7 +202,9 @@ def geom_stats(gdf, arr, output_shape=(255,255)):
     geom_masks = [
         rasterize_geometry(geom, arr.shape[-2:], transform) for geom in df_3857.geometry
     ]
-    gdf["stats"] = [np.nanmean(arr.data[geom_mask]) for geom_mask in geom_masks]
+    if isinstance(arr, np.ma.MaskedArray):
+        arr = arr.data
+    gdf["stats"] = [np.nanmean(arr[geom_mask]) for geom_mask in geom_masks]
     gdf["count"] = [geom_mask.sum() for geom_mask in geom_masks]
     return gdf
 
