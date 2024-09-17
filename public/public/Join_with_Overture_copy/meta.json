@@ -58,10 +58,10 @@
             "fused:slug": "Join_with_Overture_copy",
             "fused:name": "Join_with_Overture_copy",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/3d4ab2a744eaea1b5df48a09e993374a32523b14/public/Join_with_Overture_copy/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/3d4ab2a/public/Join_with_Overture_copy/",
-            "fused:gitPath": "public/Join_with_Overture_copy",
-            "fused:gitRef": "3d4ab2a744eaea1b5df48a09e993374a32523b14",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/c0791b01403af4eb3a9705e96dfe47be0b36761d/public/public/Join_with_Overture_copy/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/c0791b0/public/public/Join_with_Overture_copy/",
+            "fused:gitPath": "public/public/Join_with_Overture_copy",
+            "fused:gitRef": "c0791b01403af4eb3a9705e96dfe47be0b36761d",
             "fused:filePreview": true,
             "fused:filePreviewExtensions": [
               "parquet",
@@ -89,7 +89,7 @@
               "https://avatars.githubusercontent.com/u/27398253?v=4",
               "https://avatars.githubusercontent.com/u/12432685?v=4"
             ],
-            "fused:gitLastModified": "2024-09-17T09:56:48.239Z",
+            "fused:gitLastModified": "2024-09-17T09:57:29.575Z",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udf_cards/overture_join.png",
