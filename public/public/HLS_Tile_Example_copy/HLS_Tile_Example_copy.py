@@ -13,7 +13,7 @@ def udf(
     env="earthdata",
 ):
     z = bbox.z[0]
-    import pandas
+    import pandas as pd
     if z >= 9:
         utils = fused.load(
             "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
