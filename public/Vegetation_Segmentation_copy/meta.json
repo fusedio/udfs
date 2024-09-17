@@ -81,10 +81,10 @@
                 "label": "segmentation"
               }
             ],
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/b7905bbba375dd5cd68326c005c9338782ad9dfc/public/Vegetation_Segmentation/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/b7905bb/public/Vegetation_Segmentation/",
-            "fused:gitPath": "public/Vegetation_Segmentation",
-            "fused:gitRef": "b7905bbba375dd5cd68326c005c9338782ad9dfc",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/396f60898d151a266bbe5ba888fe2155986599e6/public/Vegetation_Segmentation_copy/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/396f608/public/Vegetation_Segmentation_copy/",
+            "fused:gitPath": "public/Vegetation_Segmentation_copy",
+            "fused:gitRef": "396f60898d151a266bbe5ba888fe2155986599e6",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/veg_segmentation_v2.png",
             "fused:explorerPin": "7",
             "fused:gitAuthorNames": [
@@ -99,9 +99,105 @@
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/27398253?v=4"
             ],
-            "fused:gitLastModified": "2024-09-04T22:49:15+00:00",
+            "fused:gitLastModified": "2024-09-17T15:30:51.745Z",
             "fused:explorerTab": "public",
-            "fused:gitRepo": "fusedio/udfs"
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitHistory": [
+              {
+                "fused:vizConfig": {
+                  "tileLayer": {
+                    "@@type": "TileLayer",
+                    "minZoom": 0,
+                    "maxZoom": 19,
+                    "tileSize": 256,
+                    "pickable": true
+                  },
+                  "rasterLayer": {
+                    "@@type": "BitmapLayer",
+                    "opacity": 0.3,
+                    "pickable": true
+                  },
+                  "vectorLayer": {
+                    "@@type": "GeoJsonLayer",
+                    "stroked": true,
+                    "filled": false,
+                    "pickable": true,
+                    "lineWidthMinPixels": 1,
+                    "pointRadiusMinPixels": 1,
+                    "getLineColor": {
+                      "@@function": "colorContinuous",
+                      "attr": "value",
+                      "domain": [
+                        0,
+                        10
+                      ],
+                      "colors": "RedOr",
+                      "nullColor": [
+                        184,
+                        184,
+                        184
+                      ]
+                    },
+                    "getFillColor": [
+                      208,
+                      208,
+                      208,
+                      40
+                    ]
+                  }
+                },
+                "fused:udfType": "vector_tile",
+                "fused:slug": "Vegetation_Segmentation",
+                "fused:name": "Vegetation_Segmentation",
+                "fused:id": null,
+                "fused:defaultViewState": {
+                  "enable": true,
+                  "latitude": 49.291155,
+                  "longitude": -122.837838,
+                  "zoom": 16,
+                  "pitch": 0,
+                  "bearing": 0
+                },
+                "fused:description": "## Overview\n\nThis UDF performs scalable vegetation analysis using classical computer vision techniques. It allows users to choose a vegetation index, set threshold values, and dynamically process satellite imagery for real-time global vegetation segmentation, all without relying on machine learning models.\n\n## External links\n\n- [Visible Atmospherically Resistant Index (VARI)](https://space4water.org/space/visible-atmospherically-resistant-index-vari)\n",
+                "fused:tags": [
+                  {
+                    "id": "computer-vision",
+                    "label": "computer-vision"
+                  },
+                  {
+                    "id": "vegetation-analysis",
+                    "label": "vegetation-analysis"
+                  },
+                  {
+                    "id": "segmentation",
+                    "label": "segmentation"
+                  }
+                ],
+                "fused:gitUrl": "https://github.com/fusedio/udfs/tree/b7905bbba375dd5cd68326c005c9338782ad9dfc/public/Vegetation_Segmentation/",
+                "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/b7905bb/public/Vegetation_Segmentation/",
+                "fused:gitPath": "public/Vegetation_Segmentation",
+                "fused:gitRef": "b7905bbba375dd5cd68326c005c9338782ad9dfc",
+                "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/veg_segmentation_v2.png",
+                "fused:explorerPin": "7",
+                "fused:gitAuthorNames": [
+                  "Plinio Guzman"
+                ],
+                "fused:gitAuthorUsernames": [
+                  "pgzmnk"
+                ],
+                "fused:gitAuthorUrls": [
+                  "https://github.com/pgzmnk"
+                ],
+                "fused:gitAuthorAvatarUrls": [
+                  "https://avatars.githubusercontent.com/u/27398253?v=4"
+                ],
+                "fused:gitLastModified": "2024-09-04T22:49:15+00:00",
+                "fused:explorerTab": "public",
+                "fused:gitRepo": "fusedio/udfs"
+              }
+            ],
+            "fused:gitPullRequestBranch": "carmen.mitru@gmail.com-patch-segmentation-public-p",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/290"
           },
           "source": "Vegetation_Segmentation_copy.py",
           "headers": [
