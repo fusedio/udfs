@@ -1,0 +1,102 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Census_ACS_5yr_copy",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:tags": [
+              {
+                "id": "xlsx",
+                "label": "xslx"
+              },
+              {
+                "id": "csv",
+                "label": "csv"
+              },
+              {
+                "id": "Fused",
+                "label": "Fused"
+              },
+              {
+                "id": "Aggregation",
+                "label": "Aggregation"
+              }
+            ],
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 4,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 2,
+                "getFillColor": "@@=[properties.metric, properties.metric/4, properties.metric]",
+                "getLineColor": "@@=[properties.metric, properties.metric/4, properties.metric]"
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "Census_ACS_5yr_copy",
+            "fused:name": "Census_ACS_5yr_copy",
+            "fused:id": null,
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Census_ACS_5yr.png",
+            "fused:description": "## Overview\n\nThis UDF shows how to retrieve the American Community Survey (ACS) dataset provided by the U.S. Census Bureau. It contains demographic, social, economic, and housing characteristics aggregated over a 5-year period. This dataset provides detailed information about various population attributes at different geographic levels, such as states, counties, and census tracts.\n\n## External links\n\n- [ACS official Website](https://www.census.gov/programs-surveys/acs/)\n",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/b7905bbba375dd5cd68326c005c9338782ad9dfc/public/Census_ACS_5yr/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/b7905bb/public/Census_ACS_5yr/",
+            "fused:gitPath": "public/Census_ACS_5yr",
+            "fused:gitRef": "b7905bbba375dd5cd68326c005c9338782ad9dfc",
+            "fused:explorerPin": "4",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk",
+              "Plinio Guzman",
+              "Isaac Brodsky"
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk",
+              "pgzmnk",
+              "isaacbrodsky"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk",
+              "https://github.com/pgzmnk",
+              "https://github.com/isaacbrodsky"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/u/27398253?v=4",
+              "https://avatars.githubusercontent.com/u/9139378?v=4"
+            ],
+            "fused:gitLastModified": "2024-08-16T00:38:41+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs"
+          },
+          "source": "Census_ACS_5yr_copy.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
