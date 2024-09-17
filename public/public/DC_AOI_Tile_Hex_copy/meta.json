@@ -1,0 +1,158 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "DC_AOI_Tile_Hex_copy",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "vectorLayer": {
+                "opacity": 2,
+                "@@type": "H3HexagonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "getHexagon": "@@=properties.hex",
+                "getFillColor": "@@=[properties.agg_band1, properties.agg_band2, properties.agg_band3]",
+                "getElevation": "@@=properties.agg_band1",
+                "elevationScale": 0
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "DC_AOI_Tile_Hex_copy",
+            "fused:name": "DC_AOI_Tile_Hex_copy",
+            "fused:id": null,
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DC_AOI_Example.png",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 38.89339221145854,
+              "longitude": -77.02621396941808,
+              "zoom": 10.983614041519468,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/401a5a9150ec507b827136b1b7a14b32784d07f6/public/DC_AOI_Tile_Hex_copy/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/401a5a9/public/DC_AOI_Tile_Hex_copy/",
+            "fused:gitPath": "public/DC_AOI_Tile_Hex_copy",
+            "fused:gitRef": "401a5a9150ec507b827136b1b7a14b32784d07f6",
+            "fused:description": "Exported from Fused UDF Workbench\n\n",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk",
+              null,
+              "Isaac Brodsky"
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk",
+              "fused-io-staging[bot]",
+              "isaacbrodsky"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk",
+              "https://github.com/apps/fused-io-staging",
+              "https://github.com/isaacbrodsky"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/in/885821?v=4",
+              "https://avatars.githubusercontent.com/u/9139378?v=4"
+            ],
+            "fused:gitLastModified": "2024-09-17T09:46:03.936Z",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:explorerPin": "9",
+            "fused:gitHistory": [
+              {
+                "fused:vizConfig": {
+                  "tileLayer": {
+                    "@@type": "TileLayer",
+                    "minZoom": 0,
+                    "maxZoom": 19,
+                    "tileSize": 256,
+                    "pickable": true
+                  },
+                  "vectorLayer": {
+                    "opacity": 2,
+                    "@@type": "H3HexagonLayer",
+                    "stroked": false,
+                    "filled": true,
+                    "pickable": true,
+                    "getHexagon": "@@=properties.hex",
+                    "getFillColor": "@@=[properties.agg_band1, properties.agg_band2, properties.agg_band3]",
+                    "getElevation": "@@=properties.agg_band1",
+                    "elevationScale": 0
+                  }
+                },
+                "fused:udfType": "auto",
+                "fused:slug": "DC_AOI_Tile_Hex",
+                "fused:name": "DC_AOI_Tile_Hex",
+                "fused:id": null,
+                "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DC_AOI_Example.png",
+                "fused:defaultViewState": {
+                  "enable": true,
+                  "latitude": 38.89339221145854,
+                  "longitude": -77.02621396941808,
+                  "zoom": 10.983614041519468,
+                  "pitch": 0,
+                  "bearing": 0
+                },
+                "fused:gitUrl": "https://github.com/fusedio/udfs/tree/b7905bbba375dd5cd68326c005c9338782ad9dfc/public/DC_AOI_Tile_Hex/",
+                "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/b7905bb/public/DC_AOI_Tile_Hex/",
+                "fused:gitPath": "public/DC_AOI_Tile_Hex",
+                "fused:gitRef": "b7905bbba375dd5cd68326c005c9338782ad9dfc",
+                "fused:description": "Exported from Fused UDF Workbench\n\n",
+                "fused:gitAuthorNames": [
+                  "Sina Kashuk",
+                  null,
+                  "Isaac Brodsky"
+                ],
+                "fused:gitAuthorUsernames": [
+                  "kashuk",
+                  "fused-io-staging[bot]",
+                  "isaacbrodsky"
+                ],
+                "fused:gitAuthorUrls": [
+                  "https://github.com/kashuk",
+                  "https://github.com/apps/fused-io-staging",
+                  "https://github.com/isaacbrodsky"
+                ],
+                "fused:gitAuthorAvatarUrls": [
+                  "https://avatars.githubusercontent.com/u/12432685?v=4",
+                  "https://avatars.githubusercontent.com/in/885821?v=4",
+                  "https://avatars.githubusercontent.com/u/9139378?v=4"
+                ],
+                "fused:gitLastModified": "2024-08-30T22:29:23+00:00",
+                "fused:explorerTab": "public",
+                "fused:gitRepo": "fusedio/udfs",
+                "fused:explorerPin": "9"
+              }
+            ],
+            "fused:gitPullRequestBranch": "carmen.mitru@gmail.com-patch-dc-new-fork",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/283"
+          },
+          "source": "DC_AOI_Tile_Hex_copy.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
