@@ -1,0 +1,239 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Landsat_Tile_Example_copy",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    255,
+                    0,
+                    255
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "Landsat_Tile_Example_copy",
+            "fused:name": "Landsat_Tile_Example_copy",
+            "fused:defaultParameters": [],
+            "fused:tags": [
+              {
+                "id": "Band algebra",
+                "label": "Band algebra"
+              },
+              {
+                "id": "S3",
+                "label": "S3"
+              },
+              {
+                "id": "Element84",
+                "label": "Element84"
+              },
+              {
+                "id": "Remove-clouds",
+                "label": "Remove-clouds"
+              },
+              {
+                "id": "STAC",
+                "label": "STAC"
+              }
+            ],
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Landsat_Tile_Example.png",
+            "fused:description": "## Overview\n\nLandsat Collection 2 offers global Level-2 surface reflectance and temperature products. These are generated from Collection 2 Level-1 inputs meeting specific criteria, including a Solar Zenith Angle constraint of <76 degrees and required auxiliary data inputs.\n\n## External links\n\n- [Landsat Official Website](https://www.usgs.gov/landsat-missions/landsat-collection-2-level-2-science-products)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/LULC_Tile_Example\")\narr = fused.run(udf=udf, x=5241, y=12667, z=15)\narr\n```\n",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/d2e0c10899dbeae1bcfcba7d34c5faf1077944d1/public/Landsat_Tile_Example_copy/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/d2e0c10/public/Landsat_Tile_Example_copy/",
+            "fused:gitPath": "public/Landsat_Tile_Example_copy",
+            "fused:gitRef": "d2e0c10899dbeae1bcfcba7d34c5faf1077944d1",
+            "fused:explorerPin": "8",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk",
+              "Tyler Erickson",
+              "Mehran Ghandehari",
+              null,
+              "Plinio Guzman",
+              "Isaac Brodsky"
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk",
+              "tylere",
+              "mehran66",
+              "charlesfused",
+              "pgzmnk",
+              "isaacbrodsky"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk",
+              "https://github.com/tylere",
+              "https://github.com/mehran66",
+              "https://github.com/charlesfused",
+              "https://github.com/pgzmnk",
+              "https://github.com/isaacbrodsky"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/u/92862?v=4",
+              "https://avatars.githubusercontent.com/u/10367311?v=4",
+              "https://avatars.githubusercontent.com/u/148997493?v=4",
+              "https://avatars.githubusercontent.com/u/27398253?v=4",
+              "https://avatars.githubusercontent.com/u/9139378?v=4"
+            ],
+            "fused:gitLastModified": "2024-09-17T09:30:54.631Z",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitHistory": [
+              {
+                "fused:vizConfig": {
+                  "tileLayer": {
+                    "@@type": "TileLayer",
+                    "minZoom": 0,
+                    "maxZoom": 19,
+                    "tileSize": 256,
+                    "pickable": true
+                  },
+                  "rasterLayer": {
+                    "@@type": "BitmapLayer",
+                    "pickable": true
+                  },
+                  "vectorLayer": {
+                    "@@type": "GeoJsonLayer",
+                    "stroked": true,
+                    "filled": false,
+                    "pickable": true,
+                    "lineWidthMinPixels": 1,
+                    "getLineColor": {
+                      "@@function": "hasProp",
+                      "property": "r",
+                      "present": "@@=[properties.r, properties.g, properties.b]",
+                      "absent": [
+                        255,
+                        0,
+                        255
+                      ]
+                    },
+                    "getFillColor": [
+                      255,
+                      0,
+                      0,
+                      40
+                    ]
+                  }
+                },
+                "fused:udfType": "vector_tile",
+                "fused:slug": "Landsat_Tile_Example",
+                "fused:name": "Landsat_Tile_Example",
+                "fused:defaultParameters": [],
+                "fused:tags": [
+                  {
+                    "id": "Band algebra",
+                    "label": "Band algebra"
+                  },
+                  {
+                    "id": "S3",
+                    "label": "S3"
+                  },
+                  {
+                    "id": "Element84",
+                    "label": "Element84"
+                  },
+                  {
+                    "id": "Remove-clouds",
+                    "label": "Remove-clouds"
+                  },
+                  {
+                    "id": "STAC",
+                    "label": "STAC"
+                  }
+                ],
+                "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Landsat_Tile_Example.png",
+                "fused:description": "## Overview\n\nLandsat Collection 2 offers global Level-2 surface reflectance and temperature products. These are generated from Collection 2 Level-1 inputs meeting specific criteria, including a Solar Zenith Angle constraint of <76 degrees and required auxiliary data inputs.\n\n## External links\n\n- [Landsat Official Website](https://www.usgs.gov/landsat-missions/landsat-collection-2-level-2-science-products)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/LULC_Tile_Example\")\narr = fused.run(udf=udf, x=5241, y=12667, z=15)\narr\n```\n",
+                "fused:id": null,
+                "fused:gitUrl": "https://github.com/fusedio/udfs/tree/b7905bbba375dd5cd68326c005c9338782ad9dfc/public/Landsat_Tile_Example/",
+                "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/b7905bb/public/Landsat_Tile_Example/",
+                "fused:gitPath": "public/Landsat_Tile_Example",
+                "fused:gitRef": "b7905bbba375dd5cd68326c005c9338782ad9dfc",
+                "fused:explorerPin": "8",
+                "fused:gitAuthorNames": [
+                  "Sina Kashuk",
+                  "Tyler Erickson",
+                  "Mehran Ghandehari",
+                  null,
+                  "Plinio Guzman",
+                  "Isaac Brodsky"
+                ],
+                "fused:gitAuthorUsernames": [
+                  "kashuk",
+                  "tylere",
+                  "mehran66",
+                  "charlesfused",
+                  "pgzmnk",
+                  "isaacbrodsky"
+                ],
+                "fused:gitAuthorUrls": [
+                  "https://github.com/kashuk",
+                  "https://github.com/tylere",
+                  "https://github.com/mehran66",
+                  "https://github.com/charlesfused",
+                  "https://github.com/pgzmnk",
+                  "https://github.com/isaacbrodsky"
+                ],
+                "fused:gitAuthorAvatarUrls": [
+                  "https://avatars.githubusercontent.com/u/12432685?v=4",
+                  "https://avatars.githubusercontent.com/u/92862?v=4",
+                  "https://avatars.githubusercontent.com/u/10367311?v=4",
+                  "https://avatars.githubusercontent.com/u/148997493?v=4",
+                  "https://avatars.githubusercontent.com/u/27398253?v=4",
+                  "https://avatars.githubusercontent.com/u/9139378?v=4"
+                ],
+                "fused:gitLastModified": "2024-08-16T00:38:41+00:00",
+                "fused:explorerTab": "public",
+                "fused:gitRepo": "fusedio/udfs"
+              }
+            ],
+            "fused:gitPullRequestBranch": "carmen.mitru@gmail.com-patch-Landsat-fork-test",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/280"
+          },
+          "source": "Landsat_Tile_Example_copy.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
