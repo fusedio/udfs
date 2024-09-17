@@ -1,0 +1,76 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "turquoise_bison_1231_312_99_312_123",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "turquoise_bison_1231_312_99_312_123",
+            "fused:slug": "turquoise_bison_1231_312_99_312_123",
+            "fused:gitRepo": "fusedlabs/fusedudfs",
+            "fused:gitRef": "0f90b67f162511805467f7165c436daa517ade8f",
+            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/0f90b67f162511805467f7165c436daa517ade8f/turquoise_bison/",
+            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/0f90b67/turquoise_bison/",
+            "fused:gitPath": "turquoise_bison",
+            "fused:gitLastModified": "2024-09-17T10:07:14.186Z",
+            "fused:gitPullRequestBranch": "carmen.mitru@gmail.com-patch-turquoise_bison",
+            "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/274",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "BluYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "turquoise_bison_1231_312_99_312_123.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
