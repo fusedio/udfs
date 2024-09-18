@@ -31,7 +31,7 @@
                 "label": "H3-vector"
               }
             ],
-            "fused:description": "## Overview\n\nThis UDF shows how to open NYC yellow taxi trip dataset using DuckDB.\n\n## External links\n\n- [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/DuckDB_NYC_Example\")\ngdf = fused.run(udf=udf)\ngdf\n```\n",
+            "fused:description": "## Overview\n\nThis UDF shows how to open NYC yellow taxi trip dataset using DuckDB and aggregate the pickups using [H3-DuckDB](https://github.com/isaacbrodsky/h3-duckdb).\n\n## External links\n\n- [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/DuckDB_H3_Example\")\ngdf = fused.run(udf=udf)\ngdf\n```\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -66,43 +66,33 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/19b5240c705ab8d6bec6bf747278dd2b50da7fff/public/DuckDB_NYC_Example/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/19b5240/public/DuckDB_NYC_Example/",
-            "fused:gitPath": "public/DuckDB_NYC_Example",
-            "fused:gitRef": "19b5240c705ab8d6bec6bf747278dd2b50da7fff",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/1588ace72bacd703cca68a5c51ad6dd52e472ffc/public/DuckDB_H3_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/1588ace/public/DuckDB_H3_Example/",
+            "fused:gitPath": "public/DuckDB_H3_Example",
+            "fused:gitRef": "1588ace72bacd703cca68a5c51ad6dd52e472ffc",
             "fused:gitAuthorNames": [
-              "Sina Kashuk",
               "Isaac Brodsky",
-              "Tyler Erickson",
-              "Mehran Ghandehari",
-              null,
-              "Plinio Guzman"
+              "Plinio Guzman",
+              null
             ],
             "fused:gitAuthorUsernames": [
-              "kashuk",
               "isaacbrodsky",
-              "tylere",
-              "mehran66",
-              "charlesfused",
-              "pgzmnk"
+              "pgzmnk",
+              "fused-io-staging[bot]"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/kashuk",
               "https://github.com/isaacbrodsky",
-              "https://github.com/tylere",
-              "https://github.com/mehran66",
-              "https://github.com/charlesfused",
-              "https://github.com/pgzmnk"
+              "https://github.com/pgzmnk",
+              "https://github.com/apps/fused-io-staging"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/12432685?v=4",
               "https://avatars.githubusercontent.com/u/9139378?v=4",
-              "https://avatars.githubusercontent.com/u/92862?v=4",
-              "https://avatars.githubusercontent.com/u/10367311?v=4",
-              "https://avatars.githubusercontent.com/u/148997493?v=4",
-              "https://avatars.githubusercontent.com/u/27398253?v=4"
+              "https://avatars.githubusercontent.com/u/27398253?v=4",
+              "https://avatars.githubusercontent.com/in/885821?v=4"
             ],
-            "fused:gitLastModified": "2024-03-13T17:22:21+00:00"
+            "fused:gitLastModified": "2024-09-04T01:22:00+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs"
           },
           "source": "DuckDB_H3_Example.py",
           "headers": [
