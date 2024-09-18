@@ -9,7 +9,7 @@ def udf(city='Paris', resolution=11):
     if resolution > 11:resolution=11
 
     h3_utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/fb65aff/public/DuckDB_H3_Example/"
+        "https://github.com/fusedio/udfs/tree/870e162/public/DuckDB_H3_Example/"
     ).utils
         
     @fused.cache
@@ -38,7 +38,7 @@ def udf(city='Paris', resolution=11):
         out_path = f'{city}.csv.gz'
         csv_file = fused.core.download(url=url, file_path=out_path)
         
-        con = duckdb.connect(config = {'allow_unsigned_extensions': True})
+        con = duckdb.connect()
         h3_utils.load_h3_duckdb(con)
         con.sql(f"""INSTALL httpfs; LOAD httpfs;""")
         # reading data with duckDB and generating H3 cells

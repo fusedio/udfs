@@ -1506,11 +1506,9 @@ def get_chunk_slices_from_shape(array_shape, x_chunks, y_chunks, i):
 def run_query(query, return_arrow=False):
     import duckdb
 
-    # con = duckdb.connect()
-    con = duckdb.connect(config={"allow_unsigned_extensions": True})
-    # TODO: con.sql("INSTALL h3 FROM community;")
+    con = duckdb.connect()
     fused.load(
-        "https://github.com/fusedio/udfs/tree/fb65aff/public/DuckDB_H3_Example/"
+        "https://github.com/fusedio/udfs/tree/870e162/public/DuckDB_H3_Example/"
     ).utils.load_h3_duckdb(con)
     con.sql(
         """SET home_directory='/tmp/';

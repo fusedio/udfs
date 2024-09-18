@@ -9,9 +9,9 @@ def udf(bbox=None, resolution: int = 9, min_count: int = 10):
         "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
     ).utils
     h3_utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/fb65aff/public/DuckDB_H3_Example/"
+        "https://github.com/fusedio/udfs/tree/870e162/public/DuckDB_H3_Example/"
     ).utils
-    con = duckdb.connect(config = {'allow_unsigned_extensions': True})
+    con = duckdb.connect()
 
     h3_utils.load_h3_duckdb(con)
     con.sql(f"""INSTALL httpfs; LOAD httpfs;""")
