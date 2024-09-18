@@ -3,11 +3,11 @@ def udf(count: int = 0):
     import duckdb
 
     h3_utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/fb65aff/public/DuckDB_H3_Example/"
+        "https://github.com/fusedio/udfs/tree/870e162/public/DuckDB_H3_Example/"
     ).utils
 
     # Create DuckDB connection
-    con = duckdb.connect(config={"allow_unsigned_extensions": True})
+    con = duckdb.connect()
     con.sql(f"""INSTALL httpfs; LOAD httpfs;""")
     h3_utils.load_h3_duckdb(con)
 
