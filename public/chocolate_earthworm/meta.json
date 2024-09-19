@@ -85,6 +85,10 @@
             {
               "module_name": "utils",
               "source_file": "utils.py"
+            },
+            {
+              "module_name": "utils2",
+              "source_file": "utils2.py"
             }
           ]
         }
