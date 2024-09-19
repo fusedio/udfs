@@ -56,10 +56,35 @@
             "fused:udfType": "auto",
             "fused:slug": "chocolate_earthworm",
             "fused:name": "chocolate_earthworm",
-            "fused:id": null
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/91092b87accbd9a4fda368ef44931972a9885dc4/public/chocolate_earthworm/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/91092b8/public/chocolate_earthworm/",
+            "fused:gitPath": "public/chocolate_earthworm",
+            "fused:gitRef": "91092b87accbd9a4fda368ef44931972a9885dc4",
+            "fused:description": "Exported from Fused UDF Workbench\n",
+            "fused:gitAuthorNames": [
+              "Plinio Guzman"
+            ],
+            "fused:gitAuthorUsernames": [
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitLastModified": "2024-09-19T19:07:02+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs"
           },
           "source": "chocolate_earthworm.py",
-          "headers": []
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
         }
       }
     ],
