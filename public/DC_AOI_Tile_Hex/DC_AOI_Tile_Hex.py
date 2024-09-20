@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF=None, time_of_interest="2021-09-01/2021-12-30", chip_len:int=256, scale:float=0.1):
+def udf(bbox: fused.types.TileGDF=None, time_of_interest="2021-12-01/2021-12-30", chip_len:int=256, scale:float=0.1):
     import geopandas as gpd
     import shapely
     import pandas as pd
@@ -15,7 +15,7 @@ def udf(bbox: fused.types.TileGDF=None, time_of_interest="2021-09-01/2021-12-30"
         return 
         
     # read sentinel data
-    udf_sentinel = fused.load('https://github.com/fusedio/udfs/tree/7b98f99/public/DC_AOI_Example/')
+    udf_sentinel = fused.load('https://github.com/fusedio/udfs/tree/a1c01c6/public/DC_AOI_Example/')
     arr = udf_sentinel.utils.get_arr(bbox, time_of_interest=time_of_interest, output_shape=(chip_len, chip_len))
     arr = np.clip(arr *  scale, 0, 255).astype("uint8")[:3]
     
@@ -28,7 +28,7 @@ def udf(bbox: fused.types.TileGDF=None, time_of_interest="2021-09-01/2021-12-30"
     h3_size = min(int(3+bbox.z[0]/1.5),15)
     print(h3_size) 
     data_cols = [f'band{i+1}' for i in range(len(arr))]
-    df = df_to_hex(data_cols=data_cols, h3_size=h3_size, hex_col='hex', return_avg_lalng=True)
+    df = df_to_hex(df, data_cols=data_cols, h3_size=h3_size, hex_col='hex', return_avg_lalng=True)
 
     # calculate stats: mean pixel value for each hex
     mask=1
