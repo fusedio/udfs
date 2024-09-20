@@ -7,14 +7,18 @@ def get_overture(
     num_parts: int = None,
     min_zoom: int = None,
     polygon: str = None,
-    point_convert: str = None):
+    point_convert: str = None
+):
+    """Returns Overture data as a GeoDataFrame."""
     import logging
     import concurrent.futures
-    import pandas as pd
-    import geopandas as gpd
     import json
+    
+    import geopandas as gpd
+    import pandas as pd
     from shapely.geometry import shape, box
 
+    # Load Fused helper functions
     utils = fused.load(
         "https://github.com/fusedio/udfs/tree/f8f0c0f/public/common/"
     ).utils
