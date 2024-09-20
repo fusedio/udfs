@@ -1502,10 +1502,8 @@ def get_chunk_slices_from_shape(array_shape, x_chunks, y_chunks, i):
     return x_slice, y_slice
 
 
-# @fused.cache
-def run_query(query, return_arrow=False):
+def duckdb_connect():
     import duckdb
-
     con = duckdb.connect()
     fused.load(
         "https://github.com/fusedio/udfs/tree/870e162/public/DuckDB_H3_Example/"
@@ -1519,6 +1517,11 @@ def run_query(query, return_arrow=False):
     """
     )
     print("duckdb version:", duckdb.__version__)
+    return con
+
+# @fused.cache
+def run_query(query, return_arrow=False):
+    con=duckdb_connect()
     if return_arrow:
         return con.sql(query).fetch_arrow_table()
     else:
