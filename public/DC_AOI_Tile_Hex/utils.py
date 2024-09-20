@@ -1,7 +1,7 @@
-def df_to_hex(data_cols=['data'], h3_size=9, hex_col='hex', latlng_col=['lat','lng'], ordered=False, return_avg_lalng=True):
-    run_query = fused.load(
-            "https://github.com/fusedio/udfs/tree/43656f6/public/common/"
-        ).utils.run_query
+def df_to_hex(df, data_cols=['data'], h3_size=9, hex_col='hex', latlng_col=['lat','lng'], ordered=False, return_avg_lalng=True):
+    duckdb_connect = fused.load(
+            "https://github.com/fusedio/udfs/tree/a1c01c6/public/common/"
+        ).utils.duckdb_connect
     agg_term = ', '.join([f'ARRAY_AGG({col}) as agg_{col}' for col in data_cols])
     if return_avg_lalng:
         agg_term+=f', avg({latlng_col[0]}) as {latlng_col[0]}_avg, avg({latlng_col[1]}) as {latlng_col[1]}_avg'
@@ -12,7 +12,8 @@ def df_to_hex(data_cols=['data'], h3_size=9, hex_col='hex', latlng_col=['lat','l
     """
     if ordered:
         qr += '\norder by 1'
-    return run_query(qr)
+    con = duckdb_connect()
+    return con.query(qr).df()
 
 def tile_to_df(bbox, arr, return_geometry=False):
     import numpy as np
@@ -20,7 +21,7 @@ def tile_to_df(bbox, arr, return_geometry=False):
     if len(arr.shape)==2:
         arr = np.stack([arr])
     shape_transform_to_xycoor = fused.load(
-        "https://github.com/fusedio/udfs/tree/43656f6/public/common/"
+        "https://github.com/fusedio/udfs/tree/a1c01c6/public/common/"
     ).utils.shape_transform_to_xycoor
     
     # calculate transform
