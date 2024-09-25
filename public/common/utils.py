@@ -1,8 +1,10 @@
 # To use these functions, add the following command in your UDF:
 # `common = fused.public.common`
 from __future__ import annotations
+
 import random
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
+
 import fused
 import geopandas as gpd
 import numpy as np
@@ -12,21 +14,24 @@ import shapely
 from loguru import logger
 from numpy.typing import NDArray
 
+
 def read_gdf_file(path):
     import geopandas as gpd
+
     extension = path.rsplit(".", maxsplit=1)[-1].lower()
-    if extension in ['gpkg','shp','geojson']:
+    if extension in ["gpkg", "shp", "geojson"]:
         driver = (
             "GPKG"
             if extension == "gpkg"
             else ("ESRI Shapefile" if extension == "shp" else "GeoJSON")
         )
         return gpd.read_file(path, driver=driver)
-    elif extension=='zip':
+    elif extension == "zip":
         return gpd.read_file(f"zip+{path}")
-    elif extension in ['parquet','pq']:
+    elif extension in ["parquet", "pq"]:
         return gpd.read_parquet(path)
-        
+
+
 def url_to_arr(url, return_colormap=False):
     from io import BytesIO
 
@@ -190,7 +195,7 @@ def rasterize_geometry(
 
 
 @fused.cache(path="geom_stats")
-def geom_stats(gdf, arr, output_shape=(255,255)):
+def geom_stats(gdf, arr, output_shape=(255, 255)):
     import numpy as np
 
     df_3857 = gdf.to_crs(3857)
@@ -276,7 +281,7 @@ def read_tiff(
             dx = (maxx - minx) / output_shape[-1]
             dy = (maxy - miny) / output_shape[-2]
             dst_transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
-            if len(source_data.shape)==3 and source_data.shape[0]>1:
+            if len(source_data.shape) == 3 and source_data.shape[0] > 1:
                 dst_shape = (source_data.shape[0], output_shape[-2], output_shape[-1])
             else:
                 dst_shape = output_shape
@@ -372,42 +377,46 @@ def arr_resample(arr, dst_shape=(512, 512), order=0):
     elif len(arr.shape) == 3:
         return np.asanyarray([zoom(i, zoom_factors, order=order) for i in arr])
 
-def arr_to_cog(arr, 
-               bounds = (-180, -90, 180, 90),
-               crs = 4326, 
-               output_path = 'output_cog.tif', 
-               blockxsize=256, blockysize=256,
-              overviews=[2, 4, 8, 16]):
+
+def arr_to_cog(
+    arr,
+    bounds=(-180, -90, 180, 90),
+    crs=4326,
+    output_path="output_cog.tif",
+    blockxsize=256,
+    blockysize=256,
+    overviews=[2, 4, 8, 16],
+):
     import numpy as np
     import rasterio
-    from rasterio.transform import from_bounds
     from rasterio.crs import CRS
     from rasterio.enums import Resampling
+    from rasterio.transform import from_bounds
 
-    data = arr.squeeze() 
+    data = arr.squeeze()
     # Define the CRS (Coordinate Reference System)
     crs = CRS.from_epsg(crs)
 
     # Calculate transform
-    transform = from_bounds(*bounds, data.shape[-1], data.shape[-2])    
-    if len(data.shape)==2:
+    transform = from_bounds(*bounds, data.shape[-1], data.shape[-2])
+    if len(data.shape) == 2:
         data = np.stack([data])
-        count=1
-    elif len(data.shape)==3:
-        if data.shape[0]==3:
-            count=3
-        elif data.shape[0]==4:
-            count=4
+        count = 1
+    elif len(data.shape) == 3:
+        if data.shape[0] == 3:
+            count = 3
+        elif data.shape[0] == 4:
+            count = 4
         else:
             print(data.shape)
-            return f'Wrong number of bands {data.shape[0]}. The options are: 1(gray) | 3 (RGB) | 4 (RGBA)'
+            return f"Wrong number of bands {data.shape[0]}. The options are: 1(gray) | 3 (RGB) | 4 (RGBA)"
     else:
-        return f'wrong shape {data.shape}. Data shape options are: (ny,nx) | (1,ny,nx) | (3,ny,nx) | (4,ny,nx)'
+        return f"wrong shape {data.shape}. Data shape options are: (ny,nx) | (1,ny,nx) | (3,ny,nx) | (4,ny,nx)"
     # Write the numpy array to a Cloud-Optimized GeoTIFF file
     with rasterio.open(
         output_path,
-        'w',
-        driver='GTiff',
+        "w",
+        driver="GTiff",
         height=data.shape[-2],
         width=data.shape[-1],
         count=count,
@@ -417,15 +426,16 @@ def arr_to_cog(arr,
         tiled=True,  # Enable tiling
         blockxsize=blockxsize,  # Set block size
         blockysize=blockysize,  # Set block size
-        compress='deflate',  # Use compression
-        interleave='band'  # Interleave bands
+        compress="deflate",  # Use compression
+        interleave="band",  # Interleave bands
     ) as dst:
         dst.write(data)
         # Build overviews (pyramid layers)
         dst.build_overviews(overviews, Resampling.nearest)
         # Update tags to comply with COG standards
-        dst.update_tags(ns='rio_overview', resampling='nearest')
+        dst.update_tags(ns="rio_overview", resampling="nearest")
     return output_path
+
 
 def arr_to_color(arr, colormap, out_dtype="uint8"):
     import numpy as np
@@ -1382,6 +1392,7 @@ def ee_initialize(service_account_name="", key_path=""):
         ee_initialize('your-service-account@your-project.iam.gserviceaccount.com', 'path/to/your-private-key.json')
     """
     import ee
+
     credentials = ee.ServiceAccountCredentials(service_account_name, key_path)
     ee.Initialize(
         opt_url="https://earthengine-highvolume.googleapis.com", credentials=credentials
@@ -1408,7 +1419,9 @@ def run_pool_tiffs(bbox, df_tiffs, output_shape):
 
     arrs_tmp = fused.utils.common.run_pool(fn_read_tiff, tiff_list)
     arrs_out = np.stack(arrs_tmp)
-    arrs_out = arrs_out.reshape(len(columns), len(df_tiffs), output_shape[0], output_shape[1])
+    arrs_out = arrs_out.reshape(
+        len(columns), len(df_tiffs), output_shape[0], output_shape[1]
+    )
     return arrs_out
 
 
@@ -1502,8 +1515,7 @@ def get_chunk_slices_from_shape(array_shape, x_chunks, y_chunks, i):
     return x_slice, y_slice
 
 
-# @fused.cache
-def run_query(query, return_arrow=False):
+def duckdb_connect():
     import duckdb
 
     con = duckdb.connect()
@@ -1519,6 +1531,12 @@ def run_query(query, return_arrow=False):
     """
     )
     print("duckdb version:", duckdb.__version__)
+    return con
+
+
+# @fused.cache
+def run_query(query, return_arrow=False):
+    con = duckdb_connect()
     if return_arrow:
         return con.sql(query).fetch_arrow_table()
     else:
@@ -1546,6 +1564,7 @@ def ds_to_tile(ds, variable, bbox, na_values=0):
         x=(px0, px1), y=(py0, py1), mode="constant", constant_values=na_values
     )
     return data
+
 
 def bbox_to_xy_slice(bounds, shape, transform):
     import rasterio
@@ -1577,6 +1596,7 @@ def bbox_to_xy_slice(bounds, shape, transform):
         y_slice = slice(shape[0] - y_slice.stop, shape[0] - y_slice.start + 0)
         return x_slice, y_slice
 
+
 def bbox_to_window(bounds, shape, transform):
     import rasterio
     from affine import Affine
@@ -1604,41 +1624,64 @@ def bbox_to_window(bounds, shape, transform):
         )
         return gridded_window
 
-def bounds_to_gdf(bounds_list, crs = 4326):
-    import shapely
+
+def bounds_to_gdf(bounds_list, crs=4326):
     import geopandas as gpd
+    import shapely
+
     box = shapely.box(*bounds_list)
     return gpd.GeoDataFrame(geometry=[box], crs=crs)
 
+
 def mercantile_polyfill(geom, zooms=[15], compact=True, k=None):
+    import geopandas as gpd
     import mercantile
     import shapely
-    import geopandas as gpd
-    tile_list = list(mercantile.tiles(*geom.bounds,zooms=zooms))
-    gdf_tiles = gpd.GeoDataFrame(tile_list, geometry=[shapely.box(*mercantile.bounds(i)) for i in tile_list], crs=4326)
+
+    tile_list = list(mercantile.tiles(*geom.bounds, zooms=zooms))
+    gdf_tiles = gpd.GeoDataFrame(
+        tile_list,
+        geometry=[shapely.box(*mercantile.bounds(i)) for i in tile_list],
+        crs=4326,
+    )
     gdf_tiles_intersecting = gdf_tiles[gdf_tiles.intersects(geom)]
     if k:
-        temp_list = gdf_tiles_intersecting.apply(lambda row:mercantile.Tile(row.x,row.y,row.z),1)
-        clip_list = mercantile_kring_list(temp_list,k)
+        temp_list = gdf_tiles_intersecting.apply(
+            lambda row: mercantile.Tile(row.x, row.y, row.z), 1
+        )
+        clip_list = mercantile_kring_list(temp_list, k)
         if not compact:
-            gdf = gpd.GeoDataFrame(clip_list, geometry=[shapely.box(*mercantile.bounds(i)) for i in clip_list], crs=4326)
+            gdf = gpd.GeoDataFrame(
+                clip_list,
+                geometry=[shapely.box(*mercantile.bounds(i)) for i in clip_list],
+                crs=4326,
+            )
             return gdf
     else:
         if not compact:
             return gdf_tiles_intersecting
-        clip_list = gdf_tiles_intersecting.apply(lambda row:mercantile.Tile(row.x,row.y,row.z),1)
+        clip_list = gdf_tiles_intersecting.apply(
+            lambda row: mercantile.Tile(row.x, row.y, row.z), 1
+        )
     simple_list = mercantile.simplify(clip_list)
-    gdf = gpd.GeoDataFrame(simple_list, geometry=[shapely.box(*mercantile.bounds(i)) for i in simple_list], crs=4326)
-    return gdf#.reset_index(drop=True)
+    gdf = gpd.GeoDataFrame(
+        simple_list,
+        geometry=[shapely.box(*mercantile.bounds(i)) for i in simple_list],
+        crs=4326,
+    )
+    return gdf  # .reset_index(drop=True)
+
 
 def mercantile_kring(tile, k):
-    #ToDo: Remove invalid tiles in the globe boundries (e.g. negative values)
+    # ToDo: Remove invalid tiles in the globe boundries (e.g. negative values)
     import mercantile
+
     result = []
     for x in range(tile.x - k, tile.x + k + 1):
         for y in range(tile.y - k, tile.y + k + 1):
             result.append(mercantile.Tile(x, y, tile.z))
     return result
+
 
 def mercantile_kring_list(tiles, k):
     a = []
@@ -1646,8 +1689,88 @@ def mercantile_kring_list(tiles, k):
         a.extend(mercantile_kring(tile, k))
     return list(set(a))
 
-def make_tiles_gdf(bounds,zoom = 14, k=0, compact=0):
+
+def make_tiles_gdf(bounds, zoom=14, k=0, compact=0):
     import shapely
-    df_tiles = mercantile_polyfill(shapely.box(*bounds), zooms=[zoom], compact=compact, k=k)
-    df_tiles['bounds'] = df_tiles['geometry'].apply(lambda x:x.bounds,1)
+
+    df_tiles = mercantile_polyfill(
+        shapely.box(*bounds), zooms=[zoom], compact=compact, k=k
+    )
+    df_tiles["bounds"] = df_tiles["geometry"].apply(lambda x: x.bounds, 1)
     return df_tiles
+
+
+def get_masked_array(gdf_aoi, arr_aoi):
+    import numpy as np
+    from rasterio.features import geometry_mask
+    from rasterio.transform import from_bounds
+
+    transform = from_bounds(*gdf_aoi.total_bounds, arr_aoi.shape[-1], arr_aoi.shape[-2])
+    geom_mask = geometry_mask(
+        gdf_aoi.geometry,
+        transform=transform,
+        invert=True,
+        out_shape=arr_aoi.shape[-2:],
+    )
+    masked_value = np.ma.MaskedArray(data=arr_aoi, mask=[~geom_mask])
+    return masked_value
+
+
+def get_da(path, coarsen_factor=1, variable_index=0, xy_cols=["longitude", "latitude"]):
+    # Load data
+    import xarray
+
+    path = fused.download(path, path)
+    ds = xarray.open_dataset(path)
+    try:
+        var = list(ds.data_vars)[variable_index]
+        print(var)
+        if coarsen_factor > 1:
+            da = ds.coarsen(
+                {xy_cols[0]: coarsen_factor, xy_cols[1]: coarsen_factor},
+                boundary="trim",
+            ).max()[var]
+        else:
+            da = ds[var]
+        print("done")
+        return da
+    except Exception as e:
+        print(e)
+        ValueError()
+
+
+def get_da_bounds(da, xy_cols=("longitude", "latitude")):
+    x_list = da[xy_cols[0]].values
+    y_list = da[xy_cols[1]].values
+    pixel_width = x_list[1] - x_list[0]
+    pixel_height = y_list[1] - y_list[0]
+
+    minx = x_list[0] - pixel_width / 2
+    maxx = x_list[-1] + pixel_width / 2
+    miny = y_list[-1] + pixel_height / 2
+    maxy = y_list[0] - pixel_height / 2
+
+    return (minx, miny, maxx, maxy)
+
+
+def clip_arr(arr, bounds_aoi, bounds_total=(-180, -90, 180, 90)):
+    # ToDo: fix antimeridian issue by spliting and merging arr around lng=360
+    from rasterio.transform import from_bounds
+
+    transform = from_bounds(*bounds_total, arr.shape[-1], arr.shape[-2])
+    if bounds_total[2] > 180 and bounds_total[0] >= 0:
+        print("Normalized longitude for bounds_aoi to (0,360) to match bounds_total")
+        bounds_aoi = (
+            (bounds_aoi[0] + 360) % 360,
+            bounds_aoi[1],
+            (bounds_aoi[2] + 360) % 360,
+            bounds_aoi[3],
+        )
+    x_slice, y_slice = bbox_to_xy_slice(bounds_aoi, arr.shape, transform)
+    arr_aoi = arr[y_slice, x_slice]
+    if bounds_total[1] > bounds_total[3]:
+        if len(arr_aoi.shape) == 3:
+            arr_aoi = arr_aoi[:, ::-1]
+        else:
+            arr_aoi = arr_aoi[::-1]
+    return arr_aoi
