@@ -15,16 +15,16 @@
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/CDLS_Tile_Example.png",
             "fused:tags": [
               {
-                "id": "Mask",
-                "label": "Mask"
+                "id": "mask",
+                "label": "mask"
               },
               {
-                "id": "AWS",
-                "label": "AWS"
+                "id": "aws",
+                "label": "aws"
               },
               {
-                "id": "Rasterio",
-                "label": "Rasterio"
+                "id": "rasterio",
+                "label": "rasterio"
               }
             ],
             "fused:description": "# Overview\n\nThis UDF shows how to open [Cropland Data Layer](https://www.nass.usda.gov/Research_and_Science/Cropland/SARS1a.php) (CDL) tiff files. The CDL is a categorical land cover dataset that provides information about the types of crops and land cover on agricultural lands in the United States. The CDL is produced by the United States Department of Agriculture (USDA) National Agricultural Statistics Service (NASS) on an annual basis.\n\n# External links\n\n- [Original Download Links](https://www.nass.usda.gov/Research_and_Science/Cropland/Release/index.php)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/CDLs_Tile_Example\")\narr = fused.run(udf=udf, x=9646, y=12321, z=15)\narr\n```\n",
@@ -77,39 +77,43 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/7a5a2408d2be18dba575de95f36f98f42406acfc/public/CDLs_Tile_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/aa3695ae0df4c6a9bacb28f3b85fd1d91e73cc47/public/CDLs_Tile_Example/",
             "fused:gitPath": "public/CDLs_Tile_Example",
-            "fused:gitRef": "7a5a2408d2be18dba575de95f36f98f42406acfc",
+            "fused:gitRef": "aa3695ae0df4c6a9bacb28f3b85fd1d91e73cc47",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
               null,
               "Plinio Guzman",
-              "Isaac Brodsky"
+              "Isaac Brodsky",
+              null
             ],
             "fused:gitAuthorUsernames": [
               "kashuk",
               "tylere",
               "charlesfused",
               "pgzmnk",
-              "isaacbrodsky"
+              "isaacbrodsky",
+              "fused-io[bot]"
             ],
             "fused:gitAuthorUrls": [
               "https://github.com/kashuk",
               "https://github.com/tylere",
               "https://github.com/charlesfused",
               "https://github.com/pgzmnk",
-              "https://github.com/isaacbrodsky"
+              "https://github.com/isaacbrodsky",
+              "https://github.com/apps/fused-io"
             ],
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/12432685?v=4",
               "https://avatars.githubusercontent.com/u/92862?v=4",
               "https://avatars.githubusercontent.com/u/148997493?v=4",
               "https://avatars.githubusercontent.com/u/27398253?v=4",
-              "https://avatars.githubusercontent.com/u/9139378?v=4"
+              "https://avatars.githubusercontent.com/u/9139378?v=4",
+              "https://avatars.githubusercontent.com/in/834700?v=4"
             ],
-            "fused:gitLastModified": "2024-08-15T23:41:01+00:00",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/7a5a240/public/CDLs_Tile_Example/",
+            "fused:gitLastModified": "2024-08-29T19:56:11+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/aa3695a/public/CDLs_Tile_Example/",
             "fused:explorerPin": "2",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs"
