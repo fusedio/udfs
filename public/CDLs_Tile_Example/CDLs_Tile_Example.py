@@ -25,7 +25,7 @@ def udf(
 
     # Print out the top 20 classes
     print(crop_counts(array_int).head(20))
-    
+
     colored_array = (
         np.array([color_map[value] for value in array_int.flat], dtype=np.uint8)
         .reshape(array_int.shape + (4,))
