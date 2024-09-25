@@ -1,0 +1,52 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "common_vis",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:assetUrl": "",
+            "fused:defaultParameters": [],
+            "fused:datasets": "Digital Elevation Model",
+            "fused:tags": [
+              {
+                "id": "raster",
+                "label": "raster"
+              }
+            ],
+            "fused:description": "Utility functions for visualizing data.",
+            "fused:vizConfig": {
+              "@@type": "TileLayer",
+              "minZoom": 7,
+              "maxZoom": 15,
+              "tileSize": 256,
+              "pickable": true,
+              "subLayerConfig": {
+                "@@type": "BitmapLayer"
+              }
+            },
+            "fused:udfType": "raster",
+            "fused:slug": "common_vis",
+            "fused:name": "common_vis",
+            "fused:id": null
+          },
+          "source": "common_vis.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
