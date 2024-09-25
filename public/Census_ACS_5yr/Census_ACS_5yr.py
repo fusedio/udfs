@@ -1,7 +1,13 @@
 @fused.udf
 def udf(
-    bbox, census_variable="Total Pop", scale_factor=200, is_density=True, year=2022
+    bbox: fused.types.TileGDF = None,
+    census_variable: str = "Total Pop",
+    scale_factor: float = 200,
+    is_density: bool = True,
+    year: int = 2022
 ):
+    import numpy as np
+    
     from utils import acs_5yr_bbox
 
     # different geometry details per zoom level
@@ -31,8 +37,6 @@ def udf(
     print(gdf.columns)
 
     # create a metric columns for the visualization
-    import numpy as np
-
     if suffix == "centroid" or is_density == False:
         gdf["metric"] = gdf.iloc[:, 2] * scale_factor / 1000
     else:

@@ -11,7 +11,6 @@ def url_to_arr(url, return_colormap=False):
 
     import rasterio
     import requests
-    from rasterio.plot import show
 
     response = requests.get(url)
     print(response.status_code)
@@ -37,41 +36,10 @@ def get_bands(image_path):
 
 
 def get_gsd_from_zoom(zoom_level):
-    # List of GSD values for each zoom level at the equator
-    gsd_meters_per_pixel = [
-        156412.0,  # Zoom level 0
-        78206.0,  # Zoom level 1
-        39103.0,  # Zoom level 2
-        19551.5,  # Zoom level 3
-        9775.8,  # Zoom level 4
-        4887.8,  # Zoom level 5
-        2443.9,  # Zoom level 6
-        1221.9,  # Zoom level 7
-        610.98,  # Zoom level 8
-        305.49,  # Zoom level 9
-        152.74,  # Zoom level 10
-        76.37,  # Zoom level 11
-        38.19,  # Zoom level 12
-        19.09,  # Zoom level 13
-        9.55,  # Zoom level 14
-        4.78,  # Zoom level 15
-        2.39,  # Zoom level 16
-        1.19,  # Zoom level 17
-        0.60,  # Zoom level 18
-        0.30,  # Zoom level 19
-        0.15,  # Zoom level 20
-        0.07,  # Zoom level 21
-        0.04,  # Zoom level 22
-        0.02,  # Zoom level 23
-    ]
-
-    # Validate the zoom level input
-    if 0 <= zoom_level < len(gsd_meters_per_pixel):
-        return gsd_meters_per_pixel[zoom_level]
-    else:
-        raise ValueError(
-            "Invalid zoom level. Please provide a zoom level between 0 and 23."
-        )
+    """Return pixel spacing (estimated at the equator)"""
+    # See: https://wiki.openstreetmap.org/wiki/Zoom_levels
+    C = 40075016.686
+    return (C / 2**(zoom_level + 8))
 
 
 def get_kernel_size(gsd):

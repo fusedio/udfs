@@ -5,6 +5,25 @@ read_tiff = fused.load(
 ).utils.read_tiff
 
 
+def crop_to_int(
+    crop_type,
+    verbose=True
+):
+    import pandas as pd
+    import requests
+
+    url = "https://storage.googleapis.com/earthengine-stac/catalog/USDA/USDA_NASS_CDL.json"
+    df_meta = pd.DataFrame(
+        requests.get(url).json()["summaries"]["eo:bands"][0]["gee:classes"]
+    )
+    mask = df_meta.description.map(lambda x: crop_type.lower() in x.lower())
+    df_meta_masked = df_meta[mask]
+    if verbose:
+        print(f"{df_meta_masked=}")
+        print("crop type options", df_meta.description.values)
+    return df_meta_masked.value.values
+
+
 def filter_crops(arr, crop_type, verbose=True):
     import numpy as np
 
@@ -36,19 +55,3 @@ def crop_counts(arr):
     df.columns = ["crop_type", "color", "n_pixel"]
     df = df.sort_values("n_pixel", ascending=False)
     return df.dropna()
-
-
-def crop_to_int(crop_type="corn", verbose=True):
-    import pandas as pd
-    import requests
-
-    url = "https://storage.googleapis.com/earthengine-stac/catalog/USDA/USDA_NASS_CDL.json"
-    df_meta = pd.DataFrame(
-        requests.get(url).json()["summaries"]["eo:bands"][0]["gee:classes"]
-    )
-    mask = df_meta.description.map(lambda x: crop_type.lower() in x.lower())
-    df_meta_masked = df_meta[mask]
-    if verbose:
-        print(f"{df_meta_masked=}")
-        print("crop type options", df_meta.description.values)
-    return df_meta_masked.value.values
