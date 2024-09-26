@@ -564,6 +564,19 @@ def get_s3_list(path, suffix=None):
         return ["s3://" + i for i in fs.ls(path)]
 
 
+@fused.cache
+def get_s3_list_walk(path):
+    #version 2 (recursive)
+    import s3fs
+    s3 = s3fs.S3FileSystem()
+    # Recursively list all files in the specified S3 path
+    flist=[]
+    for dirpath, dirnames, filenames in s3.walk(path):
+        for filename in filenames:
+            flist.append(f"s3://{dirpath}/{filename}")
+    return flist
+
+
 def run_async(fn, arr_args, delay=0, max_workers=32):
     import asyncio
     import concurrent.futures
