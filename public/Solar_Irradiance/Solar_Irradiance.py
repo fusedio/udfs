@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.Bbox = None):
+def udf(bbox: fused.types.TileGDF = None):
     import geopandas as gpd
     from shapely import box
 
