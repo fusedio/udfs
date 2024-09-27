@@ -5,6 +5,7 @@ def udf(
     red_band="red",
     nir_band="nir08",
     collection="landsat-c2-l2",
+    cloud_threshold=10,
 ):
     """Display NDVI based on Landsat & STAC"""
     import odc.stac
@@ -23,7 +24,7 @@ def udf(
         collections=[collection],
         bbox=bbox.total_bounds,
         datetime=time_of_interest,
-        query={"eo:cloud_cover": {"lt": 10}},
+        query={"eo:cloud_cover": {"lt": cloud_threshold}},
     ).item_collection()
     print(f"Returned {len(items)} Items")
 
