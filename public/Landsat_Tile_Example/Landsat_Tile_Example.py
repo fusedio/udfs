@@ -6,7 +6,7 @@ def udf(
     nir_band="nir08",
     collection="landsat-c2-l2",
 ):
-
+    """Display NDVI based on Landsat & STAC"""
     import odc.stac
     import palettable
     import pystac_client
