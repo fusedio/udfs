@@ -1528,21 +1528,18 @@ def get_chunk_slices_from_shape(array_shape, x_chunks, y_chunks, i):
     return x_slice, y_slice
 
 
-def duckdb_connect():
-    import duckdb
-
+def duckdb_connect(home_directory='/tmp/'):
+    import duckdb 
     con = duckdb.connect()
-    fused.load(
-        "https://github.com/fusedio/udfs/tree/870e162/public/DuckDB_H3_Example/"
-    ).utils.load_h3_duckdb(con)
     con.sql(
-        """SET home_directory='/tmp/';
+    f"""SET home_directory='{home_directory}';
+    INSTALL h3 FROM community;
+    LOAD h3;
     install 'httpfs';
     load 'httpfs';
     INSTALL spatial;
     LOAD spatial;
-    """
-    )
+    """)
     print("duckdb version:", duckdb.__version__)
     return con
 
