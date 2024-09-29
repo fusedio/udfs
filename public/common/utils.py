@@ -14,6 +14,37 @@ import shapely
 from loguru import logger
 from numpy.typing import NDArray
 
+def write_log(msg="Your message.", name='//default', log_type='info', rotation="10 MB"):
+    from loguru import logger
+    path = fused.file_path('logs/' + name + '.log')
+    logger.add(path, rotation=rotation)
+    if log_type=='warning':
+        logger.warning(msg)
+    else:
+        logger.info(msg)  # Write the log message
+    logger.remove()  # Remove the log handler
+    from datetime import datetime
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print(f"{timestamp} | {path} |msg: {msg}" )
+
+def read_log(n=None, name='default', return_log=False):
+    path = fused.file_path('logs/' + name + '.log')
+    try:
+        with open(path, 'r') as file:
+            log_content = file.readlines()
+            if n:
+                log_content = ''.join(log_content[-n:])  # Return last 'tail_lines' entries
+            else:
+                log_content = ''.join(log_content)
+            if return_log:
+                return log_content
+            else:
+                print(log_content)
+    except FileNotFoundError:
+        if return_log:
+            return "Log file not found."
+        else:
+            print("Log file not found.")
 
 def read_gdf_file(path):
     import geopandas as gpd
