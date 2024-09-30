@@ -15,20 +15,20 @@
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Duckdb_NYC311_Example.png",
             "fused:tags": [
               {
-                "id": "file",
-                "label": "file"
+                "id": "Aggregation",
+                "label": "Aggregation"
               },
               {
-                "id": "vector",
-                "label": "vector"
+                "id": "parquet",
+                "label": "parquet"
               },
               {
-                "id": "aws",
-                "label": "AWS"
+                "id": "DuckDB",
+                "label": "DuckDB"
               },
               {
-                "id": "tutorial",
-                "label": "tutorial"
+                "id": "H3-vector",
+                "label": "H3-vector"
               }
             ],
             "fused:description": "## Overview\n\nThis UDF shows how to open NYC yellow taxi trip dataset using DuckDB.\n\n## External links\n\n- [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)",

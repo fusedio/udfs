@@ -5,17 +5,15 @@ def udf():
 
     numba.config.CACHE_DIR = "/tmp/numba_cache"
 
-    import stackstac
     import planetary_computer
     import pystac_client
-    import stackstac
     import rasterio
+    import stackstac
     from datashader import Canvas
     from datashader.colors import Elevation
-    from datashader.transfer_functions import shade
-    from datashader.transfer_functions import stack
-    from xrspatial.utils import height_implied_by_aspect_ratio
+    from datashader.transfer_functions import shade, stack
     from xrspatial import hillshade
+    from xrspatial.utils import height_implied_by_aspect_ratio
 
     catalog = pystac_client.Client.open(
         "https://planetarycomputer.microsoft.com/api/stac/v1/",

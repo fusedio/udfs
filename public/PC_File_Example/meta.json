@@ -21,20 +21,20 @@
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/PC_File_Example.png",
             "fused:tags": [
               {
-                "id": "dem",
-                "label": "DEM"
+                "id": "Hillshade",
+                "label": "Hillshade"
               },
               {
-                "id": "raster",
-                "label": "raster"
+                "id": "Rasterio",
+                "label": "Rasterio"
               },
               {
-                "id": "file",
-                "label": "file"
+                "id": "MSFT-PC",
+                "label": "MSFT-PC"
               },
               {
-                "id": "pc",
-                "label": "PC"
+                "id": "STAC",
+                "label": "STAC"
               }
             ],
             "fused:description": "# Overview\n\nThis udf uses Xarray-Spatial's surface tools on Planetary Computer data to quantify and visualize terrain landform data from the NASADEM digital elevation model for McMinnville, Tennessee.\n\n# External links\n\n- [source](https://github.com/microsoft/PlanetaryComputerExamples/blob/main/tutorials/surface_analysis.ipynb)",

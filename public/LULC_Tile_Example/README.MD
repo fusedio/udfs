@@ -1,11 +1,11 @@
+<!--fused:pin=9-->
 <!--fused:preview-->
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/LULC_Tile_Example.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `10-meter` `pc` `lulc` `raster` `bbox`
+Tags: `mask` `projection` `s3` `tiff` `mosaic` `stac`
 
 <!--fused:readme-->
-
 #### Overview
 Time series of annual global maps of land use and land cover (LULC). It currently has data from 2017-2022. The maps are derived from ESA Sentinel-2 imagery at 10m resolution. Each map is a composite of LULC predictions for 9 classes throughout the year in order to generate a representative snapshot of each year.
 
@@ -17,3 +17,13 @@ All years are available under a Creative Commons BY-4.0.
 
 #### STAC Collections
 * Microsoft Planetary Computer [link](https://planetarycomputer.microsoft.com/api/stac/v1/collections/io-lulc-9-class)
+
+## Run this in any Jupyter Notebook
+
+```python
+import fused
+
+udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/LULC_Tile_Example")
+arr = fused.run(udf=udf, x=5241, y=12667, z=15)
+arr
+```

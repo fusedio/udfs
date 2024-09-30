@@ -1,12 +1,12 @@
 @fused.udf
-def udf(bbox, context, year="2022"):
+def udf(bbox, context, year="2022", chip_len:int=256):
     if bbox.z[0] >= 5:
         from utils import (
-            mosaic_tiff,
-            bbox_stac_items,
-            s3_to_https,
-            arr_to_color,
             LULC_IO_COLORS,
+            arr_to_color,
+            bbox_stac_items,
+            mosaic_tiff,
+            s3_to_https,
         )
 
         matching_items = bbox_stac_items(
@@ -21,10 +21,11 @@ def udf(bbox, context, year="2022"):
         data = mosaic_tiff(
             bbox,
             tiff_list,
-            output_shape=(256, 256),
+            output_shape=(chip_len, chip_len),
             overview_level=min(max(12 - bbox.z[0], 0), 4),
         )
         data = arr_to_color(data, color_map=LULC_IO_COLORS)
+        print(data.shape)
         return data
     else:
         print("Please zoom in more.")

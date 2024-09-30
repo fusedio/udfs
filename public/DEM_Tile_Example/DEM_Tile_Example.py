@@ -1,12 +1,12 @@
 def udf(bbox, provider="AWS"):
-    arr_to_plasma = fused.core.import_from_github(
-        "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
-    ).utils.arr_to_plasma
+    utils = fused.load(
+        "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
+    ).utils
     # collection = 'cop-dem-glo-90'
     collection = "cop-dem-glo-30"
-    from pystac.extensions.eo import EOExtension as eo
-    import pystac_client
     import odc.stac
+    import pystac_client
+    from pystac.extensions.eo import EOExtension as eo
 
     if provider == "AWS":
         odc.stac.configure_s3_access(aws_unsigned=True)
@@ -38,4 +38,4 @@ def udf(bbox, provider="AWS"):
         bbox=bbox.total_bounds,
     ).astype(float)
     arr = ds["data"].max(dim="time")
-    return arr_to_plasma(arr.values, min_max=(0, 500), reverse=False)
+    return utils.arr_to_plasma(arr.values, min_max=(0, 500), reverse=False)

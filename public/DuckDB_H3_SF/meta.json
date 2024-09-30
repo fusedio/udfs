@@ -1,0 +1,91 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "DuckDB_H3_SF",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.755579150483435,
+              "longitude": -122.43935922334451,
+              "zoom": 11.57842366922168,
+              "pitch": 49.040247678018574,
+              "bearing": -2.3957076903880576
+            },
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "extruded": true,
+                "opacity": 1,
+                "coverage": 0.9,
+                "lineWidthMinPixels": 5,
+                "getHexagon": "@@=properties.hex",
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "count",
+                  "present": "@@=[(1 - properties.count/500) * 255, 0, 255]",
+                  "absent": [
+                    200,
+                    200,
+                    200
+                  ]
+                },
+                "getFillColor": {
+                  "@@function": "hasProp",
+                  "property": "count",
+                  "present": "@@=[255, (1 - properties.count/500) * 255, 0]",
+                  "absent": [
+                    220,
+                    255,
+                    100
+                  ]
+                },
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "count",
+                  "present": "@@=properties.count",
+                  "absent": 1
+                },
+                "elevationScale": 10
+              }
+            },
+            "fused:udfType": "vector_single",
+            "fused:slug": "DuckDB_H3_SF",
+            "fused:name": "DuckDB_H3_SF",
+            "fused:id": null,
+            "fused:description": "## Overview\n\nH3 visualization of [DeckGL sample data](https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/sf.h3cells.json).",
+            "fused:assetUrl": "https://fused-magic.s3.amazonaws.com/thumbnails/udfs-staging/h3_sf.png",
+            "fused:tags": [
+              {
+                "id": "h3",
+                "label": "h3",
+                "isCreatable": true
+              }
+            ]
+          },
+          "source": "DuckDB_H3_SF.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

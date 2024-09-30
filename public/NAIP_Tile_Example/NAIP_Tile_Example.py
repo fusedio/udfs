@@ -2,25 +2,28 @@
 def udf(
     bbox,
     var="NDVI",
-    chip_len="256",
+    chip_len: int=256,
     buffer_degree=0.000,
 ):
-    read_tiff = fused.core.import_from_github(
-        "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
-    ).utils.read_tiff
-    if bbox.z[0] >= 15:
-        from utils import read_tiff, bbox_stac_items, arr_to_png
+    utils = fused.load(
+        "https://github.com/fusedio/udfs/tree/e0426b9/public/common/"
+    ).utils
+    min_zoom = 15
+    if bbox.z[0] >= min_zoom:
         import numpy as np
 
-        output_shape = (int(chip_len), int(chip_len))
-        matching_items = bbox_stac_items(
+        output_shape = (chip_len, chip_len)
+        matching_items = utils.bbox_stac_items(
             bbox.geometry[0], table="s3://fused-asset/imagery/naip/"
         )
+        max_matching_items = 10
         print(f"{len(matching_items)=}")
-        if len(matching_items) < 10:
+        if len(matching_items) < max_matching_items:
             input_tiff_path = matching_items.iloc[0].assets["naip-analytic"]["href"]
             crs = matching_items.iloc[0]["proj:epsg"]
-            arr = read_tiff(bbox, input_tiff_path, crs, buffer_degree, output_shape)
+            arr = utils.read_tiff_naip(
+                bbox, input_tiff_path, crs, buffer_degree, output_shape
+            )
             if var == "RGB":
                 arr = arr[:3]
             elif var == "NDVI":
@@ -34,9 +37,13 @@ def udf(
                 raise ValueError(
                     f'{var=} does not exist. var options are "RGB" and "NDVI"'
                 )
-            return arr_to_png(arr)
+            return arr
         else:
-            print("Too many images. Please zoom in more.")
+            print(
+                f"{matching_items} images exceeded max of {max_matching_items}. "
+                "Please zoom in more."
+            )
             return None
     else:
-        print("Please zoom in more.")
+        print(f"minimum_zoom is {min_zoom}. Please zoom in more.")
+

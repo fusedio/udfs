@@ -1,10 +1,10 @@
 def udf(bbox, provider="AWS", time_of_interest="2023-11-01/2023-12-30"):
-    arr_to_plasma = fused.core.import_from_github(
-        "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
-    ).utils.arr_to_plasma
-    from pystac.extensions.eo import EOExtension as eo
-    import pystac_client
+    utils = fused.load(
+        "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
+    ).utils
     import odc.stac
+    import pystac_client
+    from pystac.extensions.eo import EOExtension as eo
 
     if provider == "AWS":
         red_band = "red"
@@ -44,4 +44,4 @@ def udf(bbox, provider="AWS", time_of_interest="2023-11-01/2023-12-30"):
     print(ndvi.shape)
     arr = ndvi.max(dim="time")
     # arr = ndvi.groupby("time.month").median()[0]
-    return arr_to_plasma(arr.values, min_max=(0, 0.8), reverse=False)
+    return utils.arr_to_plasma(arr.values, min_max=(0, 0.8), reverse=False)

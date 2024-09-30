@@ -1,11 +1,11 @@
-import numpy as np
 import fused
+import numpy as np
 
-read_tiff = fused.core.import_from_github(
-    "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
+read_tiff = fused.load(
+    "https://github.com/fusedio/udfs/tree/3c4bc47/public/common/"
 ).utils.read_tiff
-mosaic_tiff = fused.core.import_from_github(
-    "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
+mosaic_tiff = fused.load(
+    "https://github.com/fusedio/udfs/tree/3c4bc47/public/common/"
 ).utils.mosaic_tiff
 LULC_IO_COLORS = {
     1: (65, 155, 223),  # Water

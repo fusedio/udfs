@@ -54,16 +54,24 @@
             "fused:defaultParameters": [],
             "fused:tags": [
               {
-                "id": "raster",
-                "label": "raster"
+                "id": "Band algebra",
+                "label": "Band algebra"
               },
               {
-                "id": "30-meter",
-                "label": "30 meter"
+                "id": "S3",
+                "label": "S3"
               },
               {
-                "id": "aws",
-                "label": "AWS"
+                "id": "Element84",
+                "label": "Element84"
+              },
+              {
+                "id": "Remove-clouds",
+                "label": "Remove-clouds"
+              },
+              {
+                "id": "STAC",
+                "label": "STAC"
               }
             ],
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Landsat_Tile_Example.png",

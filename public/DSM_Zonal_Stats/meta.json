@@ -78,20 +78,18 @@
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DSM_Zonal_Stats.png",
             "fused:tags": [
               {
-                "id": "30-meter",
-                "label": "30-meter"
+                "id": "Zonal stats",
+                "label": "Zonal stats",
+                "isCreatable": true
               },
               {
-                "id": "aws",
-                "label": "aws"
+                "id": "tiff",
+                "label": "tiff",
+                "isCreatable": true
               },
               {
-                "id": "tutorial",
-                "label": "tutorial"
-              },
-              {
-                "id": "buildings",
-                "label": "buildings"
+                "id": "S3",
+                "label": "S3"
               }
             ],
             "fused:description": "## Overview\n\nThis UDF calculate average DSM for every buildings in the United States. ALOS Global Digital Surface Model \"ALOS World 3D - 30m (AW3D30)\" captured by the PRISM optical sensor on the ALOS satellite, with a 30-meter horizontal resolution.\n\n## External links\n- [JAXA Digital Surface Model](https://data.earth.jaxa.jp/en/datasets/#/id/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global)\n- [STAC Collection File](https://s3.ap-northeast-1.wasabisys.com/je-pds/cog/v1/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global/collection.json)",
@@ -102,10 +100,44 @@
               "zoom": 14.101653480876822,
               "pitch": 54.31525094227026,
               "bearing": 260
-            }
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/feb5f6e959f7ac2e506cf7705ffc879d1236550f/public/DSM_Zonal_Stats/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/feb5f6e/public/DSM_Zonal_Stats/",
+            "fused:gitPath": "public/DSM_Zonal_Stats",
+            "fused:gitRef": "feb5f6e959f7ac2e506cf7705ffc879d1236550f",
+            "fused:gitAuthorNames": [
+              "Tyler Erickson",
+              "Marko Letic",
+              null,
+              "Sina Kashuk"
+            ],
+            "fused:gitAuthorUsernames": [
+              "tylere",
+              "mletic",
+              "charlesfused",
+              "kashuk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/tylere",
+              "https://github.com/mletic",
+              "https://github.com/charlesfused",
+              "https://github.com/kashuk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/92862?v=4",
+              "https://avatars.githubusercontent.com/u/7241522?v=4",
+              "https://avatars.githubusercontent.com/u/148997493?v=4",
+              "https://avatars.githubusercontent.com/u/12432685?v=4"
+            ],
+            "fused:gitLastModified": "2024-03-04T22:56:41+00:00"
           },
           "source": "DSM_Zonal_Stats.py",
-          "headers": []
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
         }
       }
     ],

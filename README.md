@@ -6,10 +6,9 @@
 </h3>
 <br><br>
 
-
 ![alt text](https://fused-magic.s3.us-west-2.amazonaws.com/docs_assets/github_udfs_repo/readme_udf_explorer.png)
 
-This repo is a public collection of Fused User Defined Functions (UDFs). 
+This repo is a public collection of Fused User Defined Functions (UDFs).
 
 Fused is the glue layer that interfaces data platforms and data tools via a managed serverless API. With Fused, you can write, share, or discover UDFs which are the building blocks of serverless geospatial operations. UDFs are Python functions that turn into live HTTP endpoints that load their output into any tools that can call an API.
 
@@ -17,26 +16,44 @@ Fused is the glue layer that interfaces data platforms and data tools via a mana
 
 ### 1. Install Fused Python SDK
 
-The Fused Python SDK is available at [PyPI](https://pypi.org/project/fused/). Use the standard Python [installation tools](https://packaging.python.org/en/latest/tutorials/installing-packages/). UDFs this repo expect a version `>=1.2.0`.
+[![PyPI Version](https://img.shields.io/pypi/v/fused.svg)](https://pypi.python.org/pypi/fused)
+
+The Fused Python SDK is available at [PyPI](https://pypi.org/project/fused/). Use the standard Python [installation tools](https://packaging.python.org/en/latest/tutorials/installing-packages/). UDFs this repo expect the most recent version.
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install fused
 ```
 
-### 2. Import a UDF into a workflow
+It's possible that to run UDFs locally the local environment might require additional packages not found locally. If that is the case, this command installs all required dependencies.
+```bash
+!pip install fused odc-stac duckdb numba xarray-spatial planetary-computer 'odc-stac[botocore]' py3dep stackstac pynhd boto3
+```
 
-This snippet shows how to import a UDF from a Python environment and their modules from a public GitHub URL. The URL must be of a directory that contains a UDF generated with Fused. This example shows how to import a UDF.
+### 2. Load a UDF into a workflow
+
+This snippet shows how to import a UDF from this repo into a Python environment. The URL is of the directory that contains a UDF generated with Fused.
 
 ```python
-utils = fused.core.import_from_github('https://github.com/fusedio/udfs/tree/main/public/common/').udf
-udf(...)
+import fused
+
+udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/DuckDB_NYC_Example")
+gdf = fused.run(udf=udf)
+gdf
+```
+
+Similarly, as a bash oneliner.
+
+```python
+python -c "import fused; udf = fused.load('https://github.com/fusedio/udfs/tree/main/public/DuckDB_NYC_Example'); print(fused.run(udf=udf));"
 ```
 
 ## Walkthrough
 
 ### Repo structure
 
-This repository is structured to facilitate easy access of UDFs and their supporting files. Each UDF, like `Sample_UDF`, is contained within its own subdirectory within the `public` directory - along with its documentation, code, metadata, and utility function code. 
+This repository is structured to facilitate easy access of UDFs and their supporting files. Each UDF, like `Sample_UDF`, is contained within its own subdirectory within the `public` directory - along with its documentation, code, metadata, and utility function code.
 
 Each UDF can be thought of as a standalone Python package.
 
@@ -66,30 +83,32 @@ Files relevant to each UDF are:
 import fused
 
 @fused.udf
-def my_udf():
-    return "Hello from Fused!"
+def my_udf(bbox=None):
+    import pandas as pd
+    return pd.DataFrame({'Hello': ['from Fused']})
+
+# Run locally
+print(fused.run(my_udf))
 
 # Save locally
-my_udf.save('my_udf', where='local')
+my_udf.to_directory('my_udf')
+# or for zip file: my_udf.to_file('my_udf.zip')
 
 # Save remotely to Fused
-my_udf.save('my_udf', where='remote')
+my_udf.to_fused('my_udf')
 ```
 
 "Save locally" generates the UDF folder on your local system, which you'll use in the following step.
 
 2. Open a PR
 
-
-Clone this repo to your local system and introduce the UDF folder under `public`. Create a PR on this repo. 
-
+Clone this repo to your local system and add the UDF folder under `public` or `community`. Create a PR on this repo.
 
 ## Ecosystem
 
 Build any scale workflows with the [Fused Python SDK](https://docs.fused.io/python-sdk/overview) and [Workbench webapp](https://docs.fused.io/workbench/overview), and integrate them into your stack with the [Fused Hosted API](https://docs.fused.io/hosted-api/overview).
 
 ![alt text](https://fused-magic.s3.us-west-2.amazonaws.com/docs_assets/ecosystem_diagram.png)
-
 
 ## Documentation
 
@@ -99,7 +118,16 @@ Fused documentation is in [docs.fused.io](https://docs.fused.io/).
 
 All UDF contributions, bug reports, bug fixes, documentation improvements, enhancements, and ideas are welcome.
 
+
+### Pre commit
+
+Please run pre-commit hooks on your UDF prior to submitting.
+
+```
+pre-commit install
+pre-commit run --files public/PC_Sentinel2/*
+```
+
 ## License
 
-MIT
-
+[MIT License](./LICENSE)

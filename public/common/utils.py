@@ -1,104 +1,74 @@
 # To use these functions, add the following command in your UDF:
 # `common = fused.public.common`
-
-# Standard library imports
 from __future__ import annotations
+
 import random
-
-# Third party imports
-from loguru import logger
-
-# Import for type hints
-from affine import Affine
-from numpy.typing import NDArray
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
 
-# Potentially expensive imports
-import numpy as np
+import fused
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 import pyproj
 import shapely
+from loguru import logger
+from numpy.typing import NDArray
 
-# Local application/library specific imports
-import fused
+def write_log(msg="Your message.", name='//default', log_type='info', rotation="10 MB"):
+    from loguru import logger
+    path = fused.file_path('logs/' + name + '.log')
+    logger.add(path, rotation=rotation)
+    if log_type=='warning':
+        logger.warning(msg)
+    else:
+        logger.info(msg)  # Write the log message
+    logger.remove()  # Remove the log handler
+    from datetime import datetime
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print(f"{timestamp} | {path} |msg: {msg}" )
 
+def read_log(n=None, name='default', return_log=False):
+    path = fused.file_path('logs/' + name + '.log')
+    try:
+        with open(path, 'r') as file:
+            log_content = file.readlines()
+            if n:
+                log_content = ''.join(log_content[-n:])  # Return last 'tail_lines' entries
+            else:
+                log_content = ''.join(log_content)
+            if return_log:
+                return log_content
+            else:
+                print(log_content)
+    except FileNotFoundError:
+        if return_log:
+            return "Log file not found."
+        else:
+            print("Log file not found.")
 
-@fused.cache
-def acs_5yr_bbox(bounds, census_variable="population", type="bbox", suffix="simplify"):
-    import json
-    import shapely
+def read_gdf_file(path):
     import geopandas as gpd
 
-    if type == "bbox":
-        bounds = (
-            "{"
-            + f'"west": {bounds[0]}, "north": {bounds[3]}, "east": {bounds[2]}, "south": {bounds[1]}'
-            + "}"
+    extension = path.rsplit(".", maxsplit=1)[-1].lower()
+    if extension in ["gpkg", "shp", "geojson"]:
+        driver = (
+            "GPKG"
+            if extension == "gpkg"
+            else ("ESRI Shapefile" if extension == "shp" else "GeoJSON")
         )
-    bounds = json.loads(bounds)
-    box = shapely.box(bounds["west"], bounds["south"], bounds["east"], bounds["north"])
-    bbox = gpd.GeoDataFrame(geometry=[box], crs=4326)
-    tid = search_title(census_variable)
-    df = acs_5yr_table(tid)
-    df["GEOID"] = df.GEO_ID.map(lambda x: x.split("US")[-1])
-    table_path = "s3://fused-asset/infra/census_bg_us"
-    if suffix:
-        table_path += f"_{suffix}"
-    print(table_path)
-    gdf = table_to_tile(
-        bbox, table_path, use_columns=["GEOID", "geometry"], min_zoom=12
-    )
-    gdf2 = gdf.merge(df)
-    return gdf2
-
-
-@fused.cache
-def acs_5yr_meta():
-    import pandas as pd
-
-    # Filter only records with census block groups data
-    tmp = pd.read_excel(
-        "https://www2.census.gov/programs-surveys/acs/summary_file/2021/sequence-based-SF/documentation/tech_docs/ACS_2021_SF_5YR_Appendices.xlsx"
-    )
-    table_ids_cbgs = tmp[tmp["Geography Restrictions"].isna()]["Table Number"]
-    # Get the list of tables and filter by only totals (the first row of each table)
-    df_tables = pd.read_csv(
-        "https://www2.census.gov/programs-surveys/acs/summary_file/2022/table-based-SF/documentation/ACS20225YR_Table_Shells.txt",
-        delimiter="|",
-    )
-    df_tables2 = df_tables.drop_duplicates("Table ID")
-    df_tables2 = df_tables2[df_tables2["Table ID"].isin(table_ids_cbgs)]
-    return df_tables2
-
-
-def search_title(title):
-    df_meta = acs_5yr_meta()
-    # search for title in the list of tables
-    search_column = "Title"  #'Title' #'Topics'
-    meta_dict = (
-        df_meta[["Table ID", search_column]]
-        .set_index(search_column)
-        .to_dict()["Table ID"]
-    )
-    List = [[meta_dict[i], i] for i in meta_dict.keys() if title.lower() in i.lower()]
-    print(f"Chosen: {List[0]}\nfrom: {List[:20]}")
-    return List[0][0]
-
-
-@fused.cache
-def acs_5yr_table(tid, year=2022):
-    import pandas as pd
-
-    url = f"https://www2.census.gov/programs-surveys/acs/summary_file/{year}/table-based-SF/data/5YRData/acsdt5y{year}-{tid.lower()}.dat"
-    return pd.read_csv(url, delimiter="|")
+        return gpd.read_file(path, driver=driver)
+    elif extension == "zip":
+        return gpd.read_file(f"zip+{path}")
+    elif extension in ["parquet", "pq"]:
+        return gpd.read_parquet(path)
 
 
 def url_to_arr(url, return_colormap=False):
-    import requests
-    import rasterio
-    from rasterio.plot import show
     from io import BytesIO
+
+    import rasterio
+    import requests
+    from rasterio.plot import show
 
     response = requests.get(url)
     print(response.status_code)
@@ -113,6 +83,7 @@ def url_to_arr(url, return_colormap=False):
 def read_shape_zip(url, file_index=0, name_prefix=""):
     """This function opens any zipped shapefile"""
     import zipfile
+
     import geopandas as gpd
 
     path = fused.core.download(url, name_prefix + url.split("/")[-1])
@@ -123,11 +94,10 @@ def read_shape_zip(url, file_index=0, name_prefix=""):
     return df
 
 
-@fused.cache
 def get_collection_bbox(collection):
     import geopandas as gpd
-    import pystac_client
     import planetary_computer
+    import pystac_client
 
     catalog = pystac_client.Client.open(
         "https://planetarycomputer.microsoft.com/api/stac/v1",
@@ -140,10 +110,10 @@ def get_collection_bbox(collection):
     return df[["assets", "datetime", "geometry"]]
 
 
-@fused.cache
 def get_pc_token(url):
-    import requests
     from urllib.parse import urlparse
+
+    import requests
 
     parsed_url = urlparse(url.rstrip("/"))
     account_name = parsed_url.netloc.split(".")[0]
@@ -154,7 +124,6 @@ def get_pc_token(url):
     return response.json()
 
 
-@fused.cache
 def read_tiff_pc(bbox, tiff_url, cache_id=2):
     tiff_url = f"{tiff_url}?{get_pc_token(tiff_url,_cache_id=cache_id)['token']}"
     print(tiff_url)
@@ -170,21 +139,31 @@ def table_to_tile(
     centorid_zoom_offset=0,
     use_columns=["geometry"],
     clip=False,
+    print_xyz=False,
 ):
     import fused
+    import geopandas as gpd
     import pandas as pd
 
     version = "0.2.3"
 
     try:
         x, y, z = bbox[["x", "y", "z"]].iloc[0]
-        print(x, y, z)
+        if print_xyz:
+            print(x, y, z)
     except:
         z = min_zoom
     df = fused.get_chunks_metadata(table)
+    if len(bbox) > 1:
+        bbox = bbox.dissolve().reset_index(drop=True)
+    else:
+        bbox = bbox.reset_index(drop=True)
     df = df[df.intersects(bbox.geometry[0])]
-    if z >= min_zoom:  # z>=12:
+    if z >= min_zoom:
         List = df[["file_id", "chunk_id"]].values
+        if not len(List):
+            # No results at this area
+            return gpd.GeoDataFrame(geometry=[])
         if use_columns:
             if "geometry" not in use_columns:
                 use_columns += ["geometry"]
@@ -210,6 +189,7 @@ def table_to_tile(
         else:
             return df
     else:
+        df.crs = bbox.crs
         if clip:
             return df.clip(bbox).explode()
         else:
@@ -217,7 +197,7 @@ def table_to_tile(
 
 
 def rasterize_geometry(
-    geom: Dict, shape: Tuple[int, int], affine: Affine, all_touched: bool = False
+    geom: Dict, shape: Tuple[int, int], affine, all_touched: bool = False
 ) -> NDArray[np.uint8]:
     """Return an image array with input geometries burned in.
 
@@ -246,25 +226,28 @@ def rasterize_geometry(
 
 
 @fused.cache(path="geom_stats")
-def geom_stats(gdf, arr, chip_len=255):
+def geom_stats(gdf, arr, output_shape=(255, 255)):
     import numpy as np
 
     df_3857 = gdf.to_crs(3857)
     df_tile = df_3857.dissolve()
     minx, miny, maxx, maxy = df_tile.total_bounds
-    d = (maxx - minx) / chip_len
-    transform = [d, 0.0, minx, 0.0, -d, maxy, 0.0, 0.0, 1.0]
+    dx = (maxx - minx) / output_shape[-1]
+    dy = (maxy - miny) / output_shape[-2]
+    transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
     geom_masks = [
         rasterize_geometry(geom, arr.shape[-2:], transform) for geom in df_3857.geometry
     ]
-    gdf["stats"] = [np.nanmean(arr.data[geom_mask]) for geom_mask in geom_masks]
+    if isinstance(arr, np.ma.MaskedArray):
+        arr = arr.data
+    gdf["stats"] = [np.nanmean(arr[geom_mask]) for geom_mask in geom_masks]
     gdf["count"] = [geom_mask.sum() for geom_mask in geom_masks]
     return gdf
 
 
 def earth_session(cred):
-    from rasterio.session import AWSSession
     from job2.credentials import get_session
+    from rasterio.session import AWSSession
 
     aws_session = get_session(
         cred["env"],
@@ -274,7 +257,7 @@ def earth_session(cred):
     return AWSSession(aws_session, requester_pays=False)
 
 
-@fused.cache(path="read_tiff2")
+@fused.cache(path="read_tiff")
 def read_tiff(
     bbox,
     input_tiff_path,
@@ -286,10 +269,11 @@ def read_tiff(
     cred=None,
 ):
     import os
-    import rasterio
-    import numpy as np
-    from scipy.ndimage import zoom
     from contextlib import ExitStack
+
+    import numpy as np
+    import rasterio
+    from scipy.ndimage import zoom
 
     version = "0.2.0"
 
@@ -307,7 +291,7 @@ def read_tiff(
         stack.enter_context(context)
         with rasterio.open(input_tiff_path, OVERVIEW_LEVEL=overview_level) as src:
             # with rasterio.Env():
-            from rasterio.warp import reproject, Resampling
+            from rasterio.warp import Resampling, reproject
 
             bbox = bbox.to_crs(3857)
             # transform_bounds = rasterio.warp.transform_bounds(3857, src.crs, *bbox["geometry"].bounds.iloc[0])
@@ -325,9 +309,13 @@ def read_tiff(
             src_transform = src.window_transform(window)
             src_crs = src.crs
             minx, miny, maxx, maxy = bbox.total_bounds
-            d = (maxx - minx) / output_shape[-1]
-            dst_transform = [d, 0.0, minx, 0.0, -d, maxy, 0.0, 0.0, 1.0]
-            dst_shape = output_shape
+            dx = (maxx - minx) / output_shape[-1]
+            dy = (maxy - miny) / output_shape[-2]
+            dst_transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
+            if len(source_data.shape) == 3 and source_data.shape[0] > 1:
+                dst_shape = (source_data.shape[0], output_shape[-2], output_shape[-1])
+            else:
+                dst_shape = output_shape
             dst_crs = bbox.crs
 
             destination_data = np.zeros(dst_shape, src.dtypes[0])
@@ -358,7 +346,24 @@ def read_tiff(
         return destination_data
 
 
-@fused.cache(path="mosaic_tiff")
+def gdf_to_mask_arr(gdf, shape, first_n=None):
+    from rasterio.features import geometry_mask
+
+    xmin, ymin, xmax, ymax = gdf.total_bounds
+    w = (xmax - xmin) / shape[-1]
+    h = (ymax - ymin) / shape[-2]
+    if first_n:
+        geom = gdf.geometry.iloc[:first_n]
+    else:
+        geom = gdf.geometry
+    return ~geometry_mask(
+        geom,
+        transform=(w, 0, xmin, 0, -h, ymax, 0, 0, 0),
+        invert=True,
+        out_shape=shape[-2:],
+    )
+
+
 def mosaic_tiff(
     bbox,
     tiff_list,
@@ -402,6 +407,65 @@ def arr_resample(arr, dst_shape=(512, 512), order=0):
         return zoom(arr, zoom_factors, order=order)
     elif len(arr.shape) == 3:
         return np.asanyarray([zoom(i, zoom_factors, order=order) for i in arr])
+
+
+def arr_to_cog(
+    arr,
+    bounds=(-180, -90, 180, 90),
+    crs=4326,
+    output_path="output_cog.tif",
+    blockxsize=256,
+    blockysize=256,
+    overviews=[2, 4, 8, 16],
+):
+    import numpy as np
+    import rasterio
+    from rasterio.crs import CRS
+    from rasterio.enums import Resampling
+    from rasterio.transform import from_bounds
+
+    data = arr.squeeze()
+    # Define the CRS (Coordinate Reference System)
+    crs = CRS.from_epsg(crs)
+
+    # Calculate transform
+    transform = from_bounds(*bounds, data.shape[-1], data.shape[-2])
+    if len(data.shape) == 2:
+        data = np.stack([data])
+        count = 1
+    elif len(data.shape) == 3:
+        if data.shape[0] == 3:
+            count = 3
+        elif data.shape[0] == 4:
+            count = 4
+        else:
+            print(data.shape)
+            return f"Wrong number of bands {data.shape[0]}. The options are: 1(gray) | 3 (RGB) | 4 (RGBA)"
+    else:
+        return f"wrong shape {data.shape}. Data shape options are: (ny,nx) | (1,ny,nx) | (3,ny,nx) | (4,ny,nx)"
+    # Write the numpy array to a Cloud-Optimized GeoTIFF file
+    with rasterio.open(
+        output_path,
+        "w",
+        driver="GTiff",
+        height=data.shape[-2],
+        width=data.shape[-1],
+        count=count,
+        dtype=data.dtype,
+        crs=crs,
+        transform=transform,
+        tiled=True,  # Enable tiling
+        blockxsize=blockxsize,  # Set block size
+        blockysize=blockysize,  # Set block size
+        compress="deflate",  # Use compression
+        interleave="band",  # Interleave bands
+    ) as dst:
+        dst.write(data)
+        # Build overviews (pyramid layers)
+        dst.build_overviews(overviews, Resampling.nearest)
+        # Update tags to comply with COG standards
+        dst.update_tags(ns="rio_overview", resampling="nearest")
+    return output_path
 
 
 def arr_to_color(arr, colormap, out_dtype="uint8"):
@@ -473,8 +537,8 @@ def arr_to_plasma(
 
 
 def run_cmd(cmd, cwd=".", shell=False, communicate=False):
-    import subprocess
     import shlex
+    import subprocess
 
     if type(cmd) == str:
         cmd = shlex.split(cmd)
@@ -505,8 +569,8 @@ def fs_list_hls(
     earthdatalogin_username="",
     earthdatalogin_password="",
 ):
-    from job2.credentials import get_credentials
     import s3fs
+    from job2.credentials import get_credentials
 
     aws_session = get_credentials(
         env,
@@ -521,38 +585,35 @@ def fs_list_hls(
     return fs.ls(path)
 
 
-# TODO combine run_udf_png & run_udf and use **kwarg
-def run_udf(name, x, y, z, context, dtype_out="geojson"):
-    import requests
-    import geopandas as gpd
+def get_s3_list(path, suffix=None):
+    import s3fs
 
-    access_token = context.auth_token
-    url = f"https://du0iv5kype.execute-api.us-west-2.amazonaws.com/api/v1/run/udf/saved/{name}/tiles/{z}/{x}/{y}?dtype_out={dtype_out}"
-    headers = {"Authorization": f"Bearer {access_token}"}
-    response = requests.get(url, headers=headers)
-    gdf = gpd.GeoDataFrame.from_features(response.json())
-    return gdf
+    fs = s3fs.S3FileSystem()
+    if suffix:
+        return ["s3://" + i for i in fs.ls(path) if i[-len(suffix) :] == suffix]
+    else:
+        return ["s3://" + i for i in fs.ls(path)]
 
 
-def run_udf_png(bbox, context, input_tiff_path, chip_len="256", requester_pays=0):
-    x, y, z = bbox[["x", "y", "z"]].iloc[0]
-    import requests
-    import rasterio
-    from io import BytesIO
-
-    url = f"https://du0iv5kype.execute-api.us-west-2.amazonaws.com/api/v1/run/udf/saved/sina@fused.io/tiff_tiler/tiles/{z}/{x}/{y}?dtype_out=png&chip_len={chip_len}&input_tiff_path={input_tiff_path}&requester_pays={requester_pays}"
-    headers = {"Authorization": f"Bearer {context.auth_token}"}
-    response = requests.get(url, headers=headers)
-    with rasterio.open(BytesIO(response.content)) as dataset:
-        data = dataset.read()
-    return data
+@fused.cache
+def get_s3_list_walk(path):
+    #version 2 (recursive)
+    import s3fs
+    s3 = s3fs.S3FileSystem()
+    # Recursively list all files in the specified S3 path
+    flist=[]
+    for dirpath, dirnames, filenames in s3.walk(path):
+        for filename in filenames:
+            flist.append(f"s3://{dirpath}/{filename}")
+    return flist
 
 
 def run_async(fn, arr_args, delay=0, max_workers=32):
     import asyncio
+    import concurrent.futures
+
     import nest_asyncio
     import numpy as np
-    import concurrent.futures
 
     nest_asyncio.apply()
 
@@ -581,6 +642,13 @@ def run_async(fn, arr_args, delay=0, max_workers=32):
     return loop.run_until_complete(fn_async_exec(fn, arr_args, delay))
 
 
+def run_pool(fn, arg_list, max_workers=36):
+    import concurrent.futures
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as pool:
+        return list(pool.map(fn, arg_list))
+
+
 def import_env(
     env="testxenv",
     mnt_path="/mnt/cache/envs/",
@@ -598,8 +666,8 @@ def install_module(
     packages_path="/lib/python3.11/site-packages",
 ):
     import_env(env, mnt_path, packages_path)
-    import sys
     import os
+    import sys
 
     path = f"{mnt_path}{env}{packages_path}"
     sys.path.append(path)
@@ -740,28 +808,44 @@ def infer_lonlat(columns: Sequence[str]) -> Optional[Tuple[str, str]]:
     return None
 
 
-def lonlat_to_geom(
-    df: pd.DataFrame,
-    cols_lonlat: Optional[Tuple[str, str]] = None,
-    verbose: bool = False,
-) -> NDArray[np.object_]:
-    """Convert longitude-latitude columns to an array of shapely points."""
+def df_to_gdf(df, cols_lonlat=None, verbose=False):
+    import json
+
+    import pyarrow as pa
+    import shapely
+    from geopandas.io.arrow import _arrow_to_geopandas
+
+    geo_metadata = {
+        "primary_column": "geometry",
+        "columns": {"geometry": {"encoding": "WKB", "crs": 4326}},
+        "version": "1.0.0-beta.1",
+    }
+    arrow_geo_metadata = {b"geo": json.dumps(geo_metadata).encode()}
     if not cols_lonlat:
         cols_lonlat = infer_lonlat(list(df.columns))
         if not cols_lonlat:
             raise ValueError("no latitude and longitude columns were found.")
 
-    assert cols_lonlat[0] in df.columns, f"column name {cols_lonlat[0]} was not found."
-    assert cols_lonlat[1] in df.columns, f"column name {cols_lonlat[1]} was not found."
+        assert (
+            cols_lonlat[0] in df.columns
+        ), f"column name {cols_lonlat[0]} was not found."
+        assert (
+            cols_lonlat[1] in df.columns
+        ), f"column name {cols_lonlat[1]} was not found."
 
-    if verbose:
-        logger.debug(
-            f"Converting {cols_lonlat} to points({cols_lonlat[0]},{cols_lonlat[0]})."
-        )
-
-    return shapely.points(
-        list(zip(df[cols_lonlat[0]].astype(float), df[cols_lonlat[1]].astype(float)))
-    )
+        if verbose:
+            logger.debug(
+                f"Converting {cols_lonlat} to points({cols_lonlat[0]},{cols_lonlat[0]})."
+            )
+    geoms = shapely.points(df[cols_lonlat[0]], df[cols_lonlat[1]])
+    table = pa.Table.from_pandas(df)
+    table = table.append_column("geometry", pa.array(shapely.to_wkb(geoms)))
+    table = table.replace_schema_metadata(arrow_geo_metadata)
+    try:
+        df = _arrow_to_geopandas(table)
+    except:
+        df = _arrow_to_geopandas(table.drop(["__index_level_0__"]))
+    return df
 
 
 def geo_convert(
@@ -779,8 +863,7 @@ def geo_convert(
                 "with cols_lonlat."
             )
 
-        shapely_points = lonlat_to_geom(data, cols_lonlat, verbose=verbose)
-        gdf = gpd.GeoDataFrame(data, geometry=shapely_points, crs=4326)
+        gdf = df_to_gdf(data, cols_lonlat, verbose=verbose)
 
         if verbose:
             logger.debug(
@@ -837,9 +920,7 @@ def geo_convert(
                     )
             # This is needed for Python 3.8 specifically, because otherwise creating the GeoDataFrame modifies the input DataFrame
             data = data.copy()
-            gdf = gpd.GeoDataFrame(
-                data, geometry=lonlat_to_geom(data, cols_lonlat, verbose=verbose)
-            ).set_crs(4326)
+            gdf = df_to_gdf(data, cols_lonlat, verbose=verbose)
         return gdf
     elif (
         isinstance(data, shapely.geometry.base.BaseGeometry)
@@ -1190,3 +1271,547 @@ def geo_samples(
         for _ in range(n_samples)
     ]
     return geo_convert(pd.DataFrame(points, columns=["lng", "lat"]))[["geometry"]]
+
+
+def bbox_stac_items(bbox, table):
+    import fused
+    import geopandas as gpd
+    import pandas as pd
+    import pyarrow.parquet as pq
+    import shapely
+
+    df = fused.get_chunks_metadata(table)
+    df = df[df.intersects(bbox)]
+    if len(df) > 10 or len(df) == 0:
+        return None  # fault
+    matching_images = []
+    for idx, row in df.iterrows():
+        file_url = table + row["file_id"] + ".parquet"
+        chunk_table = pq.ParquetFile(file_url).read_row_group(row["chunk_id"])
+        chunk_gdf = gpd.GeoDataFrame(chunk_table.to_pandas())
+        if "geometry" in chunk_gdf:
+            chunk_gdf.geometry = shapely.from_wkb(chunk_gdf["geometry"])
+        matching_images.append(chunk_gdf)
+
+    ret_gdf = pd.concat(matching_images)
+    ret_gdf = ret_gdf[ret_gdf.intersects(bbox)]
+    return ret_gdf
+
+
+# todo: switch to read_tiff with requester_pays option
+def read_tiff_naip(
+    bbox, input_tiff_path, crs, buffer_degree, output_shape, resample_order=0
+):
+    from io import BytesIO
+
+    import rasterio
+    from rasterio.session import AWSSession
+    from scipy.ndimage import zoom
+
+    out_buf = BytesIO()
+    with rasterio.Env(AWSSession(requester_pays=True)):
+        with rasterio.open(input_tiff_path) as src:
+            if buffer_degree != 0:
+                bbox.geometry = bbox.geometry.buffer(buffer_degree)
+            bbox_projected = bbox.to_crs(crs)
+            window = src.window(*bbox_projected.total_bounds)
+            data = src.read(window=window, boundless=True)
+            zoom_factors = np.array(output_shape) / np.array(data[0].shape)
+            rgb = np.array(
+                [zoom(arr, zoom_factors, order=resample_order) for arr in data]
+            )
+        return rgb
+
+
+def image_server_bbox(
+    image_url,
+    bbox=None,
+    time=None,
+    size=512,
+    bbox_crs=4326,
+    image_crs=3857,
+    image_format="tiff",
+    return_colormap=False,
+):
+    if bbox_crs and bbox_crs != image_crs:
+        import geopandas as gpd
+        import shapely
+
+        gdf = gpd.GeoDataFrame(geometry=[shapely.box(*bbox)], crs=bbox_crs).to_crs(
+            image_crs
+        )
+        print(gdf)
+        minx, miny, maxx, maxy = gdf.total_bounds
+    else:
+        minx, miny, maxx, maxy = list(bbox)
+    image_url = image_url.strip("/")
+    url_template = f"{image_url}?f=image"
+    url_template += f"&bbox={minx},{miny},{maxx},{maxy}"
+    if time:
+        url_template += f"&time={time}"
+    if image_crs:
+        url_template += f"&imageSR={image_crs}&bboxSR={image_crs}"
+    if size:
+        url_template += f"&size={size},{size*(miny-maxy)/(minx-maxx)}"
+    url_template += f"&format={image_format}"
+    return url_to_arr(url_template, return_colormap=return_colormap)
+
+
+def arr_to_stats(arr, gdf, type="nominal"):
+    import numpy as np
+
+    minx, miny, maxx, maxy = gdf.total_bounds
+    dx = (maxx - minx) / arr.shape[-1]
+    dy = (maxy - miny) / arr.shape[-2]
+    transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
+    geom_masks = [
+        rasterize_geometry(geom, arr.shape[-2:], transform) for geom in gdf.geometry
+    ]
+    if type == "nominal":
+        counts_per_mask = []
+        for geom_mask in geom_masks:
+            masked_arr = arr[geom_mask]
+            unique_values, counts = np.unique(masked_arr, return_counts=True)
+            counts_dict = {value: count for value, count in zip(unique_values, counts)}
+            counts_per_mask.append(counts_dict)
+        gdf["stats"] = counts_per_mask
+        return gdf
+    elif type == "numerical":
+        stats_per_mask = []
+        for geom_mask in geom_masks:
+            masked_arr = arr[geom_mask]
+            stats_per_mask.append(
+                {
+                    "min": np.nanmin(masked_arr),
+                    "max": np.nanmax(masked_arr),
+                    "mean": np.nanmean(masked_arr),
+                    "median": np.nanmedian(masked_arr),
+                    "std": np.nanstd(masked_arr),
+                }
+            )
+        gdf["stats"] = stats_per_mask
+        return gdf
+    else:
+        raise ValueError(
+            f'{type} is not supported. Type options are "nominal" and "numerical"'
+        )
+
+
+def ask_openai(prompt, openai_api_key, role="user", model="gpt-4-turbo-preview"):
+    # ref: https://github.com/openai/openai-python
+    # ref: https://platform.openai.com/docs/models/gpt-4-and-gpt-4-turbo
+    from openai import OpenAI
+
+    client = OpenAI(
+        api_key=openai_api_key,
+    )
+    messages = [
+        {
+            "role": role,
+            "content": prompt,
+        }
+    ]
+    chat_completion = client.chat.completions.create(
+        messages=messages,
+        model=model,
+    )
+    return [i.message.content for i in chat_completion.choices]
+
+
+def ee_initialize(service_account_name="", key_path=""):
+    """
+    Authenticate with Google Earth Engine using service account credentials.
+
+    This function initializes the Earth Engine API by authenticating with the
+    provided service account credentials. The authenticated session allows for
+    accessing and manipulating data within Google Earth Engine.
+
+    Args:
+        service_account_name (str): The email address of the service account.
+        key_path (str): The path to the private key file for the service account.
+
+    See documentation: https://docs.fused.io/basics/in/gee/
+
+    Example:
+        ee_initialize('your-service-account@your-project.iam.gserviceaccount.com', 'path/to/your-private-key.json')
+    """
+    import ee
+
+    credentials = ee.ServiceAccountCredentials(service_account_name, key_path)
+    ee.Initialize(
+        opt_url="https://earthengine-highvolume.googleapis.com", credentials=credentials
+    )
+
+
+@fused.cache
+def run_pool_tiffs(bbox, df_tiffs, output_shape):
+    import numpy as np
+
+    columns = df_tiffs.columns
+
+    @fused.cache
+    def fn_read_tiff(tiff_url, bbox=bbox, output_shape=output_shape):
+        read_tiff = fused.load(
+            "https://github.com/fusedio/udfs/tree/3c4bc47/public/common/"
+        ).utils.read_tiff
+        return read_tiff(bbox, tiff_url, output_shape=output_shape)
+
+    tiff_list = []
+    for band in columns:
+        for i in range(len(df_tiffs)):
+            tiff_list.append(df_tiffs[band].iloc[i])
+
+    arrs_tmp = fused.utils.common.run_pool(fn_read_tiff, tiff_list)
+    arrs_out = np.stack(arrs_tmp)
+    arrs_out = arrs_out.reshape(
+        len(columns), len(df_tiffs), output_shape[0], output_shape[1]
+    )
+    return arrs_out
+
+
+def search_pc_catalog(
+    bbox,
+    time_of_interest,
+    query={"eo:cloud_cover": {"lt": 5}},
+    collection="sentinel-2-l2a",
+):
+    import planetary_computer
+    import pystac_client
+
+    # Instantiate PC client
+    catalog = pystac_client.Client.open(
+        "https://planetarycomputer.microsoft.com/api/stac/v1",
+        modifier=planetary_computer.sign_inplace,
+    )
+
+    # Search catalog
+    items = catalog.search(
+        collections=[collection],
+        bbox=bbox.total_bounds,
+        datetime=time_of_interest,
+        query=query,
+    ).item_collection()
+
+    if len(items) == 0:
+        print(f"empty for {time_of_interest}")
+        return
+
+    return items
+
+
+def create_tiffs_catalog(stac_items, band_list):
+    import pandas as pd
+
+    input_paths = []
+    for selected_item in stac_items:
+        max_key_length = len(max(selected_item.assets, key=len))
+        input_paths.append([selected_item.assets[band].href for band in band_list])
+    return pd.DataFrame(input_paths, columns=band_list)
+
+
+def chunked_tiff_to_points(tiff_path, i: int = 0, x_chunks: int = 2, y_chunks: int = 2):
+    import numpy as np
+    import pandas as pd
+    import rasterio
+
+    with rasterio.open(tiff_path) as src:
+        x_list, y_list = shape_transform_to_xycoor(src.shape[-2:], src.transform)
+        x_slice, y_slice = get_chunk_slices_from_shape(
+            src.shape[-2:], x_chunks, y_chunks, i
+        )
+        x_list = x_list[x_slice]
+        y_list = y_list[y_slice]
+        X, Y = np.meshgrid(x_list, y_list)
+        arr = src.read(window=(y_slice, x_slice)).flatten()
+        df = pd.DataFrame(X.flatten(), columns=["lng"])
+        df["lat"] = Y.flatten()
+        df["data"] = arr
+    return df
+
+
+def shape_transform_to_xycoor(shape, transform):
+    import numpy as np
+
+    n_y = shape[-2]
+    n_x = shape[-1]
+    w, _, x, _, h, y, _, _, _ = transform
+    x_list = np.arange(x + w / 2, x + n_x * w + w / 2, w)[:n_x]
+    y_list = np.arange(y + h / 2, y + n_y * h + h / 2, h)[:n_y]
+    return x_list, y_list
+
+
+def get_chunk_slices_from_shape(array_shape, x_chunks, y_chunks, i):
+    # Unpack the dimensions of the array shape
+    rows, cols = array_shape
+
+    # Calculate the size of each chunk
+    chunk_height = rows // y_chunks
+    chunk_width = cols // x_chunks
+
+    # Calculate row and column index for the i-th chunk
+    row_start = (i // x_chunks) * chunk_height
+    col_start = (i % x_chunks) * chunk_width
+
+    # Create slice objects for the i-th chunk
+    y_slice = slice(row_start, row_start + chunk_height)
+    x_slice = slice(col_start, col_start + chunk_width)
+
+    return x_slice, y_slice
+
+
+def duckdb_connect(home_directory='/tmp/'):
+    import duckdb 
+    con = duckdb.connect()
+    con.sql(
+    f"""SET home_directory='{home_directory}';
+    INSTALL h3 FROM community;
+    LOAD h3;
+    install 'httpfs';
+    load 'httpfs';
+    INSTALL spatial;
+    LOAD spatial;
+    """)
+    print("duckdb version:", duckdb.__version__)
+    return con
+
+
+# @fused.cache
+def run_query(query, return_arrow=False):
+    con = duckdb_connect()
+    if return_arrow:
+        return con.sql(query).fetch_arrow_table()
+    else:
+        return con.sql(query).df()
+
+
+def ds_to_tile(ds, variable, bbox, na_values=0):
+    da = ds[variable]
+    x_slice, y_slice = bbox_to_xy_slice(
+        bbox.total_bounds, ds.rio.shape, ds.rio.transform()
+    )
+    window = bbox_to_window(bbox.total_bounds, ds.rio.shape, ds.rio.transform())
+    py0 = py1 = px0 = px1 = 0
+    if window.col_off < 0:
+        px0 = -window.col_off
+    if window.col_off + window.width > da.shape[-2]:
+        px1 = window.col_off + window.width - da.shape[-2]
+    if window.row_off < 0:
+        py0 = -window.row_off
+    if window.row_off + window.height > da.shape[-1]:
+        py1 = window.row_off + window.height - da.shape[-1]
+    # data = da.isel(x=x_slice, y=y_slice, time=0).fillna(0)
+    data = da.isel(x=x_slice, y=y_slice).fillna(0)
+    data = data.pad(
+        x=(px0, px1), y=(py0, py1), mode="constant", constant_values=na_values
+    )
+    return data
+
+
+def bbox_to_xy_slice(bounds, shape, transform):
+    import rasterio
+    from affine import Affine
+
+    if transform[4] < 0:  # if pixel_height is negative
+        original_window = rasterio.windows.from_bounds(*bounds, transform=transform)
+        gridded_window = rasterio.windows.round_window_to_full_blocks(
+            original_window, [(1, 1)]
+        )
+        y_slice, x_slice = gridded_window.toslices()
+        return x_slice, y_slice
+    else:  # if pixel_height is not negative
+        original_window = rasterio.windows.from_bounds(
+            *bounds,
+            transform=Affine(
+                transform[0],
+                transform[1],
+                transform[2],
+                transform[3],
+                -transform[4],
+                -transform[5],
+            ),
+        )
+        gridded_window = rasterio.windows.round_window_to_full_blocks(
+            original_window, [(1, 1)]
+        )
+        y_slice, x_slice = gridded_window.toslices()
+        y_slice = slice(shape[0] - y_slice.stop, shape[0] - y_slice.start + 0)
+        return x_slice, y_slice
+
+
+def bbox_to_window(bounds, shape, transform):
+    import rasterio
+    from affine import Affine
+
+    if transform[4] < 0:  # if pixel_height is negative
+        original_window = rasterio.windows.from_bounds(*bounds, transform=transform)
+        gridded_window = rasterio.windows.round_window_to_full_blocks(
+            original_window, [(1, 1)]
+        )
+        return gridded_window
+    else:  # if pixel_height is not negative
+        original_window = rasterio.windows.from_bounds(
+            *bounds,
+            transform=Affine(
+                transform[0],
+                transform[1],
+                transform[2],
+                transform[3],
+                -transform[4],
+                -transform[5],
+            ),
+        )
+        gridded_window = rasterio.windows.round_window_to_full_blocks(
+            original_window, [(1, 1)]
+        )
+        return gridded_window
+
+
+def bounds_to_gdf(bounds_list, crs=4326):
+    import geopandas as gpd
+    import shapely
+
+    box = shapely.box(*bounds_list)
+    return gpd.GeoDataFrame(geometry=[box], crs=crs)
+
+
+def mercantile_polyfill(geom, zooms=[15], compact=True, k=None):
+    import geopandas as gpd
+    import mercantile
+    import shapely
+
+    tile_list = list(mercantile.tiles(*geom.bounds, zooms=zooms))
+    gdf_tiles = gpd.GeoDataFrame(
+        tile_list,
+        geometry=[shapely.box(*mercantile.bounds(i)) for i in tile_list],
+        crs=4326,
+    )
+    gdf_tiles_intersecting = gdf_tiles[gdf_tiles.intersects(geom)]
+    if k:
+        temp_list = gdf_tiles_intersecting.apply(
+            lambda row: mercantile.Tile(row.x, row.y, row.z), 1
+        )
+        clip_list = mercantile_kring_list(temp_list, k)
+        if not compact:
+            gdf = gpd.GeoDataFrame(
+                clip_list,
+                geometry=[shapely.box(*mercantile.bounds(i)) for i in clip_list],
+                crs=4326,
+            )
+            return gdf
+    else:
+        if not compact:
+            return gdf_tiles_intersecting
+        clip_list = gdf_tiles_intersecting.apply(
+            lambda row: mercantile.Tile(row.x, row.y, row.z), 1
+        )
+    simple_list = mercantile.simplify(clip_list)
+    gdf = gpd.GeoDataFrame(
+        simple_list,
+        geometry=[shapely.box(*mercantile.bounds(i)) for i in simple_list],
+        crs=4326,
+    )
+    return gdf  # .reset_index(drop=True)
+
+
+def mercantile_kring(tile, k):
+    # ToDo: Remove invalid tiles in the globe boundries (e.g. negative values)
+    import mercantile
+
+    result = []
+    for x in range(tile.x - k, tile.x + k + 1):
+        for y in range(tile.y - k, tile.y + k + 1):
+            result.append(mercantile.Tile(x, y, tile.z))
+    return result
+
+
+def mercantile_kring_list(tiles, k):
+    a = []
+    for tile in tiles:
+        a.extend(mercantile_kring(tile, k))
+    return list(set(a))
+
+
+def make_tiles_gdf(bounds, zoom=14, k=0, compact=0):
+    import shapely
+
+    df_tiles = mercantile_polyfill(
+        shapely.box(*bounds), zooms=[zoom], compact=compact, k=k
+    )
+    df_tiles["bounds"] = df_tiles["geometry"].apply(lambda x: x.bounds, 1)
+    return df_tiles
+
+
+def get_masked_array(gdf_aoi, arr_aoi):
+    import numpy as np
+    from rasterio.features import geometry_mask
+    from rasterio.transform import from_bounds
+
+    transform = from_bounds(*gdf_aoi.total_bounds, arr_aoi.shape[-1], arr_aoi.shape[-2])
+    geom_mask = geometry_mask(
+        gdf_aoi.geometry,
+        transform=transform,
+        invert=True,
+        out_shape=arr_aoi.shape[-2:],
+    )
+    masked_value = np.ma.MaskedArray(data=arr_aoi, mask=[~geom_mask])
+    return masked_value
+
+
+def get_da(path, coarsen_factor=1, variable_index=0, xy_cols=["longitude", "latitude"]):
+    # Load data
+    import xarray
+
+    path = fused.download(path, path)
+    ds = xarray.open_dataset(path)
+    try:
+        var = list(ds.data_vars)[variable_index]
+        print(var)
+        if coarsen_factor > 1:
+            da = ds.coarsen(
+                {xy_cols[0]: coarsen_factor, xy_cols[1]: coarsen_factor},
+                boundary="trim",
+            ).max()[var]
+        else:
+            da = ds[var]
+        print("done")
+        return da
+    except Exception as e:
+        print(e)
+        ValueError()
+
+
+def get_da_bounds(da, xy_cols=("longitude", "latitude")):
+    x_list = da[xy_cols[0]].values
+    y_list = da[xy_cols[1]].values
+    pixel_width = x_list[1] - x_list[0]
+    pixel_height = y_list[1] - y_list[0]
+
+    minx = x_list[0] - pixel_width / 2
+    maxx = x_list[-1] + pixel_width / 2
+    miny = y_list[-1] + pixel_height / 2
+    maxy = y_list[0] - pixel_height / 2
+
+    return (minx, miny, maxx, maxy)
+
+
+def clip_arr(arr, bounds_aoi, bounds_total=(-180, -90, 180, 90)):
+    # ToDo: fix antimeridian issue by spliting and merging arr around lng=360
+    from rasterio.transform import from_bounds
+
+    transform = from_bounds(*bounds_total, arr.shape[-1], arr.shape[-2])
+    if bounds_total[2] > 180 and bounds_total[0] >= 0:
+        print("Normalized longitude for bounds_aoi to (0,360) to match bounds_total")
+        bounds_aoi = (
+            (bounds_aoi[0] + 360) % 360,
+            bounds_aoi[1],
+            (bounds_aoi[2] + 360) % 360,
+            bounds_aoi[3],
+        )
+    x_slice, y_slice = bbox_to_xy_slice(bounds_aoi, arr.shape, transform)
+    arr_aoi = arr[y_slice, x_slice]
+    if bounds_total[1] > bounds_total[3]:
+        if len(arr_aoi.shape) == 3:
+            arr_aoi = arr_aoi[:, ::-1]
+        else:
+            arr_aoi = arr_aoi[::-1]
+    return arr_aoi

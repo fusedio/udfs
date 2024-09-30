@@ -1,0 +1,96 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Raster_To_H3_Coarsen",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 5,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "vectorLayer": {
+                "opacity": 0.6,
+                "@@type": "H3HexagonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "getHexagon": "@@=properties.hex",
+                "getFillColor": "@@=[properties.metric*10, properties.metric*3, properties.metric*1]",
+                "getElevation": "@@=properties.metric",
+                "elevationScale": 1
+              }
+            },
+            "fused:udfType": "vector_single",
+            "fused:slug": "Raster_To_H3_Coarsen",
+            "fused:name": "Raster_To_H3_Coarsen",
+            "fused:id": null,
+            "fused:defaultViewState": {
+              "enable": false,
+              "latitude": 9.990360508611749,
+              "longitude": 10.142004327038668,
+              "zoom": 11.242460654045457,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/raster_to_h3.png",
+            "fused:tags": [
+              {
+                "id": "raster",
+                "label": "raster"
+              },
+              {
+                "id": "h3",
+                "label": "h3"
+              }
+            ],
+            "fused:description": "## Overview\n\nRaster to H3 Tile Converter\n\nConverts raster data to H3 hexagonal tiles. It processes a section of a GeoTIFF file and aggregates the data into H3 cells.\n\nThe function returns a pandas DataFrame with the following columns:\n- hex: H3 cell ID (as a hexadecimal string)\n- agg_data: Sum of data values in the cell\n- metric: Same as agg_data (for compatibility)\n",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/876e50afc65e383ae73bb58870d4923612b5fb26/public/Raster_To_H3_Coarsen/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/876e50a/public/Raster_To_H3_Coarsen/",
+            "fused:gitPath": "public/Raster_To_H3_Coarsen",
+            "fused:gitRef": "876e50afc65e383ae73bb58870d4923612b5fb26",
+            "fused:gitAuthorNames": [
+              "Plinio Guzman",
+              "Isaac Brodsky"
+            ],
+            "fused:gitAuthorUsernames": [
+              "pgzmnk",
+              "isaacbrodsky"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/pgzmnk",
+              "https://github.com/isaacbrodsky"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/27398253?v=4",
+              "https://avatars.githubusercontent.com/u/9139378?v=4"
+            ],
+            "fused:gitLastModified": "2024-08-16T00:38:41+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:explorerPin": "11"
+          },
+          "source": "Raster_To_H3_Coarsen.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

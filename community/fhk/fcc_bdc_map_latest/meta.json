@@ -1,0 +1,86 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "fcc_bdc_map_latest",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:tags": [
+              {
+                "id": "fcc",
+                "label": "fcc",
+                "isCreatable": true
+              },
+              {
+                "id": "broadband",
+                "label": "broadband",
+                "isCreatable": true
+              },
+              {
+                "id": "internet",
+                "label": "internet",
+                "isCreatable": true
+              },
+              {
+                "id": "viewer",
+                "label": "viewer",
+                "isCreatable": true
+              }
+            ],
+            "fused:description": "## Overview\n\nGet access to the FCC broadband map in a new scalable way\n\n## External links\n\n- https://broadbandmap.fcc.gov/home",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "DarkMint",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": "@@=[properties.r, properties.g, properties.b]"
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "fcc_bdc_map_latest",
+            "fused:name": "fcc_bdc_map_latest",
+            "fused:id": null
+          },
+          "source": "fcc_bdc_map_latest.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

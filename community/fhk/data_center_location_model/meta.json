@@ -1,0 +1,98 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Data_Center_Location_Model",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:assetUrl": "https://fused-asset.s3.amazonaws.com/misc/data-centers.png",
+            "fused:tags": [
+              {
+                "id": "H3-polygon",
+                "label": "H3-polygon"
+              },
+              {
+                "id": "Network analysis",
+                "label": "Network analysis"
+              }
+            ],
+            "fused:description": "## Overview\n\nBuild a e2e optimization / operations research solution.\n\nShow that it's possible to dynamically model the network design problem interactively.\n\nBuild this for the US Azure Data Center locations\n\n## Blog post\n\nhttps://pozibl.com/work/data-center-site-selection/\n\n## External links\n\nhttps://blog.wesleyac.com/posts/ping-lightspeed\nhttps://datacenters.microsoft.com/globe/explore/\nhttps://github.com/ergo-code/highs\n\n",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "ArcLayer",
+                "pickable": true,
+                "getWidth": "@@=weight*5",
+                "getSourcePosition": "@@=[hub_longitude,hub_latitude]",
+                "getTargetPosition": "@@=[demand_longitude,demand_latitude]",
+                "getSourceColor": [
+                  0,
+                  128,
+                  255,
+                  194
+                ],
+                "getTargetColor": [
+                  128,
+                  0,
+                  128,
+                  255
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Data_Center_Location_Model",
+            "fused:name": "Data_Center_Location_Model",
+            "fused:id": null,
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.62220043970982,
+              "longitude": -98.1297713179005,
+              "zoom": 3.3242393045631937,
+              "pitch": 41.33553393757667,
+              "bearing": 35.59426229508197
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/5b17f579e7154f85b6ae628b8ced5ee83b413611/community/isaacbrodsky/H3_Hexagon_Layer_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/5b17f57/community/isaacbrodsky/H3_Hexagon_Layer_Example/",
+            "fused:gitPath": "community/isaacbrodsky/H3_Hexagon_Layer_Example",
+            "fused:gitRef": "5b17f579e7154f85b6ae628b8ced5ee83b413611",
+            "fused:gitAuthorNames": [
+              "Isaac Brodsky"
+            ],
+            "fused:gitAuthorUsernames": [
+              "isaacbrodsky"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/isaacbrodsky"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/9139378?v=4"
+            ],
+            "fused:gitLastModified": "2024-04-26T17:48:19+00:00",
+            "fused:explorerTab": "community",
+            "fused:gitRepo": "fusedio/udfs"
+          },
+          "source": "Data_Center_Location_Model.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

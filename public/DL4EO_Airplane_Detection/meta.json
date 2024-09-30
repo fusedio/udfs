@@ -1,0 +1,84 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "DL4EO_Airplane_Detection",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 32.152639774920026,
+              "longitude": -110.83748922629792,
+              "zoom": 16.587057319372757,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/dl4eo_cpu.png",
+            "fused:tags": [
+              {
+                "id": "object-detection",
+                "label": "object-detection"
+              }
+            ],
+            "fused:description": "## Overview\n\nThis UDF runs an object detection model on 50cm imagery. \n\nThis is for demonstration only. Please contact Jeff Faudi (jeff@dl4eo.com) for more information on how you could get access to a commercial model or API.\n\nCredits for Pleiades images : (c) Cnes 2021 Distribution Airbus\n\n",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer"
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 3,
+                "getLineColor": [
+                  255,
+                  0,
+                  0,
+                  4000
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "DL4EO_Airplane_Detection",
+            "fused:name": "DL4EO_Airplane_Detection",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/1338d39168418222f15c0e8abd9249ae6daba11d/DL4EO_Airplane_Detection/",
+            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/1338d39/DL4EO_Airplane_Detection/",
+            "fused:gitPath": "DL4EO_Airplane_Detection",
+            "fused:gitRef": "1338d39168418222f15c0e8abd9249ae6daba11d",
+            "fused:gitAuthorNames": [],
+            "fused:gitAuthorUsernames": [],
+            "fused:gitAuthorUrls": [],
+            "fused:gitAuthorAvatarUrls": [],
+            "fused:gitLastModified": "2024-09-03T23:37:01+00:00",
+            "fused:explorerTab": "team",
+            "fused:gitRepo": "fusedlabs/fusedudfs"
+          },
+          "source": "DL4EO_Airplane_Detection.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

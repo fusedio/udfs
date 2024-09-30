@@ -14,20 +14,24 @@
           "metadata": {
             "fused:tags": [
               {
-                "id": "30-meter",
-                "label": "30 meter"
+                "id": "Mosaic",
+                "label": "Mosaic"
               },
               {
-                "id": "aws",
-                "label": "AWS"
+                "id": "S3",
+                "label": "S3"
               },
               {
-                "id": "nasa",
+                "id": "NASA",
                 "label": "NASA"
               },
               {
-                "id": "raster",
-                "label": "raster"
+                "id": "Remove-clouds",
+                "label": "Remove-clouds"
+              },
+              {
+                "id": "STAC",
+                "label": "STAC"
               }
             ],
             "fused:description": "\n## Overview\nThis UDF demonstrate how to access the NASA’s Harmonized Landsat Sentinel-2 (HLS) version 2 assets. Please visit [Earth Data Portal](https://urs.earthdata.nasa.gov) to register and manage your Earthdata Login account.\n\n## External links\n\n- [Data Discovery Example](https://nasa-openscapes.github.io/2021-Cloud-Hackathon/tutorials/02_Data_Discovery_CMR-STAC_API.html)\n- [Name of link](https://example.com)",

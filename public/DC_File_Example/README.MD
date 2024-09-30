@@ -9,3 +9,13 @@ This UDF is an example of how to load data from Census [TIGER/Line Shapefiles](h
 # External links
 
 - [source](https://www2.census.gov/geo/tiger/TIGER_RD18/STATE/11_DISTRICT_OF_COLUMBIA/11/)
+
+## Run this in any Jupyter Notebook
+
+```python
+import fused
+
+udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/DC_File_Example")
+gdf = fused.run(udf=udf)
+gdf
+```

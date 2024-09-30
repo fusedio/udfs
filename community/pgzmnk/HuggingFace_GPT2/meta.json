@@ -1,0 +1,73 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "HuggingFace_GPT2",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/docs_assets/gpt2.jpeg",
+            "fused:tags": [
+              {
+                "id": "huggingface",
+                "label": "huggingface",
+                "isCreatable": true
+              }
+            ],
+            "fused:description": "## Overview\n\nThis UDF illustrates how to run HuggingFace models with Fused. \n\nAs a simple example, it runs OpenAI GPT2-medium model on a prompt set with the `input_text` parameter.\n\nNote that GPT-2 is a large language model that generates short paragraphs of text. It debuted in 2019, and its accuracy and performance are considered below industry standards. This model is used to demonstrate use of HuggingFace within Fused - so expect the model's responses to be erroneous.\n\n## External links\n\n- [HuggingFace GPT2 profile card](https://huggingface.co/openai-community/gpt2)",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    255,
+                    0,
+                    255
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_single",
+            "fused:slug": "HuggingFace_GPT2",
+            "fused:name": "HuggingFace_GPT2",
+            "fused:id": null
+          },
+          "source": "HuggingFace_GPT2.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

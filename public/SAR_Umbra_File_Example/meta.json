@@ -22,7 +22,7 @@
               },
               "rasterLayer": {
                 "@@type": "BitmapLayer",
-                "opacity": 0.95
+                "opacity": 0.9
               },
               "vectorLayer": {
                 "@@type": "GeoJsonLayer",
@@ -54,25 +54,54 @@
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/SAR_Umbra_File_Example.png",
             "fused:tags": [
               {
-                "id": "SAR",
-                "label": "SAR",
-                "isCreatable": true
+                "id": "sar",
+                "label": "sar"
               },
               {
-                "id": "raster",
-                "label": "raster"
-              },
-              {
-                "id": "high-res",
-                "label": "high-res"
-              },
-              {
-                "id": "file",
-                "label": "file"
+                "id": "Buffer",
+                "label": "Buffer"
               }
             ],
-            "fused:description": "# Overview\n\nUmbra satellites provide high-resolution Synthetic Aperture Radar (SAR) imagery, with up to 16-cm resolution, capable of capturing images at night and in adverse weather conditions. \n\n# External links\n\n- [stac link](https://radiantearth.github.io/stac-browser/#/external/s3.us-west-2.amazonaws.com/umbra-open-data-catalog/stac/catalog.json)\n- [aws open data](https://registry.opendata.aws/umbra-open-data/)",
-            "fused:id": null
+            "fused:description": "# Overview\n\nUmbra satellites provide high-resolution Synthetic Aperture Radar (SAR) imagery, with up to 16-cm resolution, capable of capturing images at night and in adverse weather conditions. \n\n# External links\n\n- [stac link](https://radiantearth.github.io/stac-browser/#/external/s3.us-west-2.amazonaws.com/umbra-open-data-catalog/stac/catalog.json)\n- [aws open data](https://registry.opendata.aws/umbra-open-data/)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/SAR_Umbra_File_Example\")\narr = fused.run(udf=udf)\narr\n```",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/20bef59896da3eb0eab72c39da329b11fee5618d/public/SAR_Umbra_File_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/20bef59/public/SAR_Umbra_File_Example/",
+            "fused:gitPath": "public/SAR_Umbra_File_Example",
+            "fused:gitRef": "20bef59896da3eb0eab72c39da329b11fee5618d",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk",
+              "Tyler Erickson",
+              "Plinio Guzman"
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk",
+              "tylere",
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk",
+              "https://github.com/tylere",
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/u/92862?v=4",
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitLastModified": "2024-03-13T17:22:21+00:00",
+            "fused:defaultParameters": [
+              {
+                "parameter": "name",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "washington",
+                  "panama_canal",
+                  "mexico_sanmartin",
+                  "colombia_taparal"
+                ]
+              }
+            ]
           },
           "source": "SAR_Umbra_File_Example.py",
           "headers": [

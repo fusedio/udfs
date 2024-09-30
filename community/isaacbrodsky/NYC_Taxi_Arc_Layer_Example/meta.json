@@ -1,0 +1,115 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "NYC_Taxi_Arc_Layer_Example",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultParameters": [
+              {
+                "parameter": "year",
+                "value": "",
+                "type": "string",
+                "suggestedValues": []
+              },
+              {
+                "parameter": "month",
+                "value": "",
+                "type": "string",
+                "suggestedValues": []
+              },
+              {
+                "parameter": "n_rows",
+                "value": "",
+                "type": "string",
+                "suggestedValues": []
+              },
+              {
+                "parameter": "weight_by",
+                "value": "",
+                "type": "string",
+                "suggestedValues": []
+              }
+            ],
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/NYC_Taxi_Arc_Layer_Example.png",
+            "fused:tags": [
+              {
+                "id": "OD",
+                "label": "OD"
+              },
+              {
+                "id": "Aggregation",
+                "label": "Aggregation"
+              },
+              {
+                "id": "parquet",
+                "label": "parquet",
+                "isCreatable": true
+              },
+              {
+                "id": "NYC Open Data",
+                "label": "NYC Open Data",
+                "isCreatable": true
+              }
+            ],
+            "fused:description": "## Overview\n\nThis UDF shows how to open NYC yellow taxi trip dataset and visualize trips as [arcs](https://deck.gl/docs/api-reference/layers/arc-layer).\n\n## External links\n\n- [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/NYC_Taxi_Arc_Layer_Example\")\ngdf = fused.run(udf=udf)\ngdf\n```\n",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 40.7353603187322,
+              "longitude": -73.87374595794287,
+              "zoom": 10.151752114693691,
+              "pitch": 59.9001451016548,
+              "bearing": 64.91685858574003
+            },
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "ArcLayer",
+                "pickable": true,
+                "getWidth": "@@=properties.weight*5",
+                "getSourcePosition": "@@=[properties.pickup_longitude,properties.pickup_latitude]",
+                "getTargetPosition": "@@=[properties.dropoff_longitude,properties.dropoff_latitude]",
+                "getSourceColor": [
+                  0,
+                  128,
+                  255,
+                  194
+                ],
+                "getTargetColor": [
+                  128,
+                  0,
+                  128,
+                  255
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "NYC_Taxi_Arc_Layer_Example",
+            "fused:name": "NYC_Taxi_Arc_Layer_Example",
+            "fused:id": null
+          },
+          "source": "NYC_Taxi_Arc_Layer_Example.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

@@ -1,0 +1,91 @@
+Operations:
+  - attributes:
+    - optional: true
+  - tags:
+    - Dissolve
+    - Point-to-line
+    - Zonal stats
+    - Change detection
+    - Band algebra
+    - Temporal analysis
+    - Merge
+    - Mosaic
+    - Super-resolution
+    - Clip
+    - XY Retrieval
+    - Point-to-polygon
+    - Proximity
+    - H3-Raster
+    - Raster-to-vector
+    - Remove-clouds
+    - Object detection
+    - Voronoi
+    - Buffer
+    - Calculate-area
+    - Calculate-distance
+    - Self-clip
+    - Dissolve
+    - Vector-to-raster
+    - H3-vector
+    - Isochrone
+    - Routing
+    - Reverse-geocode
+    - Aggregation
+    - Filter
+    - Mask
+    - Projection
+    - Hillshade
+    - Point cloud
+    - OD
+    - Viewshed
+
+Data type:
+  - attributes:
+    - optional: true
+  - tags:
+    - geojson
+    - parquet
+    - geoparquet
+    - tiff
+    - nc
+    - shp
+    - csv
+    - json
+    - gdb
+    - kml
+    - zarr
+    - xlsx
+
+Data host:
+  - attributes:
+    - optional: true
+  - tags:
+    - CooP
+    - NASA
+    - NOAA
+    - BigQuery
+    - AWS
+    - MSFT-PC
+    - GEE
+    - GEE-community
+    - JRC
+    - USGS
+    - Fused
+    - Valhalla (?)
+    - Element84
+
+
+Connector:
+  - attributes:
+    - optional: true
+  - tags:
+    - Arraylake
+    - BigQuery
+    - DuckDB
+    - Postgres
+    - ESRI
+    - STAC
+    - GEE
+    - Rasterio
+    - GeoPandas
+    - Ibis

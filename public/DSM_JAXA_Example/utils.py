@@ -1,8 +1,11 @@
 import fused
 
-mosaic_tiff = fused.core.import_from_github(
-    "https://github.com/fusedio/udfs/tree/ccbab4334b0cfa989c0af7d2393fb3d607a04eef/public/common/"
+mosaic_tiff = fused.load(
+    "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
 ).utils.mosaic_tiff
+arr_to_plasma = fused.load(
+    "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
+).utils.arr_to_plasma
 
 
 def dsm_to_tile(bbox, z_levels=[4, 6, 9, 11], verbose=True):

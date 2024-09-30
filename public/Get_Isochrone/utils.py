@@ -9,13 +9,13 @@ def get_isochrone(
     costing options: auto, pedestrian, bicycle, truck, bus, motor_scooter
     TODO: add costing_options: e.g. exclude_polygons
     """
-    import requests
-    import pandas as pd
     import geopandas as gpd
+    import pandas as pd
+    import requests
 
     def _get_isochrone(lat, lng, costing, time_steps):
-        import time
         import random
+        import time
 
         url = "https://valhalla1.openstreetmap.de/isochrone"
         params = {

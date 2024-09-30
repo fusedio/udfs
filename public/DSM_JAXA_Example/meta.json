@@ -82,17 +82,17 @@
             "fused:description": "## Overview\n\nALOS Global Digital Surface Model \"ALOS World 3D - 30m (AW3D30)\" captured by the PRISM optical sensor on the ALOS satellite, with a 30-meter horizontal resolution.\n\n## External links\n- [JAXA Digital Surface Model](https://data.earth.jaxa.jp/en/datasets/#/id/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global)\n- [STAC Collection File](https://s3.ap-northeast-1.wasabisys.com/je-pds/cog/v1/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global/collection.json)",
             "fused:tags": [
               {
-                "id": "raster",
-                "label": "raster"
+                "id": "Mosaic",
+                "label": "Mosaic"
               },
               {
-                "id": "elevation",
-                "label": "elevation",
+                "id": "tiff",
+                "label": "tiff",
                 "isCreatable": true
               },
               {
-                "id": "30-meter",
-                "label": "30-meter"
+                "id": "S3",
+                "label": "S3"
               }
             ],
             "fused:defaultParameters": []
