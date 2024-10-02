@@ -1,34 +1,19 @@
-"""
-Run a UDF concurrently across an array of parameter-dictionaries.
-
-The target UDF should accept and un-stringify (json.loads) a `params` parameter.
-Pass its UDF's token to this function, along with an array of params.
-"""
-import json
-
-params_json = json.dumps([{"a": 1}, {"b": 2}])
-target_token = ""
-
+# Run a UDF concurrently across an array of parameter-dictionaries. The target UDF should accept and un-stringify (json.loads) a `params` parameter. Pass its UDF's token to this function, along with an array of params.
+param_list = [{"param1":10, "param2":True},
+               {"param1":20, "param2":False},
+              {"param1":20, "param2":False}]
+param_json = param_list[0]
+@fused.udf
+def udf(param_list: dict = param_list):
+    import pandas as pd
+    df = fused.run(udf_nail, engine='realtime')
+    output = fused.utils.common.run_pool(lambda x:fused.run(udf_nail,param_json=x, 
+                                                            engine='local'), param_list)
+    df = pd.concat(output)
+    print(df)
+    return df
 
 @fused.udf
-def udf(target_token: str = target_token, params_json: str = params_json):
-    import json
-
+def udf(param_json: dict = param_json):
     import pandas as pd
-
-    params_list = json.loads(params_json)
-    print(params_list)
-
-    def fn(params):
-        return fused.run(target_token, params=json.dumps(params))
-
-    output = [
-        each
-        for each in fused.utils.common.run_pool(fn, params_list)
-        if each is not None
-    ]
-
-    if len(output) == 0:
-        return None
-    else:
-        return pd.concat(output, ignore_index=True)
+    return pd.DataFrame([param_json])
