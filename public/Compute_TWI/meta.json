@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "compute_twi",
+          "name": "Compute_TWI",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -18,11 +18,10 @@
             "fused:tags": [
               {
                 "id": "whitebox",
-                "label": "whitebox",
-                "isCreatable": true
+                "label": "whitebox"
               }
             ],
-            "fused:description": "#### Overview\nApply [WhitboxTools](https://www.whiteboxgeo.com/manual/wbt_book/) workflows across the US using the USGS 3D Elevation Program (3DEP) Datasets from the National Map at 30-m resolution as the source for elevation data. WhitboxTools provides a wide range of functionalities for geospatial analysis. This UDF relies on [PyWBT](https://pywbt.readthedocs.io) to run the WhitboxTools.\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/DEM_10m_Tile_Example\")\narr = fused.run(udf=udf, x=2411, y=3079, z=13)\narr\n```",
+            "fused:description": "#### Overview\nApply [WhitboxTools](https://www.whiteboxgeo.com/manual/wbt_book/) workflows across the US using the USGS 3D Elevation Program (3DEP) Datasets from the National Map at 30-m resolution as the source for elevation data. WhitboxTools provides a wide range of functionalities for geospatial analysis. This UDF relies on [PyWBT](https://pywbt.readthedocs.io) to run the WhitboxTools.\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Compute_TWI\")\narr = fused.run(udf=udf, x=2411, y=3079, z=13)\narr\n```\n",
             "fused:vizConfig": {
               "@@type": "TileLayer",
               "minZoom": 7,
@@ -34,8 +33,8 @@
               }
             },
             "fused:udfType": "raster",
-            "fused:slug": "compute_twi",
-            "fused:name": "compute_twi",
+            "fused:slug": "Compute_TWI",
+            "fused:name": "Compute_TWI",
             "fused:id": null,
             "fused:defaultViewState": {
               "enable": true,
@@ -45,43 +44,29 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/62bd13941fcabc0bd1cb6bcbc957c1ed15e4b17a/public/DEM_10m_Tile_Example/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/62bd139/public/DEM_10m_Tile_Example/",
-            "fused:gitPath": "public/DEM_10m_Tile_Example",
-            "fused:gitRef": "62bd13941fcabc0bd1cb6bcbc957c1ed15e4b17a",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/9ff5221acb4989946730f961942bb1df26479872/public/Compute_TWI/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/9ff5221/public/Compute_TWI/",
+            "fused:gitPath": "public/Compute_TWI",
+            "fused:gitRef": "9ff5221acb4989946730f961942bb1df26479872",
             "fused:gitAuthorNames": [
-              "Sina Kashuk",
-              "Tyler Erickson",
-              null,
-              "Plinio Guzman",
-              null
+              "Taher Chegini"
             ],
             "fused:gitAuthorUsernames": [
-              "kashuk",
-              "tylere",
-              "charlesfused",
-              "pgzmnk",
-              "fused-io[bot]"
+              "cheginit"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/kashuk",
-              "https://github.com/tylere",
-              "https://github.com/charlesfused",
-              "https://github.com/pgzmnk",
-              "https://github.com/apps/fused-io"
+              "https://github.com/cheginit"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/12432685?v=4",
-              "https://avatars.githubusercontent.com/u/92862?v=4",
-              "https://avatars.githubusercontent.com/u/148997493?v=4",
-              "https://avatars.githubusercontent.com/u/27398253?v=4",
-              "https://avatars.githubusercontent.com/in/834700?v=4"
+              "https://avatars.githubusercontent.com/u/13016644?v=4"
             ],
-            "fused:gitLastModified": "2024-09-06T11:44:52+00:00",
+            "fused:gitLastModified": "2024-10-02T15:25:30.074Z",
             "fused:explorerTab": "public",
-            "fused:gitRepo": "fusedio/udfs"
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitPullRequestBranch": "plinio@fused.io-patch-Introduce-parameters",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/326"
           },
-          "source": "compute_twi.py",
+          "source": "Compute_TWI.py",
           "headers": [
             {
               "module_name": "wbt",

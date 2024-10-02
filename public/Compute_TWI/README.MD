@@ -13,7 +13,7 @@ Apply [WhitboxTools](https://www.whiteboxgeo.com/manual/wbt_book/) workflows acr
 ```python
 import fused
 
-udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/DEM_10m_Tile_Example")
+udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/Compute_TWI")
 arr = fused.run(udf=udf, x=2411, y=3079, z=13)
 arr
 ```
