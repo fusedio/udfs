@@ -12,7 +12,7 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DEM_10m_Tile_Example.png",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Compute_TWI.png",
             "fused:defaultParameters": [],
             "fused:datasets": "Digital Elevation Model",
             "fused:tags": [
