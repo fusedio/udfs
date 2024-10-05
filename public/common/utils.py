@@ -46,6 +46,17 @@ def read_log(n=None, name='default', return_log=False):
         else:
             print("Log file not found.")
 
+def dilate_bbox(bbox, chip_len, border_pixel):
+    bbox_crs = bbox.crs
+    clipped_chip=chip_len-(border_pixel*2)
+    bbox = bbox.to_crs(bbox.estimate_utm_crs())
+    length = bbox.area[0]**0.5
+    buffer_ratio = (chip_len-clipped_chip)/clipped_chip
+    buffer_distance=length*buffer_ratio/2
+    bbox.geometry = bbox.buffer(buffer_distance)
+    bbox = bbox.to_crs(bbox_crs)  
+    return bbox
+
 def read_gdf_file(path):
     import geopandas as gpd
 
