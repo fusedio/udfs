@@ -48,8 +48,39 @@
             "fused:slug": "DC_File_Example",
             "fused:name": "DC_File_Example",
             "fused:id": null,
-            "fused:description": "# Overview\n\nThis UDF is an example of how to load data from Census [TIGER/Line Shapefiles](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html).\n\n# External links\n\n- [source](https://www2.census.gov/geo/tiger/TIGER_RD18/STATE/11_DISTRICT_OF_COLUMBIA/11/)\n",
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DC_File_Example.png"
+            "fused:description": "# Overview\n\nThis UDF is an example of how to load data from Census [TIGER/Line Shapefiles](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html).\n\n# External links\n\n- [source](https://www2.census.gov/geo/tiger/TIGER_RD18/STATE/11_DISTRICT_OF_COLUMBIA/11/)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/DC_File_Example\")\ngdf = fused.run(udf=udf)\ngdf\n```\n",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DC_File_Example.png",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/3367b379eef8f66869736383f21002c46735d92b/public/DC_File_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/3367b37/public/DC_File_Example/",
+            "fused:gitPath": "public/DC_File_Example",
+            "fused:gitRef": "3367b379eef8f66869736383f21002c46735d92b",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk",
+              "Tyler Erickson",
+              "Fabion Kauker",
+              "Plinio Guzman"
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk",
+              "tylere",
+              "fhk",
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk",
+              "https://github.com/tylere",
+              "https://github.com/fhk",
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/u/92862?v=4",
+              "https://avatars.githubusercontent.com/u/4031392?v=4",
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitLastModified": "2024-07-02T14:08:35+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs"
           },
           "source": "DC_File_Example.py",
           "headers": []
