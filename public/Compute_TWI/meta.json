@@ -1,0 +1,81 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Compute_TWI",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Compute_TWI.png",
+            "fused:defaultParameters": [],
+            "fused:datasets": "Digital Elevation Model",
+            "fused:tags": [
+              {
+                "id": "whitebox",
+                "label": "whitebox"
+              }
+            ],
+            "fused:description": "#### Overview\nApply [WhitboxTools](https://www.whiteboxgeo.com/manual/wbt_book/) workflows across the US using the USGS 3D Elevation Program (3DEP) Datasets from the National Map at 30-m resolution as the source for elevation data. WhitboxTools provides a wide range of functionalities for geospatial analysis. This UDF relies on [PyWBT](https://pywbt.readthedocs.io) to run the WhitboxTools.\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Compute_TWI\")\narr = fused.run(udf=udf, x=2411, y=3079, z=13)\narr\n```\n",
+            "fused:vizConfig": {
+              "@@type": "TileLayer",
+              "minZoom": 7,
+              "maxZoom": 15,
+              "tileSize": 256,
+              "pickable": true,
+              "subLayerConfig": {
+                "@@type": "BitmapLayer"
+              }
+            },
+            "fused:udfType": "raster",
+            "fused:slug": "Compute_TWI",
+            "fused:name": "Compute_TWI",
+            "fused:id": null,
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 38.38568043740128,
+              "longitude": -77.48949130413875,
+              "zoom": 9.949946744275215,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/9ff5221acb4989946730f961942bb1df26479872/public/Compute_TWI/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/9ff5221/public/Compute_TWI/",
+            "fused:gitPath": "public/Compute_TWI",
+            "fused:gitRef": "9ff5221acb4989946730f961942bb1df26479872",
+            "fused:gitAuthorNames": [
+              "Taher Chegini"
+            ],
+            "fused:gitAuthorUsernames": [
+              "cheginit"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/cheginit"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/13016644?v=4"
+            ],
+            "fused:gitLastModified": "2024-10-02T15:25:30.074Z",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitPullRequestBranch": "plinio@fused.io-patch-Introduce-parameters",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/326"
+          },
+          "source": "Compute_TWI.py",
+          "headers": [
+            {
+              "module_name": "wbt",
+              "source_file": "wbt.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
