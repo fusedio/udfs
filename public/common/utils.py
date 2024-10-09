@@ -1772,8 +1772,8 @@ def get_da(path, coarsen_factor=1, variable_index=0, xy_cols=["longitude", "lati
     # Load data
     import xarray
 
-    path = fused.download(path, path)
-    ds = xarray.open_dataset(path)
+    path = fused.download(path, path.split('/')[-1]) 
+    ds = xarray.open_dataset(path, engine='h5netcdf')
     try:
         var = list(ds.data_vars)[variable_index]
         print(var)
