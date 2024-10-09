@@ -1768,26 +1768,22 @@ def get_masked_array(gdf_aoi, arr_aoi):
     return masked_value
 
 
-def get_da(path, coarsen_factor=1, variable_index=0, xy_cols=["longitude", "latitude"]):
+def get_da(path, coarsen_factor=1, variable_index=0,  xy_cols=['longitude', 'latitude']):
     # Load data
     import xarray
-
-    path = fused.download(path, path)
-    ds = xarray.open_dataset(path)
+    path = fused.download(path, path.split('/')[-1]) 
+    ds = xarray.open_dataset(path, engine='h5netcdf')
     try:
-        var = list(ds.data_vars)[variable_index]
+        var = list(ds.data_vars)[variable_index] 
         print(var)
-        if coarsen_factor > 1:
-            da = ds.coarsen(
-                {xy_cols[0]: coarsen_factor, xy_cols[1]: coarsen_factor},
-                boundary="trim",
-            ).max()[var]
+        if coarsen_factor>1:
+            da = ds.coarsen({xy_cols[0]:coarsen_factor, xy_cols[1]:coarsen_factor}, boundary='trim').max()[var]
         else:
             da = ds[var]
-        print("done")
-        return da
+        print('done')
+        return da 
     except Exception as e:
-        print(e)
+        print(e) 
         ValueError()
 
 
