@@ -52,3 +52,4 @@ def visualize(
         return shaped
     else:
         print('visualize: data instance type not recognized')
+        
