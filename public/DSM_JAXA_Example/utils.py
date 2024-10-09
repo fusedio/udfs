@@ -1,12 +1,13 @@
 import fused
 
+# Load utility functions.
 mosaic_tiff = fused.load(
     "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
 ).utils.mosaic_tiff
-arr_to_plasma = fused.load(
-    "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
-).utils.arr_to_plasma
 
+visualize = fused.load(
+    "https://github.com/fusedio/udfs/tree/e91f5af/public/common_vis/"
+).utils.visualize
 
 def dsm_to_tile(bbox, z_levels=[4, 6, 9, 11], verbose=True):
     if bbox.z[0] >= z_levels[2]:
