@@ -6,7 +6,7 @@ mosaic_tiff = fused.load(
 ).utils.mosaic_tiff
 
 visualize = fused.load(
-    "https://github.com/fusedio/udfs/tree/e91f5af/public/common_vis/"
+    "https://github.com/fusedio/udfs/tree/255e0fe/public/common_vis/"
 ).utils.visualize
 
 def dsm_to_tile(bbox, z_levels=[4, 6, 9, 11], verbose=True):
