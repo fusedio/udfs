@@ -1,4 +1,5 @@
 import numpy as np
+import xarray as xr
 
 def visualize(
     data: np.ndarray = None,
@@ -27,6 +28,10 @@ def visualize(
         cm = LinearSegmentedColormap.from_list('custom', colormap)
     else:
         print('visualize: no type match for colormap')
+
+    if isinstance(data, xr.DataArray):
+        # Convert from an Xarray DataArray to a Numpy ND Array
+        data = data.values
     
     if isinstance(data, np.ndarray):
         norm_data = Normalize(vmin=min, vmax=max, clip=False)(data)
@@ -47,3 +52,4 @@ def visualize(
         return shaped
     else:
         print('visualize: data instance type not recognized')
+        

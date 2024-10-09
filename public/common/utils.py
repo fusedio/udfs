@@ -14,6 +14,48 @@ import shapely
 from loguru import logger
 from numpy.typing import NDArray
 
+def write_log(msg="Your message.", name='//default', log_type='info', rotation="10 MB"):
+    from loguru import logger
+    path = fused.file_path('logs/' + name + '.log')
+    logger.add(path, rotation=rotation)
+    if log_type=='warning':
+        logger.warning(msg)
+    else:
+        logger.info(msg)  # Write the log message
+    logger.remove()  # Remove the log handler
+    from datetime import datetime
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print(f"{timestamp} | {path} |msg: {msg}" )
+
+def read_log(n=None, name='default', return_log=False):
+    path = fused.file_path('logs/' + name + '.log')
+    try:
+        with open(path, 'r') as file:
+            log_content = file.readlines()
+            if n:
+                log_content = ''.join(log_content[-n:])  # Return last 'tail_lines' entries
+            else:
+                log_content = ''.join(log_content)
+            if return_log:
+                return log_content
+            else:
+                print(log_content)
+    except FileNotFoundError:
+        if return_log:
+            return "Log file not found."
+        else:
+            print("Log file not found.")
+
+def dilate_bbox(bbox, chip_len, border_pixel):
+    bbox_crs = bbox.crs
+    clipped_chip=chip_len-(border_pixel*2)
+    bbox = bbox.to_crs(bbox.estimate_utm_crs())
+    length = bbox.area[0]**0.5
+    buffer_ratio = (chip_len-clipped_chip)/clipped_chip
+    buffer_distance=length*buffer_ratio/2
+    bbox.geometry = bbox.buffer(buffer_distance)
+    bbox = bbox.to_crs(bbox_crs)  
+    return bbox
 
 def read_gdf_file(path):
     import geopandas as gpd
@@ -1528,21 +1570,18 @@ def get_chunk_slices_from_shape(array_shape, x_chunks, y_chunks, i):
     return x_slice, y_slice
 
 
-def duckdb_connect():
-    import duckdb
-
+def duckdb_connect(home_directory='/tmp/'):
+    import duckdb 
     con = duckdb.connect()
-    fused.load(
-        "https://github.com/fusedio/udfs/tree/870e162/public/DuckDB_H3_Example/"
-    ).utils.load_h3_duckdb(con)
     con.sql(
-        """SET home_directory='/tmp/';
+    f"""SET home_directory='{home_directory}';
+    INSTALL h3 FROM community;
+    LOAD h3;
     install 'httpfs';
     load 'httpfs';
     INSTALL spatial;
     LOAD spatial;
-    """
-    )
+    """)
     print("duckdb version:", duckdb.__version__)
     return con
 
