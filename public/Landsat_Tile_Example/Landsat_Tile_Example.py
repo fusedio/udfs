@@ -12,11 +12,7 @@ def udf(
     import palettable
     import pystac_client
     from pystac.extensions.eo import EOExtension as eo
-
-    # Load utility functions.
-    common_vis = fused.load(
-        "https://github.com/fusedio/udfs/tree/aa3695a/community/tylere/common_vis"
-    ).utils
+    import utils
     
     odc.stac.configure_s3_access(requester_pays=True)
     catalog = pystac_client.Client.open("https://earth-search.aws.element84.com/v1")
@@ -45,7 +41,7 @@ def udf(
     # Select the maximum value across all times
     arr = ndvi.max(dim="time")
   
-    return common_vis.visualize(
+    return utils.visualize(
         arr.values,
         min=0,
         max=0.5,

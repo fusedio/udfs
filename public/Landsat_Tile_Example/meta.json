@@ -77,10 +77,10 @@
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Landsat_Tile_Example.png",
             "fused:description": "## Overview\n\nLandsat Collection 2 offers global Level-2 surface reflectance and temperature products. These are generated from Collection 2 Level-1 inputs meeting specific criteria, including a Solar Zenith Angle constraint of <76 degrees and required auxiliary data inputs.\n\n## External links\n\n- [Landsat Official Website](https://www.usgs.gov/landsat-missions/landsat-collection-2-level-2-science-products)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/LULC_Tile_Example\")\narr = fused.run(udf=udf, x=5241, y=12667, z=15)\narr\n```\n",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/7432e6a676b8ae543bae71e825f49c22aba5175a/public/Landsat_Tile_Example/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/7432e6a/public/Landsat_Tile_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/23ea3299277a9baf3b1dd79a73574d21341564d7/public/Landsat_Tile_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/23ea329/public/Landsat_Tile_Example/",
             "fused:gitPath": "public/Landsat_Tile_Example",
-            "fused:gitRef": "7432e6a676b8ae543bae71e825f49c22aba5175a",
+            "fused:gitRef": "23ea3299277a9baf3b1dd79a73574d21341564d7",
             "fused:explorerPin": "8",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
@@ -114,14 +114,19 @@
               "https://avatars.githubusercontent.com/u/27398253?v=4",
               "https://avatars.githubusercontent.com/u/9139378?v=4"
             ],
-            "fused:gitLastModified": "2024-09-27T20:56:06.619Z",
+            "fused:gitLastModified": "2024-09-27T20:59:11.908Z",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "tyler@vorgeo.com-patch-Cleanup-arr_to_plasma",
             "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/319"
           },
           "source": "Landsat_Tile_Example.py",
-          "headers": []
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
         }
       }
     ],
