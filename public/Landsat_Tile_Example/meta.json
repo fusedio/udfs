@@ -75,8 +75,48 @@
               }
             ],
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Landsat_Tile_Example.png",
-            "fused:description": "\n## Overview\n\nLandsat Collection 2 offers global Level-2 surface reflectance and temperature products. These are generated from Collection 2 Level-1 inputs meeting specific criteria, including a Solar Zenith Angle constraint of <76 degrees and required auxiliary data inputs.\n\n## External links\n\n- [Landsat Official Website](https://www.usgs.gov/landsat-missions/landsat-collection-2-level-2-science-products)",
-            "fused:id": null
+            "fused:description": "## Overview\n\nLandsat Collection 2 offers global Level-2 surface reflectance and temperature products. These are generated from Collection 2 Level-1 inputs meeting specific criteria, including a Solar Zenith Angle constraint of <76 degrees and required auxiliary data inputs.\n\n## External links\n\n- [Landsat Official Website](https://www.usgs.gov/landsat-missions/landsat-collection-2-level-2-science-products)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/LULC_Tile_Example\")\narr = fused.run(udf=udf, x=5241, y=12667, z=15)\narr\n```\n",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/5cfb808183325133b544a6e6769a35dde31995a8/public/Landsat_Tile_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/5cfb808/public/Landsat_Tile_Example/",
+            "fused:gitPath": "public/Landsat_Tile_Example",
+            "fused:gitRef": "5cfb808183325133b544a6e6769a35dde31995a8",
+            "fused:explorerPin": "8",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk",
+              "Tyler Erickson",
+              "Mehran Ghandehari",
+              null,
+              "Plinio Guzman",
+              "Isaac Brodsky"
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk",
+              "tylere",
+              "mehran66",
+              "charlesfused",
+              "pgzmnk",
+              "isaacbrodsky"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk",
+              "https://github.com/tylere",
+              "https://github.com/mehran66",
+              "https://github.com/charlesfused",
+              "https://github.com/pgzmnk",
+              "https://github.com/isaacbrodsky"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/u/92862?v=4",
+              "https://avatars.githubusercontent.com/u/10367311?v=4",
+              "https://avatars.githubusercontent.com/u/148997493?v=4",
+              "https://avatars.githubusercontent.com/u/27398253?v=4",
+              "https://avatars.githubusercontent.com/u/9139378?v=4"
+            ],
+            "fused:gitLastModified": "2024-08-16T00:38:41+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs"
           },
           "source": "Landsat_Tile_Example.py",
           "headers": []
