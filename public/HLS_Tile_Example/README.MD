@@ -3,10 +3,9 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/HLS_Tile_Example.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags:  `STAC` `Remove-clouds` `NASA` `S3` `Mosaic`
+Tags: `mosaic` `s3` `nasa` `remove-clouds` `stac`
 
 <!--fused:readme-->
-
 ## Overview
 This UDF demonstrate how to access the NASA’s Harmonized Landsat Sentinel-2 (HLS) version 2 assets. Please visit [Earth Data Portal](https://urs.earthdata.nasa.gov) to register and manage your Earthdata Login account.
 
