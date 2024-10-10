@@ -3,10 +3,9 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DEM_Tile_Example.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags:  `Band algebra` `AWS` `MSFT-PC` `STAC`
+Tags: `band-algebra` `aws` `stac` `mspc`
 
 <!--fused:readme-->
-
 #### Overview
 The Copernicus DEM is a digital surface model (DSM), which represents the surface of the Earth including buildings, infrastructure, and vegetation. This DSM is based on radar satellite data acquired during the TanDEM-X Mission, which was funded by a public-private partnership between the German Aerospace Centre (DLR) and Airbus Defence and Space.
 

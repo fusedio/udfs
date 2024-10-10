@@ -2,7 +2,7 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DSM_JAXA_Example.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `Mosaic` `tiff` `S3`
+Tags: `mosaic` `tiff` `s3`
 
 <!--fused:readme-->
 ## Overview

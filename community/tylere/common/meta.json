@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "common_vis",
+          "name": "common",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -33,11 +33,11 @@
               }
             },
             "fused:udfType": "raster",
-            "fused:slug": "common_vis",
-            "fused:name": "common_vis",
+            "fused:slug": "common",
+            "fused:name": "common",
             "fused:id": null
           },
-          "source": "common_vis.py",
+          "source": "common.py",
           "headers": [
             {
               "module_name": "utils",
