@@ -1,0 +1,194 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "NYC_TLC_Hourly_2010",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:description": "Read a Parquet or Geoparquet file.\n",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "extruded": false,
+                "opacity": 1,
+                "coverage": 1,
+                "lineWidthMinPixels": 1,
+                "getHexagon": "@@=properties.hex",
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "cnt",
+                  "present": "@@=[properties.cnt * 50, (properties.cnt*10), 50]",
+                  "absent": [
+                    200,
+                    200,
+                    200
+                  ]
+                },
+                "getFillColor": {
+                  "@@function": "hasProp",
+                  "property": "cnt",
+                  "present": "@@=[properties.cnt*5, (properties.cnt/1), (properties.cnt/5)]",
+                  "absent": [
+                    220,
+                    255,
+                    100
+                  ]
+                },
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "cnt",
+                  "present": "@@=properties.cnt",
+                  "absent": 1
+                },
+                "elevationScale": 2
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "NYC_TLC_Hourly_2010",
+            "fused:name": "NYC_TLC_Hourly_2010",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/de45817aa96d1e1f7e15197bfca04b29018fd081/public/NYC_TLC_Hourly_2010/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/de45817/public/NYC_TLC_Hourly_2010/",
+            "fused:gitPath": "public/NYC_TLC_Hourly_2010",
+            "fused:gitRef": "de45817aa96d1e1f7e15197bfca04b29018fd081",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udf_cards/pd_parquet.png",
+            "fused:explorerPin": "99",
+            "fused:gitAuthorNames": [
+              "Isaac Brodsky",
+              "Plinio Guzman"
+            ],
+            "fused:gitAuthorUsernames": [
+              "isaacbrodsky",
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/isaacbrodsky",
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/9139378?v=4",
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitLastModified": "2024-10-13T00:43:37.785Z",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 40.72173099816114,
+              "longitude": -73.90434691459161,
+              "zoom": 10.209143543019565,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:gitHistory": [
+              {
+                "fused:description": "Read a Parquet or Geoparquet file.\n",
+                "fused:vizConfig": {
+                  "tileLayer": {
+                    "@@type": "TileLayer",
+                    "minZoom": 0,
+                    "maxZoom": 19,
+                    "tileSize": 256,
+                    "pickable": true
+                  },
+                  "rasterLayer": {
+                    "@@type": "BitmapLayer",
+                    "pickable": true
+                  },
+                  "vectorLayer": {
+                    "@@type": "GeoJsonLayer",
+                    "stroked": true,
+                    "filled": false,
+                    "pickable": true,
+                    "lineWidthMinPixels": 1,
+                    "pointRadiusMinPixels": 1,
+                    "getLineColor": {
+                      "@@function": "colorContinuous",
+                      "attr": "value",
+                      "domain": [
+                        0,
+                        10
+                      ],
+                      "colors": "Teal",
+                      "nullColor": [
+                        184,
+                        184,
+                        184
+                      ]
+                    },
+                    "getFillColor": [
+                      208,
+                      208,
+                      208,
+                      40
+                    ]
+                  }
+                },
+                "fused:udfType": "auto",
+                "fused:slug": "Pandas_Parquet",
+                "fused:name": "Pandas_Parquet",
+                "fused:id": null,
+                "fused:gitUrl": "https://github.com/fusedio/udfs/tree/ef42812c857015d36ed3e43b31ba5d7926c7374a/files/Pandas_Parquet/",
+                "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/ef42812/files/Pandas_Parquet/",
+                "fused:gitPath": "files/Pandas_Parquet",
+                "fused:gitRef": "ef42812c857015d36ed3e43b31ba5d7926c7374a",
+                "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udf_cards/pd_parquet.png",
+                "fused:explorerPin": "99",
+                "fused:gitAuthorNames": [
+                  "Isaac Brodsky",
+                  "Plinio Guzman"
+                ],
+                "fused:gitAuthorUsernames": [
+                  "isaacbrodsky",
+                  "pgzmnk"
+                ],
+                "fused:gitAuthorUrls": [
+                  "https://github.com/isaacbrodsky",
+                  "https://github.com/pgzmnk"
+                ],
+                "fused:gitAuthorAvatarUrls": [
+                  "https://avatars.githubusercontent.com/u/9139378?v=4",
+                  "https://avatars.githubusercontent.com/u/27398253?v=4"
+                ],
+                "fused:gitLastModified": "2024-09-06T00:39:49+00:00",
+                "fused:explorerTab": "public",
+                "fused:gitRepo": "fusedio/udfs",
+                "fused:sharedToken": "UDF_Pandas_Parquet",
+                "fused:defaultViewState": {
+                  "enable": true,
+                  "latitude": 40.72173099816114,
+                  "longitude": -73.90434691459161,
+                  "zoom": 10.209143543019565,
+                  "pitch": 0,
+                  "bearing": 0
+                }
+              }
+            ],
+            "fused:gitPullRequestBranch": "sina@fused.io-patch-add-NYC_TLC",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/345"
+          },
+          "source": "NYC_TLC_Hourly_2010.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
