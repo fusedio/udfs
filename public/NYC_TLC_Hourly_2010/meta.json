@@ -31,20 +31,15 @@
                 "coverage": 1,
                 "lineWidthMinPixels": 1,
                 "getHexagon": "@@=properties.hex",
-                "getLineColor": {
-                  "@@function": "hasProp",
-                  "property": "cnt",
-                  "present": "@@=[properties.cnt * 50, (properties.cnt*10), 50]",
-                  "absent": [
-                    200,
-                    200,
-                    200
-                  ]
-                },
+                "getLineColor": [
+                  200,
+                  200,
+                  200
+                ],
                 "getFillColor": {
                   "@@function": "hasProp",
-                  "property": "cnt",
-                  "present": "@@=[properties.cnt*5, (properties.cnt/1), (properties.cnt/5)]",
+                  "property": "metric",
+                  "present": "@@=[properties.metric, (properties.metric/5), (properties.metric/20)]",
                   "absent": [
                     220,
                     255,
@@ -53,8 +48,8 @@
                 },
                 "getElevation": {
                   "@@function": "hasProp",
-                  "property": "cnt",
-                  "present": "@@=properties.cnt",
+                  "property": "metric",
+                  "present": "@@=properties.metric",
                   "absent": 1
                 },
                 "elevationScale": 2
@@ -64,10 +59,10 @@
             "fused:slug": "NYC_TLC_Hourly_2010",
             "fused:name": "NYC_TLC_Hourly_2010",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/d86e128d4cfcb93fa88d99c7102f6d0e54e9df1a/public/NYC_TLC_Hourly_2010/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/d86e128/public/NYC_TLC_Hourly_2010/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/d2f22760e2c8d83de0766d670e715fea138c8e97/public/NYC_TLC_Hourly_2010/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/d2f2276/public/NYC_TLC_Hourly_2010/",
             "fused:gitPath": "public/NYC_TLC_Hourly_2010",
-            "fused:gitRef": "d86e128d4cfcb93fa88d99c7102f6d0e54e9df1a",
+            "fused:gitRef": "d2f22760e2c8d83de0766d670e715fea138c8e97",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Duckdb_NYC311_Example.png",
             "fused:explorerPin": "99",
             "fused:gitAuthorNames": [
@@ -82,7 +77,7 @@
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/in/885821?v=4"
             ],
-            "fused:gitLastModified": "2024-10-13T00:45:30+00:00",
+            "fused:gitLastModified": "2024-10-13T00:48:24+00:00",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:defaultViewState": {
