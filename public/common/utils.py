@@ -1848,7 +1848,7 @@ def visualize(
     
     if colormap is None:
         # Set a default colormap
-        colormap = palettable.colorbrewer.sequential.Greys_9
+        colormap = palettable.colorbrewer.sequential.Greys_r
         cm = colormap.mpl_colormap
     elif isinstance(colormap, palettable.palette.Palette):
         cm = colormap.mpl_colormap
