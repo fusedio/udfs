@@ -59,10 +59,10 @@
             "fused:slug": "NYC_TLC_Hourly_2010",
             "fused:name": "NYC_TLC_Hourly_2010",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/d2f22760e2c8d83de0766d670e715fea138c8e97/public/NYC_TLC_Hourly_2010/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/d2f2276/public/NYC_TLC_Hourly_2010/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/14081e695a07b98924715f7c0202f6b091443a57/public/NYC_TLC_Hourly_2010/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/14081e6/public/NYC_TLC_Hourly_2010/",
             "fused:gitPath": "public/NYC_TLC_Hourly_2010",
-            "fused:gitRef": "d2f22760e2c8d83de0766d670e715fea138c8e97",
+            "fused:gitRef": "14081e695a07b98924715f7c0202f6b091443a57",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Duckdb_NYC311_Example.png",
             "fused:explorerPin": "99",
             "fused:gitAuthorNames": [
@@ -77,7 +77,7 @@
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/in/885821?v=4"
             ],
-            "fused:gitLastModified": "2024-10-13T00:48:24+00:00",
+            "fused:gitLastModified": "2024-10-13T06:28:18+00:00",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:defaultViewState": {
