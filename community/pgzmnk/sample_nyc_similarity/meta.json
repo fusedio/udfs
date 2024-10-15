@@ -43,7 +43,7 @@
                     0.9,
                     1
                   ],
-                  "colors": "TealRose",
+                  "colors": "Tropic",
                   "nullColor": [
                     184,
                     184,
@@ -63,30 +63,26 @@
             "fused:slug": "sample_nyc_similarity",
             "fused:name": "sample_nyc_similarity",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/a1238d86b1c50a52e586566fb098be07d53a2a65/files/Pandas_Parquet/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/a1238d8/files/Pandas_Parquet/",
-            "fused:gitPath": "files/Pandas_Parquet",
-            "fused:gitRef": "a1238d86b1c50a52e586566fb098be07d53a2a65",
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udf_cards/pd_parquet.png",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/b959b518d98ff89bd4542f3b18adc4be9f191504/community/pgzmnk/sample_nyc_similarity/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/b959b51/community/pgzmnk/sample_nyc_similarity/",
+            "fused:gitPath": "community/pgzmnk/sample_nyc_similarity",
+            "fused:gitRef": "b959b518d98ff89bd4542f3b18adc4be9f191504",
+            "fused:assetUrl": "",
             "fused:explorerPin": "99",
             "fused:gitAuthorNames": [
-              "Isaac Brodsky",
               "Plinio Guzman"
             ],
             "fused:gitAuthorUsernames": [
-              "isaacbrodsky",
               "pgzmnk"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/isaacbrodsky",
               "https://github.com/pgzmnk"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/9139378?v=4",
               "https://avatars.githubusercontent.com/u/27398253?v=4"
             ],
-            "fused:gitLastModified": "2024-09-06T00:39:49+00:00",
-            "fused:explorerTab": "public",
+            "fused:gitLastModified": "2024-10-15T21:51:53+00:00",
+            "fused:explorerTab": "community",
             "fused:gitRepo": "fusedio/udfs"
           },
           "source": "sample_nyc_similarity.py",

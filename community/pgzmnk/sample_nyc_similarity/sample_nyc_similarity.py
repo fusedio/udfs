@@ -53,4 +53,4 @@ def udf(h3_res: int = 11, lat: float = 40.647395, lng: float = -73.788927):
     # Introduce `geometry` column
     gdf = con.sql("""SELECT *, h3_cell_to_boundary_wkt(hex) geometry FROM gdf """).df()
     print(gdf.T)
-    return gdf.sample(100_000)
+    return gdf  # .sample(500_000)
