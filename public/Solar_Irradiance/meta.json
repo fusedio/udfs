@@ -59,28 +59,32 @@
                 "label": "tiff"
               }
             ],
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/98263fcf8fdade1fd2e29a2c65ca5f494e2888b5/public/Solar_Irradiance/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/98263fc/public/Solar_Irradiance/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/cb9516aae29f79eb9692bfdc96ebe79d8fadb0b5/public/Solar_Irradiance/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/cb9516a/public/Solar_Irradiance/",
             "fused:gitPath": "public/Solar_Irradiance",
-            "fused:gitRef": "98263fcf8fdade1fd2e29a2c65ca5f494e2888b5",
+            "fused:gitRef": "cb9516aae29f79eb9692bfdc96ebe79d8fadb0b5",
             "fused:description": "#### Overview\nWorld - Solar Irradiance DNI(Direct Normal Irradiance) data.\n\nThe Solargis DNI (Direct Normal Irradiance) data provides a comprehensive view of the potential for solar energy generation across the world by focusing on the amount of solar radiation received per unit area by a surface that is perpendicular to the sun's rays.\n\n#### Data Source\n* [SolarGIS](https://solargis.com/maps-and-gis-data/download/world)\n",
             "fused:gitAuthorNames": [
               "Milind Soni",
-              "Plinio Guzman"
+              "Plinio Guzman",
+              null
             ],
             "fused:gitAuthorUsernames": [
               "milind-soni",
-              "pgzmnk"
+              "pgzmnk",
+              "fused-io[bot]"
             ],
             "fused:gitAuthorUrls": [
               "https://github.com/milind-soni",
-              "https://github.com/pgzmnk"
+              "https://github.com/pgzmnk",
+              "https://github.com/apps/fused-io"
             ],
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/46266943?v=4",
-              "https://avatars.githubusercontent.com/u/27398253?v=4"
+              "https://avatars.githubusercontent.com/u/27398253?v=4",
+              "https://avatars.githubusercontent.com/in/834700?v=4"
             ],
-            "fused:gitLastModified": "2024-08-01T00:11:36+00:00",
+            "fused:gitLastModified": "2024-09-27T23:25:07+00:00",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:defaultViewState": {
@@ -93,7 +97,12 @@
             }
           },
           "source": "Solar_Irradiance.py",
-          "headers": []
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
         }
       }
     ],
