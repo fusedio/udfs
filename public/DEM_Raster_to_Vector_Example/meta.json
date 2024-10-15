@@ -12,7 +12,7 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DEM_Tile_Example.png",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DEM_Raster_to_Vector_Example.png",
             "fused:defaultParameters": [
               {
                 "parameter": "min_elevation",
@@ -29,24 +29,20 @@
             "fused:datasets": "Digital Elevation Model",
             "fused:tags": [
               {
-                "id": "Raster-to-vector",
-                "label": "Raster-to-vector"
+                "id": "raster-to-vector",
+                "label": "raster-to-vector"
               },
               {
-                "id": "Band algebra",
-                "label": "Band algebra"
+                "id": "band-algebra",
+                "label": "band-algebra"
               },
               {
-                "id": "AWS",
-                "label": "AWS"
+                "id": "aws",
+                "label": "aws"
               },
               {
-                "id": "MSFT-PC",
-                "label": "MSFT-PC"
-              },
-              {
-                "id": "STAC",
-                "label": "STAC"
+                "id": "stac",
+                "label": "stac"
               }
             ],
             "fused:description": "#### Overview\n\nThis UDF shows an example of vectorizing a raster image, based on a minimum elevation threshold.\n\nThe data for this UDF comes from the [Copernicus DEM](https://github.com/fusedio/udfs/tree/main/public/DEM_Tile_Example) example UDF.\n\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/DEM_Raster_to_Vector_Example\")\ngdf = fused.run(udf=udf)\ngdf\n```\n",
@@ -91,35 +87,29 @@
             "fused:slug": "DEM_Raster_to_Vector_Example",
             "fused:name": "DEM_Raster_to_Vector_Example",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/bbd1171cfa023b0b67950f98de05eb60d1a758aa/public/DEM_Tile_Example/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/bbd1171/public/DEM_Tile_Example/",
-            "fused:gitPath": "public/DEM_Tile_Example",
-            "fused:gitRef": "bbd1171cfa023b0b67950f98de05eb60d1a758aa",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/ef42812c857015d36ed3e43b31ba5d7926c7374a/public/DEM_Raster_to_Vector_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/ef42812/public/DEM_Raster_to_Vector_Example/",
+            "fused:gitPath": "public/DEM_Raster_to_Vector_Example",
+            "fused:gitRef": "ef42812c857015d36ed3e43b31ba5d7926c7374a",
             "fused:gitAuthorNames": [
-              "Sina Kashuk",
-              "Tyler Erickson",
-              null,
+              "Isaac Brodsky",
               "Plinio Guzman"
             ],
             "fused:gitAuthorUsernames": [
-              "kashuk",
-              "tylere",
-              "charlesfused",
+              "isaacbrodsky",
               "pgzmnk"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/kashuk",
-              "https://github.com/tylere",
-              "https://github.com/charlesfused",
+              "https://github.com/isaacbrodsky",
               "https://github.com/pgzmnk"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/12432685?v=4",
-              "https://avatars.githubusercontent.com/u/92862?v=4",
-              "https://avatars.githubusercontent.com/u/148997493?v=4",
+              "https://avatars.githubusercontent.com/u/9139378?v=4",
               "https://avatars.githubusercontent.com/u/27398253?v=4"
             ],
-            "fused:gitLastModified": "2024-03-05T11:36:20+00:00"
+            "fused:gitLastModified": "2024-07-02T15:37:29+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs"
           },
           "source": "DEM_Raster_to_Vector_Example.py",
           "headers": [
