@@ -1860,8 +1860,17 @@ def visualize(
     if isinstance(data, xr.DataArray):
         # Convert from an Xarray DataArray to a Numpy ND Array
         data = data.values
-    
+
     if isinstance(data, np.ndarray):
+
+        if isinstance(data, np.ma.MaskedArray):
+            boolean_mask = data.mask
+            if mask is None:
+                mask = boolean_mask
+            else:
+                # Combine the two masks.
+                mask = mask * boolean_mask
+        
         norm_data = Normalize(vmin=min, vmax=max, clip=False)(data)
         mapped_colors = cm(norm_data)
         if isinstance(mask, (float, np.ndarray)):
