@@ -47,11 +47,41 @@ def test_visualize_array_with_mask():
     return image_array
 
 
+def test_visualize_numpy_masked_array():
+    image_masked_array = np.ma.array(
+        np.matrix([[0, 1],
+                   [2, 3]]),
+        mask=[[0, 1],
+              [1, 0]]
+    )
+    image_array = utils.visualize(
+        data=image_masked_array,
+        mask=np.array([[0, 0],
+                       [1, 1]]),
+        min=0,
+        max=3,
+    )
+    assert(
+        np.array_equal(
+            image_array,
+            np.array([[[  0,   0],
+                       [  0, 255]],
+                      [[  0,   0],
+                       [  0, 255]],
+                      [[  0,   0],
+                       [  0, 255]],
+                      [[  0,   0],
+                       [255,   0]]])
+        )
+    )
+    return image_array
+
 @fused.udf
 def udf(bbox):
     # Run tests.
     image_array = test_visualize_simple_array()
     image_array = test_visualize_array_with_mask()
+    image_array = test_visualize_numpy_masked_array()
     
     return image_array
     
