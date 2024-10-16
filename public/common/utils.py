@@ -1842,13 +1842,13 @@ def visualize(
     import palettable
     from matplotlib.colors import LinearSegmentedColormap
     from matplotlib.colors import Normalize   
-
+    
     if data is None:
         return
     
     if colormap is None:
         # Set a default colormap
-        colormap = palettable.colorbrewer.sequential.Greys_r
+        colormap = palettable.colorbrewer.sequential.Greys_9_r
         cm = colormap.mpl_colormap
     elif isinstance(colormap, palettable.palette.Palette):
         cm = colormap.mpl_colormap
