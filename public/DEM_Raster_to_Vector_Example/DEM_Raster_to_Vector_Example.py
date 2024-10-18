@@ -1,6 +1,7 @@
 import geopandas as gpd  
 import numpy as np
 import rasterio
+from rasterio import features
 import shapely
 import utils
 
@@ -22,9 +23,9 @@ def udf(
 
     # Create a binary image showing where the elevation threshold is exceeded.
     xr_data2 = (xr_data > min_elevation)
-
+    
     # Convert to vector features.
-    shapes = rasterio.features.shapes(
+    shapes = features.shapes(
         source=xr_data2.astype(np.uint8),
         mask=xr_data2,
         transform=transform

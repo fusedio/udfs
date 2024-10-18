@@ -3,7 +3,7 @@ import pystac_client
 from pystac.extensions.eo import EOExtension as eo
 
 visualize = fused.load(
-    "https://github.com/fusedio/udfs/tree/255e0fe/public/common_vis/"
+    "https://github.com/fusedio/udfs/tree/e1c15b5/public/common/"
 ).utils.visualize
 
 @fused.cache
