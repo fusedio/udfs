@@ -15,7 +15,11 @@ def udf(
     import numpy as np
     import palettable
     from pystac_client import Client
-    import utils
+    from utils_local import list_stac_collections
+
+    utils = fused.load(
+        "https://github.com/fusedio/udfs/tree/e1c15b5/public/common/"
+    ).utils
     
     STAC_URL = "https://cmr.earthdata.nasa.gov/stac"
 
