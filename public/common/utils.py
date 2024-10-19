@@ -174,7 +174,7 @@ def table_to_tile(
     if z >= min_zoom:
         List = df[["file_id", "chunk_id"]].values
         if not len(List):
-            # No results at this area
+            # No result at this area
             return gpd.GeoDataFrame(geometry=[])
         if use_columns:
             if "geometry" not in use_columns:
@@ -1896,7 +1896,7 @@ class AsyncRunner:
     ## Usage example:
     async def fn(n): return n**2
     runner = AsyncRunner(fn, range(10))
-    runner.get_results()
+    runner.get_result_now()
     '''
     def __init__(self, func, args_list, delay_second=0, verbose=True):
         import asyncio
@@ -1944,7 +1944,7 @@ class AsyncRunner:
         else:
             return 'pending'
         
-    def get_results(self):
+    def get_result_now(self):
         self.retry()
         if self.verbose:
             print(f"{sum(self.is_done())} out of {len(self.is_done())} are done!")
@@ -1976,7 +1976,7 @@ class AsyncRunner:
                 return task            
         self.tasks = [_retry_task(task, self.verbose) for task in self.tasks]
     
-    async def get_results_async(self):
+    async def get_result_async(self):
         import asyncio
         return await asyncio.gather(*self.tasks)
 
@@ -1988,3 +1988,109 @@ class AsyncRunner:
         else:
             return "running..."
     
+class PoolRunner:
+    '''
+    ## Usage example:
+    def fn(n): return n**2
+    runner = PoolRunner(fn, range(10))
+    runner.get_result_now()
+    runner.get_result_all()
+    '''
+    def __init__(self, func, args_list, delay_second=0.01, verbose=True):
+        import asyncio
+        import pandas as pd
+        import concurrent.futures
+        if isinstance(args_list, pd.DataFrame):
+            self.args_list=args_list.T.to_dict().values()
+        elif isinstance(args_list, list) or isinstance(args_list, range):     
+            self.args_list=args_list
+        else:
+            raise ValueError('args_list need to be list, pd.DataFrame, or range')
+        self.func = func
+        self.verbose = verbose
+        self.delay_second = delay_second
+        self.pool = concurrent.futures.ThreadPoolExecutor(max_workers=1024)
+        self.run_pool()
+        self.result=[]
+
+    def create_task(self, args):
+        import time
+        time.sleep(self.delay_second)
+        if isinstance(args, dict):
+            task = self.pool.submit(self.func, **args)
+        else:
+            task = self.pool.submit(self.func, args)
+        return [task, args]
+        
+    def run_pool(self):
+        tasks = []
+        for args in self.args_list:
+            tasks.append(self.create_task(args))
+        self.tasks=tasks
+    
+    def is_done(self):
+        return [task[0].done() for task in self.tasks]
+    
+    def get_task_result(self, task):
+        if task[0].done():
+            try:
+                return task[0].result()
+            except Exception as e:
+                return str(e)
+        else:
+            return 'pending'
+        
+    def get_result_now(self):
+        self.retry()
+        if self.verbose:
+            n1=sum(self.is_done())
+            n2=len(self.is_done())
+            print(f"\r{n1/n2*100:.1f}% ({n1}|{n2}) complete", end='')
+        import json
+        import pandas as pd
+        df = pd.DataFrame([task[1] for task in self.tasks])
+        self.result=[self.get_task_result(task) for task in self.tasks]
+        df['result']=self.result
+        def fn(r):
+            if type(r)==str:
+                if r=='pending':
+                    return 'running'
+                else:
+                    return 'faild'
+            else:
+                return 'done'
+        df['status']=df['result'].map(fn)
+        return df            
+    
+    def retry(self):
+        def _retry_task(task, verbose):
+            if task[0].done():
+                task_exception = task[0].exception()
+                if task_exception:
+                    if verbose: print(task_exception)
+                    return self.create_task(task[1]) 
+                else:
+                    return task
+            else:
+                return task            
+        self.tasks = [_retry_task(task, self.verbose) for task in self.tasks]
+    
+    def get_result_all(self, timeout=120):
+        import time
+        for i in range(timeout):
+            df=self.get_result_now()
+            if (df.status=='done').mean()==1:
+                break
+            else:
+                time.sleep(1)
+        if self.verbose:
+            print(f"Done!")
+        return df
+
+    def __repr__(self):
+        if self.verbose:
+            print(f'tasks_done={self.is_done()}')
+        if (sum(self.is_done())/len(self.is_done()))==1:
+            return f"done!"
+        else:
+            return "running..."
