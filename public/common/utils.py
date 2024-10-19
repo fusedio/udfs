@@ -1889,3 +1889,102 @@ def visualize(
         return shaped
     else:
         print('visualize: data instance type not recognized')
+
+    
+class AsyncRunner:
+    '''
+    ## Usage example:
+    async def fn(n): return n**2
+    runner = AsyncRunner(fn, range(10))
+    runner.get_results()
+    '''
+    def __init__(self, func, args_list, delay_second=0, verbose=True):
+        import asyncio
+        if isinstance(args_list, pd.DataFrame):
+            self.args_list=args_list.T.to_dict().values()
+        elif isinstance(args_list, list) or isinstance(args_list, range):     
+            self.args_list=args_list
+        else:
+            raise ValueError('args_list need to be list, pd.DataFrame, or range')
+        self.func = func
+        self.verbose = verbose
+        self.delay_second = delay_second
+        self.loop = asyncio.get_running_loop()
+        self.run_async()
+    
+    def create_task(self, args):
+        import time
+        import json
+        time.sleep(self.delay_second)
+        if type(args)==str:
+            args=json.loads(args)
+        if isinstance(args, dict):
+            task = self.loop.create_task(self.func(**args))
+        else:
+            task = self.loop.create_task(self.func(args))
+        task.set_name(json.dumps(args))
+        return task
+        
+    def run_async(self):
+        tasks = []
+        for args in self.args_list:
+            tasks.append(self.create_task(args))
+        self.tasks=tasks
+    
+    def is_done(self):
+        return [task.done() for task in self.tasks]
+    
+    def get_task_result(self, r):
+        if r.done():
+            import pandas as pd
+            try:
+                return r.result()
+            except Exception as e:
+                return str(e)
+        else:
+            return 'pending'
+        
+    def get_results(self):
+        self.retry()
+        if self.verbose:
+            print(f"{sum(self.is_done())} out of {len(self.is_done())} are done!")
+        import json
+        import pandas as pd
+        df = pd.DataFrame([json.loads(task.get_name()) for task in self.tasks])
+        df['result']= [self.get_task_result(task) for task in self.tasks]
+        def fn(r):
+            if type(r)==str:
+                if r=='pending':
+                    return 'running'
+                else:
+                    return 'faild'
+            else:
+                return 'done'
+        df['status']=df['result'].map(fn)
+        return df            
+    
+    def retry(self):
+        def _retry_task(task, verbose):
+            if task.done():
+                task_exception = task.exception()
+                if task_exception:
+                    if verbose: print(task_exception)
+                    return self.create_task(task.get_name()) 
+                else:
+                    return task
+            else:
+                return task            
+        self.tasks = [_retry_task(task, self.verbose) for task in self.tasks]
+    
+    async def get_results_async(self):
+        import asyncio
+        return await asyncio.gather(*self.tasks)
+
+    def __repr__(self):
+        if self.verbose:
+            print(f'tasks_done={self.is_done()}')
+        if (sum(self.is_done())/len(self.is_done()))==1:
+            return f"done!"
+        else:
+            return "running..."
+    
