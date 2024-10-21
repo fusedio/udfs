@@ -10,7 +10,7 @@ def udf(
     import geopandas as gpd
     import pandas as pd
     from shapely.geometry import box
-    from utils import chunked_tiff_to_points, run_query
+    from utils import chunked_tiff_to_points, duckdb_connect
 
     df_tiff = chunked_tiff_to_points(
         tiff_path, i=chunk_id, x_chunks=x_chunks, y_chunks=y_chunks, coarsen=coarsen
@@ -22,8 +22,8 @@ def udf(
         group by 1
       --  order by 1
     """
-
-    df = run_query(qr, return_arrow=True)
+    con=duckdb_connect()
+    df = con.query(qr).arrow()
     df = df.to_pandas()
     df["agg_data"] = df.agg_data.map(lambda x: pd.Series(x).sum())
     df["hex"] = df["hex"].map(lambda x: hex(x)[2:])
