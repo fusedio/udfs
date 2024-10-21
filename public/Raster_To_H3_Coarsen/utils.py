@@ -1,17 +1,17 @@
 shape_transform_to_xycoor = fused.load(
-    "https://github.com/fusedio/udfs/tree/43656f6/public/common/"
+    "https://github.com/fusedio/udfs/tree/af57963/public/common/"
 ).utils.shape_transform_to_xycoor
 
 chunked_tiff_to_points = fused.load(
-    "https://github.com/fusedio/udfs/tree/43656f6/public/common/"
+    "https://github.com/fusedio/udfs/tree/af57963/public/common/"
 ).utils.chunked_tiff_to_points
 
-run_query = fused.load(
-    "https://github.com/fusedio/udfs/tree/43656f6/public/common/"
-).utils.run_query
+duckdb_connect = fused.load(
+    "https://github.com/fusedio/udfs/tree/af57963/public/common/"
+).utils.duckdb_connect
 
 get_chunk_slices_from_shape = fused.load(
-    "https://github.com/fusedio/udfs/tree/43656f6/public/common/"
+    "https://github.com/fusedio/udfs/tree/af57963/public/common/"
 ).utils.get_chunk_slices_from_shape
 
 
