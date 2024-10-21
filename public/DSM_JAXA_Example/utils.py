@@ -1,11 +1,16 @@
 import fused
+import geopandas as gpd
 
 # Load utility functions.
 common_utils = fused.load(
     "https://github.com/fusedio/udfs/tree/5cfb808/public/common/"
 ).utils
 
-def dsm_to_tile(bbox, z_levels=[4, 6, 9, 11], verbose=True):
+def dsm_to_tile(
+    bbox: gpd.geodataframe.GeoDataFrame,
+    z_levels=[4, 6, 9, 11],
+    verbose=True
+):
     if bbox.z[0] >= z_levels[2]:
         tiff_list = []
         if bbox.z[0] >= z_levels[3]:
@@ -58,7 +63,10 @@ def convert_lng(lng):
         return f"W{str(1000+abs(lng))[-3:]}.00"
 
 
-def bbox_to_navigation(bbox, interval=1):
+def bbox_to_navigation(
+    bbox: gpd.geodataframe.GeoDataFrame,
+    interval=1
+):
     import numpy as np
 
     bounds = bbox.total_bounds
