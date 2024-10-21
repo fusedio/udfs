@@ -1,13 +1,21 @@
 @fused.udf
-def udf(bbox, collection="3dep-seamless", band="data", res_factor:int=1):
-    utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
-    ).utils
+def udf(
+    bbox,
+    collection="3dep-seamless",
+    band="data",
+    res_factor:int=1
+):
+
     import odc.stac
+    import palettable
     import planetary_computer
     import pystac_client
     from pystac.extensions.eo import EOExtension as eo
 
+    utils = fused.load(
+        "https://github.com/fusedio/udfs/tree/5cfb808/public/common/"
+    ).utils
+    
     catalog = pystac_client.Client.open(
         "https://planetarycomputer.microsoft.com/api/stac/v1",
         modifier=planetary_computer.sign_inplace,
@@ -27,5 +35,15 @@ def udf(bbox, collection="3dep-seamless", band="data", res_factor:int=1):
         resolution=resolution,
         bbox=bbox.total_bounds,
     ).astype(float)
+    
+    # Use data from the most recent time.
     arr = ds[band].max(dim="time")
-    return utils.arr_to_plasma(arr.values, min_max=(0, 100), reverse=False)
+    
+    # Visualize that data as an RGB image.
+    rgb_image = utils.visualize(
+        data=arr,
+        min=0,
+        max=100,
+        colormap=palettable.matplotlib.Viridis_20,
+    )
+    return rgb_image
