@@ -2052,8 +2052,9 @@ class PoolRunner:
         else:
             return 'pending'
         
-    def get_result_now(self):
-        self.retry()
+    def get_result_now(self, retry=True):
+        if retry:
+            self.retry()
         if self.verbose:
             n1=sum(self.is_done())
             n2=len(self.is_done())
