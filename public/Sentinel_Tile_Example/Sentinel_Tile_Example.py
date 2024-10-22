@@ -1,3 +1,4 @@
+@fused.udf
 def udf(
     bbox,
     provider="AWS",
