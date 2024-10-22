@@ -1955,8 +1955,9 @@ class AsyncRunner:
         else:
             return 'pending'
         
-    def get_result_now(self):
-        self.retry()
+    def get_result_now(self, retry=True):
+        if retry:
+            self.retry()
         if self.verbose:
             print(f"{sum(self.is_done())} out of {len(self.is_done())} are done!")
         import json
@@ -2089,7 +2090,7 @@ class PoolRunner:
     def get_result_all(self, timeout=120):
         import time
         for i in range(timeout):
-            df=self.get_result_now()
+            df=self.get_result_now(retry=True)
             if (df.status=='done').mean()==1:
                 break
             else:
