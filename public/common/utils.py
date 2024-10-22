@@ -285,6 +285,7 @@ def read_tiff(
 
     import numpy as np
     import rasterio
+    from rasterio.warp import Resampling, reproject
     from scipy.ndimage import zoom
 
     version = "0.2.0"
@@ -301,51 +302,58 @@ def read_tiff(
         )
     with ExitStack() as stack:
         stack.enter_context(context)
-        with rasterio.open(input_tiff_path, OVERVIEW_LEVEL=overview_level) as src:
-            # with rasterio.Env():
-            from rasterio.warp import Resampling, reproject
+        try:
+            with rasterio.open(input_tiff_path, OVERVIEW_LEVEL=overview_level) as src:
+                # with rasterio.Env():
 
-            bbox = bbox.to_crs(3857)
-            # transform_bounds = rasterio.warp.transform_bounds(3857, src.crs, *bbox["geometry"].bounds.iloc[0])
-            window = src.window(*bbox.to_crs(src.crs).total_bounds)
-            original_window = src.window(*bbox.to_crs(src.crs).total_bounds)
-            gridded_window = rasterio.windows.round_window_to_full_blocks(
-                original_window, [(1, 1)]
-            )
-            window = gridded_window  # Expand window to nearest full pixels
-            source_data = src.read(window=window, boundless=True, masked=True)
-            nodata_value = src.nodatavals[0]
-            if filter_list:
-                mask = np.isin(source_data, filter_list, invert=True)
-                source_data[mask] = 0
-            src_transform = src.window_transform(window)
-            src_crs = src.crs
-            minx, miny, maxx, maxy = bbox.total_bounds
-            dx = (maxx - minx) / output_shape[-1]
-            dy = (maxy - miny) / output_shape[-2]
-            dst_transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
-            if len(source_data.shape) == 3 and source_data.shape[0] > 1:
-                dst_shape = (source_data.shape[0], output_shape[-2], output_shape[-1])
-            else:
-                dst_shape = output_shape
-            dst_crs = bbox.crs
+                bbox = bbox.to_crs(3857)
+                # transform_bounds = rasterio.warp.transform_bounds(3857, src.crs, *bbox["geometry"].bounds.iloc[0])
+                window = src.window(*bbox.to_crs(src.crs).total_bounds)
+                original_window = src.window(*bbox.to_crs(src.crs).total_bounds)
+                gridded_window = rasterio.windows.round_window_to_full_blocks(
+                    original_window, [(1, 1)]
+                )
+                window = gridded_window  # Expand window to nearest full pixels
+                source_data = src.read(window=window, boundless=True, masked=True)
+                nodata_value = src.nodatavals[0]
+                if filter_list:
+                    mask = np.isin(source_data, filter_list, invert=True)
+                    source_data[mask] = 0
+                src_transform = src.window_transform(window)
+                src_crs = src.crs
+                minx, miny, maxx, maxy = bbox.total_bounds
+                dx = (maxx - minx) / output_shape[-1]
+                dy = (maxy - miny) / output_shape[-2]
+                dst_transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
+                if len(source_data.shape) == 3 and source_data.shape[0] > 1:
+                    dst_shape = (source_data.shape[0], output_shape[-2], output_shape[-1])
+                else:
+                    dst_shape = output_shape
+                dst_crs = bbox.crs
 
-            destination_data = np.zeros(dst_shape, src.dtypes[0])
-            if return_colormap:
-                colormap = src.colormap(1)
-            reproject(
-                source_data,
-                destination_data,
-                src_transform=src_transform,
-                src_crs=src_crs,
-                dst_transform=dst_transform,
-                dst_crs=dst_crs,
-                # TODO: rather than nearest, get all the values and then get pct
-                resampling=Resampling.nearest,
-            )
-            destination_data = np.ma.masked_array(
-                destination_data, destination_data == nodata_value
-            )
+                destination_data = np.zeros(dst_shape, src.dtypes[0])
+                if return_colormap:
+                    colormap = src.colormap(1)
+        except rasterio.RasterioIOError as err:
+            print(f"Caught RasterioIOError {err=}, {type(err)=}")
+            return  # Return without data
+        except Exception as err:
+            print(f"Unexpected {err=}, {type(err)=}")
+            raise
+        
+        reproject(
+            source_data,
+            destination_data,
+            src_transform=src_transform,
+            src_crs=src_crs,
+            dst_transform=dst_transform,
+            dst_crs=dst_crs,
+            # TODO: rather than nearest, get all the values and then get pct
+            resampling=Resampling.nearest,
+        )
+        destination_data = np.ma.masked_array(
+            destination_data, destination_data == nodata_value
+        )
     if return_colormap:
         # todo: only set transparency to zero
         colormap[0] = [0, 0, 0, 0]
@@ -393,17 +401,20 @@ def mosaic_tiff(
     for input_tiff_path in tiff_list:
         if not input_tiff_path:
             continue
-        a.append(
-            read_tiff(
-                bbox=bbox,
-                input_tiff_path=input_tiff_path,
-                filter_list=filter_list,
-                output_shape=output_shape,
-                overview_level=overview_level,
-                cred=cred,
-            )
+        new_tiff = read_tiff(
+            bbox=bbox,
+            input_tiff_path=input_tiff_path,
+            filter_list=filter_list,
+            output_shape=output_shape,
+            overview_level=overview_level,
+            cred=cred,
         )
-    if len(a) == 1:
+        if new_tiff is not None:
+            a.append(new_tiff)
+
+    if len(a) == 0:
+        return
+    elif len(a) == 1:
         data = a[0]
     else:
         data = reduce_function(a)
