@@ -3,7 +3,7 @@ import geopandas as gpd
 
 # Load utility functions.
 common_utils = fused.load(
-    "https://github.com/fusedio/udfs/tree/5cfb808/public/common/"
+    "https://github.com/fusedio/udfs/tree/cc5941e/public/common/"
 ).utils
 
 def dsm_to_tile(
