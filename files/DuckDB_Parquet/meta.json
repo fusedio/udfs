@@ -59,7 +59,7 @@
             "fused:name": "DuckDB_Parquet",
             "fused:id": null
           },
-          "source": "duckdb_parquet.py",
+          "source": "DuckDB_Parquet.py",
           "headers": []
         }
       }
