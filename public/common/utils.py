@@ -2107,3 +2107,40 @@ class PoolRunner:
             return f"done!"
         else:
             return "running..."
+@fused.cache
+def get_parquet_stats(path):
+    import pyarrow.parquet as pq
+    import pandas as pd
+    # Load Parquet file
+    parquet_file = pq.ParquetFile(path)
+    
+    # List to store the metadata for each row group
+    stats_list = []
+
+    # Iterate through row groups
+    for i in range(parquet_file.num_row_groups):
+        row_group = parquet_file.metadata.row_group(i)
+        
+        # Dictionary to store row group's statistics
+        row_stats = {'row_group': i, 'num_rows': row_group.num_rows}
+        
+        # Iterate through columns and gather statistics
+        for j in range(row_group.num_columns):
+            column = row_group.column(j)
+            stats = column.statistics
+            
+            if stats:
+                col_name = column.path_in_schema
+                row_stats[f"{col_name}_min"] = stats.min
+                row_stats[f"{col_name}_max"] = stats.max
+                row_stats[f"{col_name}_null_count"] = stats.null_count
+        
+        # Append the row group stats to the list
+        stats_list.append(row_stats)
+    
+    # Convert the list to a DataFrame
+    df_stats = pd.DataFrame(stats_list)
+    
+    return df_stats
+
+
