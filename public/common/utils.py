@@ -2144,15 +2144,16 @@ def get_parquet_stats(path):
     return df_stats
 
 @fused.cache
-def get_row_groups(key, value, path):
-    df = fused.utils.common.get_parquet_stats(path)[['row_group', key+'_min', key+'_max']]
+def get_row_groups(key, value, file_path):
+    version='1.0'
+    df = fused.utils.common.get_parquet_stats(file_path)[['row_group', key+'_min', key+'_max']]
     con = fused.utils.common.duckdb_connect()
     df = con.query(f'select * from df where {value} between {key}_min and {key}_max').df()
     return df.row_group.values
 
-def read_row_groups(path, chunk_ids, columns=None):
+def read_row_groups(file_path, chunk_ids, columns=None):
     import pyarrow.parquet as pq   
-    table=pq.ParquetFile(path)   
+    table=pq.ParquetFile(file_path)   
     if columns:
         return table.read_row_groups(chunk_ids, columns=columns).to_pandas()   
     else: 
