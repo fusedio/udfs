@@ -59,7 +59,7 @@
             "fused:name": "DuckDB_CSV",
             "fused:id": null
           },
-          "source": "duckdb_csv.py",
+          "source": "DuckDB_CSV.py",
           "headers": []
         }
       }
