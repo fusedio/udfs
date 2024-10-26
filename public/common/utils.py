@@ -706,20 +706,6 @@ def read_module(url, remove_strings=[]):
     return module
 
 
-# url='https://raw.githubusercontent.com/stac-utils/stac-geoparquet/main/stac_geoparquet/stac_geoparquet.py'
-# remove_strings=['from stac_geoparquet.utils import fix_empty_multipolygon']
-# to_geodataframe = read_module(url,remove_strings)['to_geodataframe']
-
-__all__ = (
-    "geo_convert",
-    "geo_buffer",
-    "geo_bbox",
-    "geo_join",
-    "geo_distance",
-    "geo_samples",
-)
-
-
 def get_geo_cols(data) -> List[str]:
     """Get the names of the geometry columns.
 
@@ -868,7 +854,7 @@ def df_to_gdf(df, cols_lonlat=None, verbose=False):
 
 def geo_convert(
     data,
-    crs,
+    crs=None,
     cols_lonlat=None,
     col_geom="geometry",
     verbose: bool = False,
