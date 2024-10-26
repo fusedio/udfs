@@ -13,7 +13,6 @@ import pandas as pd
 import pyproj
 import shapely
 from loguru import logger
-import xarray as xr
 
 def write_log(msg="Your message.", name='//default', log_type='info', rotation="10 MB"):
     from loguru import logger
@@ -1841,7 +1840,7 @@ def clip_arr(arr, bounds_aoi, bounds_total=(-180, -90, 180, 90)):
 
 
 def visualize(
-    data: np.ndarray | xr.DataArray = None,
+    data,
     mask: float | np.ndarray = None,
     min: float = 0,
     max: float = 1,
@@ -1849,7 +1848,7 @@ def visualize(
     colormap = None,
 ):
     """Convert objects into visualization tiles."""
-    
+    import xarray as xr
     import palettable
     from matplotlib.colors import LinearSegmentedColormap
     from matplotlib.colors import Normalize   
@@ -2165,13 +2164,9 @@ def tiff_bbox(url):
     import rasterio
     import shapely
     import geopandas as gpd
-    with rasterio.open(url) as src:
-        gdf = gpd.GeoDataFrame(geometry=[shapely.box(*src.bounds)])
-        try:
-            gdf=gdf.set_crs(src.crs)
-        except Exception as e:
-            print(e)
-    return gdf
+    with rasterio.open(url) as dataset:
+        gpd.GeoDataFrame(geometry=[shapely.box(*dataset.bounds)],crs=dataset.crs)
+        return list(dataset.bounds)
     
 def s3_to_https(path):
     arr = path[5:].split('/')
