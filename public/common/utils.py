@@ -1,17 +1,11 @@
 # To use these functions, add the following command in your UDF:
 # `common = fused.public.common`
 from __future__ import annotations
-
-import random
-from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
-
 import fused
-import geopandas as gpd
+import pandas as pd
 import numpy as np
 from numpy.typing import NDArray
-import pandas as pd
-import pyproj
-import shapely
+from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
 from loguru import logger
 
 def write_log(msg="Your message.", name='//default', log_type='info', rotation="10 MB"):
@@ -726,12 +720,13 @@ __all__ = (
 )
 
 
-def get_geo_cols(data: gpd.GeoDataFrame) -> List[str]:
+def get_geo_cols(data) -> List[str]:
     """Get the names of the geometry columns.
 
     The first item in the result is the name of the primary geometry column. Following
     items are other columns with a type of GeoSeries.
     """
+    import geopandas as gpd
     main_col = data.geometry.name
     cols = [
         i for i in data.columns if (type(data[i]) == gpd.GeoSeries) & (i != main_col)
@@ -739,7 +734,7 @@ def get_geo_cols(data: gpd.GeoDataFrame) -> List[str]:
     return [main_col] + cols
 
 
-def crs_display(crs: pyproj.CRS) -> Union[int, pyproj.CRS]:
+def crs_display(crs):
     """Convert a CRS object into its human-readable EPSG code if possible.
 
     If the CRS object does not have a corresponding EPSG code, the CRS object itself is
@@ -755,9 +750,10 @@ def crs_display(crs: pyproj.CRS) -> Union[int, pyproj.CRS]:
         return crs
 
 
-def resolve_crs(
-    gdf: gpd.GeoDataFrame, crs: Union[pyproj.CRS, Literal["utm"]], verbose: bool = False
-) -> gpd.GeoDataFrame:
+def resolve_crs(gdf,
+                crs,
+                verbose= False
+):
     """Reproject a GeoDataFrame to the given CRS
 
     Args:
@@ -871,13 +867,15 @@ def df_to_gdf(df, cols_lonlat=None, verbose=False):
 
 
 def geo_convert(
-    data: Union[pd.Series, pd.DataFrame, gpd.GeoSeries, gpd.GeoDataFrame],
-    crs: Union[pyproj.CRS, Literal["utm"], None] = None,
+    data,
+    crs,
     cols_lonlat=None,
     col_geom="geometry",
     verbose: bool = False,
-) -> gpd.GeoDataFrame:
+):
     """Convert input data into a GeoPandas GeoDataFrame."""
+    import geopandas as gpd
+    import shapely
     if cols_lonlat:
         if isinstance(data, pd.Series):
             raise ValueError(
@@ -960,12 +958,12 @@ def geo_convert(
 
 
 def geo_buffer(
-    data: gpd.GeoDataFrame,
-    buffer_distance: Union[int, float] = 1000,
-    utm_crs: Union[pyproj.CRS, Literal["utm"]] = "utm",
-    dst_crs: Union[pyproj.CRS, Literal["original"]] = "original",
-    col_geom_buff: str = "geom_buff",
-    verbose: bool = False,
+    data,
+    buffer_distance=1000,
+    utm_crs="utm",
+    dst_crs="original",
+    col_geom_buff="geom_buff",
+    verbose: bool=False,
 ):
     """Buffer the geometry column in a GeoDataFrame in UTM projection.
 
@@ -1011,8 +1009,8 @@ def geo_buffer(
 
 
 def geo_bbox(
-    data: gpd.GeoDataFrame,
-    dst_crs: Union[Literal["utm"], pyproj.CRS, None] = None,
+    data,
+    dst_crs=None,
     verbose: bool = False,
 ):
     """Generate a GeoDataFrame that has the bounds of the current data frame.
@@ -1025,6 +1023,9 @@ def geo_bbox(
     Returns:
         A GeoDataFrame with one row, containing a geometry that has the bounds of this
     """
+    import geopandas as gpd
+    import shapely
+    import pyproj
     src_crs = data.crs
     if not dst_crs:
         return geo_convert(
@@ -1041,8 +1042,8 @@ def geo_bbox(
 
 
 def clip_bbox_gdfs(
-    left: gpd.GeoDataFrame,
-    right: gpd.GeoDataFrame,
+    left,
+    right,
     buffer_distance: Union[int, float] = 1000,
     join_type: Literal["left", "right"] = "left",
     verbose: bool = True,
@@ -1085,10 +1086,10 @@ def clip_bbox_gdfs(
 
 
 def geo_join(
-    left: gpd.GeoDataFrame,
-    right: gpd.GeoDataFrame,
+    left,
+    right,
     buffer_distance: Union[int, float, None] = None,
-    utm_crs: Union[pyproj.CRS, Literal["utm"]] = "utm",
+    utm_crs="utm",
     clip_bbox="left",
     drop_extra_geoms: bool = True,
     verbose: bool = False,
@@ -1107,6 +1108,8 @@ def geo_join(
     Returns:
         Joined GeoDataFrame.
     """
+    import geopandas as gpd
+    import shapely
     if type(left) != gpd.GeoDataFrame:
         left = geo_convert(left, verbose=verbose)
     if type(right) != gpd.GeoDataFrame:
@@ -1191,10 +1194,10 @@ def geo_join(
 
 
 def geo_distance(
-    left: gpd.GeoDataFrame,
-    right: gpd.GeoDataFrame,
+    left,
+    right,
     search_distance: Union[int, float] = 1000,
-    utm_crs: Union[Literal["utm"], pyproj.CRS] = "utm",
+    utm_crs="utm",
     clip_bbox="left",
     col_distance: str = "distance",
     k_nearest: int = 1,
@@ -1202,7 +1205,7 @@ def geo_distance(
     cols_right: Sequence[str] = (),
     drop_extra_geoms: bool = True,
     verbose: bool = False,
-) -> gpd.GeoDataFrame:
+):
     """Compute the distance from rows in one dataframe to another.
 
     First this performs an geo_join, and then finds the nearest rows in right to left.
@@ -1223,6 +1226,8 @@ def geo_distance(
     Returns:
         _description_
     """
+    import geopandas as gpd
+    import shapely
     if type(left) != gpd.GeoDataFrame:
         left = geo_convert(left, verbose=verbose)
     if type(right) != gpd.GeoDataFrame:
@@ -1274,7 +1279,7 @@ def geo_distance(
 
 def geo_samples(
     n_samples: int, min_x: float, max_x: float, min_y: float, max_y: float
-) -> gpd.GeoDataFrame:
+):
     """
     Generate sample points in a bounding box, uniformly.
 
@@ -1288,6 +1293,9 @@ def geo_samples(
     Returns:
         A GeoDataFrame with point geometry.
     """
+    import geopandas as gpd
+    import shapely
+    import random
     points = [
         (random.uniform(min_x, max_x), random.uniform(min_y, max_y))
         for _ in range(n_samples)
