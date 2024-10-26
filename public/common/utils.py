@@ -2160,3 +2160,27 @@ def read_row_groups(file_path, chunk_ids, columns=None):
         print('available columns:', table.schema.names)
         return table.read_row_groups(chunk_ids).to_pandas() 
 
+
+def tiff_bbox(url):
+    import rasterio
+    import shapely
+    import geopandas as gpd
+    with rasterio.open(url) as src:
+        gdf = gpd.GeoDataFrame(geometry=[shapely.box(*src.bounds)])
+        try:
+            gdf=gdf.set_crs(src.crs)
+        except Exception as e:
+            print(e)
+    return gdf
+    
+def s3_to_https(path):
+    arr = path[5:].split('/')
+    out = 'https://'+arr[0]+'.s3.amazonaws.com/'+'/'.join(arr[1:])
+    return out
+
+def get_ip():
+    import socket
+    hostname=socket.gethostname()
+    IPAddr=socket.gethostbyname(hostname)
+    return IPAddr
+    
