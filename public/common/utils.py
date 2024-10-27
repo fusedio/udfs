@@ -1796,18 +1796,22 @@ def get_da(path, coarsen_factor=1, variable_index=0, xy_cols=["longitude", "lati
         ValueError()
 
 
-def get_da_bounds(da, xy_cols=("longitude", "latitude")):
+def get_da_bounds(da, xy_cols=("longitude", "latitude"), pixel_position='center'):
     x_list = da[xy_cols[0]].values
     y_list = da[xy_cols[1]].values
-    pixel_width = x_list[1] - x_list[0]
-    pixel_height = y_list[1] - y_list[0]
-
-    minx = x_list[0] - pixel_width / 2
-    maxx = x_list[-1] + pixel_width / 2
-    miny = y_list[-1] + pixel_height / 2
-    maxy = y_list[0] - pixel_height / 2
-
-    return (minx, miny, maxx, maxy)
+    if pixel_position=='center':
+        pixel_width = x_list[1] - x_list[0]
+        pixel_height = y_list[1] - y_list[0]
+        minx = x_list[0] - pixel_width / 2
+        miny = y_list[-1] + pixel_height / 2
+        maxx = x_list[-1] + pixel_width / 2
+        maxy = y_list[0] - pixel_height / 2
+        return (minx, miny, maxx, maxy)
+    else:
+        return (x_list[0], y_list[-1], x_list[-1], y_list[0])
+        
+        
+    
 
 
 def clip_arr(arr, bounds_aoi, bounds_total=(-180, -90, 180, 90)):
