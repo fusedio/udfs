@@ -6,6 +6,7 @@ def udf(
     y_chunks: int = 1,
     coarsen: int = 100,
     h3_size: int = 6,
+    stats_type: str = 'mean',
 ):
     import geopandas as gpd
     import pandas as pd
@@ -23,12 +24,13 @@ def udf(
       --  order by 1
     """
     con=duckdb_connect()
-    df = con.query(qr).arrow()
-    df = df.to_pandas()
-    df["agg_data"] = df.agg_data.map(lambda x: pd.Series(x).sum())
-    df["hex"] = df["hex"].map(lambda x: hex(x)[2:])
-    df["metric"] = df.agg_data / df.agg_data.max() * 100
+    df = con.query(qr).df()
+    if stats_type=='sum':
+        fn = lambda x: pd.Series(x).sum()
+    elif stats_type=='mean':
+        fn = lambda x: pd.Series(x).mean()
+    else:
+        fn = lambda x: pd.Series(x).mean()
+    df["agg_data"] = df.agg_data.map(fn)
     print(df)
-    # Use this return statement to locate the output on the map
-    # return gpd.GeoDataFrame(geometry=[box(df_tiff.lng.min(), df_tiff.lat.min(), df_tiff.lng.max(), df_tiff.lat.max())])
     return df
