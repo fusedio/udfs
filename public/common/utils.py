@@ -98,7 +98,17 @@ def read_shape_zip(url, file_index=0, name_prefix=""):
     df = gpd.read_file(f"{path}!{fnames[file_index]}")
     return df
 
-
+@fused.cache
+def get_url_aws_stac(bbox, collections=["cop-dem-glo-30"]):
+    import pystac_client
+    catalog = pystac_client.Client.open("https://earth-search.aws.element84.com/v1")
+    items = catalog.search(
+        collections=collections,
+        bbox=bbox.total_bounds,
+    ).item_collection()
+    url_list=[i['assets']['data']['href'] for i in items.to_dict()['features']]
+    return url_list
+        
 def get_collection_bbox(collection):
     import geopandas as gpd
     import planetary_computer
