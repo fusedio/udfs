@@ -2187,3 +2187,28 @@ def get_ip():
     IPAddr=socket.gethostbyname(hostname)
     return IPAddr
     
+
+def scipy_voronoi(gdf):
+    """
+    Scipy based Voronoi function. Built because fused version at time is on geopandas 0.14.4 which 
+    doesnt' have `gdf.geometry.voronoi_polygons()`
+    Probably not the most optimised funciton but it gets the job done. 
+    Irrelevant once we move to geopandas 1.0+
+    """
+    from shapely.geometry import Polygon, Point
+    from scipy.spatial import Voronoi
+
+    points = np.array([(geom.x, geom.y) for geom in gdf.geometry])
+    vor = Voronoi(points)
+    
+    polygons = []
+    for region in vor.regions:
+        if not region or -1 in region:  # Ignore regions with open boundaries
+            continue
+        
+        # Get the vertices for the region and construct a polygon
+        polygon = Polygon([vor.vertices[i] for i in region])
+        polygons.append(polygon)
+
+    voronoi_gdf = gpd.GeoDataFrame(geometry=polygons, crs=gdf.crs)
+    return voronoi_gdf
