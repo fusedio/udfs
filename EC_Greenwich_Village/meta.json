@@ -1,0 +1,91 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "EC_Greenwich_Village",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:description": "Read a Parquet or Geoparquet file.\n",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "extruded": true,
+                "opacity": 0.2,
+                "coverage": 1,
+                "lineWidthMinPixels": 1,
+                "getHexagon": "@@=properties.hex",
+                "getLineColor": [
+                  200,
+                  200,
+                  200
+                ],
+                "getFillColor": {
+                  "@@function": "hasProp",
+                  "property": "sim_norm",
+                  "present": "@@=[properties.sim_norm*200, (properties.sim_norm*3000), (properties.sim_norm*12)]",
+                  "absent": [
+                    220,
+                    220,
+                    220
+                  ]
+                },
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "sim",
+                  "present": "@@=(properties.sim_norm)*100*200",
+                  "absent": 1
+                },
+                "elevationScale": 20
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "EC_Greenwich_Village",
+            "fused:name": "EC_Greenwich_Village",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/1d07564eba0d3f609c4904ba0c7be5dc7a97ab73/community/pgzmnk/sample_nyc_similarity/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/1d07564/community/pgzmnk/sample_nyc_similarity/",
+            "fused:gitPath": "community/pgzmnk/sample_nyc_similarity",
+            "fused:gitRef": "1d07564eba0d3f609c4904ba0c7be5dc7a97ab73",
+            "fused:assetUrl": "",
+            "fused:explorerPin": "99",
+            "fused:gitAuthorNames": [
+              "Plinio Guzman"
+            ],
+            "fused:gitAuthorUsernames": [
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitLastModified": "2024-10-15T22:11:08+00:00",
+            "fused:explorerTab": "community",
+            "fused:gitRepo": "fusedio/udfs"
+          },
+          "source": "EC_Greenwich_Village.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
