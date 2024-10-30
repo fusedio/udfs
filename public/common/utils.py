@@ -11,6 +11,17 @@ from loguru import logger
 def chunkify(lst, chunk_size):
     return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
 
+@fused.cache
+def get_meta_datestr_chunk(base_path, start_year=2020, end_year=2024, n_chunks_datestr=90, total_row_groups=52, n_row_groups=2):
+    import pandas as pd
+    date_list = pd.date_range(start=f'{start_year}-01-01', end=f'{start_year+1}-01-01').strftime('%Y-%m-%d').tolist()[:-1]
+    df = pd.DataFrame([[i[0],i[-1]] for i in chunkify(date_list,n_chunks_datestr)], columns=['start_datestr','end_datestr'])
+    df['row_group_ids']=[chunkify(range(total_row_groups),n_row_groups)]*len(df)
+    df = df.explode('row_group_ids').reset_index(drop=True)
+    df['path'] = df.apply(lambda row:f"{base_path.strip('/')}/file_{row.start_datestr.replace('-','')}_{row.end_datestr.replace('-','')}_{row.row_group_ids[0]}_{row.row_group_ids[-1]}.parquet", axis=1)
+    df['idx'] = df.index
+    return df
+
 def write_log(msg="Your message.", name='//default', log_type='info', rotation="10 MB"):
     from loguru import logger
     path = fused.file_path('logs/' + name + '.log')
