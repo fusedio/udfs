@@ -8,6 +8,9 @@ from numpy.typing import NDArray
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
 from loguru import logger
 
+def chunkify(lst, chunk_size):
+    return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
+
 def write_log(msg="Your message.", name='//default', log_type='info', rotation="10 MB"):
     from loguru import logger
     path = fused.file_path('logs/' + name + '.log')
