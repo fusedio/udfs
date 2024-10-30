@@ -20,6 +20,9 @@ def get_meta_datestr_chunk(base_path, start_year=2020, end_year=2024, n_chunks_d
     df = df.explode('row_group_ids').reset_index(drop=True)
     df['path'] = df.apply(lambda row:f"{base_path.strip('/')}/file_{row.start_datestr.replace('-','')}_{row.end_datestr.replace('-','')}_{row.row_group_ids[0]}_{row.row_group_ids[-1]}.parquet", axis=1)
     df['idx'] = df.index
+    df_meta['row_group'] = df_meta['row_group_ids']
+    df_meta = df_meta.explode('row_group').drop_duplicates('idx').sort_values('row_group')
+    del df_meta['row_group']
     return df
 
 def write_log(msg="Your message.", name='//default', log_type='info', rotation="10 MB"):
