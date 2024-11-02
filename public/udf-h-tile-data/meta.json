@@ -1,0 +1,103 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "udf-h-tile-data",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "RedOr",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "udf-h-tile-data",
+            "fused:name": "udf-h-tile-data",
+            "fused:id": null,
+            "fused:defaultParameters": [],
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": -34.63164117478592,
+              "longitude": -58.43023982277589,
+              "zoom": 10.942519802060842,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/605213b77342e5320ac544a6072dcde925fd3610/public/Arraylake_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/605213b/public/Arraylake_Example/",
+            "fused:gitPath": "public/Arraylake_Example",
+            "fused:gitRef": "605213b77342e5320ac544a6072dcde925fd3610",
+            "fused:assetUrl": "https://avatars.githubusercontent.com/u/95875797?v=4",
+            "fused:description": "## Overview\n\nThis UDF shows how to open a continental-scale Zarr data cube stored in Arraylake and visualize it in Fused.\n\n## External links\n\n- [Earthmover Blog Post on Planetary-Scale Data Cubes](https://earthmover.io/blog/serverless-datacube-pipeline)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Arraylake_Example\")\ngdf = fused.run(udf=udf)\ngdf\n```\n\n\n",
+            "fused:gitAuthorNames": [
+              "Ryan Abernathey"
+            ],
+            "fused:gitAuthorUsernames": [
+              "rabernat"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/rabernat"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/1197350?v=4"
+            ],
+            "fused:gitLastModified": "2024-09-08T23:57:45+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs"
+          },
+          "source": "udf-h-tile-data.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
