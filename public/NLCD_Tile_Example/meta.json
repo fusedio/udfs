@@ -12,7 +12,7 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:description": "# Overview\n\nThis UDF shows how to open annual [National Land Cover Database (National Land Cover Database) data](https://www.usgs.gov/centers/eros/science/annual-national-land-cover-database#overview) (NLCD) tiff files. The NLCD is a categorical land cover dataset that essential information for applications like carbon emission estimates, urban development analysis, wildfire hazard modeling, and tracking ecological and habitat changes. This dataset has annual coverage from 1985 to 2023.",
+            "fused:description": "# Overview\n\nThis UDF shows how to open annual [National Land Cover Database (National Land Cover Database) data](https://www.usgs.gov/centers/eros/science/annual-national-land-cover-database#overview) (NLCD) tiff files. The NLCD is a categorical land cover dataset with applications like carbon emission estimates, urban development analysis, wildfire hazard modeling, and tracking ecological and habitat changes. This dataset has annual coverage from 1985 to 2023.",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
