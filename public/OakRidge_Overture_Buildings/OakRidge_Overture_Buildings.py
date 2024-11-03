@@ -7,7 +7,7 @@ def udf(bbox: fused.types.TileGDF = None):
 
     # 2. Load Oak Ridge Buildings
     gdf_oakridge = fused.utils.common.table_to_tile(
-        bbox, table="s3://fused-asset/data/orln/california_ingest/", min_zoom=10
+        bbox, table="s3://fused-asset/infra/building_oak_states/state=ca/", min_zoom=10
     )
 
     # 3. Calculate intersection
