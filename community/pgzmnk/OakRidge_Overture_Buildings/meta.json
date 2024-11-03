@@ -1,0 +1,72 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "OakRidge_Overture_Buildings",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.80096917530422,
+              "longitude": -122.43092777138801,
+              "zoom": 16.71165904710595,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/comparison_overture_oakridge.png",
+            "fused:description": "## Overview\n\nContrast Overture Buildings with Oak Ridge Buildings.\n\nCredit goes to Mark Litwintschik for the workflow to ingest the Oak Ridge dataset.\n\nhttps://tech.marksblogg.com/ornl-fema-buildings.html",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer"
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    200,
+                    250,
+                    0
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "OakRidge_Overture_Buildings",
+            "fused:name": "OakRidge_Overture_Buildings",
+            "fused:id": null
+          },
+          "source": "OakRidge_Overture_Buildings.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

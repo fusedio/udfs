@@ -1,0 +1,29 @@
+@fused.udf
+def udf(bbox: fused.types.TileGDF = None):
+    import geopandas as gpd
+
+    # 1. Load Overture Buildings
+    gdf_overture = fused.utils.Overture_Maps_Example.get_overture(bbox=bbox)
+
+    # 2. Load Oak Ridge Buildings
+    gdf_oakridge = fused.utils.common.table_to_tile(
+        bbox, table="s3://fused-users/fused/plinio/orln/california_ingest/", min_zoom=10
+    )
+
+    # 3. Calculate intersection
+    intersection = gpd.overlay(gdf_overture, gdf_oakridge, how="intersection")
+
+    # 4. Calculate the areas (per tile)
+    intersection_area = intersection.geometry.area.sum()
+    gdf_overture_area = gdf_overture.geometry.area.sum()
+    gdf_oakridge_area = gdf_oakridge.geometry.area.sum()
+
+    # 5. Calculate Intersection over Union (IoU)
+    iou = intersection_area / (
+        gdf_overture_area + gdf_oakridge_area - intersection_area
+    )
+    print(f"IOU: {iou}")
+
+    # return intersection
+    return gdf_overture
+    return gdf_oakridge
