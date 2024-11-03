@@ -69,10 +69,10 @@
             "fused:slug": "OakRidge_Overture_Buildings",
             "fused:name": "OakRidge_Overture_Buildings",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/d52b526fb5b9b93c6c7af0ffab52d98652c55ddf/community/pgzmnk/OakRidge_Overture_Buildings/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/d52b526/community/pgzmnk/OakRidge_Overture_Buildings/",
-            "fused:gitPath": "community/pgzmnk/OakRidge_Overture_Buildings",
-            "fused:gitRef": "d52b526fb5b9b93c6c7af0ffab52d98652c55ddf",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/5490c3e401957f409b0688a0da077623ec1ced16/public/OakRidge_Overture_Buildings/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/5490c3e/public/OakRidge_Overture_Buildings/",
+            "fused:gitPath": "public/OakRidge_Overture_Buildings",
+            "fused:gitRef": "5490c3e401957f409b0688a0da077623ec1ced16",
             "fused:gitAuthorNames": [
               "Plinio Guzman"
             ],
@@ -85,8 +85,8 @@
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/27398253?v=4"
             ],
-            "fused:gitLastModified": "2024-11-03T01:23:22+00:00",
-            "fused:explorerTab": "community",
+            "fused:gitLastModified": "2024-11-03T01:33:01+00:00",
+            "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs"
           },
           "source": "OakRidge_Overture_Buildings.py",
