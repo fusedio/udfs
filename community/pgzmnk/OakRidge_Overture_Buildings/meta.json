@@ -21,7 +21,7 @@
               "bearing": 0
             },
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/comparison_overture_oakridge.png",
-            "fused:description": "## Overview\n\nContrast Overture Buildings with Oak Ridge Buildings.\n\nCredit goes to Mark Litwintschik for the workflow to ingest the Oak Ridge dataset.\n\nhttps://tech.marksblogg.com/ornl-fema-buildings.html",
+            "fused:description": "## Overview\n\nContrast Overture Buildings with Oak Ridge Buildings.\n\nCredit goes to Mark Litwintschik for the workflow to ingest the Oak Ridge dataset.\n\nhttps://tech.marksblogg.com/ornl-fema-buildings.html\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -36,9 +36,9 @@
               "vectorLayer": {
                 "@@type": "GeoJsonLayer",
                 "stroked": true,
-                "filled": false,
+                "filled": true,
                 "pickable": true,
-                "lineWidthMinPixels": 1,
+                "lineWidthMinPixels": 0.1,
                 "getLineColor": {
                   "@@function": "hasProp",
                   "property": "r",
@@ -49,18 +49,45 @@
                     0
                   ]
                 },
-                "getFillColor": [
-                  255,
-                  0,
-                  0,
-                  40
-                ]
+                "getFillColor": {
+                  "@@function": "colorCategories",
+                  "attr": "source",
+                  "domain": [
+                    "OpenStreetMap",
+                    "Microsoft ML Buildings"
+                  ],
+                  "colors": "Bold",
+                  "absent": [
+                    200,
+                    250,
+                    0
+                  ]
+                }
               }
             },
             "fused:udfType": "auto",
             "fused:slug": "OakRidge_Overture_Buildings",
             "fused:name": "OakRidge_Overture_Buildings",
-            "fused:id": null
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/d52b526fb5b9b93c6c7af0ffab52d98652c55ddf/community/pgzmnk/OakRidge_Overture_Buildings/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/d52b526/community/pgzmnk/OakRidge_Overture_Buildings/",
+            "fused:gitPath": "community/pgzmnk/OakRidge_Overture_Buildings",
+            "fused:gitRef": "d52b526fb5b9b93c6c7af0ffab52d98652c55ddf",
+            "fused:gitAuthorNames": [
+              "Plinio Guzman"
+            ],
+            "fused:gitAuthorUsernames": [
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitLastModified": "2024-11-03T01:23:22+00:00",
+            "fused:explorerTab": "community",
+            "fused:gitRepo": "fusedio/udfs"
           },
           "source": "OakRidge_Overture_Buildings.py",
           "headers": []

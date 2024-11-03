@@ -24,6 +24,9 @@ def udf(bbox: fused.types.TileGDF = None):
     )
     print(f"IOU: {iou}")
 
+    # 6. Overture sources
+    gdf_overture["source"] = gdf_overture["sources"].apply(lambda x: x[0]["dataset"])
+
     # return intersection
-    return gdf_overture
+    return gdf_overture[["geometry", "source"]]
     return gdf_oakridge
