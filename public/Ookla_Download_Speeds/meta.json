@@ -34,8 +34,8 @@
                   "@@function": "colorContinuous",
                   "attr": "metric",
                   "domain": [
-                    0,
-                    100000
+                    100000,
+                    0
                   ],
                   "colors": "TealGrn",
                   "nullColor": [
