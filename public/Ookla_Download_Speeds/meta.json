@@ -1,0 +1,98 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Ookla_Download_Speeds",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "extruded": false,
+                "opacity": 1,
+                "coverage": 0.9,
+                "lineWidthMinPixels": 10,
+                "getHexagon": "@@=properties.hex",
+                "getFillColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "metric",
+                  "domain": [
+                    0,
+                    100000
+                  ],
+                  "colors": "TealGrn",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getLineColor": [
+                  200,
+                  200,
+                  200
+                ],
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "metric",
+                  "present": "@@=properties.metric",
+                  "absent": 1
+                },
+                "elevationScale": 2
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "Ookla_Download_Speeds",
+            "fused:name": "Ookla_Download_Speeds",
+            "fused:id": null,
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 25.103577058765545,
+              "longitude": 11.903392271218976,
+              "zoom": 0.20354839125710023,
+              "pitch": 0,
+              "bearing": -2.054208273894437
+            },
+            "fused:description": "## Overview\n\nThis example demonstrates how Ookla's mobile performance data can be dynamically processed into an H3 hexagonal grid system. The network metrics are aggregated (averaging download speeds) for H3 hexes at a resolution that adapts based on the zoom level. The performance data comes from Ookla's global speed test infrastructure, capturing real-world mobile network performance across diverse network operators and technologies. The data is stored in Parquet format on S3, structured by year and quarter, allowing for efficient geographic querying and temporal analysis. The resulting hexagonal grid provides a standardized way to visualize and analyze mobile network performance patterns across different geographic scales and regions.\n\n##External Links\n\n- [Ookla Open Dataset on AWS Marketplace](https://aws.amazon.com/marketplace/pp/prodview-breawk6ljkovm)",
+            "fused:tags": [
+              {
+                "id": "aws",
+                "label": "aws"
+              },
+              {
+                "id": "broadband",
+                "label": "broadband",
+                "isCreatable": true
+              },
+              {
+                "id": "hex",
+                "label": "hex",
+                "isCreatable": true
+              }
+            ]
+          },
+          "source": "Ookla_Download_Speeds.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
