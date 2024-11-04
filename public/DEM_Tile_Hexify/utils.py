@@ -27,5 +27,5 @@ def aggregate_df_hex(df, res, latlng_cols=("lat", "lng"), stats_type="mean"):
         fn = lambda x: pd.Series(x).mean()
     else:
         fn = lambda x: pd.Series(x).mean()
-    df["metric"] = df.agg_data.map(fn)  # *10
+    df["metric"] = df.agg_data.map(fn)
     return df
