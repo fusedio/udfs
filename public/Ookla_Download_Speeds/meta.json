@@ -86,7 +86,8 @@
                 "label": "hex",
                 "isCreatable": true
               }
-            ]
+            ],
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/milind.png"
           },
           "source": "Ookla_Download_Speeds.py",
           "headers": []
