@@ -32,17 +32,17 @@
                 "getHexagon": "@@=properties.hex",
                 "getFillColor": "@@=[properties.r, properties.g, properties.b]",
                 "getElevation": "@@=properties.n_pixel",
-                "elevationScale": 500
+                "elevationScale": 0
               }
             },
             "fused:udfType": "auto",
             "fused:slug": "NLCD_Tile_Hexify",
             "fused:name": "NLCD_Tile_Hexify",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/7623c1c5cf740b2d36883c4601efe79ba1117769/public/NLCD_Tile_Hexify/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/7623c1c/public/NLCD_Tile_Hexify/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/f9c4c1a6637f14553af526eb51cb913d478d2e99/public/NLCD_Tile_Hexify/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/f9c4c1a/public/NLCD_Tile_Hexify/",
             "fused:gitPath": "public/NLCD_Tile_Hexify",
-            "fused:gitRef": "7623c1c5cf740b2d36883c4601efe79ba1117769",
+            "fused:gitRef": "f9c4c1a6637f14553af526eb51cb913d478d2e99",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/NLCD_Tile_Hexify.png",
             "fused:gitAuthorNames": [
               null
@@ -56,7 +56,7 @@
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/in/834700?v=4"
             ],
-            "fused:gitLastModified": "2024-11-05T06:34:22+00:00",
+            "fused:gitLastModified": "2024-11-05T07:54:54+00:00",
             "fused:gitRepo": "fusedio/udfs",
             "fused:tags": [
               {
