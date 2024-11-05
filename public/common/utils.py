@@ -1612,6 +1612,19 @@ def arr_to_latlng(arr, bounds):
     df["data"] = arr.flatten()
     return df
 
+# @fused.cache
+def df_to_hex(df, res, latlng_cols=("lat", "lng"), ordered=False):
+    qr = f"""
+            SELECT h3_latlng_to_cell({latlng_cols[0]}, {latlng_cols[1]}, {res}) AS hex, ARRAY_AGG(data) as agg_data
+            FROM df
+            group by 1
+        """
+    if ordered:
+        qr+="  order by 1"
+    con = duckdb_connect()
+    return con.query(qr).df()
+
+
 def duckdb_connect(home_directory='/tmp/'):
     import duckdb 
     con = duckdb.connect()
