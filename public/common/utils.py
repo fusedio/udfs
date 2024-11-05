@@ -1624,8 +1624,8 @@ def df_to_h3(df, res, latlng_cols=("lat", "lng"), ordered=False):
     con = duckdb_connect()
     return con.query(qr).df()
 
-def arr_to_h3(arr, bounds, res, ordered=False)
-    return df_to_h3(df=arr_to_latlng(arr, bounds), res=res, ordered=ordered)
+def arr_to_h3(arr, bounds, res, ordered=False):
+    return df_to_h3(arr_to_latlng(arr, bounds), res=res, ordered=ordered)
 
 def duckdb_connect(home_directory='/tmp/'):
     import duckdb 
