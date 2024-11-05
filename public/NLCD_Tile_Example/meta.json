@@ -58,10 +58,10 @@
             "fused:slug": "NLCD_Tile_Example",
             "fused:name": "NLCD_Tile_Example",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/8014ebd1e5498239bff599af00fb22bb0f49696a/public/NLCD_Tile_Example/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/8014ebd/public/NLCD_Tile_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/7623c1c5cf740b2d36883c4601efe79ba1117769/public/NLCD_Tile_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/7623c1c/public/NLCD_Tile_Example/",
             "fused:gitPath": "public/NLCD_Tile_Example",
-            "fused:gitRef": "8014ebd1e5498239bff599af00fb22bb0f49696a",
+            "fused:gitRef": "7623c1c5cf740b2d36883c4601efe79ba1117769",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/NLCD_Tile_Example.png",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
@@ -79,7 +79,7 @@
               "https://avatars.githubusercontent.com/u/12432685?v=4",
               "https://avatars.githubusercontent.com/in/834700?v=4"
             ],
-            "fused:gitLastModified": "2024-11-04T12:00:29+00:00",
+            "fused:gitLastModified": "2024-11-04T12:10:05+00:00",
             "fused:gitRepo": "fusedio/udfs",
             "fused:tags": [
               {
