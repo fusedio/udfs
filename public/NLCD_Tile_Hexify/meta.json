@@ -1,0 +1,106 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "NLCD_Tile_Hexify",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:description": "# Overview\n\nThis UDF shows how to open annual [National Land Cover Database (National Land Cover Database) data](https://www.usgs.gov/centers/eros/science/annual-national-land-cover-database#overview) (NLCD) tiff files. The NLCD is a categorical land cover dataset with applications like carbon emission estimates, urban development analysis, wildfire hazard modeling, and tracking ecological and habitat changes. This dataset has annual coverage from 1985 to 2023.\n",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 5,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "extrude": true,
+                "pickable": true
+              },
+              "vectorLayer": {
+                "opacity": 1,
+                "coverage": 0.9,
+                "@@type": "H3HexagonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "getHexagon": "@@=properties.hex",
+                "getFillColor": "@@=[properties.r, properties.g, properties.b]",
+                "getElevation": "@@=properties.n_pixel",
+                "elevationScale": 300
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "NLCD_Tile_Hexify",
+            "fused:name": "NLCD_Tile_Hexify",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/c113ec69ffb7170c716dda1bc3895a40707c3ea9/public/NLCD_Tile_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/c113ec6/public/NLCD_Tile_Example/",
+            "fused:gitPath": "public/NLCD_Tile_Example",
+            "fused:gitRef": "c113ec69ffb7170c716dda1bc3895a40707c3ea9",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/NLCD_Tile_Example.png",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk",
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk",
+              "fused-io[bot]"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk",
+              "https://github.com/apps/fused-io"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/in/834700?v=4"
+            ],
+            "fused:gitLastModified": "2024-11-04T12:10:05+00:00",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:tags": [
+              {
+                "id": "raster",
+                "label": "raster"
+              },
+              {
+                "id": "aws",
+                "label": "aws"
+              },
+              {
+                "id": "lulc",
+                "label": "lulc"
+              },
+              {
+                "id": "30-meter",
+                "label": "30-meter"
+              }
+            ],
+            "fused:explorerPin": "9",
+            "fused:explorerTab": "public",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.938472382088094,
+              "longitude": -121.22552505726844,
+              "zoom": 8.014707931333762,
+              "pitch": 0,
+              "bearing": 0
+            }
+          },
+          "source": "NLCD_Tile_Hexify.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
