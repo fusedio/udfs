@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF, year:int=2010, land_type:str='', chip_len:int=256):
+def udf(bbox: fused.types.TileGDF, year:int=1985, land_type:str='', chip_len:int=256):
     import numpy as np        
     import pandas as pd
     from utils import get_data, arr_to_h3, nlcd_category_dict, rgb_to_hex
@@ -21,6 +21,7 @@ def udf(bbox: fused.types.TileGDF, year:int=2010, land_type:str='', chip_len:int
     df['most_freq'] = df.agg_data.map(lambda x: np.unique(x, return_counts=True)[0][np.argmax(np.unique(x, return_counts=True)[1])])
     df['n_pixel'] = df.agg_data.map(lambda x: np.unique(x, return_counts=True)[1].max())
     df=df[df['most_freq']>0]
+    if len(df)==0: return 
 
     # get the color and land_type
     df[['r', 'g', 'b', 'a']] = df.most_freq.map(lambda x: pd.Series(color_map[x])).apply(pd.Series)
