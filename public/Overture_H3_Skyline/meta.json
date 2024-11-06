@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Overture_H3_Skyline",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 14,
+                "tileSize": 256,
+                "extrude": true,
+                "pickable": true
+              },
+              "vectorLayer": {
+                "opacity": 0.3,
+                "@@type": "H3HexagonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "extruded": true,
+                "getFillColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "avg_height",
+                  "domain": [
+                    0,
+                    100
+                  ],
+                  "colors": "TealRose"
+                },
+                "getHexagon": "@@=properties.hex",
+                "getElevation": "@@=properties.avg_height",
+                "elevationScale": 5
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Overture_H3_Skyline",
+            "fused:name": "Overture_H3_Skyline",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.7713405836712,
+              "longitude": -122.42595460804577,
+              "zoom": 11.558541444855727,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/nyc_skyline.png",
+            "fused:description": "## Overview\n\nThis UDF uses the `get_overture` helper function to access the Overture dataset hosted in Source Coop. It calculates building metrics, including perimeter and area, and aggregates them by H3 cell. The H3 resolution dynamically adjusts with zoom level unless a specific h3_size is provided.\n\n\n\n\n\n\n",
+            "fused:id": null
+          },
+          "source": "Overture_H3_Skyline.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
