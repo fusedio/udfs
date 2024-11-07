@@ -130,9 +130,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/7ac2660ae6058c48c3b840cd62678cb72761f0e9/public/Overture_Maps_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/78f2c0918477b17eef12adc5ce6b8217b4ceb7e4/public/Overture_Maps_Example/",
             "fused:gitPath": "public/Overture_Maps_Example",
-            "fused:gitRef": "7ac2660ae6058c48c3b840cd62678cb72761f0e9",
+            "fused:gitRef": "78f2c0918477b17eef12adc5ce6b8217b4ceb7e4",
             "fused:gitAuthorNames": [
               "Isaac Brodsky",
               "Plinio Guzman",
@@ -165,12 +165,14 @@
               "https://avatars.githubusercontent.com/in/834700?v=4",
               "https://avatars.githubusercontent.com/u/92862?v=4"
             ],
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/7ac2660/public/Overture_Maps_Example/",
-            "fused:gitLastModified": "2024-10-29T23:08:59+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/78f2c09/public/Overture_Maps_Example/",
+            "fused:gitLastModified": "2024-11-07T16:34:24.767Z",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:id": null,
-            "fused:explorerPin": "1"
+            "fused:explorerPin": "1",
+            "fused:gitPullRequestBranch": "carmen@fused.io-patch-test123",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/416"
           },
           "source": "Overture_Maps_Example.py",
           "headers": [
