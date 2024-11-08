@@ -8,6 +8,39 @@ from numpy.typing import NDArray
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
 from loguru import logger
 
+def point_to_line(start_lon=-122.4194, start_lat=37.7749, end_lon=-122.2712, end_lat=37.8044, value=0):
+    import geopandas as gpd
+    import shapely
+    from shapely.geometry import LineString    
+    line = LineString([(start_lon, start_lat), (end_lon, end_lat)])    
+    return gpd.GeoDataFrame({"value": [value]}, geometry=[line], crs=4326)
+    
+def interpolate_points(line_shape, point_distance):
+    points = []
+    num_points = int(line_shape.length // point_distance)
+    for i in range(num_points + 1):
+        point = line_shape.interpolate(i * point_distance)
+        points.append(point)
+    return points
+
+def pointify(lines, point_distance, segment_col='segment_id'):
+    import geopandas as gpd
+    crs_orig = lines.crs
+    crs_utm=lines.estimate_utm_crs()
+    lines = lines.to_crs(crs_utm)
+    from shapely.geometry import Point
+    import pandas as pd
+    points_list = []
+    for _, row in lines.iterrows():
+        line = row['geometry']
+        points = interpolate_points(line, point_distance)
+        for point in points:
+            points_list.append({segment_col: row[segment_col], 'geometry': point})
+    print('number of points:', len(points_list))
+    points_gdf = gpd.GeoDataFrame(points_list, crs=lines.crs)
+    return points_gdf.to_crs(crs_orig)
+
+
 def chunkify(lst, chunk_size):
     return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
 
