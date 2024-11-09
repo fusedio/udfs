@@ -116,6 +116,29 @@ def read_shape_zip(url, file_index=0, name_prefix=""):
     return df
 
 @fused.cache
+def stac_to_gdf(bbox, datetime='2024', collections=["sentinel-2-l2a"], columns=['id', 'geometry', 'bbox', 'assets', 'datetime', 'eo:cloud_cover'], query={"eo:cloud_cover": {"lt": 20}}, catalog='mspc'):
+    if catalog.lower()=='aws':
+        catalog = pystac_client.Client.open("https://earth-search.aws.element84.com/v1")
+    elif catalog.lower()=='mspc':
+        catalog = pystac_client.Client.open("https://planetarycomputer.microsoft.com/api/stac/v1")
+    else: 
+        catalog = pystac_client.Client.open(catalog)
+    items = catalog.search(
+        collections=collections,
+        bbox=bbox.total_bounds,
+        datetime=datetime,
+        query=query,
+        ).item_collection()
+    gdf=stac_geoparquet.to_geodataframe([item.to_dict() for item in items])
+    if columns==None:
+        print(gdf.columns)
+        return gdf
+    else:
+        gdf=gdf[list(set(columns).intersection(set(gdf.columns)))]
+        print(gdf.columns)
+        return gdf
+
+@fused.cache
 def get_url_aws_stac(bbox, collections=["cop-dem-glo-30"]):
     import pystac_client
     catalog = pystac_client.Client.open("https://earth-search.aws.element84.com/v1")
