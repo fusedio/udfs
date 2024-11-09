@@ -97,9 +97,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/4f7e417189989fd89edd9accc0d22100a2b96812/public/common/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/170832203ad18526360cbe6c8f5592569ae42e87/public/common/",
             "fused:gitPath": "public/common",
-            "fused:gitRef": "4f7e417189989fd89edd9accc0d22100a2b96812",
+            "fused:gitRef": "170832203ad18526360cbe6c8f5592569ae42e87",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -140,8 +140,8 @@
               "https://avatars.githubusercontent.com/in/834700?v=4",
               "https://avatars.githubusercontent.com/u/44133329?v=4"
             ],
-            "fused:gitLastModified": "2024-11-09T16:09:33+00:00",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/4f7e417/public/common/",
+            "fused:gitLastModified": "2024-11-09T19:57:20+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/1708322/public/common/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:explorerPin": "90",

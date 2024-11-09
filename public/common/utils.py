@@ -117,6 +117,8 @@ def read_shape_zip(url, file_index=0, name_prefix=""):
 
 @fused.cache
 def stac_to_gdf(bbox, datetime='2024', collections=["sentinel-2-l2a"], columns=['id', 'geometry', 'bbox', 'assets', 'datetime', 'eo:cloud_cover'], query={"eo:cloud_cover": {"lt": 20}}, catalog='mspc'):
+    import pystac_client
+    import stac_geoparquet
     if catalog.lower()=='aws':
         catalog = pystac_client.Client.open("https://earth-search.aws.element84.com/v1")
     elif catalog.lower()=='mspc':
