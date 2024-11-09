@@ -155,14 +155,6 @@ def get_pc_token(url):
     response = requests.get(url)
     return response.json()
 
-
-def read_tiff_pc(bbox, tiff_url, cache_id=2):
-    tiff_url = f"{tiff_url}?{get_pc_token(tiff_url,_cache_id=cache_id)['token']}"
-    print(tiff_url)
-    arr = read_tiff(bbox, tiff_url)
-    return arr, tiff_url
-
-
 @fused.cache(path="table_to_tile")
 def table_to_tile(
     bbox,
@@ -335,6 +327,8 @@ def read_tiff(
                 )
                 window = gridded_window  # Expand window to nearest full pixels
                 source_data = src.read(window=window, boundless=True, masked=True)
+                if not output_shape:
+                    return source_data
                 nodata_value = src.nodatavals[0]
                 if filter_list:
                     mask = np.isin(source_data, filter_list, invert=True)
