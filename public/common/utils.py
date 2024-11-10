@@ -2084,7 +2084,7 @@ class PoolRunner:
     runner.get_result_now()
     runner.get_result_all()
     '''
-    def __init__(self, func, args_list, delay_second=0.01, verbose=True):
+    def __init__(self, func, args_list, delay_second=0.01, verbose=True, max_retry=3):
         import asyncio
         import pandas as pd
         import concurrent.futures
@@ -2095,46 +2095,56 @@ class PoolRunner:
         else:
             raise ValueError('args_list need to be list, pd.DataFrame, or range')
         self.func = func
-        self.verbose = verbose
         self.delay_second = delay_second
+        self.verbose = verbose
+        self.max_retry=max_retry
         self.pool = concurrent.futures.ThreadPoolExecutor(max_workers=1024)
         self.run_pool()
         self.result=[]
 
-    def create_task(self, args):
+    def create_task(self, args, n_retry):
         import time
         time.sleep(self.delay_second)
         if isinstance(args, dict):
             task = self.pool.submit(self.func, **args)
         else:
             task = self.pool.submit(self.func, args)
-        return [task, args]
+        return [task, args, n_retry]
         
     def run_pool(self):
         tasks = []
         for args in self.args_list:
-            tasks.append(self.create_task(args))
+            tasks.append(self.create_task(args, n_retry=0))
         self.tasks=tasks
     
-    def is_done(self):
+    def is_success(self):
         return [task[0].done() for task in self.tasks]
     
     def get_task_result(self, task):
-        if task[0].done():
+        if task[0].done() or task[2]>self.max_retry:
             try:
                 return task[0].result()
             except Exception as e:
-                return str(e)
+                if task[2]<self.max_retry: 
+                    return str(e)
+                else:
+                    return f'Exceeded max_retry ({task[2]-1}|{self.max_retry}): '+str(e)
         else:
-            return 'pending'
+            # if task[2]<self.max_retry: 
+                return f'pending'
+            # else:
+            #     return f'Exceeded max_retry'
         
-    def get_result_now(self, retry=True):
+    def get_result_now(self, retry=True, sleep_second=1):
         if retry:
             self.retry()
+        else:
+            import time
+            time.sleep(sleep_second)
         if self.verbose:
-            n1=sum(self.is_done())
-            n2=len(self.is_done())
-            print(f"\r{n1/n2*100:.1f}% ({n1}|{n2}) complete", end='')
+            n1=sum(self.is_success())
+            n2=len(self.is_success())
+            print(f"\r{n1/n2*100:.1f}% ({n1}|{n2}) complete", end='\n')
         import json
         import pandas as pd
         df = pd.DataFrame([task[1] for task in self.tasks])
@@ -2142,12 +2152,12 @@ class PoolRunner:
         df['result']=self.result
         def fn(r):
             if type(r)==str:
-                if r=='pending':
-                    return 'running'
-                else:
-                    return 'faild'
+                if str.startswith(r, 'Exceeded max_retry'):
+                    return 'error'
+                else:#elif r=='pending':
+                    return 'running'#'error_retry'
             else:
-                return 'done'
+                return 'success'
         df['status']=df['result'].map(fn)
         return df            
     
@@ -2156,8 +2166,16 @@ class PoolRunner:
             if task[0].done():
                 task_exception = task[0].exception()
                 if task_exception:
-                    if verbose: print(task_exception)
-                    return self.create_task(task[1]) 
+                    if verbose: 
+                        print(task_exception)
+                    if (task[2]<self.max_retry):
+                        if verbose: 
+                            print(f'Retry {task[2]+1}|{self.max_retry} for {task[1]}.')
+                        return self.create_task(task[1], n_retry=task[2]+1) 
+                    else:
+                        if verbose: 
+                            print(f'Exceeded Max retry {self.max_retry} for {task[1]}.')
+                        return [task[0], task[1], task[2]+1]
                 else:
                     return task
             else:
@@ -2168,7 +2186,8 @@ class PoolRunner:
         import time
         for i in range(timeout):
             df=self.get_result_now(retry=True)
-            if (df.status=='done').mean()==1:
+            # if (df.status=='success').mean()==1:
+            if (df.status=='running').mean()==0:
                 break
             else:
                 time.sleep(1)
@@ -2176,13 +2195,43 @@ class PoolRunner:
             print(f"Done!")
         return df
 
+    def get_error(self, sleep_second=3):
+        df=self.get_result_now(retry=False, sleep_second=sleep_second)
+        if self.verbose:
+            print('Status Summary:', df.status.value_counts().to_dict())
+            error_mask=df.status=='error'
+            if sum(error_mask)==0:
+                print('No error.')
+            else:
+                df_error = df[error_mask]
+                for i in range(len(df_error)): 
+                    print(f'\nROW: {i} | ERROR {"="*30}')
+                    for col in df_error.columns:  
+                        print(f'{col.upper()}: {df_error.iloc[i][col]}')
+        return df
+    def get_concat(self, sleep_second=1, verbose=None):
+        if verbose != None:
+            self.verbose=verbose
+        import pandas as pd
+        df = self.get_error(sleep_second=sleep_second)
+        mask=df.status=='success'
+        if mask.sum()==0:
+            return 
+        else:
+            results=[i for i in df[mask].result if i is not None]
+            if self.verbose:
+                print(f"{100*mask.mean().round(3)} percent success.")
+                if len(results)!=mask.sum():
+                    print(f"Warnning: {mask.sum()-len(results)}/{mask.sum()} are None values.")
+        return pd.concat(results)
     def __repr__(self):
         if self.verbose:
-            print(f'tasks_done={self.is_done()}')
-        if (sum(self.is_done())/len(self.is_done()))==1:
-            return f"done!"
+            print(f'tasks_success={self.is_success()}')
+        if (sum(self.is_success())/len(self.is_success()))==1:
+            return f"success!"
         else:
             return "running..."
+            
 @fused.cache
 def get_parquet_stats(path):
     import pyarrow.parquet as pq
