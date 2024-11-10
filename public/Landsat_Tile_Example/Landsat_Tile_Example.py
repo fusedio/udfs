@@ -1,7 +1,8 @@
 # todo: investigate why sometime configure_s3_access get cached
+@fused.udf
 def udf(
-    bbox,
-    time_of_interest="2023-09-01/2023-10-30",
+    bbox: fused.types.TileGDF,
+    time_of_interest="2022-09-01/2023-10-30",
     red_band="red",
     nir_band="nir08",
     collection="landsat-c2-l2",
@@ -34,7 +35,7 @@ def udf(
     print(f"{pixel_spacing = }")
 
     # Load imagery into an XArray dataset
-    # odc.stac.configure_s3_access(requester_pays=True)
+    odc.stac.configure_s3_access(requester_pays=True)
     ds = odc.stac.load(
         items,
         crs="EPSG:3857",

@@ -116,6 +116,31 @@ def read_shape_zip(url, file_index=0, name_prefix=""):
     return df
 
 @fused.cache
+def stac_to_gdf(bbox, datetime='2024', collections=["sentinel-2-l2a"], columns=['id', 'geometry', 'bbox', 'assets', 'datetime', 'eo:cloud_cover'], query={"eo:cloud_cover": {"lt": 20}}, catalog='mspc'):
+    import pystac_client
+    import stac_geoparquet
+    if catalog.lower()=='aws':
+        catalog = pystac_client.Client.open("https://earth-search.aws.element84.com/v1")
+    elif catalog.lower()=='mspc':
+        catalog = pystac_client.Client.open("https://planetarycomputer.microsoft.com/api/stac/v1")
+    else: 
+        catalog = pystac_client.Client.open(catalog)
+    items = catalog.search(
+        collections=collections,
+        bbox=bbox.total_bounds,
+        datetime=datetime,
+        query=query,
+        ).item_collection()
+    gdf=stac_geoparquet.to_geodataframe([item.to_dict() for item in items])
+    if columns==None:
+        print(gdf.columns)
+        return gdf
+    else:
+        gdf=gdf[list(set(columns).intersection(set(gdf.columns)))]
+        print(gdf.columns)
+        return gdf
+
+@fused.cache
 def get_url_aws_stac(bbox, collections=["cop-dem-glo-30"]):
     import pystac_client
     catalog = pystac_client.Client.open("https://earth-search.aws.element84.com/v1")
@@ -154,14 +179,6 @@ def get_pc_token(url):
     url = f"https://planetarycomputer.microsoft.com/api/sas/v1/token/{account_name}/{container_name}"
     response = requests.get(url)
     return response.json()
-
-
-def read_tiff_pc(bbox, tiff_url, cache_id=2):
-    tiff_url = f"{tiff_url}?{get_pc_token(tiff_url,_cache_id=cache_id)['token']}"
-    print(tiff_url)
-    arr = read_tiff(bbox, tiff_url)
-    return arr, tiff_url
-
 
 @fused.cache(path="table_to_tile")
 def table_to_tile(
@@ -335,6 +352,8 @@ def read_tiff(
                 )
                 window = gridded_window  # Expand window to nearest full pixels
                 source_data = src.read(window=window, boundless=True, masked=True)
+                if not output_shape:
+                    return source_data
                 nodata_value = src.nodatavals[0]
                 if filter_list:
                     mask = np.isin(source_data, filter_list, invert=True)
