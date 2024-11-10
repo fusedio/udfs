@@ -116,7 +116,7 @@ def read_shape_zip(url, file_index=0, name_prefix=""):
     return df
 
 @fused.cache
-def stac_to_gdf(bbox, datetime='2024', collections=["sentinel-2-l2a"], columns=['id', 'geometry', 'bbox', 'assets', 'datetime', 'eo:cloud_cover'], query={"eo:cloud_cover": {"lt": 20}}, catalog='mspc'):
+def stac_to_gdf(bbox, datetime='2024', collections=["sentinel-2-l2a"], columns=['id', 'geometry', 'bbox', 'assets', 'datetime', 'eo:cloud_cover'], query={"eo:cloud_cover": {"lt": 20}}, catalog='mspc', explode_assets=False):
     import pystac_client
     import stac_geoparquet
     if catalog.lower()=='aws':
@@ -132,6 +132,14 @@ def stac_to_gdf(bbox, datetime='2024', collections=["sentinel-2-l2a"], columns=[
         query=query,
         ).item_collection()
     gdf=stac_geoparquet.to_geodataframe([item.to_dict() for item in items])
+    if explode_assets:
+        gdf['assets'] = gdf.assets.map(lambda x: [{k:x[k]['href']} for k in x]) 
+        gdf = gdf.explode('assets')
+        gdf['band'] = gdf.assets.map(lambda x: list(x.keys())[0]) 
+        gdf['url'] = gdf.assets.map(lambda x: list(x.values())[0]) 
+        del gdf['assets']
+        if columns:
+            columns+=['band','url']
     if columns==None:
         print(gdf.columns)
         return gdf
