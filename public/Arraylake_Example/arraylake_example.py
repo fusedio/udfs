@@ -1,53 +1,48 @@
-import os
-from dotenv import load_dotenv
+"""
+Example UDF for working with a large Zarr-based RGB datacube stored in Arraylake.
+This datacube is a monthly composite at 30m resolution generated from Sentinel-2 data over South America.
+(See https://earthmover.io/blog/serverless-datacube-pipeline for more details.)
+
+This UDF opens a dataset from Arraylake, subsets it to a bounding box, and coarsens it to an appropriate resolution.
+
+NOTE: using Arraylake requires an Earthmover account. This UDF will only work for Earthmover customers.
+"""
+
+from datetime import datetime
 
 import xarray as xr
 import fused
 
 import arraylake
 
-from datetime import datetime
+# remove this after Arraylake v0.13 is released an it becomes default
+arraylake.config.set({"chunkstore.use_delegated_credentials": True})
 
-
-# Example UDF for working with a large Zarr-based RGB datacube stored in Arraylake
-# This UDF opens a dataset from Arraylake, subsets it to a bounding box, and coarsens it to an appropriate resolution.
-
-# NOTE: using Arraylake requires an Earthmover account. This UDF will only work for Earthmover customers.
 
 @fused.udf
 def udf(
-    bbox: fused.types.Bbox = None,
+    bbox: fused.types.TileGDF = None,
     repo_name="earthmover-demos/sentinel-datacube-South-America-3",
     varname="rgb_median",
     time: datetime = datetime(2020, 10, 1),
-    scale_factor: int = 256 / 4000,
+    min_data_value=1000,
+    scale_factor: int = 3_000,
 ) -> xr.DataArray:
 
-    # Load secrets from environment variables following Fused recommended approach
-    env_file_path = "/mnt/cache/.env"
-    load_dotenv(env_file_path, override=True)
+    import boto3
 
-    arraylake.config.set(
-        {
-            "s3.aws_access_key_id": os.environ["AWS_ACCESS_KEY_ID"],
-            "s3.aws_secret_access_key": os.environ["AWS_SECRET_ACCESS_KEY"],
-        }
-    )
+    client = arraylake.Client(token=fused.secrets["ARRAYLAKE_TOKEN"])
+    repo = client.get_repo(repo_name, read_only=True)
 
-    client = arraylake.Client(token=os.environ["ARRAYLAKE_TOKEN"])
-    repo = client.get_repo(repo_name)
-
-    # open full dataset with Xarray lazily
     ds = repo.to_xarray(mask_and_scale=False, chunks={})
 
-    # infer the resolution of the dataset
-    # NOTE: may have to change lat / lon variable names depending on the dataset
+    # try to infer the resolution of the dataset
     pixel_res = 110e3 * abs(ds.latitude.values[1] - ds.latitude.values[0])
+    print(bbox)
     resolution = int(5 * 2 ** (15 - bbox.z[0]))
     coarsen_factor = max(int(resolution // pixel_res), 1)
     print(f"Coarsening by {coarsen_factor}")
 
-    # subset to bounding box
     min_lon, min_lat, max_lon, max_lat = bbox.bounds.values[0]
     ds = ds.sel(time=time, method="nearest")
     ds = ds.sel(
@@ -58,19 +53,16 @@ def udf(
         ),
     )
     data = ds[varname]
-    
-    # this actually loads the data
     data.load()
-
-    # apply a mask
     data = data.where(data > 0)
     if coarsen_factor > 1:
         data = data.coarsen(
             longitude=coarsen_factor, latitude=coarsen_factor, boundary="pad"
         ).mean()
-
-    # format output as expected by Fused
-    data = data.transpose("band", ...)
-    # rescale scale data for visualization
-    data = data * scale_factor
+    # fused needs dimensions in this order
+    data = data.transpose("band", "latitude", "longitude")
+    data = data - min_data_value
+    data = (256 / scale_factor) * data
+    # avoid oversaturating pixels
+    data = data.where(data.max("band") <= 256, 256)
     return data
