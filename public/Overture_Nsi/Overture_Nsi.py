@@ -1,13 +1,19 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF = None):
+def udf(bbox: fused.types.TileGDF = None, join_with_nsi: bool=True):
     import geopandas as gpd
+    import pandas as pd
     import requests
 
     if bbox.iloc[0].z < 10:
         return None
+    
     # 1. Load Overture Buildings
     gdf_overture = fused.utils.Overture_Maps_Example.get_overture(bbox=bbox)
 
+    if not join_with_nsi:
+        gdf_overture['metric'] = gdf_overture['height']
+        return gdf_overture
+        
     # 2. Load NSI from API
     response = requests.post(
         url="https://nsi.sec.usace.army.mil/nsiapi/structures?fmt=fc",
@@ -29,7 +35,6 @@ def udf(bbox: fused.types.TileGDF = None):
         "num_floors",
         "num_story",
     ]
-    join = gdf_overture.sjoin(gdf)
-    join["metric"] = join["height"]
-    # join['metric'] = join['num_story'] * 3
+    join = gdf_overture.sjoin(gdf, how='left')
+    join["metric"] = join.apply(lambda row: row.height if pd.notnull(row.height) else row.num_story*3, axis=1)
     return join[cols]
