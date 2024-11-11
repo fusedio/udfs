@@ -19,8 +19,6 @@
                 "value": "",
                 "type": "string",
                 "suggestedValues": [
-                  "2024-03-12-alpha-0",
-                  "2024-02-15-alpha-0",
                   "2024-08-20-0",
                   "2024-09-18-0",
                   "2024-10-23-0"
@@ -35,8 +33,8 @@
                   "base",
                   "places",
                   "transportation",
-                  "admins",
-                  "addresses"
+                  "addresses",
+                  "divisions"
                 ]
               },
               {
@@ -46,7 +44,6 @@
                 "suggestedValues": [
                   "land_use",
                   "water",
-                  "administrative_boundary",
                   "place",
                   "connector",
                   "segment",
@@ -130,9 +127,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/7110086c45aa0f170a063909edfb43f07fe23cdb/public/Overture_Maps_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/ceda418b78a2016930ad32c15b6f0c61e3ce39f2/public/Overture_Maps_Example/",
             "fused:gitPath": "public/Overture_Maps_Example",
-            "fused:gitRef": "7110086c45aa0f170a063909edfb43f07fe23cdb",
+            "fused:gitRef": "ceda418b78a2016930ad32c15b6f0c61e3ce39f2",
             "fused:gitAuthorNames": [
               "Isaac Brodsky",
               "Plinio Guzman",
@@ -165,8 +162,8 @@
               "https://avatars.githubusercontent.com/in/834700?v=4",
               "https://avatars.githubusercontent.com/u/92862?v=4"
             ],
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/7110086/public/Overture_Maps_Example/",
-            "fused:gitLastModified": "2024-09-25T21:38:58+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/ceda418/public/Overture_Maps_Example/",
+            "fused:gitLastModified": "2024-10-29T23:08:59+00:00",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:id": null,
