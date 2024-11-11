@@ -65,7 +65,7 @@
             "fused:slug": "Overture_Nsi",
             "fused:name": "Overture_Nsi",
             "fused:id": null,
-            "fused:description": "## Overview\n\nThis UDF uses the `get_overture` helper function to read from the Overture dataset hosted in Source Coop. It then queries the NSI API to load NSI structures as a feature collection of points.\n\nThe UDF then performs spatial join between Overture Buildings and NSI using GeoPandas with `gdf_overture.sjoin(gdf)`. This operation returns a unified table with Overture building footprints enriched with NSI attributes. Any duplicates, where multiple NSI points fall within the same building footprint, can be dropped. The resulting dataset will have NSI attributes enriched with GERS IDs and the building polygons.\n\nRead more in the associated [blog post](https://docs.fused.io/blog/overture-tiles/).",
+            "fused:description": "## Overview\n\nThis UDF uses the `get_overture` helper function to read from the Overture dataset hosted in Source Coop. It then queries the NSI API to load NSI structures as a feature collection of points.\n\nThe UDF then performs spatial join between Overture Buildings and NSI using GeoPandas with `gdf_overture.sjoin(gdf)`. This operation returns a unified table with Overture building footprints enriched with NSI attributes. Any duplicates, where multiple NSI points fall within the same building footprint, can be dropped. The resulting dataset will have NSI attributes enriched with GERS IDs and the building polygons.\n\nRead more in the associated [blog post](https://docs.fused.io/blog/overture-tiles/).\n",
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 46.18474623825725,
@@ -74,7 +74,34 @@
               "pitch": 27.21228670200425,
               "bearing": -19.66068910110218
             },
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/overture_nsi2.png"
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/overture_nsi2.png",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/ceda418b78a2016930ad32c15b6f0c61e3ce39f2/public/Overture_Nsi/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/ceda418/public/Overture_Nsi/",
+            "fused:gitPath": "public/Overture_Nsi",
+            "fused:gitRef": "ceda418b78a2016930ad32c15b6f0c61e3ce39f2",
+            "fused:gitAuthorNames": [
+              "Plinio Guzman"
+            ],
+            "fused:gitAuthorUsernames": [
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitLastModified": "2024-09-19T12:57:17+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:defaultParameters": [
+              {
+                "parameter": "join_with_nsi",
+                "value": true,
+                "type": "boolean",
+                "suggestedValues": []
+              }
+            ]
           },
           "source": "Overture_Nsi.py",
           "headers": []

@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF = None, h3_size: int = None):
+def udf(bbox: fused.types.TileGDF = None, h3_size: int = None, h3_scale: int=2):
     import h3
 
     conn = fused.utils.common.duckdb_connect()
@@ -8,10 +8,9 @@ def udf(bbox: fused.types.TileGDF = None, h3_size: int = None):
     x, y, z = bbox.iloc[0][["x", "y", "z"]]
 
     if not h3_size:
-        res_offset = 1  # lower makes the hex finer
-        h3_size = max(min(int(3 + bbox.z[0] / 1.5), 12) - res_offset, 2)
+        h3_size = max(min(int(3 + bbox.z[0] / 1.5), 12) - h3_scale, 2)
 
-    print(h3_size)
+    print(f"H3 Resolution: {h3_size}")
 
     # 2. Load Overture Buildings
     gdf = fused.utils.Overture_Maps_Example.get_overture(bbox=bbox, min_zoom=10)
@@ -40,6 +39,6 @@ def udf(bbox: fused.types.TileGDF = None, h3_size: int = None):
             GROUP BY hex"""
     ).df()
 
-    print(df)
+    # print(df)
 
     return df
