@@ -1,14 +1,20 @@
 @fused.udf
 def udf(
     bbox: fused.types.TileGDF = None,
-    metric: str = "combined_source"  # Combined
-    # metric: str = 'subtype' # Overture
-    # metric: str = 'OCC_CLS'  # Oak Ridge
+    class_source: str = 'combined', 
+    building_source: str = 'Overture'
 ):
     import duckdb
     import geopandas as gpd
 
     conn = fused.utils.common.duckdb_connect()
+
+    if class_source=='Overture':
+        metric = 'subtype'
+    elif class_source=='ORNL':
+        metric = 'OCC_CLS'
+    else: 
+        metric = 'combined_source'
 
     # 1. Load Overture Buildings
     gdf_overture = fused.utils.Overture_Maps_Example.get_overture(bbox=bbox)
@@ -22,29 +28,34 @@ def udf(
     )
 
     # 3. Enrich
-    gdf_overture = gdf_overture.sjoin(gdf_oakridge)
-    gdf_overture["combined_source"] = gdf_overture.apply(
+    if building_source == "Overture":
+        joined = gdf_overture.sjoin(gdf_oakridge)
+    elif building_source == "ORNL":
+        joined = gdf_oakridge.sjoin(gdf_overture)
+    
+    joined["combined_source"] = joined.apply(
         lambda x: x.get("subtype") or x.get("OCC_CLS").lower(), axis=1
     )
-    gdf_overture["combined_source"] = gdf_overture["combined_source"].apply(
+    joined["combined_source"] = joined["combined_source"].apply(
         lambda x: "government" if x == "civic" else x
     )
 
     # 4. Print stats with DuckDB
-    gdf_overture_str = gdf_overture.copy()
-    gdf_overture_str["geometry"] = gdf_overture_str["geometry"].astype(str)
+    joined_str = joined.copy()
+    joined_str["geometry"] = joined_str["geometry"].astype(str)
     df = conn.sql(
         """
         SELECT combined_source, COUNT(*) cnt
-        FROM gdf_overture_str
-        GROUP BY combined_source"""
+        FROM joined_str
+        GROUP BY combined_source
+        ORDER BY 2 DESC"""
     ).df()
     print(df)
 
     # 5. Decide column to render
     if metric == "OCC_CLS":
-        gdf_overture["OCC_CLS"] = gdf_overture["OCC_CLS"].str.lower()
+        joined["OCC_CLS"] = joined["OCC_CLS"].str.lower()
 
-    gdf_overture["metric"] = gdf_overture[metric]
+    joined["metric"] = joined[metric]
 
-    return gdf_overture
+    return joined

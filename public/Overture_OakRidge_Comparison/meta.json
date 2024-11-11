@@ -21,7 +21,7 @@
               "bearing": 0
             },
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/portland.png",
-            "fused:description": "## Overview\n\nThis UDF performs a spatial join between the Overture Buildings and Oak Ridge Buildings datasets, using Oak Ridge data to fill in gaps in Overture’s building categories. Note that Oak Ridge coverage is limited to the USA.\n\nSet the 'metric' parameter to view data from Overture, Oak Ridge, or both combined.",
+            "fused:description": "## Overview\n\nThis UDF performs a spatial join between the Overture Buildings and Oak Ridge Buildings datasets, using Oak Ridge data to fill in gaps in Overture’s building categories. Note that Oak Ridge coverage is limited to the USA.\n\nSet the 'metric' parameter to view data from Overture, Oak Ridge, or both combined.\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -66,30 +66,48 @@
             "fused:slug": "Overture_OakRidge_Comparison",
             "fused:name": "Overture_OakRidge_Comparison",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/48efc27c409b2497b184f4a0e9440a0ce4c10f42/public/OakRidge_Overture_Buildings/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/48efc27/public/OakRidge_Overture_Buildings/",
-            "fused:gitPath": "public/OakRidge_Overture_Buildings",
-            "fused:gitRef": "48efc27c409b2497b184f4a0e9440a0ce4c10f42",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/222e02b174fcf88209ce44f1346377c68eddfbb3/public/Overture_OakRidge_Comparison/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/222e02b/public/Overture_OakRidge_Comparison/",
+            "fused:gitPath": "public/Overture_OakRidge_Comparison",
+            "fused:gitRef": "222e02b174fcf88209ce44f1346377c68eddfbb3",
             "fused:gitAuthorNames": [
-              "Plinio Guzman",
-              null
+              "Plinio Guzman"
             ],
             "fused:gitAuthorUsernames": [
-              "pgzmnk",
-              "fused-io[bot]"
+              "pgzmnk"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/pgzmnk",
-              "https://github.com/apps/fused-io"
+              "https://github.com/pgzmnk"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/27398253?v=4",
-              "https://avatars.githubusercontent.com/in/834700?v=4"
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
             ],
-            "fused:gitLastModified": "2024-11-03T18:53:20.893Z",
+            "fused:gitLastModified": "2024-11-06T12:19:14+00:00",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "plinio@fused.io-patch-update-url-v2",
-            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/398"
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/398",
+            "fused:explorerTab": "public",
+            "fused:defaultParameters": [
+              {
+                "parameter": "class_source",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "combined",
+                  "ORNL",
+                  "Overture"
+                ]
+              },
+              {
+                "parameter": "building_source",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "ORNL",
+                  "Overture"
+                ]
+              }
+            ]
           },
           "source": "Overture_OakRidge_Comparison.py",
           "headers": []
