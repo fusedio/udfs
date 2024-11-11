@@ -47,7 +47,7 @@ def udf(bbox: fused.types.TileGDF = None, tech: str = 'Tarana', site_count: int 
                )
         return gdf
 
-    s3_url = r"s3://fused-users/digitaltwinsim/coverage_model/cov_hex_hive.parquet"
+    s3_url = r"s3://fused-asset/misc/digitaltwinsim/coverage_model/cov_hex_hive_parquet/"
     # Connect to duckdb backend using ibis
     con_ibis = ibis.duckdb.connect(temp_directory='/tmp', allow_unsigned_extensions=True, extensions=['spatial'])
     con_ibis.raw_sql("INSTALL h3 FROM community")
