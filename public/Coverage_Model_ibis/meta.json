@@ -1,0 +1,99 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Coverage_model_ibis",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.776826712285285,
+              "longitude": -122.43451508361305,
+              "zoom": 14.633051132236435,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:defaultParameters": [
+              {
+                "parameter": "tech",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "Tarana"
+                ]
+              },
+              {
+                "parameter": "site_count",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "1",
+                  "5",
+                  "10",
+                  "25",
+                  "50",
+                  "100"
+                ]
+              },
+              {
+                "parameter": "col_plot",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "Rx_dBm",
+                  "dist_m",
+                  "los",
+                  "foliage_dist3D_m",
+                  "dist2D_in_m",
+                  "n_external_wall",
+                  "PL_dB"
+                ]
+              }
+            ],
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "opacity": 5,
+                "@@type": "GeoJsonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "getRadius": 10,
+                "getFillColor": "@@=[properties.r, properties.g, properties.b, properties.a]"
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Coverage_model_ibis",
+            "fused:name": "Coverage_model_ibis",
+            "fused:id": null
+          },
+          "source": "Coverage_model_ibis.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
