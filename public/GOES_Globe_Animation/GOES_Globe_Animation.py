@@ -1,4 +1,3 @@
-# https://noaa-goes18.s3.amazonaws.com/index.html#ABI-L1b-RadC/2024/001/00/
 @fused.udf  
 def udf(
     n_frames: int = 144,
@@ -58,7 +57,7 @@ def udf(
     return r
 
 @fused.udf   
-def udf(i: int = 0, datestr:str ='2024-06-19',coarsen_factor:int=20, bounds:str ='-180,-10,-65,70' , product_name:str ='ABI-L2-CMIPF', bucket_name:str ='noaa-goes18', offset:str ='0', band: int=8, x_res: int=40, y_res: int=40): 
+def udf_nail(i: int = 0, datestr:str ='2024-06-19',coarsen_factor:int=20, bounds:str ='-180,-10,-65,70' , product_name:str ='ABI-L2-CMIPF', bucket_name:str ='noaa-goes18', offset:str ='0', band: int=8, x_res: int=40, y_res: int=40): 
     utils = fused.load("https://github.com/fusedio/udfs/tree/7306c98/public/common/").utils  
     import geopandas as gpd 
     import shapely
