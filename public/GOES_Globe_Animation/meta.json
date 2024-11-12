@@ -1,0 +1,167 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "GOES_Globe_Animation",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultParameters": [
+              {
+                "parameter": "i",
+                "value": "10"
+              }
+            ],
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 3,
+                "maxZoom": 3,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true,
+                "opacity": 2
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    255,
+                    0,
+                    255
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_single",
+            "fused:slug": "GOES_Globe_Animation",
+            "fused:name": "GOES_Globe_Animation",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/e6f8c74a8669a4c7c86f6445cfb92d57003a732d/GOES_Globe/",
+            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/e6f8c74/GOES_Globe/",
+            "fused:gitPath": "GOES_Globe",
+            "fused:gitRef": "e6f8c74a8669a4c7c86f6445cfb92d57003a732d",
+            "fused:description": "Exported from Fused UDF Workbench\n\n",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "fused-io[bot]"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/apps/fused-io"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/in/834700?v=4"
+            ],
+            "fused:gitLastModified": "2024-11-12T15:33:44+00:00",
+            "fused:gitRepo": "fusedlabs/fusedudfs",
+            "fused:gitHistory": [
+              {
+                "fused:defaultParameters": [
+                  {
+                    "parameter": "i",
+                    "value": "10"
+                  }
+                ],
+                "fused:vizConfig": {
+                  "tileLayer": {
+                    "@@type": "TileLayer",
+                    "minZoom": 3,
+                    "maxZoom": 3,
+                    "tileSize": 256,
+                    "pickable": true
+                  },
+                  "rasterLayer": {
+                    "@@type": "BitmapLayer",
+                    "pickable": true,
+                    "opacity": 2
+                  },
+                  "vectorLayer": {
+                    "@@type": "GeoJsonLayer",
+                    "stroked": true,
+                    "filled": false,
+                    "pickable": true,
+                    "lineWidthMinPixels": 1,
+                    "getLineColor": {
+                      "@@function": "hasProp",
+                      "property": "r",
+                      "present": "@@=[properties.r, properties.g, properties.b]",
+                      "absent": [
+                        255,
+                        0,
+                        255
+                      ]
+                    },
+                    "getFillColor": [
+                      255,
+                      0,
+                      0,
+                      40
+                    ]
+                  }
+                },
+                "fused:udfType": "vector_single",
+                "fused:slug": "docs_GOES_ST_DEMO_hammer",
+                "fused:name": "docs_GOES_ST_DEMO_hammer",
+                "fused:id": null,
+                "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/fedbe3c71fa4ce10af0a83514df45a6c5c25e949/noaa/GOES_DEMO_3_18_4326_Fast/",
+                "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/fedbe3c/noaa/GOES_DEMO_3_18_4326_Fast/",
+                "fused:gitPath": "noaa/GOES_DEMO_3_18_4326_Fast",
+                "fused:gitRef": "fedbe3c71fa4ce10af0a83514df45a6c5c25e949",
+                "fused:description": "Exported from Fused UDF Workbench\n\n",
+                "fused:gitAuthorNames": [
+                  "Isaac Brodsky"
+                ],
+                "fused:gitAuthorUsernames": [
+                  "isaacbrodsky"
+                ],
+                "fused:gitAuthorUrls": [
+                  "https://github.com/isaacbrodsky"
+                ],
+                "fused:gitAuthorAvatarUrls": [
+                  "https://avatars.githubusercontent.com/u/9139378?v=4"
+                ],
+                "fused:gitLastModified": "2024-04-26T18:44:52+00:00",
+                "fused:explorerTab": "team",
+                "fused:gitRepo": "fusedlabs/fusedudfs"
+              }
+            ],
+            "fused:gitPullRequestBranch": "sina@fused.io-patch-add-GOES_globe",
+            "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/334"
+          },
+          "source": "GOES_Globe_Animation.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
