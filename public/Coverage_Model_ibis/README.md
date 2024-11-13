@@ -1,8 +1,8 @@
 <!--fused:preview-->
-<p align="center"><img src="./UDF_preview.jpg" width="600" alt="UDF preview image"></p>
+<p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/powerplant.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `file` `wireless` `tutorial` `h3` `duckdb` `Ibis`
+Tags: `file` `wireless` `tutorial` `h3` `duckdb` `ibis`
 
 <!--fused:readme-->
 ## Overview
@@ -13,12 +13,3 @@ This UDF allows you to explore the outputs of a coverage model with different si
 
 - Network coverage model by [Digital Twin Sim](https://www.digitaltwinsim.com/)
 
-## Run this in any Jupyter Notebook
-
-```python
-import fused
-
-udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/Coverage_model_ibis")
-gdf = fused.run(udf=udf)
-gdf
-```

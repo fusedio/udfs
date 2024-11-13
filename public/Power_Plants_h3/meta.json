@@ -1,0 +1,98 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Power_Plants_H3",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 26.12280505765206,
+              "longitude": 11.906843757079194,
+              "zoom": 0.9227104086420859,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": false,
+                "extruded": false,
+                "filled": true,
+                "pickable": true,
+                "opacity": 0.8,
+                "getHexagon": "@@=properties.cell_id",
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getFillColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b, 128]",
+                  "absent": [
+                    255,
+                    0,
+                    255,
+                    128
+                  ]
+                }
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Power_Plants_H3",
+            "fused:name": "Power_Plants_H3",
+            "fused:id": null,
+            "fused:tags": [
+              {
+                "id": "vector",
+                "label": "vector"
+              },
+              {
+                "id": "h3",
+                "label": "h3",
+                "isCreatable": true
+              },
+              {
+                "id": "duckdb",
+                "label": "duckdb",
+                "isCreatable": true
+              },
+              {
+                "id": "energy",
+                "label": "energy",
+                "isCreatable": true
+              }
+            ],
+            "fused:description": "## Overview\n\nAggregate data from the Global Power Plant Database using dynamic H3 levels based on zoom.\n\nI recommend using a light base map for this. You can change the opacity in the Visualize tab.\n\n\n## External links\n\n- [Data Source: A Global Database of Power Plants](https://www.wri.org/research/global-database-power-plants",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/powerplant.png"
+          },
+          "source": "Power_Plants_H3.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
