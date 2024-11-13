@@ -1,5 +1,5 @@
 <!--fused:preview-->
-<p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/coveragemodel.png" width="600" alt="UDF preview image"></p>
+<p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/powerplant.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
 Tags: `file` `wireless` `tutorial` `h3` `duckdb` `ibis`
