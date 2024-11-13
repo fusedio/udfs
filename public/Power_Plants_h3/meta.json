@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "power_plant_h3_zoom",
+          "name": "Power_Plants_H3",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -56,8 +56,8 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "power_plant_h3_zoom",
-            "fused:name": "power_plant_h3_zoom",
+            "fused:slug": "Power_Plants_H3",
+            "fused:name": "Power_Plants_H3",
             "fused:id": null,
             "fused:tags": [
               {
@@ -80,9 +80,10 @@
                 "isCreatable": true
               }
             ],
-            "fused:description": "## Overview\n\nUse data from the Global Power Plant Database with an interactive zoom.\n\n## External links\n\n- [Data Source](https://datasets.wri.org/search)"
+            "fused:description": "## Overview\n\nAggregate data from the Global Power Plant Database using dynamic H3 levels based on zoom.\n\nI recommend using a light base map for this. You can change the opacity in the Visualize tab.\n\n\n## External links\n\n- [Data Source: A Global Database of Power Plants](https://www.wri.org/research/global-database-power-plants",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/powerplant.png"
           },
-          "source": "power_plant_h3_zoom.py",
+          "source": "Power_Plants_H3.py",
           "headers": [
             {
               "module_name": "utils",

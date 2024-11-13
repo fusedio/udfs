@@ -1,7 +1,3 @@
-"""
-I recommend using a light base map for this. You can change the opacity in the Visualize tab.
-"""
-
 @fused.udf
 def udf(bbox: fused.types.TileGDF=None):
     import duckdb
