@@ -59,10 +59,10 @@
                 "label": "tiff"
               }
             ],
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/cb9516aae29f79eb9692bfdc96ebe79d8fadb0b5/public/Solar_Irradiance/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/cb9516a/public/Solar_Irradiance/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/a1238d86b1c50a52e586566fb098be07d53a2a65/public/Solar_Irradiance/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/a1238d8/public/Solar_Irradiance/",
             "fused:gitPath": "public/Solar_Irradiance",
-            "fused:gitRef": "cb9516aae29f79eb9692bfdc96ebe79d8fadb0b5",
+            "fused:gitRef": "a1238d86b1c50a52e586566fb098be07d53a2a65",
             "fused:description": "#### Overview\nWorld - Solar Irradiance DNI(Direct Normal Irradiance) data.\n\nThe Solargis DNI (Direct Normal Irradiance) data provides a comprehensive view of the potential for solar energy generation across the world by focusing on the amount of solar radiation received per unit area by a surface that is perpendicular to the sun's rays.\n\n#### Data Source\n* [SolarGIS](https://solargis.com/maps-and-gis-data/download/world)\n",
             "fused:gitAuthorNames": [
               "Milind Soni",
@@ -97,12 +97,7 @@
             }
           },
           "source": "Solar_Irradiance.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],
