@@ -12,7 +12,7 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:description": "Places of interest (POIs) from [Foursquare Open Source Places](https://opensource.foursquare.com/os-places/) hosted on [Source Coop](https://source.coop/repositories/fused/fsq-os-places)",
+            "fused:description": "Places of interest (POIs) from [Foursquare Open Source Places](https://opensource.foursquare.com/os-places/) hosted on [Source Coop](https://source.coop/repositories/fused/fsq-os-places)\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -82,25 +82,25 @@
             "fused:slug": "Foursquare_Open_Source_Places",
             "fused:name": "Foursquare_Open_Source_Places",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/e1532a8e2372ec4212daf7d2e550a4ce48a5ecdf/Foursquare_Open_Source_Places/",
-            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/e1532a8/Foursquare_Open_Source_Places/",
-            "fused:gitPath": "Foursquare_Open_Source_Places",
-            "fused:gitRef": "e1532a8e2372ec4212daf7d2e550a4ce48a5ecdf",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/f274f386f4ce9dc547e00fa123aac42da633c282/public/Foursquare_Open_Source_Places/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/f274f38/public/Foursquare_Open_Source_Places/",
+            "fused:gitPath": "public/Foursquare_Open_Source_Places",
+            "fused:gitRef": "f274f386f4ce9dc547e00fa123aac42da633c282",
             "fused:assetUrl": "",
             "fused:gitAuthorNames": [
-              null
+              "Isaac Brodsky"
             ],
             "fused:gitAuthorUsernames": [
-              "fused-io[bot]"
+              "isaacbrodsky"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/apps/fused-io"
+              "https://github.com/isaacbrodsky"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/in/834700?v=4"
+              "https://avatars.githubusercontent.com/u/9139378?v=4"
             ],
-            "fused:gitLastModified": "2024-11-20T19:20:38.753Z",
-            "fused:gitRepo": "fusedlabs/fusedudfs",
+            "fused:gitLastModified": "2024-11-20T20:16:47+00:00",
+            "fused:gitRepo": "fusedio/udfs",
             "fused:defaultParameters": [
               {
                 "parameter": "release",
@@ -126,18 +126,15 @@
             "fused:tags": [
               {
                 "id": "fsq",
-                "label": "fsq",
-                "isCreatable": true
+                "label": "fsq"
               },
               {
                 "id": "poi",
-                "label": "poi",
-                "isCreatable": true
+                "label": "poi"
               },
               {
                 "id": "coop",
-                "label": "coop",
-                "isCreatable": true
+                "label": "coop"
               }
             ],
             "fused:gitHistory": [
@@ -265,7 +262,16 @@
               }
             ],
             "fused:gitPullRequestBranch": "isaac@fused.io-patch-fsq-poi-udf",
-            "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/358"
+            "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/358",
+            "fused:explorerTab": "public",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.761327936638445,
+              "longitude": -122.34185713726168,
+              "zoom": 10.02293460666542,
+              "pitch": 0,
+              "bearing": 0
+            }
           },
           "source": "Foursquare_Open_Source_Places.py",
           "headers": [
