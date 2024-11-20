@@ -1,0 +1,117 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Geoparquet_STAC_Land_Productivity",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/alexgleith1.png",
+            "fused:defaultParameters": [
+              {
+                "parameter": "year",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "2000",
+                  "2001",
+                  "2022",
+                  "2023"
+                ]
+              },
+              {
+                "parameter": "variable",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "evi2",
+                  "ndvi",
+                  "msavi"
+                ]
+              }
+            ],
+            "fused:datasets": "Digital Elevation Model",
+            "fused:tags": [
+              {
+                "id": "band-algebra",
+                "label": "band-algebra"
+              },
+              {
+                "id": "aws",
+                "label": "aws"
+              },
+              {
+                "id": "msft-pc",
+                "label": "msft-pc"
+              },
+              {
+                "id": "stac",
+                "label": "stac"
+              }
+            ],
+            "fused:description": "# Geoparquet STAC Example Publishing Land Productivity Analysis\n\n## Overview\n\nThis visualisation is from a Land Productivity analysis as part of the\n[Land Degradation Neutrality](https://www.unccd.int/land-and-life/land-degradation-neutrality/overview)\ncomponent of the UN Sustainability Goal, 15.3.\n\nThe interesting part of this use case for Fused is that it all runs serverless, so there are\nhundreds of data packages on S3, containing STAC Items pointing at Cloud Optimised GeoTIFF assets\nand rather than running a STAC API service as an index, we've created a single Geoparquet\nfile using [STAC Geoparquet](https://stac-utils.github.io/stac-geoparquet), which is then accessed\nusing the [stac-rs](https://github.com/stac-utils/stac-rs) tool and\n[odc-stac](https://odc-stac.readthedocs.io/en/latest/_api/odc.stac.load.html).\n\nThe end result is a scalable, dynamic visualisation with only Fused as a backend.\n\n## External links\n\n- [Leaflet visualisation](https://data.ldn.auspatious.com/testing/map.html?year=2023#10/17.2975/-88.3088)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Geoparquet_STAC_Example\")\narr = fused.run(udf=udf, x=4092, y=2241, z=15)\narr\n```",
+            "fused:vizConfig": {
+              "@@type": "TileLayer",
+              "minZoom": 6,
+              "maxZoom": 13,
+              "tileSize": 256,
+              "pickable": true,
+              "subLayerConfig": {
+                "@@type": "BitmapLayer"
+              }
+            },
+            "fused:udfType": "raster",
+            "fused:slug": "Geoparquet_STAC_Land_Productivity",
+            "fused:name": "Geoparquet_STAC_Land_Productivity",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/c71b1fa4e40918e31c4341ccf00bc2f5b8f5cabb/public/DEM_Tile_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/c71b1fa/public/DEM_Tile_Example/",
+            "fused:gitPath": "public/DEM_Tile_Example",
+            "fused:gitRef": "c71b1fa4e40918e31c4341ccf00bc2f5b8f5cabb",
+            "fused:explorerPin": "13",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk",
+              "Tyler Erickson",
+              null,
+              "Plinio Guzman",
+              "Isaac Brodsky"
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk",
+              "tylere",
+              "charlesfused",
+              "pgzmnk",
+              "isaacbrodsky"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk",
+              "https://github.com/tylere",
+              "https://github.com/charlesfused",
+              "https://github.com/pgzmnk",
+              "https://github.com/isaacbrodsky"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/u/92862?v=4",
+              "https://avatars.githubusercontent.com/u/148997493?v=4",
+              "https://avatars.githubusercontent.com/u/27398253?v=4",
+              "https://avatars.githubusercontent.com/u/9139378?v=4"
+            ],
+            "fused:gitLastModified": "2024-10-11T21:33:13+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs"
+          },
+          "source": "Geoparquet_STAC_Land_Productivity.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
