@@ -2,7 +2,7 @@
 def udf(
     bbox: fused.types.TileGDF,
     release: str = "2024-11-19",
-    min_zoom: int = 6,
+    min_zoom: int = 10,
     use_columns: list = ["geometry", "name", "fsq_category_ids"],
 ):
     from utils import join_fsq_categories
