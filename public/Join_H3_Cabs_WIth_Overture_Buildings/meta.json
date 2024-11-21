@@ -1,0 +1,74 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Join_H3_Cabs_WIth_Overture_Buildings",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 40.75520960737386,
+              "longitude": -73.94730441963667,
+              "zoom": 11.765321132441105,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "extruded": false,
+                "opacity": 5,
+                "getElevation": "@@=properties.cnt/65",
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getFillColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "cnt",
+                  "domain": [
+                    0,
+                    6000
+                  ],
+                  "colors": "OrYel",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                }
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Join_H3_Cabs_WIth_Overture_Buildings",
+            "fused:name": "Join_H3_Cabs_WIth_Overture_Buildings",
+            "fused:id": null,
+            "fused:description": "## Overview\n\nThis UDF takes H3 cells from [DuckDB_H3_Example](https://github.com/fusedio/udfs/tree/main/public/DuckDB_H3_Example) which aggregates cab pickups from January 2010 and joines them with [Overture_Maps_Example](https://github.com/fusedio/udfs/tree/main/public/Overture_Maps_Example) so it is possible to see the corresponding buildings.\n\nThe point of the UDF is to demosntrate that you can use the H3 index to join a lot of point data with sources like Overture Maps."
+          },
+          "source": "Join_H3_Cabs_WIth_Overture_Buildings.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
