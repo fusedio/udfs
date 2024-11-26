@@ -1,13 +1,12 @@
+# Note: Place your GEE credentials json in the `key_path` and set your `acct_serv`
 
 @fused.udf
 def udf(bbox: fused.types.TileGDF=None, acct_serv: str = "wgewneondataexplorer-7cd53ea0f@eminent-tesla-172116.iam.gserviceaccount.com"):
-
     import ee
     import xarray
     import numpy as np
     import xee
     import json
-    
      
     # Authenticate GEE
     key_path = '/mnt/cache/gp_creds.json'
