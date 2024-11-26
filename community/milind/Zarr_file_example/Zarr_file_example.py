@@ -1,8 +1,5 @@
 @fused.udf
 def udf(bbox: fused.types.Bbox = None, layer: str = "ndvi", time: int = 2):
-    import math
-    import os
-
     import geopandas as gpd
     import numpy as np
     import rioxarray
@@ -36,18 +33,20 @@ def udf(bbox: fused.types.Bbox = None, layer: str = "ndvi", time: int = 2):
     else:
         print("No time dimension found in the dataset.")
 
-    ds = ds.sel(latitude=slice(maxy, miny), longitude=slice(minx, maxx)).isel(time=time)
+    # Selecting subset and tile for the current tile
+    ds_tile = ds.sel(latitude=slice(maxy, miny), longitude=slice(minx, maxx)).isel(time=time)
+    arr = ds_tile[layer]
 
-    data_array = ds[layer].values.squeeze()
+    # Reprojecting to Web Mercator for visualization
+    arr = arr.rio.set_crs("EPSG:4326")
+    arr_reprojected = arr.rio.reproject("EPSG:3857")
+
+    data_array = arr_reprojected.values.squeeze()
     print(data_array)
 
-    # Compute min and max values, excluding NaN
-    valid_min = math.floor(np.nanmin(data_array))
-    valid_max = math.ceil(np.nanmax(data_array))
-
     # Masking the NaN values and replcing with values outside min max
-    masked_data = np.nan_to_num(data_array, nan=valid_min - 1)
+    masked_data = np.nan_to_num(data_array, nan=-2)
 
     # Using the minmax for color mapping
-    arr = utils.arr_to_plasma(masked_data, min_max=(valid_min, valid_max))
+    arr = utils.arr_to_plasma(masked_data, min_max=(-1, 1))
     return arr
