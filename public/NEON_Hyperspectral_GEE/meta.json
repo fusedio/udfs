@@ -1,0 +1,81 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "NEON_Hyperspectral_GEE",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 31.825789013693836,
+              "longitude": -110.86448999039044,
+              "zoom": 10.66729173001565,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "PinkYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "NEON_Hyperspectral_GEE",
+            "fused:name": "NEON_Hyperspectral_GEE",
+            "fused:id": null
+          },
+          "source": "NEON_Hyperspectral_GEE.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
