@@ -1,0 +1,63 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Simple_Trips_Gen",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 2,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorCategories",
+                  "attr": "route_type",
+                  "domain": [
+                    "home",
+                    "work"
+                  ],
+                  "colors": "Bold"
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Simple_Trips_Gen",
+            "fused:name": "Simple_Trips_Gen",
+            "fused:id": null
+          },
+          "source": "Simple_Trips_Gen.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
