@@ -38,7 +38,7 @@ def udf(bbox: fused.types.Bbox = None, layer: str = "ndvi", time: int = 2, targe
     da = da.sel(latitude=slice(miny, maxy), longitude=slice(minx, maxx))
     
     # Reprojecting to Web Mercator for visualization
-    arr = arr.rio.set_crs("EPSG:4326")
+    arr = da.rio.set_crs("EPSG:4326")
     arr_reprojected = arr.rio.reproject("EPSG:3857")
 
     data_array = arr_reprojected.values.squeeze()
