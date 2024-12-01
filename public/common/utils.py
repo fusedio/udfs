@@ -1927,7 +1927,14 @@ def get_da_bounds(da, xy_cols=("longitude", "latitude"), pixel_position='center'
         return (x_list[0], y_list[-1], x_list[-1], y_list[0])
         
         
-    
+def da_fit_to_resolution(da, target_shape):
+    import numpy as np
+    dims = da.dims
+    new_coords = {
+        dim: np.linspace(da[dim].min(), da[dim].max(), target_shape[i])
+        for i, dim in enumerate(dims)
+    }
+    return da.interp(new_coords)    
 
 
 def clip_arr(arr, bounds_aoi, bounds_total=(-180, -90, 180, 90)):
