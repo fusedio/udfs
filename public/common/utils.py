@@ -1716,7 +1716,7 @@ def run_query(query, return_arrow=False):
         return con.sql(query).df()
 
 
-def ds_to_tile(ds, variable, bbox, na_values=0):
+def ds_to_tile(ds, variable, bbox, na_values=0, cols_lonlat=('x', 'y')):
     da = ds[variable]
     x_slice, y_slice = bbox_to_xy_slice(
         bbox.total_bounds, ds.rio.shape, ds.rio.transform()
@@ -1732,9 +1732,9 @@ def ds_to_tile(ds, variable, bbox, na_values=0):
     if window.row_off + window.height > da.shape[-1]:
         py1 = window.row_off + window.height - da.shape[-1]
     # data = da.isel(x=x_slice, y=y_slice, time=0).fillna(0)
-    data = da.isel(x=x_slice, y=y_slice).fillna(0)
-    data = data.pad(
-        x=(px0, px1), y=(py0, py1), mode="constant", constant_values=na_values
+    data = da.isel({cols_lonlat[0]:x_slice, cols_lonlat[1]:y_slice}).fillna(0)
+    data = data.pad({cols_lonlat[0]:(px0, px1), cols_lonlat[1]:(py0, py1)},
+                     mode="constant", constant_values=na_values
     )
     return data
 
