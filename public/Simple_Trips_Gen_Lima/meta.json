@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "Simple_Trips_Gen",
+          "name": "Simple_Trips_Gen_Lima",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -28,8 +28,9 @@
                 "@@type": "GeoJsonLayer",
                 "stroked": true,
                 "filled": false,
+                "opacity": 0.1,
                 "pickable": true,
-                "lineWidthMinPixels": 2,
+                "lineWidthMinPixels": 7,
                 "pointRadiusMinPixels": 1,
                 "getLineColor": {
                   "@@function": "colorCategories",
@@ -38,7 +39,7 @@
                     "home",
                     "work"
                   ],
-                  "colors": "Bold"
+                  "colors": "Tropic"
                 },
                 "getFillColor": [
                   208,
@@ -49,11 +50,13 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "Simple_Trips_Gen",
-            "fused:name": "Simple_Trips_Gen",
-            "fused:id": null
+            "fused:slug": "Simple_Trips_Gen_Lima",
+            "fused:name": "Simple_Trips_Gen_Lima",
+            "fused:id": null,
+            "fused:description": "# Overview: Simple trips simulation using GeoPandas and OSMnx. \n\nDesigned to help address the challenges faced by cities with limited resources for urban planning, this tool models trips based on real-world population density, zoning data, and road networks. With parameters such as trip schedules, origins, and destinations, the tool calculates travel paths.\n\nFuture enhancements aim to expand the tool’s capabilities, including support for custom and larger areas of interest, multimodal routing (walking, biking, driving, transit), and metrics for evaluating mobility outcomes. By empowering planners with cost-effective simulations, this project helps inform critical infrastructure decisions, such as optimizing transit routes or assessing the impact of new road networks. Stay tuned for updates and a demo to explore its potential!\n\n## External links\n\n- [Code reference link](https://github.com/Claudio9701/TripsSimulator)\n\n",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/lima.png"
           },
-          "source": "Simple_Trips_Gen.py",
+          "source": "Simple_Trips_Gen_Lima.py",
           "headers": []
         }
       }
