@@ -6,7 +6,6 @@ def udf(
     chip_len: int = 256,
     colored: bool = True
 ):
-    """"""
     import numpy as np
 
     # Helper Functions

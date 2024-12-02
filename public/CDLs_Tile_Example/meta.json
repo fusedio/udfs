@@ -77,9 +77,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/aa3695ae0df4c6a9bacb28f3b85fd1d91e73cc47/public/CDLs_Tile_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/d222aa41ba2fdbcc8f11de688644963091806e39/public/CDLs_Tile_Example/",
             "fused:gitPath": "public/CDLs_Tile_Example",
-            "fused:gitRef": "aa3695ae0df4c6a9bacb28f3b85fd1d91e73cc47",
+            "fused:gitRef": "d222aa41ba2fdbcc8f11de688644963091806e39",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -112,8 +112,8 @@
               "https://avatars.githubusercontent.com/u/9139378?v=4",
               "https://avatars.githubusercontent.com/in/834700?v=4"
             ],
-            "fused:gitLastModified": "2024-08-29T19:56:11+00:00",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/aa3695a/public/CDLs_Tile_Example/",
+            "fused:gitLastModified": "2024-09-25T21:38:58+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/d222aa4/public/CDLs_Tile_Example/",
             "fused:explorerPin": "2",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs"
