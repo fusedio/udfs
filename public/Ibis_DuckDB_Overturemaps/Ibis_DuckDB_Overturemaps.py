@@ -1,6 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.ViewportGDF):
-    import duckdb
+def udf(bbox: fused.types.ViewportGDF = None):
     import ibis
     from ibis import _
 
