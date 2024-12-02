@@ -1,22 +1,20 @@
 import geopandas as gpd
 from shapely.geometry import box
+from datetime import datetime, timedelta
+
 aoi = gpd.GeoDataFrame({'geometry': [box(*[-77.0685986328125, -12.055065023002463, -77.04211914062499, -12.032977469134593])]}).set_crs('EPSG:4326', allow_override=True)
 
 @fused.udf
 def udf(
     aoi: gpd.GeoDataFrame = aoi,
-    start_hour: str = "2024-11-26 17:50:00", 
-    end_hour: str = "2024-11-26 18:00:00",
+    start_hour: str = datetime.now(), 
+    end_hour: str = datetime.now() + timedelta(hours=15),
     n_trips: int = 10 
 ):
     import time
-    from datetime import datetime
-
-    import geopandas as gpd
     import numpy as np
     import osmnx as ox
     import pandas as pd
-    from shapely.geometry import box
     
     utils = fused.load("https://github.com/fusedio/udfs/blob/main/public/common/").utils
 
@@ -141,10 +139,23 @@ def udf(
     )
 
     # Filter the data to the time range
+    print(f"{start_hour = }")
+    print(f"{end_hour = }")
+    print(f"{df['start_dts'].describe() = }")
     df = df[(df["start_dts"] >= start_hour) & (df["start_dts"] <= end_hour)]
     df["start_dts"] = df["start_dts"].apply(lambda x: x.timestamp())
-    param_list = list(df.sample(n=n_trips).itertuples(index=False, name=None))
     
+    print(f"{df.shape = }")
+    if df.shape[0] == 0:
+        return gpd.GeoDataFrame(df, geometry=[])
+        
+    print(f"{n_trips = }")
+    if df.shape[0] > n_trips:
+        df_sample = df.sample(n=n_trips)
+    else:
+        df_sample = df
+    
+    param_list = list(df_sample.itertuples(index=False, name=None))
 
     # Generate the trips to work and to home
     start = time.time()
