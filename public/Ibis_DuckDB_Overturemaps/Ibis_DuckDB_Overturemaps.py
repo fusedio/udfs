@@ -3,7 +3,7 @@ def udf(bbox: fused.types.ViewportGDF = None):
     import ibis
     from ibis import _
 
-    # Instantiate Ibis client
+    # Connect to an in-memory database
     con = ibis.duckdb.connect()
 
     # Overture S3 bucket
@@ -36,16 +36,13 @@ def udf(bbox: fused.types.ViewportGDF = None):
 
     # Filter by infrastructure class
     ibis_table = ibis_table.filter(
-        ibis_table.infra_class.isin(
+        _.infra_class.isin(
             [
                 "toilets",
                 "atm",
-                "information",
-                "vending_machine",
-                "fountain",
-                "viewpoint",
-                "post_box",
                 "drinking_water",
+                "information",
+                "vending_machine"
             ]
         )
     )
@@ -53,5 +50,5 @@ def udf(bbox: fused.types.ViewportGDF = None):
     # Show value counts
     print(ibis_table.infra_class.value_counts().to_pandas())
 
-    # Return as Pandas
+    # Return as GeoPandas dataframe
     return ibis_table.to_pandas()
