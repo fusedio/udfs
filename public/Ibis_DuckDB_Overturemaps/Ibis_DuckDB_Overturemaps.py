@@ -4,39 +4,47 @@ def udf(bbox: fused.types.ViewportGDF):
     import ibis
     from ibis import _
 
-    @fused.cache 
-    def read_data(bbox, url, con):
+    # Instantiate Ibis client
+    con_ddb = con = ibis.duckdb.connect()
 
-        minx, miny, maxx, maxy = bbox.bounds.values[0]
+    # Overture S3 bucket
+    url = "s3://overturemaps-us-west-2/release/2024-11-13.0/theme=base/type=infrastructure/*"
 
-        t = con.read_parquet(url, table_name="infra-usa")
-        
-        expr = t.filter(
-            _.bbox.xmin > minx,
-            _.bbox.ymin > miny,
-            _.bbox.xmax < maxx,
-            _.bbox.ymax < maxy,
-            _.subtype.isin(["pedestrian", "water"]),
-        ).select(["geometry", "subtype", "class"])
-        
-        return expr
+    # Structure bounding box to spatially filter viewport
+    minx, miny, maxx, maxy = bbox.bounds.values[0]
 
+    # Read data
+    t = con.read_parquet(url, table_name="infra-usa")
 
-    con_ddb = ibis.duckdb.connect()
-    url = (
-        "s3://overturemaps-us-west-2/release/2024-11-13.0/theme=base/type=infrastructure/*"
+    ibis_table = t.filter(
+        _.bbox.xmin > minx,
+        _.bbox.ymin > miny,
+        _.bbox.xmax < maxx,
+        _.bbox.ymax < maxy,
+        _.subtype.isin(["pedestrian", "water"]),
+    ).select(["geometry", "subtype", "class"])
+
+    # Rename column for convenience
+    ibis_table = ibis_table.rename(infra_class="class")
+
+    # Filter by infrastructure class
+    ibis_table = ibis_table.filter(
+        ibis_table.infra_class.isin(
+            [
+                "toilets",
+                "atm",
+                "information",
+                "vending_machine",
+                "fountain",
+                "viewpoint",
+                "post_box",
+                "drinking_water",
+            ]
         )
+    )
 
-    info = read_data(bbox, url, con_ddb)
-    info = info.rename(infra_class="class")
+    # Show value counts
+    print(ibis_table.infra_class.value_counts().to_pandas())
 
-    info = info.filter(info.infra_class.isin(["toilets", 
-                                             "drinking_water",
-                                             "bench"]))
-     
-    print(info.infra_class.value_counts().to_pandas())
-
-    gdf = info.to_pandas()
-
-
-    return gdf
+    # Return as Pandas
+    return ibis_table.to_pandas()
