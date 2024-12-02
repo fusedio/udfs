@@ -12,7 +12,6 @@ def udf(
     n_trips: int = 10 
 ):
     import time
-    import geopandas as gpd
     import numpy as np
     import osmnx as ox
     import pandas as pd
@@ -157,7 +156,7 @@ def udf(
         df_sample = df
     
     param_list = list(df_sample.itertuples(index=False, name=None))
-    
+
     # Generate the trips to work and to home
     start = time.time()
     result = utils.run_pool(generate_single_trip_v2, param_list)
