@@ -44,16 +44,16 @@
                   "attr": "infra_class",
                   "domain": [
                     "toilets",
+                    "atm",
+                    "drinking_water",
+                    "information",
+                    "vending_machine",
                     "weir",
                     "dam",
-                    "atm",
-                    "information",
                     "bench",
-                    "vending_machine",
                     "fountain",
                     "viewpoint",
-                    "post_box",
-                    "drinking_water"
+                    "post_box"
                   ],
                   "colors": "Bold",
                   "nullColor": [
