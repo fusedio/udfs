@@ -83,10 +83,10 @@
             "fused:slug": "Foursquare_Open_Source_Places",
             "fused:name": "Foursquare_Open_Source_Places",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/ffea8e133e07497d43bf13ae5c0c52342dc4faa8/public/Foursquare_Open_Source_Places/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/ffea8e1/public/Foursquare_Open_Source_Places/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/4e409a04cfbab7ef6d34124d6e33018d8c09ea52/public/Foursquare_Open_Source_Places/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/4e409a0/public/Foursquare_Open_Source_Places/",
             "fused:gitPath": "public/Foursquare_Open_Source_Places",
-            "fused:gitRef": "ffea8e133e07497d43bf13ae5c0c52342dc4faa8",
+            "fused:gitRef": "4e409a04cfbab7ef6d34124d6e33018d8c09ea52",
             "fused:assetUrl": "",
             "fused:gitAuthorNames": [
               "Isaac Brodsky",
@@ -104,7 +104,7 @@
               "https://avatars.githubusercontent.com/u/9139378?v=4",
               "https://avatars.githubusercontent.com/in/834700?v=4"
             ],
-            "fused:gitLastModified": "2024-11-20T22:20:21+00:00",
+            "fused:gitLastModified": "2024-11-21T02:06:27+00:00",
             "fused:gitRepo": "fusedio/udfs",
             "fused:defaultParameters": [
               {
@@ -112,7 +112,8 @@
                 "value": "",
                 "type": "string",
                 "suggestedValues": [
-                  "2024-11-19"
+                  "2024-11-19",
+                  "2024-12-03"
                 ]
               },
               {
