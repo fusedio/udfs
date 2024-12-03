@@ -116,25 +116,29 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "nex_gddp_cmip6",
-            "fused:name": "nex_gddp_cmip6",
+            "fused:slug": "NEX_GDDP_CMIP6",
+            "fused:name": "NEX_GDDP_CMIP6",
             "fused:id": null,
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/nex_gddp_cmip6.png",
+            "fused:assetUrl": "https://raw.githubusercontent.com/fusedio/udfs/main/community/milind/Zarr_file_example/fused-screenshot(26).png",
             "fused:tags": [
               {
                 "id": "zarr",
                 "label": "zarr"
               },
               {
-                "id": "climate",
-                "label": "climate"
+                "id": "Band algebra",
+                "label": "Band algebra"
+              },
+              {
+                "id": "Xarray",
+                "label": "Xarray"
               }
             ],
-            "fused:description": "# Vida NEX-GDDP-based climate model\n\nThis UDF operates on a given bounding box ('bbox') to select and show the output from\nVida's processed NEX-GDDP-based ensemble climate data for the year 2080 by default. \n",
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/e6e6426ef2eeb10e63acaca7789fd099a902d600/community/jacobbieker/nex_gddp_cmip6/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/e6e6426/community/jacobbieker/nex_gddp_cmip6/",
-            "fused:gitPath": "community/jacobbieker/nex_gddp_cmip6",
-            "fused:gitRef": "e6e6426ef2eeb10e63acaca7789fd099a902d600",
+            "fused:description": "This User-Defined Function (UDF) operates on a given bounding box ('bbox') to select and show the output from\nVida's processed NEX-GDDP-based ensemble climate data for the year 2080 by default. \n\n",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/c087d741f7b87620576ab45e4c916ba5ba7c7fdf/community/milind/Zarr_file_example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/c087d74/community/milind/Zarr_file_example/",
+            "fused:gitPath": "community/milind/Zarr_file_example",
+            "fused:gitRef": "c087d741f7b87620576ab45e4c916ba5ba7c7fdf",
             "fused:gitAuthorNames": [
               "Jacob Prince-Bieker"
             ],
@@ -147,7 +151,7 @@
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/7170359?v=4"
             ],
-            "fused:gitLastModified": "2024-12-03T16:07:37+00:00",
+            "fused:gitLastModified": "2024-07-02T15:37:29+00:00",
             "fused:explorerTab": "community",
             "fused:gitRepo": "fusedio/udfs",
             "fused:defaultViewState": {
@@ -159,7 +163,7 @@
               "bearing": 0
             }
           },
-          "source": "nex_gddp_cmip6.py",
+          "source": "NEX_GDDP_CMIP6.py",
           "headers": []
         }
       }
