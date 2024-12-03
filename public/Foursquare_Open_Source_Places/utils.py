@@ -27,7 +27,9 @@ def join_fsq_categories(df, *, release):
 def get_fsq_categories(release):
     import pandas as pd
 
-    url = f"s3://fsq-os-places-us-east-1/release/dt={release}/categories/parquet/categories.snappy.parquet"
+    filename = "categories.snappy.parquet" if release == "2024-11-19" else "categories.zstd.parquet"
+
+    url = f"s3://fsq-os-places-us-east-1/release/dt={release}/categories/parquet/{filename}"
     df_cat = pd.read_parquet(url)
     return df_cat
 
