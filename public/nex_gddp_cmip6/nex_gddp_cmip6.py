@@ -1,18 +1,24 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF = None, layer: str = "tas", time: int = 2, target_shape: list = [512,512]):
+def udf(
+    bbox: fused.types.TileGDF = None,
+    layer: str = "tas",
+    time: int = 2,
+    target_shape: list = [512, 512],
+):
+    import json
     import math
     import os
-    import fsspec
-    import os
-    import json
 
+    import fsspec
     import geopandas as gpd
     import numpy as np
     import rioxarray
     import shapely
     import xarray as xr
 
-    ds = xr.open_zarr("gs://fused_public/zarr/wri_cmip6_median_ssp585.zarr",)
+    ds = xr.open_zarr(
+        "gs://fused_public/zarr/wri_cmip6_median_ssp585.zarr",
+    )
 
     if bbox["z"].iloc[0] < 1:
         print("z less than 1")
@@ -20,7 +26,7 @@ def udf(bbox: fused.types.TileGDF = None, layer: str = "tas", time: int = 2, tar
     utils = fused.load(
         "https://github.com/fusedio/udfs/tree/cbc5482/public/common/"
     ).utils
-    
+
     minx, miny, maxx, maxy = bbox.total_bounds
     variable_names = list(ds.data_vars)
 
@@ -34,10 +40,12 @@ def udf(bbox: fused.types.TileGDF = None, layer: str = "tas", time: int = 2, tar
         print("No time dimension found in the dataset.")
 
     # Selecting subset and tile for the current tile
-    buffer = ds.lon[1]-ds.lon[0]
+    buffer = ds.lon[1] - ds.lon[0]
     ds = ds.sel(time=2080)
-    ds_buffer = ds.sel(lat=slice(miny-buffer, maxy+buffer), lon=slice(minx-buffer, maxx+buffer))
-    da=utils.da_fit_to_resolution(ds_buffer[layer], target_shape)
+    ds_buffer = ds.sel(
+        lat=slice(miny - buffer, maxy + buffer), lon=slice(minx - buffer, maxx + buffer)
+    )
+    da = utils.da_fit_to_resolution(ds_buffer[layer], target_shape)
     da = da.sel(lat=slice(miny, maxy), lon=slice(minx, maxx))
 
     da = da.rename({"lat": "y", "lon": "x"})
@@ -56,5 +64,7 @@ def udf(bbox: fused.types.TileGDF = None, layer: str = "tas", time: int = 2, tar
     # Masking the NaN values and replcing with values outside min max
     masked_data = np.nan_to_num(data_array, nan=valid_min - 1)
     # Using the minmax for color mapping
-    arr = utils.arr_to_plasma(masked_data, min_max=(valid_min, valid_max))
+    arr = utils.arr_to_plasma(
+        masked_data, min_max=(valid_min, valid_max), colormap="RdYlBu"
+    )
     return arr
