@@ -1,0 +1,169 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "NEX_GDDP_Cmip6_VIDA",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultParameters": [
+              {
+                "parameter": "layer",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "biomes",
+                  "drought_code_max",
+                  "drought_code_mean",
+                  "fcci_ba",
+                  "fcci_fraction_of_burnable_area",
+                  "fcci_fraction_of_observed_area",
+                  "fcci_number_of_patches",
+                  "fwi_max",
+                  "fwi_mean",
+                  "gfed_ba",
+                  "gfed_region",
+                  "gwis_ba",
+                  "lai",
+                  "lccs_class_1",
+                  "lccs_class_2",
+                  "lccs_class_3",
+                  "lccs_class_4",
+                  "lccs_class_5",
+                  "lccs_class_6",
+                  "lccs_class_7",
+                  "lccs_class_8",
+                  "lsm",
+                  "lst_day",
+                  "mslp",
+                  "ndvi",
+                  "pop_dens",
+                  "rel_hum",
+                  "skt",
+                  "ssr",
+                  "ssrd",
+                  "sst",
+                  "swvl1",
+                  "swvl2",
+                  "swvl3",
+                  "swvl4",
+                  "t2m_max",
+                  "t2m_mean",
+                  "t2m_min",
+                  "tp",
+                  "vpd",
+                  "ws10"
+                ]
+              }
+            ],
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 9,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "g",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    0,
+                    0,
+                    0
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ],
+                "getLineWidth": {
+                  "@@function": "hasValue",
+                  "property": "value",
+                  "fallback": 0
+                },
+                "getRadius": {
+                  "@@function": "hasValue",
+                  "property": "value",
+                  "fallback": 0
+                },
+                "visible": {
+                  "@@function": "checkValue",
+                  "property": "value",
+                  "valid": true,
+                  "invalid": false
+                }
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "NEX_GDDP_Cmip6_VIDA",
+            "fused:name": "NEX_GDDP_Cmip6_VIDA",
+            "fused:id": null,
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/nex_gddp_cmip6.png",
+            "fused:tags": [
+              {
+                "id": "zarr",
+                "label": "zarr"
+              },
+              {
+                "id": "climate",
+                "label": "climate"
+              }
+            ],
+            "fused:description": "# Vida NEX-GDDP-based climate model\n\nThis UDF operates on a given bounding box ('bbox') to select and show the output from\nVida's processed NEX-GDDP-based ensemble climate data for the year 2080 by default.\n",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/cc9fed6a7b5b21cd9c2db4e388ac584ce04ac59b/public/nex_gddp_cmip6/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/cc9fed6/public/nex_gddp_cmip6/",
+            "fused:gitPath": "public/nex_gddp_cmip6",
+            "fused:gitRef": "cc9fed6a7b5b21cd9c2db4e388ac584ce04ac59b",
+            "fused:gitAuthorNames": [
+              "Jacob Prince-Bieker"
+            ],
+            "fused:gitAuthorUsernames": [
+              "jacobbieker"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/jacobbieker"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/7170359?v=4"
+            ],
+            "fused:gitLastModified": "2024-12-03T16:52:07+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 21.932266976283955,
+              "longitude": 75.78150420155161,
+              "zoom": 1.9067527966901476,
+              "pitch": 0,
+              "bearing": 0
+            }
+          },
+          "source": "NEX_GDDP_Cmip6_VIDA.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
