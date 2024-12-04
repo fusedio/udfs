@@ -1,5 +1,5 @@
 # To use these functions, add the following command in your UDF:
-# `common = fused.public.common`
+# `common = fused.utils.common`
 from __future__ import annotations
 import fused
 import pandas as pd
@@ -387,11 +387,14 @@ def read_tiff(
         try:
             with rasterio.open(input_tiff_path, OVERVIEW_LEVEL=overview_level) as src:
                 # with rasterio.Env():
-
+                if src.crs:
+                    src_crs = src_crs
+                else:
+                    src_crs=4326
                 bbox = bbox.to_crs(3857)
-                # transform_bounds = rasterio.warp.transform_bounds(3857, src.crs, *bbox["geometry"].bounds.iloc[0])
-                window = src.window(*bbox.to_crs(src.crs).total_bounds)
-                original_window = src.window(*bbox.to_crs(src.crs).total_bounds)
+                # transform_bounds = rasterio.warp.transform_bounds(3857, src_crs, *bbox["geometry"].bounds.iloc[0])
+                window = src.window(*bbox.to_crs(src_crs).total_bounds)
+                original_window = src.window(*bbox.to_crs(src_crs).total_bounds)
                 gridded_window = rasterio.windows.round_window_to_full_blocks(
                     original_window, [(1, 1)]
                 )
@@ -404,7 +407,6 @@ def read_tiff(
                     mask = np.isin(source_data, filter_list, invert=True)
                     source_data[mask] = 0
                 src_transform = src.window_transform(window)
-                src_crs = src.crs
                 minx, miny, maxx, maxy = bbox.total_bounds
                 dx = (maxx - minx) / output_shape[-1]
                 dy = (maxy - miny) / output_shape[-2]
