@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.ViewportGDF, res=14):
+def udf(bbox: fused.types.TileGDF, res=14):
     import h3
     import pandas as pd
 
