@@ -1,0 +1,76 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "emerald_earthworm",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "emerald_earthworm",
+            "fused:slug": "emerald_earthworm",
+            "fused:gitRepo": "fusedlabs/fusedudfs",
+            "fused:gitRef": "401ca941635527d97b731607f9b71161f7e29565",
+            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/401ca941635527d97b731607f9b71161f7e29565/emerald_earthworm/",
+            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/401ca94/emerald_earthworm/",
+            "fused:gitPath": "emerald_earthworm",
+            "fused:gitLastModified": "2024-12-05T21:59:03.033Z",
+            "fused:gitPullRequestBranch": "chloe@fused.io-patch-test-prod",
+            "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/384",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "Emrld",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "emerald_earthworm.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
