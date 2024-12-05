@@ -1,0 +1,76 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "copper_pinniped",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "copper_pinniped",
+            "fused:slug": "copper_pinniped",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "8f7fcdfd03797d61693a58f09dc612e6d8ebc61e",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/8f7fcdfd03797d61693a58f09dc612e6d8ebc61e/public/copper_pinniped/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/8f7fcdf/public/copper_pinniped/",
+            "fused:gitPath": "public/copper_pinniped",
+            "fused:gitLastModified": "2024-12-04T01:15:44.901Z",
+            "fused:gitPullRequestBranch": "chloe@fused.io-patch-kdfkksdjhfkzdhkf",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/476",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "Peach",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "copper_pinniped.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
