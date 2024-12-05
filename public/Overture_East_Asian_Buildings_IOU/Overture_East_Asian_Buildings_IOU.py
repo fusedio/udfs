@@ -33,7 +33,7 @@ def udf(bbox: fused.types.TileGDF, res=14):
     # 3.3 Concat
     out4 = pd.concat([out2, out3])
 
-    # 4. Calculate the ration between 'intersection' and 'symmetric_difference' for each 'id'
+    # 4. Calculate IOU for each 'id'
     counts = out4.groupby(["id", "how"]).size().unstack(fill_value=0)
     counts["ratio"] = counts["intersection"] / (
         counts["intersection"] + counts["symmetric_difference"]
