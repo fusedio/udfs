@@ -1,0 +1,86 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Buildings_Proximity_to_Coffee_Shops_Bushwick",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 40.699228214874445,
+              "longitude": -73.92188723541327,
+              "zoom": 14.474395793127378,
+              "pitch": 60,
+              "bearing": 0
+            },
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "extruded": true,
+                "opacity": 1,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "coffee_score",
+                  "present": "@@=properties.coffee_score",
+                  "absent": 1
+                },
+                "elevationScale": 30,
+                "getFillColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "coffee_score",
+                  "domain": [
+                    0,
+                    25
+                  ],
+                  "colors": "Emrld",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                }
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Buildings_Proximity_to_Coffee_Shops_Bushwick",
+            "fused:name": "Buildings_Proximity_to_Coffee_Shops_Bushwick",
+            "fused:id": null,
+            "fused:description": "## Overview\n\nVisualize Buildings Near Coffee Shops with Isochrones and H3 in Bushwick, Brooklyn.\n\nDarker means higher `coffee_score`.",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/coffeeshops.png"
+          },
+          "source": "Buildings_Proximity_to_Coffee_Shops_Bushwick.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
