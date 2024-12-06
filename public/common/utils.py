@@ -452,6 +452,16 @@ def read_tiff(
         return destination_data
 
 
+def get_bounds_tiff(tiff_path):
+    import rasterio
+    with rasterio.open(tiff_path) as src:
+        bounds = src.bounds
+        import shapely 
+        import geopandas as gpd
+        bbox = gpd.GeoDataFrame({}, geometry=[shapely.box(*bounds)],crs=src.crs)
+        bbox = bbox.to_crs(4326)
+        return bbox
+
 def gdf_to_mask_arr(gdf, shape, first_n=None):
     from rasterio.features import geometry_mask
 
