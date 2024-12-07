@@ -388,7 +388,7 @@ def read_tiff(
             with rasterio.open(input_tiff_path, OVERVIEW_LEVEL=overview_level) as src:
                 # with rasterio.Env():
                 if src.crs:
-                    src_crs = src_crs
+                    src_crs = src.crs
                 else:
                     src_crs=4326
                 bbox = bbox.to_crs(3857)
