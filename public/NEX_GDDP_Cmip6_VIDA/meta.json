@@ -131,23 +131,27 @@
               }
             ],
             "fused:description": "# Vida NEX-GDDP-based climate model\n\nThis UDF operates on a given bounding box ('bbox') to select and show the output from\nVida's processed NEX-GDDP-based ensemble climate data for the year 2080 by default.\n",
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/f96ca22af9eceb56ee6518b0c6adafe0dddd0111/public/NEX_GDDP_Cmip6_VIDA/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/f96ca22/public/NEX_GDDP_Cmip6_VIDA/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/3717d5dccd333894adef907970e67a9da50d15e5/public/NEX_GDDP_Cmip6_VIDA/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/3717d5d/public/NEX_GDDP_Cmip6_VIDA/",
             "fused:gitPath": "public/NEX_GDDP_Cmip6_VIDA",
-            "fused:gitRef": "f96ca22af9eceb56ee6518b0c6adafe0dddd0111",
+            "fused:gitRef": "3717d5dccd333894adef907970e67a9da50d15e5",
             "fused:gitAuthorNames": [
-              "Jacob Prince-Bieker"
+              "Jacob Prince-Bieker",
+              null
             ],
             "fused:gitAuthorUsernames": [
-              "jacobbieker"
+              "jacobbieker",
+              "fused-io[bot]"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/jacobbieker"
+              "https://github.com/jacobbieker",
+              "https://github.com/apps/fused-io"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/7170359?v=4"
+              "https://avatars.githubusercontent.com/u/7170359?v=4",
+              "https://avatars.githubusercontent.com/in/834700?v=4"
             ],
-            "fused:gitLastModified": "2024-12-04T14:08:56+00:00",
+            "fused:gitLastModified": "2024-12-08T12:33:04+00:00",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:defaultViewState": {
