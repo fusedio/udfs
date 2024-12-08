@@ -9,6 +9,7 @@ def udf(
 ):
     import numpy as np
     import xarray as xr
+    import math
 
     ds = xr.open_zarr("gs://fused_public/zarr/wri_cmip6_median_ssp585.zarr")
 
