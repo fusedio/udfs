@@ -15,13 +15,13 @@
             "fused:name": "copper_pinniped",
             "fused:slug": "copper_pinniped",
             "fused:gitRepo": "fusedio/udfs",
-            "fused:gitRef": "e43840f6a4fce25b05ea67b4bb491c288750aafa",
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/e43840f6a4fce25b05ea67b4bb491c288750aafa/public/copper_pinniped/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/e43840f/public/copper_pinniped/",
+            "fused:gitRef": "8e7c26f5f72fbc47661d0d3a0ad1c6c73edd835c",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/8e7c26f5f72fbc47661d0d3a0ad1c6c73edd835c/public/copper_pinniped/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/8e7c26f/public/copper_pinniped/",
             "fused:gitPath": "public/copper_pinniped",
-            "fused:gitLastModified": "2024-12-05T22:21:34.466Z",
+            "fused:gitLastModified": "2024-12-06T17:52:31.695Z",
             "fused:gitPullRequestBranch": "chloe@fused.io-patch-test",
-            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/481",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/486",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
