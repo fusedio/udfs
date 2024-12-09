@@ -12,6 +12,16 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
+            "fused:name": "yellow_jackal",
+            "fused:slug": "yellow_jackal",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "014bbd771c0990c3d1d567c9ffeb00303b549eaa",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/014bbd771c0990c3d1d567c9ffeb00303b549eaa/public/yellow_jackal/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/014bbd7/public/yellow_jackal/",
+            "fused:gitPath": "public/yellow_jackal",
+            "fused:gitLastModified": "2024-12-09T17:49:42.960Z",
+            "fused:gitPullRequestBranch": "chloehe47@gmail.com-patch-test2",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/491",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -54,8 +64,6 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "yellow_jackal",
-            "fused:name": "yellow_jackal",
             "fused:id": null
           },
           "source": "yellow_jackal.py",
