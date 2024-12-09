@@ -12,6 +12,16 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
+            "fused:name": "aquamarine_boar",
+            "fused:slug": "aquamarine_boar",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "9a4f72a82832108f856ce7137e236543ac9c3ed3",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/9a4f72a82832108f856ce7137e236543ac9c3ed3/public/aquamarine_boar/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/9a4f72a/public/aquamarine_boar/",
+            "fused:gitPath": "public/aquamarine_boar",
+            "fused:gitLastModified": "2024-12-09T08:59:52.275Z",
+            "fused:gitPullRequestBranch": "chloe@fused.io-patch-test1",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/490",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -54,8 +64,6 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "aquamarine_boar",
-            "fused:name": "aquamarine_boar",
             "fused:id": null
           },
           "source": "aquamarine_boar.py",
