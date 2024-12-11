@@ -1,0 +1,75 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "teal_jackal",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "teal_jackal",
+            "fused:slug": "teal_jackal",
+            "fused:gitRepo": "fusedlabs/fusedudfs",
+            "fused:gitRef": "10915c33ebee8c5fb7e5f81040058025deb723ed",
+            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/10915c33ebee8c5fb7e5f81040058025deb723ed/public/teal_jackal/",
+            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/10915c3/public/teal_jackal/",
+            "fused:gitPath": "public/teal_jackal",
+            "fused:gitLastModified": "2024-12-11T03:53:53.709Z",
+            "fused:gitPullRequestBranch": "chloe@fused.io-patch-test5",
+            "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/396",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "RedOr",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "teal_jackal.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
