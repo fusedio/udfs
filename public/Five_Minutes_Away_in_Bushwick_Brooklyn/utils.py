@@ -21,7 +21,6 @@ def get_fsq_points(bbox, poi_category):
     # Return the filtered DataFrame based on POI category
     return category_dict.get(poi_category, gpd.GeoDataFrame(geometry=[], crs="EPSG:4326"))
 
-@fused.cache
 def get_single_isochrone(point_data):
     # Function for single isochrone
     point, costing, time_steps = point_data

@@ -4,7 +4,7 @@ def udf(bbox: fused.types.TileGDF = None,
         poi_category: str = "Coffee Shop",
         use_columns = ["subtype"], 
         costing = "pedestrian", 
-        time_steps = [5] # One step
+        time_steps = [5] # Single time step
        ):
     
     import shapely
@@ -34,10 +34,5 @@ def udf(bbox: fused.types.TileGDF = None,
     
     # Join H3 with Buildings using coffe_score to visualize, you can change to a left join
     gdf_joined = gdf_overture.sjoin(gdf_h3_isochrones, how="inner", predicate="intersects")
-
     gdf_joined = gdf_joined.drop(columns='index_right')
-    
-    # See the cells 
-    # return gdf_h3
-    
     return gdf_joined
