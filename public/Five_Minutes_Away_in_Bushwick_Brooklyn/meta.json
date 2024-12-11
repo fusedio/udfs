@@ -1,0 +1,100 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Five_Minutes_Away_in_Bushwick_Brooklyn",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "extruded": true,
+                "opacity": 1,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "poi_density",
+                  "present": "@@=properties.poi_density",
+                  "absent": 1
+                },
+                "elevationScale": 30,
+                "getFillColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "poi_density",
+                  "domain": [
+                    0,
+                    25
+                  ],
+                  "colors": "Emrld",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                }
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Five_Minutes_Away_in_Bushwick_Brooklyn",
+            "fused:name": "Five_Minutes_Away_in_Bushwick_Brooklyn",
+            "fused:defaultParameters": [
+              {
+                "parameter": "poi_category",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "Coffee Shop",
+                  "Restaurant",
+                  "Bar",
+                  "Pharmacy",
+                  "Grocery Store"
+                ]
+              }
+            ],
+            "fused:description": "## Overview\n\nVisualize Overture Buildings Near Four Square Places with Isochrones and H3 in Bushwick, Brooklyn.",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/coffeeshops.png",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 40.70057640815768,
+              "longitude": -73.91633930617161,
+              "zoom": 13.447997939170877,
+              "pitch": 60,
+              "bearing": 0
+            },
+            "fused:id": null
+          },
+          "source": "Five_Minutes_Away_in_Bushwick_Brooklyn.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
