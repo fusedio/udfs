@@ -1,0 +1,75 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "salmon_urial",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "salmon_urial",
+            "fused:slug": "salmon_urial",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "cbb68c62620af9babf4729a9558494ad2a31cb58",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/cbb68c62620af9babf4729a9558494ad2a31cb58/public/salmon_urial/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/cbb68c6/public/salmon_urial/",
+            "fused:gitPath": "public/salmon_urial",
+            "fused:gitLastModified": "2024-12-11T04:17:17.259Z",
+            "fused:gitPullRequestBranch": "chloehe47@gmail.com-patch-test6",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/500",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "TealGrn",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "salmon_urial.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
