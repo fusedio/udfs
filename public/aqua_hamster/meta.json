@@ -14,14 +14,14 @@
           "metadata": {
             "fused:name": "aqua_hamster",
             "fused:slug": "aqua_hamster",
-            "fused:gitRepo": "fusedlabs/fusedudfs",
-            "fused:gitRef": "006f49fa28aa633f25aaf6735ec0873463ef2f0d",
-            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/006f49fa28aa633f25aaf6735ec0873463ef2f0d/aqua_hamster/",
-            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/006f49f/aqua_hamster/",
-            "fused:gitPath": "aqua_hamster",
-            "fused:gitLastModified": "2024-12-13T21:49:38.263Z",
-            "fused:gitPullRequestBranch": "isaac@fused.io-patch-test-updateable-pr-2",
-            "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/412",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "70f1294daf12fdcb01390f3eedb67e15221358a5",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/70f1294daf12fdcb01390f3eedb67e15221358a5/public/aqua_hamster/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/70f1294/public/aqua_hamster/",
+            "fused:gitPath": "public/aqua_hamster",
+            "fused:gitLastModified": "2024-12-13T21:51:20.995Z",
+            "fused:gitPullRequestBranch": "isaac@fused.io-patch-test-create-new",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/513",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
