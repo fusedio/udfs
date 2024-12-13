@@ -1,0 +1,76 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "yellow_jackal",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "yellow_jackal",
+            "fused:slug": "yellow_jackal",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "7a64fc7a23e67808d13fe43e3d9e1186cee33479",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/7a64fc7a23e67808d13fe43e3d9e1186cee33479/public/yellow_jackal/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/7a64fc7/public/yellow_jackal/",
+            "fused:gitPath": "public/yellow_jackal",
+            "fused:gitLastModified": "2024-12-09T19:06:54.302Z",
+            "fused:gitPullRequestBranch": "chloehe47@gmail.com-patch-test2",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/491",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "Purp",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "yellow_jackal.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
