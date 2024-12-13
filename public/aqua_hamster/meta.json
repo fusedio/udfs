@@ -1,0 +1,75 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "aqua_hamster",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "aqua_hamster",
+            "fused:slug": "aqua_hamster",
+            "fused:gitRepo": "fusedlabs/fusedudfs",
+            "fused:gitRef": "006f49fa28aa633f25aaf6735ec0873463ef2f0d",
+            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/006f49fa28aa633f25aaf6735ec0873463ef2f0d/aqua_hamster/",
+            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/006f49f/aqua_hamster/",
+            "fused:gitPath": "aqua_hamster",
+            "fused:gitLastModified": "2024-12-13T21:49:38.263Z",
+            "fused:gitPullRequestBranch": "isaac@fused.io-patch-test-updateable-pr-2",
+            "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/412",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "PurpOr",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "aqua_hamster.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
