@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox,
+    bbox: fused.types.TileGDF,
     collection="3dep-seamless",
     band="data",
     res_factor:int=1
