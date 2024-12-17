@@ -1,0 +1,99 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Text_File",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:description": "Read a text file.\n",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "Teal",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Text_File",
+            "fused:name": "Text_File",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/f463439567376cd0c3403bcb2c0867bcf3b16bb8/files/Text_File/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/f463439/files/Text_File/",
+            "fused:gitPath": "files/Text_File",
+            "fused:gitRef": "f463439567376cd0c3403bcb2c0867bcf3b16bb8",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udf_cards/python_txt.png",
+            "fused:filePreview": true,
+            "fused:filePreviewExtensions": [
+              "md",
+              "txt"
+            ],
+            "fused:explorerPin": "99",
+            "fused:gitAuthorNames": [
+              "Isaac Brodsky",
+              "Plinio Guzman"
+            ],
+            "fused:gitAuthorUsernames": [
+              "isaacbrodsky",
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/isaacbrodsky",
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/9139378?v=4",
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitLastModified": "2024-10-24T17:26:12+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs"
+          },
+          "source": "Text_File.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
