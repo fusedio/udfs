@@ -1,6 +1,6 @@
 @fused.udf
 def udf(path: str):
-    import s3fs
+    import fsspec
 
-    with s3fs.S3FileSystem().open(path, "r") as f:
+    with fsspec.open(path, "r") as f:
         print(f.read())
