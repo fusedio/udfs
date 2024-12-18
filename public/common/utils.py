@@ -8,6 +8,20 @@ from numpy.typing import NDArray
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
 from loguru import logger
 
+@fused.cache
+def read_shapefile(url):
+    import geopandas as gpd
+    try:
+        return gpd.read_file(url)
+    except:
+        path = fused.download(url, url)
+        name=str(path).split('/')[-1].split('.')[0]
+        print(name)
+        try:
+            return gpd.read_file(f"zip://{path}!{name}/{name}.shp")
+        except:
+            return gpd.read_file(f"zip://{path}!{name}.shp")
+
 def point_to_line(start_lon=-122.4194, start_lat=37.7749, end_lon=-122.2712, end_lat=37.8044, value=0):
     import geopandas as gpd
     import shapely
