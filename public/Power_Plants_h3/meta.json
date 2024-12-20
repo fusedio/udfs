@@ -32,7 +32,7 @@
                 "@@type": "BitmapLayer",
                 "pickable": true
               },
-              "vectorLayer": {
+              "hexLayer": {
                 "@@type": "H3HexagonLayer",
                 "stroked": false,
                 "extruded": false,

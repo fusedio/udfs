@@ -28,7 +28,7 @@
                 "tileSize": 256,
                 "pickable": true
               },
-              "vectorLayer": {
+              "hexLayer": {
                 "@@type": "H3HexagonLayer",
                 "stroked": true,
                 "filled": true,

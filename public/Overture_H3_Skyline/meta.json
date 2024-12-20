@@ -21,7 +21,7 @@
                 "extrude": true,
                 "pickable": true
               },
-              "vectorLayer": {
+              "hexLayer": {
                 "opacity": 0.3,
                 "@@type": "H3HexagonLayer",
                 "stroked": true,
