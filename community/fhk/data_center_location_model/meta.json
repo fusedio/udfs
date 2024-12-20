@@ -36,7 +36,7 @@
                 "@@type": "BitmapLayer",
                 "pickable": true
               },
-              "vectorLayer": {
+              "hexLayer": {
                 "@@type": "ArcLayer",
                 "pickable": true,
                 "getWidth": "@@=weight*5",
