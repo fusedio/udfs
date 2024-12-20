@@ -14,7 +14,7 @@
           "metadata": {
             "fused:description": "Read an image file with ImageIO.\n",
             "fused:vizConfig": {
-              "vectorLayer": {
+              "hexLayer": {
                 "opacity": 1,
                 "coverage": 0.9,
                 "@@type": "H3HexagonLayer",
