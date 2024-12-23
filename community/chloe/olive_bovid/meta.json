@@ -1,0 +1,75 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "olive_bovid",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "olive_bovid",
+            "fused:slug": "olive_bovid",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "92c22826f049be739f3f3eed66792f4c7e242c87",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/92c22826f049be739f3f3eed66792f4c7e242c87/community/chloe/olive_bovid/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/92c2282/community/chloe/olive_bovid/",
+            "fused:gitPath": "community/chloe/olive_bovid",
+            "fused:gitLastModified": "2024-12-23T04:25:41.190Z",
+            "fused:gitPullRequestBranch": "chloe@fused.io-patch-test",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/530",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "Burg",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "olive_bovid.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
