@@ -1,0 +1,75 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "aquamarine_orca",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "aquamarine_orca",
+            "fused:slug": "aquamarine_orca",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "428b36f5b821d4a167a6773eaee32ab7c44f21ae",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/428b36f5b821d4a167a6773eaee32ab7c44f21ae/community/chloe/aquamarine_orca/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/428b36f/community/chloe/aquamarine_orca/",
+            "fused:gitPath": "community/chloe/aquamarine_orca",
+            "fused:gitLastModified": "2024-12-23T14:49:01.797Z",
+            "fused:gitPullRequestBranch": "chloe@fused.io-patch-4f99f0-test",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/537",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "BrwnYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "aquamarine_orca.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
