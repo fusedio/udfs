@@ -11,7 +11,7 @@ def udf(path: str, preview: bool):
     )
 
     with fsspec.open(path) as f:
-        gdf = gpd.read_file(path, driver=driver)
+        gdf = gpd.read_file(f, driver=driver)
     print(gdf)
     if preview:
         return gdf.geometry
