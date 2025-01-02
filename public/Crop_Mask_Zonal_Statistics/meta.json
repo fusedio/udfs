@@ -12,7 +12,7 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:description": "Read a NetCDF image file with rioxarray.\n",
+            "fused:description": "Calculates Solar-Induced Fluorescence (SIF) data for U.S. counties with a focus on crop-specific insights using USDA Cropland Data Layers. Computes key SIF metrics—sums, means, and ratios—for crops (e.g., corn) and non-crop areas by masking a NetCDF with GeoTiff. Users can customize parameters such as year, month, period, and county FIPS codes to track temporal and spatial trends. The result is a GeoDataFrame with detailed, spatially-referenced statistics, supporting applications in crop yield prediction, drought monitoring, and agricultural planning.\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -52,10 +52,10 @@
             "fused:slug": "Crop_Mask_Zonal_Statistics",
             "fused:name": "Crop_Mask_Zonal_Statistics",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/4af61c95c1b7d9a575981805371661f7caf2e3c3/public/Crop_Mask_Zonal_Statistics/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/4af61c9/public/Crop_Mask_Zonal_Statistics/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/1acae970a95056c5c3537d23859344e3d429abdc/public/Crop_Mask_Zonal_Statistics/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/1acae97/public/Crop_Mask_Zonal_Statistics/",
             "fused:gitPath": "public/Crop_Mask_Zonal_Statistics",
-            "fused:gitRef": "4af61c95c1b7d9a575981805371661f7caf2e3c3",
+            "fused:gitRef": "1acae970a95056c5c3537d23859344e3d429abdc",
             "fused:gitAuthorNames": [
               null,
               null
@@ -72,7 +72,7 @@
               "https://avatars.githubusercontent.com/u/80126562?v=4",
               "https://avatars.githubusercontent.com/in/834700?v=4"
             ],
-            "fused:gitLastModified": "2024-10-14T22:01:03+00:00",
+            "fused:gitLastModified": "2025-01-02T14:30:56.197Z",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitHistory": [
@@ -144,8 +144,8 @@
                 "fused:gitRepo": "fusedio/udfs"
               }
             ],
-            "fused:gitPullRequestBranch": "plinio@fused.io-patch-Introduce-Kristin-UDF",
-            "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/289",
+            "fused:gitPullRequestBranch": "kristinscholten@gmail.com-patch-updated-data-link",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/544",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/cropmask_zstats.png"
           },
           "source": "Crop_Mask_Zonal_Statistics.py",

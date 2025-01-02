@@ -48,7 +48,7 @@ def udf(crop_type ="corn", geoid: str = '19119', year: str = "2015", month: str 
     gdf['geometry'] = gdf['geometry'].buffer(0)
     gdf = gdf[gdf['GEOID'] == geoid]
 
-    # area of pixel 
+    
     area=gdf.to_crs(gdf.estimate_utm_crs()).area.round(2)
     print(area)
     
