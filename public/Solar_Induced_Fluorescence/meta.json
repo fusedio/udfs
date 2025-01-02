@@ -12,7 +12,7 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:description": "Read a NetCDF image file with rioxarray.\n",
+            "fused:description": "Visualize global photosynthesis with this solar-induced fluorescence (SIF) dataset. Covering September 2014 to July 2020, it provides 16-day mean SIF estimates at 0.05° (5 km) resolution using an ANN trained on OCO-2 and MODIS data. Adjust the \"month\", \"year\" and \"period\" parameter to explore SIF patterns by time, supporting applications like drought monitoring, yield estimation, and agricultural planning. With 138 netCDF files, it bridges satellite and ground-based photosynthesis measurements, unlocking new insights into Earth's biomes.",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -58,10 +58,10 @@
             "fused:slug": "Solar_Induced_Fluorescence",
             "fused:name": "Solar_Induced_Fluorescence",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/384b134318fe6c2985776bda7fffb16a529e74c0/public/Solar_Induced_Fluorescence/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/384b134/public/Solar_Induced_Fluorescence/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/d867db4bfe6632785a37e3f98889cf1ba1a98d0e/public/Solar_Induced_Fluorescence/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/d867db4/public/Solar_Induced_Fluorescence/",
             "fused:gitPath": "public/Solar_Induced_Fluorescence",
-            "fused:gitRef": "384b134318fe6c2985776bda7fffb16a529e74c0",
+            "fused:gitRef": "d867db4bfe6632785a37e3f98889cf1ba1a98d0e",
             "fused:gitAuthorNames": [
               "Isaac Brodsky"
             ],
@@ -74,7 +74,7 @@
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/9139378?v=4"
             ],
-            "fused:gitLastModified": "2025-01-02T13:59:17.910Z",
+            "fused:gitLastModified": "2025-01-02T14:00:09.227Z",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitHistory": [
