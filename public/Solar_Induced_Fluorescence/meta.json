@@ -58,10 +58,10 @@
             "fused:slug": "Solar_Induced_Fluorescence",
             "fused:name": "Solar_Induced_Fluorescence",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/6107b2d000faa86a98810391fb11a9b20c6a87b9/files/NetCDF_File/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/6107b2d/files/NetCDF_File/",
-            "fused:gitPath": "files/NetCDF_File",
-            "fused:gitRef": "6107b2d000faa86a98810391fb11a9b20c6a87b9",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/384b134318fe6c2985776bda7fffb16a529e74c0/public/Solar_Induced_Fluorescence/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/384b134/public/Solar_Induced_Fluorescence/",
+            "fused:gitPath": "public/Solar_Induced_Fluorescence",
+            "fused:gitRef": "384b134318fe6c2985776bda7fffb16a529e74c0",
             "fused:gitAuthorNames": [
               "Isaac Brodsky"
             ],
@@ -74,9 +74,80 @@
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/9139378?v=4"
             ],
-            "fused:gitLastModified": "2024-08-15T17:57:01+00:00",
+            "fused:gitLastModified": "2025-01-02T13:59:17.910Z",
             "fused:explorerTab": "public",
-            "fused:gitRepo": "fusedio/udfs"
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitHistory": [
+              {
+                "fused:description": "Read a NetCDF image file with rioxarray.\n",
+                "fused:vizConfig": {
+                  "tileLayer": {
+                    "@@type": "TileLayer",
+                    "minZoom": 0,
+                    "maxZoom": 19,
+                    "tileSize": 256,
+                    "pickable": true
+                  },
+                  "rasterLayer": {
+                    "@@type": "BitmapLayer",
+                    "pickable": true
+                  },
+                  "vectorLayer": {
+                    "@@type": "GeoJsonLayer",
+                    "stroked": true,
+                    "filled": false,
+                    "pickable": true,
+                    "lineWidthMinPixels": 1,
+                    "pointRadiusMinPixels": 1,
+                    "getLineColor": {
+                      "@@function": "colorContinuous",
+                      "attr": "value",
+                      "domain": [
+                        0,
+                        10
+                      ],
+                      "colors": "Teal",
+                      "nullColor": [
+                        184,
+                        184,
+                        184
+                      ]
+                    },
+                    "getFillColor": [
+                      208,
+                      208,
+                      208,
+                      40
+                    ]
+                  }
+                },
+                "fused:udfType": "vector_tile",
+                "fused:slug": "Solar_Induced_Florescence",
+                "fused:name": "Solar_Induced_Florescence",
+                "fused:id": "2882297a-0555-4ed7-a5c2-eb0e1b74d2ac",
+                "fused:gitUrl": "https://github.com/fusedio/udfs/tree/6107b2d000faa86a98810391fb11a9b20c6a87b9/files/NetCDF_File/",
+                "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/6107b2d/files/NetCDF_File/",
+                "fused:gitPath": "files/NetCDF_File",
+                "fused:gitRef": "6107b2d000faa86a98810391fb11a9b20c6a87b9",
+                "fused:gitAuthorNames": [
+                  "Isaac Brodsky"
+                ],
+                "fused:gitAuthorUsernames": [
+                  "isaacbrodsky"
+                ],
+                "fused:gitAuthorUrls": [
+                  "https://github.com/isaacbrodsky"
+                ],
+                "fused:gitAuthorAvatarUrls": [
+                  "https://avatars.githubusercontent.com/u/9139378?v=4"
+                ],
+                "fused:gitLastModified": "2024-08-15T17:57:01+00:00",
+                "fused:explorerTab": "public",
+                "fused:gitRepo": "fusedio/udfs"
+              }
+            ],
+            "fused:gitPullRequestBranch": "kristinscholten@gmail.com-patch-making-this-udf-pu",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/543"
           },
           "source": "Solar_Induced_Fluorescence.py",
           "headers": [
