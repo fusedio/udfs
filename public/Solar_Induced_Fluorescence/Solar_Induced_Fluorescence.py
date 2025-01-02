@@ -1,8 +1,9 @@
 @fused.udf
 def udf(bbox, year: str = "2016", month: str = "07", period: str ="b", chip_len: int = 1024):
-    xy_cols = ['lon', 'lat']
-    from utils import get_masked_array, get_da, get_da_bounds, clip_arr
     import pandas as pd
+    from utils import get_masked_array, get_da, get_da_bounds, clip_arr
+
+    xy_cols = ['lon', 'lat']
     
     # Dynamically construct the path based on the year and month
     path = f's3://soldatanasasifglobalifoco2modis1863/Global_SIF_OCO2_MODIS_1863/data/sif_ann_{year}{month}{period}.nc'
@@ -14,6 +15,7 @@ def udf(bbox, year: str = "2016", month: str = "07", period: str ="b", chip_len:
     arr_aoi = clip_arr(da.values, 
                        bounds_aoi=bbox.total_bounds, 
                        bounds_total=get_da_bounds(da, xy_cols=xy_cols))
+    
     # Extract raw SIF values
     sif_values = arr_aoi[arr_aoi != 0]  # Filter out zero values (no data areas)
     
