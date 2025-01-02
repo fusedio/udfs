@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "Crop_Mask_Zonal_Statistics",
+          "name": "Crop_Mask_Zonal_Statistics_LIVE",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -49,26 +49,30 @@
               }
             },
             "fused:udfType": "vector_single",
-            "fused:slug": "Crop_Mask_Zonal_Statistics",
-            "fused:name": "Crop_Mask_Zonal_Statistics",
+            "fused:slug": "Crop_Mask_Zonal_Statistics_LIVE",
+            "fused:name": "Crop_Mask_Zonal_Statistics_LIVE",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/75edc1ddcf4cd2ba0122b1eba6aa94bfdcd183ba/public/Crop_Mask_Zonal_Statistics/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/75edc1d/public/Crop_Mask_Zonal_Statistics/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/669602895e96fe1ec461eaed4a6b90b5484dee84/public/Crop_Mask_Zonal_Statistics/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/6696028/public/Crop_Mask_Zonal_Statistics/",
             "fused:gitPath": "public/Crop_Mask_Zonal_Statistics",
-            "fused:gitRef": "75edc1ddcf4cd2ba0122b1eba6aa94bfdcd183ba",
+            "fused:gitRef": "669602895e96fe1ec461eaed4a6b90b5484dee84",
             "fused:gitAuthorNames": [
+              null,
               null
             ],
             "fused:gitAuthorUsernames": [
-              "krissykodes"
+              "krissykodes",
+              "fused-io[bot]"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/krissykodes"
+              "https://github.com/krissykodes",
+              "https://github.com/apps/fused-io"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/80126562?v=4"
+              "https://avatars.githubusercontent.com/u/80126562?v=4",
+              "https://avatars.githubusercontent.com/in/834700?v=4"
             ],
-            "fused:gitLastModified": "2024-10-14T21:53:09+00:00",
+            "fused:gitLastModified": "2024-10-14T22:01:03+00:00",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitHistory": [
@@ -144,7 +148,7 @@
             "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/289",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/cropmask_zstats.png"
           },
-          "source": "Crop_Mask_Zonal_Statistics.py",
+          "source": "Crop_Mask_Zonal_Statistics_LIVE.py",
           "headers": [
             {
               "module_name": "utils2",
