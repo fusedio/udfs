@@ -14,6 +14,22 @@
           "metadata": {
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/zstats_grid.png",
             "fused:description": "Create grid with the bounds of a list of tiff files.",
+            "fused:name": "Create_Tiffs_Bounds",
+            "fused:slug": "Create_Tiffs_Bounds",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "1fae879aee6f8d2ffff8eab5ee969cba8028ea28",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/1fae879aee6f8d2ffff8eab5ee969cba8028ea28/community/plinio/Create_Tiffs_Bounds/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/1fae879/community/plinio/Create_Tiffs_Bounds/",
+            "fused:gitPath": "community/plinio/Create_Tiffs_Bounds",
+            "fused:gitLastModified": "2025-01-03T01:48:26.621Z",
+            "fused:gitHistory": [
+              {
+                "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/zstats_grid.png",
+                "fused:description": "Create grid with the bounds of a list of tiff files."
+              }
+            ],
+            "fused:gitPullRequestBranch": "plinio@fused.io-patch-Tiff-bounds-UDF",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/549",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -53,8 +69,6 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "Create_Tiffs_Bounds",
-            "fused:name": "Create_Tiffs_Bounds",
             "fused:id": null
           },
           "source": "Create_Tiffs_Bounds.py",
