@@ -3,7 +3,7 @@ def udf(
     image_basepath="https://fused-asset.s3.us-west-2.amazonaws.com/gfc2020/",
     xy_grid_n=4,
     s3_out_dir="s3://fused-users/fused/plinio/",
-    output_suffix="2jan2025",
+        output_suffix="2jan2025",
 ):
     import os
     import geopandas as gpd

@@ -60,7 +60,6 @@ def create_gdf_antimer_aware(df, image_basepath, xy_grid=(4, 4)):
         lambda x: get_raster_bounds(x, xy_grid=xy_grid, image_basepath=image_basepath)
     )
     df = df.explode("out")
-    print(df)
     # Create separate columns for sub_bounds and fused_sub_id
     df["sub_bounds"] = df["out"].apply(lambda x: x[0] if isinstance(x, list) else None)
     df["fused_sub_id"] = df["out"].apply(lambda x: x[1])
@@ -123,17 +122,12 @@ def handle_overlapping_cells(out2):
 
     no_overlaps = []
     for itr in range(10):
-        print(f"{itr=}")
         # Create unique gid
         gdf["gid"] = range(len(gdf))
         # Calculate difference
         gdf.set_index("gid", inplace=True)
-
         dfj = gdf.sjoin(gdf, predicate="overlaps", how="left")
-
-        print('dfj', dfj.gid_right)
         mask = dfj.index.isin(dfj[dfj.gid_right.isna()].index)
-        print('mask', mask)
         no_overlaps.append(dfj[mask][["geometry"]].reset_index())
         dfj = dfj[~mask]
 
@@ -152,7 +146,6 @@ def handle_overlapping_cells(out2):
         # Combine intersection & difference
         df_all = pd.concat([df_intersection, df_difference])
         df_all[df_all.geometry.is_valid]
-        print(f"{len(df_all)=}")
         if len(df_all) != 0:
             df_all["gid"] = df_all.index
             gdf = (
