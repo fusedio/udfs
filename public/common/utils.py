@@ -17,6 +17,11 @@ def html_params(html_template, params={}, **kw):
     from jinja2 import Template
     template = Template(html_template)
     return template.render(params, **kw)
+
+
+def url_redirect(url):
+    from fastapi import Response
+    return Response(f'<meta http-equiv="refresh" content="0; url={url}">'.encode('utf-8'), media_type="text/html")
     
 @fused.cache
 def read_shapefile(url):
