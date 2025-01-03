@@ -52,10 +52,10 @@
             "fused:slug": "Crop_Mask_Zonal_Statistics",
             "fused:name": "Crop_Mask_Zonal_Statistics",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/1acae970a95056c5c3537d23859344e3d429abdc/public/Crop_Mask_Zonal_Statistics/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/1acae97/public/Crop_Mask_Zonal_Statistics/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/937aaee4d6ccb92dae018d83f0f4007ebefbee6b/public/Crop_Mask_Zonal_Statistics/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/937aaee/public/Crop_Mask_Zonal_Statistics/",
             "fused:gitPath": "public/Crop_Mask_Zonal_Statistics",
-            "fused:gitRef": "1acae970a95056c5c3537d23859344e3d429abdc",
+            "fused:gitRef": "937aaee4d6ccb92dae018d83f0f4007ebefbee6b",
             "fused:gitAuthorNames": [
               null,
               null
@@ -72,7 +72,7 @@
               "https://avatars.githubusercontent.com/u/80126562?v=4",
               "https://avatars.githubusercontent.com/in/834700?v=4"
             ],
-            "fused:gitLastModified": "2025-01-02T14:30:56.197Z",
+            "fused:gitLastModified": "2025-01-02T20:11:44+00:00",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitHistory": [
