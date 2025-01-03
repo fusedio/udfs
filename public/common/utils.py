@@ -8,6 +8,21 @@ from numpy.typing import NDArray
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
 from loguru import logger
 
+def html_to_obj(html_str):
+    from fastapi import Response
+    return Response(html_str.encode('utf-8'), media_type="text/html")
+
+def html_params(html_template, params={}, **kw):
+    '''Exampl: html_params('<div>{{v1}}{{v2}}</div>',{'v1':'hello '}, v2='world!')'''
+    from jinja2 import Template
+    template = Template(html_template)
+    return template.render(params, **kw)
+
+
+def url_redirect(url):
+    from fastapi import Response
+    return Response(f'<meta http-equiv="refresh" content="0; url={url}">'.encode('utf-8'), media_type="text/html")
+    
 @fused.cache
 def read_shapefile(url):
     import geopandas as gpd
