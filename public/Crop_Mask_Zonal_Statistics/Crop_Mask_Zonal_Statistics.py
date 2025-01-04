@@ -34,7 +34,7 @@ def udf(engine='realtime', year: str = "2016", month: str = "07", period: str ="
 
     
 @fused.udf
-def udf(crop_type ="corn", geoid: str = '19119', year: str = "2015", month: str = "08", period: str ="b", output_suffix='out1'):
+def udf_nail(crop_type ="corn", geoid: str = '19119', year: str = "2015", month: str = "08", period: str ="b", output_suffix='out1'):
     from utils2 import get_masked_array, get_da, get_da_bounds, clip_arr
     from skimage.transform import resize
     import geopandas as gpd
@@ -47,8 +47,6 @@ def udf(crop_type ="corn", geoid: str = '19119', year: str = "2015", month: str 
     gdf = gpd.read_parquet('s3://fused-asset/data/tiger/county/tl_rd22_us_county 25pct.parquet')
     gdf['geometry'] = gdf['geometry'].buffer(0)
     gdf = gdf[gdf['GEOID'] == geoid]
-
-    
     area=gdf.to_crs(gdf.estimate_utm_crs()).area.round(2)
     print(area)
     
@@ -100,5 +98,4 @@ def udf(crop_type ="corn", geoid: str = '19119', year: str = "2015", month: str 
             'period': period
         }])
     df_final.crs = "EPSG:4326"
-    print(df_final.T)
     return df_final

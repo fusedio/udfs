@@ -1,26 +1,3 @@
-@fused.cache
-def get_county(fips='19119', path2: str='s3://soldatanasasifglobalifoco2modis1863/USDA/data/Actual_yields/USDA_crop_yields_2015.csv'):
-    #Load corn yield
-    import pandas as pd
-    df = pd.read_csv(path2)
-    df['GEOID'] = df['State ANSI'].map(lambda x:f'{int(x):02}' if x>0 else '99') +  df['County ANSI'].map(lambda x:f'{int(x):03}' if x>0 else '999')     
-    df = df[(df['GEOID'] == fips)]
-    #Load counties geometry
-    import geopandas as gpd
-    gdf = gpd.read_parquet('s3://fused-asset/data/tiger/county/tl_rd22_us_county 25pct.parquet')
-
-    #Join corn yield with geometry
-    gdf = gdf[['geometry','GEOID']].merge(df) 
-
-    import matplotlib.pyplot as plt
-    # Plot the data, coloring based on the 'Value' column using a green colormap
-    gdf.plot(column='Value', cmap='Greens', legend=True, edgecolor='black')
-    plt.show()
-    
-    return gdf
-
-
-
 def get_masked_array(gdf_aoi, arr_aoi):
         import numpy as np 
         from rasterio.transform import from_bounds
@@ -88,6 +65,7 @@ def clip_arr(arr, bounds_aoi, bounds_total=(-180, -90, 180, 90)):
 def bbox_to_xy_slice(bounds, shape, transform):
     import rasterio
     from affine import Affine
+
     if transform[4] < 0:  # if pixel_height is negative
         original_window = rasterio.windows.from_bounds(*bounds, transform=transform)
         gridded_window = rasterio.windows.round_window_to_full_blocks(
@@ -113,4 +91,3 @@ def bbox_to_xy_slice(bounds, shape, transform):
         y_slice, x_slice = gridded_window.toslices()
         y_slice = slice(shape[0] - y_slice.stop, shape[0] - y_slice.start + 0)
         return x_slice, y_slice
-
