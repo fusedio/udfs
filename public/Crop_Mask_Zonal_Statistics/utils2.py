@@ -20,7 +20,6 @@ def get_county(fips='19119', path2: str='s3://soldatanasasifglobalifoco2modis186
     return gdf
 
 
-
 def get_masked_array(gdf_aoi, arr_aoi):
         import numpy as np 
         from rasterio.transform import from_bounds

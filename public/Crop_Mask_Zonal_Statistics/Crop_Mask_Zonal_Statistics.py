@@ -47,6 +47,7 @@ def udf_nail(crop_type ="corn", geoid: str = '19119', year: str = "2015", month:
     gdf = gpd.read_parquet('s3://fused-asset/data/tiger/county/tl_rd22_us_county 25pct.parquet')
     gdf['geometry'] = gdf['geometry'].buffer(0)
     gdf = gdf[gdf['GEOID'] == geoid]
+
     area=gdf.to_crs(gdf.estimate_utm_crs()).area.round(2)
     print(area)
     
