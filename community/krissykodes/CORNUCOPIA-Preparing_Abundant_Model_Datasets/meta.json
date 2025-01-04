@@ -34,7 +34,7 @@
                 "pointRadiusMinPixels": 1,
                 "getFillColor": {
                   "@@function": "colorContinuous",
-                  "attr": "corn_sif_mean",
+                  "attr": "corn_sif_mean_07a",
                   "domain": [
                     0,
                     1
@@ -52,10 +52,35 @@
             "fused:slug": "CORNUCOPIA-Preparing_Abundant_Model_Datasets",
             "fused:name": "CORNUCOPIA-Preparing_Abundant_Model_Datasets",
             "fused:id": null,
-            "fused:description": "## Overview\n\nIntegrates Solar-Induced Fluorescence (SIF) data (2015–2020) with USDA crop yields to create machine learning training datasets. Calculates crop-specific SIF ratios, areas (measured in km and acres), and bushels using satellite and yield data processed with DuckDB. Outputs a GeoDataFrame for spatial and temporal trend analysis, supporting agricultural planning and yield prediction.\n\n## External links\n\n- [Solar Induced Fluorescence UDF](https://example.com)\n- [Crop Mask Zonal Statistics UDF](https://example.com)\n- [Data Dictionary for SIF](https://daac.ornl.gov/SIF-ESDR/guides/Global_SIF_OCO2_MODIS.html)"
+            "fused:description": "## Overview\n\nIntegrates Solar-Induced Fluorescence (SIF) data (2015–2020) with USDA crop yields to create machine learning training datasets. Calculates crop-specific SIF ratios, areas (measured in km and acres), and bushels using satellite and yield data processed with DuckDB. Outputs a GeoDataFrame for spatial and temporal trend analysis, supporting agricultural planning and yield prediction.\n\n## External links\n\n- [Solar Induced Fluorescence UDF](https://www.fused.io/workbench/catalog/Solar_Induced_Fluorescence-37a48cc8-711e-4b56-93ea-48f5639e4062)\n- [Crop Mask Zonal Statistics UDF](https://www.fused.io/workbench/catalog/Crop_Mask_Zonal_Statistics-dc1e6bf9-e2e6-4a1b-9061-094bc4825978)\n- [Data Dictionary for SIF](https://daac.ornl.gov/SIF-ESDR/guides/Global_SIF_OCO2_MODIS.html)\n",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/e3505e167c59e7724be3272ee6da1380516b2697/community/krissykodes/CORNUCOPIA-Preparing_Abundant_Model_Datasets/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/e3505e1/community/krissykodes/CORNUCOPIA-Preparing_Abundant_Model_Datasets/",
+            "fused:gitPath": "community/krissykodes/CORNUCOPIA-Preparing_Abundant_Model_Datasets",
+            "fused:gitRef": "e3505e167c59e7724be3272ee6da1380516b2697",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "krissykodes"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/krissykodes"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/80126562?v=4"
+            ],
+            "fused:gitLastModified": "2025-01-04T20:21:55+00:00",
+            "fused:explorerTab": "community",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/cornucopia.png"
           },
           "source": "CORNUCOPIA-Preparing_Abundant_Model_Datasets.py",
-          "headers": []
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
         }
       }
     ],
