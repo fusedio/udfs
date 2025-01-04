@@ -59,7 +59,7 @@
             "fused:name": "DuckDB_JSON",
             "fused:id": null
           },
-          "source": "duckdb_json.py",
+          "source": "DuckDB_JSON.py",
           "headers": []
         }
       }

@@ -1,0 +1,95 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "sample_nyc_similarity",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:description": "Read a Parquet or Geoparquet file.\n",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "hexLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "extruded": true,
+                "opacity": 1,
+                "coverage": 1,
+                "lineWidthMinPixels": 1,
+                "getHexagon": "@@=properties.hex",
+                "getLineColor": [
+                  200,
+                  200,
+                  200
+                ],
+                "getFillColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "sim",
+                  "domain": [
+                    0.9,
+                    1
+                  ],
+                  "colors": "Tropic",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "sim",
+                  "present": "@@=(1-properties.sim)*100",
+                  "absent": 1
+                },
+                "elevationScale": 20
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "sample_nyc_similarity",
+            "fused:name": "sample_nyc_similarity",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/b959b518d98ff89bd4542f3b18adc4be9f191504/community/pgzmnk/sample_nyc_similarity/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/b959b51/community/pgzmnk/sample_nyc_similarity/",
+            "fused:gitPath": "community/pgzmnk/sample_nyc_similarity",
+            "fused:gitRef": "b959b518d98ff89bd4542f3b18adc4be9f191504",
+            "fused:assetUrl": "",
+            "fused:explorerPin": "99",
+            "fused:gitAuthorNames": [
+              "Plinio Guzman"
+            ],
+            "fused:gitAuthorUsernames": [
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitLastModified": "2024-10-15T21:51:53+00:00",
+            "fused:explorerTab": "community",
+            "fused:gitRepo": "fusedio/udfs"
+          },
+          "source": "sample_nyc_similarity.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

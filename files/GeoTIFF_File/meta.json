@@ -59,7 +59,7 @@
             "fused:name": "GeoTIFF_File",
             "fused:id": null
           },
-          "source": "geotiff_file.py",
+          "source": "GeoTIFF_File.py",
           "headers": []
         }
       }

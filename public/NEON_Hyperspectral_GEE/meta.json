@@ -1,0 +1,102 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "NEON_Hyperspectral_GEE",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 31.825789013693836,
+              "longitude": -110.86448999039044,
+              "zoom": 10.66729173001565,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "PinkYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "NEON_Hyperspectral_GEE",
+            "fused:name": "NEON_Hyperspectral_GEE",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/0a03cfb8986c5f348ad9b132cc0f7a956b7f8fa6/public/NEON_Hyperspectral_GEE/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/0a03cfb/public/NEON_Hyperspectral_GEE/",
+            "fused:gitPath": "public/NEON_Hyperspectral_GEE",
+            "fused:gitRef": "0a03cfb8986c5f348ad9b132cc0f7a956b7f8fa6",
+            "fused:description": "# NEON Hyperspectral Signature Explorer\n\nNEON AOP is an NSF-funded initiative that's revolutionizing ecological observation. Using advanced imaging spectrometers, NEON collects hyperspectral data across 426 distinct wavelength bands at 1-meter resolution. Imagine having 426 different perspectives of the same landscape, each revealing unique insights about vegetation, soil composition, and ecosystem health.\n\nThis UDF powers an app where users can select any NEON site and survey year from a dynamically populated list - a feature that automatically stays current with GEE's data catalog, as NEON sites are surveyed at different frequencies. Once a site is selected, users can click anywhere within the highlighted area to instantly view all 426 bands of spectral data in an interactive plot.\n\n\n",
+            "fused:gitAuthorNames": [
+              "Guillermo E. Ponce-Campos"
+            ],
+            "fused:gitAuthorUsernames": [
+              "gponce-ars"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/gponce-ars"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/20215136?v=4"
+            ],
+            "fused:gitLastModified": "2024-11-26T22:45:02+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/neon_hyperspectral.png"
+          },
+          "source": "NEON_Hyperspectral_GEE.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

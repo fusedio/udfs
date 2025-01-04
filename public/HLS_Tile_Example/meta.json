@@ -14,27 +14,27 @@
           "metadata": {
             "fused:tags": [
               {
-                "id": "Mosaic",
-                "label": "Mosaic"
+                "id": "mosaic",
+                "label": "mosaic"
               },
               {
-                "id": "S3",
-                "label": "S3"
+                "id": "s3",
+                "label": "s3"
               },
               {
-                "id": "NASA",
-                "label": "NASA"
+                "id": "nasa",
+                "label": "nasa"
               },
               {
-                "id": "Remove-clouds",
-                "label": "Remove-clouds"
+                "id": "remove-clouds",
+                "label": "remove-clouds"
               },
               {
-                "id": "STAC",
-                "label": "STAC"
+                "id": "stac",
+                "label": "stac"
               }
             ],
-            "fused:description": "\n## Overview\nThis UDF demonstrate how to access the NASA’s Harmonized Landsat Sentinel-2 (HLS) version 2 assets. Please visit [Earth Data Portal](https://urs.earthdata.nasa.gov) to register and manage your Earthdata Login account.\n\n## External links\n\n- [Data Discovery Example](https://nasa-openscapes.github.io/2021-Cloud-Hackathon/tutorials/02_Data_Discovery_CMR-STAC_API.html)\n- [Name of link](https://example.com)",
+            "fused:description": "## Overview\nThis UDF demonstrate how to access the NASA’s Harmonized Landsat Sentinel-2 (HLS) version 2 assets. Please visit [Earth Data Portal](https://urs.earthdata.nasa.gov) to register and manage your Earthdata Login account.\n\n## External links\n\n- [Data Discovery Example](https://nasa-openscapes.github.io/2021-Cloud-Hackathon/tutorials/02_Data_Discovery_CMR-STAC_API.html)\n- [Name of link](https://example.com)\n\n## Run this in any Jupyter Notebook\n\nPlease set `username` and `password` arguments. Create credentials at: https://urs.earthdata.nasa.gov to register and manage your Earthdata Login account.\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/HLS_Tile_Example\")\ngdf = fused.run(udf=udf, x=5241, y=12667, z=15,  username=\"your_username\", password=\"your_password\")\ngdf\n```\n",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/HLS_Tile_Example.png",
             "fused:vizConfig": {
               "tileLayer": {
@@ -75,10 +75,55 @@
             "fused:slug": "HLS_Tile_Example",
             "fused:name": "HLS_Tile_Example",
             "fused:id": null,
-            "fused:defaultParameters": []
+            "fused:defaultParameters": [],
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/e1c15b5de872a1b828530ed53577d5b49a117770/public/HLS_Tile_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/e1c15b5/public/HLS_Tile_Example/",
+            "fused:gitPath": "public/HLS_Tile_Example",
+            "fused:gitRef": "e1c15b5de872a1b828530ed53577d5b49a117770",
+            "fused:explorerPin": "15",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk",
+              "Tyler Erickson",
+              null,
+              "Plinio Guzman",
+              "Isaac Brodsky",
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk",
+              "tylere",
+              "charlesfused",
+              "pgzmnk",
+              "isaacbrodsky",
+              "fused-io[bot]"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk",
+              "https://github.com/tylere",
+              "https://github.com/charlesfused",
+              "https://github.com/pgzmnk",
+              "https://github.com/isaacbrodsky",
+              "https://github.com/apps/fused-io"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/u/92862?v=4",
+              "https://avatars.githubusercontent.com/u/148997493?v=4",
+              "https://avatars.githubusercontent.com/u/27398253?v=4",
+              "https://avatars.githubusercontent.com/u/9139378?v=4",
+              "https://avatars.githubusercontent.com/in/834700?v=4"
+            ],
+            "fused:gitLastModified": "2024-10-15T20:38:53+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs"
           },
           "source": "HLS_Tile_Example.py",
-          "headers": []
+          "headers": [
+            {
+              "module_name": "utils_local",
+              "source_file": "utils_local.py"
+            }
+          ]
         }
       }
     ],

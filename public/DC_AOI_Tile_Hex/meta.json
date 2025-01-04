@@ -20,7 +20,7 @@
                 "tileSize": 256,
                 "pickable": true
               },
-              "vectorLayer": {
+              "hexLayer": {
                 "opacity": 2,
                 "@@type": "H3HexagonLayer",
                 "stroked": false,

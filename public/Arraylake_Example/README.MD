@@ -1,5 +1,5 @@
 <!--fused:preview-->
-<p align="center"><img src="https://avatars.githubusercontent.com/u/95875797?v=4" width="600" alt="UDF preview image"></p>
+<p align="center"><img src="https://docs.earthmover.io/assets/images/fused-screenshot-Arraylake_RGB_Image-c42900408564d13df871564d416f6c9c.png" width="600" alt="Arraylake UDF preview image"></p>
 
 <!--fused:tags-->
 Tags:  `raster` `Zarr` `Arraylake` `datacube`
@@ -8,6 +8,9 @@ Tags:  `raster` `Zarr` `Arraylake` `datacube`
 ## Overview
 
 This UDF shows how to open a continental-scale Zarr data cube stored in Arraylake and visualize it in Fused.
+This datacube is a monthly composite at 30m resolution generated from Sentinel-2 data over South America.
+
+The UDF opens a dataset from Arraylake with Xarray, subsets it to a bounding box, and coarsens it to an appropriate resolution.
 
 ## External links
 

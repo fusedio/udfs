@@ -1,17 +1,8 @@
-import json
-
-import cv2
-import numpy as np
-import rasterio
-
-
 @fused.cache
 def url_to_arr(url, return_colormap=False):
     from io import BytesIO
-
     import rasterio
     import requests
-
     response = requests.get(url)
     print(response.status_code)
     with rasterio.open(BytesIO(response.content)) as dataset:
@@ -24,6 +15,8 @@ def url_to_arr(url, return_colormap=False):
 
 @fused.cache
 def get_bands(image_path):
+    import numpy as np
+    import rasterio
     # Open the image and read the bands as numpy arrays
     with rasterio.open(image_path) as src:
         blue = src.read(1)
@@ -61,6 +54,7 @@ def get_kernel_size(gsd):
 
 
 def threshold(index, min=0.1, max=1.0):
+    import numpy as np
     # Generate the vegetation mask
     vegetation_mask = np.full(index.shape, np.nan)
     vegetation_mask[(index >= min) & (index <= max)] = 1
@@ -73,12 +67,15 @@ def threshold(index, min=0.1, max=1.0):
 
 
 def smoothing(mask, kernel_size):
+    import cv2
     # Apply Gaussian blur to the mask
     blur = cv2.GaussianBlur(mask, (kernel_size, kernel_size), 1)
     return blur
 
 
 def morphological_operations(mask, kernel_size):
+    import cv2
+    import numpy as np
     # Define the structuring element for morphological operations
     opening_kernel = np.ones((kernel_size, kernel_size), np.uint8)
     closing_kernel = np.ones((kernel_size, kernel_size), np.uint8)
@@ -91,6 +88,7 @@ def morphological_operations(mask, kernel_size):
 
 
 def get_vegetation_index(blue, green, red, index_type="VARI", normalize=True):
+    import numpy as np
     np.seterr(divide="ignore", invalid="ignore")
 
     if index_type == "VARI":

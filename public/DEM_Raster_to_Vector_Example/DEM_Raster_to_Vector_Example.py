@@ -1,25 +1,45 @@
+import geopandas as gpd  
 import numpy as np
-import rasterio.transform
-import rasterio.features
+import rasterio
+from rasterio import features
 import shapely
-import geopandas as gpd   
-from utils import get_dem
+import utils
 
 @fused.udf
-def udf(min_elevation: float = 500):
-    overview: int = 5
-    bbox = gpd.GeoDataFrame({}, geometry=[shapely.box(-125.08156811704808,32.03901094104144,-113.60059018729473,42.28088093779323)], crs=4326)
-    data = get_dem(bbox, overview)
-    if data is not None:
-        transform = rasterio.transform.from_bounds(*bbox.total_bounds, *data.shape)
-        data2 = data > min_elevation
-        shapes = rasterio.features.shapes(data2.astype(np.uint8), data2, transform=transform)
+def udf(
+    min_elevation: float = 3962  # 3962 ~= 13000ft
+):
+    """Return polygons for Colorado areas over 13,000ft of elevation."""
+    bbox = gpd.GeoDataFrame(
+        geometry=[shapely.box(-109.046667, 37.0, -102.046667, 41.0)],
+        crs=4326
+    )
     
-        geometries = [shapely.geometry.shape(shape) for shape, shape_value in shapes]
-        gdf = gpd.GeoDataFrame({}, geometry=geometries, crs=4326)
+    xr_data = utils.get_dem(bbox)
 
-        gdf = gdf.to_crs(gdf.estimate_utm_crs())
-        gdf['area'] = gdf.geometry.area
-        gdf = gdf.to_crs(4326)
-        gdf['wkt'] = gdf.geometry.apply(shapely.wkt.dumps)
-        return gdf
+    # Calculate the affine transformation matrix for the bounding box.
+    height, width = xr_data.shape
+    transform = rasterio.transform.from_bounds(*bbox.total_bounds, width, height)
+
+    # Create a binary image showing where the elevation threshold is exceeded.
+    xr_data2 = (xr_data > min_elevation)
+    
+    # Convert to vector features.
+    shapes = features.shapes(
+        source=xr_data2.astype(np.uint8),
+        mask=xr_data2,
+        transform=transform
+    )
+    
+    gdf = gpd.GeoDataFrame(
+        geometry=[shapely.geometry.shape(shape) for shape, shape_value in shapes],
+        crs=4326
+    )
+
+    # Store the Well Known Text (WKT) representation of the polygon as an attribute.
+    gdf['wkt'] = gdf.geometry.apply(shapely.wkt.dumps)
+
+    # Store the area of the polygon as an attribute.
+    gdf['area'] = gdf.to_crs(gdf.estimate_utm_crs()).geometry.area
+    
+    return gdf

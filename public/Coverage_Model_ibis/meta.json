@@ -1,0 +1,149 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Coverage_model_ibis",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.77639077726303,
+              "longitude": -122.43549901465204,
+              "zoom": 16.85328188770681,
+              "pitch": 50.25612973580492,
+              "bearing": -153.8242417886447
+            },
+            "fused:defaultParameters": [
+              {
+                "parameter": "tech",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "Tarana"
+                ]
+              },
+              {
+                "parameter": "site_count",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "1",
+                  "5",
+                  "10",
+                  "25",
+                  "50",
+                  "100"
+                ]
+              },
+              {
+                "parameter": "col_plot",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "Rx_dBm",
+                  "dist_m",
+                  "los",
+                  "foliage_dist3D_m",
+                  "dist2D_in_m",
+                  "n_external_wall",
+                  "PL_dB"
+                ]
+              }
+            ],
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "opacity": 5,
+                "@@type": "GeoJsonLayer",
+                "extruded": true,
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "getRadius": 10,
+                "getFillColor": "@@=[properties.r, properties.g, properties.b, properties.a]",
+                "getElevation": "@@=100+properties.Rx_dBm",
+                "elevationScale": 0.4
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Coverage_model_ibis",
+            "fused:name": "Coverage_model_ibis",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/7e47784e5c22adbd41472a18704a3e798c10a417/public/Coverage_Model_ibis/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/7e47784/public/Coverage_Model_ibis/",
+            "fused:gitPath": "public/Coverage_Model_ibis",
+            "fused:gitRef": "7e47784e5c22adbd41472a18704a3e798c10a417",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/coveragemodel.png",
+            "fused:tags": [
+              {
+                "id": "file",
+                "label": "file"
+              },
+              {
+                "id": "wireless",
+                "label": "wireless"
+              },
+              {
+                "id": "tutorial",
+                "label": "tutorial"
+              },
+              {
+                "id": "h3",
+                "label": "h3"
+              },
+              {
+                "id": "duckdb",
+                "label": "duckdb"
+              },
+              {
+                "id": "Ibis",
+                "label": "Ibis"
+              }
+            ],
+            "fused:description": "## Overview\n\nThis UDF allows you to explore the outputs of a coverage model with different site counts. The visualizations are done using [Ibis](https://ibis-project.org/) with a DuckDB backend. The h3 resolution changes based on zoom level.\n\n## External links\n\n- Network coverage model by [Digital Twin Sim](https://www.digitaltwinsim.com/)\n\n",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "samlalwani"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/samlalwani"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/21284822?v=4"
+            ],
+            "fused:gitLastModified": "2024-11-10T03:29:51+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs"
+          },
+          "source": "Coverage_model_ibis.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

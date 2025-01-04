@@ -1,0 +1,81 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "CloudKitchens",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "CloudKitchens",
+            "fused:slug": "CloudKitchens",
+            "fused:gitRepo": "pozibl/fused_utils",
+            "fused:gitRef": "fbc53e82602d60156d937f4c3f75d4239859a655",
+            "fused:gitUrl": "https://github.com/pozibl/fused_utils/tree/fbc53e82602d60156d937f4c3f75d4239859a655/CloudKitchens/",
+            "fused:gitShortUrl": "https://github.com/pozibl/fused_utils/tree/fbc53e8/CloudKitchens/",
+            "fused:gitPath": "CloudKitchens",
+            "fused:gitLastModified": "2024-10-12T22:09:56.998Z",
+            "fused:gitPullRequestBranch": "fabion@pozibl.com-patch-clean",
+            "fused:gitPullRequestLink": "https://github.com/pozibl/fused_utils/pull/6",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "Peach",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_single",
+            "fused:id": null
+          },
+          "source": "CloudKitchens.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

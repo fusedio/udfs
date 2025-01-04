@@ -59,7 +59,7 @@
             "fused:name": "ImageIO_File",
             "fused:id": null
           },
-          "source": "imageio_file.py",
+          "source": "ImageIO_File.py",
           "headers": []
         }
       }

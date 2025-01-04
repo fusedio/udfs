@@ -59,7 +59,7 @@
             "fused:name": "NetCDF_File",
             "fused:id": null
           },
-          "source": "netcdf_file.py",
+          "source": "NetCDF_File.py",
           "headers": []
         }
       }

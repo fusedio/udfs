@@ -44,7 +44,7 @@
                 "@@type": "BitmapLayer",
                 "pickable": true
               },
-              "vectorLayer": {
+              "hexLayer": {
                 "opacity": 5,
                 "@@type": "H3HexagonLayer",
                 "stroked": true,

@@ -1,19 +1,90 @@
 # To use these functions, add the following command in your UDF:
-# `common = fused.public.common`
+# `common = fused.utils.common`
 from __future__ import annotations
-
-import random
-from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
-
 import fused
-import geopandas as gpd
+import pandas as pd
 import numpy as np
 from numpy.typing import NDArray
-import pandas as pd
-import pyproj
-import shapely
+from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
 from loguru import logger
-import xarray as xr
+
+def html_to_obj(html_str):
+    from fastapi import Response
+    return Response(html_str.encode('utf-8'), media_type="text/html")
+
+def html_params(html_template, params={}, **kw):
+    '''Exampl: html_params('<div>{{v1}}{{v2}}</div>',{'v1':'hello '}, v2='world!')'''
+    from jinja2 import Template
+    template = Template(html_template)
+    return template.render(params, **kw)
+
+
+def url_redirect(url):
+    from fastapi import Response
+    return Response(f'<meta http-equiv="refresh" content="0; url={url}">'.encode('utf-8'), media_type="text/html")
+    
+@fused.cache
+def read_shapefile(url):
+    import geopandas as gpd
+    try:
+        return gpd.read_file(url)
+    except:
+        path = fused.download(url, url)
+        name=str(path).split('/')[-1].split('.')[0]
+        print(name)
+        try:
+            return gpd.read_file(f"zip://{path}!{name}/{name}.shp")
+        except:
+            return gpd.read_file(f"zip://{path}!{name}.shp")
+
+def point_to_line(start_lon=-122.4194, start_lat=37.7749, end_lon=-122.2712, end_lat=37.8044, value=0):
+    import geopandas as gpd
+    import shapely
+    from shapely.geometry import LineString    
+    line = LineString([(start_lon, start_lat), (end_lon, end_lat)])    
+    return gpd.GeoDataFrame({"value": [value]}, geometry=[line], crs=4326)
+
+def interpolate_points(line_shape, point_distance):
+    points = []
+    num_points = int(line_shape.length // point_distance)
+    for i in range(num_points + 1):
+        point = line_shape.interpolate(i * point_distance)
+        points.append(point)
+    return points
+
+def pointify(lines, point_distance, segment_col='segment_id'):
+    import geopandas as gpd
+    crs_orig = lines.crs
+    crs_utm=lines.estimate_utm_crs()
+    lines = lines.to_crs(crs_utm)
+    from shapely.geometry import Point
+    import pandas as pd
+    points_list = []
+    for _, row in lines.iterrows():
+        line = row['geometry']
+        points = interpolate_points(line, point_distance)
+        for point in points:
+            points_list.append({segment_col: row[segment_col], 'geometry': point})
+    print('number of points:', len(points_list))
+    points_gdf = gpd.GeoDataFrame(points_list, crs=lines.crs)
+    return points_gdf.to_crs(crs_orig)
+
+def chunkify(lst, chunk_size):
+    return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
+
+@fused.cache
+def get_meta_chunk_datestr(base_path, total_row_groups=52, start_year=2020, end_year=2024, n_chunks_row_group=2, n_chunks_datestr=90,):
+    import pandas as pd
+    date_list = pd.date_range(start=f'{start_year}-01-01', end=f'{end_year+1}-01-01').strftime('%Y-%m-%d').tolist()[:-1]
+    df = pd.DataFrame([[i[0],i[-1]] for i in chunkify(date_list,n_chunks_datestr)], columns=['start_datestr','end_datestr'])
+    df['row_group_ids']=[chunkify(list(range(total_row_groups)),n_chunks_row_group)]*len(df)
+    df = df.explode('row_group_ids').reset_index(drop=True)
+    df['path'] = df.apply(lambda row:f"{base_path.strip('/')}/file_{row.start_datestr.replace('-','')}_{row.end_datestr.replace('-','')}_{row.row_group_ids[0]}_{row.row_group_ids[-1]}.parquet", axis=1)
+    df['idx'] = df.index
+    df['row_group'] = df['row_group_ids']
+    df = df.explode('row_group').drop_duplicates('idx').sort_values('row_group')
+    del df['row_group']
+    return df
 
 def write_log(msg="Your message.", name='//default', log_type='info', rotation="10 MB"):
     from loguru import logger
@@ -105,7 +176,55 @@ def read_shape_zip(url, file_index=0, name_prefix=""):
     df = gpd.read_file(f"{path}!{fnames[file_index]}")
     return df
 
+@fused.cache
+def stac_to_gdf(bbox, datetime='2024', collections=["sentinel-2-l2a"], columns=['id', 'geometry', 'bbox', 'assets', 'datetime', 'eo:cloud_cover'], query={"eo:cloud_cover": {"lt": 20}}, catalog='mspc', explode_assets=False, version=0):
+    import pystac_client
+    import stac_geoparquet
+    if catalog.lower()=='aws':
+        catalog = pystac_client.Client.open("https://earth-search.aws.element84.com/v1")
+    elif catalog.lower()=='mspc':
+        import planetary_computer
+        # catalog = pystac_client.Client.open("https://planetarycomputer.microsoft.com/api/stac/v1")
+        catalog = pystac_client.Client.open(
+            "https://planetarycomputer.microsoft.com/api/stac/v1",
+            modifier=planetary_computer.sign_inplace,
+        )
+    else: 
+        catalog = pystac_client.Client.open(catalog)
+    items = catalog.search(
+        collections=collections,
+        bbox=bbox.total_bounds,
+        datetime=datetime,
+        query=query,
+        ).item_collection()
+    gdf=stac_geoparquet.to_geodataframe([item.to_dict() for item in items])
+    if explode_assets:
+        gdf['assets'] = gdf.assets.map(lambda x: [{k:x[k]['href']} for k in x]) 
+        gdf = gdf.explode('assets')
+        gdf['band'] = gdf.assets.map(lambda x: list(x.keys())[0]) 
+        gdf['url'] = gdf.assets.map(lambda x: list(x.values())[0]) 
+        del gdf['assets']
+        if columns:
+            columns+=['band','url']
+    if columns==None:
+        print(gdf.columns)
+        return gdf
+    else:
+        gdf=gdf[list(set(columns).intersection(set(gdf.columns)))]
+        print(gdf.columns)
+        return gdf
 
+@fused.cache
+def get_url_aws_stac(bbox, collections=["cop-dem-glo-30"]):
+    import pystac_client
+    catalog = pystac_client.Client.open("https://earth-search.aws.element84.com/v1")
+    items = catalog.search(
+        collections=collections,
+        bbox=bbox.total_bounds,
+    ).item_collection()
+    url_list=[i['assets']['data']['href'] for i in items.to_dict()['features']]
+    return url_list
+        
 def get_collection_bbox(collection):
     import geopandas as gpd
     import planetary_computer
@@ -134,14 +253,6 @@ def get_pc_token(url):
     url = f"https://planetarycomputer.microsoft.com/api/sas/v1/token/{account_name}/{container_name}"
     response = requests.get(url)
     return response.json()
-
-
-def read_tiff_pc(bbox, tiff_url, cache_id=2):
-    tiff_url = f"{tiff_url}?{get_pc_token(tiff_url,_cache_id=cache_id)['token']}"
-    print(tiff_url)
-    arr = read_tiff(bbox, tiff_url)
-    return arr, tiff_url
-
 
 @fused.cache(path="table_to_tile")
 def table_to_tile(
@@ -174,7 +285,7 @@ def table_to_tile(
     if z >= min_zoom:
         List = df[["file_id", "chunk_id"]].values
         if not len(List):
-            # No results at this area
+            # No result at this area
             return gpd.GeoDataFrame(geometry=[])
         if use_columns:
             if "geometry" not in use_columns:
@@ -285,6 +396,7 @@ def read_tiff(
 
     import numpy as np
     import rasterio
+    from rasterio.warp import Resampling, reproject
     from scipy.ndimage import zoom
 
     version = "0.2.0"
@@ -301,51 +413,62 @@ def read_tiff(
         )
     with ExitStack() as stack:
         stack.enter_context(context)
-        with rasterio.open(input_tiff_path, OVERVIEW_LEVEL=overview_level) as src:
-            # with rasterio.Env():
-            from rasterio.warp import Resampling, reproject
+        try:
+            with rasterio.open(input_tiff_path, OVERVIEW_LEVEL=overview_level) as src:
+                # with rasterio.Env():
+                if src.crs:
+                    src_crs = src.crs
+                else:
+                    src_crs=4326
+                bbox = bbox.to_crs(3857)
+                # transform_bounds = rasterio.warp.transform_bounds(3857, src_crs, *bbox["geometry"].bounds.iloc[0])
+                window = src.window(*bbox.to_crs(src_crs).total_bounds)
+                original_window = src.window(*bbox.to_crs(src_crs).total_bounds)
+                gridded_window = rasterio.windows.round_window_to_full_blocks(
+                    original_window, [(1, 1)]
+                )
+                window = gridded_window  # Expand window to nearest full pixels
+                source_data = src.read(window=window, boundless=True, masked=True)
+                if not output_shape:
+                    return source_data
+                nodata_value = src.nodatavals[0]
+                if filter_list:
+                    mask = np.isin(source_data, filter_list, invert=True)
+                    source_data[mask] = 0
+                src_transform = src.window_transform(window)
+                minx, miny, maxx, maxy = bbox.total_bounds
+                dx = (maxx - minx) / output_shape[-1]
+                dy = (maxy - miny) / output_shape[-2]
+                dst_transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
+                if len(source_data.shape) == 3 and source_data.shape[0] > 1:
+                    dst_shape = (source_data.shape[0], output_shape[-2], output_shape[-1])
+                else:
+                    dst_shape = output_shape
+                dst_crs = bbox.crs
 
-            bbox = bbox.to_crs(3857)
-            # transform_bounds = rasterio.warp.transform_bounds(3857, src.crs, *bbox["geometry"].bounds.iloc[0])
-            window = src.window(*bbox.to_crs(src.crs).total_bounds)
-            original_window = src.window(*bbox.to_crs(src.crs).total_bounds)
-            gridded_window = rasterio.windows.round_window_to_full_blocks(
-                original_window, [(1, 1)]
-            )
-            window = gridded_window  # Expand window to nearest full pixels
-            source_data = src.read(window=window, boundless=True, masked=True)
-            nodata_value = src.nodatavals[0]
-            if filter_list:
-                mask = np.isin(source_data, filter_list, invert=True)
-                source_data[mask] = 0
-            src_transform = src.window_transform(window)
-            src_crs = src.crs
-            minx, miny, maxx, maxy = bbox.total_bounds
-            dx = (maxx - minx) / output_shape[-1]
-            dy = (maxy - miny) / output_shape[-2]
-            dst_transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
-            if len(source_data.shape) == 3 and source_data.shape[0] > 1:
-                dst_shape = (source_data.shape[0], output_shape[-2], output_shape[-1])
-            else:
-                dst_shape = output_shape
-            dst_crs = bbox.crs
-
-            destination_data = np.zeros(dst_shape, src.dtypes[0])
-            if return_colormap:
-                colormap = src.colormap(1)
-            reproject(
-                source_data,
-                destination_data,
-                src_transform=src_transform,
-                src_crs=src_crs,
-                dst_transform=dst_transform,
-                dst_crs=dst_crs,
-                # TODO: rather than nearest, get all the values and then get pct
-                resampling=Resampling.nearest,
-            )
-            destination_data = np.ma.masked_array(
-                destination_data, destination_data == nodata_value
-            )
+                destination_data = np.zeros(dst_shape, src.dtypes[0])
+                if return_colormap:
+                    colormap = src.colormap(1)
+        except rasterio.RasterioIOError as err:
+            print(f"Caught RasterioIOError {err=}, {type(err)=}")
+            return  # Return without data
+        except Exception as err:
+            print(f"Unexpected {err=}, {type(err)=}")
+            raise
+        
+        reproject(
+            source_data,
+            destination_data,
+            src_transform=src_transform,
+            src_crs=src_crs,
+            dst_transform=dst_transform,
+            dst_crs=dst_crs,
+            # TODO: rather than nearest, get all the values and then get pct
+            resampling=Resampling.nearest,
+        )
+        destination_data = np.ma.masked_array(
+            destination_data, destination_data == nodata_value
+        )
     if return_colormap:
         # todo: only set transparency to zero
         colormap[0] = [0, 0, 0, 0]
@@ -357,6 +480,16 @@ def read_tiff(
     else:
         return destination_data
 
+
+def get_bounds_tiff(tiff_path):
+    import rasterio
+    with rasterio.open(tiff_path) as src:
+        bounds = src.bounds
+        import shapely 
+        import geopandas as gpd
+        bbox = gpd.GeoDataFrame({}, geometry=[shapely.box(*bounds)],crs=src.crs)
+        bbox = bbox.to_crs(4326)
+        return bbox
 
 def gdf_to_mask_arr(gdf, shape, first_n=None):
     from rasterio.features import geometry_mask
@@ -393,17 +526,20 @@ def mosaic_tiff(
     for input_tiff_path in tiff_list:
         if not input_tiff_path:
             continue
-        a.append(
-            read_tiff(
-                bbox=bbox,
-                input_tiff_path=input_tiff_path,
-                filter_list=filter_list,
-                output_shape=output_shape,
-                overview_level=overview_level,
-                cred=cred,
-            )
+        new_tiff = read_tiff(
+            bbox=bbox,
+            input_tiff_path=input_tiff_path,
+            filter_list=filter_list,
+            output_shape=output_shape,
+            overview_level=overview_level,
+            cred=cred,
         )
-    if len(a) == 1:
+        if new_tiff is not None:
+            a.append(new_tiff)
+
+    if len(a) == 0:
+        return
+    elif len(a) == 1:
         data = a[0]
     else:
         data = reduce_function(a)
@@ -546,7 +682,6 @@ def arr_to_plasma(
             )
     else:
         return norm_data255
-
 
 def run_cmd(cmd, cwd=".", shell=False, communicate=False):
     import shlex
@@ -702,26 +837,13 @@ def read_module(url, remove_strings=[]):
     return module
 
 
-# url='https://raw.githubusercontent.com/stac-utils/stac-geoparquet/main/stac_geoparquet/stac_geoparquet.py'
-# remove_strings=['from stac_geoparquet.utils import fix_empty_multipolygon']
-# to_geodataframe = read_module(url,remove_strings)['to_geodataframe']
-
-__all__ = (
-    "geo_convert",
-    "geo_buffer",
-    "geo_bbox",
-    "geo_join",
-    "geo_distance",
-    "geo_samples",
-)
-
-
-def get_geo_cols(data: gpd.GeoDataFrame) -> List[str]:
+def get_geo_cols(data) -> List[str]:
     """Get the names of the geometry columns.
 
     The first item in the result is the name of the primary geometry column. Following
     items are other columns with a type of GeoSeries.
     """
+    import geopandas as gpd
     main_col = data.geometry.name
     cols = [
         i for i in data.columns if (type(data[i]) == gpd.GeoSeries) & (i != main_col)
@@ -729,7 +851,7 @@ def get_geo_cols(data: gpd.GeoDataFrame) -> List[str]:
     return [main_col] + cols
 
 
-def crs_display(crs: pyproj.CRS) -> Union[int, pyproj.CRS]:
+def crs_display(crs):
     """Convert a CRS object into its human-readable EPSG code if possible.
 
     If the CRS object does not have a corresponding EPSG code, the CRS object itself is
@@ -745,9 +867,10 @@ def crs_display(crs: pyproj.CRS) -> Union[int, pyproj.CRS]:
         return crs
 
 
-def resolve_crs(
-    gdf: gpd.GeoDataFrame, crs: Union[pyproj.CRS, Literal["utm"]], verbose: bool = False
-) -> gpd.GeoDataFrame:
+def resolve_crs(gdf,
+                crs,
+                verbose= False
+):
     """Reproject a GeoDataFrame to the given CRS
 
     Args:
@@ -861,13 +984,15 @@ def df_to_gdf(df, cols_lonlat=None, verbose=False):
 
 
 def geo_convert(
-    data: Union[pd.Series, pd.DataFrame, gpd.GeoSeries, gpd.GeoDataFrame],
-    crs: Union[pyproj.CRS, Literal["utm"], None] = None,
+    data,
+    crs=None,
     cols_lonlat=None,
     col_geom="geometry",
     verbose: bool = False,
-) -> gpd.GeoDataFrame:
+):
     """Convert input data into a GeoPandas GeoDataFrame."""
+    import geopandas as gpd
+    import shapely
     if cols_lonlat:
         if isinstance(data, pd.Series):
             raise ValueError(
@@ -950,12 +1075,12 @@ def geo_convert(
 
 
 def geo_buffer(
-    data: gpd.GeoDataFrame,
-    buffer_distance: Union[int, float] = 1000,
-    utm_crs: Union[pyproj.CRS, Literal["utm"]] = "utm",
-    dst_crs: Union[pyproj.CRS, Literal["original"]] = "original",
-    col_geom_buff: str = "geom_buff",
-    verbose: bool = False,
+    data,
+    buffer_distance=1000,
+    utm_crs="utm",
+    dst_crs="original",
+    col_geom_buff="geom_buff",
+    verbose: bool=False,
 ):
     """Buffer the geometry column in a GeoDataFrame in UTM projection.
 
@@ -1001,8 +1126,8 @@ def geo_buffer(
 
 
 def geo_bbox(
-    data: gpd.GeoDataFrame,
-    dst_crs: Union[Literal["utm"], pyproj.CRS, None] = None,
+    data,
+    dst_crs=None,
     verbose: bool = False,
 ):
     """Generate a GeoDataFrame that has the bounds of the current data frame.
@@ -1015,6 +1140,9 @@ def geo_bbox(
     Returns:
         A GeoDataFrame with one row, containing a geometry that has the bounds of this
     """
+    import geopandas as gpd
+    import shapely
+    import pyproj
     src_crs = data.crs
     if not dst_crs:
         return geo_convert(
@@ -1031,8 +1159,8 @@ def geo_bbox(
 
 
 def clip_bbox_gdfs(
-    left: gpd.GeoDataFrame,
-    right: gpd.GeoDataFrame,
+    left,
+    right,
     buffer_distance: Union[int, float] = 1000,
     join_type: Literal["left", "right"] = "left",
     verbose: bool = True,
@@ -1075,10 +1203,10 @@ def clip_bbox_gdfs(
 
 
 def geo_join(
-    left: gpd.GeoDataFrame,
-    right: gpd.GeoDataFrame,
+    left,
+    right,
     buffer_distance: Union[int, float, None] = None,
-    utm_crs: Union[pyproj.CRS, Literal["utm"]] = "utm",
+    utm_crs="utm",
     clip_bbox="left",
     drop_extra_geoms: bool = True,
     verbose: bool = False,
@@ -1097,6 +1225,8 @@ def geo_join(
     Returns:
         Joined GeoDataFrame.
     """
+    import geopandas as gpd
+    import shapely
     if type(left) != gpd.GeoDataFrame:
         left = geo_convert(left, verbose=verbose)
     if type(right) != gpd.GeoDataFrame:
@@ -1181,10 +1311,10 @@ def geo_join(
 
 
 def geo_distance(
-    left: gpd.GeoDataFrame,
-    right: gpd.GeoDataFrame,
+    left,
+    right,
     search_distance: Union[int, float] = 1000,
-    utm_crs: Union[Literal["utm"], pyproj.CRS] = "utm",
+    utm_crs="utm",
     clip_bbox="left",
     col_distance: str = "distance",
     k_nearest: int = 1,
@@ -1192,7 +1322,7 @@ def geo_distance(
     cols_right: Sequence[str] = (),
     drop_extra_geoms: bool = True,
     verbose: bool = False,
-) -> gpd.GeoDataFrame:
+):
     """Compute the distance from rows in one dataframe to another.
 
     First this performs an geo_join, and then finds the nearest rows in right to left.
@@ -1213,6 +1343,8 @@ def geo_distance(
     Returns:
         _description_
     """
+    import geopandas as gpd
+    import shapely
     if type(left) != gpd.GeoDataFrame:
         left = geo_convert(left, verbose=verbose)
     if type(right) != gpd.GeoDataFrame:
@@ -1264,7 +1396,7 @@ def geo_distance(
 
 def geo_samples(
     n_samples: int, min_x: float, max_x: float, min_y: float, max_y: float
-) -> gpd.GeoDataFrame:
+):
     """
     Generate sample points in a bounding box, uniformly.
 
@@ -1278,6 +1410,9 @@ def geo_samples(
     Returns:
         A GeoDataFrame with point geometry.
     """
+    import geopandas as gpd
+    import shapely
+    import random
     points = [
         (random.uniform(min_x, max_x), random.uniform(min_y, max_y))
         for _ in range(n_samples)
@@ -1570,6 +1705,32 @@ def get_chunk_slices_from_shape(array_shape, x_chunks, y_chunks, i):
 
     return x_slice, y_slice
 
+def arr_to_latlng(arr, bounds):
+    import numpy as np
+    import pandas as pd
+    from rasterio.transform import from_bounds
+    transform = from_bounds(*bounds, arr.shape[-1], arr.shape[-2])
+    x_list, y_list = shape_transform_to_xycoor(arr.shape[-2:], transform)
+    X, Y = np.meshgrid(x_list, y_list)
+    df = pd.DataFrame(X.flatten(), columns=["lng"])
+    df["lat"] = Y.flatten()
+    df["data"] = arr.flatten()
+    return df
+
+# @fused.cache
+def df_to_h3(df, res, latlng_cols=("lat", "lng"), ordered=False):
+    qr = f"""
+            SELECT h3_latlng_to_cell({latlng_cols[0]}, {latlng_cols[1]}, {res}) AS hex, ARRAY_AGG(data) as agg_data
+            FROM df
+            group by 1
+        """
+    if ordered:
+        qr+="  order by 1"
+    con = duckdb_connect()
+    return con.query(qr).df()
+
+def arr_to_h3(arr, bounds, res, ordered=False):
+    return df_to_h3(arr_to_latlng(arr, bounds), res=res, ordered=ordered)
 
 def duckdb_connect(home_directory='/tmp/'):
     import duckdb 
@@ -1596,7 +1757,7 @@ def run_query(query, return_arrow=False):
         return con.sql(query).df()
 
 
-def ds_to_tile(ds, variable, bbox, na_values=0):
+def ds_to_tile(ds, variable, bbox, na_values=0, cols_lonlat=('x', 'y')):
     da = ds[variable]
     x_slice, y_slice = bbox_to_xy_slice(
         bbox.total_bounds, ds.rio.shape, ds.rio.transform()
@@ -1612,9 +1773,9 @@ def ds_to_tile(ds, variable, bbox, na_values=0):
     if window.row_off + window.height > da.shape[-1]:
         py1 = window.row_off + window.height - da.shape[-1]
     # data = da.isel(x=x_slice, y=y_slice, time=0).fillna(0)
-    data = da.isel(x=x_slice, y=y_slice).fillna(0)
-    data = data.pad(
-        x=(px0, px1), y=(py0, py1), mode="constant", constant_values=na_values
+    data = da.isel({cols_lonlat[0]:x_slice, cols_lonlat[1]:y_slice}).fillna(0)
+    data = data.pad({cols_lonlat[0]:(px0, px1), cols_lonlat[1]:(py0, py1)},
+                     mode="constant", constant_values=na_values
     )
     return data
 
@@ -1792,18 +1953,29 @@ def get_da(path, coarsen_factor=1, variable_index=0, xy_cols=["longitude", "lati
         ValueError()
 
 
-def get_da_bounds(da, xy_cols=("longitude", "latitude")):
+def get_da_bounds(da, xy_cols=("longitude", "latitude"), pixel_position='center'):
     x_list = da[xy_cols[0]].values
     y_list = da[xy_cols[1]].values
-    pixel_width = x_list[1] - x_list[0]
-    pixel_height = y_list[1] - y_list[0]
-
-    minx = x_list[0] - pixel_width / 2
-    maxx = x_list[-1] + pixel_width / 2
-    miny = y_list[-1] + pixel_height / 2
-    maxy = y_list[0] - pixel_height / 2
-
-    return (minx, miny, maxx, maxy)
+    if pixel_position=='center':
+        pixel_width = x_list[1] - x_list[0]
+        pixel_height = y_list[1] - y_list[0]
+        minx = x_list[0] - pixel_width / 2
+        miny = y_list[-1] + pixel_height / 2
+        maxx = x_list[-1] + pixel_width / 2
+        maxy = y_list[0] - pixel_height / 2
+        return (minx, miny, maxx, maxy)
+    else:
+        return (x_list[0], y_list[-1], x_list[-1], y_list[0])
+        
+        
+def da_fit_to_resolution(da, target_shape):
+    import numpy as np
+    dims = da.dims
+    new_coords = {
+        dim: np.linspace(da[dim].min(), da[dim].max(), target_shape[i])
+        for i, dim in enumerate(dims)
+    }
+    return da.interp(new_coords)    
 
 
 def clip_arr(arr, bounds_aoi, bounds_total=(-180, -90, 180, 90)):
@@ -1830,7 +2002,7 @@ def clip_arr(arr, bounds_aoi, bounds_total=(-180, -90, 180, 90)):
 
 
 def visualize(
-    data: np.ndarray | xr.DataArray = None,
+    data,
     mask: float | np.ndarray = None,
     min: float = 0,
     max: float = 1,
@@ -1838,17 +2010,17 @@ def visualize(
     colormap = None,
 ):
     """Convert objects into visualization tiles."""
-    
+    import xarray as xr
     import palettable
     from matplotlib.colors import LinearSegmentedColormap
     from matplotlib.colors import Normalize   
-
+    
     if data is None:
         return
     
     if colormap is None:
         # Set a default colormap
-        colormap = palettable.colorbrewer.sequential.Greys_r
+        colormap = palettable.colorbrewer.sequential.Greys_9_r
         cm = colormap.mpl_colormap
     elif isinstance(colormap, palettable.palette.Palette):
         cm = colormap.mpl_colormap
@@ -1860,8 +2032,17 @@ def visualize(
     if isinstance(data, xr.DataArray):
         # Convert from an Xarray DataArray to a Numpy ND Array
         data = data.values
-    
+
     if isinstance(data, np.ndarray):
+
+        if isinstance(data, np.ma.MaskedArray):
+            boolean_mask = data.mask
+            if mask is None:
+                mask = boolean_mask
+            else:
+                # Combine the two masks.
+                mask = mask * boolean_mask
+        
         norm_data = Normalize(vmin=min, vmax=max, clip=False)(data)
         mapped_colors = cm(norm_data)
         if isinstance(mask, (float, np.ndarray)):
@@ -1880,3 +2061,357 @@ def visualize(
         return shaped
     else:
         print('visualize: data instance type not recognized')
+
+    
+class AsyncRunner:
+    '''
+    ## Usage example:
+    async def fn(n): return n**2
+    runner = AsyncRunner(fn, range(10))
+    runner.get_result_now()
+    '''
+    def __init__(self, func, args_list, delay_second=0, verbose=True):
+        import asyncio
+        if isinstance(args_list, pd.DataFrame):
+            self.args_list=args_list.T.to_dict().values()
+        elif isinstance(args_list, list) or isinstance(args_list, range):     
+            self.args_list=args_list
+        else:
+            raise ValueError('args_list need to be list, pd.DataFrame, or range')
+        self.func = func
+        self.verbose = verbose
+        self.delay_second = delay_second
+        self.loop = asyncio.get_running_loop()
+        self.run_async()
+    
+    def create_task(self, args):
+        import time
+        import json
+        time.sleep(self.delay_second)
+        if type(args)==str:
+            args=json.loads(args)
+        if isinstance(args, dict):
+            task = self.loop.create_task(self.func(**args))
+        else:
+            task = self.loop.create_task(self.func(args))
+        task.set_name(json.dumps(args))
+        return task
+        
+    def run_async(self):
+        tasks = []
+        for args in self.args_list:
+            tasks.append(self.create_task(args))
+        self.tasks=tasks
+    
+    def is_done(self):
+        return [task.done() for task in self.tasks]
+    
+    def get_task_result(self, r):
+        if r.done():
+            import pandas as pd
+            try:
+                return r.result()
+            except Exception as e:
+                return str(e)
+        else:
+            return 'pending'
+        
+    def get_result_now(self, retry=True):
+        if retry:
+            self.retry()
+        if self.verbose:
+            print(f"{sum(self.is_done())} out of {len(self.is_done())} are done!")
+        import json
+        import pandas as pd
+        df = pd.DataFrame([json.loads(task.get_name()) for task in self.tasks])
+        df['result']= [self.get_task_result(task) for task in self.tasks]
+        def fn(r):
+            if type(r)==str:
+                if r=='pending':
+                    return 'running'
+                else:
+                    return 'faild'
+            else:
+                return 'done'
+        df['status']=df['result'].map(fn)
+        return df            
+    
+    def retry(self):
+        def _retry_task(task, verbose):
+            if task.done():
+                task_exception = task.exception()
+                if task_exception:
+                    if verbose: print(task_exception)
+                    return self.create_task(task.get_name()) 
+                else:
+                    return task
+            else:
+                return task            
+        self.tasks = [_retry_task(task, self.verbose) for task in self.tasks]
+    
+    async def get_result_async(self):
+        import asyncio
+        return await asyncio.gather(*self.tasks)
+
+    def __repr__(self):
+        if self.verbose:
+            print(f'tasks_done={self.is_done()}')
+        if (sum(self.is_done())/len(self.is_done()))==1:
+            return f"done!"
+        else:
+            return "running..."
+    
+class PoolRunner:
+    '''
+    ## Usage example:
+    def fn(n): return n**2
+    runner = PoolRunner(fn, range(10))
+    runner.get_result_now()
+    runner.get_result_all()
+    '''
+    def __init__(self, func, args_list, delay_second=0.01, verbose=True, max_retry=3):
+        import asyncio
+        import pandas as pd
+        import concurrent.futures
+        if isinstance(args_list, pd.DataFrame):
+            self.args_list=args_list.T.to_dict().values()
+        elif isinstance(args_list, list) or isinstance(args_list, range):     
+            self.args_list=args_list
+        else:
+            raise ValueError('args_list need to be list, pd.DataFrame, or range')
+        self.func = func
+        self.delay_second = delay_second
+        self.verbose = verbose
+        self.max_retry=max_retry
+        self.pool = concurrent.futures.ThreadPoolExecutor(max_workers=1024)
+        self.run_pool()
+        self.result=[]
+
+    def create_task(self, args, n_retry):
+        import time
+        time.sleep(self.delay_second)
+        if isinstance(args, dict):
+            task = self.pool.submit(self.func, **args)
+        else:
+            task = self.pool.submit(self.func, args)
+        return [task, args, n_retry]
+        
+    def run_pool(self):
+        tasks = []
+        for args in self.args_list:
+            tasks.append(self.create_task(args, n_retry=0))
+        self.tasks=tasks
+    
+    def is_success(self):
+        return [task[0].done() for task in self.tasks]
+    
+    def get_task_result(self, task):
+        if task[0].done() or task[2]>self.max_retry:
+            try:
+                return task[0].result()
+            except Exception as e:
+                if task[2]<self.max_retry: 
+                    return str(e)
+                else:
+                    return f'Exceeded max_retry ({task[2]-1}|{self.max_retry}): '+str(e)
+        else:
+            # if task[2]<self.max_retry: 
+                return f'pending'
+            # else:
+            #     return f'Exceeded max_retry'
+        
+    def get_result_now(self, retry=True, sleep_second=1):
+        if retry:
+            self.retry()
+        else:
+            import time
+            time.sleep(sleep_second)
+        if self.verbose:
+            n1=sum(self.is_success())
+            n2=len(self.is_success())
+            print(f"\r{n1/n2*100:.1f}% ({n1}|{n2}) complete", end='\n')
+        import json
+        import pandas as pd
+        df = pd.DataFrame([task[1] for task in self.tasks])
+        self.result=[self.get_task_result(task) for task in self.tasks]
+        df['result']=self.result
+        def fn(r):
+            if type(r)==str:
+                if str.startswith(r, 'Exceeded max_retry'):
+                    return 'error'
+                else:#elif r=='pending':
+                    return 'running'#'error_retry'
+            else:
+                return 'success'
+        df['status']=df['result'].map(fn)
+        return df            
+    
+    def retry(self):
+        def _retry_task(task, verbose):
+            if task[0].done():
+                task_exception = task[0].exception()
+                if task_exception:
+                    if verbose: 
+                        print(task_exception)
+                    if (task[2]<self.max_retry):
+                        if verbose: 
+                            print(f'Retry {task[2]+1}|{self.max_retry} for {task[1]}.')
+                        return self.create_task(task[1], n_retry=task[2]+1) 
+                    else:
+                        if verbose: 
+                            print(f'Exceeded Max retry {self.max_retry} for {task[1]}.')
+                        return [task[0], task[1], task[2]+1]
+                else:
+                    return task
+            else:
+                return task            
+        self.tasks = [_retry_task(task, self.verbose) for task in self.tasks]
+    
+    def get_result_all(self, timeout=120):
+        import time
+        for i in range(timeout):
+            df=self.get_result_now(retry=True)
+            # if (df.status=='success').mean()==1:
+            if (df.status=='running').mean()==0:
+                break
+            else:
+                time.sleep(1)
+        if self.verbose:
+            print(f"Done!")
+        return df
+
+    def get_error(self, sleep_second=3):
+        df=self.get_result_now(retry=False, sleep_second=sleep_second)
+        if self.verbose:
+            print('Status Summary:', df.status.value_counts().to_dict())
+            error_mask=df.status=='error'
+            if sum(error_mask)==0:
+                print('No error.')
+            else:
+                df_error = df[error_mask]
+                for i in range(len(df_error)): 
+                    print(f'\nROW: {i} | ERROR {"="*30}')
+                    for col in df_error.columns:  
+                        print(f'{str(col).upper()}: {df_error.iloc[i][col]}')
+        return df
+    def get_concat(self, sleep_second=0, verbose=None):
+        if verbose != None:
+            self.verbose=verbose
+        import pandas as pd
+        df = self.get_error(sleep_second=sleep_second)
+        mask=df.status=='success'
+        if mask.sum()==0:
+            return 
+        else:
+            results=[i for i in df[mask].result if i is not None]
+            if self.verbose:
+                print(f"{100*mask.mean().round(3)} percent success.")
+                if len(results)!=mask.sum():
+                    print(f"Warnning: {mask.sum()-len(results)}/{mask.sum()} are None values.")
+        return pd.concat(results)
+    def __repr__(self):
+        if self.verbose:
+            print(f'tasks_success={self.is_success()}')
+        if (sum(self.is_success())/len(self.is_success()))==1:
+            return f"success!"
+        else:
+            return "running..."
+            
+@fused.cache
+def get_parquet_stats(path):
+    import pyarrow.parquet as pq
+    import pandas as pd
+    # Load Parquet file
+    parquet_file = pq.ParquetFile(path)
+    
+    # List to store the metadata for each row group
+    stats_list = []
+
+    # Iterate through row groups
+    for i in range(parquet_file.num_row_groups):
+        row_group = parquet_file.metadata.row_group(i)
+        
+        # Dictionary to store row group's statistics
+        row_stats = {'row_group': i, 'num_rows': row_group.num_rows}
+        
+        # Iterate through columns and gather statistics
+        for j in range(row_group.num_columns):
+            column = row_group.column(j)
+            stats = column.statistics
+            
+            if stats:
+                col_name = column.path_in_schema
+                row_stats[f"{col_name}_min"] = stats.min
+                row_stats[f"{col_name}_max"] = stats.max
+                row_stats[f"{col_name}_null_count"] = stats.null_count
+        
+        # Append the row group stats to the list
+        stats_list.append(row_stats)
+    
+    # Convert the list to a DataFrame
+    df_stats = pd.DataFrame(stats_list)
+    
+    return df_stats
+
+@fused.cache
+def get_row_groups(key, value, file_path):
+    version='1.0'
+    df = fused.utils.common.get_parquet_stats(file_path)[['row_group', key+'_min', key+'_max']]
+    con = fused.utils.common.duckdb_connect()
+    df = con.query(f'select * from df where {value} between {key}_min and {key}_max').df()
+    return df.row_group.values
+
+def read_row_groups(file_path, chunk_ids, columns=None):
+    import pyarrow.parquet as pq   
+    table=pq.ParquetFile(file_path)   
+    if columns:
+        return table.read_row_groups(chunk_ids, columns=columns).to_pandas()   
+    else: 
+        print('available columns:', table.schema.names)
+        return table.read_row_groups(chunk_ids).to_pandas() 
+
+
+def tiff_bbox(url):
+    import rasterio
+    import shapely
+    import geopandas as gpd
+    with rasterio.open(url) as dataset:
+        gpd.GeoDataFrame(geometry=[shapely.box(*dataset.bounds)],crs=dataset.crs)
+        return list(dataset.bounds)
+    
+def s3_to_https(path):
+    arr = path[5:].split('/')
+    out = 'https://'+arr[0]+'.s3.amazonaws.com/'+'/'.join(arr[1:])
+    return out
+
+def get_ip():
+    import socket
+    hostname=socket.gethostname()
+    IPAddr=socket.gethostbyname(hostname)
+    return IPAddr
+    
+
+def scipy_voronoi(gdf):
+    """
+    Scipy based Voronoi function. Built because fused version at time is on geopandas 0.14.4 which 
+    doesnt' have `gdf.geometry.voronoi_polygons()`
+    Probably not the most optimised funciton but it gets the job done. 
+    Irrelevant once we move to geopandas 1.0+
+    """
+    from shapely.geometry import Polygon, Point
+    from scipy.spatial import Voronoi
+
+    points = np.array([(geom.x, geom.y) for geom in gdf.geometry])
+    vor = Voronoi(points)
+    
+    polygons = []
+    for region in vor.regions:
+        if not region or -1 in region:  # Ignore regions with open boundaries
+            continue
+        
+        # Get the vertices for the region and construct a polygon
+        polygon = Polygon([vor.vertices[i] for i in region])
+        polygons.append(polygon)
+
+    voronoi_gdf = gpd.GeoDataFrame(geometry=polygons, crs=gdf.crs)
+    return voronoi_gdf
