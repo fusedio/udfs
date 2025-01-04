@@ -106,7 +106,7 @@ Clone this repo to your local system and add the UDF folder under `public` or `c
 
 ## Ecosystem
 
-Build any scale workflows with the [Fused Python SDK](https://docs.fused.io/python-sdk/overview) and [Workbench webapp](https://docs.fused.io/workbench/overview), and integrate them into your stack with the [Fused Hosted API](https://docs.fused.io/hosted-api/overview).
+Build any scale workflows with the [Fused Python SDK](https://docs.fused.io/python-sdk/) and [Workbench webapp](https://docs.fused.io/workbench/), and integrate them into your stack by [calling then via HTTP](https://docs.fused.io/user-guide/out/http/)
 
 ![alt text](https://fused-magic.s3.us-west-2.amazonaws.com/docs_assets/ecosystem_diagram.png)
 

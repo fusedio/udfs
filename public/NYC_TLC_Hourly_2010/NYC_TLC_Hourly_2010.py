@@ -1,5 +1,5 @@
 @fused.udf
-def udf(hex_res:int=11, path: str='s3://fused-asset/misc/nyc/TLC_2010_count_hourly_hex12.parquet'):
+def udf(hex_res:int=11, path: str='s3://fused-asset/misc/nyc/TLC_2010_count_hourly_hex12.parquet', hourly=True):
     import h3
     import pandas as pd
     hex_res=min(hex_res,12)
@@ -13,7 +13,7 @@ def udf(hex_res:int=11, path: str='s3://fused-asset/misc/nyc/TLC_2010_count_hour
         else:
             df = df.groupby('hex')['cnt'].sum().reset_index()
         return df
-    df=get_data(path, hex_res, hourly=False)
+    df=get_data(path, hex_res, hourly=hourly)
     # df=df[df.cnt>=100]
     df['metric']=df.cnt**0.5*10
     print(df)    

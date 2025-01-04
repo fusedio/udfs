@@ -1,0 +1,94 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "FEMA_Buildings_US",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:description": "Oak Ridge National Laboratory and FEMA have created a comprehensive inventory of over 125 million structures across the U.S. and its territories, intended for use by federal agencies, local governments, and first responders to accelerate disaster response, better identify vulnerable areas, and develop strategies to improve the resilience of critical structures and communities. \n\n## External links\n\n- [Nature article link](https://www.nature.com/articles/s41597-024-03219-x)\n- [Code reference link](https://tech.marksblogg.com/ornl-fema-buildings.html)\n",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 0.95,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorCategories",
+                  "attr": "OCC_CLS",
+                  "domain": [
+                    "Assembly",
+                    "Commercial",
+                    "Utility and Misc",
+                    "Residential",
+                    "Industrial",
+                    "Education",
+                    "Government"
+                  ],
+                  "colors": "Bold"
+                }
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "FEMA_Buildings_US",
+            "fused:name": "FEMA_Buildings_US",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/7c0db1079666c7d88d76f78374e9fb25f11f9da5/files/Fused_Geo-partitioned_Table/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/7c0db10/files/Fused_Geo-partitioned_Table/",
+            "fused:gitPath": "files/Fused_Geo-partitioned_Table",
+            "fused:gitRef": "7c0db1079666c7d88d76f78374e9fb25f11f9da5",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/FEMA_Building_Tile.png",
+            "fused:gitAuthorNames": [
+              "Isaac Brodsky",
+              "Plinio Guzman"
+            ],
+            "fused:gitAuthorUsernames": [
+              "isaacbrodsky",
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/isaacbrodsky",
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/9139378?v=4",
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitLastModified": "2024-09-26T21:17:23+00:00",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 40.698455135410704,
+              "longitude": -73.98940117753095,
+              "zoom": 12.62912235764822,
+              "pitch": 0,
+              "bearing": 0
+            }
+          },
+          "source": "FEMA_Buildings_US.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

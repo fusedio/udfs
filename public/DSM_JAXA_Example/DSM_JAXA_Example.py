@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox,
+    bbox: fused.types.TileGDF,
     min_max=(0, 255),
     z_levels=[4, 6, 9, 11],
     verbose=False

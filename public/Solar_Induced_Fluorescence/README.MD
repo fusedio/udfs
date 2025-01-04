@@ -1,0 +1,2 @@
+<!--fused:readme-->
+Visualize global photosynthesis with this solar-induced fluorescence (SIF) dataset. Covering September 2014 to July 2020, it provides 16-day mean SIF estimates at 0.05° (5 km) resolution using an ANN trained on OCO-2 and MODIS data. Adjust the "month", "year" and "period" parameter to explore SIF patterns by time, supporting applications like drought monitoring, yield estimation, and agricultural planning. With 138 netCDF files, it bridges satellite and ground-based photosynthesis measurements, unlocking new insights into Earth's biomes.

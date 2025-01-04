@@ -19,10 +19,11 @@
                 "value": "",
                 "type": "string",
                 "suggestedValues": [
-                  "2024-03-12-alpha-0",
-                  "2024-02-15-alpha-0",
                   "2024-08-20-0",
-                  "2024-09-18-0"
+                  "2024-09-18-0",
+                  "2024-10-23-0",
+                  "2024-11-13-0",
+                  "2024-12-18-0"
                 ]
               },
               {
@@ -34,8 +35,8 @@
                   "base",
                   "places",
                   "transportation",
-                  "admins",
-                  "addresses"
+                  "addresses",
+                  "divisions"
                 ]
               },
               {
@@ -45,7 +46,6 @@
                 "suggestedValues": [
                   "land_use",
                   "water",
-                  "administrative_boundary",
                   "place",
                   "connector",
                   "segment",
@@ -82,7 +82,7 @@
                 "label": "coop"
               }
             ],
-            "fused:description": "Buildings footprints, places of interest (POIs), admin boundaries, and transportation globally from [Overture Maps](https://overturemaps.org/).\n\n## Parameters\n\n- `release`: Overture release ID. Defaults to `2024-09-18-0`. Note that `.` should be replaced with `-` in the ID.\n- `type`: One of `infrastructure`, `land`, `land_use`, `water`, `division`, `division_boundary`, `division_area`, `place`, `connector`, `segment`, `address`, `building` (default).\n- `theme`: One of `buildings`, `base`, `places`, `transportation`, `divisions`, `addresses`. If not specified, this will be inferred from the type.\n- `use_columns`: Load only these columns if specified. Default is to load all columns.\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\nimport geopandas as gpd\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Overture_Maps_Example\")\ngdf_output = fused.run(udf, x=2622, y=6333, z=14)\ngdf = gpd.GeoDataFrame(gdf_output, geometry='geometry', crs='epsg:4326')\ngdf.plot()\n```\n",
+            "fused:description": "Buildings footprints, places of interest (POIs), admin boundaries, and transportation globally from [Overture Maps](https://overturemaps.org/).\n\n## Parameters\n\n- `release`: Overture release ID. Defaults to `2024-12-18-0`. Note that `.` should be replaced with `-` in the ID.\n- `type`: One of `infrastructure`, `land`, `land_use`, `water`, `division`, `division_boundary`, `division_area`, `place`, `connector`, `segment`, `address`, `building` (default).\n- `theme`: One of `buildings`, `base`, `places`, `transportation`, `divisions`, `addresses`. If not specified, this will be inferred from the type.\n- `use_columns`: Load only these columns if specified. Default is to load all columns.\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\nimport geopandas as gpd\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Overture_Maps_Example\")\ngdf_output = fused.run(udf, x=2622, y=6333, z=14)\ngdf = gpd.GeoDataFrame(gdf_output, geometry='geometry', crs='epsg:4326')\ngdf.plot()\n```\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -129,39 +129,43 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/75be14e6587ddd36d6b4f2b1d7242670af9bfb6a/public/Overture_Maps_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/e0e45408fe77fdb4ca4de9ab0b11c5c2af86bcd6/public/Overture_Maps_Example/",
             "fused:gitPath": "public/Overture_Maps_Example",
-            "fused:gitRef": "75be14e6587ddd36d6b4f2b1d7242670af9bfb6a",
+            "fused:gitRef": "e0e45408fe77fdb4ca4de9ab0b11c5c2af86bcd6",
             "fused:gitAuthorNames": [
               "Isaac Brodsky",
               "Plinio Guzman",
               "Sina Kashuk",
               "Fabion Kauker",
-              null
+              null,
+              "Tyler Erickson"
             ],
             "fused:gitAuthorUsernames": [
               "isaacbrodsky",
               "pgzmnk",
               "kashuk",
               "fhk",
-              "fused-io[bot]"
+              "fused-io[bot]",
+              "tylere"
             ],
             "fused:gitAuthorUrls": [
               "https://github.com/isaacbrodsky",
               "https://github.com/pgzmnk",
               "https://github.com/kashuk",
               "https://github.com/fhk",
-              "https://github.com/apps/fused-io"
+              "https://github.com/apps/fused-io",
+              "https://github.com/tylere"
             ],
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/9139378?v=4",
               "https://avatars.githubusercontent.com/u/27398253?v=4",
               "https://avatars.githubusercontent.com/u/12432685?v=4",
               "https://avatars.githubusercontent.com/u/4031392?v=4",
-              "https://avatars.githubusercontent.com/in/834700?v=4"
+              "https://avatars.githubusercontent.com/in/834700?v=4",
+              "https://avatars.githubusercontent.com/u/92862?v=4"
             ],
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/75be14e/public/Overture_Maps_Example/",
-            "fused:gitLastModified": "2024-09-21T01:46:09+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/e0e4540/public/Overture_Maps_Example/",
+            "fused:gitLastModified": "2024-11-15T01:14:30+00:00",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:id": null,

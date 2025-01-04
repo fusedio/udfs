@@ -1,18 +1,13 @@
 @fused.udf
-def udf(bbox: fused.types.Bbox = None, layer: str = "ndvi", time: int = 2):
-    import math
-    import os
-
+def udf(bbox: fused.types.Bbox = None, layer: str = "ndvi", time: int = 2, target_shape: list = [512,512]):
     import geopandas as gpd
     import numpy as np
     import rioxarray
     import shapely
     import xarray as xr
-
     utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
-    ).utils
-
+        "https://github.com/fusedio/udfs/tree/cbc5482/public/common/"
+        ).utils
     ds = xr.open_zarr("s3://fused-asset/data/seasfire_v3/")
 
     print(ds)
@@ -36,18 +31,22 @@ def udf(bbox: fused.types.Bbox = None, layer: str = "ndvi", time: int = 2):
     else:
         print("No time dimension found in the dataset.")
 
-    ds = ds.sel(latitude=slice(maxy, miny), longitude=slice(minx, maxx)).isel(time=time)
+    # Selecting subset and tile for the current tile
+    buffer = ds.longitude[1]-ds.longitude[0]
+    ds_buffer = ds.sel(latitude=slice(maxy+buffer, miny-buffer), longitude=slice(minx-buffer, maxx+buffer)).isel(time=time)    
+    da=utils.da_fit_to_resolution(ds_buffer[layer], target_shape)
+    da = da.sel(latitude=slice(miny, maxy), longitude=slice(minx, maxx))
+    
+    # Reprojecting to Web Mercator for visualization
+    arr = da.rio.set_crs("EPSG:4326")
+    arr_reprojected = arr.rio.reproject("EPSG:3857")
 
-    data_array = ds[layer].values.squeeze()
-    print(data_array)
-
-    # Compute min and max values, excluding NaN
-    valid_min = math.floor(np.nanmin(data_array))
-    valid_max = math.ceil(np.nanmax(data_array))
+    data_array = arr_reprojected.values.squeeze()
+    print(data_array.shape)
 
     # Masking the NaN values and replcing with values outside min max
-    masked_data = np.nan_to_num(data_array, nan=valid_min - 1)
+    masked_data = np.nan_to_num(data_array, nan=-2)
 
     # Using the minmax for color mapping
-    arr = utils.arr_to_plasma(masked_data, min_max=(valid_min, valid_max))
+    arr = utils.arr_to_plasma(masked_data, min_max=(-1, 1))
     return arr
