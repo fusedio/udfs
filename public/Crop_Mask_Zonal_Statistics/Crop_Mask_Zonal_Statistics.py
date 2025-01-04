@@ -8,7 +8,7 @@ def udf(engine='realtime', year: str = "2016", month: str = "07", period: str ="
     def load(crop_type='corn'):
         
         gdf_counties = gpd.read_parquet('s3://fused-asset/data/tiger/county/tl_rd22_us_county small.parquet')
-        target_counties = gdf_counties[gdf_counties['GEOID'].str.startswith(('31', '19', '17', '18'))].GEOID.values
+        target_counties = gdf_counties[gdf_counties['GEOID'].str.startswith(('19'))].GEOID.values
 
         # Create array of all parameter combinations
         all_params = [{'geoid': geoid, 'year': year, 'crop_type': crop_type} for geoid in target_counties]
@@ -20,7 +20,7 @@ def udf(engine='realtime', year: str = "2016", month: str = "07", period: str ="
             geoid = params['geoid']
             year = params['year']
             crop_type = params['crop_type']
-            df = fused.run(udf_nail, geoid=geoid, year=year, month=month, period =period, crop_type=crop_type, engine=engine)
+            df = fused.run(udf_nail, geoid=geoid, year=year, month=month, period=period, crop_type=crop_type, engine=engine)
             return df
     
         dfs_out = fused.utils.common.run_pool(hammer_udf, all_params, max_workers=64)
@@ -32,9 +32,10 @@ def udf(engine='realtime', year: str = "2016", month: str = "07", period: str ="
     gdf['metric']= gdf['county_sif_sum']/gdf['corn_sif_sum']
     return gdf
 
-    
+
+# Rename `udf` to `udf_nail` to run in loop
 @fused.udf
-def udf_nail(crop_type ="corn", geoid: str = '19119', year: str = "2015", month: str = "08", period: str ="b", output_suffix='out1'):
+def udf(crop_type ="corn", geoid: str = '19119', year: str = "2015", month: str = "08", period: str ="b", output_suffix='out1'):
     from utils2 import get_masked_array, get_da, get_da_bounds, clip_arr
     from skimage.transform import resize
     import geopandas as gpd
@@ -47,7 +48,6 @@ def udf_nail(crop_type ="corn", geoid: str = '19119', year: str = "2015", month:
     gdf = gpd.read_parquet('s3://fused-asset/data/tiger/county/tl_rd22_us_county 25pct.parquet')
     gdf['geometry'] = gdf['geometry'].buffer(0)
     gdf = gdf[gdf['GEOID'] == geoid]
-
     area=gdf.to_crs(gdf.estimate_utm_crs()).area.round(2)
     print(area)
     
@@ -55,8 +55,8 @@ def udf_nail(crop_type ="corn", geoid: str = '19119', year: str = "2015", month:
     geom_bbox = fused.utils.common.geo_bbox(gdf)
     
     # Dynamically construct the path based on the year and month
-    # path = f's3://fused-asset/misc/kristin/sif_ann_{year}{month}{period}.nc'
     path = f's3://soldatanasasifglobalifoco2modis1863/Global_SIF_OCO2_MODIS_1863/data/sif_ann_{year}{month}{period}.nc'
+    
     # Load SIF Array
     da = get_da(path, coarsen_factor=1, variable_index=0, xy_cols=xy_cols)
     
@@ -70,7 +70,7 @@ def udf_nail(crop_type ="corn", geoid: str = '19119', year: str = "2015", month:
     sif_resized = resize(img, (arr_crop.shape[0],arr_crop.shape[1]), anti_aliasing=True, preserve_range=True).astype('uint8')
 
     # Sif for entire county prior to corn mask
-    utils = fused.load('https://github.com/fusedio/udfs/tree/ba8aeee/public/common/')
+    utils = fused.load('https://github.com/fusedio/udfs/tree/ba8aeee/public/common/').utils
     county_geom_mask = utils.gdf_to_mask_arr(gdf, sif_resized.shape[-2:], first_n=1) 
     sif_resized_county = np.ma.masked_array(sif_resized, mask=county_geom_mask)
     # return sif_resized_county, geom_bbox.total_bounds
