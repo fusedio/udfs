@@ -12,7 +12,7 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:description": "Visualize global photosynthesis with this solar-induced fluorescence (SIF) dataset. Covering September 2014 to July 2020, it provides 16-day mean SIF estimates at 0.05° (5 km) resolution using an ANN trained on OCO-2 and MODIS data. Adjust the \"month\", \"year\" and \"period\" parameter to explore SIF patterns by time, supporting applications like drought monitoring, yield estimation, and agricultural planning. With 138 netCDF files, it bridges satellite and ground-based photosynthesis measurements, unlocking new insights into Earth's biomes.",
+            "fused:description": "# Solar Induced Fluorescence\n\nVisualize global photosynthesis with this solar-induced fluorescence (SIF) dataset. The dataset bridges satellite and ground-based photosynthesis measurements, unlocking new insights into Earth's biomes.\n\nCovering September 2014 to July 2020, this dataset provides 16-day mean SIF estimates at 0.05° (5 km) resolution using an ANN trained on OCO-2 and MODIS data. Adjust the \"month\", \"year\" and \"period\" parameter to explore SIF patterns by time, supporting applications like drought monitoring, yield estimation, and agricultural planning. \n\n\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -58,23 +58,31 @@
             "fused:slug": "Solar_Induced_Fluorescence",
             "fused:name": "Solar_Induced_Fluorescence",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/de9c742d137441924a25ea21e965f1e7c5c2b998/public/Solar_Induced_Fluorescence/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/de9c742/public/Solar_Induced_Fluorescence/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/8dfc92c381ba36b7fa5c1c1c8d5d729e5d7bb864/public/Solar_Induced_Fluorescence/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/8dfc92c/public/Solar_Induced_Fluorescence/",
             "fused:gitPath": "public/Solar_Induced_Fluorescence",
-            "fused:gitRef": "de9c742d137441924a25ea21e965f1e7c5c2b998",
+            "fused:gitRef": "8dfc92c381ba36b7fa5c1c1c8d5d729e5d7bb864",
             "fused:gitAuthorNames": [
-              "Isaac Brodsky"
+              null,
+              "Plinio Guzman",
+              null
             ],
             "fused:gitAuthorUsernames": [
-              "isaacbrodsky"
+              "fused-io[bot]",
+              "pgzmnk",
+              "krissykodes"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/isaacbrodsky"
+              "https://github.com/apps/fused-io",
+              "https://github.com/pgzmnk",
+              "https://github.com/krissykodes"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/9139378?v=4"
+              "https://avatars.githubusercontent.com/in/834700?v=4",
+              "https://avatars.githubusercontent.com/u/27398253?v=4",
+              "https://avatars.githubusercontent.com/u/80126562?v=4"
             ],
-            "fused:gitLastModified": "2025-01-02T14:11:30.555Z",
+            "fused:gitLastModified": "2025-01-04T20:16:10+00:00",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitHistory": [
@@ -147,7 +155,16 @@
               }
             ],
             "fused:gitPullRequestBranch": "kristinscholten@gmail.com-patch-making-this-udf-pu",
-            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/543"
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/543",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/sif.png",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 39.562333308752294,
+              "longitude": -91.23771748253755,
+              "zoom": 1.7759115916353163,
+              "pitch": 0,
+              "bearing": 0
+            }
           },
           "source": "Solar_Induced_Fluorescence.py",
           "headers": [
