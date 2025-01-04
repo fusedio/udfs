@@ -12,7 +12,7 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:description": "Read a NetCDF image file with rioxarray.\n",
+            "fused:description": "Calculates Solar-Induced Fluorescence (SIF) data for U.S. counties with a focus on crop-specific insights using USDA Cropland Data Layers. Computes key SIF metrics—sums, means, and ratios—for crops (e.g., corn) and non-crop areas by masking a NetCDF with GeoTiff. Users can customize parameters such as year, month, period, and county FIPS codes to track temporal and spatial trends. The result is a GeoDataFrame with detailed, spatially-referenced statistics, supporting applications in crop yield prediction, drought monitoring, and agricultural planning.\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -52,17 +52,29 @@
             "fused:slug": "Crop_Mask_Zonal_Statistics",
             "fused:name": "Crop_Mask_Zonal_Statistics",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/7f4612f8c2abd582548ccfc8cdf10c3300675c53/Kristin_Corn_Irradiance/",
-            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/7f4612f/Kristin_Corn_Irradiance/",
-            "fused:gitPath": "Kristin_Corn_Irradiance",
-            "fused:gitRef": "7f4612f8c2abd582548ccfc8cdf10c3300675c53",
-            "fused:gitAuthorNames": [],
-            "fused:gitAuthorUsernames": [],
-            "fused:gitAuthorUrls": [],
-            "fused:gitAuthorAvatarUrls": [],
-            "fused:gitLastModified": "2024-10-14T00:57:17+00:00",
-            "fused:explorerTab": "team",
-            "fused:gitRepo": "fusedlabs/fusedudfs",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/937aaee4d6ccb92dae018d83f0f4007ebefbee6b/public/Crop_Mask_Zonal_Statistics/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/937aaee/public/Crop_Mask_Zonal_Statistics/",
+            "fused:gitPath": "public/Crop_Mask_Zonal_Statistics",
+            "fused:gitRef": "937aaee4d6ccb92dae018d83f0f4007ebefbee6b",
+            "fused:gitAuthorNames": [
+              null,
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "krissykodes",
+              "fused-io[bot]"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/krissykodes",
+              "https://github.com/apps/fused-io"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/80126562?v=4",
+              "https://avatars.githubusercontent.com/in/834700?v=4"
+            ],
+            "fused:gitLastModified": "2025-01-02T20:11:44+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs",
             "fused:gitHistory": [
               {
                 "fused:description": "Read a NetCDF image file with rioxarray.\n",
@@ -132,8 +144,8 @@
                 "fused:gitRepo": "fusedio/udfs"
               }
             ],
-            "fused:gitPullRequestBranch": "plinio@fused.io-patch-Introduce-Kristin-UDF",
-            "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/289",
+            "fused:gitPullRequestBranch": "kristinscholten@gmail.com-patch-updated-data-link",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/544",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/cropmask_zstats.png"
           },
           "source": "Crop_Mask_Zonal_Statistics.py",
