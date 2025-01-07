@@ -52,7 +52,60 @@
             "fused:slug": "CORNUCOPIA-Preparing_Abundant_Model_Datasets",
             "fused:name": "CORNUCOPIA-Preparing_Abundant_Model_Datasets",
             "fused:id": null,
-            "fused:description": "## Overview\n\nIntegrates Solar-Induced Fluorescence (SIF) data (2015–2020) with USDA crop yields to create machine learning training datasets. Calculates crop-specific SIF ratios, areas (measured in km and acres), and bushels using satellite and yield data processed with DuckDB. Outputs a GeoDataFrame for spatial and temporal trend analysis, supporting agricultural planning and yield prediction.\n\n## External links\n\n- [Solar Induced Fluorescence UDF](https://example.com)\n- [Crop Mask Zonal Statistics UDF](https://example.com)\n- [Data Dictionary for SIF](https://daac.ornl.gov/SIF-ESDR/guides/Global_SIF_OCO2_MODIS.html)"
+            "fused:description": "## Overview\n\nIntegrates Solar-Induced Fluorescence (SIF) data (2015–2020) with USDA crop yields to create machine learning training datasets. Calculates crop-specific SIF ratios, areas (measured in km and acres), and bushels using satellite and yield data processed with DuckDB. Outputs a GeoDataFrame for spatial and temporal trend analysis, supporting agricultural planning and yield prediction.\n\n## External links\n\n- [Solar Induced Fluorescence UDF](https://example.com)\n- [Crop Mask Zonal Statistics UDF](https://example.com)\n- [Data Dictionary for SIF](https://daac.ornl.gov/SIF-ESDR/guides/Global_SIF_OCO2_MODIS.html)",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "1aa6c936b8239f7980c342e1d67b4a7c1ed02bdb",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/1aa6c936b8239f7980c342e1d67b4a7c1ed02bdb/community/kristinscholten/CORNUCOPIA-Preparing_Abundant_Model_Datasets/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/1aa6c93/community/kristinscholten/CORNUCOPIA-Preparing_Abundant_Model_Datasets/",
+            "fused:gitPath": "community/kristinscholten/CORNUCOPIA-Preparing_Abundant_Model_Datasets",
+            "fused:gitLastModified": "2025-01-07T16:47:12.157Z",
+            "fused:gitHistory": [
+              {
+                "fused:vizConfig": {
+                  "tileLayer": {
+                    "@@type": "TileLayer",
+                    "minZoom": 0,
+                    "maxZoom": 19,
+                    "tileSize": 256,
+                    "pickable": true
+                  },
+                  "rasterLayer": {
+                    "@@type": "BitmapLayer",
+                    "pickable": true
+                  },
+                  "vectorLayer": {
+                    "@@type": "GeoJsonLayer",
+                    "stroked": true,
+                    "filled": true,
+                    "pickable": true,
+                    "opacity": 0.01,
+                    "lineWidthMinPixels": 1,
+                    "pointRadiusMinPixels": 1,
+                    "getFillColor": {
+                      "@@function": "colorContinuous",
+                      "attr": "corn_sif_mean",
+                      "domain": [
+                        0,
+                        1
+                      ],
+                      "colors": "OrYel",
+                      "nullColor": [
+                        184,
+                        184,
+                        184
+                      ]
+                    }
+                  }
+                },
+                "fused:udfType": "auto",
+                "fused:slug": "Kristin_Query_Sif_Tables",
+                "fused:name": "Kristin_Query_Sif_Tables",
+                "fused:id": null,
+                "fused:description": "## Overview\n\nIntegrates Solar-Induced Fluorescence (SIF) data (2015–2020) with USDA crop yields to create machine learning training datasets. Calculates crop-specific SIF ratios, areas (measured in km and acres), and bushels using satellite and yield data processed with DuckDB. Outputs a GeoDataFrame for spatial and temporal trend analysis, supporting agricultural planning and yield prediction.\n\n## External links\n\n- [Solar Induced Fluorescence UDF](https://example.com)\n- [Crop Mask Zonal Statistics UDF](https://example.com)\n- [Data Dictionary for SIF](https://daac.ornl.gov/SIF-ESDR/guides/Global_SIF_OCO2_MODIS.html)"
+              }
+            ],
+            "fused:gitPullRequestBranch": "kristinscholten@gmail.com-patch-fixed-pivot-table-",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/560"
           },
           "source": "CORNUCOPIA-Preparing_Abundant_Model_Datasets.py",
           "headers": []

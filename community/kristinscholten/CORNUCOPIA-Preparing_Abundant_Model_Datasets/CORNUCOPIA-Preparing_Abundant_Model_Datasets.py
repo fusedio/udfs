@@ -133,6 +133,9 @@ def udf():
     out_reduced = out[['GEOID', 'year', 'bushels_per_acre_actual','area_corn_acres', 'area_county_acres','geometry','m_pct','bushels_sum_actual']]
     # print(out_reduced)
     # print(out_reduced.drop(columns='geometry').T)
+    # print(pivot.dtypes)
+    # print(year_totals.dtypes)
+
 
     # Merge with all the corn sif mean totals
     result = pivot.merge(year_totals, on=['GEOID', 'year'], how='left')
@@ -141,9 +144,9 @@ def udf():
     result = gpd.GeoDataFrame(result, geometry='geometry')
     # print(result.info())
     # result.rename(columns={'Value': 'bushelsperacre'}, inplace=True)
-    
-    # print(result.head().drop(columns='geometry').T)
-    # # print(result.head().drop(columns='geometry'))
+    print(result)
+    print(result.head().drop(columns='geometry').T)
+    # print(result.head().drop(columns='geometry'))
     # print(result)
     
     return result
