@@ -5,7 +5,6 @@
 ## Cluster Embeddings of Overture Places by H3
 
 This UDF groups business categories in Overture Places at the H3 grid level, we can analyze the distribution of services and their accessibility. This approach provides a quantifiable way to compare cities globally, shedding light on the urban inclusivity of different regions.
-Workflow
 
 The UDF follows this workflow:
 
