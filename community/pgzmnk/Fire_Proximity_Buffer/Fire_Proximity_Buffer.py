@@ -3,8 +3,6 @@ def udf(
     # bbox: fused.types.TileGDF=None,
     bbox: fused.types.ViewportGDF = None,
     date_start: int = 2,
-    date_end: int = 1,
-    h3_size: int = 7,
 ):
     import datetime
 
