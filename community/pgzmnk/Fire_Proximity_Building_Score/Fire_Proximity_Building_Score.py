@@ -8,8 +8,6 @@ def udf(
     bbox: fused.types.TileGDF = None,
     # bbox: fused.types.ViewportGDF=None,
     # bbox: fused.types.Bbox=aoi,
-    date_start: int = 2,
-    date_end: int = 1,
     h3_size: int = 7,
 ):
     import datetime
@@ -44,6 +42,7 @@ def udf(
     gdf_fire = load_data()
     cols = [
         "geometry",
+        "poly_IncidentName",
         "poly_CreateDate",
         "poly_DateCurrent",
         "poly_PolygonDateTime",
