@@ -21,7 +21,7 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:description": "## Fire Risk Buffer\n\nCreates a buffer around a fire polygon. The fire rating is calculated with a buffer to represent proximity to a fire from the [WFIGS Current Interagency Fire Perimeters](https://data-nifc.opendata.arcgis.com/datasets/nifc::wfigs-current-interagency-fire-perimeters/about) dataset. ",
+            "fused:description": "## Fire Risk Buffer\n\nCreates a buffer around a fire polygon. The fire rating is calculated with a buffer to represent proximity to a fire from the [WFIGS Current Interagency Fire Perimeters](https://data-nifc.opendata.arcgis.com/datasets/nifc::wfigs-current-interagency-fire-perimeters/about) dataset.\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -108,7 +108,26 @@
             "fused:udfType": "vector_tile",
             "fused:slug": "Fire_Proximity_Buffer",
             "fused:name": "Fire_Proximity_Buffer",
-            "fused:id": null
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/4c5902f2594890e986f056dffcf52f3c92f5268d/community/pgzmnk/Fire_Proximity_Buffer/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/4c5902f/community/pgzmnk/Fire_Proximity_Buffer/",
+            "fused:gitPath": "community/pgzmnk/Fire_Proximity_Buffer",
+            "fused:gitRef": "4c5902f2594890e986f056dffcf52f3c92f5268d",
+            "fused:gitAuthorNames": [
+              "Plinio Guzman"
+            ],
+            "fused:gitAuthorUsernames": [
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitLastModified": "2025-01-09T11:38:13+00:00",
+            "fused:explorerTab": "community",
+            "fused:gitRepo": "fusedio/udfs"
           },
           "source": "Fire_Proximity_Buffer.py",
           "headers": []
