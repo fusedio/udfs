@@ -109,10 +109,10 @@
             "fused:slug": "Fire_Proximity_Buffer",
             "fused:name": "Fire_Proximity_Buffer",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/4c5902f2594890e986f056dffcf52f3c92f5268d/community/pgzmnk/Fire_Proximity_Buffer/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/4c5902f/community/pgzmnk/Fire_Proximity_Buffer/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/4524236908c942b16ce0df38a9d0aa06db148128/community/pgzmnk/Fire_Proximity_Buffer/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/4524236/community/pgzmnk/Fire_Proximity_Buffer/",
             "fused:gitPath": "community/pgzmnk/Fire_Proximity_Buffer",
-            "fused:gitRef": "4c5902f2594890e986f056dffcf52f3c92f5268d",
+            "fused:gitRef": "4524236908c942b16ce0df38a9d0aa06db148128",
             "fused:gitAuthorNames": [
               "Plinio Guzman"
             ],
@@ -125,9 +125,11 @@
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/27398253?v=4"
             ],
-            "fused:gitLastModified": "2025-01-09T11:38:13+00:00",
+            "fused:gitLastModified": "2025-01-09T17:21:34.532Z",
             "fused:explorerTab": "community",
-            "fused:gitRepo": "fusedio/udfs"
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitPullRequestBranch": "plinio@fused.io-patch-polyIncidentName",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/566"
           },
           "source": "Fire_Proximity_Buffer.py",
           "headers": []
