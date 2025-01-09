@@ -20,8 +20,8 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/fire_h3.png",
-            "fused:description": "## Buildings Fire Risk\n\nThis UDF can return 2 outputs:\n1. Overture Building polygons with a rating of proximity to fire\n2. H3 rollup of Overture Place categories\n\nThe fire rating is calculated with a buffer to represent proximity to a fire from the [WFIGS Current Interagency Fire Perimeters](https://data-nifc.opendata.arcgis.com/datasets/nifc::wfigs-current-interagency-fire-perimeters/about) dataset. ",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/chris_buildings.png",
+            "fused:description": "## Buildings Fire Risk\n\nThis UDF can return 2 outputs:\n1. Overture Building polygons with a rating of proximity to fire\n2. H3 rollup of Overture Place categories\n\nThe fire rating is calculated with a buffer to represent proximity to a fire from the [WFIGS Current Interagency Fire Perimeters](https://data-nifc.opendata.arcgis.com/datasets/nifc::wfigs-current-interagency-fire-perimeters/about) dataset.\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -108,7 +108,28 @@
             "fused:udfType": "vector_tile",
             "fused:slug": "Fire_Proximity_Building_Score",
             "fused:name": "Fire_Proximity_Building_Score",
-            "fused:id": null
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/c6dba16fbba9c5aa7eab29e2ebf347906e9db99e/community/pgzmnk/Fire_Proximity_Building_Score/",
+            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/c6dba16/community/pgzmnk/Fire_Proximity_Building_Score/",
+            "fused:gitPath": "community/pgzmnk/Fire_Proximity_Building_Score",
+            "fused:gitRef": "c6dba16fbba9c5aa7eab29e2ebf347906e9db99e",
+            "fused:gitAuthorNames": [
+              "Plinio Guzman"
+            ],
+            "fused:gitAuthorUsernames": [
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitLastModified": "2025-01-09T17:52:46.923Z",
+            "fused:explorerTab": "community",
+            "fused:gitRepo": "fusedlabs/fusedudfs",
+            "fused:gitPullRequestBranch": "plinio@fused.io-patch-remove-params",
+            "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/492"
           },
           "source": "Fire_Proximity_Building_Score.py",
           "headers": [

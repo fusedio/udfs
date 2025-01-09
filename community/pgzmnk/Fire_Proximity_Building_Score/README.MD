@@ -1,5 +1,5 @@
 <!--fused:preview-->
-<p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/fire_h3.png" width="600" alt="UDF preview image"></p>
+<p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/chris_buildings.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:readme-->
 ## Buildings Fire Risk
