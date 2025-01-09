@@ -19,7 +19,7 @@ def udf(gers_id: str='08b2a100d2cb6fff02000821de8bdff1'):
     # 4. Subselect building
     gdf = gdf[gdf['id'] == gers_id]
     
-    # 5. De-struct the names column
+    # 5. De-struct the primary names column
     gdf['primary'] = gdf['names'].apply(lambda x: x.get('primary') if isinstance(x, dict) else None)
     cols = ['id', 'primary', 'subtype', 'class', 'geometry']
     print(gdf[cols].T)
