@@ -1,0 +1,64 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Overture_Buildings_GERS_Lookup",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/overture_gers_lookup.png",
+            "fused:description": "## Overture Buildings GERS Lookup\n\nThis UDF  accepts an Overture Buildings GERS defined by the `gers_id` parameter and returns the corresponding Building  polygon, id, and attributes. Because the first 16 digits of GERS correspond to an H3 cell, we can use the ID to create a polygon to spatially filter the dataset. \n\nThen, `get_overture` loads any buildings that intersect the H3 cell and the building that matches that ID is selected.\n\n",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer"
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    200,
+                    250,
+                    0
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Overture_Buildings_GERS_Lookup",
+            "fused:name": "Overture_Buildings_GERS_Lookup",
+            "fused:id": null
+          },
+          "source": "Overture_Buildings_GERS_Lookup.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
