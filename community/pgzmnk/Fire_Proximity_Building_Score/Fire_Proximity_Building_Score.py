@@ -44,6 +44,7 @@ def udf(
     gdf_fire = load_data()
     cols = [
         "geometry",
+        "poly_IncidentName",
         "poly_CreateDate",
         "poly_DateCurrent",
         "poly_PolygonDateTime",
