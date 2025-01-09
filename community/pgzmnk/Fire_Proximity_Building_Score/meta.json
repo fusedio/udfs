@@ -1,0 +1,125 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Fire_Proximity_Building_Score",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 34.41854838655976,
+              "longitude": -117.64118284555663,
+              "zoom": 15.52595305646848,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/fire_h3.png",
+            "fused:description": "## Buildings Fire Risk\n\nThis UDF can return 2 outputs:\n1. Overture Building polygons with a rating of proximity to fire\n2. H3 rollup of Overture Place categories\n\nThe fire rating is calculated with a buffer to represent proximity to a fire from the [WFIGS Current Interagency Fire Perimeters](https://data-nifc.opendata.arcgis.com/datasets/nifc::wfigs-current-interagency-fire-perimeters/about) dataset. ",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": [
+                  28,
+                  224,
+                  184,
+                  400
+                ],
+                "getFillColor": [
+                  208,
+                  28,
+                  28,
+                  5
+                ]
+              },
+              "hexLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "extruded": true,
+                "opacity": 0.3,
+                "coverage": 0.8,
+                "lineWidthMinPixels": 0,
+                "getHexagon": "@@=properties.h3_index",
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "TealGrn",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": {
+                  "@@function": "colorCategories",
+                  "attr": "cluster",
+                  "domain": [
+                    0,
+                    1,
+                    2,
+                    4,
+                    5,
+                    6,
+                    7
+                  ],
+                  "colors": "Bold",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "cnt",
+                  "present": "@@=properties.cnt",
+                  "absent": 1
+                },
+                "elevationScale": 10
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "Fire_Proximity_Building_Score",
+            "fused:name": "Fire_Proximity_Building_Score",
+            "fused:id": null
+          },
+          "source": "Fire_Proximity_Building_Score.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
