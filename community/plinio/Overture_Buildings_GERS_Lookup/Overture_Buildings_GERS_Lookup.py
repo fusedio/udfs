@@ -20,10 +20,8 @@ def udf(gers_id: str='08b2a100d2cb6fff02000821de8bdff1'):
     gdf = gdf[gdf['id'] == gers_id]
     
     # 5. De-struct the names column
-    normalized_df = pd.json_normalize(gdf['names'])
-    gdf = gdf.reset_index(drop=True).join(normalized_df)
+    gdf['primary'] = gdf['names'].apply(lambda x: x.get('primary') if isinstance(x, dict) else None)
     cols = ['id', 'primary', 'subtype', 'class', 'geometry']
-
     print(gdf[cols].T)
     return gdf[cols]
 

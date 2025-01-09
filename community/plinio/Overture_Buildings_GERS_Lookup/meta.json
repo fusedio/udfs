@@ -14,6 +14,22 @@
           "metadata": {
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/overture_gers_lookup.png",
             "fused:description": "## Overture Buildings GERS Lookup\n\nThis UDF  accepts an Overture Buildings GERS defined by the `gers_id` parameter and returns the corresponding Building  polygon, id, and attributes. Because the first 16 digits of GERS correspond to an H3 cell, we can use the ID to create a polygon to spatially filter the dataset. \n\nThen, `get_overture` loads any buildings that intersect the H3 cell and the building that matches that ID is selected.\n\n",
+            "fused:name": "Overture_Buildings_GERS_Lookup",
+            "fused:slug": "Overture_Buildings_GERS_Lookup",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "b06265431fd0fdab25118d49ff702ef37aedc8a0",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/b06265431fd0fdab25118d49ff702ef37aedc8a0/community/plinio/Overture_Buildings_GERS_Lookup/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/b062654/community/plinio/Overture_Buildings_GERS_Lookup/",
+            "fused:gitPath": "community/plinio/Overture_Buildings_GERS_Lookup",
+            "fused:gitLastModified": "2025-01-09T16:29:59.877Z",
+            "fused:gitHistory": [
+              {
+                "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/overture_gers_lookup.png",
+                "fused:description": "## Overture Buildings GERS Lookup\n\nThis UDF  accepts an Overture Buildings GERS defined by the `gers_id` parameter and returns the corresponding Building  polygon, id, and attributes. Because the first 16 digits of GERS correspond to an H3 cell, we can use the ID to create a polygon to spatially filter the dataset. \n\nThen, `get_overture` loads any buildings that intersect the H3 cell and the building that matches that ID is selected.\n\n"
+              }
+            ],
+            "fused:gitPullRequestBranch": "plinio@fused.io-patch-Create-Overture-Buildings-GE",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/564",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -50,8 +66,6 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "Overture_Buildings_GERS_Lookup",
-            "fused:name": "Overture_Buildings_GERS_Lookup",
             "fused:id": null
           },
           "source": "Overture_Buildings_GERS_Lookup.py",
