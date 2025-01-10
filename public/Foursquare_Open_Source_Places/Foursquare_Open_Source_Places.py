@@ -1,7 +1,7 @@
 @fused.udf
 def udf(
     bbox: fused.types.TileGDF,
-    release: str = "2024-12-03",
+    release: str = "2025-01-10",
     min_zoom: int = 10,
     use_columns: list = ["geometry", "name", "fsq_category_ids"],
 ):
