@@ -8,6 +8,20 @@ from numpy.typing import NDArray
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
 from loguru import logger
 
+@fused.cache
+def simplify_gdf(gdf, pct=1, args='-o force -clean'):
+    #ref https://github.com/mbloch/mapshaper/blob/master/REFERENCE.md
+    import geopandas as gpd
+    import uuid
+    import json
+    file_path = f'/mount/cache_data/temp/{uuid.uuid4()}.json'
+    print(file_path)
+    with open(file_path, "w") as f:
+        json.dump(gdf.__geo_interface__, f)
+    # print(fused.utils.common.run_cmd('npm install -g mapshaper',communicate=True)[1].decode())    
+    print(fused.utils.common.run_cmd(f'/mount/npm/bin/mapshaper {file_path} -simplify {pct}% {args} -o {file_path.replace(".json","2.json")}',communicate=True))
+    return gpd.read_file(file_path.replace(".json","2.json"))
+
 def html_to_obj(html_str):
     from fastapi import Response
     return Response(html_str.encode('utf-8'), media_type="text/html")
