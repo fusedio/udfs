@@ -1,0 +1,75 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "rose_moth",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "rose_moth",
+            "fused:slug": "rose_moth",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "14de27da3d0f8d26882104b0b9dfbde93960d00d",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/14de27da3d0f8d26882104b0b9dfbde93960d00d/community/plinio/rose_moth/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/14de27d/community/plinio/rose_moth/",
+            "fused:gitPath": "community/plinio/rose_moth",
+            "fused:gitLastModified": "2025-01-13T01:37:10.317Z",
+            "fused:gitPullRequestBranch": "plinio-patch-b256e7-test-save-in-community-DELETEM",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/575",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "BluYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "rose_moth.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
