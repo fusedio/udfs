@@ -1,0 +1,75 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "scarlet_parrotfish",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "scarlet_parrotfish",
+            "fused:slug": "scarlet_parrotfish",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "1c027fca0c38fa773ceadc90c8aec2f55f95edc0",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/1c027fca0c38fa773ceadc90c8aec2f55f95edc0/community/chloe/scarlet_parrotfish/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/1c027fc/community/chloe/scarlet_parrotfish/",
+            "fused:gitPath": "community/chloe/scarlet_parrotfish",
+            "fused:gitLastModified": "2025-01-15T18:00:29.368Z",
+            "fused:gitPullRequestBranch": "chloe-patch-dca590-test",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/583",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "Emrld",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "scarlet_parrotfish.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
