@@ -8,10 +8,20 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "pink_sheep",
+          "name": "rename_udf",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
+            "fused:name": "rename_udf",
+            "fused:slug": "rename_udf",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "0a31cb3a222682310143ada86b11932667360413",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/0a31cb3a222682310143ada86b11932667360413/community/chloe/pink_sheep/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/0a31cb3/community/chloe/pink_sheep/",
+            "fused:gitPath": "community/chloe/pink_sheep",
+            "fused:gitLastModified": "2025-01-15T16:24:51.391Z",
+            "fused:gitPullRequestBranch": "chloe-patch-a0aab5-test-rename-udf",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/577",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -53,11 +63,9 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "pink_sheep",
-            "fused:name": "pink_sheep",
             "fused:id": null
           },
-          "source": "pink_sheep.py",
+          "source": "rename_udf.py",
           "headers": []
         }
       }
