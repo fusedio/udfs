@@ -1,0 +1,75 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "black_firefly",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "black_firefly",
+            "fused:slug": "black_firefly",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "81bed994d2a62b608c98d970c0f3e0aa93c028e1",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/81bed994d2a62b608c98d970c0f3e0aa93c028e1/public/community/chloe/black_firefly/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/81bed99/public/community/chloe/black_firefly/",
+            "fused:gitPath": "public/community/chloe/black_firefly",
+            "fused:gitLastModified": "2025-01-15T18:07:28.825Z",
+            "fused:gitPullRequestBranch": "chloe-patch-75872c-test",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/585",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "BluYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "black_firefly.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
