@@ -1,0 +1,75 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "peach_boa",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "peach_boa",
+            "fused:slug": "peach_boa",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "db037856366d780e54009c1d4107d2846c4e9425",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/db037856366d780e54009c1d4107d2846c4e9425/community/chloe/peach_boa/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/db03785/community/chloe/peach_boa/",
+            "fused:gitPath": "community/chloe/peach_boa",
+            "fused:gitLastModified": "2025-01-15T18:33:57.514Z",
+            "fused:gitPullRequestBranch": "chloe-patch-e1e01e-test",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/590",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "DarkMint",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "peach_boa.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
