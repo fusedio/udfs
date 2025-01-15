@@ -1,0 +1,75 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "green_roundworm",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "green_roundworm",
+            "fused:slug": "green_roundworm",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "c4fb7ceceafa91906ba889e1768f7bab44f8e90f",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/c4fb7ceceafa91906ba889e1768f7bab44f8e90f/community/chloe/green_roundworm/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/c4fb7ce/community/chloe/green_roundworm/",
+            "fused:gitPath": "community/chloe/green_roundworm",
+            "fused:gitLastModified": "2025-01-15T18:11:01.957Z",
+            "fused:gitPullRequestBranch": "chloe-patch-bceaa5-test",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/586",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "Sunset",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "green_roundworm.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
