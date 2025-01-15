@@ -1,0 +1,75 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "TESTER",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "TESTER",
+            "fused:slug": "TESTER",
+            "fused:gitRepo": "fusedlabs/fusedudfs",
+            "fused:gitRef": "99101e23c29633a4432ae37303034c4cb3d888a2",
+            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/99101e23c29633a4432ae37303034c4cb3d888a2/community/plinio/TESTER/",
+            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/99101e2/community/plinio/TESTER/",
+            "fused:gitPath": "community/plinio/TESTER",
+            "fused:gitLastModified": "2025-01-15T17:35:17.584Z",
+            "fused:gitPullRequestBranch": "plinio-patch-1cc7a4-DELETE-ME-PLEASE-v2",
+            "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/497",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "OrYel",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "TESTER.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
