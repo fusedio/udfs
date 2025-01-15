@@ -1,0 +1,75 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "red_elk",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "red_elk",
+            "fused:slug": "red_elk",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "c7f4c24cc00b5cd2d42f0affe16511f6255735f7",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/c7f4c24cc00b5cd2d42f0affe16511f6255735f7/community/chloe/red_elk/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/c7f4c24/community/chloe/red_elk/",
+            "fused:gitPath": "community/chloe/red_elk",
+            "fused:gitLastModified": "2025-01-15T23:13:35.085Z",
+            "fused:gitPullRequestBranch": "chloe-patch-d91e28-test",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/592",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "BrwnYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "red_elk.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
