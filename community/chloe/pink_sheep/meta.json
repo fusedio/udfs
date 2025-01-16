@@ -1,0 +1,75 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "rename_udf",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "rename_udf",
+            "fused:slug": "rename_udf",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "0a31cb3a222682310143ada86b11932667360413",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/0a31cb3a222682310143ada86b11932667360413/community/chloe/pink_sheep/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/0a31cb3/community/chloe/pink_sheep/",
+            "fused:gitPath": "community/chloe/pink_sheep",
+            "fused:gitLastModified": "2025-01-15T16:24:51.391Z",
+            "fused:gitPullRequestBranch": "chloe-patch-a0aab5-test-rename-udf",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/577",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "Burg",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "rename_udf.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
