@@ -1,0 +1,75 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "renamed_pink_lion",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "renamed_pink_lion",
+            "fused:slug": "renamed_pink_lion",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "d25bf48263f60d475acbe3c0910cda2c1e91180f",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/d25bf48263f60d475acbe3c0910cda2c1e91180f/public/pink_lion/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/d25bf48/public/pink_lion/",
+            "fused:gitPath": "public/pink_lion",
+            "fused:gitLastModified": "2025-01-17T18:04:17.013Z",
+            "fused:gitPullRequestBranch": "chloe-patch-efb7b3-test",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/599",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "BrwnYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "renamed_pink_lion.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
