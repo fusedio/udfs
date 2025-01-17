@@ -1,0 +1,75 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "renamed_udf",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "renamed_udf",
+            "fused:slug": "renamed_udf",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "e5cc2828a37e8c07d4f5e406ea9967273c8ffc09",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/e5cc2828a37e8c07d4f5e406ea9967273c8ffc09/public/scarlet_worm/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/e5cc282/public/scarlet_worm/",
+            "fused:gitPath": "public/scarlet_worm",
+            "fused:gitLastModified": "2025-01-17T01:43:59.367Z",
+            "fused:gitPullRequestBranch": "chloe-patch-503dbd-test",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/596",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "BluGrn",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:id": null
+          },
+          "source": "renamed_udf.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
