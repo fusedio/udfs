@@ -1,0 +1,230 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Invasive_Species_Hotspot",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/blog-assets/liz2.png",
+            "fused:defaultParameters": [
+              {
+                "parameter": "release",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "2024-08-20-0",
+                  "2024-09-18-0",
+                  "2024-10-23-0",
+                  "2024-11-13-0",
+                  "2024-12-18-0"
+                ]
+              },
+              {
+                "parameter": "theme",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "buildings",
+                  "base",
+                  "places",
+                  "transportation",
+                  "addresses",
+                  "divisions"
+                ]
+              },
+              {
+                "parameter": "overture_type",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "land_use",
+                  "water",
+                  "place",
+                  "connector",
+                  "segment",
+                  "building",
+                  "address",
+                  "infrastructure",
+                  "land",
+                  "division",
+                  "division_area",
+                  "division_boundary"
+                ]
+              },
+              {
+                "parameter": "use_columns",
+                "value": [],
+                "type": "array",
+                "suggestedValues": [
+                  "geometry",
+                  "id",
+                  "names",
+                  "sources",
+                  "update_time",
+                  "categories"
+                ]
+              }
+            ],
+            "fused:tags": [
+              {
+                "id": "overture",
+                "label": "overture"
+              },
+              {
+                "id": "coop",
+                "label": "coop"
+              }
+            ],
+            "fused:description": "# Invasive Species Hotspot\n\nMap key hotspots where Arundo donax is likely to spread based on built-environment factors derived from Overture Maps data.\n\nThis UDF runs a simple model to identify hotspots susceptible to Arundo. The model uses a weighted sum of several base Overture data classes:\n\n- Golf Courses\n- Bridges\n- Water bodies (rivers, streams, etc.)\n\nThe UDF performs the following steps:\n\n1. Create GeoDataFrames from the Overture maps dataset using get_overture\n2. Generate an H3 score based on buffers around each feature\n3. Aggregate the H3 scores to create a weighted sum\n\n",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer"
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    255,
+                    25,
+                    255
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "hexLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "extruded": true,
+                "opacity": 0.3,
+                "coverage": 0.8,
+                "lineWidthMinPixels": 0,
+                "getHexagon": "@@=properties.cell_id",
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "TealGrn",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "score",
+                  "domain": [
+                    0,
+                    15
+                  ],
+                  "colors": "Temps",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "cnt",
+                  "present": "@@=properties.score",
+                  "absent": 1
+                },
+                "elevationScale": 10
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "Invasive_Species_Hotspot",
+            "fused:name": "Invasive_Species_Hotspot",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.550183916165025,
+              "longitude": -122.26785932585092,
+              "zoom": 12.671829017615035,
+              "pitch": 37.89589996191902,
+              "bearing": -163.97661346157315
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/2f384097df6ee189abb02b3aa0d2fcb36c2b6308/public/Overture_Maps_Example/",
+            "fused:gitPath": "public/Overture_Maps_Example",
+            "fused:gitRef": "2f384097df6ee189abb02b3aa0d2fcb36c2b6308",
+            "fused:gitAuthorNames": [
+              "Isaac Brodsky",
+              "Plinio Guzman",
+              "Sina Kashuk",
+              "Fabion Kauker",
+              null,
+              "Tyler Erickson"
+            ],
+            "fused:gitAuthorUsernames": [
+              "isaacbrodsky",
+              "pgzmnk",
+              "kashuk",
+              "fhk",
+              "fused-io[bot]",
+              "tylere"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/isaacbrodsky",
+              "https://github.com/pgzmnk",
+              "https://github.com/kashuk",
+              "https://github.com/fhk",
+              "https://github.com/apps/fused-io",
+              "https://github.com/tylere"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/9139378?v=4",
+              "https://avatars.githubusercontent.com/u/27398253?v=4",
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/u/4031392?v=4",
+              "https://avatars.githubusercontent.com/in/834700?v=4",
+              "https://avatars.githubusercontent.com/u/92862?v=4"
+            ],
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/2f38409/public/Overture_Maps_Example/",
+            "fused:gitLastModified": "2024-12-23T20:07:29+00:00",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:id": null
+          },
+          "source": "Invasive_Species_Hotspot.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
