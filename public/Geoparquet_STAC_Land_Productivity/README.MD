@@ -31,7 +31,7 @@ The end result is a scalable, dynamic visualisation with only Fused as a backend
 
 ```python
 import fused
-udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/Geoparquet_STAC_Example")
+udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/Geoparquet_STAC_Land_Productivity")
 arr = fused.run(udf=udf, x=4092, y=2241, z=15)
 arr
 ```
