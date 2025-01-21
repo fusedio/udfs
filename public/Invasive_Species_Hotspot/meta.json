@@ -12,7 +12,6 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/blog-assets/liz2.png",
             "fused:defaultParameters": [
               {
                 "parameter": "release",
@@ -72,17 +71,6 @@
                 ]
               }
             ],
-            "fused:tags": [
-              {
-                "id": "overture",
-                "label": "overture"
-              },
-              {
-                "id": "coop",
-                "label": "coop"
-              }
-            ],
-            "fused:description": "# Invasive Species Hotspot\n\nMap key hotspots where Arundo donax is likely to spread based on built-environment factors derived from Overture Maps data.\n\nThis UDF runs a simple model to identify hotspots susceptible to Arundo. The model uses a weighted sum of several base Overture data classes:\n\n- Golf Courses\n- Bridges\n- Water bodies (rivers, streams, etc.)\n\nThe UDF performs the following steps:\n\n1. Create GeoDataFrames from the Overture maps dataset using get_overture\n2. Generate an H3 score based on buffers around each feature\n3. Aggregate the H3 scores to create a weighted sum\n\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -175,45 +163,38 @@
               "pitch": 37.89589996191902,
               "bearing": -163.97661346157315
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/2f384097df6ee189abb02b3aa0d2fcb36c2b6308/public/Overture_Maps_Example/",
-            "fused:gitPath": "public/Overture_Maps_Example",
-            "fused:gitRef": "2f384097df6ee189abb02b3aa0d2fcb36c2b6308",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/dd4345eb69f37e0e780f3b2c8bf77dee42114c6e/public/Invasive_Species_Hotspot/",
+            "fused:gitPath": "public/Invasive_Species_Hotspot",
+            "fused:gitRef": "dd4345eb69f37e0e780f3b2c8bf77dee42114c6e",
             "fused:gitAuthorNames": [
-              "Isaac Brodsky",
-              "Plinio Guzman",
-              "Sina Kashuk",
-              "Fabion Kauker",
-              null,
-              "Tyler Erickson"
+              null
             ],
             "fused:gitAuthorUsernames": [
-              "isaacbrodsky",
-              "pgzmnk",
-              "kashuk",
-              "fhk",
-              "fused-io[bot]",
-              "tylere"
+              "fused-io[bot]"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/isaacbrodsky",
-              "https://github.com/pgzmnk",
-              "https://github.com/kashuk",
-              "https://github.com/fhk",
-              "https://github.com/apps/fused-io",
-              "https://github.com/tylere"
+              "https://github.com/apps/fused-io"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/9139378?v=4",
-              "https://avatars.githubusercontent.com/u/27398253?v=4",
-              "https://avatars.githubusercontent.com/u/12432685?v=4",
-              "https://avatars.githubusercontent.com/u/4031392?v=4",
-              "https://avatars.githubusercontent.com/in/834700?v=4",
-              "https://avatars.githubusercontent.com/u/92862?v=4"
+              "https://avatars.githubusercontent.com/in/834700?v=4"
             ],
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/2f38409/public/Overture_Maps_Example/",
-            "fused:gitLastModified": "2024-12-23T20:07:29+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/dd4345e/public/Invasive_Species_Hotspot/",
+            "fused:gitLastModified": "2025-01-20T00:15:52+00:00",
             "fused:gitRepo": "fusedio/udfs",
-            "fused:id": null
+            "fused:id": null,
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/blog-assets/liz2.png",
+            "fused:tags": [
+              {
+                "id": "overture",
+                "label": "overture"
+              },
+              {
+                "id": "coop",
+                "label": "coop"
+              }
+            ],
+            "fused:description": "# Invasive Species Hotspot\n\nMap key hotspots where Arundo donax is likely to spread based on built-environment factors derived from Overture Maps data.\n\nThis UDF runs a simple model to identify hotspots susceptible to Arundo. The model uses a weighted sum of several base Overture data classes:\n\n- Golf Courses\n- Bridges\n- Water bodies (rivers, streams, etc.)\n\nThe UDF performs the following steps:\n\n1. Create GeoDataFrames from the Overture maps dataset using get_overture\n2. Generate an H3 score based on buffers around each feature\n3. Aggregate the H3 scores to create a weighted sum\n\n",
+            "fused:explorerTab": "public"
           },
           "source": "Invasive_Species_Hotspot.py",
           "headers": [
