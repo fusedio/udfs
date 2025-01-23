@@ -1,7 +1,7 @@
 @fused.udf 
 def udf(
     bbox: fused.types.TileGDF = None,
-    release: str = "2024-12-18-0",
+    release: str = "2025-01-22-0",
     theme: str = None,
     overture_type: str = None, 
     use_columns: list = None,
