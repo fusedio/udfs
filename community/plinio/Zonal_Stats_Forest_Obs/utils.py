@@ -9,7 +9,7 @@ def get_idx_range(target_url, s3_file_path):
     return idx_range
 
 def get_asset_dissolve(
-    url=f"s3://fused-users/fused/plinio/assets_with_bounds_4_4_antimeridian.parquet",
+    url="s3://fused-asset/data/zonal_stats_example/assets_with_bounds_4_4.parquet",
     order=0,
 ):
     import geopandas as gpd
