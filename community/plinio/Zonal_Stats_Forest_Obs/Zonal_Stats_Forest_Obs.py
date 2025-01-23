@@ -10,7 +10,6 @@ def udf(
     import numpy as np
     import pandas as pd
     import s3fs
-    import itertools
 
     from utils import get_asset_dissolve, rio_clip_geom_from_url, rio_clip_geom, zonal_stats_df, get_idx_range
 
