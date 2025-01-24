@@ -85,7 +85,6 @@ def get_strahler_gdf(bbox):
 
     @fused.cache
     def create_strahler_vector(arr):
-        # Create a binary image showing where the elevation threshold is exceeded.
         gdfs = []
         for strahler_value in range(0,8):
             print(strahler_value)
