@@ -69,18 +69,15 @@ def udf(
         return
 
     gdf_muni = gdf_muni.explode()
-    gdf_muni["_idx_"] = range(len(gdf_muni))
     gdf_muni.crs = 4326
 
     # 4. Load tiff
     filename = gdf_cell[["url"]].iloc[0].values[0]
     tiff_url = f"s3://fused-asset/gfc2020/{filename}"
     geom_bbox_muni = fused.utils.common.geo_bbox(gdf_muni).geometry[0]
-    # return geom_bbox_muni
 
     # 5. Get TIFF dataset
     da, _ = fused.utils.Zonal_Stats_Forest_Obs.rio_clip_geom_from_url(geom_bbox_muni, tiff_url)
-    # return da
     
     # 6. Zonal stats
     stats_dict={
@@ -110,7 +107,6 @@ def udf(
         df_final.to_parquet(path_output)
 
 
-    print(df_final)
     return df_final
 
 
