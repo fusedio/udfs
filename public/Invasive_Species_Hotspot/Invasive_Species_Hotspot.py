@@ -50,9 +50,9 @@ def udf(
     }
 
     # Create buffers and scores
-    gdf_bridges_buffers=create_h3_buffer_scored(gdf_bridges, buffers_bridges)
-    gdf_water_buffers=create_h3_buffer_scored(gdf_water, buffers_water)
-    gdf_golf_buffers=create_h3_buffer_scored(gdf_golf, buffers_golf)
+    gdf_bridges_buffers=create_h3_buffer_scored(gdf_bridges, buffers_bridges, h3_res=h3_res)
+    gdf_water_buffers=create_h3_buffer_scored(gdf_water, buffers_water, h3_res=h3_res)
+    gdf_golf_buffers=create_h3_buffer_scored(gdf_golf, buffers_golf, h3_res=h3_res)
 
     gdfs = [gdf[['cell_id', 'cnt', 'score']] for gdf in [
         gdf_water_buffers, 
