@@ -1,6 +1,8 @@
 utils = fused.load("https://github.com/fusedio/udfs/tree/be3bc93/public/common/").utils
-
-
+url_to_arr=utils.url_to_arr
+def url_to_plasma(url, min_max=None, colormap='plasma'):
+    return utils.arr_to_plasma(utils.url_to_arr(url).squeeze(), min_max=min_max, colormap=colormap, reverse=False)
+    
 @fused.cache
 def df_to_hex(df, res, latlng_cols=("lat", "lng")):
     utils = fused.load(
