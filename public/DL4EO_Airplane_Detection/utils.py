@@ -2,7 +2,7 @@
 def predict(
     arr,
     threshold=0.5,
-    weights_path = "s3://fused-asset/misc/dl4eo/best.onnx"
+    weights_path = "s3://fused-users/fused/asset/dl4eo/best.onnx"
 ):
     import os
     import time
