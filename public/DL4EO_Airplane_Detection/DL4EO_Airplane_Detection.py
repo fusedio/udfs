@@ -9,7 +9,7 @@ def udf(
     bbox: fused.types.TileGDF=None,
     chip_len=256,
     buffer_degree=0.00001,
-    weights_path = "s3://fused-users/fused/asset/dl4eo/best.onnx"
+    weights_path = "s3://fused-asset/misc/dl4eo/best.onnx"
 ):
     import geopandas as gpd
     import shapely
