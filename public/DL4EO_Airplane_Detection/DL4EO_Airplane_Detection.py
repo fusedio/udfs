@@ -8,7 +8,8 @@ def udf_rgb_tiles(bbox: fused.types.TileGDF):
 def udf(    
     bbox: fused.types.TileGDF=None,
     chip_len=256,
-    buffer_degree=0.00001
+    buffer_degree=0.00001,
+    weights_path = "s3://fused-users/fused/asset/dl4eo/best.onnx"
 ):
     import geopandas as gpd
     import shapely
@@ -21,7 +22,7 @@ def udf(
     arr = fused.run(udf_rgb_tiles, bbox=bbox).astype(np.uint8)
     
     # Predict
-    boxes = predict(arr)
+    boxes = predict(arr, weights_path=weights_path)
     print(boxes)
     if boxes is None:
         print("Warning: Unable to run inference...")
