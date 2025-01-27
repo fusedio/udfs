@@ -49,27 +49,31 @@
             "fused:slug": "DL4EO_Airplane_Detection",
             "fused:name": "DL4EO_Airplane_Detection",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/861954f0cfe9cb082e51286937cb9a159bb65614/public/DL4EO_Airplane_Detection/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/861954f/public/DL4EO_Airplane_Detection/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/3f9fbd0e8af268e77dee0d8afcb0d56c315d3485/public/DL4EO_Airplane_Detection/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/3f9fbd0/public/DL4EO_Airplane_Detection/",
             "fused:gitPath": "public/DL4EO_Airplane_Detection",
-            "fused:gitRef": "861954f0cfe9cb082e51286937cb9a159bb65614",
+            "fused:gitRef": "3f9fbd0e8af268e77dee0d8afcb0d56c315d3485",
             "fused:gitAuthorNames": [
               "Jeff Faudi",
-              "Plinio Guzman"
+              "Plinio Guzman",
+              null
             ],
             "fused:gitAuthorUsernames": [
               "jeffaudi",
-              "pgzmnk"
+              "pgzmnk",
+              "fused-io[bot]"
             ],
             "fused:gitAuthorUrls": [
               "https://github.com/jeffaudi",
-              "https://github.com/pgzmnk"
+              "https://github.com/pgzmnk",
+              "https://github.com/apps/fused-io"
             ],
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/6923608?v=4",
-              "https://avatars.githubusercontent.com/u/27398253?v=4"
+              "https://avatars.githubusercontent.com/u/27398253?v=4",
+              "https://avatars.githubusercontent.com/in/834700?v=4"
             ],
-            "fused:gitLastModified": "2024-09-04T22:56:35+00:00",
+            "fused:gitLastModified": "2025-01-27T16:19:28+00:00",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/dl4eo_cpu.png",
