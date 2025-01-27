@@ -21,10 +21,14 @@ def predict(
 
     # Set weights file
     WEIGHTS_FILE = "/mnt/cache/best.onnx"
-    
-    if not os.path.exists(WEIGHTS_FILE):
-        path = fused.download(weights_path, 'best.onnx')
-        print(f"Downloaded: {path}")
+
+    try:
+        if not os.path.exists(WEIGHTS_FILE):
+            path = fused.download(weights_path, 'best.onnx')
+            print(f"Downloaded: {path}")
+    except Exception as e:
+        print("Error", e)
+        return 
     
     # Load a model
     start_time = time.time()

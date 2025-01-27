@@ -49,10 +49,10 @@
             "fused:slug": "DL4EO_Airplane_Detection",
             "fused:name": "DL4EO_Airplane_Detection",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/3f9fbd0e8af268e77dee0d8afcb0d56c315d3485/public/DL4EO_Airplane_Detection/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/3f9fbd0/public/DL4EO_Airplane_Detection/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/dac7ff3cf98ab64c0fcc11a06c32683213c86bf3/public/DL4EO_Airplane_Detection/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/dac7ff3/public/DL4EO_Airplane_Detection/",
             "fused:gitPath": "public/DL4EO_Airplane_Detection",
-            "fused:gitRef": "3f9fbd0e8af268e77dee0d8afcb0d56c315d3485",
+            "fused:gitRef": "dac7ff3cf98ab64c0fcc11a06c32683213c86bf3",
             "fused:gitAuthorNames": [
               "Jeff Faudi",
               "Plinio Guzman",
@@ -73,7 +73,7 @@
               "https://avatars.githubusercontent.com/u/27398253?v=4",
               "https://avatars.githubusercontent.com/in/834700?v=4"
             ],
-            "fused:gitLastModified": "2025-01-27T16:19:28+00:00",
+            "fused:gitLastModified": "2025-01-27T16:37:11.832Z",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/dl4eo_cpu.png",
@@ -83,7 +83,9 @@
                 "label": "object-detection"
               }
             ],
-            "fused:description": "## Overview\n\nThis UDF runs an object detection model on 50cm imagery. \n\nThis is for demonstration only. Please contact Jeff Faudi (jeff@dl4eo.com) for more information on how you could get access to a commercial model or API.\n\nCredits for Pleiades images : (c) Cnes 2021 Distribution Airbus\n\n"
+            "fused:description": "## Overview\n\nThis UDF runs an object detection model on 50cm imagery. \n\nThis is for demonstration only. Please contact Jeff Faudi (jeff@dl4eo.com) for more information on how you could get access to a commercial model or API.\n\nCredits for Pleiades images : (c) Cnes 2021 Distribution Airbus\n\n",
+            "fused:gitPullRequestBranch": "plinio-patch-e7c3cc-weightspath",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/625"
           },
           "source": "DL4EO_Airplane_Detection.py",
           "headers": [
