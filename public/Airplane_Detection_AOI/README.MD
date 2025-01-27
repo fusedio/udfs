@@ -6,6 +6,8 @@
 
 This UDF detects airplanes within a specified Area of Interest (AOI) by leveraging a deep learning model for object detection.
 
+The UDF runs inference atop the RGB satellite image from the [Public ArcGIS RGB UDF](https://www.fused.io/workbench/catalog/Arcgis_Rgb-b58b7a3c-3dc0-4e9d-9bdd-7092f3ea9817). For best visualization effects, render the output of that UDF as layer underneath.
+
 ## How It Works
 
 1. Tile Generation: The UDF divides the AOI into smaller tiles based on a given zoom level.
