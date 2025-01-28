@@ -13,7 +13,7 @@ def udf(west="-120.485537", south="34.879334",  east="-120.400163", north="34.95
         pixel = pixel_perc
         while not success:
             try:
-                out =fused.run("gabriel@fused.io", "S2_3ch", west=west, south=south,  east=east, north=north,
+                out =fused.run("gabriel@fused.io/S2_3ch", west=west, south=south,  east=east, north=north,
                                time_of_interest=time_of_interest,
                                cloud_cover_perc=str(i),
                                brightness="1.0",
@@ -33,7 +33,7 @@ def udf(west="-120.485537", south="34.879334",  east="-120.400163", north="34.95
     img_x = img.shape[-2]
     img_y = img.shape[-1]
     
-    mask = fused.run("gabriel@fused.io", "CDL_mask", west=west, south=south,  east=east, north=north, year=year, zoom = int(zoom))
+    mask = fused.run("gabriel@fused.io/CDL_mask", west=west, south=south,  east=east, north=north, year=year, zoom = int(zoom))
     mask0= np.array(mask.image[0], dtype='uint8')
     print('mask dimensions:',mask0.shape)
     mask= np.expand_dims(mask0, 0)
