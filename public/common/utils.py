@@ -26,24 +26,20 @@ def html_to_obj(html_str):
     from fastapi import Response
     return Response(html_str.encode('utf-8'), media_type="text/html")
 
-def pydeck_to_obj(map, return_string=False):    
-    import io
-    html_buffer = io.StringIO()
-    map.to_html(html_buffer)
-    html_str = html_buffer.getvalue()
-    html_buffer.close()
-    if return_string:
-        return html_str
-    else: 
-        return html_to_obj(html_str)
+def pydeck_to_obj(map, as_string=False):    
+        html_str = map.to_html(as_string=True)
+        if as_string:
+            return html_str
+        else: 
+            return html_to_obj(html_str)
 
-def altair_to_obj(chart, return_string=False):    
+def altair_to_obj(chart, as_string=False):    
     import io
     html_buffer = io.StringIO()
     chart.save(html_buffer, format="html")
     html_str = html_buffer.getvalue()
     html_buffer.close()
-    if return_string:
+    if as_string:
         return html_str
     else: 
         return html_to_obj(html_str)
