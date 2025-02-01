@@ -2,11 +2,12 @@
 def udf(bbox: fused.types.TileGDF, path: str, *, chip_len=256):
     import numpy as np
 
-    utils = fused.load("https://github.com/fusedio/udfs/tree/004b8d9/public/common/").utils
+    utils = fused.load("https://github.com/fusedio/udfs/tree/e1fefb7/public/common/").utils
     try:
-        arr, color_map = utils.read_tiff(bbox, path, output_shape=(chip_len, chip_len), return_colormap=True)
+        arr, metadata = utils.read_tiff(bbox, path, output_shape=(chip_len, chip_len), return_colormap=True)
+        colormap = metadata['colormap']
         colored_array = (
-            np.array([color_map[value] for value in arr.flat], dtype=np.uint8)
+            np.array([colormap[value] for value in arr.flat], dtype=np.uint8)
             .reshape(arr.shape + (4,))
             .transpose(2, 0, 1)
         )
