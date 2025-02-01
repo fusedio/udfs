@@ -13,7 +13,7 @@ def udf(
     from utils import crop_counts, filter_crops, read_tiff
 
     input_tiff_path = f"s3://fused-asset/data/cdls/{year}_30m_cdls.tif"
-    array_int, color_map = read_tiff(
+    array_int, metadata = read_tiff(
         bbox,
         input_tiff_path,
         output_shape=(chip_len, chip_len),
@@ -25,9 +25,9 @@ def udf(
 
     # Print out the top 20 classes
     print(crop_counts(array_int).head(20))
-
+    colormap=metadata['colormap']
     colored_array = (
-        np.array([color_map[value] for value in array_int.flat], dtype=np.uint8)
+        np.array([colormap[value] for value in array_int.flat], dtype=np.uint8)
         .reshape(array_int.shape + (4,))
         .transpose(2, 0, 1)
     )
