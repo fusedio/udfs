@@ -421,6 +421,9 @@ def read_tiff(
     overview_level=None,
     return_colormap=False,
     return_transform=False,
+    return_crs=False,
+    return_bounds=False,
+    return_meta=False,
     cred=None,
 ):
     import os
@@ -461,24 +464,14 @@ def read_tiff(
                 )
                 window = gridded_window  # Expand window to nearest full pixels
                 source_data = src.read(window=window, boundless=True, masked=True)
-                if not output_shape:
-                    return source_data
+                
                 nodata_value = src.nodatavals[0]
                 if filter_list:
                     mask = np.isin(source_data, filter_list, invert=True)
                     source_data[mask] = 0
                 src_transform = src.window_transform(window)
-                minx, miny, maxx, maxy = bbox.total_bounds
-                dx = (maxx - minx) / output_shape[-1]
-                dy = (maxy - miny) / output_shape[-2]
-                dst_transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
-                if len(source_data.shape) == 3 and source_data.shape[0] > 1:
-                    dst_shape = (source_data.shape[0], output_shape[-2], output_shape[-1])
-                else:
-                    dst_shape = output_shape
-                dst_crs = bbox.crs
-
-                destination_data = np.zeros(dst_shape, src.dtypes[0])
+                src_dtypes = src.dtypes[0]
+                src_meta = src.meta
                 if return_colormap:
                     colormap = src.colormap(1)
         except rasterio.RasterioIOError as err:
@@ -487,28 +480,52 @@ def read_tiff(
         except Exception as err:
             print(f"Unexpected {err=}, {type(err)=}")
             raise
-        
-        reproject(
-            source_data,
-            destination_data,
-            src_transform=src_transform,
-            src_crs=src_crs,
-            dst_transform=dst_transform,
-            dst_crs=dst_crs,
-            # TODO: rather than nearest, get all the values and then get pct
-            resampling=Resampling.nearest,
-        )
+        if output_shape:
+            minx, miny, maxx, maxy = bbox.total_bounds
+            dx = (maxx - minx) / output_shape[-1]
+            dy = (maxy - miny) / output_shape[-2]
+            dst_transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
+            if len(source_data.shape) == 3 and source_data.shape[0] > 1:
+                dst_shape = (source_data.shape[0], output_shape[-2], output_shape[-1])
+            else:
+                dst_shape = output_shape
+            dst_crs = bbox.crs
+
+            destination_data = np.zeros(dst_shape, src_dtypes)
+            reproject(
+                source_data,
+                destination_data,
+                src_transform=src_transform,
+                src_crs=src_crs,
+                dst_transform=dst_transform,
+                dst_crs=dst_crs,
+                # TODO: rather than nearest, get all the values and then get pct
+                resampling=Resampling.nearest,
+            )
+        else:
+            dst_transform = src_transform
+            dst_crs = src_crs
+            destination_data=source_data
         destination_data = np.ma.masked_array(
             destination_data, destination_data == nodata_value
         )
-    if return_colormap:
-        # todo: only set transparency to zero
-        colormap[0] = [0, 0, 0, 0]
-        return destination_data, colormap
-    elif (
-        return_transform
-    ):  # Note: usually you do not need this since it can be calculated using crs=4326 and bounds
-        return destination_data, dst_transform
+    if return_colormap or return_transform or return_crs or return_bounds or return_meta:
+        ### TODO: NOT backward comp -- fix colormap / transform 
+        metadata={}
+        if return_colormap:
+            # todo: only set transparency to zero
+            colormap[0] = [0, 0, 0, 0]
+            metadata['colormap']=colormap
+        if return_crs:  
+            metadata['crs']=dst_crs
+        if return_transform:  # Note: usually you do not need this since it can be calculated using crs=4326 and bounds
+            metadata['transform']=dst_transform
+        if return_bounds:
+            metadata['bounds']=rasterio.transform.array_bounds(destination_data.shape[-2] , destination_data.shape[-1], dst_transform)
+        if return_meta:
+            metadata['meta']=src_meta
+        return destination_data, metadata
+        
     else:
         return destination_data
 
