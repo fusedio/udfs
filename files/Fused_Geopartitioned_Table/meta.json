@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "Fused_Geo-partitioned_Table",
+          "name": "Fused_Geopartitioned_Table",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -55,11 +55,11 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "Fused_Geo-partitioned_Table",
-            "fused:name": "Fused_Geo-partitioned_Table",
+            "fused:slug": "Fused_Geopartitioned_Table",
+            "fused:name": "Fused_Geopartitioned_Table",
             "fused:id": null
           },
-          "source": "Fused_Geo-partitioned_Table.py",
+          "source": "Fused_Geopartitioned_Table.py",
           "headers": []
         }
       }
