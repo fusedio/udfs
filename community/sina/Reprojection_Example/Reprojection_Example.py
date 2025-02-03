@@ -17,7 +17,7 @@ def udf(path:str = f"s3://fused-asset/data/cdls/2022_30m_cdls.tif",
     import shapely
     bbox = gpd.GeoDataFrame(geometry=[shapely.box(*bounds)], crs=crs)
     # bbox = gpd.GeoDataFrame(geometry=[shapely.box(-120.53035513070277,37.98012159397518,-120.41893689940078,38.03204439357735)], crs=4326)
-    arr, metadata = utils.read_tiff(bbox, path, output_shape=None, return_colormap=True, return_transform=True, return_crs=True, return_bounds=True, return_meta=True,)
+    arr, metadata = utils.read_tiff(bbox, path, output_shape=None, return_colormap=False, return_transform=True, return_crs=True, return_bounds=True, return_meta=True,)
     if verbose:
         print(metadata["meta"])
         print(arr.shape)
