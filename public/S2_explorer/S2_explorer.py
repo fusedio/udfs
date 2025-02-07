@@ -1,5 +1,5 @@
 def udf(
-    bbox,
+    bbox: fused.types.TileGDF,
     provider="AWS",
     channels=["B11", "veg", "snow"],
     time_of_interest="2023-05-01/2023-09-13",

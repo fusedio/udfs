@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox, min_zoom=15, table="s3://fused-asset/infra/building_msft_us/", chip_len=256
+    bbox: fused.types.TileGDF, min_zoom=15, table="s3://fused-asset/infra/building_msft_us/", chip_len=256
 ):
     import utils
 
