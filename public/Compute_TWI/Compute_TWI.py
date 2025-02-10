@@ -17,7 +17,7 @@ wbt_args = {
 min_max = (0, 15)
 
 @fused.udf
-def udf(bbox, out_tif_name: str ='output', wbt_args: dict = wbt_args, min_max=min_max):
+def udf(bbox: fused.types.TileGDF, out_tif_name: str ='output', wbt_args: dict = wbt_args, min_max=min_max):
     import wbt
     wbt_args = json.loads(wbt_args) if isinstance(wbt_args, str) else wbt_args
     return wbt.run(bbox, wbt_args, out_tif_name, extra_input_files=None, min_max=min_max)
