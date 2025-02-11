@@ -12,32 +12,46 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DEM_10m_Tile_Example.png",
             "fused:defaultParameters": [],
             "fused:datasets": "Digital Elevation Model",
-            "fused:tags": [
-              {
-                "id": "band-algebra",
-                "label": "band-algebra"
-              },
-              {
-                "id": "stac",
-                "label": "stac"
-              },
-              {
-                "id": "msft-pc",
-                "label": "msft-pc"
-              }
-            ],
-            "fused:description": "#### Overview\nU.S.-wide digital elevation data at horizontal resolutions ranging from one to sixty meters.\n\nThe USGS 3D Elevation Program (3DEP) Datasets from the National Map are the primary elevation data product produced and distributed by the USGS. The 3DEP program provides raster elevation data for the conterminous United States, Alaska, Hawaii, and the island territories, at a variety of spatial resolutions. The seamless DEM layers produced by the 3DEP program are updated frequently to integrate newly available, improved elevation source data.\n\nDEM layers are available nationally at grid spacings of 1 arc-second (approximately 30 meters) for the conterminous United States, and at approximately 1, 3, and 9 meters for parts of the United States. Most seamless DEM data for Alaska is available at a resolution of approximately 60 meters, where only lower resolution source data exist.\n#### STAC Collections\n* [Microsoft Planetary Computer](https://planetarycomputer.microsoft.com/api/stac/v1/collections/3dep-seamless)\n\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/DEM_10m_Tile_Example\")\narr = fused.run(udf=udf, x=2411, y=3079, z=13)\narr\n```\n",
             "fused:vizConfig": {
-              "@@type": "TileLayer",
-              "minZoom": 7,
-              "maxZoom": 15,
-              "tileSize": 256,
-              "pickable": true,
-              "subLayerConfig": {
-                "@@type": "BitmapLayer"
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "SunsetDark",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
               }
             },
             "fused:udfType": "raster",
@@ -52,10 +66,10 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/bdfb4d092b0942a7a9ac73f7f49908f65b63907c/public/DEM_10m_Tile_Example/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/bdfb4d0/public/DEM_10m_Tile_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/3a8ab43b782176bf346ad22f580152fafe3acd40/public/DEM_10m_Tile_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/3a8ab43/public/DEM_10m_Tile_Example/",
             "fused:gitPath": "public/DEM_10m_Tile_Example",
-            "fused:gitRef": "bdfb4d092b0942a7a9ac73f7f49908f65b63907c",
+            "fused:gitRef": "3a8ab43b782176bf346ad22f580152fafe3acd40",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -84,9 +98,25 @@
               "https://avatars.githubusercontent.com/u/27398253?v=4",
               "https://avatars.githubusercontent.com/in/834700?v=4"
             ],
-            "fused:gitLastModified": "2024-10-21T22:21:08+00:00",
+            "fused:gitLastModified": "2024-12-15T23:53:00+00:00",
             "fused:explorerTab": "public",
-            "fused:gitRepo": "fusedio/udfs"
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DEM_10m_Tile_Example.png",
+            "fused:tags": [
+              {
+                "id": "band-algebra",
+                "label": "band-algebra"
+              },
+              {
+                "id": "stac",
+                "label": "stac"
+              },
+              {
+                "id": "msft-pc",
+                "label": "msft-pc"
+              }
+            ],
+            "fused:description": "#### Overview\nU.S.-wide digital elevation data at horizontal resolutions ranging from one to sixty meters.\n\nThe USGS 3D Elevation Program (3DEP) Datasets from the National Map are the primary elevation data product produced and distributed by the USGS. The 3DEP program provides raster elevation data for the conterminous United States, Alaska, Hawaii, and the island territories, at a variety of spatial resolutions. The seamless DEM layers produced by the 3DEP program are updated frequently to integrate newly available, improved elevation source data.\n\nDEM layers are available nationally at grid spacings of 1 arc-second (approximately 30 meters) for the conterminous United States, and at approximately 1, 3, and 9 meters for parts of the United States. Most seamless DEM data for Alaska is available at a resolution of approximately 60 meters, where only lower resolution source data exist.\n#### STAC Collections\n* [Microsoft Planetary Computer](https://planetarycomputer.microsoft.com/api/stac/v1/collections/3dep-seamless)\n\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/DEM_10m_Tile_Example\")\narr = fused.run(udf=udf, x=2411, y=3079, z=13)\narr\n```\n"
           },
           "source": "DEM_10m_Tile_Example.py",
           "headers": []
