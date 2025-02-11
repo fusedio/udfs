@@ -1,0 +1,74 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Create_A_Placekey_Join",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:description": "## Overview\n\nUsing Placekey to create a shareable map on Fused.io",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 10,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorCategories",
+                  "attr": "belonging",
+                  "domain": [
+                    "a",
+                    "b",
+                    "both"
+                  ],
+                  "colors": "Bold",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "Create_A_Placekey_Join",
+            "fused:name": "Create_A_Placekey_Join",
+            "fused:id": null
+          },
+          "source": "Create_A_Placekey_Join.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
