@@ -1,0 +1,112 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Flood_Risk_Analysis",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultParameters": [
+              {
+                "parameter": "year",
+                "value": "2022"
+              },
+              {
+                "parameter": "water_buffer",
+                "value": "",
+                "type": "string",
+                "suggestedValues": []
+              }
+            ],
+            "fused:datasets": "Land Use Land Cover",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "TealGrn",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "raster",
+            "fused:slug": "Flood_Risk_Analysis",
+            "fused:name": "Flood_Risk_Analysis",
+            "fused:id": null,
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": -0.7623204914477872,
+              "longitude": 36.36477639838356,
+              "zoom": 9.80776433233219,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/3796a00e2c62f8a8a672d9b1e9e9ee25db9e78df/community/K_Njoroge/Flood_Risk_Analysis/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/3796a00/community/K_Njoroge/Flood_Risk_Analysis/",
+            "fused:gitPath": "community/K_Njoroge/Flood_Risk_Analysis",
+            "fused:gitRef": "3796a00e2c62f8a8a672d9b1e9e9ee25db9e78df",
+            "fused:gitAuthorNames": [
+              "Plinio Guzman"
+            ],
+            "fused:gitAuthorUsernames": [
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitLastModified": "2024-07-30T19:49:03+00:00",
+            "fused:explorerTab": "community",
+            "fused:gitRepo": "fusedio/udfs"
+          },
+          "source": "Flood_Risk_Analysis.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
