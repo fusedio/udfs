@@ -1,5 +1,5 @@
 def udf(
-    bbox: fused.types.TileGDF = None,
+    bbox: fused.types.Tile = None,
     year: int = 2023,
     variable: str = "evi2",
 ):

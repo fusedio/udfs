@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF = None, tech: str = 'Tarana', site_count: int = 1, col_plot: str = 'Rx_dBm'):
+def udf(bbox: fused.types.Tile = None, tech: str = 'Tarana', site_count: int = 1, col_plot: str = 'Rx_dBm'):
     """
     Function to read the data from the fused coverage model
     :param bbox:

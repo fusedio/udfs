@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF = None, h3_size: int = None, h3_scale: int=2):
+def udf(bbox: fused.types.Tile = None, h3_size: int = None, h3_scale: int=2):
     import h3
 
     conn = fused.utils.common.duckdb_connect()

@@ -1,5 +1,5 @@
 def get_overture(
-    bbox: fused.types.TileGDF = None,
+    bbox: fused.types.Tile = None,
     release: str = "2025-01-22-0",
     theme: str = None,
     overture_type: str = None,

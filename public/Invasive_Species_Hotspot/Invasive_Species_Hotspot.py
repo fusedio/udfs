@@ -1,6 +1,6 @@
 @fused.udf 
 def udf(
-    bbox: fused.types.TileGDF = None,
+    bbox: fused.types.Tile = None,
     h3_res: int=12
 ):
     import h3

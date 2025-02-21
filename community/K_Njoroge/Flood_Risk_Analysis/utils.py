@@ -73,7 +73,7 @@ def get_lulc(bbox, year):
 
 
 def get_overture(
-    bbox: fused.types.TileGDF = None,
+    bbox: fused.types.Tile = None,
     release: str = "2024-03-12-alpha-0",
     theme: str = None,
     overture_type: str = None,

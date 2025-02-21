@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF=None):
+def udf(bbox: fused.types.Tile=None):
     import duckdb
     import pandas as pd
     from utils import add_rgb_cmap, CMAP, get_data, run_query

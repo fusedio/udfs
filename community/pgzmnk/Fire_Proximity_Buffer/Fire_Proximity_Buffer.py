@@ -1,7 +1,7 @@
 @fused.udf
 def udf(
-    # bbox: fused.types.TileGDF=None,
-    bbox: fused.types.ViewportGDF = None,
+    # bbox: fused.types.Tile=None,
+    bbox: fused.types.Bounds = None,
     date_start: int = 2,
 ):
     import datetime
@@ -11,6 +11,8 @@ def udf(
     import pandas as pd
     import requests
     import shapely
+
+    bbox = fused.utils.common.bounds_to_gdf(bbox)
 
     # Function to convert unix to datetime
     date_string = lambda x: datetime.datetime.utcfromtimestamp(x / 1000).strftime(

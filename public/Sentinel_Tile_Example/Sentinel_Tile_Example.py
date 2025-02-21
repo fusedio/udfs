@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox: fused.types.TileGDF,
+    bbox: fused.types.Tile,
     provider="AWS",
     time_of_interest="2023-11-01/2023-12-30"
 ):  

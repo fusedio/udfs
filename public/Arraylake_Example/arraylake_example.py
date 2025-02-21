@@ -21,7 +21,7 @@ arraylake.config.set({"chunkstore.use_delegated_credentials": True})
 
 @fused.udf
 def udf(
-    bbox: fused.types.TileGDF = None,
+    bbox: fused.types.Tile = None,
     repo_name="earthmover-demos/sentinel-datacube-South-America-3",
     varname="rgb_median",
     time: datetime = datetime(2020, 10, 1),

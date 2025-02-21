@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF = None):
+def udf(bbox: fused.types.Tile = None):
     # Get the bounding box coordinates
     x, y, z = bbox[["x", "y", "z"]].iloc[0]
     # ArcGIS Online World Imagery basemap

@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF=None, resolution: int = 11, min_count: int = 10):
+def udf(bbox: fused.types.Tile=None, resolution: int = 11, min_count: int = 10):
     import duckdb
     import shapely
     import geopandas as gpd

@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox: fused.types.TileGDF = None,
+    bbox: fused.types.Tile = None,
     layer: str = "tas",
     time: int = 2,
     target_shape: list = [512, 512],

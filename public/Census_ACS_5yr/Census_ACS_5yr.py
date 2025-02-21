@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox: fused.types.TileGDF = None,
+    bbox: fused.types.Tile = None,
     census_variable: str = "Total Pop",
     scale_factor: float = 200,
     is_density: bool = True,

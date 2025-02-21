@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF, path: str, *, chip_len=256):
+def udf(bbox: fused.types.Tile, path: str, *, chip_len=256):
     import numpy as np
 
     utils = fused.load("https://github.com/fusedio/udfs/tree/e1fefb7/public/common/").utils

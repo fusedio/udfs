@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF,
+def udf(bbox: fused.types.Tile,
         dataset1: str = 'dataset name here',
         dataset2: str = 'dataset name here',
         preview: bool=False):

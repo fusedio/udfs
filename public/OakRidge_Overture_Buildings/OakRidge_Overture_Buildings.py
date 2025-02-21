@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF = None):
+def udf(bbox: fused.types.Tile = None):
     import geopandas as gpd
 
     # 1. Load Overture Buildings

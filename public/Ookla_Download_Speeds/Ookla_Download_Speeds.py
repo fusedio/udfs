@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF=None):
+def udf(bbox: fused.types.Tile=None):
     file_path='s3://ookla-open-data/parquet/performance/type=mobile/year=2024/quarter=3/2024-07-01_performance_mobile_tiles.parquet'
     bounds = bbox.total_bounds
     @fused.cache

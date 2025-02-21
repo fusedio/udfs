@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox: fused.types.TileGDF, path: str, overture_type="place", clip: bool = False
+    bbox: fused.types.Tile, path: str, overture_type="place", clip: bool = False
 ):
     theme_type = {
         "building": "buildings",

@@ -1,6 +1,6 @@
 # Note: This UDF is only for demo purposes. You may get `HTTP GET error` after several times calling it. This is the data retrieval issue caused by Cloudfront servers not responding.
 @fused.udf
-def udf(bbox: fused.types.TileGDF = None, resolution: int = 9, min_count: int = 10):
+def udf(bbox: fused.types.Tile = None, resolution: int = 9, min_count: int = 10):
     import duckdb
     from utils import duckdb_with_h3
     import shapely

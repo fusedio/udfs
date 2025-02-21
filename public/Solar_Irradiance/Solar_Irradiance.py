@@ -3,7 +3,7 @@ from shapely import box
 
 @fused.udf
 def udf(
-    bbox: fused.types.TileGDF = gpd.GeoDataFrame(
+    bbox: fused.types.Tile = gpd.GeoDataFrame(
             {"geometry": [box(-122.549, 37.681, -122.341, 37.818)]},
             crs="EPSG:4326")
 ):

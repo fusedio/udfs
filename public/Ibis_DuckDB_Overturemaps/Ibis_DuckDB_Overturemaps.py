@@ -1,11 +1,13 @@
 @fused.udf
-def udf(bbox: fused.types.ViewportGDF = None):
+def udf(bbox: fused.types.Bounds = None):
     import ibis
     from ibis import _
 
     # Connect to an in-memory database
     con = ibis.duckdb.connect()
-
+    
+    # Converting bounds to GeoDataFrame
+    bbox = fused.utils.common.bounds_to_gdf(bbox)
     # Overture S3 bucket
     url = "s3://overturemaps-us-west-2/release/2024-11-13.0/theme=base/type=infrastructure/*"
 

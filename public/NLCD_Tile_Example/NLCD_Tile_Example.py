@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF, year:int=1985, land_type:str='', chip_len:int=256, colored: bool = True):
+def udf(bbox: fused.types.Tile, year:int=1985, land_type:str='', chip_len:int=256, colored: bool = True):
     import numpy as np
     from utils import get_data, get_summary
     

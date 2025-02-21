@@ -1,12 +1,12 @@
 @fused.udf
-def udf_rgb_tiles(bbox: fused.types.TileGDF):
+def udf_rgb_tiles(bbox: fused.types.Tile):
     utils = fused.load('https://github.com/fusedio/udfs/tree/004b8d9/public/common/').utils
     x, y, z = bbox[["x", "y", "z"]].iloc[0]
     return utils.url_to_arr(f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}")
 
 @fused.udf
 def udf(    
-    bbox: fused.types.TileGDF=None,
+    bbox: fused.types.Tile=None,
     chip_len=256,
     buffer_degree=0.00001,
     weights_path = "s3://fused-asset/misc/dl4eo/best.onnx"
