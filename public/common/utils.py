@@ -7,15 +7,6 @@ import numpy as np
 from numpy.typing import NDArray
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
 from loguru import logger
-from fused._optional_deps import (
-    GPD_GEODATAFRAME,
-    HAS_GEOPANDAS,
-    HAS_MERCANTILE,
-    HAS_SHAPELY,
-    MERCANTILE_TILE,
-    SHAPELY_GEOMETRY,
-)
-
 
 @fused.cache
 def simplify_gdf(gdf, pct=1, args='-o force -clean'):
@@ -2493,6 +2484,14 @@ def estimate_zoom(bounds) -> int:
         The estimated zoom level (0-20).
 
     """
+    from fused._optional_deps import (
+        GPD_GEODATAFRAME,
+        HAS_GEOPANDAS,
+        HAS_MERCANTILE,
+        HAS_SHAPELY,
+        MERCANTILE_TILE,
+        SHAPELY_GEOMETRY,
+    )
     if HAS_GEOPANDAS and isinstance(bounds, GPD_GEODATAFRAME):
         bounds = bounds.total_bounds
     elif HAS_SHAPELY and isinstance(bounds, SHAPELY_GEOMETRY):
