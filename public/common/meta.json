@@ -95,9 +95,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/845c03d0052d56f7900d775fa1f9f30c0431207a/public/common/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/6fa44615e0048e00ca70beecc55f2ed3086ba5b3/public/common/",
             "fused:gitPath": "public/common",
-            "fused:gitRef": "845c03d0052d56f7900d775fa1f9f30c0431207a",
+            "fused:gitRef": "6fa44615e0048e00ca70beecc55f2ed3086ba5b3",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -106,7 +106,8 @@
               "Plinio Guzman",
               null,
               null,
-              "Maxime Lenormand"
+              "Maxime Lenormand",
+              "Milind Soni"
             ],
             "fused:gitAuthorUsernames": [
               "kashuk",
@@ -116,7 +117,8 @@
               "pgzmnk",
               "fused-io-staging[bot]",
               "fused-io[bot]",
-              "MaxLenormand"
+              "MaxLenormand",
+              "milind-soni"
             ],
             "fused:gitAuthorUrls": [
               "https://github.com/kashuk",
@@ -126,7 +128,8 @@
               "https://github.com/pgzmnk",
               "https://github.com/apps/fused-io-staging",
               "https://github.com/apps/fused-io",
-              "https://github.com/MaxLenormand"
+              "https://github.com/MaxLenormand",
+              "https://github.com/milind-soni"
             ],
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/12432685?v=4",
@@ -136,10 +139,11 @@
               "https://avatars.githubusercontent.com/u/27398253?v=4",
               "https://avatars.githubusercontent.com/in/885821?v=4",
               "https://avatars.githubusercontent.com/in/834700?v=4",
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-01-28T01:49:33+00:00",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/845c03d/public/common/",
+            "fused:gitLastModified": "2025-02-26T03:42:51+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/6fa4461/public/common/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "sina_000002-patch-6d61a0-add-html-utils",
