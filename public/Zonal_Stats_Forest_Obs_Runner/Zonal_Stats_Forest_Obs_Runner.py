@@ -16,6 +16,9 @@ def udf(
     import s3fs
     import itertools
 
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+
     # 1. Define `cell_id` from the input dictionary
     cell_id = arg['ind']
 
@@ -53,7 +56,7 @@ def udf(
         translate = True
 
     # 3. Create gdf_muni
-    gdf_muni = fused.utils.common.table_to_tile(
+    gdf_muni = utils.table_to_tile(
         gdf_cell,
         table_muni_geoboundaries,
         use_columns=["shapeID", "geometry"],
@@ -74,7 +77,7 @@ def udf(
     # 4. Load tiff
     filename = gdf_cell[["url"]].iloc[0].values[0]
     tiff_url = f"s3://fused-asset/gfc2020/{filename}"
-    geom_bbox_muni = fused.utils.common.geo_bbox(gdf_muni).geometry[0]
+    geom_bbox_muni = utils.geo_bbox(gdf_muni).geometry[0]
 
     # 5. Get TIFF dataset
     da, _ = fused.utils.Zonal_Stats_Forest_Obs.rio_clip_geom_from_url(geom_bbox_muni, tiff_url)

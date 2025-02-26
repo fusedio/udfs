@@ -3,9 +3,12 @@ def udf(bbox: fused.types.TileGDF, res=14):
     import h3
     import pandas as pd
 
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+
     # 1. Load East Asia Zenodo Buildings
     path = "s3://fused-asset/misc/jennings/East_Asian_buildings_parquet3_ingested_3dec/"
-    gdf_zenodo = fused.utils.common.table_to_tile(bbox, table=path)
+    gdf_zenodo = utils.table_to_tile(bbox, table=path)
     print("Bulding Count EA: ", len(gdf_zenodo))
 
     # 2. Load Overture Buildings

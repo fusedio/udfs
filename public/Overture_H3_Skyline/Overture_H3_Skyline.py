@@ -2,7 +2,10 @@
 def udf(bbox: fused.types.TileGDF = None, h3_size: int = None, h3_scale: int=2):
     import h3
 
-    conn = fused.utils.common.duckdb_connect()
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+
+    conn = utils.duckdb_connect()
 
     # 1. Set H3 resolution
     x, y, z = bbox.iloc[0][["x", "y", "z"]]
