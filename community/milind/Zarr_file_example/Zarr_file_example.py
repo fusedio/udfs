@@ -50,7 +50,7 @@ def udf(bounds: fused.types.Bounds = None, layer: str = "ndvi", time: int = 2, t
     da = utils.da_fit_to_resolution(ds_buffer[layer], target_shape)
     da = da.sel(latitude=slice(miny, maxy), longitude=slice(minx, maxx))
     
-    # Reproject
+    # Reproject to Web Mercator for visualization
     arr = da.rio.set_crs("EPSG:4326")
     arr_reprojected = arr.rio.reproject("EPSG:3857")
     data_array = arr_reprojected.values.squeeze()
