@@ -14,7 +14,8 @@ def udf(gers_id: str='08b2a100d2cb6fff02000821de8bdff1'):
     bbox = gpd.GeoDataFrame({'h3_index': [h3_index], 'geometry': [bounds]})
 
     # 3. Load Overture Buildings
-    gdf = fused.utils.Overture_Maps_Example.get_overture(bbox=bbox, overture_type='building', min_zoom=10)
+    overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.
+    gdf = overture_utils.get_overture(bbox=bbox, overture_type='building', min_zoom=10)
 
     # 4. Subselect building
     gdf = gdf[gdf['id'] == gers_id]

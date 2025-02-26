@@ -16,7 +16,10 @@ def run_pool_tiffs(bbox, df_tiffs, output_shape):
         for i in range(len(df_tiffs)):
             tiff_list.append(df_tiffs[band].iloc[i])
 
-    arrs_tmp = fused.utils.common.run_pool(fn_read_tiff, tiff_list)
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+
+    arrs_tmp = utils.run_pool(fn_read_tiff, tiff_list)
     arrs_out = np.stack(arrs_tmp)
     arrs_out = arrs_out.reshape(len(columns), len(df_tiffs), output_shape[-2], output_shape[-1])
     return arrs_out

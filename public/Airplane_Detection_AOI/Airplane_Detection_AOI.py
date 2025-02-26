@@ -32,8 +32,10 @@ def udf(target_gdf: gpd.GeoDataFrame = j, zoom:int=17):
         if len(out)>0:
             return out
 
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
     # Run the UDF concurrently for each tile
-    gdfs = fused.utils.common.run_pool(run_udf, list_of_tile_gdfs)
+    gdfs = utils.run_pool(run_udf, list_of_tile_gdfs)
     gdf_out = pd.concat(gdfs)
     print('Total airplanes: ', len(gdf_out))
     return gdf_out

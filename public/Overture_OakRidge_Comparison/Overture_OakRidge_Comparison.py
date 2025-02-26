@@ -7,7 +7,11 @@ def udf(
     import duckdb
     import geopandas as gpd
 
-    conn = fused.utils.common.duckdb_connect()
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+    overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils
+
+    conn = utils.duckdb_connect()
 
     if class_source=='Overture':
         metric = 'subtype'
@@ -17,10 +21,10 @@ def udf(
         metric = 'combined_source'
 
     # 1. Load Overture Buildings
-    gdf_overture = fused.utils.Overture_Maps_Example.get_overture(bbox=bbox)
+    gdf_overture = overture_utils.get_overture(bbox=bbox)
 
     # 2. Load Oak Ridge Buildings
-    gdf_oakridge = fused.utils.common.table_to_tile(
+    gdf_oakridge = utils.table_to_tile(
         bbox,
         table="s3://fused-asset/infra/building_oak/",
         use_columns=None,

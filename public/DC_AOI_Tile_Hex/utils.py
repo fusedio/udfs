@@ -36,8 +36,11 @@ def tile_to_df(bbox, arr, return_geometry=False):
     df = pd.DataFrame(X.flatten(), columns=["lng"])
     df["lat"] = Y.flatten()
 
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+
     # convert back to 4326
-    df = fused.utils.common.geo_convert(df).set_crs(3857, allow_override=True).to_crs(bbox.crs)
+    df = utils.geo_convert(df).set_crs(3857, allow_override=True).to_crs(bbox.crs)
     df["lat"]=df.geometry.y
     df["lng"]=df.geometry.x
     if not return_geometry:

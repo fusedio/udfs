@@ -36,8 +36,10 @@ def run_query(bounds, pplant_table, resolution):
         FROM most_frequent_names;
     
         """
+        # Load pinned versions of utility functions.
+        utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
         # Connect to DuckDB
-        con = fused.utils.common.duckdb_connect()
+        con = utils.duckdb_connect()
 
         # Execute the query and get the DataFrame
         return con.sql(query, params={'xmin': xmin, 'xmax': xmax, 'ymin': ymin, "ymax": ymax, 'resolution': resolution}).df()
