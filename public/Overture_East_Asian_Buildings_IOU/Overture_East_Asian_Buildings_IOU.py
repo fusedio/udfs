@@ -5,6 +5,7 @@ def udf(bbox: fused.types.TileGDF, res=14):
 
     # Load pinned versions of utility functions.
     utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+    overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils
 
     # 1. Load East Asia Zenodo Buildings
     path = "s3://fused-asset/misc/jennings/East_Asian_buildings_parquet3_ingested_3dec/"
@@ -12,7 +13,7 @@ def udf(bbox: fused.types.TileGDF, res=14):
     print("Bulding Count EA: ", len(gdf_zenodo))
 
     # 2. Load Overture Buildings
-    gdf_overture = fused.utils.Overture_Maps_Example.get_overture(bbox=bbox)
+    gdf_overture = overture_utils.get_overture(bbox=bbox)
     print("Bulding Count Overture: ", len(gdf_overture))
 
     # 3. IOU

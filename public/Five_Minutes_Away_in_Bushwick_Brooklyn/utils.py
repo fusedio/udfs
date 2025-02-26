@@ -25,7 +25,8 @@ def get_single_isochrone(point_data):
     # Function for single isochrone
     point, costing, time_steps = point_data
     try:
-        return fused.utils.Get_Isochrone.get_isochrone(
+        get_isochrone_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Get_Isochrone/").utils
+        return get_isochrone_utils.get_isochrone(
             lat=point.y,
             lng=point.x, 
             costing=costing,

@@ -4,6 +4,7 @@ def udf(bbox: fused.types.TileGDF = None, h3_size: int = None, h3_scale: int=2):
 
     # Load pinned versions of utility functions.
     utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+    overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils
 
     conn = utils.duckdb_connect()
 
@@ -16,7 +17,7 @@ def udf(bbox: fused.types.TileGDF = None, h3_size: int = None, h3_scale: int=2):
     print(f"H3 Resolution: {h3_size}")
 
     # 2. Load Overture Buildings
-    gdf = fused.utils.Overture_Maps_Example.get_overture(bbox=bbox, min_zoom=10)
+    gdf = overture_utils.get_overture(bbox=bbox, min_zoom=10)
     if len(gdf) < 1:
         return
 
