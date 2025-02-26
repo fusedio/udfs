@@ -30,7 +30,8 @@ def udf(bbox: fused.types.Tile = None,
     gdf_h3_isochrones = bushwick_boundary(gdf_h3_isochrones)
     
     # Get Overture Buildings
-    gdf_overture = fused.utils.Overture_Maps_Example.get_overture(bbox=bbox, use_columns=use_columns, min_zoom=10)
+    overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.
+    gdf_overture = overture_utils.get_overture(bbox=bbox, use_columns=use_columns, min_zoom=10)
     
     # Join H3 with Buildings using coffe_score to visualize, you can change to a left join
     gdf_joined = gdf_overture.sjoin(gdf_h3_isochrones, how="inner", predicate="intersects")

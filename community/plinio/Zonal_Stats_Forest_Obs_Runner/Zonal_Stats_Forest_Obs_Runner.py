@@ -16,11 +16,15 @@ def udf(
     import s3fs
     import itertools
 
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+    zonal_stats_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/community/plinio/Zonal_Stats_Forest_Obs/").utils
+
     # 1. Define `cell_id` from the input dictionary
     cell_id = arg['ind']
 
     # 2. Create GeoDataFrame with the bounds for the specified cell id 
-    gdf_cells = fused.utils.Zonal_Stats_Forest_Obs.get_asset_dissolve(url=table_tif_bounds)
+    gdf_cells = zonal_stats_utils.get_asset_dissolve(url=table_tif_bounds)
     cell_id = list(gdf_cells[gdf_cells['ind'] == cell_id]['ind'].values)[0]
     cell_ids_df = gdf_cells[gdf_cells['ind'] == cell_id]
 
@@ -53,7 +57,7 @@ def udf(
         translate = True
 
     # 3. Create gdf_muni
-    gdf_muni = fused.utils.common.table_to_tile(
+    gdf_muni = utils.table_to_tile(
         gdf_cell,
         table_muni_geoboundaries,
         use_columns=["shapeID", "geometry"],
@@ -74,10 +78,10 @@ def udf(
     # 4. Load tiff
     filename = gdf_cell[["url"]].iloc[0].values[0]
     tiff_url = f"s3://fused-asset/gfc2020/{filename}"
-    geom_bbox_muni = fused.utils.common.geo_bbox(gdf_muni).geometry[0]
+    geom_bbox_muni = utils.geo_bbox(gdf_muni).geometry[0]
 
     # 5. Get TIFF dataset
-    da, _ = fused.utils.Zonal_Stats_Forest_Obs.rio_clip_geom_from_url(geom_bbox_muni, tiff_url)
+    da, _ = zonal_stats_utils.rio_clip_geom_from_url(geom_bbox_muni, tiff_url)
     
     # 6. Zonal stats
     stats_dict={
@@ -87,7 +91,7 @@ def udf(
         'size': lambda masked_value: masked_value.data.size,
     }
   
-    df_pre_final = fused.utils.Zonal_Stats_Forest_Obs.zonal_stats_df(gdf_muni=gdf_muni, da=da, tiff_url=tiff_url, stats_dict=stats_dict)
+    df_pre_final = zonal_stats_utils.zonal_stats_df(gdf_muni=gdf_muni, da=da, tiff_url=tiff_url, stats_dict=stats_dict)
 
     # 7. Structure final table
     df_final = pd.concat([gdf_muni.reset_index(drop=True), df_pre_final], axis=1)

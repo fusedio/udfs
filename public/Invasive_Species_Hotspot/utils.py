@@ -44,8 +44,11 @@ def get_strahler_gdf(bbox):
     import pandas as pd
     VARNAME='b1'
 
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+
     # Set your own creds
-    fused.utils.common.ee_initialize(service_account_name='fused-nyt-gee@fused-nyt.iam.gserviceaccount.com',key_path="/mnt/cache/gee_creds/fusedbenchmark-513a57ac463f.json")
+    utils.ee_initialize(service_account_name='fused-nyt-gee@fused-nyt.iam.gserviceaccount.com',key_path="/mnt/cache/gee_creds/fusedbenchmark-513a57ac463f.json")
     geom = ee.Geometry.Rectangle(*bbox.total_bounds)
     ic = ee.ImageCollection("projects/sat-io/open-datasets/HYDROGRAPHY90/stream-order/order_strahler")
     

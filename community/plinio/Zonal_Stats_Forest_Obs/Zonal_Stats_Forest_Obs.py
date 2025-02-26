@@ -12,6 +12,8 @@ def udf(
     import s3fs
 
     from utils import get_asset_dissolve, rio_clip_geom_from_url, rio_clip_geom, zonal_stats_df, get_idx_range
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
 
     # 1. Get cell bounds for the cell
     gdf_cells = get_asset_dissolve(url=s3_file_path)
@@ -37,7 +39,7 @@ def udf(
         translate = True
 
     # 4. Create gdf_muni
-    gdf_muni = fused.utils.common.table_to_tile(
+    gdf_muni = utils.table_to_tile(
         gdf_cell,
         "s3://fused-asset/data/geoboundaries/adm2_064_v2/",
         use_columns=["shapeID", "geometry"],
@@ -61,7 +63,7 @@ def udf(
     # 5. Load tiff
     filename = gdf_cell[["url"]].iloc[0].values[0]
     tiff_url = f"s3://fused-asset/gfc2020/{filename}"
-    geom_bbox_muni = fused.utils.common.geo_bbox(gdf_muni).geometry[0]
+    geom_bbox_muni = utils.geo_bbox(gdf_muni).geometry[0]
     # return geom_bbox_muni
 
     # 6. Get TIFF dataset

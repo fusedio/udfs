@@ -9,7 +9,7 @@ def udf():
     import json
     from shapely.geometry import Polygon
     import numpy as np
-    conn = fused.utils.common.duckdb_connect()
+    conn = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils.duckdb_connect() #use pinned version of utility function
     h3_size=8
     
     # 1. Load data from output directories

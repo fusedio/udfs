@@ -17,7 +17,10 @@ def udf(bbox: fused.types.Tile=None, time_of_interest="2021-09-01/2021-12-30", c
     udf_sentinel = fused.load('https://github.com/fusedio/udfs/tree/7b98f99/public/DC_AOI_Example/')
     arr = udf_sentinel.utils.get_arr(bbox, time_of_interest=time_of_interest, output_shape=(chip_len, chip_len))
     arr = np.clip(arr *  scale, 0, 255).astype("uint8")[:3]
-    
+
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+
     # create a geom mask
-    geom_mask = fused.utils.common.gdf_to_mask_arr(gdf_w_bbox, arr.shape[-2:], first_n=1)    
+    geom_mask = utils.gdf_to_mask_arr(gdf_w_bbox, arr.shape[-2:], first_n=1)    
     return np.ma.masked_array(arr, [geom_mask]*arr.shape[0])

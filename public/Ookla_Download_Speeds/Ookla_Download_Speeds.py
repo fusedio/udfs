@@ -2,9 +2,13 @@
 def udf(bbox: fused.types.Tile=None):
     file_path='s3://ookla-open-data/parquet/performance/type=mobile/year=2024/quarter=3/2024-07-01_performance_mobile_tiles.parquet'
     bounds = bbox.total_bounds
+
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+
     @fused.cache
     def get_data(bounds, file_path, h3_size):
-        con = fused.utils.common.duckdb_connect()
+        con = utils.duckdb_connect()
 
         # DuckDB query to:
         # 1. Convert lat/long to H3 cells
@@ -27,5 +31,3 @@ def udf(bbox: fused.types.Tile=None):
     df = get_data(bounds, file_path, h3_size=res)
     print(df)
     return df
-    df = fused.utils.common.get_parquet_stats(file_path)
-    

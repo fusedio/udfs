@@ -104,6 +104,9 @@ def udf(bbox: fused.types.Tile = aoi, h3_size=8):
     from sklearn.metrics.pairwise import cosine_similarity
     from utils import global_categories
 
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+
     # 1. Polyfill AOI
     h3s = h3.polygon_to_cells(h3.geo_to_h3shape(bbox.geometry.iloc[0]), h3_size)
 
@@ -120,7 +123,7 @@ def udf(bbox: fused.types.Tile = aoi, h3_size=8):
             print(e)
 
     # 2. Run Embeddings UDF for each H3 cell
-    gdfs = fused.utils.common.run_pool(run_udfs, h3s, max_workers=100)
+    gdfs = utils.run_pool(run_udfs, h3s, max_workers=100)
     gdf = pd.concat(gdfs)
 
     embeddings = gdf.embedding.tolist()

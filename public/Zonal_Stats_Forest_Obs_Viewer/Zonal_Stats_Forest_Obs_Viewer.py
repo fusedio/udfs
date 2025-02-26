@@ -3,9 +3,11 @@ def udf(bbox: fused.types.Tile=None):
     import pandas as pd
     import geopandas as gpd
 
+    zonal_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/community/plinio/Zonal_Stats_Forest_Obs/").utils
+
     # 1. Determine which Zonal Stats grid cells fall within the `bbox`
     s3_file_path = f"s3://fused-asset/data/zonal_stats_example/assets_with_bounds_4_4.parquet"
-    gdf_bounds = fused.utils.Zonal_Stats_Forest_Obs.get_asset_dissolve(s3_file_path)
+    gdf_bounds = zonal_utils.get_asset_dissolve(s3_file_path)
     gdf = gdf_bounds.sjoin(bbox)
     target_cells = list(set(gdf.ind.values))
 

@@ -3,13 +3,17 @@ def udf(bbox: fused.types.Tile, res=14):
     import h3
     import pandas as pd
 
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+    overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils
+
     # 1. Load East Asia Zenodo Buildings
     path = "s3://fused-asset/misc/jennings/East_Asian_buildings_parquet3_ingested_3dec/"
-    gdf_zenodo = fused.utils.common.table_to_tile(bbox, table=path)
+    gdf_zenodo = utils.table_to_tile(bbox, table=path)
     print("Bulding Count EA: ", len(gdf_zenodo))
 
     # 2. Load Overture Buildings
-    gdf_overture = fused.utils.Overture_Maps_Example.get_overture(bbox=bbox)
+    gdf_overture = overture_utils.get_overture(bbox=bbox)
     print("Bulding Count Overture: ", len(gdf_overture))
 
     # 3. IOU
