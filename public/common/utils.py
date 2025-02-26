@@ -8,6 +8,26 @@ from numpy.typing import NDArray
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
 from loguru import logger
 
+def json_path_from_secret(var='gcs_fused'):
+    import json
+    import tempfile
+    with tempfile.NamedTemporaryFile(suffix=".json", delete=False, mode="w") as tmp_file:
+        json.dump(json.loads(fused.secrets[var]), tmp_file)
+        tmp_file_path = tmp_file.name
+    return tmp_file_path
+    
+def gcs_credentials_from_secret(var='gcs_fused'):
+    """
+    example: 
+    """
+    import gcsfs
+    import json
+    from google.oauth2 import service_account
+    
+    gcs_secret = json.loads(fused.secrets[var])
+    credentials = service_account.Credentials.from_service_account_info(gcs_secret)
+    return credentials
+
 @fused.cache
 def simplify_gdf(gdf, pct=1, args='-o force -clean'):
     #ref https://github.com/mbloch/mapshaper/blob/master/REFERENCE.md
