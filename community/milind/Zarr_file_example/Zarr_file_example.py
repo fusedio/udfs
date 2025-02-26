@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.Bounds = None, layer: str = "ndvi", time: int = 2, target_shape: list = [512,512]):
+def udf(bounds: fused.types.Bounds = None, layer: str = "ndvi", time: int = 2, target_shape: list = [512,512]):
     import geopandas as gpd
     import numpy as np
     import rioxarray
