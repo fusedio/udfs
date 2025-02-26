@@ -6,9 +6,7 @@ def udf(bounds: fused.types.Bounds = None, layer: str = "ndvi", time: int = 2, t
     import shapely
     import xarray as xr
     
-    # Convert bounds to GeoDataFrame
-    bbox = fused.utils.common.bounds_to_gdf(bbox)
-    
+
     # Load utils
     utils = fused.load(
         "https://github.com/fusedio/udfs/tree/cbc5482/public/common/"
@@ -19,7 +17,7 @@ def udf(bounds: fused.types.Bounds = None, layer: str = "ndvi", time: int = 2, t
     print(ds)
     
     # Get bounds
-    minx, miny, maxx, maxy = bbox.total_bounds
+    minx, miny, maxx, maxy = bounds
     
     # Print dataset info
     variable_names = list(ds.data_vars)
