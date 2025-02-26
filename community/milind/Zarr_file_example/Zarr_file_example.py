@@ -18,7 +18,7 @@ def udf(bounds: fused.types.Bounds = None, layer: str = "ndvi", time: int = 2, t
     
     # Get bounds
     minx, miny, maxx, maxy = bounds
-    
+     
     # Print dataset info
     variable_names = list(ds.data_vars)
     print("Variable names in the dataset:")
