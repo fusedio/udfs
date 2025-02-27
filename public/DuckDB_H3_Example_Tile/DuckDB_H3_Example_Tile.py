@@ -1,14 +1,14 @@
 @fused.udf
-def udf(bbox: fused.types.Tile=None, resolution: int = 11, min_count: int = 10):
+def udf(bounds: fused.types.Tile=None, resolution: int = 11, min_count: int = 10):
     import duckdb
     import shapely
     import geopandas as gpd
 
-    tile_bbox_gdf = gpd.GeoDataFrame.from_features({"type":"FeatureCollection","features":[{"type":"Feature","properties":{"shape":"Rectangle"},"geometry":{"type":"Polygon","coordinates":[[[-73.99322955922597,40.76627870054801],[-73.96753345042097,40.76627870054801],[-73.96753345042097,40.74825844008337],[-73.99322955922597,40.74825844008337],[-73.99322955922597,40.76627870054801]]]}}]})
-    default_bbox = tile_bbox_gdf.iloc[0].geometry
-    tile_bbox_geom = bbox if bbox is not None else default_bbox
+    tile_bounds_gdf = gpd.GeoDataFrame.from_features({"type":"FeatureCollection","features":[{"type":"Feature","properties":{"shape":"Rectangle"},"geometry":{"type":"Polygon","coordinates":[[[-73.99322955922597,40.76627870054801],[-73.96753345042097,40.76627870054801],[-73.96753345042097,40.74825844008337],[-73.99322955922597,40.74825844008337],[-73.99322955922597,40.76627870054801]]]}}]})
+    default_bounds = tile_bounds_gdf.iloc[0].geometry
+    tile_bounds_geom = bounds if bounds is not None else default_bounds
 
-    bounds = bbox.bounds.values[0] if bbox is not None else default_bbox.bounds
+    bounds = bounds.bounds.values[0] if bounds is not None else default_bounds.bounds
     print(bounds)
 
     utils = fused.load(

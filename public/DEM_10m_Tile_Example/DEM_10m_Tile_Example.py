@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox: fused.types.Tile,
+    bounds: fused.types.Tile,
     collection="3dep-seamless",
     band="data",
     res_factor:int=1
@@ -11,7 +11,6 @@ def udf(
     import planetary_computer
     import pystac_client
     from pystac.extensions.eo import EOExtension as eo
-
     utils = fused.load(
         "https://github.com/fusedio/udfs/tree/5cfb808/public/common/"
     ).utils
@@ -22,18 +21,18 @@ def udf(
     )
     items = catalog.search( 
         collections=[collection],
-        bbox=bbox.total_bounds,
+        bbox=bounds.total_bounds,
     ).item_collection()
     print(items[0].assets.keys()) 
     print(f"Returned {len(items)} Items")
-    resolution = int(20/res_factor * 2 ** (max(0, 13 - bbox.z[0])))
+    resolution = int(20/res_factor * 2 ** (max(0, 13 - bounds.z[0])))
     print(f"{resolution=}")
     ds = odc.stac.load(
         items,
         crs="EPSG:3857",
         bands=[band],
         resolution=resolution,
-        bbox=bbox.total_bounds,
+        bbox=bounds.total_bounds,
     ).astype(float)
     
     # Use data from the most recent time.

@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox: fused.types.Tile = None,
+    bounds: fused.types.Tile = None,
     year: int = 2022,
     crop_type: str = "",
     chip_len: int = 256,
@@ -14,7 +14,7 @@ def udf(
 
     input_tiff_path = f"s3://fused-asset/data/cdls/{year}_30m_cdls.tif"
     array_int, metadata = read_tiff(
-        bbox,
+        bounds,
         input_tiff_path,
         output_shape=(chip_len, chip_len),
         return_colormap=True

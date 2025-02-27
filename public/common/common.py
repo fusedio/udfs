@@ -1,3 +1,3 @@
 @fused.udf
-def udf(bbox:fused.types.Tile):
-    return bbox  
+def udf(bounds:fused.types.Tile):
+    return bounds  

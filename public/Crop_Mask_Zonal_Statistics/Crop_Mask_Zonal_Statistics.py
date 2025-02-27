@@ -58,7 +58,7 @@ def udf(crop_type ="corn", geoid: str = '19119', year: str = "2015", month: str 
     utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
 
     # Get box around the geometry
-    geom_bbox = utils.common.geo_bbox(gdf)
+    geom_bbox = utils.geo_bbox(gdf)
     
     # Dynamically construct the path based on the year and month
     path = f's3://soldatanasasifglobalifoco2modis1863/Global_SIF_OCO2_MODIS_1863/data/sif_ann_{year}{month}{period}.nc'
@@ -72,7 +72,7 @@ def udf(crop_type ="corn", geoid: str = '19119', year: str = "2015", month: str 
     
     # Load crop UDF
     udf = fused.load('https://github.com/fusedio/udfs/tree/ba8aeee/public/CDLs_Tile_Example/')
-    arr_crop = fused.run(udf, engine='local', colored=False, bbox=geom_bbox, year= year, crop_type=crop_type)
+    arr_crop = fused.run(udf, engine='local', colored=False, bounds=geom_bbox, year= year, crop_type=crop_type)
     sif_resized = resize(img, (arr_crop.shape[0],arr_crop.shape[1]), anti_aliasing=True, preserve_range=True).astype('uint8')
 
     # Sif for entire county prior to corn mask

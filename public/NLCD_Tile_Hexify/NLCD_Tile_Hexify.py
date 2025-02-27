@@ -1,21 +1,21 @@
 @fused.udf
-def udf(bbox: fused.types.Tile, year:int=1985, land_type:str='', chip_len:int=256):
+def udf(bounds: fused.types.Tile, year:int=1985, land_type:str='', chip_len:int=256):
     import numpy as np        
     import pandas as pd
     from utils import get_data, arr_to_h3, nlcd_category_dict, rgb_to_hex
     
     #initial parameters
-    x, y, z = bbox.iloc[0][["x", "y", "z"]]
+    x, y, z = bounds.iloc[0][["x", "y", "z"]]
     res_offset = 1  # lower makes the hex finer
-    res = max(min(int(3 + bbox.z[0] / 1.5), 12) - res_offset, 2)
+    res = max(min(int(3 + bounds.z[0] / 1.5), 12) - res_offset, 2)
     print(res)
     
     # read tiff file
-    arr_int, color_map = get_data(bbox, year, land_type, chip_len)
+    arr_int, color_map = get_data(bounds, year, land_type, chip_len)
 
     # hexify tiff array
     
-    df = arr_to_h3(arr_int, bbox.total_bounds, res=res, ordered=False)
+    df = arr_to_h3(arr_int, bounds.total_bounds, res=res, ordered=False)
 
     # find most frequet land_type
     df['most_freq'] = df.agg_data.map(lambda x: np.unique(x, return_counts=True)[0][np.argmax(np.unique(x, return_counts=True)[1])])

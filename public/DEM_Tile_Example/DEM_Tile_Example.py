@@ -1,5 +1,5 @@
 def udf(
-    bbox: fused.types.Tile = None,
+    bounds: fused.types.Tile = None,
     provider: str = "AWS"
 ):
     import odc.stac
@@ -9,7 +9,7 @@ def udf(
     from pystac.extensions.eo import EOExtension as eo
     import utils
 
-    print(f'{type(bbox) = }')
+    print(f'{type(bounds) = }')
     
     collection = "cop-dem-glo-30"
 
@@ -30,7 +30,7 @@ def udf(
     
     items = catalog.search(
         collections=[collection],
-        bbox=bbox.total_bounds,
+        bbox=bounds.total_bounds,
     ).item_collection()
     print(f"Returned {len(items)} Items")
 
@@ -44,7 +44,7 @@ def udf(
         crs="EPSG:3857",
         bands=["data"],
         resolution=resolution,
-        bbox=bbox.total_bounds,
+        bbox=bounds.total_bounds,
     ).astype(float)
     
     # Use data from the most recent time.

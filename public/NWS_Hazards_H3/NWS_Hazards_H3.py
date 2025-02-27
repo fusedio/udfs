@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.Tile = None, crs="EPSG:4326", res=7):
+def udf(bounds: fused.types.Tile = None, crs="EPSG:4326", res=7):
     import fused
     import pandas as pd
     import geopandas as gpd
@@ -8,8 +8,8 @@ def udf(bbox: fused.types.Tile = None, crs="EPSG:4326", res=7):
     from utils import fetch_all_features, add_rgb_cmap, CMAP
 
 
-    # Generate ESRI-friendly envelope bbox
-    total_bounds = bbox.geometry.total_bounds
+    # Generate ESRI-friendly envelope bounds
+    total_bounds = bounds.geometry.total_bounds
     envelope = f'{total_bounds[0]},{total_bounds[1]},{total_bounds[2]},{total_bounds[3]}'
     
     # URL for querying the Watch/Warning/Advisory (WWA) FeatureServer
@@ -17,7 +17,7 @@ def udf(bbox: fused.types.Tile = None, crs="EPSG:4326", res=7):
 
    # Define the parameters for the query
     params = {
-        "geometryType": "esriGeometryEnvelope",  # Type of geometry to use in the spatial query (for bbox)
+        "geometryType": "esriGeometryEnvelope",  # Type of geometry to use in the spatial query (for bounds)
         "geometry": envelope,                    # The bounding box geometry for the query
         "inSR": "4326",                          # The spatial reference of the input geometry
         "spatialRel": "esriSpatialRelIntersects",# Spatial relationship rule for the query

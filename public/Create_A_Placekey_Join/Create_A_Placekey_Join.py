@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.Tile,
+def udf(bounds: fused.types.Tile,
         dataset1: str = 'dataset name here',
         dataset2: str = 'dataset name here',
         preview: bool=False):
@@ -10,8 +10,8 @@ def udf(bbox: fused.types.Tile,
     import shapely
 
     #get two placekey'd datasets; choose these based on what's available on the module tab
-    df1 = get_placekeyd_dataset(bbox, dataset1)
-    df2 = get_placekeyd_dataset(bbox, dataset2)
+    df1 = get_placekeyd_dataset(bounds, dataset1)
+    df2 = get_placekeyd_dataset(bounds, dataset2)
 
     #join the datasets on placekey
     return placekey_merge(df1, df2)

@@ -1,7 +1,7 @@
 # Note: Place your GEE credentials json in the `key_path` and set your `acct_serv`
 
 @fused.udf
-def udf(bbox: fused.types.Tile=None, acct_serv: str = "wgewneondataexplorer-7cd53ea0f@eminent-tesla-172116.iam.gserviceaccount.com"):
+def udf(bounds: fused.types.Tile=None, acct_serv: str = "wgewneondataexplorer-7cd53ea0f@eminent-tesla-172116.iam.gserviceaccount.com"):
     import ee
     import xarray
     import numpy as np
@@ -14,8 +14,8 @@ def udf(bbox: fused.types.Tile=None, acct_serv: str = "wgewneondataexplorer-7cd5
     ee.Initialize(opt_url="https://earthengine-highvolume.googleapis.com", credentials=credentials)
   
     # Create collection
-    geom = ee.Geometry.Rectangle(*bbox.total_bounds)
-    scale = 1 / 2 ** max(0, bbox.z[0])
+    geom = ee.Geometry.Rectangle(*bounds.total_bounds)
+    scale = 1 / 2 ** max(0, bounds.z[0])
     
     def mask_img(img):
         msk = img.select(['R', 'G', 'B']).gt(0)

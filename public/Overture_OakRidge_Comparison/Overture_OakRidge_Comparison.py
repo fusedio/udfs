@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox: fused.types.Tile = None,
+    bounds: fused.types.Tile = None,
     class_source: str = 'combined', 
     building_source: str = 'Overture'
 ):
@@ -21,11 +21,11 @@ def udf(
         metric = 'combined_source'
 
     # 1. Load Overture Buildings
-    gdf_overture = overture_utils.get_overture(bbox=bbox)
+    gdf_overture = overture_utils.get_overture(bounds=bounds)
 
     # 2. Load Oak Ridge Buildings
     gdf_oakridge = utils.table_to_tile(
-        bbox,
+        bounds,
         table="s3://fused-asset/infra/building_oak/",
         use_columns=None,
         min_zoom=11,

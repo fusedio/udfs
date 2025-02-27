@@ -1,6 +1,6 @@
 @fused.udf 
 def udf(
-    bbox: fused.types.Tile = None,
+    bounds: fused.types.Tile = None,
     release: str = "2025-01-22-0",
     theme: str = None,
     overture_type: str = None, 
@@ -13,7 +13,7 @@ def udf(
     from utils import get_overture
     
     gdf = get_overture(
-        bbox=bbox,
+        bounds=bounds,
         release=release,
         theme=theme,
         overture_type=overture_type,

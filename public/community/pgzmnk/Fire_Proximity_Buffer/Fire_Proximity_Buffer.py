@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox: fused.types.Tile=None,
+    bounds: fused.types.Tile=None,
     date_start: int = 2,
 ):
 

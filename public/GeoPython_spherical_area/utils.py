@@ -1,6 +1,6 @@
 @fused.cache
 def get_overture(
-    bbox: fused.types.TileGDF = None,
+    bounds: fused.types.TileGDF = None,
     release: str = "2024-10-23-0",
     theme: str = None,
     overture_type: str = None,
@@ -105,7 +105,7 @@ def get_overture(
         part_path = f"{table_path}/part={part}/" if num_parts != 1 else table_path
         try:
             return utils.table_to_tile(
-                bbox, table=part_path, use_columns=use_columns, min_zoom=min_zoom
+                bounds, table=part_path, use_columns=use_columns, min_zoom=min_zoom
             )
         except ValueError:
             return None

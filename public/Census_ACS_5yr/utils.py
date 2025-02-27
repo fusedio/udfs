@@ -1,7 +1,7 @@
 import fused
 
 @fused.cache 
-def acs_5yr_bbox(
+def acs_5yr_bounds(
     bounds,
     census_variable='population',
     suffix='simplify_01',
@@ -18,7 +18,7 @@ def acs_5yr_bbox(
     # Load pinned versions of utility functions.
     utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
 
-    bbox = gpd.GeoDataFrame(geometry=[shapely.box(*bounds)], crs=4326)
+    bounds = gpd.GeoDataFrame(geometry=[shapely.box(*bounds)], crs=4326)
     utils.import_env()
     tid = search_title(census_variable)  
     df = acs_5yr_table(tid, year=year)
@@ -31,7 +31,7 @@ def acs_5yr_bbox(
         table_path += f'_{suffix}'
     print(table_path)
     gdf = utils.table_to_tile(
-        bbox,
+        bounds,
         table_path,
         use_columns=['GEOID','geometry'],
         min_zoom=12
@@ -40,7 +40,7 @@ def acs_5yr_bbox(
         gdf2 = gdf.merge(df)
         return gdf2
     else:
-        print('No geometry is intersecting with the given bbox.')
+        print('No geometry is intersecting with the given bounds.')
         return gpd.GeoDataFrame({})
 
 
