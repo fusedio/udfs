@@ -53,7 +53,7 @@ def clip_arr(arr, bounds_aoi, bounds_total=(-180, -90, 180, 90)):
         print('Normalized longitude for bounds_aoi to (0,360) to match bounds_total')
         bounds_aoi = ((bounds_aoi[0]+360)%360, bounds_aoi[1], 
                       (bounds_aoi[2]+360)%360, bounds_aoi[3])
-    x_slice, y_slice = bbox_to_xy_slice(bounds_aoi, arr.shape, transform)
+    x_slice, y_slice = bounds_to_xy_slice(bounds_aoi, arr.shape, transform)
     arr_aoi = arr[y_slice, x_slice]  
     if bounds_total[1]>bounds_total[3]:
         if len(arr_aoi.shape)==3:
@@ -62,7 +62,7 @@ def clip_arr(arr, bounds_aoi, bounds_total=(-180, -90, 180, 90)):
             arr_aoi = arr_aoi[::-1]
     return  arr_aoi
 
-def bbox_to_xy_slice(bounds, shape, transform):
+def bounds_to_xy_slice(bounds, shape, transform):
     import rasterio
     from affine import Affine
 

@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox: fused.types.Tile,
+    bounds: fused.types.Tile,
     provider="AWS",
     time_of_interest="2023-11-01/2023-12-30"
 ):  
@@ -32,13 +32,13 @@ def udf(
     
     items = catalog.search(
         collections=["sentinel-2-l2a"],
-        bbox=bbox.total_bounds,
+        bbox=bounds.total_bounds,
         datetime=time_of_interest,
         query={"eo:cloud_cover": {"lt": 10}},
     ).item_collection()
     
     # Capping resolution to min 10m, the native Sentinel 2 pixel size
-    resolution = int(10 * 2 ** max(0, (15 - bbox.z[0])))
+    resolution = int(10 * 2 ** max(0, (15 - bounds.z[0])))
     print(f"{resolution=}")
 
     if len(items) < 1:
@@ -51,7 +51,7 @@ def udf(
                 crs="EPSG:3857",
                 bands=[nir_band, red_band],
                 resolution=resolution,
-                bbox=bbox.total_bounds,
+                bbox=bounds.total_bounds,
             ).astype(float)
 
         ndvi = (ds[nir_band] - ds[red_band]) / (ds[nir_band] + ds[red_band])

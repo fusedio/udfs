@@ -1,5 +1,5 @@
 def udf(
-    bbox: fused.types.Tile,
+    bounds: fused.types.Tile,
     provider="AWS",
     channels=["B11", "veg", "snow"],
     time_of_interest="2023-05-01/2023-09-13",
@@ -80,7 +80,7 @@ def udf(
 
     items = catalog.search(
         collections=["sentinel-2-l2a"],
-        bbox=bbox.total_bounds,
+        bbox=bounds.total_bounds,
         datetime=time_of_interest,
         query={"eo:cloud_cover": {"lt": cloud_cover_perc}},
     ).item_collection()
@@ -91,14 +91,14 @@ def udf(
             "no satellite imagery available for the current viewport and time period. Please explore other regions or timeframes."
         )
     print(f"Returned {len(items)} Items")
-    resolution = int(5 * 2 ** (15 - bbox.z[0]))
+    resolution = int(5 * 2 ** (15 - bounds.z[0]))
     # print(f'{resolution=}')
     ds = odc.stac.load(
         items,
         crs="EPSG:3857",
         bands=s2_bands,
         resolution=resolution,
-        bbox=bbox.total_bounds,
+        bbox=bounds.total_bounds,
     ).astype(float)
     print(str(time_of_interest))
 

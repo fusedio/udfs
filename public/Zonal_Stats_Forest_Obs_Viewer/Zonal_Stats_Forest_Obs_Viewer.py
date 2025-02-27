@@ -1,14 +1,14 @@
 @fused.udf
-def udf(bbox: fused.types.Tile=None):
+def udf(bounds: fused.types.Tile=None):
     import pandas as pd
     import geopandas as gpd
 
     zonal_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/community/plinio/Zonal_Stats_Forest_Obs/").utils
 
-    # 1. Determine which Zonal Stats grid cells fall within the `bbox`
+    # 1. Determine which Zonal Stats grid cells fall within the `bounds`
     s3_file_path = f"s3://fused-asset/data/zonal_stats_example/assets_with_bounds_4_4.parquet"
     gdf_bounds = zonal_utils.get_asset_dissolve(s3_file_path)
-    gdf = gdf_bounds.sjoin(bbox)
+    gdf = gdf_bounds.sjoin(bounds)
     target_cells = list(set(gdf.ind.values))
 
     # 2. Create GeoDataFrame for every target grid cell
@@ -35,6 +35,6 @@ def udf(bbox: fused.types.Tile=None):
 
     # 5. Re-joined municipalities need their mean re-calculated
     gdf['stats_mean'] = gdf['stats_sum'] / gdf['stats_count']
-    return gdf.clip(bbox)
+    return gdf.clip(bounds)
   
 

@@ -1,15 +1,15 @@
 @fused.cache
-def run_pool_tiffs(bbox, df_tiffs, output_shape):
+def run_pool_tiffs(bounds, df_tiffs, output_shape):
     import numpy as np
 
     columns = df_tiffs.columns
 
     @fused.cache
-    def fn_read_tiff(tiff_url, bbox=bbox, output_shape=output_shape):
+    def fn_read_tiff(tiff_url, bounds=bounds, output_shape=output_shape):
         read_tiff = fused.load(
             "https://github.com/fusedio/udfs/tree/eda5aec/public/common/"
         ).utils.read_tiff
-        return read_tiff(bbox, tiff_url, output_shape=output_shape)
+        return read_tiff(bounds, tiff_url, output_shape=output_shape)
 
     tiff_list = []
     for band in columns:
@@ -26,7 +26,7 @@ def run_pool_tiffs(bbox, df_tiffs, output_shape):
 
 
 def search_pc_catalog(
-    bbox,
+    bounds,
     time_of_interest,
     query={"eo:cloud_cover": {"lt": 5}},
     collection="sentinel-2-l2a",
@@ -43,7 +43,7 @@ def search_pc_catalog(
     # Search catalog
     items = catalog.search(
         collections=[collection],
-        bbox=bbox.total_bounds,
+        bbox=bounds.total_bounds,
         datetime=time_of_interest,
         query=query,
     ).item_collection()

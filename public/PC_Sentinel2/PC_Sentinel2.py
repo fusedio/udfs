@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox: fused.types.Tile = None,
+    bounds: fused.types.Tile = None,
     time_of_interest="2020-09-01/2021-10-30",
     collection="sentinel-2-l2a",
 ):
@@ -18,7 +18,7 @@ def udf(
     odc.stac.configure_s3_access(requester_pays=True)
 
     @fused.cache
-    def load_data(bbox, time_of_interest):
+    def load_data(bounds, time_of_interest):
         # Instantiate PC client
         catalog = pystac_client.Client.open(
             "https://planetarycomputer.microsoft.com/api/stac/v1",
@@ -27,7 +27,7 @@ def udf(
         # Search catalog
         items = catalog.search(
             collections=[collection],
-            bbox=bbox.total_bounds,
+            bbox=bounds.total_bounds,
             datetime=time_of_interest,
             query={"eo:cloud_cover": {"lt": 10}},
         ).item_collection()
@@ -40,12 +40,12 @@ def udf(
         data = odc.stac.stac_load(
             [selected_item],
             bands=bands_of_interest,
-            bbox=bbox.total_bounds,
+            bbox=bounds.total_bounds,
         ).isel(time=0)
         return data
 
     # Run cached function
-    data = load_data(bbox, time_of_interest)
+    data = load_data(bounds, time_of_interest)
 
     # Normalize each band between 0 and 256
     vmin_red, vmax_red = 0, 6644.0
