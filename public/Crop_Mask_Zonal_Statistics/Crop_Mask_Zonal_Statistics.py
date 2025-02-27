@@ -58,7 +58,7 @@ def udf(crop_type ="corn", geoid: str = '19119', year: str = "2015", month: str 
     utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
 
     # Get box around the geometry
-    geom_bbox = utils.common.geo_bbox(gdf)
+    geom_bbox = utils.geo_bbox(gdf)
     
     # Dynamically construct the path based on the year and month
     path = f's3://soldatanasasifglobalifoco2modis1863/Global_SIF_OCO2_MODIS_1863/data/sif_ann_{year}{month}{period}.nc'
