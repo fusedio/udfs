@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox: fused.types.TileGDF = None,
+    bbox: fused.types.Tile = None,
     h3_size: int = 7,
 ):
     import geopandas as gpd

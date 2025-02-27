@@ -33,7 +33,7 @@ def create_h3_buffer_scored(gdf, buffers, remove_inner=False, h3_res=12):
     return gdf3
     
 @fused.cache
-def get_strahler_gdf(bbox):
+def get_strahler_gdf(bounds):
     import ee
     import xarray
     import numpy as np
@@ -49,14 +49,14 @@ def get_strahler_gdf(bbox):
 
     # Set your own creds
     utils.ee_initialize(service_account_name='fused-nyt-gee@fused-nyt.iam.gserviceaccount.com',key_path="/mnt/cache/gee_creds/fusedbenchmark-513a57ac463f.json")
-    geom = ee.Geometry.Rectangle(*bbox.total_bounds)
+    geom = ee.Geometry.Rectangle(*bounds.total_bounds)
     ic = ee.ImageCollection("projects/sat-io/open-datasets/HYDROGRAPHY90/stream-order/order_strahler")
     
     ds = xarray.open_dataset(
         ic,
         engine='ee',
         geometry=geom,
-        scale=1/2**max(0,bbox.z[0]) 
+        scale=1/2**max(0,bounds.z[0]) 
     )
     ds=ds.max(dim='time') 
 
@@ -84,7 +84,7 @@ def get_strahler_gdf(bbox):
 
     # Calculate the affine transformation matrix for the bounding box.
     height, width = xr_data.shape
-    transform = rasterio.transform.from_bounds(*bbox.total_bounds, width, height)
+    transform = rasterio.transform.from_bounds(*bounds.total_bounds, width, height)
 
     @fused.cache
     def create_strahler_vector(arr):

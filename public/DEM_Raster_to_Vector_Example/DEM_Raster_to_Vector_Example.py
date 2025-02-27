@@ -10,16 +10,16 @@ def udf(
     min_elevation: float = 3962  # 3962 ~= 13000ft
 ):
     """Return polygons for Colorado areas over 13,000ft of elevation."""
-    bbox = gpd.GeoDataFrame(
+    bounds = gpd.GeoDataFrame(
         geometry=[shapely.box(-109.046667, 37.0, -102.046667, 41.0)],
         crs=4326
     )
     
-    xr_data = utils.get_dem(bbox)
+    xr_data = utils.get_dem(bounds)
 
     # Calculate the affine transformation matrix for the bounding box.
     height, width = xr_data.shape
-    transform = rasterio.transform.from_bounds(*bbox.total_bounds, width, height)
+    transform = rasterio.transform.from_bounds(*bounds.total_bounds, width, height)
 
     # Create a binary image showing where the elevation threshold is exceeded.
     xr_data2 = (xr_data > min_elevation)

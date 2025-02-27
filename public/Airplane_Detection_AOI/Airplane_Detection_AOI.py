@@ -22,13 +22,13 @@ def udf(target_gdf: gpd.GeoDataFrame = j, zoom:int=17):
     list_of_tile_gdfs = [gpd.GeoDataFrame(row.to_frame().T) for _, row in gdf_tiles.iterrows()]
     print('Total tiles: ', len(list_of_tile_gdfs))
     if len(list_of_tile_gdfs)>400:
-        print('Too many ',len(list_of_tile_gdfs), 'tiles, too large a bbox, shrink it until there are less than 400 tiles.')
+        print('Too many ',len(list_of_tile_gdfs), 'tiles, too large a bounds, shrink it until there are less than 400 tiles.')
         return gpd.GeoDataFrame({'a':[1]})
     
     # Function to run UDF 
     @fused.cache
-    def run_udf(bbox):
-        out = fused.run("UDF_DL4EO_Airplane_Detection", bbox=bbox)
+    def run_udf(bounds):
+        out = fused.run("UDF_DL4EO_Airplane_Detection", bounds=bounds)
         if len(out)>0:
             return out
 

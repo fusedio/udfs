@@ -6,7 +6,7 @@ def placekey_df_validate(df):
             raise ValueError("Dataset doesn't have " + column + ".")
 
 @fused.cache
-def get_placekeyd_dataset(bbox, name: str):
+def get_placekeyd_dataset(bounds, name: str):
     utils = fused.load('https://github.com/fusedio/udfs/tree/19b5240/public/common/').utils
     # pick one of these datasets!!
     datasets = set(['dc-healthy-corner-stores','home-health-agency-medicare-enrollments', 'home-infusion-therapy-provider-medicare-enrollments', 'hospice-medicare-enrollments', 'hospital-medicare-enrollments', 'national-downloadable-files-from-the-doctors-and-clinicians-data-section', 'skilled-nursing-facility-medicare-enrollments', 'rural-health-clinic-medicare-enrollments',
@@ -14,7 +14,7 @@ def get_placekeyd_dataset(bbox, name: str):
     if name in datasets:
         path = 's3://placekey-free-datasets/'+name+'/fused/_sample'
         base_path = path.rsplit('/', maxsplit=1)[0] if path.endswith('/_sample') or path.endswith('/_metadata') else path
-        return utils.table_to_tile(bbox, table=base_path, use_columns=None)
+        return utils.table_to_tile(bounds, table=base_path, use_columns=None)
     else:
         raise ValueError(name + " is either not available through Placekey or is not onboarded onto fused.io. Contact Placekey if you would like it to be! https://www.placekey.io/contact-sales")    
 

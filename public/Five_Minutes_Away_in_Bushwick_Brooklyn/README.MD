@@ -14,7 +14,7 @@ This UDF uses three other Fused UDFs:
 
 The UDF retrieves points of interest (POIs), generates isochrones for these points using the fused.utils.common.run_pool function, and converts the resulting isochrones into H3 cells using the get_cells function. This process results in two outputs: a list of `poi_names` and a corresponding `poi_density`. Both `poi_density` and `poi_names` vary depending on the H3 resolution used.
 
-The function `get_fsq_isochrones_gdf` acts as a File UDF within a Tile UDF. A hardcoded `bbox` for the area surrounding Bushwick is used to generate the points. Isochrone H3 cells are overlaid with boundaries from Bushwick, sourced from NYC Open Data, to visualize the neighborhood.
+The function `get_fsq_isochrones_gdf` acts as a File UDF within a Tile UDF. A hardcoded `bounds` for the area surrounding Bushwick is used to generate the points. Isochrone H3 cells are overlaid with boundaries from Bushwick, sourced from NYC Open Data, to visualize the neighborhood.
 
 To flatten the map, set `extruded` to `false` in the visualize tab. Darker buildings indicate a higher `poi_density`.
 

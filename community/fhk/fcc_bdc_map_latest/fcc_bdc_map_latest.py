@@ -29,7 +29,7 @@ Each step is broken out as a seperate notebook:
 """
 @fused.udf
 def udf(
-    bbox: fused.types.TileGDF = None,
+    bbox: fused.types.Tile = None,
     use_columns: list = None,
     providers=None, # e.g. ['AT&T'] Filter the data to show only these, a list of strings as shown in the data
     unserved="[25,3]", # The [download speed, upload speed]

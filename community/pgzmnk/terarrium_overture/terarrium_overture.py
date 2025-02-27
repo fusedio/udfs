@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF, preview: bool = False):
+def udf(bbox: fused.types.Tile, preview: bool = False):
     import imageio.v3 as iio
     import s3fs
 

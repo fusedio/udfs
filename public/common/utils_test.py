@@ -4,7 +4,7 @@ import shapely
 import utils
 
 # Sample bounding box for the San Francisco area (x/y/z = 18/49/7)
-bbox_sf_area = gpd.GeoDataFrame(
+bounds_sf_area = gpd.GeoDataFrame(
         {'geometry': [shapely.geometry.box(minx=-135.0, miny=31.952162, maxx=-123.75, maxy=40.979898)]},
         crs="EPSG:4326"
     )

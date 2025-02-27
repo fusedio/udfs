@@ -1,5 +1,5 @@
-def rio_transform_bbox(raster_url, geo_extend, do_tranform=True, overview_level=None):
-    """This function takes the image and the extend polygon and returns the transformed image and the bbox"""
+def rio_transform_bounds(raster_url, geo_extend, do_tranform=True, overview_level=None):
+    """This function takes the image and the extend polygon and returns the transformed image and the bounds"""
     import numpy as np
     import rasterio
     import rasterio.warp
@@ -13,7 +13,7 @@ def rio_transform_bbox(raster_url, geo_extend, do_tranform=True, overview_level=
         if not do_tranform:
             return arr, geo_extend.bounds
 
-        # Transform using affine based on geo_extend to bbox_bounds
+        # Transform using affine based on geo_extend to bounds_bounds
         crs = 32618
         dst_shape = src.height, src.width
         destination_data = np.zeros(dst_shape, src.dtypes[0])
@@ -42,7 +42,7 @@ def rio_transform_bbox(raster_url, geo_extend, do_tranform=True, overview_level=
         ]
         # Create a transformation from GCPs
         transform_gcps = rasterio.transform.from_gcps(gcps)
-        # Create a transformation from destination bbox (bounds of orig geom)
+        # Create a transformation from destination bounds (bounds of orig geom)
         minx, miny, maxx, maxy = geo_extend.bounds
         # minx, miny, maxx, maxy = rasterio.warp.transform_bounds(crs, 4326, *geo_extend.bounds)
         dy = (maxx - minx) / src.height
@@ -58,7 +58,7 @@ def rio_transform_bbox(raster_url, geo_extend, do_tranform=True, overview_level=
                 arr.squeeze()[::-1, ::-1],
                 destination_data,
                 src_transform=transform_gcps,  # from georefernce points
-                dst_transform=transform,  # to transform of the dest bbox which is the bounds of the geom
+                dst_transform=transform,  # to transform of the dest bounds which is the bounds of the geom
                 src_crs=crs,
                 dst_crs=crs,  # Assuming the same CRS
                 resampling=rasterio.enums.Resampling.nearest,  # Adjust as needed

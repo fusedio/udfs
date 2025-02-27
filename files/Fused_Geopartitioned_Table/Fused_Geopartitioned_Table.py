@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF, path: str, preview: bool):
+def udf(bbox: fused.types.Tile, path: str, preview: bool):
     use_columns = ["geometry"] if preview else None
     utils = fused.load(
         "https://github.com/fusedio/udfs/tree/19b5240/public/common/"

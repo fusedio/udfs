@@ -20,7 +20,7 @@ def pixel2deg(xtile, ytile, zoom, xpixel, ypixel, extent = 4096):
 
 
 @fused.udf
-def udf(bbox: fused.types.TileGDF=None, token='{insert-mapbox-token}'):
+def udf(bbox: fused.types.Tile=None, token='{insert-mapbox-token}'):
     import geopandas as gpd
     import shapely
     import requests, mapbox_vector_tile, json

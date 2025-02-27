@@ -75,8 +75,8 @@ def center_of_bounds(bb):
     return 0.5*(bb[2] + bb[0]), 0.5*(bb[3] + bb[1])
 
 def reproject_raster(arr,bounds, crs_in = 4326, crs_out = 3857):
-    bbox_src = bounds_to_gdf(bounds, crs = crs_in)
-    bbox_dest = bounds_to_gdf(bounds, crs = crs_out)
+    bounds_src = bounds_to_gdf(bounds, crs = crs_in)
+    bounds_dest = bounds_to_gdf(bounds, crs = crs_out)
     with rasterio.Env():
         ul = (bounds[0], bounds[3])  # in lon, lat / x, y order
         ll = (bounds[0], bounds[1])
@@ -96,7 +96,7 @@ def reproject_raster(arr,bounds, crs_in = 4326, crs_out = 3857):
         source = np.squeeze(arr)
 
         dst_crs = crs_out #{'init': 'EPSG:3857'}
-        dst_transform, width, height = rasterio.warp.calculate_default_transform(crs_in, crs_out, cols, rows, *bbox_dest.total_bounds)
+        dst_transform, width, height = rasterio.warp.calculate_default_transform(crs_in, crs_out, cols, rows, *bounds_dest.total_bounds)
         if depth ==1:
             dst_shape =  height, width
         else:
@@ -124,7 +124,7 @@ def divide_and_conquer(bb, udf_fn, zm = 12, as_list=False):
 
     tile_list = list(gdf_tiles['bounds'].values)
     if len(tile_list)>300:
-        print('there are ',len(tile_list), 'tiles, too large a bbox, shrink it until there are less than 300 tiles')
+        print('there are ',len(tile_list), 'tiles, too large a bounds, shrink it until there are less than 300 tiles')
     pair_list = run_async(udf_fn, tile_list, delay=0., max_workers=300)
     print('got pair list')
     pair_list_mercator = [(reproject_raster(img,bounds, crs_in = 4326, crs_out = 3857),bounds) for img,bounds in pair_list]

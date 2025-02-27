@@ -1,12 +1,12 @@
 @fused.udf
-def udf(bbox: fused.types.Tile):
+def udf(bounds: fused.types.Tile):
     # adding custom path for spherely (not yet installed by default)
     import sys;
     sys.path.append(f"/mnt/cache/envs/geopython/lib/python3.11/site-packages")
 
-    # loading the Overture building polygons for the current bbox
+    # loading the Overture building polygons for the current bounds
     from utils import get_overture
-    gdf = get_overture(bbox, theme="buildings", use_columns=["geometry"])
+    gdf = get_overture(bounds, theme="buildings", use_columns=["geometry"])
     gdf = gdf[["geometry"]]
 
     # constructing spherely Geography objects through WKB

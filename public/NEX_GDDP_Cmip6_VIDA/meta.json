@@ -130,7 +130,7 @@
                 "label": "climate"
               }
             ],
-            "fused:description": "# Vida NEX-GDDP-based climate model\n\nThis UDF operates on a given bounding box ('bbox') to select and show the output from\nVida's processed NEX-GDDP-based ensemble climate data for the year 2080 by default.\n",
+            "fused:description": "# Vida NEX-GDDP-based climate model\n\nThis UDF operates on a given bounding box ('bounds') to select and show the output from\nVida's processed NEX-GDDP-based ensemble climate data for the year 2080 by default.\n",
             "fused:gitUrl": "https://github.com/fusedio/udfs/tree/f96ca22af9eceb56ee6518b0c6adafe0dddd0111/public/NEX_GDDP_Cmip6_VIDA/",
             "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/f96ca22/public/NEX_GDDP_Cmip6_VIDA/",
             "fused:gitPath": "public/NEX_GDDP_Cmip6_VIDA",
