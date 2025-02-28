@@ -58,24 +58,27 @@
             "fused:udfType": "vector_single",
             "fused:slug": "GOES_Globe_Animation",
             "fused:name": "GOES_Globe_Animation",
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/e0253d7ac2facb6592bec98813fc86f5553b0e8b/public/GOES_Globe_Animation/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/e0253d7/public/GOES_Globe_Animation/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/515f6f6cdda4d63b1ea128a65f4dbd034c6e26df/public/GOES_Globe_Animation/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/515f6f6/public/GOES_Globe_Animation/",
             "fused:gitPath": "public/GOES_Globe_Animation",
-            "fused:gitRef": "e0253d7ac2facb6592bec98813fc86f5553b0e8b",
-            "fused:description": "# Overview\n\nDaily Timelapse of GEOS Satellite\n\n# External links\n\n- [Source](https://noaa-goes18.s3.amazonaws.com/index.html#ABI-L1b-RadC/2024/001/00/)\n\n",
+            "fused:gitRef": "515f6f6cdda4d63b1ea128a65f4dbd034c6e26df",
             "fused:gitAuthorNames": [
-              "Sina Kashuk"
+              "Sina Kashuk",
+              null
             ],
             "fused:gitAuthorUsernames": [
-              "kashuk"
+              "kashuk",
+              "fused-io-staging[bot]"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/kashuk"
+              "https://github.com/kashuk",
+              "https://github.com/apps/fused-io-staging"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/12432685?v=4"
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/in/885821?v=4"
             ],
-            "fused:gitLastModified": "2024-11-12T16:01:14+00:00",
+            "fused:gitLastModified": "2024-11-12T16:14:05+00:00",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitHistory": [
               {
@@ -151,6 +154,7 @@
             "fused:gitPullRequestBranch": "sina@fused.io-patch-add-GOES_globe",
             "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/334",
             "fused:explorerTab": "public",
+            "fused:id": null,
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/GOES_Globe_Animation.png",
             "fused:tags": [
               {
@@ -167,11 +171,10 @@
               },
               {
                 "id": "goes",
-                "label": "goes",
-                "isCreatable": true
+                "label": "goes"
               }
             ],
-            "fused:id": null
+            "fused:description": "# Overview\n\nDaily Timelapse of GEOS Satellite\n\n# External links\n\n- [Source](https://noaa-goes18.s3.amazonaws.com/index.html#ABI-L1b-RadC/2024/001/00/)\n\n"
           },
           "source": "GOES_Globe_Animation.py",
           "headers": [
