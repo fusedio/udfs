@@ -1167,7 +1167,20 @@ def geo_convert(
         )
 
 
-
+def extract_xyz_bounds(bounds, estimate_xy=False):
+    """Extract x, y, z coordinates and bounds from input."""
+    gdf = geo_convert(bounds if bounds is not None else [-122.549, 37.681, -122.341, 37.818])
+    
+    # Extract x, y, z values if available
+    if 'x' in gdf.columns and 'y' in gdf.columns and 'z' in gdf.columns:
+        x = gdf.iloc[0].x
+        y = gdf.iloc[0].y
+        z = gdf.iloc[0].z
+    else:
+        x = y = None
+        z = estimate_zoom(list(gdf.total_bounds))
+    
+    return x, y, z, gdf.total_bounds
 
 def geo_buffer(
     data,
