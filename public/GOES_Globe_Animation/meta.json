@@ -58,10 +58,10 @@
             "fused:udfType": "vector_single",
             "fused:slug": "GOES_Globe_Animation",
             "fused:name": "GOES_Globe_Animation",
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/515f6f6cdda4d63b1ea128a65f4dbd034c6e26df/public/GOES_Globe_Animation/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/515f6f6/public/GOES_Globe_Animation/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/b3e28107f15bd279c9e863afdb24edb19deac776/public/GOES_Globe_Animation/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/b3e2810/public/GOES_Globe_Animation/",
             "fused:gitPath": "public/GOES_Globe_Animation",
-            "fused:gitRef": "515f6f6cdda4d63b1ea128a65f4dbd034c6e26df",
+            "fused:gitRef": "b3e28107f15bd279c9e863afdb24edb19deac776",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               null
@@ -78,7 +78,7 @@
               "https://avatars.githubusercontent.com/u/12432685?v=4",
               "https://avatars.githubusercontent.com/in/885821?v=4"
             ],
-            "fused:gitLastModified": "2024-11-12T16:14:05+00:00",
+            "fused:gitLastModified": "2025-02-28T14:19:58.829Z",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitHistory": [
               {
@@ -151,8 +151,8 @@
                 "fused:gitRepo": "fusedlabs/fusedudfs"
               }
             ],
-            "fused:gitPullRequestBranch": "sina@fused.io-patch-add-GOES_globe",
-            "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/334",
+            "fused:gitPullRequestBranch": "sina-patch-0d0b98-move-GOESGlobeAnimation-under-co",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/677",
             "fused:explorerTab": "public",
             "fused:id": null,
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/GOES_Globe_Animation.png",
