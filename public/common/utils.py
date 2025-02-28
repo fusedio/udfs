@@ -1063,6 +1063,11 @@ def geo_convert(
     import geopandas as gpd
     import pandas as pd
     import shapely
+
+    if data is None:
+        whole_earth = shapely.geometry.box(-180, -90, 180, 90)
+        gdf = gpd.GeoDataFrame(geometry=[whole_earth], crs=crs if crs else 4326)
+        return gdf
     
     # Handle fused.types.Bounds (list of 4 coordinates)
     if isinstance(data, list) and len(data) == 4 and all(isinstance(x, (int, float)) for x in data):
