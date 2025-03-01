@@ -2506,7 +2506,7 @@ def scipy_voronoi(gdf):
 
 
 
-def estimate_zoom(bounds, target_tiles=1):
+def estimate_zoom(bounds, target_num_tiles=1):
     """
     Estimate the zoom level for a given bounding box.
 
@@ -2516,7 +2516,7 @@ def estimate_zoom(bounds, target_tiles=1):
     Args:
         bounds: A list of 4 coordinates (minx, miny, maxx, maxy), a
                 GeoDataFrame or Shapely geometry, or a mercantile Tile.
-        target_tiles: Target number of tiles to cover the bounds (default=1).
+        target_num_tiles: Target number of tiles to cover the bounds (default=1).
                       If 1, finds the zoom where a single tile covers the bounds.
                       If >1, estimates zoom to achieve approximately this many tiles.
     
@@ -2549,7 +2549,7 @@ def estimate_zoom(bounds, target_tiles=1):
     import math
     
 
-    if target_tiles == 1:
+    if target_num_tiles == 1:
         minx, miny, maxx, maxy = bounds
         centroid = (minx + maxx) / 2, (miny + maxy) / 2
         width = (maxx - minx) - 1e-11
@@ -2571,5 +2571,10 @@ def estimate_zoom(bounds, target_tiles=1):
         delta_x = x_max - x_min + 1
         delta_y = y_max - y_min + 1
 
-        zoom = math.log2(math.sqrt(target_tiles) / max(delta_x, delta_y)) + max_zoom
-        return int(math.floor(zoom)) 
+        zoom = math.log2(math.sqrt(target_num_tiles) / max(delta_x, delta_y)) + max_zoom
+        zoom = int(math.floor(zoom)) 
+        current_num_tiles = len(mercantile_polyfill(bounds, zooms=[zoom], compact=False))
+        if current_num_tiles>=target_num_tiles:
+            return zoom
+        else:
+            return zoom+1
