@@ -1062,25 +1062,41 @@ def geo_convert(
     """Convert input data into a GeoPandas GeoDataFrame."""
     import geopandas as gpd
     import shapely
+    import pandas as pd
+    import mercantile
+    
+    # Handle the bounds case specifically
+    if data is None or (isinstance(data, (list, tuple)) and len(data) == 4):
+        bounds = [-180, -90, 180, 90] if data is None else data
+        bbox = gpd.GeoDataFrame({}, geometry=[shapely.box(*bounds)], crs=crs or 4326)
+        return bbox
+        
+    # Handle xyz tile coordinates
+    if isinstance(data, (list, tuple)) and len(data) == 3:
+        x, y, z = data
+        tile = mercantile.Tile(x, y, z)
+        bbox = mercantile.bounds(tile)
+        gdf = gpd.GeoDataFrame(
+            {"x": [x], "y": [y], "z": [z]},
+            geometry=[shapely.box(bbox.west, bbox.south, bbox.east, bbox.north)],
+            crs=4326
+        )
+        return gdf[['x', 'y', 'z', 'geometry']]
+        
     if cols_lonlat:
         if isinstance(data, pd.Series):
             raise ValueError(
                 "Cannot pass a pandas Series or a geopandas GeoSeries in conjunction "
                 "with cols_lonlat."
             )
-
         gdf = df_to_gdf(data, cols_lonlat, verbose=verbose)
-
         if verbose:
             logger.debug(
                 "cols_lonlat was passed so original CRS was assumed to be EPSG:4326."
             )
-
         if crs:
             gdf = resolve_crs(gdf, crs, verbose=verbose)
-
         return gdf
-
     if isinstance(data, gpd.GeoDataFrame):
         gdf = data
         if crs:
@@ -1098,8 +1114,8 @@ def geo_convert(
     elif type(data) in (pd.DataFrame, pd.Series):
         if type(data) is pd.Series:
             data = pd.DataFrame(data)
-            if col_geom in data.index:
-                data = data.T
+        if col_geom in data.index:
+            data = data.T
         if (col_geom in data.columns) and (not cols_lonlat):
             if type(data[col_geom][0]) == str:
                 gdf = gpd.GeoDataFrame(
@@ -1135,13 +1151,11 @@ def geo_convert(
     ):
         if not crs:
             raise ValueError("Please provide crs. usually crs=4326.")
-
         return gpd.GeoDataFrame(geometry=[data], crs=crs)
     else:
         raise ValueError(
             f"Cannot convert data of type {type(data)} to GeoDataFrame. Please pass a GeoDataFrame, GeoSeries, DataFrame, Series, or shapely geometry."
         )
-
 
 def geo_buffer(
     data,
