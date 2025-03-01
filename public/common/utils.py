@@ -1114,8 +1114,8 @@ def geo_convert(
     elif type(data) in (pd.DataFrame, pd.Series):
         if type(data) is pd.Series:
             data = pd.DataFrame(data)
-        if col_geom in data.index:
-            data = data.T
+            if col_geom in data.index:
+                data = data.T
         if (col_geom in data.columns) and (not cols_lonlat):
             if type(data[col_geom][0]) == str:
                 gdf = gpd.GeoDataFrame(
