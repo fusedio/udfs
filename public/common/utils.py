@@ -2509,6 +2509,9 @@ def scipy_voronoi(gdf):
 def estimate_zoom(bounds, target_tiles=1):
     """
     Estimate the zoom level for a given bounding box.
+
+    This method returns the zoom level at which a tile exists that, potentially
+    shifted slightly, fully covers the bounding box.
     
     Args:
         bounds: A list of 4 coordinates (minx, miny, maxx, maxy), a
@@ -2518,7 +2521,7 @@ def estimate_zoom(bounds, target_tiles=1):
                       If >1, estimates zoom to achieve approximately this many tiles.
     
     Returns:
-        The estimated zoom level (0-24).
+        The estimated zoom level (0-20).
     """
     from fused._optional_deps import (
         GPD_GEODATAFRAME,
@@ -2562,7 +2565,7 @@ def estimate_zoom(bounds, target_tiles=1):
 
     else:
         minx, miny, maxx, maxy = bounds
-        max_zoom = 24
+        max_zoom = 20
         x_min, y_min, _ = mercantile.tile(minx, maxy, max_zoom)
         x_max, y_max, _ = mercantile.tile(maxx, miny, max_zoom)
         delta_x = x_max - x_min + 1
