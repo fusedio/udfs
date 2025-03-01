@@ -1935,13 +1935,16 @@ def mercantile_polyfill(geom, zooms=[15], compact=True, k=None):
     import mercantile
     import shapely
 
-    tile_list = list(mercantile.tiles(*geom.bounds, zooms=zooms))
+    gdf = geo_convert(geom , crs = 4326)
+    geometry = gdf.geometry[0]
+    
+    tile_list = list(mercantile.tiles(*geometry.bounds, zooms=zooms))
     gdf_tiles = gpd.GeoDataFrame(
         tile_list,
         geometry=[shapely.box(*mercantile.bounds(i)) for i in tile_list],
         crs=4326,
     )
-    gdf_tiles_intersecting = gdf_tiles[gdf_tiles.intersects(geom)]
+    gdf_tiles_intersecting = gdf_tiles[gdf_tiles.intersects(geometry)]
     if k:
         temp_list = gdf_tiles_intersecting.apply(
             lambda row: mercantile.Tile(row.x, row.y, row.z), 1
