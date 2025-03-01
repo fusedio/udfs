@@ -2578,3 +2578,44 @@ def estimate_zoom(bounds, target_num_tiles=1):
             return zoom
         else:
             return zoom+1
+
+
+def get_tile(
+    bounds=None, target_num_tiles=1, zoom=None, max_tile_recursion=6, as_gdf=True
+):
+    import mercantile
+
+    if zoom is not None:
+        print("zoom is provided; target_num_tiles will be ignored.")
+        target_num_tiles = None
+
+    if target_num_tiles is not None and target_num_tiles < 1:
+        raise ValueError("target_num_tiles should be more than zero.")
+
+    if target_num_tiles == 1:
+        bbox = common.geo_convert(bounds)
+        tile = mercantile.bounding_tile(*bbox.total_bounds)
+        gdf = common.geo_convert((tile.x, tile.y, tile.z))
+    else:
+        zoom_level = (
+            zoom
+            if zoom is not None
+            else common.estimate_zoom(bounds, target_num_tiles=target_num_tiles)
+        )
+        base_zoom = common.estimate_zoom(bounds, target_num_tiles=1)
+        if zoom_level > (base_zoom + max_tile_recursion + 1):
+            zoom_level = base_zoom + max_tile_recursion + 1
+            if zoom:
+                print(
+                    f"Warning: Maximum number of tiles is reached ({zoom=} > {base_zoom+max_tile_recursion+1=} tiles). Increase {max_tile_recursion=} to allow for deeper tile recursion"
+                )
+            else:
+                print(
+                    f"Warning: Maximum number of tiles is reached ({target_num_tiles} > {4**max_tile_recursion-1} tiles). Increase {max_tile_recursion=} to allow for deeper tile recursion"
+                )
+
+        gdf = common.mercantile_polyfill(bounds, zooms=[zoom_level], compact=False)
+        print(f"Generated {len(gdf)} tiles at zoom level {zoom_level}")
+
+    return gdf if as_gdf else gdf[["x", "y", "z"]].values
+
