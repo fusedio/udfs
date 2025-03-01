@@ -1935,13 +1935,16 @@ def mercantile_polyfill(geom, zooms=[15], compact=True, k=None):
     import mercantile
     import shapely
 
-    tile_list = list(mercantile.tiles(*geom.bounds, zooms=zooms))
+    gdf = geo_convert(geom , crs = 4326)
+    geometry = gdf.geometry[0]
+    
+    tile_list = list(mercantile.tiles(*geometry.bounds, zooms=zooms))
     gdf_tiles = gpd.GeoDataFrame(
         tile_list,
         geometry=[shapely.box(*mercantile.bounds(i)) for i in tile_list],
         crs=4326,
     )
-    gdf_tiles_intersecting = gdf_tiles[gdf_tiles.intersects(geom)]
+    gdf_tiles_intersecting = gdf_tiles[gdf_tiles.intersects(geometry)]
     if k:
         temp_list = gdf_tiles_intersecting.apply(
             lambda row: mercantile.Tile(row.x, row.y, row.z), 1
@@ -2503,20 +2506,22 @@ def scipy_voronoi(gdf):
 
 
 
-def estimate_zoom(bounds) -> int:
+def estimate_zoom(bounds, target_tiles=1):
     """
     Estimate the zoom level for a given bounding box.
 
     This method returns the zoom level at which a tile exists that, potentially
     shifted slightly, fully covers the bounding box.
-
+    
     Args:
         bounds: A list of 4 coordinates (minx, miny, maxx, maxy), a
-            GeoDataFrame or Shapely geometry, or a mercantile Tile.
-
+                GeoDataFrame or Shapely geometry, or a mercantile Tile.
+        target_tiles: Target number of tiles to cover the bounds (default=1).
+                      If 1, finds the zoom where a single tile covers the bounds.
+                      If >1, estimates zoom to achieve approximately this many tiles.
+    
     Returns:
         The estimated zoom level (0-20).
-
     """
     from fused._optional_deps import (
         GPD_GEODATAFRAME,
@@ -2526,6 +2531,8 @@ def estimate_zoom(bounds) -> int:
         MERCANTILE_TILE,
         SHAPELY_GEOMETRY,
     )
+
+    # Process input bounds to get standard format
     if HAS_GEOPANDAS and isinstance(bounds, GPD_GEODATAFRAME):
         bounds = bounds.total_bounds
     elif HAS_SHAPELY and isinstance(bounds, SHAPELY_GEOMETRY):
@@ -2537,18 +2544,32 @@ def estimate_zoom(bounds) -> int:
 
     if not HAS_MERCANTILE:
         raise ImportError("This function requires the mercantile package.")
+    
     import mercantile
+    import math
+    
 
-    minx, miny, maxx, maxy = bounds
+    if target_tiles == 1:
+        minx, miny, maxx, maxy = bounds
+        centroid = (minx + maxx) / 2, (miny + maxy) / 2
+        width = (maxx - minx) - 1e-11
+        height = (maxy - miny) - 1e-11
+        
+        for z in range(20, 0, -1):
+            tile = mercantile.tile(*centroid, zoom=z)
+            west, south, east, north = mercantile.bounds(tile)
+            if width <= (east - west) and height <= (north - south):
+                break
+        return z
+    
 
-    centroid = (minx + maxx) / 2, (miny + maxy) / 2
-    width = (maxx - minx) - 1e-11
-    height = (maxy - miny) - 1e-11
+    else:
+        minx, miny, maxx, maxy = bounds
+        max_zoom = 20
+        x_min, y_min, _ = mercantile.tile(minx, maxy, max_zoom)
+        x_max, y_max, _ = mercantile.tile(maxx, miny, max_zoom)
+        delta_x = x_max - x_min + 1
+        delta_y = y_max - y_min + 1
 
-    for z in range(20, 0, -1):
-        tile = mercantile.tile(*centroid, zoom=z)
-        west, south, east, north = mercantile.bounds(tile)
-        if width <= (east - west) and height <= (north - south):
-            break
-
-    return z
+        zoom = math.log2(math.sqrt(target_tiles) / max(delta_x, delta_y)) + max_zoom
+        return int(math.floor(zoom)) 
