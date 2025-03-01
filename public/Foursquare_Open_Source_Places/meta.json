@@ -12,7 +12,6 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:description": "Places of interest (POIs) from [Foursquare Open Source Places](https://opensource.foursquare.com/os-places/) hosted on [Source Coop](https://source.coop/repositories/fused/fsq-os-places)\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -83,11 +82,10 @@
             "fused:slug": "Foursquare_Open_Source_Places",
             "fused:name": "Foursquare_Open_Source_Places",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/dbd5afb9ae365cc9de22d02116dd3c6a9a5a2fa6/public/Foursquare_Open_Source_Places/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/dbd5afb/public/Foursquare_Open_Source_Places/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/45a7cd9d674d8ac6920774a0a3c9ea1a32e5df4c/public/Foursquare_Open_Source_Places/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/45a7cd9/public/Foursquare_Open_Source_Places/",
             "fused:gitPath": "public/Foursquare_Open_Source_Places",
-            "fused:gitRef": "dbd5afb9ae365cc9de22d02116dd3c6a9a5a2fa6",
-            "fused:assetUrl": "",
+            "fused:gitRef": "45a7cd9d674d8ac6920774a0a3c9ea1a32e5df4c",
             "fused:gitAuthorNames": [
               "Isaac Brodsky",
               null,
@@ -108,7 +106,7 @@
               "https://avatars.githubusercontent.com/in/834700?v=4",
               "https://avatars.githubusercontent.com/in/885821?v=4"
             ],
-            "fused:gitLastModified": "2024-12-03T23:58:46+00:00",
+            "fused:gitLastModified": "2025-01-10T21:44:57+00:00",
             "fused:gitRepo": "fusedio/udfs",
             "fused:defaultParameters": [
               {
@@ -118,7 +116,8 @@
                 "suggestedValues": [
                   "2024-11-19",
                   "2024-12-03",
-                  "2025-01-10"
+                  "2025-01-10",
+                  "2025-02-06"
                 ]
               },
               {
@@ -132,20 +131,6 @@
                 "value": "",
                 "type": "array",
                 "suggestedValues": []
-              }
-            ],
-            "fused:tags": [
-              {
-                "id": "fsq",
-                "label": "fsq"
-              },
-              {
-                "id": "poi",
-                "label": "poi"
-              },
-              {
-                "id": "coop",
-                "label": "coop"
               }
             ],
             "fused:gitHistory": [
@@ -282,7 +267,22 @@
               "zoom": 10.02293460666542,
               "pitch": 0,
               "bearing": 0
-            }
+            },
+            "fused:tags": [
+              {
+                "id": "fsq",
+                "label": "fsq"
+              },
+              {
+                "id": "poi",
+                "label": "poi"
+              },
+              {
+                "id": "coop",
+                "label": "coop"
+              }
+            ],
+            "fused:description": "Places of interest (POIs) from [Foursquare Open Source Places](https://opensource.foursquare.com/os-places/) hosted on [Source Coop](https://source.coop/repositories/fused/fsq-os-places)\n"
           },
           "source": "Foursquare_Open_Source_Places.py",
           "headers": [
