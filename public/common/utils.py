@@ -1066,13 +1066,13 @@ def geo_convert(
     import mercantile
     
     # Handle the bounds case specifically
-    if data is None or (isinstance(data, (list, tuple)) and len(data) == 4):
+    if data is None or (isinstance(data, (list, tuple, np.ndarray)) and len(data) == 4):
         bounds = [-180, -90, 180, 90] if data is None else data
         bbox = gpd.GeoDataFrame({}, geometry=[shapely.box(*bounds)], crs=crs or 4326)
         return bbox
         
     # Handle xyz tile coordinates
-    if isinstance(data, (list, tuple)) and len(data) == 3:
+    if isinstance(data, (list, tuple, np.ndarray)) and len(data) == 3:
         x, y, z = data
         tile = mercantile.Tile(x, y, z)
         bbox = mercantile.bounds(tile)
@@ -1936,15 +1936,14 @@ def mercantile_polyfill(geom, zooms=[15], compact=True, k=None):
     import shapely
 
     gdf = geo_convert(geom , crs = 4326)
-    geometry = gdf.geometry[0]
     
-    tile_list = list(mercantile.tiles(*geometry.bounds, zooms=zooms))
+    tile_list = list(mercantile.tiles(*gdf.total_bounds, zooms=zooms))
     gdf_tiles = gpd.GeoDataFrame(
         tile_list,
         geometry=[shapely.box(*mercantile.bounds(i)) for i in tile_list],
         crs=4326,
     )
-    gdf_tiles_intersecting = gdf_tiles[gdf_tiles.intersects(geometry)]
+    gdf_tiles_intersecting = gdf_tiles[gdf_tiles.intersects(gdf)]
     if k:
         temp_list = gdf_tiles_intersecting.apply(
             lambda row: mercantile.Tile(row.x, row.y, row.z), 1
@@ -2593,16 +2592,16 @@ def get_tile(
         raise ValueError("target_num_tiles should be more than zero.")
 
     if target_num_tiles == 1:
-        bbox = common.geo_convert(bounds)
+        bbox = geo_convert(bounds)
         tile = mercantile.bounding_tile(*bbox.total_bounds)
-        gdf = common.geo_convert((tile.x, tile.y, tile.z))
+        gdf = geo_convert((tile.x, tile.y, tile.z))
     else:
         zoom_level = (
             zoom
             if zoom is not None
-            else common.estimate_zoom(bounds, target_num_tiles=target_num_tiles)
+            else estimate_zoom(bounds, target_num_tiles=target_num_tiles)
         )
-        base_zoom = common.estimate_zoom(bounds, target_num_tiles=1)
+        base_zoom = estimate_zoom(bounds, target_num_tiles=1)
         if zoom_level > (base_zoom + max_tile_recursion + 1):
             zoom_level = base_zoom + max_tile_recursion + 1
             if zoom:
@@ -2614,7 +2613,7 @@ def get_tile(
                     f"Warning: Maximum number of tiles is reached ({target_num_tiles} > {4**max_tile_recursion-1} tiles). Increase {max_tile_recursion=} to allow for deeper tile recursion"
                 )
 
-        gdf = common.mercantile_polyfill(bounds, zooms=[zoom_level], compact=False)
+        gdf = mercantile_polyfill(bounds, zooms=[zoom_level], compact=False)
         print(f"Generated {len(gdf)} tiles at zoom level {zoom_level}")
 
     return gdf if as_gdf else gdf[["x", "y", "z"]].values
