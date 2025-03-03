@@ -451,6 +451,7 @@ def read_tiff(
 
     import numpy as np
     import rasterio
+    from rasterio.coords import BoundingBox, disjoint_bounds
     from rasterio.warp import Resampling, reproject
     from scipy.ndimage import zoom
 
@@ -475,23 +476,60 @@ def read_tiff(
                     src_crs = src.crs
                 else:
                     src_crs=4326
-                bbox = bbox.to_crs(3857)
-                # transform_bounds = rasterio.warp.transform_bounds(3857, src_crs, *bbox["geometry"].bounds.iloc[0])
-                window = src.window(*bbox.to_crs(src_crs).total_bounds)
-                original_window = src.window(*bbox.to_crs(src_crs).total_bounds)
-                gridded_window = rasterio.windows.round_window_to_full_blocks(
-                    original_window, [(1, 1)]
+                src_bbox = bbox.to_crs(src_crs)
+
+                if disjoint_bounds(src.bounds, BoundingBox(*src_bbox.total_bounds)):
+                    return None
+
+                window = src.window(*src_bbox.total_bounds)
+
+                factor = 1
+                if output_shape is not None:
+                    # determine a factor to downsample based on the overviews of the first band
+                    for f in src.overviews(1):
+                        if (window.height / f) < output_shape[0]:
+                            break
+                        else:
+                            factor = f
+
+                    n_pixels_window = window.height * window.width / (factor ** 2)
+                    if n_pixels_window > (output_shape[-2] * output_shape[-1] * 4):
+                        # if we would still be reading too much data with the current
+                        # window and factor (cutoff at 4x the desired output size)
+                        # -> increase factor to avoid memory blowup
+                        new_factor =  min(
+                            window.height / (output_shape[-2]*2),
+                            window.width / (output_shape[-1]*2)
+                        )
+                        factor = int(new_factor // factor) * factor
+
+                # # transform_bounds = rasterio.warp.transform_bounds(3857, src_crs, *bbox["geometry"].bounds.iloc[0])
+                # window = src.window(*bbox.to_crs(src_crs).total_bounds)
+                # original_window = src.window(*bbox.to_crs(src_crs).total_bounds)
+                # gridded_window = rasterio.windows.round_window_to_full_blocks(
+                #     original_window, [(1, 1)]
+                # )
+                # window = gridded_window  # Expand window to nearest full pixels
+                source_data = src.read(
+                    window=window,
+                    out_shape=(src.count, int(window.height / factor), int(window.width / factor)),
+                    resampling=Resampling.bilinear,
+                    boundless=True,
+                    masked=True,
                 )
-                window = gridded_window  # Expand window to nearest full pixels
-                source_data = src.read(window=window, boundless=True, masked=True)
-                
+
+                window_transform = src.window_transform(window)
+                src_transform = window_transform * window_transform.scale(
+                    (window.width / source_data.shape[-1]),
+                    (window.height / source_data.shape[-2])
+                )
+                src_dtype = src.dtypes[0]
+                src_meta = src.meta
                 nodata_value = src.nodatavals[0]
+
                 if filter_list:
                     mask = np.isin(source_data, filter_list, invert=True)
                     source_data[mask] = 0
-                src_transform = src.window_transform(window)
-                src_dtypes = src.dtypes[0]
-                src_meta = src.meta
                 if return_colormap:
                     colormap = src.colormap(1)
         except rasterio.RasterioIOError as err:
@@ -501,7 +539,9 @@ def read_tiff(
             print(f"Unexpected {err=}, {type(err)=}")
             raise
         if output_shape:
-            minx, miny, maxx, maxy = bbox.total_bounds
+            # reproject
+            bbox_web = bbox.to_crs("EPSG:3857")
+            minx, miny, maxx, maxy = bbox_web.total_bounds
             dx = (maxx - minx) / output_shape[-1]
             dy = (maxy - miny) / output_shape[-2]
             dst_transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
@@ -509,9 +549,9 @@ def read_tiff(
                 dst_shape = (source_data.shape[0], output_shape[-2], output_shape[-1])
             else:
                 dst_shape = output_shape
-            dst_crs = bbox.crs
+            dst_crs = bbox_web.crs
 
-            destination_data = np.zeros(dst_shape, src_dtypes)
+            destination_data = np.zeros(dst_shape, src_dtype)
             reproject(
                 source_data,
                 destination_data,
@@ -520,15 +560,29 @@ def read_tiff(
                 dst_transform=dst_transform,
                 dst_crs=dst_crs,
                 # TODO: rather than nearest, get all the values and then get pct
+                resampling=Resampling.bilinear,
+            )
+
+            destination_mask = np.zeros(dst_shape, dtype="int8")
+            reproject(
+                source_data.mask.astype("uint8"),
+                destination_mask,
+                src_transform=src_transform,
+                src_crs=src_crs,
+                dst_transform=dst_transform,
+                dst_crs=dst_crs,
                 resampling=Resampling.nearest,
+            )
+            destination_data = np.ma.masked_array(
+                destination_data, destination_mask
             )
         else:
             dst_transform = src_transform
             dst_crs = src_crs
-            destination_data=source_data
-        destination_data = np.ma.masked_array(
-            destination_data, destination_data == nodata_value
-        )
+            destination_data = source_data
+            destination_data = np.ma.masked_array(
+                source_data, source_data == nodata_value
+            )
     if return_colormap or return_transform or return_crs or return_bounds or return_meta:
         ### TODO: NOT backward comp -- fix colormap / transform 
         metadata={}
