@@ -33,6 +33,7 @@ def get_public_udf_folders():
         headers["Authorization"] = f"Bearer {os.environ.get('GITHUB_TOKEN')}"
     if os.environ.get("GITHUB_SHA"):
         params["ref"] = os.environ.get("GITHUB_SHA")
+        print(f"fetching UDFs from commit: {params['ref']}")
 
     response = requests.get(
         "https://api.github.com/repos/fusedio/udfs/contents/public",
