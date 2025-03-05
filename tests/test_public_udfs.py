@@ -89,4 +89,5 @@ def test_public_udfs(udf_name: str, udf_url: str):
             # "auto" udf types (TODO sniff the type and test those as well)
             return
     except Exception as e:
+        print(f"Failed to run {udf_url} because {repr(e)}")
         raise Exception(f"Failed to run {udf_name}: {repr(e)}")

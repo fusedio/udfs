@@ -35,4 +35,5 @@ jobs:
         env:
           GITHUB_SHA: ${{ github.event.pull_request.head.sha }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pytest tests/test_public_udfs.py -v
+        shell: bash
+        run: pytest tests/test_public_udfs.py -v -s
