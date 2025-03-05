@@ -26,6 +26,7 @@ jobs:
       # install dependencies
       #----------------------------------------------
       - name: Install dependencies
+        shell: bash
         run: pip install fused[batch] pytest
 
       #----------------------------------------------
@@ -35,5 +36,6 @@ jobs:
         env:
           GITHUB_SHA: ${{ github.event.pull_request.head.sha }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTH0_REFRESH_TOKEN: ${{ secrets.AUTH0_REFRESH_TOKEN }}
         shell: bash
-        run: pytest tests/test_public_udfs.py -v -s
+        run: pytest tests/test_public_udfs.py -v
