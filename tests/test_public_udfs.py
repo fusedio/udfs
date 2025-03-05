@@ -82,9 +82,9 @@ def test_public_udfs(udf_name: str, udf_url: str):
         udftype = metadata.get("fused:udfType")
         if udftype in ["vector_tile", "raster"]:
             x, y, z = get_bbox_for_udf(metadata)
-            fused.run(udf, x=x, y=y, z=z)
+            fused.run(udf, x=x, y=y, z=z, engine="remote", cache_max_age="0s")
         elif udftype in ["vector_single", "raster_single"]:
-            fused.run(udf)
+            fused.run(udf, engine="remote", cache_max_age="0s")
         else:
             # "auto" udf types (TODO sniff the type and test those as well)
             return
