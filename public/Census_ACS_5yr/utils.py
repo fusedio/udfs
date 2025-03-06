@@ -15,8 +15,11 @@ def acs_5yr_bbox(
     if int(year) not in (2021, 2022):
         raise ValueError('The only available years are 2021 and 2022')
 
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+
     bbox = gpd.GeoDataFrame(geometry=[shapely.box(*bounds)], crs=4326)
-    fused.utils.common.import_env()
+    utils.import_env()
     tid = search_title(census_variable)  
     df = acs_5yr_table(tid, year=year)
     df['GEOID'] = df.GEO_ID.map(lambda x:x.split('US')[-1])
@@ -27,7 +30,7 @@ def acs_5yr_bbox(
     if suffix:
         table_path += f'_{suffix}'
     print(table_path)
-    gdf = fused.utils.common.table_to_tile(
+    gdf = utils.table_to_tile(
         bbox,
         table_path,
         use_columns=['GEOID','geometry'],

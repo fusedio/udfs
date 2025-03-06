@@ -1,0 +1,77 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Building_Comparison_Viewer",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:assetUrl": " https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/samroy.png",
+            "fused:description": "## Preview output of Overture/OakRidge H3 building metrics\n\nQuickly compare different Building datasets: Overture Buildings and Oak Ridge Buildings. A count comparison reveals spatial variability in the data across data sources.\n\nBy: Sam Roy\n\n\n\n\n\n",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 35.94875943573597,
+              "longitude": -118.27287341562749,
+              "zoom": 5.097143611354211,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "Teal",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Building_Comparison_Viewer",
+            "fused:name": "Building_Comparison_Viewer",
+            "fused:id": null
+          },
+          "source": "Building_Comparison_Viewer.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

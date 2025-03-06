@@ -1,0 +1,41 @@
+name: Test Suite
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: test-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      #----------------------------------------------
+      #       check-out repo and set-up python
+      #----------------------------------------------
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      #----------------------------------------------
+      # install dependencies
+      #----------------------------------------------
+      - name: Install dependencies
+        shell: bash
+        run: pip install fused[batch] pytest
+
+      #----------------------------------------------
+      #       run tests for public udfs
+      #----------------------------------------------
+      - name: Run tests for public udfs
+        env:
+          GITHUB_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTH0_REFRESH_TOKEN: ${{ secrets.AUTH0_REFRESH_TOKEN }}
+        shell: bash
+        run: pytest tests/test_public_udfs.py

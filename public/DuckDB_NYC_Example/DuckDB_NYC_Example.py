@@ -1,6 +1,6 @@
 # Note: This UDF is only for demo purposes. You may get `HTTP GET error` after several times calling it. This is the data retrieval issue caused by Cloudfront servers not responding.
 @fused.udf
-def udf(bbox=None, agg_factor=3, min_count=5):
+def udf(bbox: fused.types.TileGDF = None, agg_factor=3, min_count=5):
     import duckdb
 
     utils = fused.load(

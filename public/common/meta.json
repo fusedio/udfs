@@ -84,11 +84,9 @@
                 ]
               }
             },
-            "fused:udfType": "vector_tile",
+            "fused:udfType": "auto",
             "fused:slug": "common",
             "fused:name": "common",
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Fused_Logo.png",
-            "fused:description": "## Overview\n\nThis UDF contains common utils that are being used for many public udfs.\n\n\nTo import common utils in your udf run the following command:\n\n`common = fused.utils.common`\n",
             "fused:defaultViewState": {
               "enable": false,
               "latitude": 0,
@@ -97,9 +95,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/bba30612eaa2718e4c286242e6a37b5765eae653/public/common/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/dbd614699645ee5e3ae34eecd596e887fe13055e/public/common/",
             "fused:gitPath": "public/common",
-            "fused:gitRef": "bba30612eaa2718e4c286242e6a37b5765eae653",
+            "fused:gitRef": "dbd614699645ee5e3ae34eecd596e887fe13055e",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -108,7 +106,8 @@
               "Plinio Guzman",
               null,
               null,
-              "Maxime Lenormand"
+              "Maxime Lenormand",
+              "Milind Soni"
             ],
             "fused:gitAuthorUsernames": [
               "kashuk",
@@ -118,7 +117,8 @@
               "pgzmnk",
               "fused-io-staging[bot]",
               "fused-io[bot]",
-              "MaxLenormand"
+              "MaxLenormand",
+              "milind-soni"
             ],
             "fused:gitAuthorUrls": [
               "https://github.com/kashuk",
@@ -128,7 +128,8 @@
               "https://github.com/pgzmnk",
               "https://github.com/apps/fused-io-staging",
               "https://github.com/apps/fused-io",
-              "https://github.com/MaxLenormand"
+              "https://github.com/MaxLenormand",
+              "https://github.com/milind-soni"
             ],
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/12432685?v=4",
@@ -138,16 +139,19 @@
               "https://avatars.githubusercontent.com/u/27398253?v=4",
               "https://avatars.githubusercontent.com/in/885821?v=4",
               "https://avatars.githubusercontent.com/in/834700?v=4",
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-01-03T03:28:02.324Z",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/bba3061/public/common/",
+            "fused:gitLastModified": "2025-03-01T22:18:37.744Z",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/dbd6146/public/common/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
-            "fused:explorerPin": "90",
-            "fused:gitPullRequestBranch": "sina_000002-patch-6d61a0-add-html-utils",
-            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/551",
-            "fused:id": null
+            "fused:gitPullRequestBranch": "sina-patch-9be4de-fix-geoconvert-to-support-npndar",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/686",
+            "fused:id": null,
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Fused_Logo.png",
+            "fused:description": "## Overview\n\nThis UDF contains common utils that are being used for many public udfs.\n\n\nTo import common utils in your udf run the following command:\n\n`common = fused.utils.common`\n",
+            "fused:explorerPin": "90"
           },
           "source": "common.py",
           "headers": [

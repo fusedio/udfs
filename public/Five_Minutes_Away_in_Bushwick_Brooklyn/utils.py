@@ -25,7 +25,8 @@ def get_single_isochrone(point_data):
     # Function for single isochrone
     point, costing, time_steps = point_data
     try:
-        return fused.utils.Get_Isochrone.get_isochrone(
+        get_isochrone_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Get_Isochrone/").utils
+        return get_isochrone_utils.get_isochrone(
             lat=point.y,
             lng=point.x, 
             costing=costing,
@@ -40,9 +41,11 @@ def get_pool_isochrones(df, costing, time_steps):
     # Run the isochrone requests concurrently
     if len(df) == 0:
         return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
     # Using the Fused common run_pool function 
     arg_list = [(point, costing, time_steps) for point in df.geometry]
-    isochrones = fused.utils.common.run_pool(get_single_isochrone, arg_list)
+    isochrones = utils.run_pool(get_single_isochrone, arg_list)
     
     # Track which isochrones are valid along with their names
     valid_pairs = [(iso, name) for iso, name in zip(isochrones, df['name']) if len(iso) > 0]
@@ -78,8 +81,10 @@ def get_fsq_isochrones_gdf(costing, time_steps, poi_category):
 
 @fused.cache
 def fsq_isochrones_to_h3(df_fsq_isochrones, resolution):
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
     # Connect to DuckDB
-    con = fused.utils.common.duckdb_connect()
+    con = utils.duckdb_connect()
     # Convert the isochrones into H3, count the overlap and keep the POI name
     query = f"""
     with to_cells as (

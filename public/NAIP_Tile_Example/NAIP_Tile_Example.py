@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox,
+    bbox: fused.types.TileGDF,
     var="NDVI",
     chip_len: int=256,
     buffer_degree=0.000,

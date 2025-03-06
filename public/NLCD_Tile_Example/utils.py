@@ -1,15 +1,16 @@
-utils = fused.load('https://github.com/fusedio/udfs/tree/004b8d9/public/common/').utils
+utils = fused.load('https://github.com/fusedio/udfs/tree/e1fefb7/public/common/').utils
 
 def get_data(bbox, year, land_type, chip_len):
         path= f"https://s3-us-west-2.amazonaws.com/mrlc/Annual_NLCD_LndCov_{year}_CU_C1V0.tif"
-        arr_int, color_map = utils.read_tiff(bbox, path, output_shape=(chip_len, chip_len), return_colormap=True)
+        arr_int, metadata = utils.read_tiff(bbox, path, output_shape=(chip_len, chip_len), return_colormap=True)
+        colormap = metadata['colormap']
         if land_type:
             arr_int = filter_lands(arr_int, land_type, verbose=False)    
-        return arr_int, color_map
+        return arr_int, colormap
 
-def get_summary(arr_int, color_map):
+def get_summary(arr_int, colormap):
     df = type_counts(arr_int)
-    df['color'] = df.index.map(lambda x: rgb_to_hex(color_map[x]) if x in color_map else "NaN")
+    df['color'] = df.index.map(lambda x: rgb_to_hex(colormap[x]) if x in colormap else "NaN")
     return df[['land_type', 'color', 'n_pixel']]
 
 nlcd_category_dict = {

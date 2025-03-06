@@ -1,0 +1,86 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Zonal_Stats_Forest_Obs_Viewer",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 0.2,
+                "pointRadiusMinPixels": 1,
+                "getFillColor": {
+                  "@@function": "hasProp",
+                  "property": "stats_mean",
+                  "present": "@@=[properties.stats_mean*10, properties.stats_mean*255, properties.stats_mean*10, properties.stats_mean*255]",
+                  "absent": [
+                    25,
+                    0,
+                    255,
+                    100
+                  ]
+                },
+                "getLineColor": [
+                  255,
+                  0,
+                  0,
+                  60
+                ]
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "Zonal_Stats_Forest_Obs_Viewer",
+            "fused:name": "Zonal_Stats_Forest_Obs_Viewer",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/c744949293bc992ba0b250f27384f4fa184d7336/community/plinio/Zonal_Stats_Forest_Obs_Viewer/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/c744949/community/plinio/Zonal_Stats_Forest_Obs_Viewer/",
+            "fused:gitPath": "community/plinio/Zonal_Stats_Forest_Obs_Viewer",
+            "fused:gitRef": "c744949293bc992ba0b250f27384f4fa184d7336",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "fused-io[bot]"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/apps/fused-io"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/in/834700?v=4"
+            ],
+            "fused:gitLastModified": "2025-01-24T15:18:03+00:00",
+            "fused:explorerTab": "community",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/blog-assets/zstats_viewer_mx.png",
+            "fused:description": "# Zonal Stats Forest Observations - viewer\n\nThis UDF visualizes the final output of a zonal statistics workflow for forest cover for municipal areas around the world. This table shows aggregates of a raster of global forest cover across zones defined by a vector table of municipalities. The output table contains records for every municipality and columns with summary metrics such as percent forest coverage.\n\nThis UDF is called \"viewer\" because it clips the table of outputs it to fit within the bounds of the tile as a tile UDF and renders it as a choroplet map. The maps shows differences in color intensity, from 0 to 1, within municipality polygons to indicate the average values of forest cover.\n"
+          },
+          "source": "Zonal_Stats_Forest_Obs_Viewer.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

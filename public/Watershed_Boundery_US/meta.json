@@ -1,0 +1,80 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Watershed_Boundery_US",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    25,
+                    175,
+                    255
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "Watershed_Boundery_US",
+            "fused:name": "Watershed_Boundery_US",
+            "fused:id": null,
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 40.730981012032494,
+              "longitude": -73.77617446174428,
+              "zoom": 7.904403407182891,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Watershed_Boundery_US.png",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "e7a06ccd5b404537f04b9121b4be1e850df411d4",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/e7a06ccd5b404537f04b9121b4be1e850df411d4/public/Watershed_Boundery_US/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/e7a06cc/public/Watershed_Boundery_US/",
+            "fused:gitPath": "public/Watershed_Boundery_US",
+            "fused:gitLastModified": "2025-01-25T22:59:11.720Z",
+            "fused:gitPullRequestBranch": "sina_000002-patch-46038a-add-WatershedBounderyUS",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/619"
+          },
+          "source": "Watershed_Boundery_US.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

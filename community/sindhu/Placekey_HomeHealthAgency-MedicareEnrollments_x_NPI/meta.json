@@ -8,18 +8,17 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "Fused_Geo-partitioned_Table",
+          "name": "Placekey_HomeHealthAgency-MedicareEnrollments_x_NPI",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:description": "Read a file with GeoPandas.",
+            "fused:description": "## Overview\n\nUsing Placekey to create a shareable map on Fused.io",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
                 "minZoom": 0,
                 "maxZoom": 19,
-                "tileSize": 256,
-                "pickable": true
+                "tileSize": 256
               },
               "rasterLayer": {
                 "@@type": "BitmapLayer",
@@ -30,16 +29,17 @@
                 "stroked": true,
                 "filled": false,
                 "pickable": true,
-                "lineWidthMinPixels": 1,
+                "lineWidthMinPixels": 10,
                 "pointRadiusMinPixels": 1,
                 "getLineColor": {
-                  "@@function": "colorContinuous",
-                  "attr": "value",
+                  "@@function": "colorCategories",
+                  "attr": "belonging",
                   "domain": [
-                    0,
-                    10
+                    "a",
+                    "b",
+                    "both"
                   ],
-                  "colors": "BurgYl",
+                  "colors": "Bold",
                   "nullColor": [
                     184,
                     184,
@@ -54,13 +54,18 @@
                 ]
               }
             },
-            "fused:udfType": "auto",
-            "fused:slug": "Fused_Geo-partitioned_Table",
-            "fused:name": "Fused_Geo-partitioned_Table",
+            "fused:udfType": "vector_tile",
+            "fused:slug": "Placekey_HomeHealthAgency-MedicareEnrollments_x_NPI",
+            "fused:name": "Placekey_HomeHealthAgency-MedicareEnrollments_x_NPI",
             "fused:id": null
           },
-          "source": "Fused_Geo-partitioned_Table.py",
-          "headers": []
+          "source": "Placekey_HomeHealthAgency-MedicareEnrollments_x_NPI.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
         }
       }
     ],

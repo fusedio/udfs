@@ -8,9 +8,61 @@ from numpy.typing import NDArray
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
 from loguru import logger
 
+def json_path_from_secret(var='gcs_fused'):
+    import json
+    import tempfile
+    with tempfile.NamedTemporaryFile(suffix=".json", delete=False, mode="w") as tmp_file:
+        json.dump(json.loads(fused.secrets[var]), tmp_file)
+        tmp_file_path = tmp_file.name
+    return tmp_file_path
+    
+def gcs_credentials_from_secret(var='gcs_fused'):
+    """
+    example: 
+    """
+    import gcsfs
+    import json
+    from google.oauth2 import service_account
+    
+    gcs_secret = json.loads(fused.secrets[var])
+    credentials = service_account.Credentials.from_service_account_info(gcs_secret)
+    return credentials
+
+@fused.cache
+def simplify_gdf(gdf, pct=1, args='-o force -clean'):
+    #ref https://github.com/mbloch/mapshaper/blob/master/REFERENCE.md
+    import geopandas as gpd
+    import uuid
+    import json
+    file_path = f'/mount/cache_data/temp/{uuid.uuid4()}.json'
+    print(file_path)
+    with open(file_path, "w") as f:
+        json.dump(gdf.__geo_interface__, f)
+    # print(fused.utils.common.run_cmd('npm install -g mapshaper',communicate=True)[1].decode())    
+    print(fused.utils.common.run_cmd(f'/mount/npm/bin/mapshaper {file_path} -simplify {pct}% {args} -o {file_path.replace(".json","2.json")}',communicate=True))
+    return gpd.read_file(file_path.replace(".json","2.json"))
+
 def html_to_obj(html_str):
     from fastapi import Response
     return Response(html_str.encode('utf-8'), media_type="text/html")
+
+def pydeck_to_obj(map, as_string=False):    
+        html_str = map.to_html(as_string=True)
+        if as_string:
+            return html_str
+        else: 
+            return html_to_obj(html_str)
+
+def altair_to_obj(chart, as_string=False):    
+    import io
+    html_buffer = io.StringIO()
+    chart.save(html_buffer, format="html")
+    html_str = html_buffer.getvalue()
+    html_buffer.close()
+    if as_string:
+        return html_str
+    else: 
+        return html_to_obj(html_str)
 
 def html_params(html_template, params={}, **kw):
     '''Exampl: html_params('<div>{{v1}}{{v2}}</div>',{'v1':'hello '}, v2='world!')'''
@@ -389,6 +441,9 @@ def read_tiff(
     overview_level=None,
     return_colormap=False,
     return_transform=False,
+    return_crs=False,
+    return_bounds=False,
+    return_meta=False,
     cred=None,
 ):
     import os
@@ -396,6 +451,7 @@ def read_tiff(
 
     import numpy as np
     import rasterio
+    from rasterio.coords import BoundingBox, disjoint_bounds
     from rasterio.warp import Resampling, reproject
     from scipy.ndimage import zoom
 
@@ -420,33 +476,60 @@ def read_tiff(
                     src_crs = src.crs
                 else:
                     src_crs=4326
-                bbox = bbox.to_crs(3857)
-                # transform_bounds = rasterio.warp.transform_bounds(3857, src_crs, *bbox["geometry"].bounds.iloc[0])
-                window = src.window(*bbox.to_crs(src_crs).total_bounds)
-                original_window = src.window(*bbox.to_crs(src_crs).total_bounds)
-                gridded_window = rasterio.windows.round_window_to_full_blocks(
-                    original_window, [(1, 1)]
+                src_bbox = bbox.to_crs(src_crs)
+
+                if disjoint_bounds(src.bounds, BoundingBox(*src_bbox.total_bounds)):
+                    return None
+
+                window = src.window(*src_bbox.total_bounds)
+
+                factor = 1
+                if output_shape is not None:
+                    # determine a factor to downsample based on the overviews of the first band
+                    for f in src.overviews(1):
+                        if (window.height / f) < output_shape[0]:
+                            break
+                        else:
+                            factor = f
+
+                    n_pixels_window = window.height * window.width / (factor ** 2)
+                    if n_pixels_window > (output_shape[-2] * output_shape[-1] * 4):
+                        # if we would still be reading too much data with the current
+                        # window and factor (cutoff at 4x the desired output size)
+                        # -> increase factor to avoid memory blowup
+                        new_factor =  min(
+                            window.height / (output_shape[-2]*2),
+                            window.width / (output_shape[-1]*2)
+                        )
+                        factor = int(new_factor // factor) * factor
+
+                # # transform_bounds = rasterio.warp.transform_bounds(3857, src_crs, *bbox["geometry"].bounds.iloc[0])
+                # window = src.window(*bbox.to_crs(src_crs).total_bounds)
+                # original_window = src.window(*bbox.to_crs(src_crs).total_bounds)
+                # gridded_window = rasterio.windows.round_window_to_full_blocks(
+                #     original_window, [(1, 1)]
+                # )
+                # window = gridded_window  # Expand window to nearest full pixels
+                source_data = src.read(
+                    window=window,
+                    out_shape=(src.count, int(window.height / factor), int(window.width / factor)),
+                    resampling=Resampling.bilinear,
+                    boundless=True,
+                    masked=True,
                 )
-                window = gridded_window  # Expand window to nearest full pixels
-                source_data = src.read(window=window, boundless=True, masked=True)
-                if not output_shape:
-                    return source_data
+
+                window_transform = src.window_transform(window)
+                src_transform = window_transform * window_transform.scale(
+                    (window.width / source_data.shape[-1]),
+                    (window.height / source_data.shape[-2])
+                )
+                src_dtype = src.dtypes[0]
+                src_meta = src.meta
                 nodata_value = src.nodatavals[0]
+
                 if filter_list:
                     mask = np.isin(source_data, filter_list, invert=True)
                     source_data[mask] = 0
-                src_transform = src.window_transform(window)
-                minx, miny, maxx, maxy = bbox.total_bounds
-                dx = (maxx - minx) / output_shape[-1]
-                dy = (maxy - miny) / output_shape[-2]
-                dst_transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
-                if len(source_data.shape) == 3 and source_data.shape[0] > 1:
-                    dst_shape = (source_data.shape[0], output_shape[-2], output_shape[-1])
-                else:
-                    dst_shape = output_shape
-                dst_crs = bbox.crs
-
-                destination_data = np.zeros(dst_shape, src.dtypes[0])
                 if return_colormap:
                     colormap = src.colormap(1)
         except rasterio.RasterioIOError as err:
@@ -455,28 +538,68 @@ def read_tiff(
         except Exception as err:
             print(f"Unexpected {err=}, {type(err)=}")
             raise
+        if output_shape:
+            # reproject
+            bbox_web = bbox.to_crs("EPSG:3857")
+            minx, miny, maxx, maxy = bbox_web.total_bounds
+            dx = (maxx - minx) / output_shape[-1]
+            dy = (maxy - miny) / output_shape[-2]
+            dst_transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
+            if len(source_data.shape) == 3 and source_data.shape[0] > 1:
+                dst_shape = (source_data.shape[0], output_shape[-2], output_shape[-1])
+            else:
+                dst_shape = output_shape
+            dst_crs = bbox_web.crs
+
+            destination_data = np.zeros(dst_shape, src_dtype)
+            reproject(
+                source_data,
+                destination_data,
+                src_transform=src_transform,
+                src_crs=src_crs,
+                dst_transform=dst_transform,
+                dst_crs=dst_crs,
+                # TODO: rather than nearest, get all the values and then get pct
+                resampling=Resampling.bilinear,
+            )
+
+            destination_mask = np.zeros(dst_shape, dtype="int8")
+            reproject(
+                source_data.mask.astype("uint8"),
+                destination_mask,
+                src_transform=src_transform,
+                src_crs=src_crs,
+                dst_transform=dst_transform,
+                dst_crs=dst_crs,
+                resampling=Resampling.nearest,
+            )
+            destination_data = np.ma.masked_array(
+                destination_data, destination_mask
+            )
+        else:
+            dst_transform = src_transform
+            dst_crs = src_crs
+            destination_data = source_data
+            destination_data = np.ma.masked_array(
+                source_data, source_data == nodata_value
+            )
+    if return_colormap or return_transform or return_crs or return_bounds or return_meta:
+        ### TODO: NOT backward comp -- fix colormap / transform 
+        metadata={}
+        if return_colormap:
+            # todo: only set transparency to zero
+            colormap[0] = [0, 0, 0, 0]
+            metadata['colormap']=colormap
+        if return_crs:  
+            metadata['crs']=dst_crs
+        if return_transform:  # Note: usually you do not need this since it can be calculated using crs=4326 and bounds
+            metadata['transform']=dst_transform
+        if return_bounds:
+            metadata['bounds']=rasterio.transform.array_bounds(destination_data.shape[-2] , destination_data.shape[-1], dst_transform)
+        if return_meta:
+            metadata['meta']=src_meta
+        return destination_data, metadata
         
-        reproject(
-            source_data,
-            destination_data,
-            src_transform=src_transform,
-            src_crs=src_crs,
-            dst_transform=dst_transform,
-            dst_crs=dst_crs,
-            # TODO: rather than nearest, get all the values and then get pct
-            resampling=Resampling.nearest,
-        )
-        destination_data = np.ma.masked_array(
-            destination_data, destination_data == nodata_value
-        )
-    if return_colormap:
-        # todo: only set transparency to zero
-        colormap[0] = [0, 0, 0, 0]
-        return destination_data, colormap
-    elif (
-        return_transform
-    ):  # Note: usually you do not need this since it can be calculated using crs=4326 and bounds
-        return destination_data, dst_transform
     else:
         return destination_data
 
@@ -993,25 +1116,41 @@ def geo_convert(
     """Convert input data into a GeoPandas GeoDataFrame."""
     import geopandas as gpd
     import shapely
+    import pandas as pd
+    import mercantile
+    
+    # Handle the bounds case specifically
+    if data is None or (isinstance(data, (list, tuple, np.ndarray)) and len(data) == 4):
+        bounds = [-180, -90, 180, 90] if data is None else data
+        bbox = gpd.GeoDataFrame({}, geometry=[shapely.box(*bounds)], crs=crs or 4326)
+        return bbox
+        
+    # Handle xyz tile coordinates
+    if isinstance(data, (list, tuple, np.ndarray)) and len(data) == 3:
+        x, y, z = data
+        tile = mercantile.Tile(x, y, z)
+        bbox = mercantile.bounds(tile)
+        gdf = gpd.GeoDataFrame(
+            {"x": [x], "y": [y], "z": [z]},
+            geometry=[shapely.box(bbox.west, bbox.south, bbox.east, bbox.north)],
+            crs=4326
+        )
+        return gdf[['x', 'y', 'z', 'geometry']]
+        
     if cols_lonlat:
         if isinstance(data, pd.Series):
             raise ValueError(
                 "Cannot pass a pandas Series or a geopandas GeoSeries in conjunction "
                 "with cols_lonlat."
             )
-
         gdf = df_to_gdf(data, cols_lonlat, verbose=verbose)
-
         if verbose:
             logger.debug(
                 "cols_lonlat was passed so original CRS was assumed to be EPSG:4326."
             )
-
         if crs:
             gdf = resolve_crs(gdf, crs, verbose=verbose)
-
         return gdf
-
     if isinstance(data, gpd.GeoDataFrame):
         gdf = data
         if crs:
@@ -1066,13 +1205,11 @@ def geo_convert(
     ):
         if not crs:
             raise ValueError("Please provide crs. usually crs=4326.")
-
         return gpd.GeoDataFrame(geometry=[data], crs=crs)
     else:
         raise ValueError(
             f"Cannot convert data of type {type(data)} to GeoDataFrame. Please pass a GeoDataFrame, GeoSeries, DataFrame, Series, or shapely geometry."
         )
-
 
 def geo_buffer(
     data,
@@ -1852,13 +1989,17 @@ def mercantile_polyfill(geom, zooms=[15], compact=True, k=None):
     import mercantile
     import shapely
 
-    tile_list = list(mercantile.tiles(*geom.bounds, zooms=zooms))
+    gdf = geo_convert(geom , crs = 4326)
+    geometry = gdf.geometry[0]
+
+    tile_list = list(mercantile.tiles(*geometry.bounds, zooms=zooms))
     gdf_tiles = gpd.GeoDataFrame(
         tile_list,
         geometry=[shapely.box(*mercantile.bounds(i)) for i in tile_list],
         crs=4326,
     )
-    gdf_tiles_intersecting = gdf_tiles[gdf_tiles.intersects(geom)]
+    gdf_tiles_intersecting = gdf_tiles[gdf_tiles.intersects(geometry)]
+
     if k:
         temp_list = gdf_tiles_intersecting.apply(
             lambda row: mercantile.Tile(row.x, row.y, row.z), 1
@@ -2415,3 +2556,121 @@ def scipy_voronoi(gdf):
 
     voronoi_gdf = gpd.GeoDataFrame(geometry=polygons, crs=gdf.crs)
     return voronoi_gdf
+
+
+
+
+
+def estimate_zoom(bounds, target_num_tiles=1):
+    """
+    Estimate the zoom level for a given bounding box.
+
+    This method returns the zoom level at which a tile exists that, potentially
+    shifted slightly, fully covers the bounding box.
+    
+    Args:
+        bounds: A list of 4 coordinates (minx, miny, maxx, maxy), a
+                GeoDataFrame or Shapely geometry, or a mercantile Tile.
+        target_num_tiles: Target number of tiles to cover the bounds (default=1).
+                      If 1, finds the zoom where a single tile covers the bounds.
+                      If >1, estimates zoom to achieve approximately this many tiles.
+    
+    Returns:
+        The estimated zoom level (0-20).
+    """
+    from fused._optional_deps import (
+        GPD_GEODATAFRAME,
+        HAS_GEOPANDAS,
+        HAS_MERCANTILE,
+        HAS_SHAPELY,
+        MERCANTILE_TILE,
+        SHAPELY_GEOMETRY,
+    )
+
+    # Process input bounds to get standard format
+    if HAS_GEOPANDAS and isinstance(bounds, GPD_GEODATAFRAME):
+        bounds = bounds.total_bounds
+    elif HAS_SHAPELY and isinstance(bounds, SHAPELY_GEOMETRY):
+        bounds = bounds.bounds
+    elif HAS_MERCANTILE and isinstance(bounds, MERCANTILE_TILE):
+        return bounds.z
+    elif not isinstance(bounds, list):
+        raise TypeError(f"Invalid bounds type: {type(bounds)}")
+
+    if not HAS_MERCANTILE:
+        raise ImportError("This function requires the mercantile package.")
+    
+    import mercantile
+    import math
+    
+
+    if target_num_tiles == 1:
+        minx, miny, maxx, maxy = bounds
+        centroid = (minx + maxx) / 2, (miny + maxy) / 2
+        width = (maxx - minx) - 1e-11
+        height = (maxy - miny) - 1e-11
+        
+        for z in range(20, 0, -1):
+            tile = mercantile.tile(*centroid, zoom=z)
+            west, south, east, north = mercantile.bounds(tile)
+            if width <= (east - west) and height <= (north - south):
+                break
+        return z
+    
+
+    else:
+        minx, miny, maxx, maxy = bounds
+        max_zoom = 20
+        x_min, y_min, _ = mercantile.tile(minx, maxy, max_zoom)
+        x_max, y_max, _ = mercantile.tile(maxx, miny, max_zoom)
+        delta_x = x_max - x_min + 1
+        delta_y = y_max - y_min + 1
+
+        zoom = math.log2(math.sqrt(target_num_tiles) / max(delta_x, delta_y)) + max_zoom
+        zoom = int(math.floor(zoom)) 
+        current_num_tiles = len(mercantile_polyfill(bounds, zooms=[zoom], compact=False))
+        if current_num_tiles>=target_num_tiles:
+            return zoom
+        else:
+            return zoom+1
+
+
+def get_tile(
+    bounds=None, target_num_tiles=1, zoom=None, max_tile_recursion=6, as_gdf=True
+):
+    import mercantile
+
+    if zoom is not None:
+        print("zoom is provided; target_num_tiles will be ignored.")
+        target_num_tiles = None
+
+    if target_num_tiles is not None and target_num_tiles < 1:
+        raise ValueError("target_num_tiles should be more than zero.")
+
+    if target_num_tiles == 1:
+        bbox = geo_convert(bounds)
+        tile = mercantile.bounding_tile(*bbox.total_bounds)
+        gdf = geo_convert((tile.x, tile.y, tile.z))
+    else:
+        zoom_level = (
+            zoom
+            if zoom is not None
+            else estimate_zoom(bounds, target_num_tiles=target_num_tiles)
+        )
+        base_zoom = estimate_zoom(bounds, target_num_tiles=1)
+        if zoom_level > (base_zoom + max_tile_recursion + 1):
+            zoom_level = base_zoom + max_tile_recursion + 1
+            if zoom:
+                print(
+                    f"Warning: Maximum number of tiles is reached ({zoom=} > {base_zoom+max_tile_recursion+1=} tiles). Increase {max_tile_recursion=} to allow for deeper tile recursion"
+                )
+            else:
+                print(
+                    f"Warning: Maximum number of tiles is reached ({target_num_tiles} > {4**max_tile_recursion-1} tiles). Increase {max_tile_recursion=} to allow for deeper tile recursion"
+                )
+
+        gdf = mercantile_polyfill(bounds, zooms=[zoom_level], compact=False)
+        print(f"Generated {len(gdf)} tiles at zoom level {zoom_level}")
+
+    return gdf if as_gdf else gdf[["x", "y", "z"]].values
+

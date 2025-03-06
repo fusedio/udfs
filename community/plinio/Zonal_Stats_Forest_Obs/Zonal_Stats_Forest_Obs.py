@@ -1,6 +1,7 @@
 @fused.udf
 def udf(
-    s3_file_path: str = f"s3://fused-users/fused/plinio/assets_with_bounds_4_4_antimeridian_2jan2025.parquet",
+    cell_id: int = 1140,
+    s3_file_path: str = "s3://fused-asset/data/zonal_stats_example/assets_with_bounds_4_4.parquet",
     geoboundary_file="adm2_064_v2",
     output_suffix="3jan2025_v2",
     use_cached_output=True
@@ -9,25 +10,16 @@ def udf(
     import numpy as np
     import pandas as pd
     import s3fs
-    import itertools
 
     from utils import get_asset_dissolve, rio_clip_geom_from_url, rio_clip_geom, zonal_stats_df, get_idx_range
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
 
-    # 1. Get cell bounds for all tif URLs
-    s3_file_path = 's3://fused-users/fused/plinio/assets_with_bounds_4_4_antimeridian_2jan2025.parquet'
-    df = pd.read_parquet(s3_file_path)
-    list_of_urls = list(set(list(itertools.chain.from_iterable(df.url.values))))
-    target_urls = ["JRC_GFC2020_V1_N20_W100.tif"]
-    target_url = target_urls[0]
-    # 2. All cell indices for a given tif URL
-    idx_range = get_idx_range(target_url=target_url, s3_file_path=s3_file_path)
-    print('idx_range', idx_range)
-    # return
-    cell_id = idx_range[3] # select cell
+    # 1. Get cell bounds for the cell
     gdf_cells = get_asset_dissolve(url=s3_file_path)
     gdf_cell = gdf_cells.iloc[cell_id : cell_id + 1]
-    # return gdf_cell
-    
+
+    # 2. Structure output path
     path_output = s3_file_path.split(".")[0] + f"_{geoboundary_file}_{output_suffix}/out_{cell_id}.parquet"
     print('path_output: ', path_output)
     
@@ -47,9 +39,9 @@ def udf(
         translate = True
 
     # 4. Create gdf_muni
-    gdf_muni = fused.utils.common.table_to_tile(
+    gdf_muni = utils.table_to_tile(
         gdf_cell,
-        f"s3://fused-users/fused/plinio/geoboundaries/{geoboundary_file}/",
+        "s3://fused-asset/data/geoboundaries/adm2_064_v2/",
         use_columns=["shapeID", "geometry"],
         clip=True,
     )
@@ -71,7 +63,7 @@ def udf(
     # 5. Load tiff
     filename = gdf_cell[["url"]].iloc[0].values[0]
     tiff_url = f"s3://fused-asset/gfc2020/{filename}"
-    geom_bbox_muni = fused.utils.common.geo_bbox(gdf_muni).geometry[0]
+    geom_bbox_muni = utils.geo_bbox(gdf_muni).geometry[0]
     # return geom_bbox_muni
 
     # 6. Get TIFF dataset

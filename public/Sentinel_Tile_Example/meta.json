@@ -48,27 +48,15 @@
                 ]
               }
             },
-            "fused:udfType": "vector_tile",
+            "fused:udfType": "auto",
             "fused:slug": "Sentinel_Tile_Example",
             "fused:name": "Sentinel_Tile_Example",
             "fused:defaultParameters": [],
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Sentinel_Tile_Example.png",
-            "fused:description": "### Overview [link](https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a)\nThe [Sentinel-2](https://sentinel.esa.int/web/sentinel/missions/sentinel-2) program provides global imagery in thirteen spectral bands at 10m-60m resolution and a revisit time of approximately five days. This dataset represents the global Sentinel-2 archive, from 2016 to the present, processed to L2A (bottom-of-atmosphere) using Sen2Cor and converted to cloud-optimized GeoTIFF format.\n\n### External links\n* [Reference](https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a)\n* [AWS Earth Search STAC](https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a)\n* [Microsoft Planetary Computer STAC](https://planetarycomputer.microsoft.com/api/stac/v1/collections/sentinel-2-l2a)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Sentinel_Tile_Example\")\narr = fused.run(udf, x=5241, y=12667, z=15)\narr\n```\n",
-            "fused:tags": [
-              {
-                "id": "usgs",
-                "label": "usgs"
-              },
-              {
-                "id": "hillshade",
-                "label": "hillshade"
-              }
-            ],
             "fused:datasets": "Sentinel 2",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/9c6e2e30ab342ea115b4ee6f61ad2252c51801ef/public/Sentinel_Tile_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/5069808dc19540be442b853fb4dc9e83c8f05dd7/public/Sentinel_Tile_Example/",
             "fused:gitPath": "public/Sentinel_Tile_Example",
-            "fused:gitRef": "9c6e2e30ab342ea115b4ee6f61ad2252c51801ef",
+            "fused:gitRef": "5069808dc19540be442b853fb4dc9e83c8f05dd7",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -101,13 +89,25 @@
               "https://avatars.githubusercontent.com/u/9139378?v=4",
               "https://avatars.githubusercontent.com/in/834700?v=4"
             ],
-            "fused:gitLastModified": "2024-10-22T12:54:07.345Z",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/9c6e2e3/public/Sentinel_Tile_Example/",
-            "fused:explorerPin": "14",
+            "fused:gitLastModified": "2024-10-22T14:19:02+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/5069808/public/Sentinel_Tile_Example/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "max@fused.io-patch-Fixing-min-resolution-requireme",
-            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/372"
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/372",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Sentinel_Tile_Example.png",
+            "fused:tags": [
+              {
+                "id": "usgs",
+                "label": "usgs"
+              },
+              {
+                "id": "hillshade",
+                "label": "hillshade"
+              }
+            ],
+            "fused:description": "### Overview [link](https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a)\nThe [Sentinel-2](https://sentinel.esa.int/web/sentinel/missions/sentinel-2) program provides global imagery in thirteen spectral bands at 10m-60m resolution and a revisit time of approximately five days. This dataset represents the global Sentinel-2 archive, from 2016 to the present, processed to L2A (bottom-of-atmosphere) using Sen2Cor and converted to cloud-optimized GeoTIFF format.\n\n### External links\n* [Reference](https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a)\n* [AWS Earth Search STAC](https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a)\n* [Microsoft Planetary Computer STAC](https://planetarycomputer.microsoft.com/api/stac/v1/collections/sentinel-2-l2a)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Sentinel_Tile_Example\")\narr = fused.run(udf, x=5241, y=12667, z=15)\narr\n```\n",
+            "fused:explorerPin": "14"
           },
           "source": "Sentinel_Tile_Example.py",
           "headers": [

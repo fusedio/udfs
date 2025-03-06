@@ -1,14 +1,15 @@
 @fused.udf
-def udf_pleiades_tiles(bbox: fused.types.TileGDF, chip_len = 256):
+def udf_rgb_tiles(bbox: fused.types.TileGDF):
     utils = fused.load('https://github.com/fusedio/udfs/tree/004b8d9/public/common/').utils
-    path = 's3://fused-users/fused/asset/airbus/airplanes-demo.tif'
-    return utils.read_tiff(bbox, path, output_shape=(chip_len, chip_len))
+    x, y, z = bbox[["x", "y", "z"]].iloc[0]
+    return utils.url_to_arr(f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}")
 
 @fused.udf
 def udf(    
     bbox: fused.types.TileGDF=None,
     chip_len=256,
-    buffer_degree=0.00001
+    buffer_degree=0.00001,
+    weights_path = "s3://fused-asset/misc/dl4eo/best.onnx"
 ):
     import geopandas as gpd
     import shapely
@@ -18,10 +19,10 @@ def udf(
 
     # Load imagery
     bbox.geometry = bbox.buffer(buffer_degree).geometry
-    arr = fused.run(udf_pleiades_tiles, bbox=bbox).image.to_numpy().astype(np.uint8)
+    arr = fused.run(udf_rgb_tiles, bbox=bbox).astype(np.uint8)
     
     # Predict
-    boxes = predict(arr)
+    boxes = predict(arr, weights_path=weights_path)
     print(boxes)
     if boxes is None:
         print("Warning: Unable to run inference...")
