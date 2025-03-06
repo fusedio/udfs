@@ -45,10 +45,8 @@ def get_public_udf_folders():
         raise Exception(f"Failed to fetch UDFs: {response.status_code}")
     contents = response.json()
 
-    NON_UDF_FOLDERS = ["community"]
-
     for item in contents:
-        if item["type"] == "dir" and item["name"] not in NON_UDF_FOLDERS:
+        if item["type"] == "dir":
             yield pytest.param(
                 item["name"],
                 item["html_url"],
