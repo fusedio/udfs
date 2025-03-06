@@ -38,4 +38,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AUTH0_REFRESH_TOKEN: ${{ secrets.AUTH0_REFRESH_TOKEN }}
         shell: bash
-        run: pytest tests/test_public_udfs.py -v -s
+        run: pytest tests/test_public_udfs.py -v
