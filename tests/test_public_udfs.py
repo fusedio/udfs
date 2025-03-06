@@ -84,7 +84,6 @@ def test_public_udfs(udf_name: str, udf_url: str):
         elif udftype in ["vector_single", "raster_single"]:
             fused.run(udf, engine="remote", cache_max_age="0s")
         else:
-            # "auto" udf types (TODO sniff the type and test those as well)
-            return
+            return pytest.skip(f"Unsupported UDF type: {udftype}")
     except Exception as e:
         raise Exception(f"Failed to run {udf_name}: {repr(e)}")
