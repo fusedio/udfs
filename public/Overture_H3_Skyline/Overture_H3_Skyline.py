@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF = None, h3_size: int = None, h3_scale: int=2):
+def udf(bounds: fused.types.TileGDF = None, h3_size: int = None, h3_scale: int=2):
     import h3
 
     # Load pinned versions of utility functions.
@@ -9,15 +9,15 @@ def udf(bbox: fused.types.TileGDF = None, h3_size: int = None, h3_scale: int=2):
     conn = utils.duckdb_connect()
 
     # 1. Set H3 resolution
-    x, y, z = bbox.iloc[0][["x", "y", "z"]]
+    x, y, z = bounds.iloc[0][["x", "y", "z"]]
 
     if not h3_size:
-        h3_size = max(min(int(3 + bbox.z[0] / 1.5), 12) - h3_scale, 2)
+        h3_size = max(min(int(3 + bounds.z[0] / 1.5), 12) - h3_scale, 2)
 
     print(f"H3 Resolution: {h3_size}")
 
     # 2. Load Overture Buildings
-    gdf = overture_utils.get_overture(bbox=bbox, min_zoom=10)
+    gdf = overture_utils.get_overture(bounds=bounds, min_zoom=10)
     if len(gdf) < 1:
         return
 

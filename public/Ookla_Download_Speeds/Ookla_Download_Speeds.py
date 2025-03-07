@@ -1,7 +1,7 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF=None):
+def udf(bounds: fused.types.TileGDF=None):
     file_path='s3://ookla-open-data/parquet/performance/type=mobile/year=2024/quarter=3/2024-07-01_performance_mobile_tiles.parquet'
-    bounds = bbox.total_bounds
+    bounds = bounds.total_bounds
 
     # Load pinned versions of utility functions.
     utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
@@ -27,7 +27,7 @@ def udf(bbox: fused.types.TileGDF=None):
         
     # Calculate H3 resolution based on zoom level:    
     res_offset=0
-    res = max(min(int(2+bbox.z[0]/1.5),8)-res_offset,2)
+    res = max(min(int(2+bounds.z[0]/1.5),8)-res_offset,2)
     df = get_data(bounds, file_path, h3_size=res)
     print(df)
     return df

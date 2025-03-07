@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox: fused.types.TileGDF,
+    bounds: fused.types.TileGDF,
     min_max=(0, 255),
     z_levels=[4, 6, 9, 11],
     verbose=False
@@ -12,7 +12,7 @@ def udf(
     import palettable
     import utils
     
-    arr = utils.dsm_to_tile(bbox, z_levels=z_levels, verbose=verbose)
+    arr = utils.dsm_to_tile(bounds, z_levels=z_levels, verbose=verbose)
     return utils.common_utils.visualize(
         data=arr,
         min=0,

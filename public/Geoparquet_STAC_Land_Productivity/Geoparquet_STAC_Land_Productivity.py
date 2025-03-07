@@ -1,5 +1,5 @@
 def udf(
-    bbox: fused.types.TileGDF = None,
+    bounds: fused.types.TileGDF = None,
     year: int = 2023,
     variable: str = "evi2",
 ):
@@ -19,7 +19,7 @@ def udf(
     # year can be passed in as a parameter for the function
     item_dicts = stacrs.search(
         "https://data.ldn.auspatious.com/geo_ls_lp/geo_ls_lp_0_1_0.parquet",
-        bbox=bbox.total_bounds,
+        bounds=bounds.total_bounds,
         datetime=f"{year}-01-01T00:00:00.000Z/{year}-12-31T23:59:59.999Z",
     )
 
@@ -27,7 +27,7 @@ def udf(
     items = [Item.from_dict(d) for d in item_dicts]
 
     # Calculate the resolution based on zoom level
-    power = 13 - bbox.z[0]
+    power = 13 - bounds.z[0]
     if power < 0:
         resolution = 30
     else:
@@ -40,7 +40,7 @@ def udf(
         crs="EPSG:3857",
         bands=[variable],
         resolution=resolution,
-        bbox=bbox.total_bounds,
+        bbox=bounds.total_bounds,
     ).squeeze()
 
     # Create a mask where data is nan

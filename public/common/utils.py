@@ -170,16 +170,16 @@ def read_log(n=None, name='default', return_log=False):
         else:
             print("Log file not found.")
 
-def dilate_bbox(bbox, chip_len, border_pixel):
-    bbox_crs = bbox.crs
+def dilate_bbox(bounds, chip_len, border_pixel):
+    bbox_crs = bounds.crs
     clipped_chip=chip_len-(border_pixel*2)
-    bbox = bbox.to_crs(bbox.estimate_utm_crs())
-    length = bbox.area[0]**0.5
+    bounds = bounds.to_crs(bounds.estimate_utm_crs())
+    length = bounds.area[0]**0.5
     buffer_ratio = (chip_len-clipped_chip)/clipped_chip
     buffer_distance=length*buffer_ratio/2
-    bbox.geometry = bbox.buffer(buffer_distance)
-    bbox = bbox.to_crs(bbox_crs)  
-    return bbox
+    bounds.geometry = bounds.buffer(buffer_distance)
+    bounds = bounds.to_crs(bbox_crs)
+    return bounds
 
 def read_gdf_file(path):
     import geopandas as gpd
@@ -229,7 +229,7 @@ def read_shape_zip(url, file_index=0, name_prefix=""):
     return df
 
 @fused.cache
-def stac_to_gdf(bbox, datetime='2024', collections=["sentinel-2-l2a"], columns=['id', 'geometry', 'bbox', 'assets', 'datetime', 'eo:cloud_cover'], query={"eo:cloud_cover": {"lt": 20}}, catalog='mspc', explode_assets=False, version=0):
+def stac_to_gdf(bounds, datetime='2024', collections=["sentinel-2-l2a"], columns=['id', 'geometry', 'bounds', 'assets', 'datetime', 'eo:cloud_cover'], query={"eo:cloud_cover": {"lt": 20}}, catalog='mspc', explode_assets=False, version=0):
     import pystac_client
     import stac_geoparquet
     if catalog.lower()=='aws':
@@ -245,7 +245,7 @@ def stac_to_gdf(bbox, datetime='2024', collections=["sentinel-2-l2a"], columns=[
         catalog = pystac_client.Client.open(catalog)
     items = catalog.search(
         collections=collections,
-        bbox=bbox.total_bounds,
+        bbox=bounds.total_bounds,
         datetime=datetime,
         query=query,
         ).item_collection()
@@ -267,12 +267,12 @@ def stac_to_gdf(bbox, datetime='2024', collections=["sentinel-2-l2a"], columns=[
         return gdf
 
 @fused.cache
-def get_url_aws_stac(bbox, collections=["cop-dem-glo-30"]):
+def get_url_aws_stac(bounds, collections=["cop-dem-glo-30"]):
     import pystac_client
     catalog = pystac_client.Client.open("https://earth-search.aws.element84.com/v1")
     items = catalog.search(
         collections=collections,
-        bbox=bbox.total_bounds,
+        bbox=bounds.total_bounds,
     ).item_collection()
     url_list=[i['assets']['data']['href'] for i in items.to_dict()['features']]
     return url_list
@@ -308,7 +308,7 @@ def get_pc_token(url):
 
 @fused.cache(path="table_to_tile")
 def table_to_tile(
-    bbox,
+    bounds,
     table="s3://fused-asset/imagery/naip/",
     min_zoom=12,
     centorid_zoom_offset=0,
@@ -323,17 +323,17 @@ def table_to_tile(
     version = "0.2.3"
 
     try:
-        x, y, z = bbox[["x", "y", "z"]].iloc[0]
+        x, y, z = bounds[["x", "y", "z"]].iloc[0]
         if print_xyz:
             print(x, y, z)
     except:
         z = min_zoom
     df = fused.get_chunks_metadata(table)
-    if len(bbox) > 1:
-        bbox = bbox.dissolve().reset_index(drop=True)
+    if len(bounds) > 1:
+        bounds = bounds.dissolve().reset_index(drop=True)
     else:
-        bbox = bbox.reset_index(drop=True)
-    df = df[df.intersects(bbox.geometry[0])]
+        bounds = bounds.reset_index(drop=True)
+    df = df[df.intersects(bounds.geometry[0])]
     if z >= min_zoom:
         List = df[["file_id", "chunk_id"]].values
         if not len(List):
@@ -353,20 +353,20 @@ def table_to_tile(
                 [fused.get_chunk_from_table(table, fc[0], fc[1]) for fc in List]
             )
             print("available columns:", list(rows_df.columns))
-        df = rows_df[rows_df.intersects(bbox.geometry[0])]
-        df.crs = bbox.crs
+        df = rows_df[rows_df.intersects(bounds.geometry[0])]
+        df.crs = bounds.crs
         if (
             z < min_zoom + centorid_zoom_offset
         ):  # switch to centroid for the last one zoom level before showing metadata
             df.geometry = df.geometry.centroid
         if clip:
-            return df.clip(bbox).explode()
+            return df.clip(bounds).explode()
         else:
             return df
     else:
-        df.crs = bbox.crs
+        df.crs = bounds.crs
         if clip:
-            return df.clip(bbox).explode()
+            return df.clip(bounds).explode()
         else:
             return df
 
@@ -434,7 +434,7 @@ def earth_session(cred):
 
 @fused.cache(path="read_tiff")
 def read_tiff(
-    bbox,
+    bounds,
     input_tiff_path,
     filter_list=None,
     output_shape=(256, 256),
@@ -476,7 +476,7 @@ def read_tiff(
                     src_crs = src.crs
                 else:
                     src_crs=4326
-                src_bbox = bbox.to_crs(src_crs)
+                src_bbox = bounds.to_crs(src_crs)
 
                 if disjoint_bounds(src.bounds, BoundingBox(*src_bbox.total_bounds)):
                     return None
@@ -503,9 +503,9 @@ def read_tiff(
                         )
                         factor = int(new_factor // factor) * factor
 
-                # # transform_bounds = rasterio.warp.transform_bounds(3857, src_crs, *bbox["geometry"].bounds.iloc[0])
-                # window = src.window(*bbox.to_crs(src_crs).total_bounds)
-                # original_window = src.window(*bbox.to_crs(src_crs).total_bounds)
+                # # transform_bounds = rasterio.warp.transform_bounds(3857, src_crs, *bounds["geometry"].bounds.iloc[0])
+                # window = src.window(*bounds.to_crs(src_crs).total_bounds)
+                # original_window = src.window(*bounds.to_crs(src_crs).total_bounds)
                 # gridded_window = rasterio.windows.round_window_to_full_blocks(
                 #     original_window, [(1, 1)]
                 # )
@@ -540,7 +540,7 @@ def read_tiff(
             raise
         if output_shape:
             # reproject
-            bbox_web = bbox.to_crs("EPSG:3857")
+            bbox_web = bounds.to_crs("EPSG:3857")
             minx, miny, maxx, maxy = bbox_web.total_bounds
             dx = (maxx - minx) / output_shape[-1]
             dy = (maxy - miny) / output_shape[-2]
@@ -610,9 +610,9 @@ def get_bounds_tiff(tiff_path):
         bounds = src.bounds
         import shapely 
         import geopandas as gpd
-        bbox = gpd.GeoDataFrame({}, geometry=[shapely.box(*bounds)],crs=src.crs)
-        bbox = bbox.to_crs(4326)
-        return bbox
+        bounds = gpd.GeoDataFrame({}, geometry=[shapely.box(*bounds)],crs=src.crs)
+        bounds = bounds.to_crs(4326)
+        return bounds
 
 def gdf_to_mask_arr(gdf, shape, first_n=None):
     from rasterio.features import geometry_mask
@@ -633,7 +633,7 @@ def gdf_to_mask_arr(gdf, shape, first_n=None):
 
 
 def mosaic_tiff(
-    bbox,
+    bounds,
     tiff_list,
     reduce_function=None,
     filter_list=None,
@@ -650,7 +650,7 @@ def mosaic_tiff(
         if not input_tiff_path:
             continue
         new_tiff = read_tiff(
-            bbox=bbox,
+            bounds=bounds,
             input_tiff_path=input_tiff_path,
             filter_list=filter_list,
             output_shape=output_shape,
@@ -1122,17 +1122,17 @@ def geo_convert(
     # Handle the bounds case specifically
     if data is None or (isinstance(data, (list, tuple, np.ndarray)) and len(data) == 4):
         bounds = [-180, -90, 180, 90] if data is None else data
-        bbox = gpd.GeoDataFrame({}, geometry=[shapely.box(*bounds)], crs=crs or 4326)
-        return bbox
+        bounds = gpd.GeoDataFrame({}, geometry=[shapely.box(*bounds)], crs=crs or 4326)
+        return bounds
         
     # Handle xyz tile coordinates
     if isinstance(data, (list, tuple, np.ndarray)) and len(data) == 3:
         x, y, z = data
         tile = mercantile.Tile(x, y, z)
-        bbox = mercantile.bounds(tile)
+        bounds = mercantile.bounds(tile)
         gdf = gpd.GeoDataFrame(
             {"x": [x], "y": [y], "z": [z]},
-            geometry=[shapely.box(bbox.west, bbox.south, bbox.east, bbox.north)],
+            geometry=[shapely.box(bounds.west, bounds.south, bounds.east, bounds.north)],
             crs=4326
         )
         return gdf[['x', 'y', 'z', 'geometry']]
@@ -1315,7 +1315,7 @@ def clip_bbox_gdfs(
     def fn(df1, df2, buffer_distance=buffer_distance):
         if buffer_distance:
             utm_crs = df1.estimate_utm_crs()
-            # transform bbox to utm & buffer & then to df2_crs
+            # transform bounds to utm & buffer & then to df2_crs
             bbox_utm = geo_bbox(df1, dst_crs=utm_crs, verbose=verbose)
             bbox_utm_buff = geo_buffer(
                 bbox_utm, buffer_distance, utm_crs=None, dst_crs=None, verbose=verbose
@@ -1557,7 +1557,7 @@ def geo_samples(
     return geo_convert(pd.DataFrame(points, columns=["lng", "lat"]))[["geometry"]]
 
 
-def bbox_stac_items(bbox, table):
+def bbox_stac_items(bounds, table):
     import fused
     import geopandas as gpd
     import pandas as pd
@@ -1565,7 +1565,7 @@ def bbox_stac_items(bbox, table):
     import shapely
 
     df = fused.get_chunks_metadata(table)
-    df = df[df.intersects(bbox)]
+    df = df[df.intersects(bounds)]
     if len(df) > 10 or len(df) == 0:
         return None  # fault
     matching_images = []
@@ -1578,13 +1578,13 @@ def bbox_stac_items(bbox, table):
         matching_images.append(chunk_gdf)
 
     ret_gdf = pd.concat(matching_images)
-    ret_gdf = ret_gdf[ret_gdf.intersects(bbox)]
+    ret_gdf = ret_gdf[ret_gdf.intersects(bounds)]
     return ret_gdf
 
 
 # todo: switch to read_tiff with requester_pays option
 def read_tiff_naip(
-    bbox, input_tiff_path, crs, buffer_degree, output_shape, resample_order=0
+    bounds, input_tiff_path, crs, buffer_degree, output_shape, resample_order=0
 ):
     from io import BytesIO
 
@@ -1596,8 +1596,8 @@ def read_tiff_naip(
     with rasterio.Env(AWSSession(requester_pays=True)):
         with rasterio.open(input_tiff_path) as src:
             if buffer_degree != 0:
-                bbox.geometry = bbox.geometry.buffer(buffer_degree)
-            bbox_projected = bbox.to_crs(crs)
+                bounds.geometry = bounds.geometry.buffer(buffer_degree)
+            bbox_projected = bounds.to_crs(crs)
             window = src.window(*bbox_projected.total_bounds)
             data = src.read(window=window, boundless=True)
             zoom_factors = np.array(output_shape) / np.array(data[0].shape)
@@ -1609,7 +1609,7 @@ def read_tiff_naip(
 
 def image_server_bbox(
     image_url,
-    bbox=None,
+    bounds=None,
     time=None,
     size=512,
     bbox_crs=4326,
@@ -1621,16 +1621,16 @@ def image_server_bbox(
         import geopandas as gpd
         import shapely
 
-        gdf = gpd.GeoDataFrame(geometry=[shapely.box(*bbox)], crs=bbox_crs).to_crs(
+        gdf = gpd.GeoDataFrame(geometry=[shapely.box(*bounds)], crs=bbox_crs).to_crs(
             image_crs
         )
         print(gdf)
         minx, miny, maxx, maxy = gdf.total_bounds
     else:
-        minx, miny, maxx, maxy = list(bbox)
+        minx, miny, maxx, maxy = list(bounds)
     image_url = image_url.strip("/")
     url_template = f"{image_url}?f=image"
-    url_template += f"&bbox={minx},{miny},{maxx},{maxy}"
+    url_template += f"&bounds={minx},{miny},{maxx},{maxy}"
     if time:
         url_template += f"&time={time}"
     if image_crs:
@@ -1728,17 +1728,17 @@ def ee_initialize(service_account_name="", key_path=""):
 
 
 @fused.cache
-def run_pool_tiffs(bbox, df_tiffs, output_shape):
+def run_pool_tiffs(bounds, df_tiffs, output_shape):
     import numpy as np
 
     columns = df_tiffs.columns
 
     @fused.cache
-    def fn_read_tiff(tiff_url, bbox=bbox, output_shape=output_shape):
+    def fn_read_tiff(tiff_url, bounds=bounds, output_shape=output_shape):
         read_tiff = fused.load(
             "https://github.com/fusedio/udfs/tree/3c4bc47/public/common/"
         ).utils.read_tiff
-        return read_tiff(bbox, tiff_url, output_shape=output_shape)
+        return read_tiff(bounds, tiff_url, output_shape=output_shape)
 
     tiff_list = []
     for band in columns:
@@ -1754,7 +1754,7 @@ def run_pool_tiffs(bbox, df_tiffs, output_shape):
 
 
 def search_pc_catalog(
-    bbox,
+    bounds,
     time_of_interest,
     query={"eo:cloud_cover": {"lt": 5}},
     collection="sentinel-2-l2a",
@@ -1771,7 +1771,7 @@ def search_pc_catalog(
     # Search catalog
     items = catalog.search(
         collections=[collection],
-        bbox=bbox.total_bounds,
+        bbox=bounds.total_bounds,
         datetime=time_of_interest,
         query=query,
     ).item_collection()
@@ -1894,12 +1894,12 @@ def run_query(query, return_arrow=False):
         return con.sql(query).df()
 
 
-def ds_to_tile(ds, variable, bbox, na_values=0, cols_lonlat=('x', 'y')):
+def ds_to_tile(ds, variable, bounds, na_values=0, cols_lonlat=('x', 'y')):
     da = ds[variable]
     x_slice, y_slice = bbox_to_xy_slice(
-        bbox.total_bounds, ds.rio.shape, ds.rio.transform()
+        bounds.total_bounds, ds.rio.shape, ds.rio.transform()
     )
-    window = bbox_to_window(bbox.total_bounds, ds.rio.shape, ds.rio.transform())
+    window = bbox_to_window(bounds.total_bounds, ds.rio.shape, ds.rio.transform())
     py0 = py1 = px0 = px1 = 0
     if window.col_off < 0:
         px0 = -window.col_off
@@ -2648,8 +2648,8 @@ def get_tile(
         raise ValueError("target_num_tiles should be more than zero.")
 
     if target_num_tiles == 1:
-        bbox = geo_convert(bounds)
-        tile = mercantile.bounding_tile(*bbox.total_bounds)
+        bounds = geo_convert(bounds)
+        tile = mercantile.bounding_tile(*bounds.total_bounds)
         gdf = geo_convert((tile.x, tile.y, tile.z))
     else:
         zoom_level = (

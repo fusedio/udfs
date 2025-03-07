@@ -9,10 +9,10 @@ def udf_h3_embedding(h3_index="894509b022bffff", h3_size=8):
 
     # 1. Polygon from H3
     bounds = Polygon([coord[::-1] for coord in h3.cell_to_boundary(h3_index)])
-    bbox = gpd.GeoDataFrame({"h3_index": [h3_index], "geometry": [bounds]})
+    bounds = gpd.GeoDataFrame({"h3_index": [h3_index], "geometry": [bounds]})
 
     # 2. Load Overture Places
-    gdf = fused.run("UDF_Overture_Maps_Example", bbox=bbox, overture_type="place")
+    gdf = fused.run("UDF_Overture_Maps_Example", bounds=bounds, overture_type="place")
 
     # 3. Normalize the 'categories' column into individual columns
     categories_df = pd.json_normalize(gdf["categories"]).reset_index(drop=True)
@@ -94,7 +94,7 @@ aoi = gpd.GeoDataFrame.from_features(
 
 
 @fused.udf
-def udf(bbox: fused.types.TileGDF = aoi, h3_size=8):
+def udf(bounds: fused.types.TileGDF = aoi, h3_size=8):
     import duckdb
     import geopandas as gpd
     import h3
@@ -108,7 +108,7 @@ def udf(bbox: fused.types.TileGDF = aoi, h3_size=8):
     utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
 
     # 1. Polyfill AOI
-    h3s = h3.polygon_to_cells(h3.geo_to_h3shape(bbox.geometry.iloc[0]), h3_size)
+    h3s = h3.polygon_to_cells(h3.geo_to_h3shape(bounds.geometry.iloc[0]), h3_size)
 
     @fused.cache
     def run_udfs(h3_index):

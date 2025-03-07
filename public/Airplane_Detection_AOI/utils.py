@@ -124,7 +124,7 @@ def divide_and_conquer(bb, udf_fn, zm = 12, as_list=False):
 
     tile_list = list(gdf_tiles['bounds'].values)
     if len(tile_list)>300:
-        print('there are ',len(tile_list), 'tiles, too large a bbox, shrink it until there are less than 300 tiles')
+        print('there are ',len(tile_list), 'tiles, too large a bounds, shrink it until there are less than 300 tiles')
     pair_list = run_async(udf_fn, tile_list, delay=0., max_workers=300)
     print('got pair list')
     pair_list_mercator = [(reproject_raster(img,bounds, crs_in = 4326, crs_out = 3857),bounds) for img,bounds in pair_list]

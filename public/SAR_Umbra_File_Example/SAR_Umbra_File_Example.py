@@ -12,12 +12,12 @@ def udf(name="colombia_taparal"):
 
         geo_extend = df.geometry.values[0]
         geo_extend = shapely.affinity.rotate(geo_extend, rotation)
-        arr, bbox = rio_transform_bbox(
+        arr, bounds = rio_transform_bbox(
             tiff_url, geo_extend, do_tranform=do_tranform, overview_level=overview_level
         )
-        return arr, bbox
+        return arr, bounds
 
-    arr, bbox = get_image(
+    arr, bounds = get_image(
         meta_url=CATALOG[name]["meta_url"],
         tiff_url=CATALOG[name]["tiff_url"],
         overview_level=1,
@@ -25,7 +25,7 @@ def udf(name="colombia_taparal"):
     )
 
     bounds = (
-        gpd.GeoDataFrame(geometry=[shapely.box(*bbox)], crs="32618")
+        gpd.GeoDataFrame(geometry=[shapely.box(*bounds)], crs="32618")
         .to_crs(4326)
         .buffer(-0.0005)
         .total_bounds

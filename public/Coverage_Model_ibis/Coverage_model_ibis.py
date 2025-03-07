@@ -1,8 +1,8 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF = None, tech: str = 'Tarana', site_count: int = 1, col_plot: str = 'Rx_dBm'):
+def udf(bounds: fused.types.TileGDF = None, tech: str = 'Tarana', site_count: int = 1, col_plot: str = 'Rx_dBm'):
     """
     Function to read the data from the fused coverage model
-    :param bbox:
+    :param bounds:
     :param tech:
     :param site_count:
     :param col_plot:
@@ -17,13 +17,13 @@ def udf(bbox: fused.types.TileGDF = None, tech: str = 'Tarana', site_count: int 
     from utils import h3_cell_to_parent, h3_cell_to_boundary_wkt, ST_GeomFromText
 
     @fused.cache
-    def read_data(bbox, url: str, tech: str, site_count: int, col_plot: str, con_ibis):
+    def read_data(bounds, url: str, tech: str, site_count: int, col_plot: str, con_ibis):
         import ibis
         from ibis import _
         ibis.set_backend(con_ibis)
 
-        minx, miny, maxx, maxy = bbox.bounds.values[0]
-        parent_res = 15 - (19 - bbox.z.values[0])
+        minx, miny, maxx, maxy = bounds.bounds.values[0]
+        parent_res = 15 - (19 - bounds.z.values[0])
 
         # Read the data from the parquet file
         t_gdf = (con_ibis
@@ -53,7 +53,7 @@ def udf(bbox: fused.types.TileGDF = None, tech: str = 'Tarana', site_count: int 
     con_ibis.raw_sql("INSTALL h3 FROM community")
     con_ibis.raw_sql("LOAD h3")
 
-    gdf = read_data(bbox, s3_url, tech, site_count, col_plot, con_ibis)
+    gdf = read_data(bounds, s3_url, tech, site_count, col_plot, con_ibis)
 
     if len(gdf):
         # Normalize colors

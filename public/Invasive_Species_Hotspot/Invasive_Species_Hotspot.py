@@ -1,6 +1,6 @@
 @fused.udf 
 def udf(
-    bbox: fused.types.TileGDF = None,
+    bounds: fused.types.TileGDF = None,
     h3_res: int=12
 ):
     import h3
@@ -10,24 +10,24 @@ def udf(
     overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.
     
     # A. Bridges
-    gdf_bridges = overture_utils.get_overture(bbox=bbox, overture_type='infrastructure')
+    gdf_bridges = overture_utils.get_overture(bounds=bounds, overture_type='infrastructure')
     gdf_bridges = gdf_bridges[gdf_bridges['subtype'] == 'bridge']
     
     # B. Water 
-    gdf_water = overture_utils.get_overture(bbox=bbox,overture_type='water')
+    gdf_water = overture_utils.get_overture(bounds=bounds,overture_type='water')
     gdf_water = gdf_water[gdf_water['class'].isin(['river', 'stream', 'lagoon', 'pond', 'drain'])]
 
     # Keep only bridges that intersect non-oceanic water; (riparean) rivers
     gdf_bridges = gdf_bridges.sjoin(gdf_water[['geometry']], how='inner')
 
     # C. Golf Courses
-    gdf_golf = overture_utils.get_overture(bbox=bbox,theme = 'base',overture_type = 'land_use')
+    gdf_golf = overture_utils.get_overture(bounds=bounds,theme = 'base',overture_type = 'land_use')
     gdf_golf = gdf_golf[gdf_golf['class'] == 'golf_course'].dissolve()
 
     # D. Strahler
     try:
         # Skip if no GEE
-        gdf_strahler = get_strahler_gdf(bbox)
+        gdf_strahler = get_strahler_gdf(bounds)
         gdf_water = gdf_water.sjoin(gdf_strahler, how='left')
         # Sort the dataframe by 'strahler_value' in descending order
         gdf_water = gdf_water.sort_values('strahler_value', ascending=False).drop_duplicates(subset='geometry', keep='first')

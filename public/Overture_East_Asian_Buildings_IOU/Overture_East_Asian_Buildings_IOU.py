@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF, res=14):
+def udf(bounds: fused.types.TileGDF, res=14):
     import h3
     import pandas as pd
 
@@ -9,11 +9,11 @@ def udf(bbox: fused.types.TileGDF, res=14):
 
     # 1. Load East Asia Zenodo Buildings
     path = "s3://fused-asset/misc/jennings/East_Asian_buildings_parquet3_ingested_3dec/"
-    gdf_zenodo = utils.table_to_tile(bbox, table=path)
+    gdf_zenodo = utils.table_to_tile(bounds, table=path)
     print("Bulding Count EA: ", len(gdf_zenodo))
 
     # 2. Load Overture Buildings
-    gdf_overture = overture_utils.get_overture(bbox=bbox)
+    gdf_overture = overture_utils.get_overture(bounds=bounds)
     print("Bulding Count Overture: ", len(gdf_overture))
 
     # 3. IOU

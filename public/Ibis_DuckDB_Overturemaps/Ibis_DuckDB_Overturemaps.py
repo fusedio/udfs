@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.ViewportGDF = None):
+def udf(bounds: fused.types.ViewportGDF = None):
     import ibis
     from ibis import _
 
@@ -10,7 +10,7 @@ def udf(bbox: fused.types.ViewportGDF = None):
     url = "s3://overturemaps-us-west-2/release/2024-11-13.0/theme=base/type=infrastructure/*"
 
     # Structure bounding box to spatially filter viewport
-    if bbox is None:
+    if bounds is None:
         minx, miny, maxx, maxy = [
             4.83097697496089,
             52.32640789400446,
@@ -18,16 +18,16 @@ def udf(bbox: fused.types.ViewportGDF = None):
             52.40928707739445,
         ]
     else:
-        minx, miny, maxx, maxy = bbox.bounds.values[0]
+        minx, miny, maxx, maxy = bounds.bounds.values[0]
 
     # Read data
     t = con.read_parquet(url, table_name="infra-usa")
 
     ibis_table = t.filter(
-        _.bbox.xmin > minx,
-        _.bbox.ymin > miny,
-        _.bbox.xmax < maxx,
-        _.bbox.ymax < maxy,
+        _.bounds.xmin > minx,
+        _.bounds.ymin > miny,
+        _.bounds.xmax < maxx,
+        _.bounds.ymax < maxy,
         _.subtype.isin(["pedestrian", "water"]),
     ).select(["geometry", "subtype", "class"])
 

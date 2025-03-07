@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox: fused.types.TileGDF = None,
+    bounds: fused.types.TileGDF = None,
     index_min: float = 0.3,
     index_max: float = 1.0,
     index_method: int = 0,
@@ -11,7 +11,7 @@ def udf(
     from utils import process_image, url_to_arr
     
     # Get the bounding box coordinates
-    x, y, z = bbox[["x", "y", "z"]].iloc[0]
+    x, y, z = bounds[["x", "y", "z"]].iloc[0]
     print("Zoom level:", z)
 
     # ArcGIS Online World Imagery basemap

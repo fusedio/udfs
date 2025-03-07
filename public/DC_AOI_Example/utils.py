@@ -8,7 +8,7 @@ utils = fused.load(
 
 @fused.cache
 def get_arr(
-    bbox,
+    bounds,
     time_of_interest,
     output_shape,
     nth_item=None,
@@ -18,7 +18,7 @@ def get_arr(
     greenest_example_utils = fused.load('https://github.com/fusedio/udfs/tree/9bfb5d0/public/Satellite_Greenest_Pixel').utils
 
     stac_items = greenest_example_utils.search_pc_catalog(
-        bbox=bbox,
+        bounds=bounds,
         time_of_interest=time_of_interest,
         query={"eo:cloud_cover": {"lt": 5}},
         collection="sentinel-2-l2a"
@@ -31,10 +31,10 @@ def get_arr(
         if nth_item > len(df_tiff_catalog):
             raise ValueError(f'{nth_item} > total number of images ({len(df_tiff_catalog)})') 
         df_tiff_catalog = df_tiff_catalog[nth_item:nth_item + 1]
-        arrs_out = greenest_example_utils.run_pool_tiffs(bbox, df_tiff_catalog, output_shape)
+        arrs_out = greenest_example_utils.run_pool_tiffs(bounds, df_tiff_catalog, output_shape)
         arr = arrs_out.squeeze()
     else:
-        arrs_out = greenest_example_utils.run_pool_tiffs(bbox, df_tiff_catalog, output_shape)
+        arrs_out = greenest_example_utils.run_pool_tiffs(bounds, df_tiff_catalog, output_shape)
         arr = greenest_example_utils.get_greenest_pixel(arrs_out, how='median', fillna=True)
     return arr
     

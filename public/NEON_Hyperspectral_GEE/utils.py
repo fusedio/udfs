@@ -1,5 +1,5 @@
 @fused.cache
-def fetch_rgb_udf(bbox: fused.types.TileGDF = None, neon_site: str = "SRER"):
+def fetch_rgb_udf(bounds: fused.types.TileGDF = None, neon_site: str = "SRER"):
     import ee
     import numpy as np
     import xarray
@@ -13,8 +13,8 @@ def fetch_rgb_udf(bbox: fused.types.TileGDF = None, neon_site: str = "SRER"):
     ee.Initialize(opt_url="https://earthengine-highvolume.googleapis.com", credentials=credentials)
 
     # Create collection
-    geom = ee.Geometry.Rectangle(*bbox.total_bounds)
-    scale = 1 / 2 ** max(0, bbox.z[0])
+    geom = ee.Geometry.Rectangle(*bounds.total_bounds)
+    scale = 1 / 2 ** max(0, bounds.z[0])
 
     # Get NEON RGB image
     ic = ee.ImageCollection("projects/neon-prod-earthengine/assets/RGB/001")\

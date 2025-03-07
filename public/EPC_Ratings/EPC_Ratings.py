@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF):
+def udf(bounds: fused.types.TileGDF):
     # Load Addresscloud data
     path: str = "s3://us-west-2.opendata.source.coop/addresscloud/epc/geoparquet-local-authority/Liverpool.parquet"
     utils = fused.load(
@@ -12,7 +12,7 @@ def udf(bbox: fused.types.TileGDF):
         "UDF_Overture_Maps_Example",
         theme="buildings",
         overture_type="building",
-        bbox=bbox,
+        bounds=bounds,
     )
 
     # Join
