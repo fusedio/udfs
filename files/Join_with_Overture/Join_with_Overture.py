@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox: fused.types.Tile, path: str, overture_type="place", clip: bool = False
+    bounds: fused.types.Tile, path: str, overture_type="place", clip: bool = False
 ):
     theme_type = {
         "building": "buildings",
@@ -18,18 +18,18 @@ def udf(
     }
     try:
         utils = fused.load(
-            "https://github.com/fusedio/udfs/tree/95872cd/public/common"
+            "https://github.com/fusedio/udfs/tree/2ea46f3/public/common"
         ).utils
         gdf = utils.read_gdf_file(path).to_crs("EPSG:4326")
     except Exception as e:
         print("This file seems to not contain geometry.", str(e))
         return
-    overture_udf = fused.load('https://github.com/fusedio/udfs/tree/c8c3c40/public/Overture_Maps_Example/')
+    overture_udf = fused.load('https://github.com/fusedio/udfs/tree/2ea46f3/public/Overture_Maps_Example/')
     gdf_overture = fused.run(
         overture_udf,
         theme=theme_type[overture_type],
         overture_type=overture_type,
-        bbox=bbox,
+        bounds=bounds,
         engine='local'
     )
     if len(gdf_overture) == 0:
