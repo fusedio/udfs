@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF = None, n=10):
+def udf(bbox: fused.types.Tile = None, n=10):
     import json
 
     import core_utils

@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.TileGDF = None, join_with_nsi: bool=True):
+def udf(bounds: fused.types.Tile = None, join_with_nsi: bool=True):
     import geopandas as gpd
     import pandas as pd
     import requests

@@ -39,7 +39,7 @@ def arr_to_color(arr, color_map={1: (65, 155, 223), 2: (57, 125, 73)}):
     return np.asarray(mapped_arr).astype("uint8")
 
 
-def bbox_stac_items(bounds, table):
+def bounds_stac_items(bounds, table):
     import fused
     import pandas as pd
 

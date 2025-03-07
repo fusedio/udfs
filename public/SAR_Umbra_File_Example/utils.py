@@ -1,4 +1,4 @@
-def rio_transform_bbox(raster_url, geo_extend, do_tranform=True, overview_level=None):
+def rio_transform_bounds(raster_url, geo_extend, do_tranform=True, overview_level=None):
     """This function takes the image and the extend polygon and returns the transformed image and the bounds"""
     import numpy as np
     import rasterio
@@ -13,7 +13,7 @@ def rio_transform_bbox(raster_url, geo_extend, do_tranform=True, overview_level=
         if not do_tranform:
             return arr, geo_extend.bounds
 
-        # Transform using affine based on geo_extend to bbox_bounds
+        # Transform using affine based on geo_extend to bounds_bounds
         crs = 32618
         dst_shape = src.height, src.width
         destination_data = np.zeros(dst_shape, src.dtypes[0])

@@ -1,6 +1,6 @@
 @fused.cache
 def get_overture(
-    bounds: fused.types.TileGDF = None,
+    bounds: fused.types.Tile = None,
     release: str = "2024-10-23-0",
     theme: str = None,
     overture_type: str = None,

@@ -1,5 +1,5 @@
 def udf(
-    bounds: fused.types.TileGDF = None,
+    bounds: fused.types.Tile = None,
     provider: str = "AWS"
 ):
     import odc.stac

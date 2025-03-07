@@ -1,6 +1,6 @@
 @fused.udf 
 def udf(
-    bounds: fused.types.TileGDF = None,
+    bounds: fused.types.Tile = None,
     release: str = "2025-01-22-0",
     theme: str = None,
     overture_type: str = None, 

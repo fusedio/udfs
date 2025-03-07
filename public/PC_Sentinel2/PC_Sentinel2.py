@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.TileGDF = None,
+    bounds: fused.types.Tile = None,
     time_of_interest="2020-09-01/2021-10-30",
     collection="sentinel-2-l2a",
 ):

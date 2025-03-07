@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.TileGDF, stats_type="mean", type='hex', color_scale:float=1):
+def udf(bounds: fused.types.Tile, stats_type="mean", type='hex', color_scale:float=1):
     import pandas as pd
     import rioxarray
     from utils import aggregate_df_hex, url_to_plasma

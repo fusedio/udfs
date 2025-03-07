@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.TileGDF=None):
+def udf(bounds: fused.types.Tile=None):
     import pandas as pd
     import geopandas as gpd
 

@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.TileGDF = None):
+def udf(bounds: fused.types.Tile = None):
     # Get the bounding box coordinates
     x, y, z = bounds[["x", "y", "z"]].iloc[0]
     # Load pinned versions of utility functions.

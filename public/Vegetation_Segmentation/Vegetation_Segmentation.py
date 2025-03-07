@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.TileGDF = None,
+    bounds: fused.types.Tile = None,
     index_min: float = 0.3,
     index_max: float = 1.0,
     index_method: int = 0,

@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.TileGDF = None, 
+def udf(bounds: fused.types.Tile = None, 
         resolution: int  = 11,
         poi_category: str = "Coffee Shop",
         use_columns = ["subtype"], 

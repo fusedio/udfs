@@ -1,5 +1,5 @@
 @fused.cache
-def fetch_rgb_udf(bounds: fused.types.TileGDF = None, neon_site: str = "SRER"):
+def fetch_rgb_udf(bounds: fused.types.Tile = None, neon_site: str = "SRER"):
     import ee
     import numpy as np
     import xarray

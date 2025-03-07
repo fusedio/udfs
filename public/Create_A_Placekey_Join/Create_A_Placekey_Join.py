@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.TileGDF,
+def udf(bounds: fused.types.Tile,
         dataset1: str = 'home-health-agency-medicare-enrollments',
         dataset2: str = 'national-provider-identifier',
         preview: bool=False):

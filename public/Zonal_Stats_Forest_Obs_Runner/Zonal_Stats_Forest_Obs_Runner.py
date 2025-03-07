@@ -78,10 +78,10 @@ def udf(
     # 4. Load tiff
     filename = gdf_cell[["url"]].iloc[0].values[0]
     tiff_url = f"s3://fused-asset/gfc2020/{filename}"
-    geom_bbox_muni = utils.geo_bbox(gdf_muni).geometry[0]
+    geom_bounds_muni = utils.geo_bbox(gdf_muni).geometry[0]
 
     # 5. Get TIFF dataset
-    da, _ = zonal_utils.rio_clip_geom_from_url(geom_bbox_muni, tiff_url)
+    da, _ = zonal_utils.rio_clip_geom_from_url(geom_bounds_muni, tiff_url)
     
     # 6. Zonal stats
     stats_dict={

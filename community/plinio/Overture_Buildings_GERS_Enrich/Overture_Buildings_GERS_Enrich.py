@@ -3,7 +3,7 @@ import json
 aoi = json.dumps({"type":"FeatureCollection","features":[{"type":"Feature","properties":{},"geometry":{"coordinates":[[[-73.9945443706057,40.751205998161026],[-73.9945443706057,40.749882643934455],[-73.99222917395902,40.749882643934455],[-73.99222917395902,40.751205998161026],[-73.9945443706057,40.751205998161026]]],"type":"Polygon"}}]})
 
 @fused.udf
-def udf(bbox: fused.types.TileGDF=aoi):
+def udf(bbox: fused.types.Tile=aoi):
     import geopandas as gpd
 
     # 1. Convert bbox to GeoDataFrame

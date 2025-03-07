@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.TileGDF,
+    bounds: fused.types.Tile,
     collection_id="HLSS30_2.0",  # Landsat:'HLSL30_2.0' & Sentinel:'HLSS30_2.0'
     band="B8A",  # Landsat:'B05' & Sentinel:'B8A'
     date_range="2023-10/2024-01",

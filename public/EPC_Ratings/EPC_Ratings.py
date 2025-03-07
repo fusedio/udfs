@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.TileGDF):
+def udf(bounds: fused.types.Tile):
     # Load Addresscloud data
     path: str = "s3://us-west-2.opendata.source.coop/addresscloud/epc/geoparquet-local-authority/Liverpool.parquet"
     utils = fused.load(

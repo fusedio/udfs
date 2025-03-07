@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.TileGDF = None,
+    bounds: fused.types.Tile = None,
     class_source: str = 'combined', 
     building_source: str = 'Overture'
 ):

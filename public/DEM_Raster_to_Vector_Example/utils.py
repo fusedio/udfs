@@ -25,7 +25,7 @@ def get_dem(bounds):
         crs="EPSG:3857",
         bands=["data"],
         resolution=resolution,
-        bbox=bounds.total_bounds,
+        bounds=bounds.total_bounds,
     ).astype(float)
     xr_data = ds["data"].max(dim="time")
     return xr_data

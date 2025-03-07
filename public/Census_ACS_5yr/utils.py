@@ -1,7 +1,7 @@
 import fused
 
 @fused.cache 
-def acs_5yr_bbox(
+def acs_5yr_bounds(
     bounds,
     census_variable='population',
     suffix='simplify_01',

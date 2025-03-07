@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.TileGDF, res=14):
+def udf(bounds: fused.types.Tile, res=14):
     import h3
     import pandas as pd
 

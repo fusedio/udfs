@@ -95,7 +95,7 @@ aoi = gpd.GeoDataFrame.from_features(
 
 
 @fused.udf
-def udf(bounds: fused.types.TileGDF = aoi, h3_size=8):
+def udf(bounds: fused.types.Tile = aoi, h3_size=8):
     import duckdb
     import geopandas as gpd
     import h3

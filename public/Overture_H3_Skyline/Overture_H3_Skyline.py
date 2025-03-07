@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.TileGDF = None, h3_size: int = None, h3_scale: int=2):
+def udf(bounds: fused.types.Tile = None, h3_size: int = None, h3_scale: int=2):
     import h3
 
     # Load pinned versions of utility functions.

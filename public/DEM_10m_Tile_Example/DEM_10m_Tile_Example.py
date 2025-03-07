@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.TileGDF,
+    bounds: fused.types.Tile,
     collection="3dep-seamless",
     band="data",
     res_factor:int=1
@@ -11,7 +11,6 @@ def udf(
     import planetary_computer
     import pystac_client
     from pystac.extensions.eo import EOExtension as eo
-
     utils = fused.load(
         "https://github.com/fusedio/udfs/tree/5cfb808/public/common/"
     ).utils

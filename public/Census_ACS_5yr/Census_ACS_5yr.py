@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.TileGDF = None,
+    bounds: fused.types.Tile = None,
     census_variable: str = "Total Pop",
     scale_factor: float = 200,
     is_density: bool = True,
@@ -8,7 +8,7 @@ def udf(
 ):
     import numpy as np
     
-    from utils import acs_5yr_bbox
+    from utils import acs_5yr_bounds
 
     # different geometry details per zoom level
     if bounds.z[0] > 12:
@@ -24,7 +24,7 @@ def udf(
     print(suffix)
 
     # read the variables
-    gdf = acs_5yr_bbox(
+    gdf = acs_5yr_bounds(
         bounds.total_bounds, census_variable=census_variable, suffix=suffix, year=year
     )
     if len(gdf) == 0:

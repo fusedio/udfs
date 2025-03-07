@@ -1,7 +1,7 @@
 # todo: investigate why sometime configure_s3_access get cached
 @fused.udf
 def udf(
-    bounds: fused.types.TileGDF,
+    bounds: fused.types.Tile,
     time_of_interest="2022-09-01/2023-10-30",
     red_band="red",
     nir_band="nir08",

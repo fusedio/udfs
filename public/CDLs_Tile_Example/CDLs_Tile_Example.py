@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.TileGDF = None,
+    bounds: fused.types.Tile = None,
     year: int = 2022,
     crop_type: str = "",
     chip_len: int = 256,

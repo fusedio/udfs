@@ -19,7 +19,7 @@ def dsm_to_tile(
             overview_level = 1
         if verbose:
             print(f"{overview_level=}")
-        bounds_list = bbox_to_navigation(bounds, interval=1)
+        bounds_list = bounds_to_navigation(bounds, interval=1)
 
         for b in bounds_list:
             zoom_level = 3
@@ -34,7 +34,7 @@ def dsm_to_tile(
             overview_level = 1
         if verbose:
             print(f"{overview_level=}")
-        bounds_list = bbox_to_navigation(bounds, interval=10)
+        bounds_list = bounds_to_navigation(bounds, interval=10)
         for b in bounds_list:
             zoom_level = 2
             tiff_list.append(
@@ -63,7 +63,7 @@ def convert_lng(lng):
         return f"W{str(1000+abs(lng))[-3:]}.00"
 
 
-def bbox_to_navigation(
+def bounds_to_navigation(
     bounds: gpd.geodataframe.GeoDataFrame,
     interval=1
 ):

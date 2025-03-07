@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.TileGDF,
+    bounds: fused.types.Tile,
     var="NDVI",
     chip_len: int=256,
     buffer_degree=0.000,
@@ -13,7 +13,7 @@ def udf(
         import numpy as np
 
         output_shape = (chip_len, chip_len)
-        matching_items = utils.bbox_stac_items(
+        matching_items = utils.bounds_stac_items(
             bounds.geometry[0], table="s3://fused-asset/imagery/naip/"
         )
         max_matching_items = 10

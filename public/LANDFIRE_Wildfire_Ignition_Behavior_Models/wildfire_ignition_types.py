@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.TileGDF,
+    bounds: fused.types.Tile,
     cmap_name: str = None,  # 'tab20c'
 ):
     import rasterio

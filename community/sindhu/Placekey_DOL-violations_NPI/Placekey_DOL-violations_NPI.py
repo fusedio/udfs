@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF, preview: bool=False):
+def udf(bbox: fused.types.Tile, preview: bool=False):
     #import necessary things
     from utils import placekey_merge, get_placekeyd_dataset
     import pandas as pd

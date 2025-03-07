@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.TileGDF = None):
+def udf(bounds: fused.types.Tile = None):
     import geopandas as gpd
     # Load pinned versions of utility functions.
     utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils

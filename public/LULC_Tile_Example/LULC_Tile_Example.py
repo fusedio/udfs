@@ -1,17 +1,17 @@
 import fused
 
 @fused.udf
-def udf(bounds: fused.types.TileGDF, context, year="2022", chip_len:int=256):
+def udf(bounds: fused.types.Tile, context, year="2022", chip_len:int=256):
     if bounds.z[0] >= 5:
         from utils import (
             LULC_IO_COLORS,
             arr_to_color,
-            bbox_stac_items,
+            bounds_stac_items,
             mosaic_tiff,
             s3_to_https,
         )
 
-        matching_items = bbox_stac_items(
+        matching_items = bounds_stac_items(
             bounds.geometry[0], table="s3://fused-asset/lulc/io10m/"
         )
         mask = matching_items["datetime"].map(lambda x: str(x)[:4] == year)

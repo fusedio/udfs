@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.TileGDF = None, crs="EPSG:4326", res=7):
+def udf(bounds: fused.types.Tile = None, crs="EPSG:4326", res=7):
     import fused
     import pandas as pd
     import geopandas as gpd

@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.TileGDF, year: str = "2016", month: str = "07", period: str ="b", chip_len: int = 1024):
+def udf(bounds: fused.types.Tile, year: str = "2016", month: str = "07", period: str ="b", chip_len: int = 1024):
     xy_cols = ['lon', 'lat']
     from utils import get_masked_array, get_da, get_da_bounds, clip_arr
     import pandas as pd
