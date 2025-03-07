@@ -19,7 +19,7 @@ def udf(
     # year can be passed in as a parameter for the function
     item_dicts = stacrs.search(
         "https://data.ldn.auspatious.com/geo_ls_lp/geo_ls_lp_0_1_0.parquet",
-        bounds=bounds.total_bounds,
+        bbox=bounds.total_bounds,
         datetime=f"{year}-01-01T00:00:00.000Z/{year}-12-31T23:59:59.999Z",
     )
 
