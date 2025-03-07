@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF, year: str = "2016", month: str = "07", period: str ="b", chip_len: int = 1024):
+def udf(bounds: fused.types.TileGDF, year: str = "2016", month: str = "07", period: str ="b", chip_len: int = 1024):
     xy_cols = ['lon', 'lat']
     from utils import get_masked_array, get_da, get_da_bounds, clip_arr
     import pandas as pd
@@ -15,7 +15,7 @@ def udf(bbox: fused.types.TileGDF, year: str = "2016", month: str = "07", period
     
     # Clip the array based on the bounding box
     arr_aoi = clip_arr(da.values, 
-                       bounds_aoi=bbox.total_bounds, 
+                       bounds_aoi=bounds.total_bounds, 
                        bounds_total=get_da_bounds(da, xy_cols=xy_cols))
     
     # Extract raw SIF values

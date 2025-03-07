@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox: fused.types.TileGDF,
+    bounds: fused.types.TileGDF,
     collection_id="HLSS30_2.0",  # Landsat:'HLSL30_2.0' & Sentinel:'HLSS30_2.0'
     band="B8A",  # Landsat:'B05' & Sentinel:'B8A'
     date_range="2023-10/2024-01",
@@ -23,7 +23,7 @@ def udf(
     
     STAC_URL = "https://cmr.earthdata.nasa.gov/stac"
 
-    z = bbox.z[0]
+    z = bounds.z[0]
     if z >= 9:
 
         catalog = Client.open(f"{STAC_URL}/LPCLOUD/")
@@ -45,7 +45,7 @@ def udf(
 
         search = catalog.search(
             collections=[collection_id],
-            bbox=bbox.total_bounds,
+            bbox=bounds.total_bounds,
             datetime=date_range,
             limit=100,
         )
@@ -74,7 +74,7 @@ def udf(
             return None
 
         arr = utils.mosaic_tiff(
-            bbox,
+            bounds,
             band_urls[:n_mosaic],
             reduce_function=lambda x: np.max(x, axis=0),
             overview_level=max(0, 12 - z),

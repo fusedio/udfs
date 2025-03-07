@@ -7,7 +7,7 @@ visualize = fused.load(
 ).utils.visualize
 
 @fused.cache
-def get_dem(bbox):
+def get_dem(bounds):
     collection = 'cop-dem-glo-90'
     # Reduce the resolution to get a quicker, but less accurate, results.
     resolution = 90*2
@@ -17,7 +17,7 @@ def get_dem(bbox):
 
     items = catalog.search(
         collections=[collection],
-        bbox=bbox.total_bounds,
+        bbox=bounds.total_bounds,
     ).item_collection()
     
     ds = odc.stac.load(
@@ -25,7 +25,7 @@ def get_dem(bbox):
         crs="EPSG:3857",
         bands=["data"],
         resolution=resolution,
-        bbox=bbox.total_bounds,
+        bbox=bounds.total_bounds,
     ).astype(float)
     xr_data = ds["data"].max(dim="time")
     return xr_data

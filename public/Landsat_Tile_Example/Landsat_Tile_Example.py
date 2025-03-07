@@ -1,7 +1,7 @@
 # todo: investigate why sometime configure_s3_access get cached
 @fused.udf
 def udf(
-    bbox: fused.types.TileGDF,
+    bounds: fused.types.TileGDF,
     time_of_interest="2022-09-01/2023-10-30",
     red_band="red",
     nir_band="nir08",
@@ -24,14 +24,14 @@ def udf(
     # Search for imagery within a specified bounding box and time period
     items = catalog.search(
         collections=[collection],
-        bbox=bbox.total_bounds,
+        bbox=bounds.total_bounds,
         datetime=time_of_interest,
         query={"eo:cloud_cover": {"lt": cloud_threshold}},
     ).item_collection()
     print(f"Returned {len(items)} Items")
 
     # Determine the pixel spacing for the zoom level
-    pixel_spacing = int(5 * 2 ** (15 - bbox.z[0]))
+    pixel_spacing = int(5 * 2 ** (15 - bounds.z[0]))
     print(f"{pixel_spacing = }")
 
     # Load imagery into an XArray dataset
@@ -41,7 +41,7 @@ def udf(
         crs="EPSG:3857",
         bands=[nir_band, red_band],
         resolution=pixel_spacing,
-        bbox=bbox.total_bounds,
+        bbox=bounds.total_bounds,
     ).astype(float)
 
     # Calculate the Normalized Difference Vegetation Index

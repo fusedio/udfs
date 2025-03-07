@@ -1,16 +1,16 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF = None, join_with_nsi: bool=True):
+def udf(bounds: fused.types.TileGDF = None, join_with_nsi: bool=True):
     import geopandas as gpd
     import pandas as pd
     import requests
 
-    if bbox.iloc[0].z < 10:
+    if bounds.iloc[0].z < 10:
         return None
 
-    overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.
+    overture_utils = fused.load("https://github.com/fusedio/udfs/tree/2ea46f3/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.
     
     # 1. Load Overture Buildings
-    gdf_overture = overture_utils.get_overture(bbox=bbox)
+    gdf_overture = overture_utils.get_overture(bounds=bounds)
 
     if not join_with_nsi:
         gdf_overture['metric'] = gdf_overture['height']
@@ -19,7 +19,7 @@ def udf(bbox: fused.types.TileGDF = None, join_with_nsi: bool=True):
     # 2. Load NSI from API
     response = requests.post(
         url="https://nsi.sec.usace.army.mil/nsiapi/structures?fmt=fc",
-        json=bbox.__geo_interface__,
+        json=bounds.__geo_interface__,
     )
 
     # 3. Create NSI gdf

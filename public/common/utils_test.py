@@ -21,7 +21,7 @@ def test_mosaic_tiff_with_some_404s():
         'https://s3.ap-northeast-1.wasabisys.com/je-pds/cog/v1/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global/2021-02/2/W130.00-W120.00/W130.00-N30.00-W120.00-N40.00-DSM.tiff', 
         ]
     mosaic = utils.mosaic_tiff(
-        bbox=bbox_sf_area,
+        bounds=bbox_sf_area,
         tiff_list=tiff_list,
         overview_level=1
     )
@@ -31,7 +31,7 @@ def test_read_tiff():
     input_tiff_path = 'https://s3.ap-northeast-1.wasabisys.com/je-pds/cog/v1/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global/2021-02/2/W140.00-W130.00/W140.00-N30.00-W130.00-N40.00-DSM.tiff'
 
     utils.read_tiff(
-        bbox=bbox_sf_area,
+        bounds=bbox_sf_area,
         input_tiff_path=input_tiff_path
     )
 

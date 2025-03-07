@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF = None, 
+def udf(bounds: fused.types.TileGDF = None, 
         resolution: int  = 11,
         poi_category: str = "Coffee Shop",
         use_columns = ["subtype"], 
@@ -31,7 +31,7 @@ def udf(bbox: fused.types.TileGDF = None,
     
     # Get Overture Buildings
     overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.
-    gdf_overture = overture_utils.get_overture(bbox=bbox, use_columns=use_columns, min_zoom=10)
+    gdf_overture = overture_utils.get_overture(bounds=bounds, use_columns=use_columns, min_zoom=10)
     
     # Join H3 with Buildings using coffe_score to visualize, you can change to a left join
     gdf_joined = gdf_overture.sjoin(gdf_h3_isochrones, how="inner", predicate="intersects")

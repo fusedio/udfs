@@ -1,16 +1,16 @@
 @fused.udf
-def udf(bbox: fused.types.TileGDF = None):
+def udf(bounds: fused.types.TileGDF = None):
     import geopandas as gpd
     # Load pinned versions of utility functions.
     utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
     overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.
 
     # 1. Load Overture Buildings
-    gdf_overture = overture_utils.get_overture(bbox=bbox)
+    gdf_overture = overture_utils.get_overture(bounds=bounds)
 
     # 2. Load Oak Ridge Buildings
     gdf_oakridge = utils.table_to_tile(
-        bbox, table="s3://fused-asset/infra/building_oak_states/state=ca/", min_zoom=10
+        bounds, table="s3://fused-asset/infra/building_oak_states/state=ca/", min_zoom=10
     )
 
     # 3. Calculate intersection

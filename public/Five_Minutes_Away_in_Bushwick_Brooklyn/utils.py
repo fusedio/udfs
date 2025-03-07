@@ -3,9 +3,9 @@ import shapely
 import geopandas as gpd
 
 @fused.cache
-def get_fsq_points(bbox, poi_category):
+def get_fsq_points(bounds, poi_category):
     # Pull the points
-    df = fused.run("UDF_Foursquare_Open_Source_Places", bbox=bbox, min_zoom=0)
+    df = fused.run("UDF_Foursquare_Open_Source_Places", bounds=bounds, min_zoom=0)
     # Check if the df is empty
     if len(df) < 1:
         return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
@@ -65,12 +65,12 @@ def get_pool_isochrones(df, costing, time_steps):
     return result
 def get_fsq_isochrones_gdf(costing, time_steps, poi_category): 
     # Greater Bushwick
-    bbox = gpd.GeoDataFrame(
+    bounds = gpd.GeoDataFrame(
        geometry=[shapely.box(-73.966036,40.666722,-73.875359,40.726179)], 
        crs=4326
     )
     # Coffee shops
-    df = get_fsq_points(bbox, poi_category)
+    df = get_fsq_points(bounds, poi_category)
 
     if len(df) == 0:
         return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")

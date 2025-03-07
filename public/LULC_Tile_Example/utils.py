@@ -39,14 +39,14 @@ def arr_to_color(arr, color_map={1: (65, 155, 223), 2: (57, 125, 73)}):
     return np.asarray(mapped_arr).astype("uint8")
 
 
-def bbox_stac_items(bbox, table):
+def bbox_stac_items(bounds, table):
     import fused
     import pandas as pd
 
     df = fused.get_chunks_metadata(table)
-    df = df[df.intersects(bbox)]
+    df = df[df.intersects(bounds)]
     List = df[["file_id", "chunk_id"]].values
     rows_df = pd.concat(
         [fused.get_chunk_from_table(table, fc[0], fc[1]) for fc in List]
     )
-    return rows_df[rows_df.intersects(bbox)]
+    return rows_df[rows_df.intersects(bounds)]

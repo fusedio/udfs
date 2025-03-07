@@ -15,7 +15,7 @@ def df_to_hex(df, data_cols=['data'], h3_size=9, hex_col='hex', latlng_col=['lat
     con = duckdb_connect()
     return con.query(qr).df()
 
-def tile_to_df(bbox, arr, return_geometry=False):
+def tile_to_df(bounds, arr, return_geometry=False):
     import numpy as np
     import pandas as pd
     if len(arr.shape)==2:
@@ -25,7 +25,7 @@ def tile_to_df(bbox, arr, return_geometry=False):
     ).utils.shape_transform_to_xycoor
     
     # calculate transform
-    minx, miny, maxx, maxy = bbox.to_crs(3857).total_bounds
+    minx, miny, maxx, maxy = bounds.to_crs(3857).total_bounds
     dx = (maxx - minx) / arr.shape[-1]
     dy = (maxx - minx) / arr.shape[-2]
     transform = [dx, 0.0, minx, 0.0, -dy, maxy, 0.0, 0.0, 1.0]
@@ -40,7 +40,7 @@ def tile_to_df(bbox, arr, return_geometry=False):
     utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
 
     # convert back to 4326
-    df = utils.geo_convert(df).set_crs(3857, allow_override=True).to_crs(bbox.crs)
+    df = utils.geo_convert(df).set_crs(3857, allow_override=True).to_crs(bounds.crs)
     df["lat"]=df.geometry.y
     df["lng"]=df.geometry.x
     if not return_geometry:

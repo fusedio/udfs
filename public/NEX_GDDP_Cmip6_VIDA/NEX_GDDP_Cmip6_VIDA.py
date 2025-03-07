@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bbox: fused.types.TileGDF = None,
+    bounds: fused.types.TileGDF = None,
     layer: str = "tas",
     time: int = 2,
     target_shape: list = [512, 512],
@@ -12,12 +12,12 @@ def udf(
 
     ds = xr.open_zarr("gs://fused_public/zarr/wri_cmip6_median_ssp585.zarr")
 
-    if bbox["z"].iloc[0] < 1:
+    if bounds["z"].iloc[0] < 1:
         print("z less than 1")
         return
     utils = fused.load("https://github.com/fusedio/udfs/tree/cbc5482/public/common/").utils
 
-    minx, miny, maxx, maxy = bbox.total_bounds
+    minx, miny, maxx, maxy = bounds.total_bounds
     variable_names = list(ds.data_vars)
 
     # Printing the Time Range of the Dataset
