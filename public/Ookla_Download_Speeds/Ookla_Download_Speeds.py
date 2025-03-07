@@ -1,7 +1,7 @@
 @fused.udf
 def udf(bounds: fused.types.Tile=None):
     file_path='s3://ookla-open-data/parquet/performance/type=mobile/year=2024/quarter=3/2024-07-01_performance_mobile_tiles.parquet'
-    bounds = bounds.total_bounds
+    total_bounds = bounds.total_bounds
 
     # Load pinned versions of utility functions.
     utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
