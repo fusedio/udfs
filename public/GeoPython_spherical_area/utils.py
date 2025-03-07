@@ -88,7 +88,7 @@ def get_overture(
     if polygon is not None:
         polygon=gpd.from_features(json.loads(polygon))
         bounds = polygon.geometry.bounds
-        bbox = gpd.GeoDataFrame(
+        bounds = gpd.GeoDataFrame(
             {
                 "geometry": [
                     box(

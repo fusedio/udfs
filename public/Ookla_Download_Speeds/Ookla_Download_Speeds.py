@@ -18,8 +18,8 @@ def udf(bounds: fused.types.Tile=None):
                     avg(avg_d_kbps) as metric
         from read_parquet("{file_path}") 
         where 1=1
-        and tile_x between {bounds[0]} and {bounds[2]}
-        and tile_y between {bounds[1]} and {bounds[3]}
+        and tile_x between {total_bounds[0]} and {total_bounds[2]}
+        and tile_y between {total_bounds[1]} and {total_bounds[3]}
         group by 1
         ''' 
         df = con.sql(qr).df()

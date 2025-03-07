@@ -18,6 +18,8 @@ UDFS_THAT_ERROR = [
     "GOES_18_Runner",
     "GOES_18_Async",
     "GOES_18_Partitions",
+    # None GDFs being returned
+    "Overture_Places_Embedding_Clusters"
 ]
 
 

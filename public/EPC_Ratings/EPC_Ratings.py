@@ -8,8 +8,9 @@ def udf(bounds: fused.types.Tile):
     gdf = utils.read_gdf_file(path).to_crs("EPSG:4326")
 
     # Load Overture data
+    udf = fused.load("https://github.com/fusedio/udfs/tree/2ea46f3/public/Overture_Maps_Example/")
     gdf_overture = fused.run(
-        "UDF_Overture_Maps_Example",
+        udf,
         theme="buildings",
         overture_type="building",
         bbox=bounds,

@@ -9,7 +9,7 @@ def udf_h3_embedding(h3_index="894509b022bffff", h3_size=8):
 
     # 1. Polygon from H3
     bounds = Polygon([coord[::-1] for coord in h3.cell_to_boundary(h3_index)])
-    bbox = gpd.GeoDataFrame({"h3_index": [h3_index], "geometry": [bounds]})
+    bbox = gpd.GeofDataFrame({"h3_index": [h3_index], "geometry": [bounds]})
 
     # 2. Load Overture Places
     gdf = fused.run("UDF_Overture_Maps_Example", bounds=bbox, overture_type="place")

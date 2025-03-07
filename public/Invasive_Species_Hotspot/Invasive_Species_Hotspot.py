@@ -7,7 +7,7 @@ def udf(
     import pandas as pd
     from utils import get_strahler_gdf, create_h3_buffer_scored
 
-    overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.
+    overture_utils = fused.load("https://github.com/fusedio/udfs/tree/2ea46f3/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.
     
     # A. Bridges
     gdf_bridges = overture_utils.get_overture(bounds=bounds, overture_type='infrastructure')

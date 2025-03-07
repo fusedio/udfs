@@ -24,10 +24,10 @@ def udf(bounds: fused.types.ViewportGDF = None):
     t = con.read_parquet(url, table_name="infra-usa")
 
     ibis_table = t.filter(
-        _.bbox.xmin > minx,
-        _.bbox.ymin > miny,
-        _.bbox.xmax < maxx,
-        _.bbox.ymax < maxy,
+        _.bounds.xmin > minx,
+        _.bounds.ymin > miny,
+        _.bounds.xmax < maxx,
+        _.bounds.ymax < maxy,
         _.subtype.isin(["pedestrian", "water"]),
     ).select(["geometry", "subtype", "class"])
 

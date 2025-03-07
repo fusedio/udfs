@@ -74,7 +74,7 @@ def udf(
             return None
 
         arr = utils.mosaic_tiff(
-            bbox,
+            bounds,
             band_urls[:n_mosaic],
             reduce_function=lambda x: np.max(x, axis=0),
             overview_level=max(0, 12 - z),

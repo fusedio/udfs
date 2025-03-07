@@ -7,7 +7,7 @@ def udf(bounds: fused.types.Tile = None, join_with_nsi: bool=True):
     if bounds.iloc[0].z < 10:
         return None
 
-    overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.
+    overture_utils = fused.load("https://github.com/fusedio/udfs/tree/2ea46f3/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.
     
     # 1. Load Overture Buildings
     gdf_overture = overture_utils.get_overture(bounds=bounds)

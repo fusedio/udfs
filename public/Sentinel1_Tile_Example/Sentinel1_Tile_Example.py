@@ -1,13 +1,13 @@
 @fused.udf
 def udf(
-    # bbox,
+    # bounds,
     time_of_interest="2023-12-01/2023-12-10"
 ):  
     import geopandas as gpd
     import shapely
-    bbox = gpd.GeoDataFrame({}, geometry=[shapely.box(1.0327936764743764,51.428602071115954,1.137246717432179,51.49368102911712)])
+    bounds = gpd.GeoDataFrame({}, geometry=[shapely.box(1.0327936764743764,51.428602071115954,1.137246717432179,51.49368102911712)])
     @fused.cache
-    def get_data(bbox, time_of_interest):
+    def get_data(bounds, time_of_interest):
         import odc.stac
         import planetary_computer
         import pystac_client
@@ -19,13 +19,13 @@ def udf(
             )
         items = catalog.search(
             collections=["sentinel-1-grd"],
-            bbox=bbox.total_bounds,
+            bbox=bounds.total_bounds,
             datetime=time_of_interest,
             query=None,
         ).item_collection()
         # print(items.to_dict())
         # Capping resolution to min 10m, the native Sentinel 2 pixel size
-        # resolution = int(10 * 2 ** max(0, (15 - bbox.z[0])))
+        # resolution = int(10 * 2 ** max(0, (15 - bounds.z[0])))
         # print(f"{resolution=}")
         resolution=10
         if len(items) < 1:
@@ -33,20 +33,20 @@ def udf(
         else:
             print(f"Returned {len(items)} Items")
             @fused.cache
-            def fn(bbox,resolution, time_of_interest):
+            def fn(bounds,resolution, time_of_interest):
                 ds = odc.stac.load(
                         items,
                         crs="EPSG:3857",
                         bands=['vv'],
                         resolution=resolution,
-                        bbox=bbox.total_bounds,
+                        bbox=bounds.total_bounds,
                     ).astype(float)
                 return ds
-            ds=fn(bbox,resolution, time_of_interest)
+            ds=fn(bounds,resolution, time_of_interest)
             da =  ds['vv'].isel(time=0)
             print(da)
             return da
-    da=get_data(bbox, time_of_interest) 
+    da=get_data(bounds, time_of_interest) 
     image = da.values*1.
 
 
@@ -81,8 +81,8 @@ def udf(
     print(stacked_image.shape)
     image=stacked_image.std(axis=0)
     print(image.shape)
-    # return (image).astype('uint8'), bbox.total_bounds
+    # return (image).astype('uint8'), bounds.total_bounds
     utils = fused.load(
     "https://github.com/fusedio/udfs/tree/2b25cb3/public/common/"
     ).utils
-    return utils.arr_to_plasma(image), bbox.total_bounds
+    return utils.arr_to_plasma(image), bounds.total_bounds
