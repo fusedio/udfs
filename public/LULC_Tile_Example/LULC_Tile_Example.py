@@ -1,7 +1,7 @@
 import fused
 
 @fused.udf
-def udf(bounds: fused.types.TileGDF, context, year="2022", chip_len:int=256):
+def udf(bounds: fused.types.Tile, context, year="2022", chip_len:int=256):
     if bounds.z[0] >= 5:
         from utils import (
             LULC_IO_COLORS,

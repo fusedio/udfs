@@ -12,7 +12,8 @@ def udf_h3_embedding(h3_index="894509b022bffff", h3_size=8):
     bbox = gpd.GeofDataFrame({"h3_index": [h3_index], "geometry": [bounds]})
 
     # 2. Load Overture Places
-    gdf = fused.run("UDF_Overture_Maps_Example", bounds=bbox, overture_type="place")
+    udf = fused.load("https://github.com/fusedio/udfs/tree/2ea46f3/public/Overture_Maps_Example/")
+    gdf = fused.run(udf, bounds=bbox, overture_type="place")
 
     # 3. Normalize the 'categories' column into individual columns
     categories_df = pd.json_normalize(gdf["categories"]).reset_index(drop=True)

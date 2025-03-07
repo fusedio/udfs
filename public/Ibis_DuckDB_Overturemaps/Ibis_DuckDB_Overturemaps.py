@@ -18,7 +18,7 @@ def udf(bounds: fused.types.ViewportGDF = None):
             52.40928707739445,
         ]
     else:
-        minx, miny, maxx, maxy = bounds.bounds.values[0]
+        minx, miny, maxx, maxy = bounds
 
     # Read data
     t = con.read_parquet(url, table_name="infra-usa")

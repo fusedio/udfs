@@ -13,7 +13,7 @@ def udf(bounds: fused.types.Tile):
         udf,
         theme="buildings",
         overture_type="building",
-        bbox=bounds,
+        bounds=bounds,
     )
 
     # Join
