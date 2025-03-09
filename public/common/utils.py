@@ -8,6 +8,30 @@ from numpy.typing import NDArray
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
 from loguru import logger
 
+def df_summary(df, desciption="", n_head=5, n_tail=5, n_sample=5, n_unique=100, add_details=True):
+    val = desciption+"\n\n"
+    val += "These are stats of df:\n"
+    val += f"{list(df.columns)=} \n\n"
+    val += f"{df.isnull().sum()=} \n\n"
+    val += f"{df.describe().to_json()=} \n\n"
+    val += f"{df.head(n_head).to_json()=} \n\n"
+    val += f"{df.tail(n_tail).to_json()=} \n\n"
+    if add_details:
+        if len(df) <= n_unique:
+            val += f"{df.to_json()} \n\n"
+        else:
+            val += f"{df.quantile([0.25, 0.5, 0.75])} \n\n"
+            for c in df.select_dtypes(include="object").columns:
+                val += f"{c} most frequent:\n{df[c].mode()[0]} \n\n"
+            if len(df) > n_sample:
+                val += f"{df.sample(n_sample).to_json()=} \n\n"
+            for c in df.columns:
+                value_counts = df[c].value_counts()
+                df[c].value_counts().head()
+                val += f"df[{c}].value_counts()\n{value_counts} \n\n"
+                val += f"{df[c].unique()[:n_unique]} \n\n"
+    return val
+
 def json_path_from_secret(var='gcs_fused'):
     import json
     import tempfile
