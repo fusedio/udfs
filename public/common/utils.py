@@ -20,7 +20,6 @@ def df_summary(df, desciption="", n_head=5, n_tail=5, n_sample=5, n_unique=100, 
         if len(df) <= n_unique:
             val += f"{df.to_json()} \n\n"
         else:
-            val += f"{df.quantile([0.25, 0.5, 0.75])} \n\n"
             for c in df.select_dtypes(include="object").columns:
                 val += f"{c} most frequent:\n{df[c].mode()[0]} \n\n"
             if len(df) > n_sample:
