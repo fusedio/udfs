@@ -5,7 +5,7 @@ import fused
 import pandas as pd
 import numpy as np
 from numpy.typing import NDArray
-from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union, Any
 from loguru import logger
 
 def to_pickle(obj):
@@ -2778,3 +2778,70 @@ def add_utm_area(gdf, utm_col='utm_epsg', utm_area_col='utm_area_sqm'):
     # Step 3: Assign areas back to original gdf order
     gdf[utm_area_col] = gdf.index.map(areas_dict)
     return gdf
+
+
+def test_udf(udf_token: str, cache_length: str = "1d", arg_token: Optional[str] = None):
+    """
+    Test a UDF by running it with the provided arguments.
+    Note: We only support passing bounds in the DataFrame([{x, y, z}]) format for now.
+    If no arg token provided, will run with default view state of UDF.
+    Args:
+        udf_token: The identifier string of the UDF to test.
+        cache_length: The length of time to cache the results (default: 1d).
+        arg_token: optional token of a udf that returns custom arguments to test the UDF.
+    Returns:
+        A tuple of (test_passing, similar, old, new).
+    """
+    import mercantile
+    import math
+
+    udf = fused.load(udf_token)
+    arg_list: list[dict[str, Any]] = []
+
+    if arg_token:
+        # try to fetch input params from UDF defined in arg_token
+        udf_arg_list = fused.run(arg_token)
+        assert type(udf_arg_list) is pd.DataFrame
+        arg_list = udf_arg_list.to_dict(orient='records')
+    elif hasattr(udf.utils, "get_test_params"):
+        # try to fetch input params from get_test_params that we (will) enforce will be present in the utils module of UDF
+        fn_arg_list = udf.utils.get_test_params()
+        assert type(fn_arg_list) is pd.DataFrame
+        arg_list = fn_arg_list.to_dict(orient='records')
+    else:
+        # try to get bounds data from UDF metadata if required
+        metadata = udf.metadata
+        if metadata.get("fused:udfType") in ["vector_tile", "raster"]:
+            # Using San Francisco as the fallback
+            view = metadata.get("fused:defaultViewState") or {
+                "longitude": 9647,
+                "latitude": 12320,
+                "zoom": 15,
+            }
+            x, y, z = mercantile.tile(
+                view["longitude"], view["latitude"], math.ceil(view["zoom"])
+            )
+            arg_list.append({"x": x, "y": y, "z": z})
+        elif metadata.get("fused:udfType") in ["vector_single", "raster_single"]:
+            arg_list.append({})
+
+    if not arg_list:
+        raise ValueError("No arguments found for UDF")
+
+    try:
+        new = fused.submit(
+            udf, arg_list, cache_max_age="0s", wait_on_results=True, engine="local"
+        )
+        old = fused.submit(
+            udf,
+            arg_list,
+            cache_max_age=cache_length,
+            wait_on_results=True,
+            engine="local",
+        )
+        # Compare each dataframe in the result column
+        all_equal = all(old_df.equals(new_df) for old_df, new_df in zip(old["result"], new["result"]))
+        return (True, all_equal, old, new)
+    except Exception as e:
+        print(repr(e))
+        return (False, False, None, None)
