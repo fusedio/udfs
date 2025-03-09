@@ -2695,3 +2695,25 @@ def get_tile(
 
     return gdf if as_gdf else gdf[["x", "y", "z"]].values
 
+def get_utm_epsg(geometry):
+    utm_zone = int((geometry.centroid.x + 180) / 6) + 1
+    return 32600 + utm_zone if geometry.centroid.y >= 0 else 32700 + utm_zone  # 326XX for Northern Hemisphere, 327XX for Southern
+
+
+def add_utm_area(gdf, utm_col='utm_epsg', utm_area_col='utm_area_sqm'):
+    import geopandas as gpd
+
+    # Step 1: Compute UTM zones
+    gdf[utm_col] = gdf.geometry.apply(get_utm_epsg)
+
+    # Step 2: Compute areas in batches while preserving order
+    areas_dict = {}
+
+    for utm_zone, group in gdf.groupby(utm_col, group_keys=False):
+        utm_crs = f"EPSG:{utm_zone}"
+        reprojected = group.to_crs(utm_crs)  # Reproject all geometries in batch
+        areas_dict.update(dict(zip(group.index, reprojected.area)))  # Store areas by index
+
+    # Step 3: Assign areas back to original gdf order
+    gdf[utm_area_col] = gdf.index.map(areas_dict)
+    return gdf
