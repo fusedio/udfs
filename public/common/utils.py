@@ -29,7 +29,7 @@ def df_summary(df, description="", n_head=5, n_tail=5, n_sample=5, n_unique=100,
                 val += f"{df[c].unique()[:n_unique]} \n\n"
     return val
 
-def get_diff_text(text1: str, text2: str, as_html: bool=True) -> str:
+def get_diff_text(text1: str, text2: str, as_html: bool=True, only_diff:bool=False) -> str:
     import difflib
     diff = difflib.ndiff(text1.splitlines(keepends=True), text2.splitlines(keepends=True))
     processed_diff = []
@@ -40,7 +40,8 @@ def get_diff_text(text1: str, text2: str, as_html: bool=True) -> str:
             elif line.startswith("-"):
                 processed_diff.append(f"DEL: {line}")  # Deletions
             else:
-                processed_diff.append(f"  {line}")  # Unchanged lines
+                if not only_diff:
+                    processed_diff.append(f"  {line}")  # Unchanged lines
         return "\n".join(processed_diff)            
     
     for line in diff:
@@ -49,7 +50,8 @@ def get_diff_text(text1: str, text2: str, as_html: bool=True) -> str:
         elif line.startswith("-"):
             processed_diff.append(f"<span style='color:red;'> {line} </span><br>")  # Red for deletions
         else:
-            processed_diff.append(f"<span style='color:gray;'> {line} </span><br>")  # Gray for unchanged lines
+            if not only_diff:
+                processed_diff.append(f"<span style='color:gray;'> {line} </span><br>")  # Gray for unchanged lines
     
     # HTML structure with a dropdown for selecting background color
     html_output = """
