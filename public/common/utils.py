@@ -29,6 +29,48 @@ def df_summary(df, description="", n_head=5, n_tail=5, n_sample=5, n_unique=100,
                 val += f"{df[c].unique()[:n_unique]} \n\n"
     return val
 
+def get_diff_text(text1: str, text2: str, as_html: bool=True) -> str:
+    import difflib
+    diff = difflib.ndiff(text1.splitlines(keepends=True), text2.splitlines(keepends=True))
+    processed_diff = []
+    if not as_html:
+        for line in diff:
+            if line.startswith("+"):
+                processed_diff.append(f"ADD: {line}")  # Additions
+            elif line.startswith("-"):
+                processed_diff.append(f"DEL: {line}")  # Deletions
+            else:
+                processed_diff.append(f"  {line}")  # Unchanged lines
+        return "\n".join(processed_diff)            
+    
+    for line in diff:
+        if line.startswith("+"):
+            processed_diff.append(f"<span style='color:green;'> {line} </span><br>")  # Green for additions
+        elif line.startswith("-"):
+            processed_diff.append(f"<span style='color:red;'> {line} </span><br>")  # Red for deletions
+        else:
+            processed_diff.append(f"<span style='color:gray;'> {line} </span><br>")  # Gray for unchanged lines
+    
+    # HTML structure with a dropdown for selecting background color
+    html_output = """
+    <div>
+        <label for="backgroundColor" style="color:gray;">Choose Background Color: </label>
+        <select id="backgroundColor" onchange="document.getElementById('diff-container').style.backgroundColor = this.value;">
+            <option value="#222">Dark Gray</option>
+            <option value="#f0f0f0">Light Gray</option>
+            <option value="#ffffff">White</option>
+            <option value="#e0f7fa">Cyan</option>
+            <option value="#ffebee">Pink</option>
+            <option value="#c8e6c9">Green</option>
+        </select>
+    </div>
+    <div id="diff-container" style="background-color:#f0f0f0; padding:10px;">
+        {}</div>
+    """.format("".join(processed_diff))
+
+    return html_output
+
+
 def json_path_from_secret(var='gcs_fused'):
     import json
     import tempfile
