@@ -56,7 +56,7 @@ def get_diff_text(text1: str, text2: str, as_html: bool=True) -> str:
     <div>
         <label for="backgroundColor" style="color:gray;">Choose Background Color: </label>
         <select id="backgroundColor" onchange="document.getElementById('diff-container').style.backgroundColor = this.value;">
-            <option value="#222">Dark Gray</option>
+            <option value="#111111">Dark Gray</option>
             <option value="#f0f0f0">Light Gray</option>
             <option value="#ffffff">White</option>
             <option value="#e0f7fa">Cyan</option>
@@ -64,7 +64,7 @@ def get_diff_text(text1: str, text2: str, as_html: bool=True) -> str:
             <option value="#c8e6c9">Green</option>
         </select>
     </div>
-    <div id="diff-container" style="background-color:#f0f0f0; padding:10px;">
+    <div id="diff-container" style="background-color:#111111; padding:10px;">
         {}</div>
     """.format("".join(processed_diff))
 
