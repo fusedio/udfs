@@ -29,10 +29,13 @@ def df_summary(df, description="", n_head=5, n_tail=5, n_sample=5, n_unique=100,
                 val += f"{df[c].unique()[:n_unique]} \n\n"
     return val
 
-def get_diff_text(text1: str, text2: str, as_html: bool=True, only_diff:bool=False) -> str:
+def get_diff_text(text1: str, text2: str, as_html: bool=True, only_diff: bool=False) -> str:
     import difflib
+    import html
+    
     diff = difflib.ndiff(text1.splitlines(keepends=True), text2.splitlines(keepends=True))
     processed_diff = []
+    
     if not as_html:
         for line in diff:
             if line.startswith("+"):
@@ -45,13 +48,15 @@ def get_diff_text(text1: str, text2: str, as_html: bool=True, only_diff:bool=Fal
         return "\n".join(processed_diff)            
     
     for line in diff:
+        escaped_line = html.escape(line)  # Escape HTML to preserve special characters
+        
         if line.startswith("+"):
-            processed_diff.append(f"<span style='color:green;'> {line} </span><br>")  # Green for additions
+            processed_diff.append(f"<span style='color:green; line-height:normal;'> {escaped_line} </span><br>")  # Green for additions
         elif line.startswith("-"):
-            processed_diff.append(f"<span style='color:red;'> {line} </span><br>")  # Red for deletions
+            processed_diff.append(f"<span style='color:red; line-height:normal;'> {escaped_line} </span><br>")  # Red for deletions
         else:
             if not only_diff:
-                processed_diff.append(f"<span style='color:gray;'> {line} </span><br>")  # Gray for unchanged lines
+                processed_diff.append(f"<span style='color:gray; line-height:normal;'> {escaped_line} </span><br>")  # Gray for unchanged lines
     
     # HTML structure with a dropdown for selecting background color
     html_output = """
@@ -66,10 +71,9 @@ def get_diff_text(text1: str, text2: str, as_html: bool=True, only_diff:bool=Fal
             <option value="#c8e6c9">Green</option>
         </select>
     </div>
-    <div id="diff-container" style="background-color:#111111; padding:10px;">
+    <div id="diff-container" style="background-color:#111111; padding:10px; font-family:monospace; white-space:pre; line-height:normal;">
         {}</div>
     """.format("".join(processed_diff))
-
     return html_output
 
 
