@@ -95,9 +95,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/d34486adeac5a02f90ead172343f9a34186da1aa/public/common/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/0da5cfeea4f6643dde1414245d125c7710defabb/public/common/",
             "fused:gitPath": "public/common",
-            "fused:gitRef": "d34486adeac5a02f90ead172343f9a34186da1aa",
+            "fused:gitRef": "0da5cfeea4f6643dde1414245d125c7710defabb",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -150,12 +150,12 @@
               "https://avatars.githubusercontent.com/u/1020496?v=4",
               "https://avatars.githubusercontent.com/u/26461855?v=4"
             ],
-            "fused:gitLastModified": "2025-03-10T01:13:13+00:00",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/d34486a/public/common/",
+            "fused:gitLastModified": "2025-03-10T12:42:18.402Z",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/0da5cfe/public/common/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
-            "fused:gitPullRequestBranch": "sina-patch-9be4de-fix-geoconvert-to-support-npndar",
-            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/686",
+            "fused:gitPullRequestBranch": "sina-patch-ce8537-add-dict-support-for-xyz",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/705",
             "fused:id": null,
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Fused_Logo.png",
             "fused:description": "## Overview\n\nThis UDF contains common utils that are being used for many public udfs.\n\n\nTo import common utils in your udf run the following command:\n\n`common = fused.utils.common`\n",

@@ -1206,7 +1206,9 @@ def geo_convert(
         try:
             data = [int(data['x']), int(data['y']), int(data['z'])]
         except (ValueError, TypeError):
-            pass      
+            pass     
+            
+    # Handle the bounds case specifically
     if data is None or (isinstance(data, (list, tuple, np.ndarray)) and len(data) == 4):
         bounds = [-180, -90, 180, 90] if data is None else data
         bounds = gpd.GeoDataFrame({}, geometry=[shapely.box(*bounds)], crs=crs or 4326)
