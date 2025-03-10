@@ -2782,15 +2782,27 @@ def add_utm_area(gdf, utm_col='utm_epsg', utm_area_col='utm_area_sqm'):
 
 def test_udf(udf_token: str, cache_length: str = "1d", arg_token: Optional[str] = None):
     """
-    Test a UDF by running it with the provided arguments.
-    Note: We only support passing bounds in the DataFrame([{x, y, z}]) format for now.
-    If no arg token provided, will run with default view state of UDF.
+    Test a UDF by running it with the provided arguments and comparing results with cached output.
+
+    The function attempts to obtain test arguments in the following order:
+    1. From a provided arg_token UDF that returns a pd.DataFrame of test arguments
+    2. From the UDF's utils.get_test_params() function if it exists
+    3. From the UDF's metadata for the bounds if available (using default view state)
+    4. From a placeholder value for bounds if required by the UDF
+
+    Note: We only support passing bounds in a pd.DataFrame([{x, y, z}]) format for now.
+
     Args:
-        udf_token: The identifier string of the UDF to test.
-        cache_length: The length of time to cache the results (default: 1d).
-        arg_token: optional token of a udf that returns custom arguments to test the UDF.
+        udf_token: The identifier string of the UDF to test
+        cache_length: The length of time to cache the results (default: 1d)
+        arg_token: Optional token of a UDF that returns custom arguments as pd.DataFrame
+
     Returns:
-        A tuple of (test_passing, similar, old, new).
+        A tuple of:
+        - test_passing (bool): True if no exceptions in current results
+        - similar (bool): True if current and previous results are identical
+        - old: Previous run results using cached data
+        - new: Current run results using fresh data
     """
     import mercantile
     import math
@@ -2809,19 +2821,15 @@ def test_udf(udf_token: str, cache_length: str = "1d", arg_token: Optional[str] 
         assert type(fn_arg_list) is pd.DataFrame
         arg_list = fn_arg_list.to_dict(orient='records')
     else:
-        # try to get bounds data from UDF metadata if required
+        # try to get bounds data from UDF metadata if available
         metadata = udf.metadata
-        if metadata.get("fused:udfType") in ["vector_tile", "raster"]:
-            # Using San Francisco as the fallback
-            view = metadata.get("fused:defaultViewState") or {
-                "longitude": 9647,
-                "latitude": 12320,
-                "zoom": 15,
-            }
-            x, y, z = mercantile.tile(
-                view["longitude"], view["latitude"], math.ceil(view["zoom"])
-            )
+        view = metadata.get("fused:defaultViewState")
+        if view and view.get("enabled"):
+            x, y, z = mercantile.tile(view["longitude"], view["latitude"], math.ceil(view["zoom"]))
             arg_list.append({"x": x, "y": y, "z": z})
+        elif metadata.get("fused:udfType") in ["vector_tile", "raster"]:
+            # Using San Francisco as the fallback if required
+            arg_list.append({"x": 9647, "y": 12320, "z": 15})
         elif metadata.get("fused:udfType") in ["vector_single", "raster_single"]:
             arg_list.append({})
 
