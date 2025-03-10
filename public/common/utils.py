@@ -5,7 +5,7 @@ import fused
 import pandas as pd
 import numpy as np
 from numpy.typing import NDArray
-from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union, Any
 from loguru import logger
 
 def to_pickle(obj):
@@ -2785,3 +2785,75 @@ def add_utm_area(gdf, utm_col='utm_epsg', utm_area_col='utm_area_sqm'):
     # Step 3: Assign areas back to original gdf order
     gdf[utm_area_col] = gdf.index.map(areas_dict)
     return gdf
+
+
+def test_udf(udf_token: str, cache_length: str = "9999d", arg_token: Optional[str] = None):
+    """
+    Test a UDF by running it with the provided arguments and comparing results with cached output.
+
+    The function attempts to obtain test arguments in the following order:
+    1. From a provided arg_token UDF that returns a pd.DataFrame of test arguments
+    2. From the UDF's utils.get_test_params() function if it exists
+    3. From the UDF's metadata for the bounds if available (using default view state)
+    4. From a placeholder value for bounds if required by the UDF
+
+    Note: We only support passing bounds in a pd.DataFrame([{x, y, z}]) format for now.
+
+    Args:
+        udf_token: The identifier string of the UDF to test
+        cache_length: The length of time to cache the results (default: 9999d)
+        arg_token: Optional token of a UDF that returns custom arguments as pd.DataFrame
+
+    Returns:
+        A tuple of:
+        - test_passing (bool): True if no exceptions in current results
+        - similar (bool): True if current and previous results are identical
+        - old: Previous run results using cached data
+        - new: Current run results using fresh data
+    """
+    import mercantile
+    import math
+    import pickle
+
+    udf = fused.load(udf_token)
+    arg_list: list[dict[str, Any]] = []
+
+    if arg_token:
+        # try to fetch input params from UDF defined in arg_token
+        udf_arg_list = fused.run(arg_token)
+        assert type(udf_arg_list) is pd.DataFrame
+        arg_list = udf_arg_list.to_dict(orient='records')
+    elif hasattr(udf.utils, "get_test_params"):
+        # try to fetch input params from get_test_params that we (will) enforce will be present in the utils module of UDF
+        fn_arg_list = udf.utils.get_test_params()
+        assert type(fn_arg_list) is pd.DataFrame
+        arg_list = fn_arg_list.to_dict(orient='records')
+    else:
+        # try to get bounds data from UDF metadata if available
+        metadata = udf.metadata
+        view = metadata.get("fused:defaultViewState")
+        if view and view.get("enabled"):
+            x, y, z = mercantile.tile(view["longitude"], view["latitude"], math.ceil(view["zoom"]))
+            arg_list.append({"x": x, "y": y, "z": z})
+        elif metadata.get("fused:udfType") in ["vector_tile", "raster"]:
+            # Using San Francisco as the fallback if required
+            arg_list.append({"x": 9647, "y": 12320, "z": 15})
+        elif metadata.get("fused:udfType") in ["vector_single", "raster_single"]:
+            arg_list.append({})
+
+    if not arg_list:
+        raise ValueError("No arguments found for UDF")
+
+    prev_run = fused.submit(
+        udf_token,
+        arg_list,
+        cache_max_age=cache_length,
+        wait_on_results=True,
+    )
+    current_run = fused.submit(udf_token, arg_list, cache_max_age="0s", wait_on_results=True)
+
+    # Check if results are valid
+    all_passing = (current_run["status"] == "success").all()
+    # Check if result matches cached result
+    all_equal = pickle.dumps(prev_run) == pickle.dumps(current_run)
+    return (all_passing, all_equal, prev_run, current_run)
