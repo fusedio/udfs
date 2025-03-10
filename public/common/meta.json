@@ -95,9 +95,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/7e84423e79bc223f1e43f3894a163e46218b554e/public/common/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/d34486adeac5a02f90ead172343f9a34186da1aa/public/common/",
             "fused:gitPath": "public/common",
-            "fused:gitRef": "7e84423e79bc223f1e43f3894a163e46218b554e",
+            "fused:gitRef": "d34486adeac5a02f90ead172343f9a34186da1aa",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -150,8 +150,8 @@
               "https://avatars.githubusercontent.com/u/1020496?v=4",
               "https://avatars.githubusercontent.com/u/26461855?v=4"
             ],
-            "fused:gitLastModified": "2025-03-10T00:15:17+00:00",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/7e84423/public/common/",
+            "fused:gitLastModified": "2025-03-10T01:13:13+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/d34486a/public/common/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "sina-patch-9be4de-fix-geoconvert-to-support-npndar",
