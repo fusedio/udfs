@@ -2828,20 +2828,18 @@ def test_udf(udf_token: str, cache_length: str = "1d", arg_token: Optional[str] 
     if not arg_list:
         raise ValueError("No arguments found for UDF")
 
-    try:
-        new = fused.submit(
-            udf, arg_list, cache_max_age="0s", wait_on_results=True, engine="local"
-        )
-        old = fused.submit(
-            udf,
-            arg_list,
-            cache_max_age=cache_length,
-            wait_on_results=True,
-            engine="local",
-        )
-        # Compare each dataframe in the result column
-        all_equal = all(old_df.equals(new_df) for old_df, new_df in zip(old["result"], new["result"]))
-        return (True, all_equal, old, new)
-    except Exception as e:
-        print(repr(e))
-        return (False, False, None, None)
+    current_run = fused.submit(udf_token, arg_list, cache_max_age="0s", wait_on_results=True)
+    prev_run = fused.submit(
+        udf_token,
+        arg_list,
+        cache_max_age=cache_length,
+        wait_on_results=True,
+    )
+    # Check if results are valid
+    all_passing = all(not isinstance(res, Exception) for res in current_run["result"])
+    # Compare each dataframe in the result column
+    all_equal = all(
+        isinstance(old_df, pd.DataFrame) and old_df.equals(new_df)
+        for old_df, new_df in zip(prev_run["result"], current_run["result"])
+    )
+    return (all_passing, all_equal, prev_run, current_run)
