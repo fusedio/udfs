@@ -2806,6 +2806,7 @@ def test_udf(udf_token: str, cache_length: str = "1d", arg_token: Optional[str] 
     """
     import mercantile
     import math
+    import pickle
 
     udf = fused.load(udf_token)
     arg_list: list[dict[str, Any]] = []
@@ -2836,18 +2837,16 @@ def test_udf(udf_token: str, cache_length: str = "1d", arg_token: Optional[str] 
     if not arg_list:
         raise ValueError("No arguments found for UDF")
 
-    current_run = fused.submit(udf_token, arg_list, cache_max_age="0s", wait_on_results=True)
     prev_run = fused.submit(
         udf_token,
         arg_list,
         cache_max_age=cache_length,
         wait_on_results=True,
     )
+    current_run = fused.submit(udf_token, arg_list, cache_max_age="0s", wait_on_results=True)
+
     # Check if results are valid
     all_passing = all(not isinstance(res, Exception) for res in current_run["result"])
-    # Compare each dataframe in the result column
-    all_equal = all(
-        isinstance(old_df, pd.DataFrame) and old_df.equals(new_df)
-        for old_df, new_df in zip(prev_run["result"], current_run["result"])
-    )
+    # Check if result matches cached result
+    all_equal = pickle.dumps(prev_run) == pickle.dumps(current_run)
     return (all_passing, all_equal, prev_run, current_run)
