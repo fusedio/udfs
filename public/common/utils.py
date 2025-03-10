@@ -2846,7 +2846,7 @@ def test_udf(udf_token: str, cache_length: str = "1d", arg_token: Optional[str] 
     current_run = fused.submit(udf_token, arg_list, cache_max_age="0s", wait_on_results=True)
 
     # Check if results are valid
-    all_passing = all(not isinstance(res, Exception) for res in current_run["result"])
+    all_passing = (current_run["status"] == "success").all()
     # Check if result matches cached result
     all_equal = pickle.dumps(prev_run) == pickle.dumps(current_run)
     return (all_passing, all_equal, prev_run, current_run)
