@@ -8,7 +8,7 @@ from numpy.typing import NDArray
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
 from loguru import logger
 
-def encode(obj):
+def to_pickle(obj):
     """Encode an object to a pickle byte stream and store in DataFrame."""
     import pickle
     import pandas as pd
@@ -16,7 +16,7 @@ def encode(obj):
         {"data_type": [type(obj).__name__], "data_content": [pickle.dumps(obj)]}
     )
 
-def decode(df):
+def from_pickle(df):
     """Decode an object from a DataFrame containing pickle byte stream."""
     import pickle
     return pickle.loads(df["data_content"].iloc[0])
