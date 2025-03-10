@@ -2780,7 +2780,7 @@ def add_utm_area(gdf, utm_col='utm_epsg', utm_area_col='utm_area_sqm'):
     return gdf
 
 
-def test_udf(udf_token: str, cache_length: str = "1d", arg_token: Optional[str] = None):
+def test_udf(udf_token: str, cache_length: str = "9999d", arg_token: Optional[str] = None):
     """
     Test a UDF by running it with the provided arguments and comparing results with cached output.
 
@@ -2794,7 +2794,7 @@ def test_udf(udf_token: str, cache_length: str = "1d", arg_token: Optional[str] 
 
     Args:
         udf_token: The identifier string of the UDF to test
-        cache_length: The length of time to cache the results (default: 1d)
+        cache_length: The length of time to cache the results (default: 9999d)
         arg_token: Optional token of a UDF that returns custom arguments as pd.DataFrame
 
     Returns:
