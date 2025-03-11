@@ -2787,6 +2787,29 @@ def add_utm_area(gdf, utm_col='utm_epsg', utm_area_col='utm_area_sqm'):
     return gdf
 
 
+def run_submit_default(udf_token: str, cache_length: str = "9999d", arg_token: Optional[str] = None):
+    
+    # Assume people know what they're doing 
+    try:
+        # arg_token is a UDF that returns a pd.DataFrame of test arguments
+        arg_list = fused.run(arg_token)
+    except Exception as e:
+        print(f"Couldn't load UDF {udf_token} with arg_token {arg_token}, trying to load default params...")
+        udf = fused.load(udf_token)
+
+        # Assume we have a funciton called 'submit_default_params` inside the main UDF which returns a pd.DataFrame of test arguments
+        if hasattr(udf.utils, "submit_default_params"):
+            arg_list = udf.utils.submit_default_params()
+        else:
+            raise ValueError("No default params found for UDF, can't run this UDF")
+
+    return fused.submit(
+        udf_token,
+        arg_list,
+        cache_max_age=cache_length,
+        wait_on_results=True,
+    )
+
 def test_udf(udf_token: str, cache_length: str = "9999d", arg_token: Optional[str] = None):
     """
     Test a UDF by running it with the provided arguments and comparing results with cached output.
@@ -2823,9 +2846,9 @@ def test_udf(udf_token: str, cache_length: str = "9999d", arg_token: Optional[st
         udf_arg_list = fused.run(arg_token)
         assert type(udf_arg_list) is pd.DataFrame
         arg_list = udf_arg_list.to_dict(orient='records')
-    elif hasattr(udf.utils, "get_test_params"):
+    elif hasattr(udf.utils, "submit_default_params"):
         # try to fetch input params from get_test_params that we (will) enforce will be present in the utils module of UDF
-        fn_arg_list = udf.utils.get_test_params()
+        fn_arg_list = udf.utils.submit_default_params()
         assert type(fn_arg_list) is pd.DataFrame
         arg_list = fn_arg_list.to_dict(orient='records')
     else:
