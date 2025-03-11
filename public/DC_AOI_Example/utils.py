@@ -15,7 +15,7 @@ def get_arr(
     max_items=30
 ):
 
-    greenest_example_utils = fused.load('https://github.com/fusedio/udfs/tree/9bfb5d0/public/Satellite_Greenest_Pixel').utils
+    greenest_example_utils = fused.load('https://github.com/fusedio/udfs/tree/e74035a/public/Satellite_Greenest_Pixel').utils
 
     stac_items = greenest_example_utils.search_pc_catalog(
         bounds=bounds,
