@@ -2798,6 +2798,12 @@ def run_submit_with_defaults(udf_token: str, cache_length: str = "9999d", defaul
     try:
         # arg_token is a UDF that returns a pd.DataFrame of test arguments
         arg_list = fused.run(default_params_token)
+
+        if 'bounds' in arg_list.columns:
+            # This is a hacky workaround for now as we can't pass np.float bounds to `fused.run(udf, bounds) so need to convert them to float
+            # but fused.run() returns bounds as `np.float` for whatever reason
+            arg_list['bounds'] = arg_list['bounds'].apply(lambda bounds_list: [float(x) for x in bounds_list])
+            
         print(f"Loaded default params from UDF {default_params_token}... Running UDF over these")
     except Exception as e:
         print(f"Couldn't load UDF {udf_token} with arg_token {default_params_token}, trying to load default params...")
