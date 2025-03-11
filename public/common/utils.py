@@ -2787,19 +2787,20 @@ def add_utm_area(gdf, utm_col='utm_epsg', utm_area_col='utm_area_sqm'):
     return gdf
 
 
-def run_submit_default(udf_token: str, cache_length: str = "9999d", arg_token: Optional[str] = None):
+def run_submit_default(udf_token: str, cache_length: str = "9999d", default_params_token: Optional[str] = None):
     """
     Uses fused.submit() to run a UDF over:
-    - A UDF that returns a pd.DataFrame of test arguments (`arg_token`)
+    - A UDF that returns a pd.DataFrame of test arguments (`default_params_token`)
     - Or default params (expectes udf.utils.submit_default_params to return a pd.DataFrame)
     """
     
     # Assume people know what they're doing 
     try:
         # arg_token is a UDF that returns a pd.DataFrame of test arguments
-        arg_list = fused.run(arg_token)
+        arg_list = fused.run(default_params_token)
+        print(f"Loaded default params from UDF {default_params_token}... Running UDF over these")
     except Exception as e:
-        print(f"Couldn't load UDF {udf_token} with arg_token {arg_token}, trying to load default params...")
+        print(f"Couldn't load UDF {udf_token} with arg_token {default_params_token}, trying to load default params...")
         
         try:
             udf = fused.load(udf_token)
@@ -2842,7 +2843,7 @@ def test_udf(udf_token: str, cache_length: str = "9999d", arg_token: Optional[st
     current_run = run_submit_default(udf_token, "0s", arg_token)
 
     # Check if results are valid
-    all_passing = bool((current_run["status"] == "success").all())
+    all_passing = (current_run["status"] == "success").all()
     # Check if result matches cached result
     all_equal = pickle.dumps(cached_run) == pickle.dumps(current_run)
-    return (all_passing, all_equal, cached_run, current_run)
+    return (bool(all_passing), all_equal, cached_run, current_run)
