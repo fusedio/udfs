@@ -2724,7 +2724,7 @@ def estimate_zoom(bounds, target_num_tiles=1):
             return zoom+1
 
 
-def get_tile(
+def get_tiles(
     bounds=None, target_num_tiles=1, zoom=None, max_tile_recursion=6, as_gdf=True
 ):
     import mercantile
