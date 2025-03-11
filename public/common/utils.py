@@ -5,7 +5,7 @@ import fused
 import pandas as pd
 import numpy as np
 from numpy.typing import NDArray
-from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union, Any
 from loguru import logger
 
 def to_pickle(obj):
@@ -2785,3 +2785,71 @@ def add_utm_area(gdf, utm_col='utm_epsg', utm_area_col='utm_area_sqm'):
     # Step 3: Assign areas back to original gdf order
     gdf[utm_area_col] = gdf.index.map(areas_dict)
     return gdf
+
+
+def run_submit_with_defaults(udf_token: str, cache_length: str = "9999d", default_params_token: Optional[str] = None):
+    """
+    Uses fused.submit() to run a UDF over:
+    - A UDF that returns a pd.DataFrame of test arguments (`default_params_token`)
+    - Or default params (expectes udf.utils.submit_default_params to return a pd.DataFrame)
+    """
+    
+    # Assume people know what they're doing 
+    try:
+        # arg_token is a UDF that returns a pd.DataFrame of test arguments
+        arg_list = fused.run(default_params_token)
+
+        if 'bounds' in arg_list.columns:
+            # This is a hacky workaround for now as we can't pass np.float bounds to `fused.run(udf, bounds) so need to convert them to float
+            # but fused.run() returns bounds as `np.float` for whatever reason
+            arg_list['bounds'] = arg_list['bounds'].apply(lambda bounds_list: [float(x) for x in bounds_list])
+            
+        print(f"Loaded default params from UDF {default_params_token}... Running UDF over these")
+    except Exception as e:
+        print(f"Couldn't load UDF {udf_token} with arg_token {default_params_token}, trying to load default params...")
+        
+        try:
+            udf = fused.load(udf_token)
+            
+            # Assume we have a funciton called 'submit_default_params` inside the main UDF which returns a pd.DataFrame of test arguments
+            # TODO: edit this to directly use `udf.submit_default_params()` once we remove utils
+            if hasattr(udf.utils, "submit_default_params"):
+                print("Found default params for UDF, using them...")
+                arg_list = udf.utils.submit_default_params()
+            else:
+                raise ValueError("No default params found for UDF, can't run this UDF")
+
+        except Exception as e:
+            raise ValueError("Couldn't load UDF, can't run this UDF. Try with another UDF")
+        
+        #TODO: Add support for using the default view state
+
+    return fused.submit(
+        udf_token,
+        arg_list,
+        cache_max_age=cache_length,
+        wait_on_results=True,
+    )
+
+def test_udf(udf_token: str, cache_length: str = "9999d", arg_token: Optional[str] = None):
+    """
+    Testing a UDF:
+    1. Does it run and return successful result for all its default parameters?
+    2. Are the results identical to the cached results?
+
+    Returns:
+    - all_passing: True if the UDF runs and returns successful result for all its default parameters
+    - all_equal: True if the results are identical to the cached results
+    - prev_run: Cached UDF output
+    - current_run: New UDF output
+    """
+    import pickle
+
+    cached_run = run_submit_with_defaults(udf_token, cache_length, arg_token)
+    current_run = run_submit_with_defaults(udf_token, "0s", arg_token)
+
+    # Check if results are valid
+    all_passing = (current_run["status"] == "success").all()
+    # Check if result matches cached result
+    all_equal = pickle.dumps(cached_run) == pickle.dumps(current_run)
+    return (bool(all_passing), all_equal, cached_run, current_run)
