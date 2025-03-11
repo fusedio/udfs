@@ -2788,6 +2788,11 @@ def add_utm_area(gdf, utm_col='utm_epsg', utm_area_col='utm_area_sqm'):
 
 
 def run_submit_default(udf_token: str, cache_length: str = "9999d", arg_token: Optional[str] = None):
+    """
+    Uses fused.submit() to run a UDF over:
+    - A UDF that returns a pd.DataFrame of test arguments (`arg_token`)
+    - Or default params (expectes udf.utils.submit_default_params to return a pd.DataFrame)
+    """
     
     # Assume people know what they're doing 
     try:
@@ -2795,13 +2800,22 @@ def run_submit_default(udf_token: str, cache_length: str = "9999d", arg_token: O
         arg_list = fused.run(arg_token)
     except Exception as e:
         print(f"Couldn't load UDF {udf_token} with arg_token {arg_token}, trying to load default params...")
-        udf = fused.load(udf_token)
+        
+        try:
+            udf = fused.load(udf_token)
+            
+            # Assume we have a funciton called 'submit_default_params` inside the main UDF which returns a pd.DataFrame of test arguments
+            # TODO: edit this to directly use `udf.submit_default_params()` once we remove utils
+            if hasattr(udf.utils, "submit_default_params"):
+                print("Found default params for UDF, using them...")
+                arg_list = udf.utils.submit_default_params()
+            else:
+                raise ValueError("No default params found for UDF, can't run this UDF")
 
-        # Assume we have a funciton called 'submit_default_params` inside the main UDF which returns a pd.DataFrame of test arguments
-        if hasattr(udf.utils, "submit_default_params"):
-            arg_list = udf.utils.submit_default_params()
-        else:
-            raise ValueError("No default params found for UDF, can't run this UDF")
+        except Exception as e:
+            raise ValueError("Couldn't load UDF, can't run this UDF. Try with another UDF")
+        
+        #TODO: Add support for using the default view state
 
     return fused.submit(
         udf_token,
@@ -2812,71 +2826,23 @@ def run_submit_default(udf_token: str, cache_length: str = "9999d", arg_token: O
 
 def test_udf(udf_token: str, cache_length: str = "9999d", arg_token: Optional[str] = None):
     """
-    Test a UDF by running it with the provided arguments and comparing results with cached output.
-
-    The function attempts to obtain test arguments in the following order:
-    1. From a provided arg_token UDF that returns a pd.DataFrame of test arguments
-    2. From the UDF's utils.get_test_params() function if it exists
-    3. From the UDF's metadata for the bounds if available (using default view state)
-    4. From a placeholder value for bounds if required by the UDF
-
-    Note: We only support passing bounds in a pd.DataFrame([{x, y, z}]) format for now.
-
-    Args:
-        udf_token: The identifier string of the UDF to test
-        cache_length: The length of time to cache the results (default: 9999d)
-        arg_token: Optional token of a UDF that returns custom arguments as pd.DataFrame
+    Testing a UDF:
+    1. Does it run and return successful result for all its default parameters?
+    2. Are the results identical to the cached results?
 
     Returns:
-        A tuple of:
-        - test_passing (bool): True if no exceptions in current results
-        - similar (bool): True if current and previous results are identical
-        - old: Previous run results using cached data
-        - new: Current run results using fresh data
+    - all_passing: True if the UDF runs and returns successful result for all its default parameters
+    - all_equal: True if the results are identical to the cached results
+    - prev_run: Cached UDF output
+    - current_run: New UDF output
     """
-    import mercantile
-    import math
     import pickle
 
-    udf = fused.load(udf_token)
-    arg_list: list[dict[str, Any]] = []
-
-    if arg_token:
-        # try to fetch input params from UDF defined in arg_token
-        udf_arg_list = fused.run(arg_token)
-        assert type(udf_arg_list) is pd.DataFrame
-        arg_list = udf_arg_list.to_dict(orient='records')
-    elif hasattr(udf.utils, "submit_default_params"):
-        # try to fetch input params from get_test_params that we (will) enforce will be present in the utils module of UDF
-        fn_arg_list = udf.utils.submit_default_params()
-        assert type(fn_arg_list) is pd.DataFrame
-        arg_list = fn_arg_list.to_dict(orient='records')
-    else:
-        # try to get bounds data from UDF metadata if available
-        metadata = udf.metadata
-        view = metadata.get("fused:defaultViewState")
-        if view and view.get("enabled"):
-            x, y, z = mercantile.tile(view["longitude"], view["latitude"], math.ceil(view["zoom"]))
-            arg_list.append({"x": x, "y": y, "z": z})
-        elif metadata.get("fused:udfType") in ["vector_tile", "raster"]:
-            # Using San Francisco as the fallback if required
-            arg_list.append({"x": 9647, "y": 12320, "z": 15})
-        elif metadata.get("fused:udfType") in ["vector_single", "raster_single"]:
-            arg_list.append({})
-
-    if not arg_list:
-        raise ValueError("No arguments found for UDF")
-
-    prev_run = fused.submit(
-        udf_token,
-        arg_list,
-        cache_max_age=cache_length,
-        wait_on_results=True,
-    )
-    current_run = fused.submit(udf_token, arg_list, cache_max_age="0s", wait_on_results=True)
+    cached_run = run_submit_default(udf_token, cache_length, arg_token)
+    current_run = run_submit_default(udf_token, "0s", arg_token)
 
     # Check if results are valid
-    all_passing = (current_run["status"] == "success").all()
+    all_passing = bool((current_run["status"] == "success").all())
     # Check if result matches cached result
-    all_equal = pickle.dumps(prev_run) == pickle.dumps(current_run)
-    return (all_passing, all_equal, prev_run, current_run)
+    all_equal = pickle.dumps(cached_run) == pickle.dumps(current_run)
+    return (all_passing, all_equal, cached_run, current_run)
