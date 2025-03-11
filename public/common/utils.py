@@ -2787,7 +2787,7 @@ def add_utm_area(gdf, utm_col='utm_epsg', utm_area_col='utm_area_sqm'):
     return gdf
 
 
-def run_submit_default(udf_token: str, cache_length: str = "9999d", default_params_token: Optional[str] = None):
+def run_submit_with_defaults(udf_token: str, cache_length: str = "9999d", default_params_token: Optional[str] = None):
     """
     Uses fused.submit() to run a UDF over:
     - A UDF that returns a pd.DataFrame of test arguments (`default_params_token`)
@@ -2839,8 +2839,8 @@ def test_udf(udf_token: str, cache_length: str = "9999d", arg_token: Optional[st
     """
     import pickle
 
-    cached_run = run_submit_default(udf_token, cache_length, arg_token)
-    current_run = run_submit_default(udf_token, "0s", arg_token)
+    cached_run = run_submit_with_defaults(udf_token, cache_length, arg_token)
+    current_run = run_submit_with_defaults(udf_token, "0s", arg_token)
 
     # Check if results are valid
     all_passing = (current_run["status"] == "success").all()
