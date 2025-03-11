@@ -1,5 +1,5 @@
 def get_overture(
-    bounds: fused.types.Tile = None,
+    bounds: fused.types.Bounds = None,
     release: str = "2025-01-22-0",
     theme: str = None,
     overture_type: str = None,
@@ -19,9 +19,10 @@ def get_overture(
     from shapely.geometry import shape, box
 
     # Load Fused helper functions
-    utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/f8f0c0f/public/common/"
+    common = fused.load(
+        "https://github.com/fusedio/udfs/tree/783dc65/public/common/"
     ).utils
+    bbox = common.bounds_to_gdf(bounds)
 
     if release == "2024-02-15-alpha-0":
         if overture_type == "administrative_boundary":
@@ -94,15 +95,15 @@ def get_overture(
 
     if polygon is not None:
         polygon=gpd.from_features(json.loads(polygon))
-        bounds = polygon.geometry.bounds
-        bounds = gpd.GeoDataFrame(
+        bbox = polygon.geometry.bbox
+        bbox = gpd.GeoDataFrame(
             {
                 "geometry": [
                     box(
-                        bounds.minx.loc[0],
-                        bounds.miny.loc[0],
-                        bounds.maxx.loc[0],
-                        bounds.maxy.loc[0],
+                        bbox.minx.loc[0],
+                        bbox.miny.loc[0],
+                        bbox.maxx.loc[0],
+                        bbox.maxy.loc[0],
                     )
                 ]
             }
@@ -111,8 +112,8 @@ def get_overture(
     def get_part(part):
         part_path = f"{table_path}/part={part}/" if num_parts != 1 else table_path
         try:
-            return utils.table_to_tile(
-                bounds, table=part_path, use_columns=use_columns, min_zoom=min_zoom
+            return common.table_to_tile(
+                bbox, table=part_path, use_columns=use_columns, min_zoom=min_zoom
             )
         except ValueError:
             return None
