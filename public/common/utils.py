@@ -5,8 +5,90 @@ import fused
 import pandas as pd
 import numpy as np
 from numpy.typing import NDArray
-from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union, Any
 from loguru import logger
+
+def to_pickle(obj):
+    """Encode an object to a pickle byte stream and store in DataFrame."""
+    import pickle
+    import pandas as pd
+    return pd.DataFrame(
+        {"data_type": [type(obj).__name__], "data_content": [pickle.dumps(obj)]}
+    )
+
+def from_pickle(df):
+    """Decode an object from a DataFrame containing pickle byte stream."""
+    import pickle
+    return pickle.loads(df["data_content"].iloc[0])
+
+def df_summary(df, description="", n_head=5, n_tail=5, n_sample=5, n_unique=100, add_details=True):
+    val = description+"\n\n"
+    val += "These are stats for df (pd.DataFrame):\n"
+    val += f"{list(df.columns)=} \n\n"
+    val += f"{df.isnull().sum()=} \n\n"
+    val += f"{df.describe().to_json()=} \n\n"
+    val += f"{df.head(n_head).to_json()=} \n\n"
+    val += f"{df.tail(n_tail).to_json()=} \n\n"
+    if len(df) > n_sample:
+        val += f"{df.sample(n_sample).to_json()=} \n\n"
+    if add_details:
+        if len(df) <= n_unique:
+            val += f"{df.to_json()} \n\n"
+        else:
+            for c in df.columns:
+                value_counts = df[c].value_counts()
+                df[c].value_counts().head()
+                val += f"df[{c}].value_counts()\n{value_counts} \n\n"
+                val += f"{df[c].unique()[:n_unique]} \n\n"
+    return val
+
+def get_diff_text(text1: str, text2: str, as_html: bool=True, only_diff: bool=False) -> str:
+    import difflib
+    import html
+    
+    diff = difflib.ndiff(text1.splitlines(keepends=True), text2.splitlines(keepends=True))
+    processed_diff = []
+    
+    if not as_html:
+        for line in diff:
+            if line.startswith("+"):
+                processed_diff.append(f"ADD: {line}")  # Additions
+            elif line.startswith("-"):
+                processed_diff.append(f"DEL: {line}")  # Deletions
+            else:
+                if not only_diff:
+                    processed_diff.append(f"  {line}")  # Unchanged lines
+        return "\n".join(processed_diff)            
+    
+    for line in diff:
+        escaped_line = html.escape(line)  # Escape HTML to preserve special characters
+        
+        if line.startswith("+"):
+            processed_diff.append(f"<span style='color:green; line-height:normal;'> {escaped_line} </span><br>")  # Green for additions
+        elif line.startswith("-"):
+            processed_diff.append(f"<span style='color:red; line-height:normal;'> {escaped_line} </span><br>")  # Red for deletions
+        else:
+            if not only_diff:
+                processed_diff.append(f"<span style='color:gray; line-height:normal;'> {escaped_line} </span><br>")  # Gray for unchanged lines
+    
+    # HTML structure with a dropdown for selecting background color
+    html_output = """
+    <div>
+        <label for="backgroundColor" style="color:gray;">Choose Background Color: </label>
+        <select id="backgroundColor" onchange="document.getElementById('diff-container').style.backgroundColor = this.value;">
+            <option value="#111111">Dark Gray</option>
+            <option value="#f0f0f0">Light Gray</option>
+            <option value="#ffffff">White</option>
+            <option value="#e0f7fa">Cyan</option>
+            <option value="#ffebee">Pink</option>
+            <option value="#c8e6c9">Green</option>
+        </select>
+    </div>
+    <div id="diff-container" style="background-color:#111111; padding:10px; font-family:monospace; white-space:pre; line-height:normal;">
+        {}</div>
+    """.format("".join(processed_diff))
+    return html_output
+
 
 def json_path_from_secret(var='gcs_fused'):
     import json
@@ -1106,7 +1188,7 @@ def df_to_gdf(df, cols_lonlat=None, verbose=False):
     return df
 
 
-def to_gdf(
+def geo_convert(
     data,
     crs=None,
     cols_lonlat=None,
@@ -1119,6 +1201,13 @@ def to_gdf(
     import pandas as pd
     import mercantile
     
+    # Convert xyz dict to xyz array
+    if isinstance(data, dict) and set(data.keys()) == {'x', 'y', 'z'}:
+        try:
+            data = [int(data['x']), int(data['y']), int(data['z'])]
+        except (ValueError, TypeError):
+            pass     
+            
     # Handle the bounds case specifically
     if data is None or (isinstance(data, (list, tuple, np.ndarray)) and len(data) == 4):
         bounds = [-180, -90, 180, 90] if data is None else data
@@ -1236,7 +1325,7 @@ def geo_buffer(
     assert data.crs not in (
         None,
         "",
-    ), "no crs was not found. use to_gdf to add crs"
+    ), "no crs was not found. use geo_convert to add crs"
     if str(dst_crs).lower().replace("_", "").replace(" ", "").replace("-", "") in [
         "original",
         "originalcrs",
@@ -1282,7 +1371,7 @@ def geo_bbox(
     import pyproj
     src_crs = data.crs
     if not dst_crs:
-        return to_gdf(
+        return geo_convert(
             shapely.geometry.box(*data.total_bounds), crs=src_crs, verbose=verbose
         )
     elif str(dst_crs).lower() == "utm":
@@ -1290,7 +1379,7 @@ def geo_bbox(
         logger.debug(f"estimated dst_crs={crs_display(dst_crs)}")
     transformer = pyproj.Transformer.from_crs(src_crs, dst_crs, always_xy=True)
     dst_bounds = transformer.transform_bounds(*data.total_bounds)
-    return to_gdf(
+    return geo_convert(
         shapely.geometry.box(*dst_bounds, ccw=True), crs=dst_crs, verbose=verbose
     )
 
@@ -1365,9 +1454,9 @@ def geo_join(
     import geopandas as gpd
     import shapely
     if type(left) != gpd.GeoDataFrame:
-        left = to_gdf(left, verbose=verbose)
+        left = geo_convert(left, verbose=verbose)
     if type(right) != gpd.GeoDataFrame:
-        right = to_gdf(right, verbose=verbose)
+        right = geo_convert(right, verbose=verbose)
     left_geom_cols = get_geo_cols(left)
     right_geom_cols = get_geo_cols(right)
     if verbose:
@@ -1483,9 +1572,9 @@ def geo_distance(
     import geopandas as gpd
     import shapely
     if type(left) != gpd.GeoDataFrame:
-        left = to_gdf(left, verbose=verbose)
+        left = geo_convert(left, verbose=verbose)
     if type(right) != gpd.GeoDataFrame:
-        right = to_gdf(right, verbose=verbose)
+        right = geo_convert(right, verbose=verbose)
     left_geom_cols = get_geo_cols(left)
     right_geom_cols = get_geo_cols(right)
     cols_right = list(cols_right)
@@ -1554,7 +1643,7 @@ def geo_samples(
         (random.uniform(min_x, max_x), random.uniform(min_y, max_y))
         for _ in range(n_samples)
     ]
-    return to_gdf(pd.DataFrame(points, columns=["lng", "lat"]))[["geometry"]]
+    return geo_convert(pd.DataFrame(points, columns=["lng", "lat"]))[["geometry"]]
 
 
 def bbox_stac_items(bounds, table):
@@ -1989,7 +2078,7 @@ def mercantile_polyfill(geom, zooms=[15], compact=True, k=None):
     import mercantile
     import shapely
 
-    gdf = to_gdf(geom , crs = 4326)
+    gdf = geo_convert(geom , crs = 4326)
     geometry = gdf.geometry[0]
 
     tile_list = list(mercantile.tiles(*geometry.bounds, zooms=zooms))
@@ -2635,7 +2724,7 @@ def estimate_zoom(bounds, target_num_tiles=1):
             return zoom+1
 
 
-def get_tile(
+def get_tiles(
     bounds=None, target_num_tiles=1, zoom=None, max_tile_recursion=6, as_gdf=True
 ):
     import mercantile
@@ -2648,9 +2737,9 @@ def get_tile(
         raise ValueError("target_num_tiles should be more than zero.")
 
     if target_num_tiles == 1:
-        bounds = to_gdf(bounds)
+        bounds = geo_convert(bounds)
         tile = mercantile.bounding_tile(*bounds.total_bounds)
-        gdf = to_gdf((tile.x, tile.y, tile.z))
+        gdf = geo_convert((tile.x, tile.y, tile.z))
     else:
         zoom_level = (
             zoom
@@ -2674,3 +2763,93 @@ def get_tile(
 
     return gdf if as_gdf else gdf[["x", "y", "z"]].values
 
+def get_utm_epsg(geometry):
+    utm_zone = int((geometry.centroid.x + 180) / 6) + 1
+    return 32600 + utm_zone if geometry.centroid.y >= 0 else 32700 + utm_zone  # 326XX for Northern Hemisphere, 327XX for Southern
+
+
+def add_utm_area(gdf, utm_col='utm_epsg', utm_area_col='utm_area_sqm'):
+    import geopandas as gpd
+
+    # Step 1: Compute UTM zones
+    gdf[utm_col] = gdf.geometry.apply(get_utm_epsg)
+
+    # Step 2: Compute areas in batches while preserving order
+    areas_dict = {}
+
+    for utm_zone, group in gdf.groupby(utm_col, group_keys=False):
+        utm_crs = f"EPSG:{utm_zone}"
+        reprojected = group.to_crs(utm_crs)  # Reproject all geometries in batch
+        areas_dict.update(dict(zip(group.index, reprojected.area)))  # Store areas by index
+
+    # Step 3: Assign areas back to original gdf order
+    gdf[utm_area_col] = gdf.index.map(areas_dict)
+    return gdf
+
+
+def run_submit_with_defaults(udf_token: str, cache_length: str = "9999d", default_params_token: Optional[str] = None):
+    """
+    Uses fused.submit() to run a UDF over:
+    - A UDF that returns a pd.DataFrame of test arguments (`default_params_token`)
+    - Or default params (expectes udf.utils.submit_default_params to return a pd.DataFrame)
+    """
+    
+    # Assume people know what they're doing 
+    try:
+        # arg_token is a UDF that returns a pd.DataFrame of test arguments
+        arg_list = fused.run(default_params_token)
+
+        if 'bounds' in arg_list.columns:
+            # This is a hacky workaround for now as we can't pass np.float bounds to `fused.run(udf, bounds) so need to convert them to float
+            # but fused.run() returns bounds as `np.float` for whatever reason
+            arg_list['bounds'] = arg_list['bounds'].apply(lambda bounds_list: [float(x) for x in bounds_list])
+            
+        print(f"Loaded default params from UDF {default_params_token}... Running UDF over these")
+    except Exception as e:
+        print(f"Couldn't load UDF {udf_token} with arg_token {default_params_token}, trying to load default params...")
+        
+        try:
+            udf = fused.load(udf_token)
+            
+            # Assume we have a funciton called 'submit_default_params` inside the main UDF which returns a pd.DataFrame of test arguments
+            # TODO: edit this to directly use `udf.submit_default_params()` once we remove utils
+            if hasattr(udf.utils, "submit_default_params"):
+                print("Found default params for UDF, using them...")
+                arg_list = udf.utils.submit_default_params()
+            else:
+                raise ValueError("No default params found for UDF, can't run this UDF")
+
+        except Exception as e:
+            raise ValueError("Couldn't load UDF, can't run this UDF. Try with another UDF")
+        
+        #TODO: Add support for using the default view state
+
+    return fused.submit(
+        udf_token,
+        arg_list,
+        cache_max_age=cache_length,
+        wait_on_results=True,
+    )
+
+def test_udf(udf_token: str, cache_length: str = "9999d", arg_token: Optional[str] = None):
+    """
+    Testing a UDF:
+    1. Does it run and return successful result for all its default parameters?
+    2. Are the results identical to the cached results?
+
+    Returns:
+    - all_passing: True if the UDF runs and returns successful result for all its default parameters
+    - all_equal: True if the results are identical to the cached results
+    - prev_run: Cached UDF output
+    - current_run: New UDF output
+    """
+    import pickle
+
+    cached_run = run_submit_with_defaults(udf_token, cache_length, arg_token)
+    current_run = run_submit_with_defaults(udf_token, "0s", arg_token)
+
+    # Check if results are valid
+    all_passing = (current_run["status"] == "success").all()
+    # Check if result matches cached result
+    all_equal = pickle.dumps(cached_run) == pickle.dumps(current_run)
+    return (bool(all_passing), all_equal, cached_run, current_run)
