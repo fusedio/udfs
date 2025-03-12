@@ -1188,7 +1188,7 @@ def df_to_gdf(df, cols_lonlat=None, verbose=False):
     return df
 
 
-def geo_convert(
+def to_gdf(
     data,
     crs=None,
     cols_lonlat=None,
@@ -1325,7 +1325,7 @@ def geo_buffer(
     assert data.crs not in (
         None,
         "",
-    ), "no crs was not found. use geo_convert to add crs"
+    ), "no crs was not found. use to_gdf to add crs"
     if str(dst_crs).lower().replace("_", "").replace(" ", "").replace("-", "") in [
         "original",
         "originalcrs",
@@ -1371,7 +1371,7 @@ def geo_bbox(
     import pyproj
     src_crs = data.crs
     if not dst_crs:
-        return geo_convert(
+        return to_gdf(
             shapely.geometry.box(*data.total_bounds), crs=src_crs, verbose=verbose
         )
     elif str(dst_crs).lower() == "utm":
@@ -1379,7 +1379,7 @@ def geo_bbox(
         logger.debug(f"estimated dst_crs={crs_display(dst_crs)}")
     transformer = pyproj.Transformer.from_crs(src_crs, dst_crs, always_xy=True)
     dst_bounds = transformer.transform_bounds(*data.total_bounds)
-    return geo_convert(
+    return to_gdf(
         shapely.geometry.box(*dst_bounds, ccw=True), crs=dst_crs, verbose=verbose
     )
 
@@ -1454,9 +1454,9 @@ def geo_join(
     import geopandas as gpd
     import shapely
     if type(left) != gpd.GeoDataFrame:
-        left = geo_convert(left, verbose=verbose)
+        left = to_gdf(left, verbose=verbose)
     if type(right) != gpd.GeoDataFrame:
-        right = geo_convert(right, verbose=verbose)
+        right = to_gdf(right, verbose=verbose)
     left_geom_cols = get_geo_cols(left)
     right_geom_cols = get_geo_cols(right)
     if verbose:
@@ -1572,9 +1572,9 @@ def geo_distance(
     import geopandas as gpd
     import shapely
     if type(left) != gpd.GeoDataFrame:
-        left = geo_convert(left, verbose=verbose)
+        left = to_gdf(left, verbose=verbose)
     if type(right) != gpd.GeoDataFrame:
-        right = geo_convert(right, verbose=verbose)
+        right = to_gdf(right, verbose=verbose)
     left_geom_cols = get_geo_cols(left)
     right_geom_cols = get_geo_cols(right)
     cols_right = list(cols_right)
@@ -1643,7 +1643,7 @@ def geo_samples(
         (random.uniform(min_x, max_x), random.uniform(min_y, max_y))
         for _ in range(n_samples)
     ]
-    return geo_convert(pd.DataFrame(points, columns=["lng", "lat"]))[["geometry"]]
+    return to_gdf(pd.DataFrame(points, columns=["lng", "lat"]))[["geometry"]]
 
 
 def bbox_stac_items(bounds, table):
@@ -2078,7 +2078,7 @@ def mercantile_polyfill(geom, zooms=[15], compact=True, k=None):
     import mercantile
     import shapely
 
-    gdf = geo_convert(geom , crs = 4326)
+    gdf = to_gdf(geom , crs = 4326)
     geometry = gdf.geometry[0]
 
     tile_list = list(mercantile.tiles(*geometry.bounds, zooms=zooms))
@@ -2737,9 +2737,9 @@ def get_tiles(
         raise ValueError("target_num_tiles should be more than zero.")
 
     if target_num_tiles == 1:
-        bounds = geo_convert(bounds)
+        bounds = to_gdf(bounds)
         tile = mercantile.bounding_tile(*bounds.total_bounds)
-        gdf = geo_convert((tile.x, tile.y, tile.z))
+        gdf = to_gdf((tile.x, tile.y, tile.z))
     else:
         zoom_level = (
             zoom
