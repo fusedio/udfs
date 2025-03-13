@@ -1208,23 +1208,24 @@ def to_gdf(
         except (ValueError, TypeError):
             pass     
             
-    # Handle the bounds case specifically
+    
     if data is None or (isinstance(data, (list, tuple, np.ndarray)) and len(data) == 4):
-        bounds = [-180, -90, 180, 90] if data is None else data
-        bounds = gpd.GeoDataFrame({}, geometry=[shapely.box(*bounds)], crs=crs or 4326)
-        return bounds
         
-    # Handle xyz tile coordinates
-    if isinstance(data, (list, tuple, np.ndarray)) and len(data) == 3:
-        x, y, z = data
-        tile = mercantile.Tile(x, y, z)
-        bounds = mercantile.bounds(tile)
-        gdf = gpd.GeoDataFrame(
-            {"x": [x], "y": [y], "z": [z]},
-            geometry=[shapely.box(bounds.west, bounds.south, bounds.east, bounds.north)],
-            crs=4326
-        )
-        return gdf[['x', 'y', 'z', 'geometry']]
+        data = [327, 791, 11] if data is None else data #if no data, get a tile in SF
+        
+        if len(data) == 3: # Handle xyz tile coordinates
+            x, y, z = data
+            tile = mercantile.Tile(x, y, z)
+            bounds = mercantile.bounds(tile)
+            gdf = gpd.GeoDataFrame(
+                {"x": [x], "y": [y], "z": [z]},
+                geometry=[shapely.box(bounds.west, bounds.south, bounds.east, bounds.north)],
+                crs=4326
+            )
+            return gdf[['x', 'y', 'z', 'geometry']]
+        
+        else: # Handle the bounds case specifically        
+            return gpd.GeoDataFrame({}, geometry=[shapely.box(*data)], crs=crs or 4326)        
         
     if cols_lonlat:
         if isinstance(data, pd.Series):
@@ -2709,6 +2710,9 @@ def estimate_zoom(bounds, target_num_tiles=1):
 
     else:
         minx, miny, maxx, maxy = bounds
+        miny = max(miny,-89.9999993) #there is a bug in the mercentile that adds an epsilon to lat lngs and causes issue
+        maxy = min(maxy,89.9999993) #there is a bug in the mercentile that adds an epsilon to lat lngs and causes issue
+        print(bounds)
         max_zoom = 20
         x_min, y_min, _ = mercantile.tile(minx, maxy, max_zoom)
         x_max, y_max, _ = mercantile.tile(maxx, miny, max_zoom)
@@ -2727,6 +2731,7 @@ def estimate_zoom(bounds, target_num_tiles=1):
 def get_tiles(
     bounds=None, target_num_tiles=1, zoom=None, max_tile_recursion=6, as_gdf=True
 ):
+    bounds = to_gdf(bounds)
     import mercantile
 
     if zoom is not None:
@@ -2737,7 +2742,6 @@ def get_tiles(
         raise ValueError("target_num_tiles should be more than zero.")
 
     if target_num_tiles == 1:
-        bounds = to_gdf(bounds)
         tile = mercantile.bounding_tile(*bounds.total_bounds)
         gdf = to_gdf((tile.x, tile.y, tile.z))
     else:
