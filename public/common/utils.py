@@ -1200,32 +1200,30 @@ def to_gdf(
     import shapely
     import pandas as pd
     import mercantile
-    
-    # Convert xyz dict to xyz array
+
+    # Convert xyz dict to list of 3: [x, y, z]
     if isinstance(data, dict) and set(data.keys()) == {'x', 'y', 'z'}:
         try:
             data = [int(data['x']), int(data['y']), int(data['z'])]
         except (ValueError, TypeError):
             pass     
-            
+
+    # If no data is passed, we set a tile in San Francisco 
+    data = [327, 791, 11] if data is None else data
+        
+    if len(data) == 3: # Handling of X Y Z tile
+        x, y, z = data
+        tile = mercantile.Tile(x, y, z)
+        bounds = mercantile.bounds(tile)
+        gdf = gpd.GeoDataFrame(
+            {"x": [x], "y": [y], "z": [z]},
+            geometry=[shapely.box(bounds.west, bounds.south, bounds.east, bounds.north)],
+            crs=4326
+        )
+        return gdf[['x', 'y', 'z', 'geometry']]
     
-    if data is None or (isinstance(data, (list, tuple, np.ndarray)) and len(data) == 4):
-        
-        data = [327, 791, 11] if data is None else data #if no data, get a tile in SF
-        
-        if len(data) == 3: # Handle xyz tile coordinates
-            x, y, z = data
-            tile = mercantile.Tile(x, y, z)
-            bounds = mercantile.bounds(tile)
-            gdf = gpd.GeoDataFrame(
-                {"x": [x], "y": [y], "z": [z]},
-                geometry=[shapely.box(bounds.west, bounds.south, bounds.east, bounds.north)],
-                crs=4326
-            )
-            return gdf[['x', 'y', 'z', 'geometry']]
-        
-        else: # Handle the bounds case specifically        
-            return gpd.GeoDataFrame({}, geometry=[shapely.box(*data)], crs=crs or 4326)        
+    if (isinstance(data, (list, tuple, np.ndarray)) and len(data) == 4): # Handling of fused.types.Bounds   
+        return gpd.GeoDataFrame({}, geometry=[shapely.box(*data)], crs=crs or 4326)        
         
     if cols_lonlat:
         if isinstance(data, pd.Series):
@@ -2742,7 +2740,7 @@ def get_tiles(
 
     if target_num_tiles == 1:
         tile = mercantile.bounding_tile(*bounds.total_bounds)
-        gdf = to_gdf((tile.x, tile.y, tile.z))
+        gdf = to_gdf([tile.x, tile.y, tile.z])
     else:
         zoom_level = (
             zoom
