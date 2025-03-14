@@ -120,16 +120,18 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/27845f33c289bebefc0ff108f01527128ba151d8/public/Overture_Maps_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/783dc656abcf9a74e9a55faad85ea7f55c77b171/public/Overture_Maps_Example/",
             "fused:gitPath": "public/Overture_Maps_Example",
-            "fused:gitRef": "27845f33c289bebefc0ff108f01527128ba151d8",
+            "fused:gitRef": "783dc656abcf9a74e9a55faad85ea7f55c77b171",
             "fused:gitAuthorNames": [
               "Isaac Brodsky",
               "Plinio Guzman",
               "Sina Kashuk",
               "Fabion Kauker",
               null,
-              "Tyler Erickson"
+              "Tyler Erickson",
+              "Suryashankar Das",
+              "Milind Soni"
             ],
             "fused:gitAuthorUsernames": [
               "isaacbrodsky",
@@ -137,7 +139,9 @@
               "kashuk",
               "fhk",
               "fused-io[bot]",
-              "tylere"
+              "tylere",
+              "iamsdas",
+              "milind-soni"
             ],
             "fused:gitAuthorUrls": [
               "https://github.com/isaacbrodsky",
@@ -145,7 +149,9 @@
               "https://github.com/kashuk",
               "https://github.com/fhk",
               "https://github.com/apps/fused-io",
-              "https://github.com/tylere"
+              "https://github.com/tylere",
+              "https://github.com/iamsdas",
+              "https://github.com/milind-soni"
             ],
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/9139378?v=4",
@@ -153,10 +159,12 @@
               "https://avatars.githubusercontent.com/u/12432685?v=4",
               "https://avatars.githubusercontent.com/u/4031392?v=4",
               "https://avatars.githubusercontent.com/in/834700?v=4",
-              "https://avatars.githubusercontent.com/u/92862?v=4"
+              "https://avatars.githubusercontent.com/u/92862?v=4",
+              "https://avatars.githubusercontent.com/u/26461855?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/27845f3/public/Overture_Maps_Example/",
-            "fused:gitLastModified": "2024-12-23T20:07:29+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/783dc65/public/Overture_Maps_Example/",
+            "fused:gitLastModified": "2025-03-07T09:19:42+00:00",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:id": null,
