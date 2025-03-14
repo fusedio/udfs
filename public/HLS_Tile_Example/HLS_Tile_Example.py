@@ -7,11 +7,8 @@ def udf(
     max_cloud_cover=25,
     n_mosaic=5,
     min_max=(0, 3000),
-    username="username",
-    password="password",
-    env="earthdata",
 ):
-    
+    import json
     import numpy as np
     import palettable
     from pystac_client import Client
@@ -20,28 +17,40 @@ def udf(
     utils = fused.load(
         "https://github.com/fusedio/udfs/tree/e1c15b5/public/common/"
     ).utils
-    
+
     STAC_URL = "https://cmr.earthdata.nasa.gov/stac"
+
+    try:
+        creds_json = fused.secrets.earthdata
+        creds_dict = json.loads(creds_json)
+        username = creds_dict["username"]
+        password = creds_dict["password"]
+        env = creds_dict.get("env", "earthdata")
+    except:
+        print(
+            "Unable to authenticate to NASA Earthdata.\n"
+            "Please update the `earthdata` secret.\n"
+            "Docs: https://docs.fused.io/workbench/account/#secrets-management\n"
+            "It should have content that looks like:\n"
+            "\n"
+            '{"username":"my_username", "password":"my_password"}\n'
+            "\n"
+            "To register and manage your Earthdata Login account,\n"
+            "go to: https://urs.earthdata.nasa.gov "
+        )
+        return None
 
     z = bounds.z[0]
     if z >= 9:
 
         catalog = Client.open(f"{STAC_URL}/LPCLOUD/")
-    
+
         # Uncomment the following line to see a list of collections.
         # utils.list_stac_collections(catalog)
 
         # Check authentication.
         cred = {"env": env, "username": username, "password": password}
-        try:
-            aws_session = utils.earth_session(cred=cred)
-        except:
-            print("Unable to authenticate to NASA Earthdata.\n"
-                  "Please update the `username` and `password` arguments.\n"
-                  "To register and manage your Earthdata Login account,\n"
-                  "go to: https://urs.earthdata.nasa.gov "
-            )
-            return None
+        aws_session = utils.earth_session(cred=cred)
 
         search = catalog.search(
             collections=[collection_id],
