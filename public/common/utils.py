@@ -2712,7 +2712,6 @@ def estimate_zoom(bounds, target_num_tiles=1):
         minx, miny, maxx, maxy = bounds
         miny = max(miny,-89.9999993) #there is a bug in the mercentile that adds an epsilon to lat lngs and causes issue
         maxy = min(maxy,89.9999993) #there is a bug in the mercentile that adds an epsilon to lat lngs and causes issue
-        print(bounds)
         max_zoom = 20
         x_min, y_min, _ = mercantile.tile(minx, maxy, max_zoom)
         x_max, y_max, _ = mercantile.tile(maxx, miny, max_zoom)
