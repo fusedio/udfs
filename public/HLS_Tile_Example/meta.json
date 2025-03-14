@@ -95,10 +95,10 @@
                 "suggestedValues": []
               }
             ],
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/c0fd4960845d1ebc4ac86c93274a537029ec70c7/public/HLS_Tile_Example/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/c0fd496/public/HLS_Tile_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/f659099084e67b37b125bad3dbc5729f7f95ded1/public/HLS_Tile_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/f659099/public/HLS_Tile_Example/",
             "fused:gitPath": "public/HLS_Tile_Example",
-            "fused:gitRef": "c0fd4960845d1ebc4ac86c93274a537029ec70c7",
+            "fused:gitRef": "f659099084e67b37b125bad3dbc5729f7f95ded1",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -143,7 +143,7 @@
               "https://avatars.githubusercontent.com/u/26461855?v=4",
               "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-03-07T09:19:42+00:00",
+            "fused:gitLastModified": "2025-03-14T23:11:10.755Z",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/HLS_Tile_Example.png",
@@ -169,8 +169,10 @@
                 "label": "stac"
               }
             ],
-            "fused:description": "## Overview\nThis UDF demonstrate how to access the NASA’s Harmonized Landsat Sentinel-2 (HLS) version 2 assets. Please visit [Earth Data Portal](https://urs.earthdata.nasa.gov) to register and manage your Earthdata Login account.\n\n## External links\n\n- [Data Discovery Example](https://nasa-openscapes.github.io/2021-Cloud-Hackathon/tutorials/02_Data_Discovery_CMR-STAC_API.html)\n- [Name of link](https://example.com)\n\n## Run this in any Jupyter Notebook\n\nPlease set `username` and `password` arguments. Create credentials at: https://urs.earthdata.nasa.gov to register and manage your Earthdata Login account.\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/HLS_Tile_Example\")\ngdf = fused.run(udf=udf, x=5241, y=12667, z=15,  username=\"your_username\", password=\"your_password\")\ngdf\n```\n",
-            "fused:explorerPin": "15"
+            "fused:description": "## Overview\nThis UDF demonstrate how to access the NASA’s Harmonized Landsat Sentinel-2 (HLS) version 2 assets. Please visit [Earth Data Portal](https://urs.earthdata.nasa.gov) to register and manage your Earthdata Login account.\n\n## External links\n\n- [Data Discovery Example](https://nasa-openscapes.github.io/2021-Cloud-Hackathon/tutorials/02_Data_Discovery_CMR-STAC_API.html)\n\n## Run this in any Jupyter Notebook\n\nPlease set `earthdata` [secret](https://docs.fused.io/workbench/account/#secrets-management) in Fused with a JSON dictionary of `username` and `password`.\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/HLS_Tile_Example\")\ngdf = fused.run(udf=udf, x=5241, y=12667, z=15)\ngdf\n```\n",
+            "fused:explorerPin": "15",
+            "fused:gitPullRequestBranch": "isaac_000002-patch-134839-use-fusedsecrets",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/718"
           },
           "source": "HLS_Tile_Example.py",
           "headers": [
