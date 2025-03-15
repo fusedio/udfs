@@ -1209,7 +1209,7 @@ def to_gdf(
             pass     
             
     
-    if data is None or (isinstance(data, (list, tuple, np.ndarray)) and len(data) == 4):
+    if data is None or (isinstance(data, (list, tuple, np.ndarray))):
         
         data = [327, 791, 11] if data is None else data #if no data, get a tile in SF
         
@@ -1223,8 +1223,8 @@ def to_gdf(
                 crs=4326
             )
             return gdf[['x', 'y', 'z', 'geometry']]
-        
-        else: # Handle the bounds case specifically        
+         
+        elif len(data) == 4: # Handle the bounds case specifically        
             return gpd.GeoDataFrame({}, geometry=[shapely.box(*data)], crs=crs or 4326)        
         
     if cols_lonlat:
@@ -2741,7 +2741,9 @@ def get_tiles(
         raise ValueError("target_num_tiles should be more than zero.")
 
     if target_num_tiles == 1:
+        
         tile = mercantile.bounding_tile(*bounds.total_bounds)
+        print(to_gdf((0,0,0)))
         gdf = to_gdf((tile.x, tile.y, tile.z))
     else:
         zoom_level = (
