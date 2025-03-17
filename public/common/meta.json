@@ -95,9 +95,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/732f59442c47633dc5d956e303b79ab6381f2560/public/common/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/d8594b7fb7384a0a7b18cba0c8f19939ccc0c456/public/common/",
             "fused:gitPath": "public/common",
-            "fused:gitRef": "732f59442c47633dc5d956e303b79ab6381f2560",
+            "fused:gitRef": "d8594b7fb7384a0a7b18cba0c8f19939ccc0c456",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -150,12 +150,12 @@
               "https://avatars.githubusercontent.com/u/1020496?v=4",
               "https://avatars.githubusercontent.com/u/26461855?v=4"
             ],
-            "fused:gitLastModified": "2025-03-14T08:55:58+00:00",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/732f594/public/common/",
+            "fused:gitLastModified": "2025-03-17T19:57:46.153Z",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/d8594b7/public/common/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
-            "fused:gitPullRequestBranch": "sina-patch-ce8537-add-dict-support-for-xyz",
-            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/705",
+            "fused:gitPullRequestBranch": "max-patch-49087a-FIxing-savetoagents",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/723",
             "fused:id": null,
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Fused_Logo.png",
             "fused:description": "## Overview\n\nThis UDF contains common utils that are being used for many public udfs.\n\n\nTo import common utils in your udf run the following command:\n\n`common = fused.utils.common`\n",

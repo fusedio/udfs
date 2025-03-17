@@ -2864,19 +2864,23 @@ def test_udf(udf_token: str, cache_length: str = "9999d", arg_token: Optional[st
 
   
 def save_to_agent(
-    agent_json_dir: str, udf: AnyBaseUdf, udf_name: str, mcp_metadata: dict[str, Any]
+    agent_json_path: str, udf: AnyBaseUdf, udf_name: str, mcp_metadata: dict[str, Any], overwrite: bool = True,
 ):
     """
     Save UDF to agent of udf_ai directory
     Args:
-        agent_json_dir (str): Absolute path to the agent.json file
+        agent_json_path (str): Absolute path to the agent.json file
         udf (AnyBaseUdf): UDF to save
         udf_name (str): Name of the UDF
         mcp_metadata (dict[str, Any]): MCP metadata
+        overwrite (bool): If True, overwrites any existing UDF directory with current `udf`
     """
     # load agent.json
-    agent_json = json.load(open(agent_json_dir))
-    repo_dir = os.path.dirname(agent_json_dir)
+    if os.path.exists(agent_json_path):
+        agent_json = json.load(open(agent_json_path))
+    else:
+        agent_json = {"agents": []}
+    repo_dir = os.path.dirname(agent_json_path)
 
     # save udf to repo
     udf.metadata = {}
@@ -2884,9 +2888,8 @@ def save_to_agent(
     if not mcp_metadata.get("description") or mcp_metadata.get("parameters"):
         raise ValueError("mcp_metadata must have description and parameters")
     udf.metadata["fused:mcp"] = mcp_metadata
-    udf.to_directory(f"{repo_dir}/{udf_name}")
+    udf.to_directory(f"{repo_dir}/{udf_name}", overwrite=overwrite)
 
-    # check if agent already exists, if exists then add udf to agent, else create new agent
     if udf_name in [agent["name"] for agent in agent_json["agents"]]:
         for agent in agent_json["agents"]:
             if agent["name"] == udf_name:
@@ -2898,17 +2901,16 @@ def save_to_agent(
         agent_json["agents"].append({"name": udf_name, "udfs": [udf_name]})
 
     # save agent.json
-    json.dump(agent_json, open(agent_json_dir, "w"), indent=4)
+    json.dump(agent_json, open(agent_json_path, "w"), indent=4)
 
-def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_path: str):
+def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_path: str, uv_path: str = 'uv'):
     """
     Generate MCP configuration file based on list of agents from the udf_ai directory
     Args:
         config_path (str): Absolute path to the MCP configuration file.
         agents_list (list[str]): List of agent names to be included in the configuration.
         repo_path (str): Absolute path to the locally cloned udf_ai repo directory.
-
-    Note: The `uv` command is expected to be available in the path.
+        uv_path (str): Path to `uv`. Defaults to `uv` but might require your local path to `uv`
     """
     if not os.path.exists(repo_path):
         raise ValueError(f"Repository path {repo_path} does not exist")
