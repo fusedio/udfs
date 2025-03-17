@@ -2886,7 +2886,8 @@ def save_to_agent(
     udf.metadata["fused:mcp"] = mcp_metadata
     udf.to_directory(f"{repo_dir}/{udf_name}")
 
-    # check if agent already exists, if exists then add udf to agent, else create new agent
+    if 'agents' not in agent_json:
+        agent_json['agents'] = []
     if udf_name in [agent["name"] for agent in agent_json["agents"]]:
         for agent in agent_json["agents"]:
             if agent["name"] == udf_name:
