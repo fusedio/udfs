@@ -93,7 +93,7 @@ def get_overture(
     table_path = table_path.rstrip("/")
 
     if polygon is not None:
-        polygon=gpd.from_features(json.loads(polygon))
+        polygon=gpd.GeoDataFrame.from_features(json.loads(polygon))
         bounds = polygon.geometry.bounds
         bounds = gpd.GeoDataFrame(
             {
