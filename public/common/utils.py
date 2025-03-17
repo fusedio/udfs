@@ -2864,7 +2864,7 @@ def test_udf(udf_token: str, cache_length: str = "9999d", arg_token: Optional[st
 
   
 def save_to_agent(
-    agent_json_dir: str, udf: AnyBaseUdf, udf_name: str, mcp_metadata: dict[str, Any]
+    agent_json_dir: str, udf: AnyBaseUdf, udf_name: str, mcp_metadata: dict[str, Any], overwrite: bool = True,
 ):
     """
     Save UDF to agent of udf_ai directory
@@ -2873,6 +2873,7 @@ def save_to_agent(
         udf (AnyBaseUdf): UDF to save
         udf_name (str): Name of the UDF
         mcp_metadata (dict[str, Any]): MCP metadata
+        overwrite (bool): If True, overwrites any existing UDF directory with current `udf`
     """
     # load agent.json
     agent_json = json.load(open(agent_json_dir))
@@ -2884,7 +2885,7 @@ def save_to_agent(
     if not mcp_metadata.get("description") or mcp_metadata.get("parameters"):
         raise ValueError("mcp_metadata must have description and parameters")
     udf.metadata["fused:mcp"] = mcp_metadata
-    udf.to_directory(f"{repo_dir}/{udf_name}")
+    udf.to_directory(f"{repo_dir}/{udf_name}", overwrite=overwrite)
 
     if 'agents' not in agent_json:
         agent_json['agents'] = []
