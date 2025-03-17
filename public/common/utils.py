@@ -2889,7 +2889,9 @@ def save_to_agent(
     if udf_name in [agent["name"] for agent in agent_json["agents"]]:
         for agent in agent_json["agents"]:
             if agent["name"] == udf_name:
-                agent["udfs"].append(udf_name)
+                # Only append udf_name if it doesn't already exist in the agent's udfs list
+                if udf_name not in agent["udfs"]:
+                    agent["udfs"].append(udf_name)
                 break
     else:
         agent_json["agents"].append({"name": udf_name, "udfs": [udf_name]})
