@@ -2858,3 +2858,45 @@ def test_udf(udf_token: str, cache_length: str = "9999d", arg_token: Optional[st
     # Check if result matches cached result
     all_equal = pickle.dumps(cached_run) == pickle.dumps(current_run)
     return (bool(all_passing), all_equal, cached_run, current_run)
+
+
+def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_path: str):
+    """
+    Generate MCP configuration file based on list of agents from the udf_ai directory
+    Args:
+        config_path (str): Absolute path to the MCP configuration file.
+        agents_list (list[str]): List of agent names to be included in the configuration.
+        repo_path (str): Absolute path to the locally cloned udf_ai repo directory.
+
+    Note: The `uv` command is expected to be available in the path.
+    """
+    if not os.path.exists(repo_path):
+        raise ValueError(f"Repository path {repo_path} does not exist")
+
+    # load agent.json containing agent to udfs mapping
+    agent_json = json.load(open(f"{repo_path}/agents.json", "rt"))
+
+    # create config json for all agents
+    config_json = {"mcpServers": {}}
+
+    for agent_name in agents_list:
+        agent = next(
+            (agent for agent in agent_json["agents"] if agent["name"] == agent_name),
+            None,
+        )
+        if not agent or not agent["udfs"]:
+            raise ValueError(f"No UDFs found for agent {agent_name}")
+
+        agent_config = {
+            "command": "uv",
+            "args": [
+                "--directory",
+                f"{repo_path}",
+                "run",
+                f"run.py --udf-folder-names='{','.join(agent['udfs'])}'",
+            ],
+        }
+        config_json["mcpServers"][agent_name] = agent_config
+
+    # save config json
+    json.dump(config_json, open(config_path, "w"), indent=4)
