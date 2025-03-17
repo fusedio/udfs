@@ -4,9 +4,12 @@ from __future__ import annotations
 import fused
 import pandas as pd
 import numpy as np
+import json
+import os
 from numpy.typing import NDArray
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union, Any
 from loguru import logger
+from fused.api.api import AnyBaseUdf
 
 def to_pickle(obj):
     """Encode an object to a pickle byte stream and store in DataFrame."""
@@ -2858,3 +2861,38 @@ def test_udf(udf_token: str, cache_length: str = "9999d", arg_token: Optional[st
     # Check if result matches cached result
     all_equal = pickle.dumps(cached_run) == pickle.dumps(current_run)
     return (bool(all_passing), all_equal, cached_run, current_run)
+
+def save_to_agent(
+    agent_json_dir: str, udf: AnyBaseUdf, udf_name: str, mcp_metadata: dict[str, Any]
+):
+    """
+    Save UDF to agent of udf_ai directory
+    Args:
+        agent_json_dir (str): Absolute path to the agent.json file
+        udf (AnyBaseUdf): UDF to save
+        udf_name (str): Name of the UDF
+        mcp_metadata (dict[str, Any]): MCP metadata
+    """
+    # load agent.json
+    agent_json = json.load(open(agent_json_dir))
+    repo_dir = os.path.dirname(agent_json_dir)
+
+    # save udf to repo
+    udf.metadata = {}
+    udf.name = udf_name
+    if not mcp_metadata.get("description") or mcp_metadata.get("parameters"):
+        raise ValueError("mcp_metadata must have description and parameters")
+    udf.metadata["fused:mcp"] = mcp_metadata
+    udf.to_directory(f"{repo_dir}/{udf_name}")
+
+    # check if agent already exists, if exists then add udf to agent, else create new agent
+    if udf_name in [agent["name"] for agent in agent_json["agents"]]:
+        for agent in agent_json["agents"]:
+            if agent["name"] == udf_name:
+                agent["udfs"].append(udf_name)
+                break
+    else:
+        agent_json["agents"].append({"name": udf_name, "udfs": [udf_name]})
+
+    # save agent.json
+    json.dump(agent_json, open(agent_json_dir, "w"), indent=4)
