@@ -2904,7 +2904,7 @@ def save_to_agent(
     # save agent.json
     json.dump(agent_json, open(agent_json_path, "w"), indent=4)
 
-def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_path: str, uv_path: str = 'uv', script_path: str = 'run.py'):
+def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_path: str, uv_path: str = 'uv', script_path: str = 'main.py'):
     """
     Generate MCP configuration file based on list of agents from the udf_ai directory
     Args:
