@@ -133,7 +133,7 @@ def create_server_from_folder_names(
             if udf_name:
                 try:
                     # get absolute path of folder
-                    folder_path = f"{os.path.abspath(os.curdir)}/{udf_name}"
+                    folder_path = f"{os.path.abspath(os.curdir)}/udfs/{udf_name}"
                     udf_file_path = f"{folder_path}/udf_{udf_name}.py"
                     meta_file_path = f"{folder_path}/meta.json"
 

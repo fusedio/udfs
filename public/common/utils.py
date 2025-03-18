@@ -2888,7 +2888,7 @@ def save_to_agent(
     if not mcp_metadata.get("description") or mcp_metadata.get("parameters"):
         raise ValueError("mcp_metadata must have description and parameters")
     udf.metadata["fused:mcp"] = mcp_metadata
-    udf.to_directory(f"{repo_dir}/{udf_name}", overwrite=overwrite)
+    udf.to_directory(f"{repo_dir}/udfs/{udf_name}", overwrite=overwrite)
 
     if udf_name in [agent["name"] for agent in agent_json["agents"]]:
         for agent in agent_json["agents"]:
