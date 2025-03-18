@@ -4,7 +4,6 @@ from __future__ import annotations
 import fused
 import pandas as pd
 import numpy as np
-import sys
 import json
 import os
 from numpy.typing import NDArray
@@ -2905,13 +2904,14 @@ def save_to_agent(
     # save agent.json
     json.dump(agent_json, open(agent_json_path, "w"), indent=4)
 
-def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_path: str, script_path: str = 'run.py'):
+def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_path: str, uv_path: str = 'uv', script_path: str = 'main.py'):
     """
     Generate MCP configuration file based on list of agents from the udf_ai directory
     Args:
         config_path (str): Absolute path to the MCP configuration file.
         agents_list (list[str]): List of agent names to be included in the configuration.
         repo_path (str): Absolute path to the locally cloned udf_ai repo directory.
+        uv_path (str): Path to `uv`. Defaults to `uv` but might require your local path to `uv`.
         script_path (str): Path to the script to run. Defaults to `run.py`.
     """
     if not os.path.exists(repo_path):
@@ -2932,9 +2932,12 @@ def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_pat
             raise ValueError(f"No UDFs found for agent {agent_name}")
 
         agent_config = {
-            "command": sys.executable,
+            "command": uv_path,
             "args": [
-                f"{repo_path}/{script_path}",
+                "run",
+                "--directory",
+                f"{repo_path}",
+                f"{script_path}",
                 "--runtime=local",
                 f"--udf-names={','.join(agent['udfs'])}",
                 f"--name={agent_name}",

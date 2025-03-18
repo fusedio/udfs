@@ -34,16 +34,15 @@ DEFAULT_TOKENS_TO_READ_FUSED_DOCS = [
 def register_udf_tool(mcp: FastMCP, udf: AnyBaseUdf):
     """Register a UDF tool using provided metadata."""
     mcp_metadata = udf.metadata.get("fused:mcp")
-    udf_name = udf.metadata.get("fused:name")
 
     if not mcp_metadata:
         raise ValueError(
-            f"No metadata provided for token '{udf_name}', skipping registration"
+            f"No metadata provided for token '{udf.name}', skipping registration"
         )
 
     # Log the parameters from metadata
     logger.info(
-        f"Registering tool '{udf_name}' with parameters: {mcp_metadata['parameters']}"
+        f"Registering tool '{udf.name}' with parameters: {mcp_metadata['parameters']}"
     )
 
     # Create docstring from metadata
@@ -58,32 +57,16 @@ def register_udf_tool(mcp: FastMCP, udf: AnyBaseUdf):
             )
     else:
         logger.info(
-            f"No parameters received for {udf_name} so skipping creating docstring for parameters"
+            f"No parameters received for {udf.name} so skipping creating docstring for parameters"
         )
 
     async def udf_tool(**params):
         """Dynamic UDF tool implementation."""
         # Log what parameters were received
-        logger.info(f"Tool '{udf_name}' received parameters: {params}")
-
-        # Initialize API parameters dict
-        api_params = {}
-
-        # Copy all parameters directly to the API parameters
-        try:
-            for key, value in params.items():
-                if key != "return_code":  # Skip non-API parameters
-                    api_params[key] = value
-                    logger.info(f"Added parameter: {key}={value}")
-        except Exception as e:
-            api_params = {}
-            logger.info(f"No parameters received for {udf_name}")
-
-        # Log the final parameters
-        logger.info(f"Final API parameters for {udf_name}: {api_params}")
+        logger.info(f"Tool '{udf.name}' received parameters: {params}")
 
         try:
-            return fused.run(udf, **api_params)
+            return fused.run(udf, **params)
         except Exception as e:
             logger.error(f"Error executing function: {e}")
             return f"Error: {str(e)}"
@@ -92,7 +75,7 @@ def register_udf_tool(mcp: FastMCP, udf: AnyBaseUdf):
     udf_tool.__doc__ = docstring
 
     # Register the tool with the token ID as name
-    return mcp.tool(name=udf_name)(udf_tool)
+    return mcp.tool(name=udf.name)(udf_tool)
 
 
 def create_server_from_token_ids(
