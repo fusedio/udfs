@@ -2903,14 +2903,15 @@ def save_to_agent(
     # save agent.json
     json.dump(agent_json, open(agent_json_path, "w"), indent=4)
 
-def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_path: str, uv_path: str = 'uv'):
+def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_path: str, uv_path: str = 'uv', script_path: str = 'run.py'):
     """
     Generate MCP configuration file based on list of agents from the udf_ai directory
     Args:
         config_path (str): Absolute path to the MCP configuration file.
         agents_list (list[str]): List of agent names to be included in the configuration.
         repo_path (str): Absolute path to the locally cloned udf_ai repo directory.
-        uv_path (str): Path to `uv`. Defaults to `uv` but might require your local path to `uv`
+        uv_path (str): Path to `uv`. Defaults to `uv` but might require your local path to `uv`.
+        script_path (str): Path to the script to run. Defaults to `run.py`.
     """
     if not os.path.exists(repo_path):
         raise ValueError(f"Repository path {repo_path} does not exist")
@@ -2930,12 +2931,15 @@ def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_pat
             raise ValueError(f"No UDFs found for agent {agent_name}")
 
         agent_config = {
-            "command": "uv",
+            "command": uv_path,
             "args": [
+                "run",
                 "--directory",
                 f"{repo_path}",
-                "run",
-                f"run.py --runtime='local' --udf-names='{','.join(agent['udfs'])}' --name='{agent_name}'",
+                f"{script_path}",
+                "--runtime=local",
+                f"--udf-names={','.join(agent['udfs'])}",
+                f"--name={agent_name}",
             ],
         }
         config_json["mcpServers"][agent_name] = agent_config
