@@ -2912,7 +2912,6 @@ def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_pat
         config_path (str): Absolute path to the MCP configuration file.
         agents_list (list[str]): List of agent names to be included in the configuration.
         repo_path (str): Absolute path to the locally cloned udf_ai repo directory.
-        uv_path (str): Path to `uv`. Defaults to `uv` but might require your local path to `uv`.
         script_path (str): Path to the script to run. Defaults to `run.py`.
     """
     if not os.path.exists(repo_path):
@@ -2935,10 +2934,7 @@ def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_pat
         agent_config = {
             "command": sys.executable,
             "args": [
-                "run",
-                "--directory",
-                f"{repo_path}",
-                f"{script_path}",
+                f"{repo_path}/{script_path}",
                 "--runtime=local",
                 f"--udf-names={','.join(agent['udfs'])}",
                 f"--name={agent_name}",
