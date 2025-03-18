@@ -15,6 +15,8 @@ from mcp.server import Server
 import uvicorn
 import fused
 
+import pandas as pd
+
 # Configure logging
 logging.basicConfig(
     level=logging.WARN, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -66,7 +68,10 @@ def register_udf_tool(mcp: FastMCP, udf: AnyBaseUdf):
         logger.info(f"Tool '{udf.name}' received parameters: {params}")
 
         try:
-            return fused.run(udf, **params)
+            result = fused.run(udf, **params)
+            if isinstance(result, pd.DataFrame):
+                return result.to_dict(orient="records")
+            return result
         except Exception as e:
             logger.error(f"Error executing function: {e}")
             return f"Error: {str(e)}"
