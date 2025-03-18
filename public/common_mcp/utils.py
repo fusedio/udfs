@@ -132,16 +132,9 @@ def create_server_from_folder_names(
             udf_name = udf_name.strip()  # Remove any whitespace
             if udf_name:
                 try:
-                    # get absolute path of folder
+                    # load UDF from folder
                     folder_path = f"{os.path.abspath(os.curdir)}/udfs/{udf_name}"
-                    udf_file_path = f"{folder_path}/udf_{udf_name}.py"
-                    meta_file_path = f"{folder_path}/meta.json"
-
-                    # create UDF based on folder
-                    udf = fused.load(udf_file_path)
-                    meta = json.load(open(meta_file_path))
-                    udf.metadata = meta["job_config"]["steps"][0]["udf"]["metadata"]
-                    udf.name = udf_name
+                    udf = fused.load(folder_path)
 
                     # register UDF tool to mcp
                     register_udf_tool(mcp, udf)
