@@ -2935,7 +2935,7 @@ def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_pat
                 "--directory",
                 f"{repo_path}",
                 "run",
-                f"run.py --udf-folder-names='{','.join(agent['udfs'])}'",
+                f"run.py --runtime='local' --udf-names='{','.join(agent['udfs'])}'",
             ],
         }
         config_json["mcpServers"][agent_name] = agent_config
