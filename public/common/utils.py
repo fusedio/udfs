@@ -4,6 +4,7 @@ from __future__ import annotations
 import fused
 import pandas as pd
 import numpy as np
+import sys
 import json
 import os
 from numpy.typing import NDArray
@@ -2904,7 +2905,7 @@ def save_to_agent(
     # save agent.json
     json.dump(agent_json, open(agent_json_path, "w"), indent=4)
 
-def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_path: str, uv_path: str = 'uv', script_path: str = 'run.py'):
+def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_path: str, script_path: str = 'run.py'):
     """
     Generate MCP configuration file based on list of agents from the udf_ai directory
     Args:
@@ -2932,7 +2933,7 @@ def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_pat
             raise ValueError(f"No UDFs found for agent {agent_name}")
 
         agent_config = {
-            "command": uv_path,
+            "command": sys.executable,
             "args": [
                 "run",
                 "--directory",
