@@ -2886,7 +2886,7 @@ def save_to_agent(
     # save udf to repo
     udf.metadata = {}
     udf.name = udf_name
-    if not mcp_metadata.get("description") or mcp_metadata.get("parameters"):
+    if not mcp_metadata.get("description") or not mcp_metadata.get("parameters"):
         raise ValueError("mcp_metadata must have description and parameters")
     udf.metadata["fused:mcp"] = mcp_metadata
     udf.to_directory(f"{repo_dir}/udfs/{udf_name}", overwrite=overwrite)

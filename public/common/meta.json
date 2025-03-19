@@ -95,9 +95,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/d8594b7fb7384a0a7b18cba0c8f19939ccc0c456/public/common/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/5f860abf8cede4906249544918a40f8f2b606e4c/public/common/",
             "fused:gitPath": "public/common",
-            "fused:gitRef": "d8594b7fb7384a0a7b18cba0c8f19939ccc0c456",
+            "fused:gitRef": "5f860abf8cede4906249544918a40f8f2b606e4c",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -150,8 +150,8 @@
               "https://avatars.githubusercontent.com/u/1020496?v=4",
               "https://avatars.githubusercontent.com/u/26461855?v=4"
             ],
-            "fused:gitLastModified": "2025-03-17T19:57:46.153Z",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/d8594b7/public/common/",
+            "fused:gitLastModified": "2025-03-18T14:46:28+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/5f860ab/public/common/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "max-patch-49087a-FIxing-savetoagents",
