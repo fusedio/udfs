@@ -22,9 +22,6 @@ logging.basicConfig(
     level=logging.WARN, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
-# Configure fused environment
-fused._env(os.getenv("FUSED_ENV", "unstable"))
-
 DEFAULT_TIMEOUT = 30.0
 DEFAULT_USER_AGENT = "fused-api-client/1.0"
 DEFAULT_TOKENS_TO_READ_FUSED_DOCS = [
