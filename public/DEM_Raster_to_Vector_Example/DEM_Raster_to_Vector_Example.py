@@ -1,14 +1,14 @@
-import geopandas as gpd  
-import numpy as np
-import rasterio
-from rasterio import features
-import shapely
-import utils
-
 @fused.udf
 def udf(
     min_elevation: float = 3962  # 3962 ~= 13000ft
 ):
+    import geopandas as gpd
+    import numpy as np
+    import rasterio
+    from rasterio import features
+    import shapely
+    import utils
+
     """Return polygons for Colorado areas over 13,000ft of elevation."""
     bounds = gpd.GeoDataFrame(
         geometry=[shapely.box(-109.046667, 37.0, -102.046667, 41.0)],
