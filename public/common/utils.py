@@ -438,7 +438,10 @@ def table_to_tile(
                 [fused.get_chunk_from_table(table, fc[0], fc[1]) for fc in List]
             )
             print("available columns:", list(rows_df.columns))
-        df = rows_df[rows_df.intersects(bounds.geometry[0])]
+        try:
+            df = rows_df[rows_df.intersects(bounds.geometry[0])]
+        except:
+            df = rows_df
         df.crs = bounds.crs
         if (
             z < min_zoom + centorid_zoom_offset
