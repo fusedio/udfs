@@ -124,7 +124,7 @@ def simplify_gdf(gdf, pct=1, args='-o force -clean'):
     with open(file_path, "w") as f:
         json.dump(gdf.__geo_interface__, f)
     # print(fused.utils.common.run_cmd('npm install -g mapshaper',communicate=True)[1].decode())    
-    print(fused.utils.common.run_cmd(f'/mount/npm/bin/mapshaper {file_path} -simplify {pct}% {args} -o {file_path.replace(".json","2.json")}',communicate=True))
+    print(run_cmd(f'/mount/npm/bin/mapshaper {file_path} -simplify {pct}% {args} -o {file_path.replace(".json","2.json")}',communicate=True))
     return gpd.read_file(file_path.replace(".json","2.json"))
 
 def html_to_obj(html_str):
@@ -1843,7 +1843,7 @@ def run_pool_tiffs(bounds, df_tiffs, output_shape):
         for i in range(len(df_tiffs)):
             tiff_list.append(df_tiffs[band].iloc[i])
 
-    arrs_tmp = fused.utils.common.run_pool(fn_read_tiff, tiff_list)
+    arrs_tmp = run_pool(fn_read_tiff, tiff_list)
     arrs_out = np.stack(arrs_tmp)
     arrs_out = arrs_out.reshape(
         len(columns), len(df_tiffs), output_shape[0], output_shape[1]
@@ -2033,7 +2033,7 @@ def ds_to_tile(ds, variable, bounds, na_values=0, cols_lonlat=('x', 'y')):
 @fused.cache(cache_max_age='24h')
 def tiff_to_xyz(input_tiff, output_xyz, xoff, x_block_size, yoff, y_block_size):
     cmd = f"gdal_translate -srcwin {xoff*x_block_size} {yoff*y_block_size} {x_block_size} {y_block_size} -of XYZ {input_tiff} {output_xyz}"
-    r = common.run_cmd(cmd, communicate=True)
+    r = run_cmd(cmd, communicate=True)
     assert r[1] == b""   # cehck if there is an error (r[1] != b"")
     return r
 
@@ -2633,8 +2633,8 @@ def get_parquet_stats(path):
 @fused.cache
 def get_row_groups(key, value, file_path):
     version='1.0'
-    df = fused.utils.common.get_parquet_stats(file_path)[['row_group', key+'_min', key+'_max']]
-    con = fused.utils.common.duckdb_connect()
+    df = get_parquet_stats(file_path)[['row_group', key+'_min', key+'_max']]
+    con = duckdb_connect()
     df = con.query(f'select * from df where {value} between {key}_min and {key}_max').df()
     return df.row_group.values
 
