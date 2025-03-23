@@ -414,7 +414,9 @@ def table_to_tile(
     except:
         z = min_zoom
     df = fused.get_chunks_metadata(table)
-    if len(bounds) > 1:
+    if isinstance(bounds, (list, tuple, np.ndarray)):
+        bounds=to_gdf(bounds)
+    elif len(bounds) > 1: 
         bounds = bounds.dissolve().reset_index(drop=True)
     else:
         bounds = bounds.reset_index(drop=True)
