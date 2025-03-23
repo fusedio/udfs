@@ -1897,7 +1897,6 @@ def create_chunk_metadata(df, chunk_size=10_000):
             "bbox_miny": chunk.lat.min(),
             "bbox_maxy": chunk.lat.max(),
             "chunk_id": idx,
-            "file_id": f"{year}_30m_cdls5kx5k_{xoff}_{yoff}",
             "num_rows": len(chunk)  # Additional stat showing number of rows in chunk
         })
     import pandas as pd
