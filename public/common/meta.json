@@ -95,9 +95,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/8832df4eff97ec8ce7e69271be5a490b7cf0ca2a/public/common/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/6fd770d86c8ba84f971b965b14ad369bfb302b43/public/common/",
             "fused:gitPath": "public/common",
-            "fused:gitRef": "8832df4eff97ec8ce7e69271be5a490b7cf0ca2a",
+            "fused:gitRef": "6fd770d86c8ba84f971b965b14ad369bfb302b43",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -150,8 +150,8 @@
               "https://avatars.githubusercontent.com/u/1020496?v=4",
               "https://avatars.githubusercontent.com/u/26461855?v=4"
             ],
-            "fused:gitLastModified": "2025-03-23T01:33:15.672Z",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/8832df4/public/common/",
+            "fused:gitLastModified": "2025-03-23T01:34:53.180Z",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/6fd770d/public/common/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "sina-patch-1acf7b-add-createchunkmetadata",

@@ -2025,6 +2025,21 @@ def ds_to_tile(ds, variable, bounds, na_values=0, cols_lonlat=('x', 'y')):
     )
     return data
 
+def xy_transform(df, src_crs="EPSG:5070", dst_crs="EPSG:4326", 
+                         cols_src_xy=['x','y'], cols_dst_xy=['lng', 'lat']):
+    from pyproj import Proj, transform
+
+    # Define the source (original CRS) and target (EPSG:4326) CRSs
+    source_proj = Proj(init=src_crs)  # Replace with original CRS
+    target_proj = Proj(init=dst_crs)  # EPSG:4326 for WGS84
+
+    # Transform the X, Y coordinates to EPSG:4326 (WGS84)
+    x_coords = df[cols_src_xy[0]].values
+    y_coords = df[cols_src_xy[1]].values
+    lon, lat = transform(source_proj, target_proj, x_coords, y_coords)
+    df[cols_dst_xy[0]] = lon
+    df[cols_dst_xy[1]] = lat
+    return df
 
 def bbox_to_xy_slice(bounds, shape, transform):
     import rasterio
