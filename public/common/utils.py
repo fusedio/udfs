@@ -1885,6 +1885,22 @@ def create_tiffs_catalog(stac_items, band_list):
         input_paths.append([selected_item.assets[band].href for band in band_list])
     return pd.DataFrame(input_paths, columns=band_list)
 
+def create_chunk_metadata(df, chunk_size=10_000):
+    total_rows = len(df)
+    num_chunks = (total_rows + chunk_size - 1) // chunk_size
+    meta = []
+    for idx in range(num_chunks):
+        chunk = df.iloc[idx * chunk_size:min((idx + 1) * chunk_size, total_rows)]
+        meta.append({
+            "bbox_minx": chunk.lng.min(),
+            "bbox_maxx": chunk.lng.max(),
+            "bbox_miny": chunk.lat.min(),
+            "bbox_maxy": chunk.lat.max(),
+            "chunk_id": idx,
+            "num_rows": len(chunk)  # Additional stat showing number of rows in chunk
+        })
+    import pandas as pd
+    return pd.DataFrame.from_records(meta)
 
 def chunked_tiff_to_points(tiff_path, i: int = 0, x_chunks: int = 2, y_chunks: int = 2):
     import numpy as np
