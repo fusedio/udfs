@@ -2030,7 +2030,7 @@ def ds_to_tile(ds, variable, bounds, na_values=0, cols_lonlat=('x', 'y')):
     )
     return data
 
-@fused.cache(cache_max_age='24h')
+# @fused.cache(cache_max_age='24h')
 def tiff_to_xyz(input_tiff, output_xyz, xoff, x_block_size, yoff, y_block_size):
     cmd = f"gdal_translate -srcwin {xoff*x_block_size} {yoff*y_block_size} {x_block_size} {y_block_size} -of XYZ {input_tiff} {output_xyz}"
     r = run_cmd(cmd, communicate=True)
