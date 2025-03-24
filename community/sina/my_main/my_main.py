@@ -270,7 +270,7 @@ def main():
     args = parser.parse_args()
 
     # Update base URL if provided
-    global API_BASE_URL
+    # global API_BASE_URL
     if args.base_url:
         API_BASE_URL = args.base_url
 
