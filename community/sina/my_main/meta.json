@@ -14,12 +14,12 @@
           "metadata": {
             "fused:name": "my_main",
             "fused:slug": "my_main",
-            "fused:gitRepo": "fusedlabs/fusedudfs",
-            "fused:gitRef": "f12e8c909db5397210abe62b5a3f2f4067bcaa0c",
-            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/f12e8c909db5397210abe62b5a3f2f4067bcaa0c/my_main/",
-            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/f12e8c9/my_main/",
-            "fused:gitPath": "my_main",
-            "fused:gitLastModified": "2025-03-24T19:43:29.719Z",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "92ece07f346dea9d85129db8294d5a03124145ae",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/92ece07f346dea9d85129db8294d5a03124145ae/community/sina/my_main/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/92ece07/community/sina/my_main/",
+            "fused:gitPath": "community/sina/my_main",
+            "fused:gitLastModified": "2025-03-24T19:53:54+00:00",
             "fused:gitPullRequestBranch": "sina-patch-06434d-fix-global-issye",
             "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/632",
             "fused:vizConfig": {
@@ -64,9 +64,21 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "my_main",
-            "fused:name": "my_main",
-            "fused:id": null
+            "fused:id": null,
+            "fused:description": "Exported from Fused UDF Workbench\n\n",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk"
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4"
+            ],
+            "fused:explorerTab": "community"
           },
           "source": "my_main.py",
           "headers": []

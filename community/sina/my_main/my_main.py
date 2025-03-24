@@ -124,74 +124,86 @@ def main():
         async def udf_tool(**params):
             """Dynamic UDF tool implementation."""
             # Log what parameters were received
-            logger.info(f"Tool '{token_id}' received parameters: {params}")
-
-            # Initialize API parameters dict
-            api_params = {}
-
-            # Copy all parameters directly to the API parameters
+            logger.info(f"Tool '{udf.name}' received parameters: {params}")
+    
             try:
-                for key, value in params.items():
-                    if key != "return_code":  # Skip non-API parameters
-                        api_params[key] = value
-                        logger.info(f"Added parameter: {key}={value}")
-            except Exception as e:
-                api_params = {}
-                logger.info(f"No parameters received for {token_id}")
-
-            # Set appropriate output formats for better readability
-            api_params.update(
-                {
-                    "dtype_out_raster": "png",
-                    "dtype_out_vector": "json",  # Claude expects JSON?
-                }
-            )
-
-            logger.info(f"API parameters for {token_id}: {api_params}")
-
-            # Log the final parameters
-            logger.info(f"Final API parameters for {token_id}: {api_params}")
-
-            url = f"{API_BASE_URL}/v1/realtime-shared/{token_id}/run/file"
-            logger.info(f"Executing API call to {url}")
-
-            try:
-                async with httpx.AsyncClient() as client:
-                    logger.info(
-                        f"Some parameters received for {token_id} so making GET request WITH params"
-                    )
-                    response = await client.get(
-                        url,
-                        headers={"User-Agent": DEFAULT_USER_AGENT, "Accept": "*/*"},
-                        params=api_params,
-                        timeout=DEFAULT_TIMEOUT,
-                    )
-                    response.raise_for_status()
-
-                    logger.info(f"Received response status: {response.status_code}")
-                    content_type = response.headers.get("content-type", "")
-                    logger.info(f"Response content type: {content_type}")
-
-                    # Handle different response types
-                    if (
-                        "application/octet-stream" in content_type
-                        or "application/parquet" in content_type
-                    ):
-                        # This is binary data, likely Parquet - don't try to return it as text
-                        return "Received binary data response. The data has been processed but cannot be displayed directly in text format."
-                    elif "application/json" in content_type or "text/json" in content_type:
-                        # Return formatted JSON
-                        try:
-                            json_data = response.json()
-                            return f"Result from function with token {token_id}:\n\n{json.dumps(json_data, indent=2)}"
-                        except:
-                            return f"Result from function with token {token_id}:\n\n{response.text}"
-                    else:
-                        # Return as plain text
-                        return f"Result from function with token {token_id}:\n\n{response.text}"
+                result = fused.run(udf, **params)
+                if isinstance(result, pd.DataFrame):
+                    return result.to_dict(orient="records")
+                return result
             except Exception as e:
                 logger.error(f"Error executing function: {e}")
                 return f"Error: {str(e)}"
+            # """Dynamic UDF tool implementation."""
+            # # Log what parameters were received
+            # logger.info(f"Tool '{token_id}' received parameters: {params}")
+
+            # # Initialize API parameters dict
+            # api_params = {}
+
+            # # Copy all parameters directly to the API parameters
+            # try:
+            #     for key, value in params.items():
+            #         if key != "return_code":  # Skip non-API parameters
+            #             api_params[key] = value
+            #             logger.info(f"Added parameter: {key}={value}")
+            # except Exception as e:
+            #     api_params = {}
+            #     logger.info(f"No parameters received for {token_id}")
+
+            # # Set appropriate output formats for better readability
+            # api_params.update(
+            #     {
+            #         "dtype_out_raster": "png",
+            #         "dtype_out_vector": "json",  # Claude expects JSON?
+            #     }
+            # )
+
+            # logger.info(f"API parameters for {token_id}: {api_params}")
+
+            # # Log the final parameters
+            # logger.info(f"Final API parameters for {token_id}: {api_params}")
+
+            # url = f"{API_BASE_URL}/v1/realtime-shared/{token_id}/run/file"
+            # logger.info(f"Executing API call to {url}")
+
+            # try:
+            #     async with httpx.AsyncClient() as client:
+            #         logger.info(
+            #             f"Some parameters received for {token_id} so making GET request WITH params"
+            #         )
+            #         response = await client.get(
+            #             url,
+            #             headers={"User-Agent": DEFAULT_USER_AGENT, "Accept": "*/*"},
+            #             params=api_params,
+            #             timeout=DEFAULT_TIMEOUT,
+            #         )
+            #         response.raise_for_status()
+
+            #         logger.info(f"Received response status: {response.status_code}")
+            #         content_type = response.headers.get("content-type", "")
+            #         logger.info(f"Response content type: {content_type}")
+
+            #         # Handle different response types
+            #         if (
+            #             "application/octet-stream" in content_type
+            #             or "application/parquet" in content_type
+            #         ):
+            #             # This is binary data, likely Parquet - don't try to return it as text
+            #             return "Received binary data response. The data has been processed but cannot be displayed directly in text format."
+            #         elif "application/json" in content_type or "text/json" in content_type:
+            #             # Return formatted JSON
+            #             try:
+            #                 json_data = response.json()
+            #                 return f"Result from function with token {token_id}:\n\n{json.dumps(json_data, indent=2)}"
+            #             except:
+            #                 return f"Result from function with token {token_id}:\n\n{response.text}"
+            #         else:
+            #             # Return as plain text
+            #             return f"Result from function with token {token_id}:\n\n{response.text}"
+            # except Exception as e:
+            #     logger.error(f"Error executing function: {e}")
+            #     return f"Error: {str(e)}"
 
         # Set the docstring
         udf_tool.__doc__ = docstring
