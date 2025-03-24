@@ -64,6 +64,8 @@
               }
             },
             "fused:udfType": "auto",
+            "fused:slug": "my_main",
+            "fused:name": "my_main",
             "fused:id": null
           },
           "source": "my_main.py",
