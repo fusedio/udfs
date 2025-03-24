@@ -12,6 +12,16 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
+            "fused:name": "my_main",
+            "fused:slug": "my_main",
+            "fused:gitRepo": "fusedlabs/fusedudfs",
+            "fused:gitRef": "f12e8c909db5397210abe62b5a3f2f4067bcaa0c",
+            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/f12e8c909db5397210abe62b5a3f2f4067bcaa0c/my_main/",
+            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/f12e8c9/my_main/",
+            "fused:gitPath": "my_main",
+            "fused:gitLastModified": "2025-03-24T19:43:29.719Z",
+            "fused:gitPullRequestBranch": "sina-patch-06434d-fix-global-issye",
+            "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/632",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
