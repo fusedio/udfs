@@ -101,7 +101,7 @@ def create_server_from_token_ids(
                     register_udf_tool(mcp, udf)
                     logger.info(f"Successfully registered tool for token: {token_id}")
                 except Exception as e:
-                    logger.error(f"Error registering tool for token '{token_id}': {e}")
+                    logger.exception(f"Error registering tool for token '{token_id}': {e}")
 
     return mcp
 
@@ -128,7 +128,7 @@ def create_server_from_folder_names(
                     register_udf_tool(mcp, udf)
                     logger.info(f"Successfully registered tool for udf: {udf_name}")
                 except Exception as e:
-                    logger.error(f"Error registering tool for udf '{udf_name}': {e}")
+                    logger.exception(f"Error registering tool for udf '{udf_name}': {e}")
 
     return mcp
 
@@ -203,7 +203,7 @@ def run_server(
             uvicorn.run(starlette_app, host=host, port=port)
 
     except Exception as e:
-        logger.error(f"Error starting server: {e}")
+        logger.exception(f"Error starting server: {e}")
         sys.exit(1)
 
 
