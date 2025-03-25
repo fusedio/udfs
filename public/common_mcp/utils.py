@@ -1,23 +1,23 @@
-from typing import Any, Dict, List, Optional
-import sys
-import os
 import argparse
+import asyncio
 import json
 import logging
-import asyncio
+import os
+import sys
+from typing import Any, Dict, List
+
+import fused
+import mcp.server.stdio
 import mcp.types as types
+import uvicorn
 from fused.api.api import AnyBaseUdf
 from loguru import logger
-from mcp.server import Server, NotificationOptions
+from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
-import mcp.server.stdio
+from mcp.server.sse import SseServerTransport
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.routing import Mount, Route
-from mcp.server.sse import SseServerTransport
-import uvicorn
-import fused
-import pandas as pd
 
 # Configure logging
 logging.basicConfig(
@@ -35,9 +35,10 @@ DEFAULT_TOKENS_TO_READ_FUSED_DOCS = [
     "fsh_7hfbTGjNsv4ZzWfHEU1iHm",  # Listing code & name of public UDFs
 ]
 
+
 class UdfMcpServer:
     """MCP server for Fused UDFs using direct Server API"""
-    
+
     def __init__(self, server_name: str):
         """Initialize the UDF MCP server"""
         self.server = Server(server_name)
@@ -47,20 +48,18 @@ class UdfMcpServer:
 
     def _setup_handlers(self):
         """Set up the MCP request handlers"""
-        
+
         @self.server.list_tools()
         async def handle_list_tools() -> list[types.Tool]:
             """List all registered UDF tools"""
             tools = []
-            
+
             for token_id, udf in self.registered_udfs.items():
                 # Get the schema for this tool
-                schema = self.tool_schemas.get(token_id, {
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                })
-                
+                schema = self.tool_schemas.get(
+                    token_id, {"type": "object", "properties": {}, "required": []}
+                )
+
                 # Create tool definition
                 tools.append(
                     types.Tool(
@@ -68,51 +67,52 @@ class UdfMcpServer:
                         description=udf.metadata.get("fused:mcp", {}).get(
                             "description", f"Function: {token_id}"
                         ),
-                        inputSchema=schema
+                        inputSchema=schema,
                     )
                 )
-            
+
             logger.info(f"Returning {len(tools)} tools")
             return tools
-        
+
         @self.server.call_tool()
-        async def handle_call_tool(name: str, arguments: Dict[str, Any] = None) -> list[types.TextContent]:
+        async def handle_call_tool(
+            name: str, arguments: Dict[str, Any] = None
+        ) -> list[types.TextContent]:
             """Execute a registered UDF tool"""
             try:
                 # Check if this is a registered UDF
                 if name not in self.registered_udfs:
-                    return [types.TextContent(
-                        type="text",
-                        text=f"Error: Unknown UDF tool '{name}'"
-                    )]
-                
+                    return [
+                        types.TextContent(
+                            type="text", text=f"Error: Unknown UDF tool '{name}'"
+                        )
+                    ]
+
                 # Get the UDF
                 udf = self.registered_udfs[name]
                 arguments = arguments or {}
-                
+
                 logger.info(f"Executing UDF '{name}' with arguments: {arguments}")
-                
+
                 # Execute the UDF
                 try:
                     result = fused.run(udf, **arguments)
-                    
+
                     # Simply return the result as a string for all types
                     return [types.TextContent(type="text", text=str(result))]
-                        
+
                 except Exception as e:
                     logger.exception(f"Error executing UDF '{name}': {e}")
-                    return [types.TextContent(
-                        type="text",
-                        text=f"Error executing UDF '{name}': {str(e)}"
-                    )]
-                        
+                    return [
+                        types.TextContent(
+                            type="text", text=f"Error executing UDF '{name}': {str(e)}"
+                        )
+                    ]
+
             except Exception as e:
                 logger.exception(f"Error handling tool call: {e}")
-                return [types.TextContent(
-                    type="text",
-                    text=f"Error: {str(e)}"
-                )]
-    
+                return [types.TextContent(type="text", text=f"Error: {str(e)}")]
+
     def register_udf(self, udf: AnyBaseUdf) -> bool:
         """Register a UDF as an MCP tool"""
         try:
@@ -121,61 +121,63 @@ class UdfMcpServer:
             if not mcp_metadata:
                 logger.warning(f"No MCP metadata for UDF '{udf.name}', skipping")
                 return False
-                
+
             # Log registration
             logger.info(f"Registering UDF tool '{udf.name}'")
-            
+
             # Create schema from parameters
             schema = self._create_schema_from_parameters(udf.name, mcp_metadata)
-            
+
             # Store the UDF and schema
             self.registered_udfs[udf.name] = udf
             self.tool_schemas[udf.name] = schema
-            
+
             logger.info(f"Successfully registered UDF tool '{udf.name}'")
             return True
-            
+
         except Exception as e:
             logger.exception(f"Error registering UDF '{udf.name}': {e}")
             return False
-    
-    def _create_schema_from_parameters(self, udf_name: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
+
+    def _create_schema_from_parameters(
+        self, udf_name: str, metadata: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Create a JSON Schema from UDF parameters"""
         # Initialize schema
-        schema = {
-            "type": "object",
-            "properties": {},
-            "required": []
-        }
-        
+        schema = {"type": "object", "properties": {}, "required": []}
+
         # Get parameters
         parameters_raw = metadata.get("parameters", [])
-        
+
         # Check if parameters is a JSON string that needs to be deserialized
         if isinstance(parameters_raw, str):
             try:
-                logger.debug(f"Parameters for UDF '{udf_name}' is a string, attempting to parse as JSON")
+                logger.debug(
+                    f"Parameters for UDF '{udf_name}' is a string, attempting to parse as JSON"
+                )
                 parameters = json.loads(parameters_raw)
             except json.JSONDecodeError as e:
-                logger.warning(f"Failed to parse parameters JSON for UDF '{udf_name}': {e}")
+                logger.warning(
+                    f"Failed to parse parameters JSON for UDF '{udf_name}': {e}"
+                )
                 parameters = []
         else:
             parameters = parameters_raw
-        
+
         if parameters is None:
             logger.info(f"No parameters defined for UDF '{udf_name}'")
             return schema
-            
+
         # Process parameters
         for param in parameters:
             if not isinstance(param, dict) or "name" not in param:
                 continue
-                
+
             param_name = param["name"]
             param_type = param.get("type", "string").lower()
             param_desc = param.get("description", f"Parameter: {param_name}")
             required = param.get("required", True)
-            
+
             if param_type in ("float", "double", "decimal", "number"):
                 json_type = "number"
             elif param_type in ("int", "integer"):
@@ -188,20 +190,20 @@ class UdfMcpServer:
                 json_type = "object"
             else:
                 json_type = "string"
-                
+
             # Add property definition
             schema["properties"][param_name] = {
                 "type": json_type,
-                "description": param_desc
+                "description": param_desc,
             }
-            
+
             # Add to required list if needed
             if required:
                 schema["required"].append(param_name)
-        
+
         logger.info(f"Created schema for UDF '{udf_name}': {schema}")
         return schema
-            
+
     async def run_stdio(self):
         """Run the server with stdio transport"""
         logger.info("Starting MCP server with stdio transport")
@@ -218,7 +220,7 @@ class UdfMcpServer:
                     ),
                 ),
             )
-    
+
     def create_starlette_app(self, debug: bool = False) -> Starlette:
         """Create a Starlette application for SSE transport"""
         sse = SseServerTransport("/messages/")
@@ -268,10 +270,10 @@ def create_server_from_token_ids(
                     # Load the UDF
                     logger.info(f"Loading UDF from token: {token_id}")
                     udf = fused.load(token_id)
-                    
+
                     # Register the UDF
                     server.register_udf(udf)
-                    
+
                 except Exception as e:
                     logger.exception(f"Error loading UDF from token '{token_id}': {e}")
 
@@ -299,7 +301,7 @@ def create_server_from_folder_names(
 
                     # Register the UDF
                     server.register_udf(udf)
-                    
+
                 except Exception as e:
                     logger.exception(f"Error loading UDF from folder '{udf_name}': {e}")
 
@@ -381,16 +383,16 @@ def main():
         help="Enable debug logging",
     )
     args = parser.parse_args()
-    
+
     # Set up logging based on debug flag
     if args.debug:
         logger.remove()
         logger.add(sys.stderr, level="DEBUG")
-    
+
     # Process token and udf_names arguments
     tokens = args.tokens.split(",") if args.tokens else None
     udf_names = args.udf_names.split(",") if args.udf_names else None
-    
+
     # Run the server
     run_server(
         server_name=args.name,
