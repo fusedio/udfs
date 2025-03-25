@@ -149,7 +149,19 @@ class UdfMcpServer:
         }
         
         # Get parameters
-        parameters = metadata.get("parameters", [])
+        parameters_raw = metadata.get("parameters", [])
+        
+        # Check if parameters is a JSON string that needs to be deserialized
+        if isinstance(parameters_raw, str):
+            try:
+                logger.debug(f"Parameters for UDF '{udf_name}' is a string, attempting to parse as JSON")
+                parameters = json.loads(parameters_raw)
+            except json.JSONDecodeError as e:
+                logger.warning(f"Failed to parse parameters JSON for UDF '{udf_name}': {e}")
+                parameters = []
+        else:
+            parameters = parameters_raw
+        
         if parameters is None:
             logger.info(f"No parameters defined for UDF '{udf_name}'")
             return schema
@@ -164,7 +176,6 @@ class UdfMcpServer:
             param_desc = param.get("description", f"Parameter: {param_name}")
             required = param.get("required", True)
             
-            # Map parameter type to JSON Schema type
             if param_type in ("float", "double", "decimal", "number"):
                 json_type = "number"
             elif param_type in ("int", "integer"):
