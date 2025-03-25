@@ -73,7 +73,7 @@ def register_udf_tool(mcp: FastMCP, udf: AnyBaseUdf):
                 return result.to_dict(orient="records")
             return result
         except Exception as e:
-            logger.error(f"Error executing function: {e}")
+            logger.exception(f"Error executing function: {e}")
             return f"Error: {str(e)}"
 
     # Set the docstring
