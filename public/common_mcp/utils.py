@@ -62,13 +62,13 @@ def register_udf_tool(mcp: FastMCP, udf: AnyBaseUdf):
             f"No parameters received for {udf.name} so skipping creating docstring for parameters"
         )
 
-    async def udf_tool(**params):
+    async def udf_tool(params: dict[str, Any]):
         """Dynamic UDF tool implementation."""
         # Log what parameters were received
         logger.info(f"Tool '{udf.name}' received parameters: {params}")
 
         try:
-            result = fused.run(udf, **params)
+            result = fused.run(udf, **params if type(params) is dict else params)
             if isinstance(result, pd.DataFrame):
                 return result.to_dict(orient="records")
             return result
