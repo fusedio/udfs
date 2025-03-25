@@ -1890,17 +1890,17 @@ def create_tiffs_catalog(stac_items, band_list):
         input_paths.append([selected_item.assets[band].href for band in band_list])
     return pd.DataFrame(input_paths, columns=band_list)
 
-def create_chunk_metadata(df, chunk_size=10_000):
+def create_chunk_metadata(df, chunk_size=10_000, cols_lonlat=['lng', 'lat']):
     total_rows = len(df)
     num_chunks = (total_rows + chunk_size - 1) // chunk_size
     meta = []
     for idx in range(num_chunks):
         chunk = df.iloc[idx * chunk_size:min((idx + 1) * chunk_size, total_rows)]
         meta.append({
-            "bbox_minx": chunk.lng.min(),
-            "bbox_maxx": chunk.lng.max(),
-            "bbox_miny": chunk.lat.min(),
-            "bbox_maxy": chunk.lat.max(),
+            "bbox_minx": chunk[cols_lonlat[0]].min(),
+            "bbox_maxx": chunk[cols_lonlat[0]].max(),
+            "bbox_miny": chunk[cols_lonlat[1]].min(),
+            "bbox_maxy": chunk[cols_lonlat[1]].max(),
             "chunk_id": idx,
             "num_rows": len(chunk)  # Additional stat showing number of rows in chunk
         })
