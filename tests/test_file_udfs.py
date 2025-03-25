@@ -28,6 +28,10 @@ FILES_PATH = os.path.join(os.path.abspath(os.curdir), "files")
 def test_udf_loading_with_duckdb(
     sample_dataframe: pd.DataFrame, temp_directory: str, file_format: str, udf_name: str
 ):
+    """
+    Tests loading and processing various file formats using DuckDB UDFs.
+    Verifies that the UDF correctly loads the file and returns the expected DataFrame.
+    """
 
     file_path = get_sample_file_from_dataframe(
         temp_directory, sample_dataframe, file_format
@@ -53,6 +57,10 @@ def test_loading_with_geopandas(
     file_format: str,
     udf_name: str,
 ):
+    """
+    Tests loading and processing various geospatial file formats using GeoPandas UDFs.
+    Verifies that the UDF correctly loads the file and returns the expected GeoDataFrame.
+    """
 
     file_path = get_sample_file_from_gdf(
         temp_directory, sample_geodataframe, file_format
@@ -65,6 +73,10 @@ def test_loading_with_geopandas(
 def test_loading_with_geopandas_gpx(
     sample_track_dataframe: gpd.GeoDataFrame, temp_directory: str
 ):
+    """
+    Tests loading and processing GPX files using GeoPandas UDFs.
+    Verifies that the UDF correctly loads the GPX file and returns a GeoDataFrame with the expected name and geometry columns.
+    """
     file_path = get_sample_file_from_gdf(temp_directory, sample_track_dataframe, "gpx")
     udf = fused.load(os.path.join(FILES_PATH, "GeoPandas_GPX"))
     result = fused.run(udf, path=file_path, engine="local")
@@ -75,6 +87,10 @@ def test_loading_with_geopandas_gpx(
 
 
 def test_udf_loading_with_netcdf(sample_xr_dataset: xr.Dataset, temp_directory: str):
+    """
+    Tests loading and processing NetCDF files using xarray UDFs.
+    Verifies that the UDF can load and process NetCDF files without errors.
+    """
     # Save the dataset to a NetCDF file
     file_path = get_sample_netcdf_file(temp_directory, sample_xr_dataset)
     udf_path = os.path.join(FILES_PATH, "NetCDF_File")
@@ -94,6 +110,10 @@ def test_udf_loading_with_netcdf(sample_xr_dataset: xr.Dataset, temp_directory: 
 def test_loading_with_pandas(
     sample_dataframe: pd.DataFrame, temp_directory: str, file_format: str, udf_name: str
 ):
+    """
+    Tests loading and processing various file formats using Pandas UDFs.
+    Verifies that the UDF correctly loads the file and returns the expected DataFrame.
+    """
 
     file_path = get_sample_file_from_dataframe(
         temp_directory, sample_dataframe, file_format
@@ -104,6 +124,10 @@ def test_loading_with_pandas(
 
 
 def test_loading_with_text(temp_directory: str, sample_text: str):
+    """
+    Tests loading and processing text files using Text UDFs.
+    Verifies that the UDF can load and process text files without errors.
+    """
 
     file_path = get_sample_file_from_text(temp_directory, sample_text)
     udf = fused.load(os.path.join(FILES_PATH, "Text_File"))
