@@ -29,7 +29,7 @@ jobs:
       #----------------------------------------------
       - name: Install dependencies
         shell: bash
-        run: pip install fused[batch] pytest
+        run: pip install fused[batch] pytest openpyxl netCDF4
 
       #----------------------------------------------
       #       run tests for public udfs
@@ -40,4 +40,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AUTH0_REFRESH_TOKEN: ${{ secrets.AUTH0_REFRESH_TOKEN }}
         shell: bash
-        run: pytest tests --tb=short
+        run: pytest tests/test_public_udfs.py --tb=short
+
+      #----------------------------------------------
+      #       run tests for files udfs
+      #----------------------------------------------
+      - name: Run tests for files udfs
+        env:
+          AUTH0_REFRESH_TOKEN: ${{ secrets.AUTH0_REFRESH_TOKEN }}
+        shell: bash
+        run: pytest tests/test_file_udfs.py --tb=short
+
