@@ -1,10 +1,10 @@
 @fused.udf
-def udf(path: str, preview: bool):
+def udf(path: str, preview: bool=False):
     import geopandas as gpd
 
     # Add the path within the zip file here if not automatically detected
-    path2 = f"zip+{path}"
-    gdf = gpd.read_file(path2)
+    # path = f"zip+{path}"
+    gdf = gpd.read_file(path)
     print(gdf)
     if preview:
         return gdf.geometry

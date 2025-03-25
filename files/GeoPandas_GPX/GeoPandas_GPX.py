@@ -1,5 +1,5 @@
 @fused.udf
-def udf(path: str, preview: bool):
+def udf(path: str, preview: bool=False):
     import fiona
     import geopandas as gpd
 
