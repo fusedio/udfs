@@ -69,8 +69,6 @@ def test_loading_with_geopandas_gpx(
     udf = fused.load(os.path.join(FILES_PATH, "GeoPandas_GPX"))
     result = fused.run(udf, path=file_path, engine="local")
     # just check the name and geometry columns
-    print("start")
-    print(result)
     pd_testing.assert_series_equal(result["name"], sample_track_dataframe["name"])
     pd_testing.assert_series_equal(result["geometry"], sample_track_dataframe["geometry"])
 
