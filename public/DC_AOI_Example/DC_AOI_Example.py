@@ -10,12 +10,12 @@ def udf(
     from utils import get_arr, rgbi_to_ndvi
 
     # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/")
 
     # Lad the geometry
     gdf = gpd.read_file('https://www2.census.gov/geo/tiger/TIGER_RD18/STATE/11_DISTRICT_OF_COLUMBIA/11/tl_rd22_11_tract.zip')
     if not chip_len:
-        xmin,ymin,xmax,ymax = utils.geo_convert(gdf, crs='UTM').total_bounds
+        xmin,ymin,xmax,ymax = common.geo_convert(gdf, crs='UTM').total_bounds
         chip_len = int(max(xmax-xmin, ymax-ymin) / 10) # considering pixel size of 10m
     
     # Check to make sure the image is not too big
@@ -33,7 +33,7 @@ def udf(
         arr = np.clip(arr_rgbi[:3] * scale, 0, 255).astype("uint8")
     
     # Create clip using geom and convert to masked array
-    geom_mask = utils.gdf_to_mask_arr(gdf, arr.shape[-2:])
+    geom_mask = common.gdf_to_mask_arr(gdf, arr.shape[-2:])
     if len(arr.shape) == 2:
         arr = np.ma.masked_array(arr, [geom_mask])
     else:
