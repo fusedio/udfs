@@ -102,3 +102,16 @@ def test_loading_with_text(temp_directory: str, sample_text: str):
     udf = fused.load(os.path.join(FILES_PATH, "Text_File"))
     fused.run(udf, path=file_path, engine="local")
     # just check that the function runs with no errors
+
+
+def test_loading_geotiff(sample_geotiff_file: str):
+    udf = fused.load(os.path.join(FILES_PATH, "GeoTIFF_File"))
+    res = fused.run(udf, path=sample_geotiff_file, x=1, y=2, z=1, engine="local")
+
+
+def test_loading_gpx(sample_gpx_file: str):
+    udf = fused.load(os.path.join(FILES_PATH, "GeoPandas_GPX"))
+    res = fused.run(udf, path=sample_gpx_file, layer=None, engine="local")
+    assert isinstance(res, gpd.GeoDataFrame)
+    assert res.shape == (86, 20)
+

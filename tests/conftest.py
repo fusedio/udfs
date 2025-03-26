@@ -53,3 +53,13 @@ def sample_geodataframe():
 @pytest.fixture
 def sample_text():
     return "Hello, World! \nThis is a sample text file."
+
+
+@pytest.fixture
+def sample_gpx_file():
+    return os.path.join(os.curdir, "tests/sample_files/sample_gpx.gpx")
+
+
+@pytest.fixture
+def sample_geotiff_file():
+    return os.path.join(os.curdir, "tests/sample_files/sample_geotiff.tif")
