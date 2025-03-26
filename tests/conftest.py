@@ -8,7 +8,7 @@ from shapely.geometry import Point
 import pandas as pd
 
 # Authenticate
-if os.environ.get("CI"):
+if os.environ.get("CI") and os.environ.get("AUTH0_REFRESH_TOKEN"):
     fused._auth.refresh_token(os.getenv("AUTH0_REFRESH_TOKEN"))
 
 
