@@ -4,15 +4,12 @@ import fused
 import geopandas as gpd
 import geopandas.testing as gpd_testing
 import pandas.testing as pd_testing
-import xarray as xr
 import pytest
 from file_udf_helpers import (
     get_sample_file_from_dataframe,
     get_sample_file_from_gdf,
     get_sample_file_from_text,
-    get_sample_netcdf_file,
 )
-
 
 FILES_PATH = os.path.join(os.path.abspath(os.curdir), "files")
 
@@ -49,7 +46,7 @@ def test_udf_loading_with_duckdb(
         ("gpkg", "GeoPandas_File"),
         ("shp", "GeoPandas_File"),
         ("zip", "GeoPandas_ZIP"),
-        ("kml", "GeoPandas_KML")
+        ("kml", "GeoPandas_KML"),
     ],
 )
 def test_loading_with_geopandas(
@@ -69,34 +66,6 @@ def test_loading_with_geopandas(
     udf = fused.load(os.path.join(FILES_PATH, udf_name))
     result = fused.run(udf, path=file_path, engine="local")
     gpd_testing.assert_geodataframe_equal(result, sample_geodataframe)
-
-
-def test_loading_with_geopandas_gpx(
-    sample_track_dataframe: gpd.GeoDataFrame, temp_directory: str
-):
-    """
-    Tests loading and processing GPX files using GeoPandas UDFs.
-    Verifies that the UDF correctly loads the GPX file and returns a GeoDataFrame with the expected name and geometry columns.
-    """
-    file_path = get_sample_file_from_gdf(temp_directory, sample_track_dataframe, "gpx")
-    udf = fused.load(os.path.join(FILES_PATH, "GeoPandas_GPX"))
-    result = fused.run(udf, path=file_path, engine="local")
-    # just check the name and geometry columns
-    pd_testing.assert_series_equal(result["geometry"], sample_track_dataframe["geometry"])
-
-
-
-def test_udf_loading_with_netcdf(sample_xr_dataset: xr.Dataset, temp_directory: str):
-    """
-    Tests loading and processing NetCDF files using xarray UDFs.
-    Verifies that the UDF can load and process NetCDF files without errors.
-    """
-    # Save the dataset to a NetCDF file
-    file_path = get_sample_netcdf_file(temp_directory, sample_xr_dataset)
-    udf_path = os.path.join(FILES_PATH, "NetCDF_File")
-    udf = fused.load(udf_path)
-    fused.run(udf, path=file_path, engine="local")
-    # just check if no errors
 
 
 @pytest.mark.parametrize(

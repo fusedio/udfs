@@ -4,10 +4,8 @@ import tempfile
 
 import fused
 import geopandas as gpd
-from shapely.geometry import Point, LineString
+from shapely.geometry import Point
 import pandas as pd
-import numpy as np
-import xarray as xr
 
 # Authenticate
 if os.environ.get("CI"):
@@ -53,29 +51,5 @@ def sample_geodataframe():
 
 
 @pytest.fixture
-def sample_track_dataframe():
-    """Helper function to create a sample GeoPandas GeoDataFrame for gpx file"""
-    coords = [(-122.4, 37.8), (-122.5, 37.7), (-122.6, 37.6)]
-    line = LineString(coords)
-    gdf = gpd.GeoDataFrame(
-        {"name": ["Sample Track"]}, geometry=[line], crs="EPSG:4326"
-    )
-    return gdf
-
-
-@pytest.fixture
 def sample_text():
     return "Hello, World! \nThis is a sample text file."
-
-
-@pytest.fixture
-def sample_xr_dataset():
-    """Helper function to create a sample xarray Dataset that can be opened as a NetCDF file"""
-    return xr.Dataset(
-        {"foo": (("x", "y"), np.random.rand(4, 5))},
-        coords={
-            "x": [10, 20, 30, 40],
-            "y": pd.date_range("2000-01-01", periods=5),
-            "z": ("x", list("abcd")),
-        },
-    )

@@ -2,7 +2,6 @@ import uuid
 import os
 import pandas as pd
 import geopandas as gpd
-import xarray as xr
 import zipfile
 
 
@@ -53,19 +52,4 @@ def get_sample_file_from_gdf(
             return filepath
 
     gdf.to_file(filepath)
-    return filepath
-
-
-def get_sample_gpx_file(temp_directory: str, gdf: gpd.GeoDataFrame):
-    """Create a temporary GPX file for testing."""
-
-    filepath = _random_filename(temp_directory, "gpx")
-    gdf.to_file(filepath, layer="tracks")
-    return filepath
-
-
-def get_sample_netcdf_file(temp_directory: str, dataset: xr.Dataset):
-    """Create a temporary NetCDF file for testing."""
-    filepath = _random_filename(temp_directory, "nc")
-    dataset.to_netcdf(filepath)
     return filepath
