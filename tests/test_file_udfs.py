@@ -105,11 +105,19 @@ def test_loading_with_text(temp_directory: str, sample_text: str):
 
 
 def test_loading_geotiff(sample_geotiff_file: str):
+    """
+    Tests loading and processing geotiff files using GeoTIFF UDFs.
+    Verifies that the UDF can load and process geotiff files without errors.
+    """
     udf = fused.load(os.path.join(FILES_PATH, "GeoTIFF_File"))
-    res = fused.run(udf, path=sample_geotiff_file, x=1, y=2, z=1, engine="local")
+    fused.run(udf, path=sample_geotiff_file, x=1, y=2, z=1, engine="local")
 
 
 def test_loading_gpx(sample_gpx_file: str):
+    """
+    Tests loading and processing gpx files using GeoPandas UDFs.
+    Verifies that the UDF can load and process gpx files without errors.
+    """
     udf = fused.load(os.path.join(FILES_PATH, "GeoPandas_GPX"))
     res = fused.run(udf, path=sample_gpx_file, layer=None, engine="local")
     assert isinstance(res, gpd.GeoDataFrame)
