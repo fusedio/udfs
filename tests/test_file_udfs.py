@@ -123,3 +123,5 @@ def test_loading_gpx(sample_gpx_file: str):
     assert isinstance(res, gpd.GeoDataFrame)
     assert res.shape == (86, 20)
 
+
+# TODO: add tests for `Fused_Geopartitioned_Table`, `ImageIO_FIle`, `Join_with_Overture` and `NetCDF_File`
