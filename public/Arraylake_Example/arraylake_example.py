@@ -48,7 +48,7 @@ def udf(
     coarsen_factor = max(int(resolution // pixel_res), 1)
     print(f"Coarsening by {coarsen_factor}")
 
-    min_lon, min_lat, max_lon, max_lat = tile.bounds.values[0]
+    min_lon, min_lat, max_lon, max_lat = bounds
     ds = ds.sel(time=time, method="nearest")
     ds = ds.sel(
         longitude=slice(min_lon, max_lon),
