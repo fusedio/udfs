@@ -132,7 +132,7 @@ class UdfMcpServer:
             # Store the UDF and schema
             self.registered_udfs[udf.name] = udf
             if token is not None:
-                self.registered_udf_tokens[udf.name ] = token
+                self.registered_udf_tokens[udf.name] = token
             self.tool_schemas[udf.name] = schema
 
             logger.info(f"Successfully registered UDF tool '{udf.name}'")
