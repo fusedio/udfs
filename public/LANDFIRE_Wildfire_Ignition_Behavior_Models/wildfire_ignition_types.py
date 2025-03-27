@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Tile,
+    bounds: fused.types.Bounds,
     cmap_name: str = None,  # 'tab20c'
 ):
     import rasterio
@@ -11,7 +11,13 @@ def udf(
     from shapely.geometry import shape
     import pandas as pd
 
-    envelope = bounds.geometry.envelope
+    # convert bounds to tile
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = common_utils.estimate_zoom(bounds)
+    tile = common_utils.get_tiles(bounds, zoom=zoom)
+
+
+    envelope = tile.geometry.envelope
 
     cog_url = "https://storage.googleapis.com/fire-cog/fire-cog.tif"
 

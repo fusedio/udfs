@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Tile,
+    bounds: fused.types.Bounds,
     collection_id="HLSS30_2.0",  # Landsat:'HLSL30_2.0' & Sentinel:'HLSS30_2.0'
     band="B8A",  # Landsat:'B05' & Sentinel:'B8A'
     date_range="2023-10/2024-01",
@@ -14,9 +14,10 @@ def udf(
     from pystac_client import Client
     from utils_local import list_stac_collections
 
-    utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/e1c15b5/public/common/"
-    ).utils
+    # convert bounds to tile
+    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = utils.estimate_zoom(bounds)
+    tile = utils.get_tiles(bounds, zoom=zoom)
 
     STAC_URL = "https://cmr.earthdata.nasa.gov/stac"
 
@@ -40,7 +41,7 @@ def udf(
         )
         return None
 
-    z = bounds.z[0]
+    z = tile.z[0]
     if z >= 9:
 
         catalog = Client.open(f"{STAC_URL}/LPCLOUD/")
@@ -54,7 +55,7 @@ def udf(
 
         search = catalog.search(
             collections=[collection_id],
-            bbox=bounds.total_bounds,
+            bbox=tile.total_bounds,
             datetime=date_range,
             limit=100,
         )
@@ -83,7 +84,7 @@ def udf(
             return None
 
         arr = utils.mosaic_tiff(
-            bounds,
+            tile,
             band_urls[:n_mosaic],
             reduce_function=lambda x: np.max(x, axis=0),
             overview_level=max(0, 12 - z),

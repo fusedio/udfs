@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Tile = None, crs="EPSG:4326", res=7):
+def udf(bounds: fused.types.Bounds = None, crs="EPSG:4326", res=7):
     import fused
     import pandas as pd
     import geopandas as gpd
@@ -7,9 +7,13 @@ def udf(bounds: fused.types.Tile = None, crs="EPSG:4326", res=7):
     import requests
     from utils import fetch_all_features, add_rgb_cmap, CMAP
 
+    # convert bounds to tile
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = common_utils.estimate_zoom(bounds)
+    tile = common_utils.get_tiles(bounds, zoom=zoom)
 
     # Generate ESRI-friendly envelope bounds
-    total_bounds = bounds.geometry.total_bounds
+    total_bounds = tile.geometry.total_bounds
     envelope = f'{total_bounds[0]},{total_bounds[1]},{total_bounds[2]},{total_bounds[3]}'
     
     # URL for querying the Watch/Warning/Advisory (WWA) FeatureServer

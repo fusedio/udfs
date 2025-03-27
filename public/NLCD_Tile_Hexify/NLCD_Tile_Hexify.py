@@ -1,21 +1,26 @@
 @fused.udf
-def udf(bounds: fused.types.Tile, year:int=1985, land_type:str='', chip_len:int=256):
+def udf(bounds: fused.types.Bounds, year:int=1985, land_type:str='', chip_len:int=256):
     import numpy as np        
     import pandas as pd
     from utils import get_data, arr_to_h3, nlcd_category_dict, rgb_to_hex
-    
+
+    # convert bounds to tile
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = common_utils.estimate_zoom(bounds)
+    tile = common_utils.get_tiles(bounds, zoom=zoom)
+
     #initial parameters
-    x, y, z = bounds.iloc[0][["x", "y", "z"]]
+    x, y, z = tile.iloc[0][["x", "y", "z"]]
     res_offset = 1  # lower makes the hex finer
-    res = max(min(int(3 + bounds.z[0] / 1.5), 12) - res_offset, 2)
+    res = max(min(int(3 + tile.z[0] / 1.5), 12) - res_offset, 2)
     print(res)
     
     # read tiff file
-    arr_int, color_map = get_data(bounds, year, land_type, chip_len)
+    arr_int, color_map = get_data(tile, year, land_type, chip_len)
 
     # hexify tiff array
     
-    df = arr_to_h3(arr_int, bounds.total_bounds, res=res, ordered=False)
+    df = arr_to_h3(arr_int, tile.total_bounds, res=res, ordered=False)
 
     # find most frequet land_type
     df['most_freq'] = df.agg_data.map(lambda x: np.unique(x, return_counts=True)[0][np.argmax(np.unique(x, return_counts=True)[1])])
