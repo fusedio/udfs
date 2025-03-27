@@ -16,7 +16,7 @@ def udf(
     tile = common_utils.get_tiles(bounds, zoom=zoom)
 
     # different geometry details per zoom level
-    if tile.z[0] > 12:
+    if zoom > 12:
         suffix = None
     elif tile.z[0] > 10:
         suffix = "simplify_0001"
