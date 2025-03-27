@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import sys
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import fused
 import mcp.server.stdio
