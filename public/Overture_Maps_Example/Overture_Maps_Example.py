@@ -13,7 +13,7 @@ def udf(
     from utils import get_overture
     
     gdf = get_overture(
-        tile=bounds,
+        bounds=bounds,
         release=release,
         theme=theme,
         overture_type=overture_type,
