@@ -1,5 +1,5 @@
 def udf(
-    bounds: fused.types.Tile,
+    bounds: fused.types.Bounds,
     provider="AWS",
     channels=["B11", "veg", "snow"],
     time_of_interest="2023-05-01/2023-09-13",
@@ -23,6 +23,17 @@ def udf(
         reverse_channel_band_dict,
     )
     from PIL import Image
+
+    # convert bounds to tile
+    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = utils.estimate_zoom(bounds)
+    tile = utils.get_tiles(bounds, zoom=zoom)
+
+    # This is the line that caculates the resolution based on zoom. You can overide the resolution parameter by hard coding it.
+    resolution = max(min(int(6 + (tile.z[0] - 10) * (5/9)), 11), 0)
+    print(f"resolution: {resolution}")
+    print(f"zoom: {tile.z[0]}")
+
 
     index_name_dict = {
         "burn": ["B08", "B12"],
@@ -80,7 +91,7 @@ def udf(
 
     items = catalog.search(
         collections=["sentinel-2-l2a"],
-        bbox=bounds.total_bounds,
+        bbox=tile.total_bounds,
         datetime=time_of_interest,
         query={"eo:cloud_cover": {"lt": cloud_cover_perc}},
     ).item_collection()
@@ -91,14 +102,14 @@ def udf(
             "no satellite imagery available for the current viewport and time period. Please explore other regions or timeframes."
         )
     print(f"Returned {len(items)} Items")
-    resolution = int(5 * 2 ** (15 - bounds.z[0]))
+    resolution = int(5 * 2 ** (15 - tile.z[0]))
     # print(f'{resolution=}')
     ds = odc.stac.load(
         items,
         crs="EPSG:3857",
         bands=s2_bands,
         resolution=resolution,
-        bbox=bounds.total_bounds,
+        bbox=tile.total_bounds,
     ).astype(float)
     print(str(time_of_interest))
 

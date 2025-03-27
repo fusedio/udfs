@@ -41,7 +41,7 @@ sentinel_params = json.dumps(
 
 @fused.udf
 def udf(
-    bounds: fused.types.Tile = None,
+    bounds: fused.types.Bounds = None,
     collection_params=sentinel_params,
     chip_len: int = 512,
     how: str = "max",  # median, min. default is max
@@ -60,6 +60,11 @@ def udf(
         search_pc_catalog,
     )
 
+    # convert bounds to tile
+    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = utils.estimate_zoom(bounds)
+    tile = utils.get_tiles(bounds, zoom=zoom)
+
     collection, band_list, time_of_interest, query, scale = json.loads(
         collection_params
     ).values()
@@ -67,7 +72,7 @@ def udf(
     print(collection, band_list, time_of_interest, query)
 
     stac_items = search_pc_catalog(
-        bounds=bounds, time_of_interest=time_of_interest, query=query, collection=collection
+        bounds=tile, time_of_interest=time_of_interest, query=query, collection=collection
     )
     if not stac_items:
         return
@@ -76,7 +81,7 @@ def udf(
     print(stac_items[0].assets.keys())
     df_tiff_catalog = create_tiffs_catalog(stac_items, band_list)
 
-    arrs_out = run_pool_tiffs(bounds, df_tiff_catalog, output_shape=(chip_len, chip_len))
+    arrs_out = run_pool_tiffs(tile, df_tiff_catalog, output_shape=(chip_len, chip_len))
 
     # Generate arr with imagery
     arr = get_greenest_pixel(arrs_out, how=how, fillna=fillna)[:3,:,:]
