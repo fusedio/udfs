@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import sys
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import fused
 import mcp.server.stdio
@@ -43,6 +43,7 @@ class UdfMcpServer:
         """Initialize the UDF MCP server"""
         self.server = Server(server_name)
         self.registered_udfs: Dict[str, AnyBaseUdf] = {}
+        self.registered_udf_tokens: Dict[str, str] = {}
         self.tool_schemas: Dict[str, Dict[str, Any]] = {}
         self._setup_handlers()
 
@@ -89,10 +90,10 @@ class UdfMcpServer:
                     ]
 
                 # Get the UDF
-                udf = self.registered_udfs[name]
+                udf = self.registered_udf_tokens.get(name, self.registered_udfs[name])
                 arguments = arguments or {}
 
-                logger.info(f"Executing UDF '{name}' with arguments: {arguments}")
+                logger.info(f"Executing UDF '{name}' {'(with token)' if isinstance(udf, str) else '(with source code)'} with arguments: {arguments}")
 
                 # Execute the UDF
                 try:
@@ -113,7 +114,7 @@ class UdfMcpServer:
                 logger.exception(f"Error handling tool call: {e}")
                 return [types.TextContent(type="text", text=f"Error: {str(e)}")]
 
-    def register_udf(self, udf: AnyBaseUdf) -> bool:
+    def register_udf(self, udf: AnyBaseUdf, token: Optional[str] = None) -> bool:
         """Register a UDF as an MCP tool"""
         try:
             # Get the MCP metadata
@@ -130,6 +131,8 @@ class UdfMcpServer:
 
             # Store the UDF and schema
             self.registered_udfs[udf.name] = udf
+            if token is not None:
+                self.registered_udf_tokens[udf.name] = token
             self.tool_schemas[udf.name] = schema
 
             logger.info(f"Successfully registered UDF tool '{udf.name}'")
@@ -272,7 +275,7 @@ def create_server_from_token_ids(
                     udf = fused.load(token_id)
 
                     # Register the UDF
-                    server.register_udf(udf)
+                    server.register_udf(udf, token_id)
 
                 except Exception as e:
                     logger.exception(f"Error loading UDF from token '{token_id}': {e}")
