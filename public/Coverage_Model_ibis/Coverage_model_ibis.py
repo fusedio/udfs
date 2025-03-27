@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Tile = None, tech: str = 'Tarana', site_count: int = 1, col_plot: str = 'Rx_dBm'):
+def udf(bounds: fused.types.Bounds = None, tech: str = 'Tarana', site_count: int = 1, col_plot: str = 'Rx_dBm'):
     """
     Function to read the data from the fused coverage model
     :param bounds:
@@ -15,6 +15,11 @@ def udf(bounds: fused.types.Tile = None, tech: str = 'Tarana', site_count: int =
     from palettable.colorbrewer.sequential import YlOrRd_9  # as color_map_used
     import matplotlib as mpl
     from utils import h3_cell_to_parent, h3_cell_to_boundary_wkt, ST_GeomFromText
+
+    # convert bounds to tile
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = common_utils.estimate_zoom(bounds)
+    tile = common_utils.get_tiles(bounds, zoom=zoom)
 
     @fused.cache
     def read_data(bounds, url: str, tech: str, site_count: int, col_plot: str, con_ibis):
@@ -53,7 +58,7 @@ def udf(bounds: fused.types.Tile = None, tech: str = 'Tarana', site_count: int =
     con_ibis.raw_sql("INSTALL h3 FROM community")
     con_ibis.raw_sql("LOAD h3")
 
-    gdf = read_data(bounds, s3_url, tech, site_count, col_plot, con_ibis)
+    gdf = read_data(tile, s3_url, tech, site_count, col_plot, con_ibis)
 
     if len(gdf):
         # Normalize colors

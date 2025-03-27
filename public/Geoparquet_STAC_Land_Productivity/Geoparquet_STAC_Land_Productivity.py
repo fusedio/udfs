@@ -1,5 +1,5 @@
 def udf(
-    bounds: fused.types.Tile = None,
+    bounds: fused.types.Bounds = None,
     year: int = 2023,
     variable: str = "evi2",
 ):
@@ -7,6 +7,12 @@ def udf(
     import palettable
     import stacrs
     from pystac import Item
+
+    # convert bounds to tile
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = common_utils.estimate_zoom(bounds)
+    tile = common_utils.get_tiles(bounds, zoom=zoom)
+
 
     # Load utility functions
     visualize = fused.load(
@@ -19,7 +25,7 @@ def udf(
     # year can be passed in as a parameter for the function
     item_dicts = stacrs.search(
         "https://data.ldn.auspatious.com/geo_ls_lp/geo_ls_lp_0_1_0.parquet",
-        bbox=bounds.total_bounds,
+        bbox=tile.total_bounds,
         datetime=f"{year}-01-01T00:00:00.000Z/{year}-12-31T23:59:59.999Z",
     )
 
@@ -27,7 +33,7 @@ def udf(
     items = [Item.from_dict(d) for d in item_dicts]
 
     # Calculate the resolution based on zoom level
-    power = 13 - bounds.z[0]
+    power = 13 - tile.z[0]
     if power < 0:
         resolution = 30
     else:
@@ -40,7 +46,7 @@ def udf(
         crs="EPSG:3857",
         bands=[variable],
         resolution=resolution,
-        bbox=bounds.total_bounds,
+        bbox=tile.total_bounds,
     ).squeeze()
 
     # Create a mask where data is nan

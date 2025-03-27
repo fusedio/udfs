@@ -1,18 +1,23 @@
 @fused.udf
-def udf(bounds: fused.types.Tile, stats_type="mean", type='hex', color_scale:float=1):
+def udf(bounds: fused.types.Bounds, stats_type="mean", type='hex', color_scale:float=1):
     import pandas as pd
     import rioxarray
     from utils import aggregate_df_hex, url_to_plasma
 
+    # convert bounds to tile
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = common_utils.estimate_zoom(bounds)
+    tile = common_utils.get_tiles(bounds, zoom=zoom)
+
     # 1. Initial parameters
-    x, y, z = bounds.iloc[0][["x", "y", "z"]]
+    x, y, z = tile.iloc[0][["x", "y", "z"]]
     url = f"https://s3.amazonaws.com/elevation-tiles-prod/geotiff/{z}/{x}/{y}.tif"
     if type=='png':
         return url_to_plasma(url, min_max=(-1000,2000/color_scale**0.5), colormap='plasma')
     else:
         
         res_offset = 0  # lower makes the hex finer
-        h3_size = max(min(int(3 + bounds.z[0] / 1.5), 12) - res_offset, 2)
+        h3_size = max(min(int(3 + tile.z[0] / 1.5), 12) - res_offset, 2)
         print(h3_size)
     
         # 2. Read tiff
