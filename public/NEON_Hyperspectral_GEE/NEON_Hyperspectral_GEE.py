@@ -22,7 +22,7 @@ def udf(
     ee.Initialize(opt_url="https://earthengine-highvolume.googleapis.com", credentials=credentials)
   
     # Create collection
-    geom = ee.Geometry.Rectangle(*tile.total_bounds)
+    geom = ee.Geometry.Rectangle(*bounds)
     scale = 1 / 2 ** max(0, zoom)
     
     def mask_img(img):

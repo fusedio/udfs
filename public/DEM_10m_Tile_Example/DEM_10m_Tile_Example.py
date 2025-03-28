@@ -23,7 +23,7 @@ def udf(
     )
     items = catalog.search( 
         collections=[collection],
-        bbox=tile.total_bounds,
+        bbox=bounds,
     ).item_collection()
     print(items[0].assets.keys()) 
     print(f"Returned {len(items)} Items")
@@ -34,7 +34,7 @@ def udf(
         crs="EPSG:3857",
         bands=[band],
         resolution=resolution,
-        bbox=tile.total_bounds,
+        bbox=bounds,
     ).astype(float)
     
     # Use data from the most recent time.

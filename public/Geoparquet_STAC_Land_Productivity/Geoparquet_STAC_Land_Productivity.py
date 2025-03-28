@@ -25,7 +25,7 @@ def udf(
     # year can be passed in as a parameter for the function
     item_dicts = stacrs.search(
         "https://data.ldn.auspatious.com/geo_ls_lp/geo_ls_lp_0_1_0.parquet",
-        bbox=tile.total_bounds,
+        bbox=bounds,
         datetime=f"{year}-01-01T00:00:00.000Z/{year}-12-31T23:59:59.999Z",
     )
 
@@ -46,7 +46,7 @@ def udf(
         crs="EPSG:3857",
         bands=[variable],
         resolution=resolution,
-        bbox=tile.total_bounds,
+        bbox=bounds,
     ).squeeze()
 
     # Create a mask where data is nan

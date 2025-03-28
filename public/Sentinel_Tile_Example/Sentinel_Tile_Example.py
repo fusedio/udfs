@@ -37,7 +37,7 @@ def udf(
     
     items = catalog.search(
         collections=["sentinel-2-l2a"],
-        bbox=tile.total_bounds,
+        bbox=bounds,
         datetime=time_of_interest,
         query={"eo:cloud_cover": {"lt": 10}},
     ).item_collection()
@@ -56,7 +56,7 @@ def udf(
                 crs="EPSG:3857",
                 bands=[nir_band, red_band],
                 resolution=resolution,
-                bbox=tile.total_bounds,
+                bbox=bounds,
             ).astype(float)
 
         ndvi = (ds[nir_band] - ds[red_band]) / (ds[nir_band] + ds[red_band])

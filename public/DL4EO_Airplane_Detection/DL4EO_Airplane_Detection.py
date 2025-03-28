@@ -35,7 +35,7 @@ def udf(
 
     # Transform prediction bounding boxes from px to degrees
     tile.set_crs(4326, inplace=True)
-    transform = rasterio.transform.from_bounds(*tile.total_bounds, chip_len, chip_len)
+    transform = rasterio.transform.from_bounds(*bounds, chip_len, chip_len)
     
     tf_boxes = []
     for box in boxes:

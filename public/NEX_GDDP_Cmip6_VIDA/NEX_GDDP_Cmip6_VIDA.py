@@ -23,7 +23,7 @@ def udf(
         return
     utils = fused.load("https://github.com/fusedio/udfs/tree/cbc5482/public/common/").utils
 
-    minx, miny, maxx, maxy = tile.total_bounds
+    minx, miny, maxx, maxy = bounds
     variable_names = list(ds.data_vars)
 
     # Printing the Time Range of the Dataset

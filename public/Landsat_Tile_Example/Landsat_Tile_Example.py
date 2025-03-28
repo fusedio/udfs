@@ -25,7 +25,7 @@ def udf(
     # Search for imagery within a specified bounding box and time period
     items = catalog.search(
         collections=[collection],
-        bbox=tile.total_bounds,
+        bbox=bounds,
         datetime=time_of_interest,
         query={"eo:cloud_cover": {"lt": cloud_threshold}},
     ).item_collection()
@@ -42,7 +42,7 @@ def udf(
         crs="EPSG:3857",
         bands=[nir_band, red_band],
         resolution=pixel_spacing,
-        bbox=tile.total_bounds,
+        bbox=bounds,
     ).astype(float)
 
     # Calculate the Normalized Difference Vegetation Index

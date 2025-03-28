@@ -20,7 +20,7 @@ def udf(bounds: fused.types.Bounds, year:int=1985, land_type:str='', chip_len:in
 
     # hexify tiff array
     
-    df = arr_to_h3(arr_int, tile.total_bounds, res=res, ordered=False)
+    df = arr_to_h3(arr_int, bounds, res=res, ordered=False)
 
     # find most frequet land_type
     df['most_freq'] = df.agg_data.map(lambda x: np.unique(x, return_counts=True)[0][np.argmax(np.unique(x, return_counts=True)[1])])

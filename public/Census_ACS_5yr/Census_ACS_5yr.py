@@ -30,7 +30,7 @@ def udf(
 
     # read the variables
     gdf = acs_5yr_bounds(
-        tile.total_bounds, census_variable=census_variable, suffix=suffix, year=year
+        bounds, census_variable=census_variable, suffix=suffix, year=year
     )
     if len(gdf) == 0:
         return None

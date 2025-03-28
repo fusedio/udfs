@@ -17,7 +17,7 @@ def udf(bounds: fused.types.Bounds, year: str = "2016", month: str = "07", perio
     
     # Clip the array based on the bounding box
     arr_aoi = clip_arr(da.values, 
-                       bounds_aoi=tile.total_bounds,
+                       bounds_aoi=bounds,
                        bounds_total=get_da_bounds(da, xy_cols=xy_cols))
     
     # Extract raw SIF values

@@ -55,7 +55,7 @@ def udf(
 
         search = catalog.search(
             collections=[collection_id],
-            bbox=tile.total_bounds,
+            bbox=bounds,
             datetime=date_range,
             limit=100,
         )
