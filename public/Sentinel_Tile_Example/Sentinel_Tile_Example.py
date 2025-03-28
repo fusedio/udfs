@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Tile,
+    bounds: fused.types.Bounds,
     provider="AWS",
     time_of_interest="2023-11-01/2023-12-30"
 ):  
@@ -13,6 +13,11 @@ def udf(
     import pystac_client
     from pystac.extensions.eo import EOExtension as eo
     import utils
+
+    # convert bounds to tile
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = common_utils.estimate_zoom(bounds)
+    tile = common_utils.get_tiles(bounds, zoom=zoom)
     
     if provider == "AWS":
         red_band = "red"
@@ -32,13 +37,13 @@ def udf(
     
     items = catalog.search(
         collections=["sentinel-2-l2a"],
-        bbox=bounds.total_bounds,
+        bbox=bounds,
         datetime=time_of_interest,
         query={"eo:cloud_cover": {"lt": 10}},
     ).item_collection()
     
     # Capping resolution to min 10m, the native Sentinel 2 pixel size
-    resolution = int(10 * 2 ** max(0, (15 - bounds.z[0])))
+    resolution = int(10 * 2 ** max(0, (15 - zoom)))
     print(f"{resolution=}")
 
     if len(items) < 1:
@@ -51,14 +56,14 @@ def udf(
                 crs="EPSG:3857",
                 bands=[nir_band, red_band],
                 resolution=resolution,
-                bbox=bounds.total_bounds,
+                bbox=bounds,
             ).astype(float)
 
         ndvi = (ds[nir_band] - ds[red_band]) / (ds[nir_band] + ds[red_band])
         print(ndvi.shape)
         arr = ndvi.max(dim="time")
         
-        rgb_image = utils.visualize(
+        rgb_image = common_utils.visualize(
             data=arr,
             min=0,
             max=1,

@@ -1,33 +1,39 @@
 @fused.udf 
 def udf(
-    bounds: fused.types.Tile = None,
+    bounds: fused.types.Bounds = None,
     h3_res: int=12
 ):
     import h3
     import pandas as pd
     from utils import get_strahler_gdf, create_h3_buffer_scored
 
+    # convert bounds to tile
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = common_utils.estimate_zoom(bounds)
+    tile = common_utils.get_tiles(bounds, zoom=zoom)
+
+
     overture_utils = fused.load("https://github.com/fusedio/udfs/tree/2ea46f3/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.
     
     # A. Bridges
-    gdf_bridges = overture_utils.get_overture(bounds=bounds, overture_type='infrastructure')
+    gdf_bridges = overture_utils.get_overture(bounds=tile, overture_type='infrastructure')
     gdf_bridges = gdf_bridges[gdf_bridges['subtype'] == 'bridge']
     
     # B. Water 
-    gdf_water = overture_utils.get_overture(bounds=bounds,overture_type='water')
+    gdf_water = overture_utils.get_overture(bounds=tile,overture_type='water')
     gdf_water = gdf_water[gdf_water['class'].isin(['river', 'stream', 'lagoon', 'pond', 'drain'])]
 
     # Keep only bridges that intersect non-oceanic water; (riparean) rivers
     gdf_bridges = gdf_bridges.sjoin(gdf_water[['geometry']], how='inner')
 
     # C. Golf Courses
-    gdf_golf = overture_utils.get_overture(bounds=bounds,theme = 'base',overture_type = 'land_use')
+    gdf_golf = overture_utils.get_overture(bounds=tile,theme = 'base',overture_type = 'land_use')
     gdf_golf = gdf_golf[gdf_golf['class'] == 'golf_course'].dissolve()
 
     # D. Strahler
     try:
         # Skip if no GEE
-        gdf_strahler = get_strahler_gdf(bounds)
+        gdf_strahler = get_strahler_gdf(tile)
         gdf_water = gdf_water.sjoin(gdf_strahler, how='left')
         # Sort the dataframe by 'strahler_value' in descending order
         gdf_water = gdf_water.sort_values('strahler_value', ascending=False).drop_duplicates(subset='geometry', keep='first')

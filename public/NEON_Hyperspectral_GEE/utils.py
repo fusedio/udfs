@@ -1,9 +1,17 @@
 @fused.cache
-def fetch_rgb_udf(bounds: fused.types.Tile = None, neon_site: str = "SRER"):
+def fetch_rgb_udf(
+    bounds: fused.types.Bounds = None,
+    neon_site: str = "SRER"
+):
     import ee
     import numpy as np
     import xarray
     import xee
+
+    # convert bounds to tile
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = common_utils.estimate_zoom(bounds)
+    tile = common_utils.get_tiles(bounds, zoom=zoom)
 
     # Authenticate GEE
     key_path = "/mnt/cache/gp_creds.json"
@@ -13,8 +21,8 @@ def fetch_rgb_udf(bounds: fused.types.Tile = None, neon_site: str = "SRER"):
     ee.Initialize(opt_url="https://earthengine-highvolume.googleapis.com", credentials=credentials)
 
     # Create collection
-    geom = ee.Geometry.Rectangle(*bounds.total_bounds)
-    scale = 1 / 2 ** max(0, bounds.z[0])
+    geom = ee.Geometry.Rectangle(*bounds)
+    scale = 1 / 2 ** max(0, zoom)
 
     # Get NEON RGB image
     ic = ee.ImageCollection("projects/neon-prod-earthengine/assets/RGB/001")\

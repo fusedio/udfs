@@ -1,5 +1,5 @@
 def udf(
-    bounds: fused.types.Tile = None,
+    bounds: fused.types.Bounds = None,
     provider: str = "AWS"
 ):
     import odc.stac
@@ -9,7 +9,12 @@ def udf(
     from pystac.extensions.eo import EOExtension as eo
     import utils
 
-    print(f'{type(bounds) = }')
+    # convert bounds to tile
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = common_utils.estimate_zoom(bounds)
+    tile = common_utils.get_tiles(bounds, zoom=zoom)
+
+    print(f'{type(tile) = }')
     
     collection = "cop-dem-glo-30"
 
@@ -30,12 +35,12 @@ def udf(
     
     items = catalog.search(
         collections=[collection],
-        bbox=bounds.total_bounds,
+        bbox=bounds,
     ).item_collection()
     print(f"Returned {len(items)} Items")
 
     # Calculate the resolution based on zoom level.
-    resolution = int(20 * 2 ** (13 - min(bounds.z[0], 13)))
+    resolution = int(20 * 2 ** (13 - min(zoom, 13)))
     print(f"{resolution=}")
 
     # Load the data into an XArray dataset
@@ -44,7 +49,7 @@ def udf(
         crs="EPSG:3857",
         bands=["data"],
         resolution=resolution,
-        bbox=bounds.total_bounds,
+        bbox=bounds,
     ).astype(float)
     
     # Use data from the most recent time.

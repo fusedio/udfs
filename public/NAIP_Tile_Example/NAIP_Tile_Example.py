@@ -1,20 +1,22 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Tile,
+    bounds: fused.types.Bounds,
     var="NDVI",
     chip_len: int=256,
     buffer_degree=0.000,
 ):
-    utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/e0426b9/public/common/"
-    ).utils
+    # convert bounds to tile
+    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = utils.estimate_zoom(bounds)
+    tile = utils.get_tiles(bounds, zoom=zoom)
+
     min_zoom = 15
-    if bounds.z[0] >= min_zoom:
+    if zoom >= min_zoom:
         import numpy as np
 
         output_shape = (chip_len, chip_len)
         matching_items = utils.bounds_stac_items(
-            bounds.geometry[0], table="s3://fused-asset/imagery/naip/"
+            tile.geometry[0], table="s3://fused-asset/imagery/naip/"
         )
         max_matching_items = 10
         print(f"{len(matching_items)=}")
@@ -22,7 +24,7 @@ def udf(
             input_tiff_path = matching_items.iloc[0].assets["naip-analytic"]["href"]
             crs = matching_items.iloc[0]["proj:epsg"]
             arr = utils.read_tiff_naip(
-                bounds, input_tiff_path, crs, buffer_degree, output_shape
+                tile, input_tiff_path, crs, buffer_degree, output_shape
             )
             if var == "RGB":
                 arr = arr[:3]

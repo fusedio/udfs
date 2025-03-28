@@ -1,23 +1,29 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Tile = None,
+    bounds: fused.types.Bounds = None,
     layer: str = "tas",
     time: int = 2,
     target_shape: list = [512, 512],
-    valid_min=250,
-    valid_max=300,
+    valid_min: int = 250,
+    valid_max: int = 300,
 ):
     import numpy as np
     import xarray as xr
 
+    # convert bounds to tile
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = common_utils.estimate_zoom(bounds)
+    tile = common_utils.get_tiles(bounds, zoom=zoom)
+
+
     ds = xr.open_zarr("gs://fused_public/zarr/wri_cmip6_median_ssp585.zarr")
 
-    if bounds["z"].iloc[0] < 1:
+    if tile["z"].iloc[0] < 1:
         print("z less than 1")
         return
     utils = fused.load("https://github.com/fusedio/udfs/tree/cbc5482/public/common/").utils
 
-    minx, miny, maxx, maxy = bounds.total_bounds
+    minx, miny, maxx, maxy = bounds
     variable_names = list(ds.data_vars)
 
     # Printing the Time Range of the Dataset

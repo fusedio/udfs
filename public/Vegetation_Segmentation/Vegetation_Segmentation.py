@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Tile = None,
+    bounds: fused.types.Bounds = None,
     index_min: float = 0.3,
     index_max: float = 1.0,
     index_method: int = 0,
@@ -9,9 +9,15 @@ def udf(
     import numpy as np
     
     from utils import process_image, url_to_arr
+
+    # convert bounds to tile
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = common_utils.estimate_zoom(bounds)
+    tile = common_utils.get_tiles(bounds, zoom=zoom)
+
     
     # Get the bounding box coordinates
-    x, y, z = bounds[["x", "y", "z"]].iloc[0]
+    x, y, z = tile[["x", "y", "z"]].iloc[0]
     print("Zoom level:", z)
 
     # ArcGIS Online World Imagery basemap

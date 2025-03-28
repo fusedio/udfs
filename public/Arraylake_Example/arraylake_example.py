@@ -21,15 +21,13 @@ arraylake.config.set({"chunkstore.use_delegated_credentials": True})
 
 @fused.udf
 def udf(
-    bounds: fused.types.Tile = None,
+    bounds: fused.types.Bounds = None,
     repo_name="earthmover-demos/sentinel-datacube-South-America-3",
     varname="rgb_median",
     time: datetime = datetime(2020, 10, 1),
     min_data_value=1000,
     scale_factor: int = 3_000,
 ) -> xr.DataArray:
-
-    import boto3
 
     client = arraylake.Client(token=fused.secrets["ARRAYLAKE_TOKEN"])
     repo = client.get_repo(repo_name, read_only=True)
@@ -38,12 +36,11 @@ def udf(
 
     # try to infer the resolution of the dataset
     pixel_res = 110e3 * abs(ds.latitude.values[1] - ds.latitude.values[0])
-    print(bounds)
-    resolution = int(5 * 2 ** (15 - bounds.z[0]))
+    resolution = int(5 * 2 ** (15 - zoom))
     coarsen_factor = max(int(resolution // pixel_res), 1)
     print(f"Coarsening by {coarsen_factor}")
 
-    min_lon, min_lat, max_lon, max_lat = bounds.bounds.values[0]
+    min_lon, min_lat, max_lon, max_lat = bounds
     ds = ds.sel(time=time, method="nearest")
     ds = ds.sel(
         longitude=slice(min_lon, max_lon),

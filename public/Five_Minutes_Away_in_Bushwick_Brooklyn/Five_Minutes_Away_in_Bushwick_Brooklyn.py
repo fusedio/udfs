@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Tile = None, 
+def udf(bounds: fused.types.Bounds = None,
         resolution: int  = 11,
         poi_category: str = "Coffee Shop",
         use_columns = ["subtype"], 
@@ -11,6 +11,12 @@ def udf(bounds: fused.types.Tile = None,
     import geopandas as gpd
     import pandas as pd
     from utils import get_fsq_isochrones_gdf, fsq_isochrones_to_h3, bushwick_boundary
+
+    # convert bounds to tile
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = common_utils.estimate_zoom(bounds)
+    tile = common_utils.get_tiles(bounds, zoom=zoom)
+
     
     # This pulls 5 minute walking isochrones around FSQ coffee shops
     gdf_fsq_isochrones = get_fsq_isochrones_gdf(costing, time_steps, poi_category)
@@ -31,7 +37,7 @@ def udf(bounds: fused.types.Tile = None,
     
     # Get Overture Buildings
     overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.
-    gdf_overture = overture_utils.get_overture(bounds=bounds, use_columns=use_columns, min_zoom=10)
+    gdf_overture = overture_utils.get_overture(bounds=tile, use_columns=use_columns, min_zoom=10)
     
     # Join H3 with Buildings using coffe_score to visualize, you can change to a left join
     gdf_joined = gdf_overture.sjoin(gdf_h3_isochrones, how="inner", predicate="intersects")

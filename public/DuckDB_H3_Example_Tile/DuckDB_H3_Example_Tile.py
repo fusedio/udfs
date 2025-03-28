@@ -1,15 +1,21 @@
 @fused.udf
-def udf(bounds: fused.types.Tile=None, resolution: int = 11, min_count: int = 10):
+def udf(bounds: fused.types.Bounds=None, resolution: int = 11, min_count: int = 10):
     import duckdb
     import shapely
     import geopandas as gpd
 
+    # convert bounds to tile
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = common_utils.estimate_zoom(bounds)
+    tile = common_utils.get_tiles(bounds, zoom=zoom)
+
+
     tile_bounds_gdf = gpd.GeoDataFrame.from_features({"type":"FeatureCollection","features":[{"type":"Feature","properties":{"shape":"Rectangle"},"geometry":{"type":"Polygon","coordinates":[[[-73.99322955922597,40.76627870054801],[-73.96753345042097,40.76627870054801],[-73.96753345042097,40.74825844008337],[-73.99322955922597,40.74825844008337],[-73.99322955922597,40.76627870054801]]]}}]})
     default_bounds = tile_bounds_gdf.iloc[0].geometry
-    tile_bounds_geom = bounds if bounds is not None else default_bounds
+    tile_bounds_geom = tile if tile is not None else default_bounds
 
-    bounds = bounds.bounds.values[0] if bounds is not None else default_bounds.bounds
-    print(bounds)
+    tile = tile.bounds.values[0] if tile is not None else default_bounds.bounds
+    print(tile)
 
     utils = fused.load(
         "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
@@ -50,7 +56,7 @@ def udf(bounds: fused.types.Tile=None, resolution: int = 11, min_count: int = 10
         url='s3://fused-asset/misc/nyc/tlc/trip-data/yellow_tripdata_2010-01.parquet', 
         resolution=resolution, 
         min_count=min_count, 
-        bounds=bounds
+        bounds=tile
     )
     print("number of trips:", df.cnt.sum())
     gdf = gpd.GeoDataFrame(df.drop(columns=['boundary']), geometry=df.boundary.apply(shapely.wkt.loads))

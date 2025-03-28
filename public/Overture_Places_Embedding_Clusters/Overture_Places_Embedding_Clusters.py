@@ -95,7 +95,7 @@ aoi = gpd.GeoDataFrame.from_features(
 
 
 @fused.udf
-def udf(bounds: fused.types.Tile = aoi, h3_size=8):
+def udf(bounds: fused.types.Bounds = None, h3_size=8):
     import duckdb
     import geopandas as gpd
     import h3
@@ -105,11 +105,13 @@ def udf(bounds: fused.types.Tile = aoi, h3_size=8):
     from sklearn.metrics.pairwise import cosine_similarity
     from utils import global_categories
 
-    # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+    # convert bounds to tile
+    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = utils.estimate_zoom(bounds)
+    tile = utils.get_tiles(bounds, zoom=zoom)
 
     # 1. Polyfill AOI
-    h3s = h3.polygon_to_cells(h3.geo_to_h3shape(bounds.geometry.iloc[0]), h3_size)
+    h3s = h3.polygon_to_cells(h3.geo_to_h3shape(tile.geometry.iloc[0]), h3_size)
 
     @fused.cache
     def run_udfs(h3_index):

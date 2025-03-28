@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Tile = None,
+    bounds: fused.types.Bounds = None,
     census_variable: str = "Total Pop",
     scale_factor: float = 200,
     is_density: bool = True,
@@ -10,14 +10,19 @@ def udf(
     
     from utils import acs_5yr_bounds
 
+    # convert bounds to tile
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = common_utils.estimate_zoom(bounds)
+    tile = common_utils.get_tiles(bounds, zoom=zoom)
+
     # different geometry details per zoom level
-    if bounds.z[0] > 12:
+    if zoom > 12:
         suffix = None
-    elif bounds.z[0] > 10:
+    elif zoom > 10:
         suffix = "simplify_0001"
-    elif bounds.z[0] > 8:
+    elif zoom > 8:
         suffix = "simplify_001"
-    elif bounds.z[0] > 5:
+    elif zoom > 5:
         suffix = "simplify_01"
     else:
         suffix = "centroid"
@@ -25,7 +30,7 @@ def udf(
 
     # read the variables
     gdf = acs_5yr_bounds(
-        bounds.total_bounds, census_variable=census_variable, suffix=suffix, year=year
+        bounds, census_variable=census_variable, suffix=suffix, year=year
     )
     if len(gdf) == 0:
         return None

@@ -1,12 +1,12 @@
 @fused.udf
-def udf_rgb_tiles(bounds: fused.types.Tile):
+def udf_rgb_tiles(bounds: fused.types.Bounds):
     utils = fused.load('https://github.com/fusedio/udfs/tree/004b8d9/public/common/').utils
     x, y, z = bounds[["x", "y", "z"]].iloc[0]
     return utils.url_to_arr(f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}")
 
 @fused.udf
 def udf(    
-    bounds: fused.types.Tile=None,
+    bounds: fused.types.Bounds=None,
     chip_len=256,
     buffer_degree=0.00001,
     weights_path = "s3://fused-asset/misc/dl4eo/best.onnx"
@@ -17,9 +17,14 @@ def udf(
     from utils import predict
     import numpy as np
 
+    # convert bounds to tile
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = common_utils.estimate_zoom(bounds)
+    tile = common_utils.get_tiles(bounds, zoom=zoom)
+
     # Load imagery
-    bounds.geometry = bounds.buffer(buffer_degree).geometry
-    arr = fused.run(udf_rgb_tiles, bounds=bounds).astype(np.uint8)
+    tile.geometry = tile.buffer(buffer_degree).geometry
+    arr = fused.run(udf_rgb_tiles, bounds=tile).astype(np.uint8)
     
     # Predict
     boxes = predict(arr, weights_path=weights_path)
@@ -29,8 +34,8 @@ def udf(
         return None
 
     # Transform prediction bounding boxes from px to degrees
-    bounds.set_crs(4326, inplace=True)
-    transform = rasterio.transform.from_bounds(*bounds.total_bounds, chip_len, chip_len)
+    tile.set_crs(4326, inplace=True)
+    transform = rasterio.transform.from_bounds(*bounds, chip_len, chip_len)
     
     tf_boxes = []
     for box in boxes:

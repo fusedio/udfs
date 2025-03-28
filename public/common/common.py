@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Tile):
+def udf(bounds: fused.types.Bounds):
     return bounds
 
 
