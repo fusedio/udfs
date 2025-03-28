@@ -7,6 +7,7 @@ import sys
 from typing import Any, Dict, List, Optional
 
 import fused
+import pandas as pd
 import mcp.server.stdio
 import mcp.types as types
 import uvicorn
@@ -34,6 +35,12 @@ DEFAULT_TOKENS_TO_READ_FUSED_DOCS = [
     "fsh_7lMTze647XbSSUEjBLGNoy",  # Reading fused docs from prod
     "fsh_7hfbTGjNsv4ZzWfHEU1iHm",  # Listing code & name of public UDFs
 ]
+
+# Not limiting the amount of data from dataframes we can return back to Claude
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', None)
+pd.set_option('display.max_colwidth', None)
 
 
 class UdfMcpServer:
@@ -99,8 +106,8 @@ class UdfMcpServer:
                 try:
                     result = fused.run(udf, **arguments)
 
-                    # Simply return the result as a string for all types
-                    return [types.TextContent(type="text", text=str(result))]
+                    # Need ot use df.to_string() rather than str(df) because str(df) truncates the output
+                    return [types.TextContent(type="text", text=result.to_string())]
 
                 except Exception as e:
                     logger.exception(f"Error executing UDF '{name}': {e}")
