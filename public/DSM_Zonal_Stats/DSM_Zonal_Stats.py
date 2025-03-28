@@ -4,7 +4,7 @@ def udf(
 ):
     # convert bounds to tile
     utils = fused.load("https://github.com/fusedio/udfs/tree/91845c4/public/common/").utils
-    zoom = common_utils.estimate_zoom(bounds)
+    zoom = utils.estimate_zoom(bounds)
 
 
     if zoom >= min_zoom:
