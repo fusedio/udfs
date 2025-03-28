@@ -92,10 +92,10 @@ def get_overture(
             {
                 "geometry": [
                     box(
-                        tile.minx.loc[0],
-                        tile.miny.loc[0],
-                        tile.maxx.loc[0],
-                        tile.maxy.loc[0],
+                        bounds[0],
+                        bounds[1],
+                        bounds[2],
+                        bounds[3],
                     )
                 ]
             }
