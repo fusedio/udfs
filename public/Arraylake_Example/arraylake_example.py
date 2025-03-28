@@ -29,13 +29,6 @@ def udf(
     scale_factor: int = 3_000,
 ) -> xr.DataArray:
 
-    import boto3
-
-    # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = common_utils.estimate_zoom(bounds)
-    tile = common_utils.get_tiles(bounds, zoom=zoom)
-
     client = arraylake.Client(token=fused.secrets["ARRAYLAKE_TOKEN"])
     repo = client.get_repo(repo_name, read_only=True)
 
