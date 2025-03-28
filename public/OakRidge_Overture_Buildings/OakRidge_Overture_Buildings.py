@@ -2,7 +2,7 @@
 def udf(bounds: fused.types.Bounds = None):
     import geopandas as gpd
     # Load pinned versions of utility functions.
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/91845c4/public/common/").utils
     overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.
 
     # Convert bounds to tile
@@ -13,7 +13,7 @@ def udf(bounds: fused.types.Bounds = None):
     gdf_overture = overture_utils.get_overture(bounds=tile)
 
     # 2. Load Oak Ridge Buildings
-    gdf_oakridge = utils.table_to_tile(
+    gdf_oakridge = common_utils.table_to_tile(
         tile, table="s3://fused-asset/infra/building_oak_states/state=ca/", min_zoom=10
     )
 

@@ -2,18 +2,20 @@ import fused
 import geopandas as gpd
 
 # Load utility functions.
-common_utils = fused.load(
-    "https://github.com/fusedio/udfs/tree/cc5941e/public/common/"
-).utils
+common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
 
 def dsm_to_tile(
-    bounds: gpd.geodataframe.GeoDataFrame,
+    bounds: fused.types.Bounds,
     z_levels=[4, 6, 9, 11],
     verbose=True
 ):
-    if bounds.z[0] >= z_levels[2]:
+
+    zoom = common_utils.estimate_zoom(bounds)
+    tile = common_utils.get_tiles(bounds, zoom=zoom)
+
+    if zoom >= z_levels[2]:
         tiff_list = []
-        if bounds.z[0] >= z_levels[3]:
+        if zoom >= z_levels[3]:
             overview_level = 0
         else:
             overview_level = 1
@@ -26,9 +28,9 @@ def dsm_to_tile(
             tiff_list.append(
                 f"https://s3.ap-northeast-1.wasabisys.com/je-pds/cog/v1/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global/2021-02/{zoom_level}/{b[0]}-{b[1]}/{b[0]}-{b[2]}-{b[1]}-{b[3]}-DSM.tiff"
             )
-    elif bounds.z[0] >= z_levels[0]:
+    elif zoom >= z_levels[0]:
         tiff_list = []
-        if bounds.z[0] >= z_levels[1]:
+        if zoom >= z_levels[1]:
             overview_level = 0
         else:
             overview_level = 1
@@ -42,10 +44,10 @@ def dsm_to_tile(
             )
             # url='https://s3.ap-northeast-1.wasabisys.com/je-pds/cog/v1/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global/2021-02/1/E000.00-E090.00/E000.00-N00.00-E090.00-N90.00-DSM.tiff'
     else:
-        return bounds
+        return tile
     if verbose:
         print(tiff_list)
-    arr = common_utils.mosaic_tiff(bounds, tiff_list, overview_level=overview_level)
+    arr = common_utils.mosaic_tiff(tile, tiff_list, overview_level=overview_level)
     return arr
 
 
@@ -64,12 +66,11 @@ def convert_lng(lng):
 
 
 def bounds_to_navigation(
-    bounds: gpd.geodataframe.GeoDataFrame,
+    bounds: fused.types.Bounds,
     interval=1
 ):
     import numpy as np
 
-    bounds = bounds.total_bounds
     a = []
     if interval == 1:
         for lat in range(int(np.floor(bounds[1])), int(np.ceil(bounds[3]))):

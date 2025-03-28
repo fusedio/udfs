@@ -393,7 +393,7 @@ def get_pc_token(url):
 
 @fused.cache(path="table_to_tile")
 def table_to_tile(
-    bounds,
+    bounds: fused.types.Bounds,
     table="s3://fused-asset/imagery/naip/",
     min_zoom=12,
     centorid_zoom_offset=0,
@@ -406,21 +406,23 @@ def table_to_tile(
     import pandas as pd
 
     version = "0.2.3"
+    zoom = estimate_zoom(bounds)
+    tile = get_tiles(bounds, zoom=zoom)
 
     try:
-        x, y, z = bounds[["x", "y", "z"]].iloc[0]
+        x, y, z = tile[["x", "y", "z"]].iloc[0]
         if print_xyz:
             print(x, y, z)
     except:
         z = min_zoom
     df = fused.get_chunks_metadata(table)
-    if isinstance(bounds, (list, tuple, np.ndarray)):
-        bounds=to_gdf(bounds)
-    elif len(bounds) > 1: 
-        bounds = bounds.dissolve().reset_index(drop=True)
+    if isinstance(tile, (list, tuple, np.ndarray)):
+        tile=to_gdf(tile)
+    elif len(tile) > 1:
+        tile = tile.dissolve().reset_index(drop=True)
     else:
-        bounds = bounds.reset_index(drop=True)
-    df = df[df.intersects(bounds.geometry[0])]
+        tile = tile.reset_index(drop=True)
+    df = df[df.intersects(tile.geometry[0])]
     if z >= min_zoom:
         List = df[["file_id", "chunk_id"]].values
         if not len(List):
@@ -441,22 +443,22 @@ def table_to_tile(
             )
             print("available columns:", list(rows_df.columns))
         try:
-            df = rows_df[rows_df.intersects(bounds.geometry[0])]
+            df = rows_df[rows_df.intersects(tile.geometry[0])]
         except:
             df = rows_df
-        df.crs = bounds.crs
+        df.crs = tile.crs
         if (
             z < min_zoom + centorid_zoom_offset
         ):  # switch to centroid for the last one zoom level before showing metadata
             df.geometry = df.geometry.centroid
         if clip:
-            return df.clip(bounds).explode()
+            return df.clip(tile).explode()
         else:
             return df
     else:
-        df.crs = bounds.crs
+        df.crs = tile.crs
         if clip:
-            return df.clip(bounds).explode()
+            return df.clip(tile).explode()
         else:
             return df
 
