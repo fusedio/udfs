@@ -22,7 +22,7 @@ def fetch_rgb_udf(
 
     # Create collection
     geom = ee.Geometry.Rectangle(*tile.total_bounds)
-    scale = 1 / 2 ** max(0, tile.z[0])
+    scale = 1 / 2 ** max(0, zoom)
 
     # Get NEON RGB image
     ic = ee.ImageCollection("projects/neon-prod-earthengine/assets/RGB/001")\

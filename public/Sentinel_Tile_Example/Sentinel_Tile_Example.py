@@ -43,7 +43,7 @@ def udf(
     ).item_collection()
     
     # Capping resolution to min 10m, the native Sentinel 2 pixel size
-    resolution = int(10 * 2 ** max(0, (15 - tile.z[0])))
+    resolution = int(10 * 2 ** max(0, (15 - zoom)))
     print(f"{resolution=}")
 
     if len(items) < 1:

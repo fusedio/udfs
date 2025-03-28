@@ -10,7 +10,7 @@ def udf(
     tile = common_utils.get_tiles(bounds, zoom=zoom)
 
 
-    if tile.z[0] >= min_zoom:
+    if zoom >= min_zoom:
         gdf = utils.table_to_tile(tile, table, min_zoom)
         arr = utils.dsm_to_tile(tile, z_levels=[4, 6, 9, 11], verbose=False)
         gdf_zonal = utils.geom_stats(gdf, arr, output_shape=(chip_len, chip_len))

@@ -27,7 +27,7 @@ def udf(
     ).item_collection()
     print(items[0].assets.keys()) 
     print(f"Returned {len(items)} Items")
-    resolution = int(20/res_factor * 2 ** (max(0, 13 - tile.z[0])))
+    resolution = int(20/res_factor * 2 ** (max(0, 13 - zoom)))
     print(f"{resolution=}")
     ds = odc.stac.load(
         items,

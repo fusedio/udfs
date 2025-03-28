@@ -23,7 +23,7 @@ def udf(
   
     # Create collection
     geom = ee.Geometry.Rectangle(*tile.total_bounds)
-    scale = 1 / 2 ** max(0, tile.z[0])
+    scale = 1 / 2 ** max(0, zoom)
     
     def mask_img(img):
         msk = img.select(['R', 'G', 'B']).gt(0)

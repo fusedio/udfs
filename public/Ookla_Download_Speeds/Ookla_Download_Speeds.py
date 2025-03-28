@@ -33,7 +33,7 @@ def udf(bounds: fused.types.Bounds = None):
         
     # Calculate H3 resolution based on zoom level:    
     res_offset=0
-    res = max(min(int(2+tile.z[0]/1.5),8)-res_offset,2)
+    res = max(min(int(2+zoom/1.5),8)-res_offset,2)
     df = get_data(tile, file_path, h3_size=res)
     print(df)
     return df

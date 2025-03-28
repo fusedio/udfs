@@ -17,7 +17,7 @@ def udf(bounds: fused.types.Bounds, stats_type="mean", type='hex', color_scale:f
     else:
         
         res_offset = 0  # lower makes the hex finer
-        h3_size = max(min(int(3 + tile.z[0] / 1.5), 12) - res_offset, 2)
+        h3_size = max(min(int(3 + zoom / 1.5), 12) - res_offset, 2)
         print(h3_size)
     
         # 2. Read tiff

@@ -18,11 +18,11 @@ def udf(
     # different geometry details per zoom level
     if zoom > 12:
         suffix = None
-    elif tile.z[0] > 10:
+    elif zoom > 10:
         suffix = "simplify_0001"
-    elif tile.z[0] > 8:
+    elif zoom > 8:
         suffix = "simplify_001"
-    elif tile.z[0] > 5:
+    elif zoom > 5:
         suffix = "simplify_01"
     else:
         suffix = "centroid"

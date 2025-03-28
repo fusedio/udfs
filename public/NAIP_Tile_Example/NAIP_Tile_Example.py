@@ -11,7 +11,7 @@ def udf(
     tile = utils.get_tiles(bounds, zoom=zoom)
 
     min_zoom = 15
-    if tile.z[0] >= min_zoom:
+    if zoom >= min_zoom:
         import numpy as np
 
         output_shape = (chip_len, chip_len)

@@ -10,9 +10,9 @@ def udf(bounds: fused.types.Bounds=None):
     tile = utils.get_tiles(bounds, zoom=zoom)
     
     # This is the line that caculates the resolution based on zoom. You can overide the resolution parameter by hard coding it.
-    resolution = max(min(int(6 + (tile.z[0] - 10) * (5/9)), 11), 0)
+    resolution = max(min(int(6 + (zoom - 10) * (5/9)), 11), 0)
     print(f"resolution: {resolution}")   
-    print(f"zoom: {tile.z[0]}")
+    print(f"zoom: {zoom}")
 
     # We use the bounds to only query what's in view
     tile = tile.bounds.values[0]

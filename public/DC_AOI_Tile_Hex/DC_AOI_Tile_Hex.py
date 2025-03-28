@@ -33,7 +33,7 @@ def udf(bounds: fused.types.Bounds=None, time_of_interest="2021-12-01/2021-12-30
     
     # convert arr to xyz dataframe
     df = tile_to_df(tile, arr)
-    h3_size = min(int(3+tile.z[0]/1.5),15)
+    h3_size = min(int(3+zoom/1.5),15)
     print(h3_size) 
     data_cols = [f'band{i+1}' for i in range(len(arr))]
     df = df_to_hex(df, data_cols=data_cols, h3_size=h3_size, hex_col='hex', return_avg_lalng=True)

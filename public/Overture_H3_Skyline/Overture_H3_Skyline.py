@@ -17,7 +17,7 @@ def udf(bounds: fused.types.Bounds = None, h3_size: int = None, h3_scale: int=2)
     x, y, z = tile.iloc[0][["x", "y", "z"]]
 
     if not h3_size:
-        h3_size = max(min(int(3 + tile.z[0] / 1.5), 12) - h3_scale, 2)
+        h3_size = max(min(int(3 + zoom / 1.5), 12) - h3_scale, 2)
 
     print(f"H3 Resolution: {h3_size}")
 

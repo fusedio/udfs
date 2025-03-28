@@ -41,7 +41,7 @@ def udf(
         )
         return None
 
-    z = tile.z[0]
+    z = zoom
     if z >= 9:
 
         catalog = Client.open(f"{STAC_URL}/LPCLOUD/")

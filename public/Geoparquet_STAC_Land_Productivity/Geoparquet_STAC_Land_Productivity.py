@@ -33,7 +33,7 @@ def udf(
     items = [Item.from_dict(d) for d in item_dicts]
 
     # Calculate the resolution based on zoom level
-    power = 13 - tile.z[0]
+    power = 13 - zoom
     if power < 0:
         resolution = 30
     else:

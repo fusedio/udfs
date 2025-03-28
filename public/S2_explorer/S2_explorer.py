@@ -30,9 +30,9 @@ def udf(
     tile = utils.get_tiles(bounds, zoom=zoom)
 
     # This is the line that caculates the resolution based on zoom. You can overide the resolution parameter by hard coding it.
-    resolution = max(min(int(6 + (tile.z[0] - 10) * (5/9)), 11), 0)
+    resolution = max(min(int(6 + (zoom - 10) * (5/9)), 11), 0)
     print(f"resolution: {resolution}")
-    print(f"zoom: {tile.z[0]}")
+    print(f"zoom: {zoom}")
 
 
     index_name_dict = {
@@ -102,7 +102,7 @@ def udf(
             "no satellite imagery available for the current viewport and time period. Please explore other regions or timeframes."
         )
     print(f"Returned {len(items)} Items")
-    resolution = int(5 * 2 ** (15 - tile.z[0]))
+    resolution = int(5 * 2 ** (15 - zoom))
     # print(f'{resolution=}')
     ds = odc.stac.load(
         items,

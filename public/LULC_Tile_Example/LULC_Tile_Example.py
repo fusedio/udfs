@@ -8,7 +8,7 @@ def udf(bounds: fused.types.Bounds, context, year="2022", chip_len:int=256):
     zoom = common_utils.estimate_zoom(bounds)
     tile = common_utils.get_tiles(bounds, zoom=zoom)
 
-    if tile.z[0] >= 5:
+    if zoom >= 5:
         from utils import (
             LULC_IO_COLORS,
             arr_to_color,
@@ -30,7 +30,7 @@ def udf(bounds: fused.types.Bounds, context, year="2022", chip_len:int=256):
             tile,
             tiff_list,
             output_shape=(chip_len, chip_len),
-            overview_level=min(max(12 - tile.z[0], 0), 4),
+            overview_level=min(max(12 - zoom, 0), 4),
         )
         data = arr_to_color(data, color_map=LULC_IO_COLORS)
         print(data.shape)

@@ -32,7 +32,7 @@ def udf(
     print(f"Returned {len(items)} Items")
 
     # Determine the pixel spacing for the zoom level
-    pixel_spacing = int(5 * 2 ** (15 - tile.z[0]))
+    pixel_spacing = int(5 * 2 ** (15 - zoom))
     print(f"{pixel_spacing = }")
 
     # Load imagery into an XArray dataset
