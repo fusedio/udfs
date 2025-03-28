@@ -12,12 +12,7 @@ def udf(
     import palettable
     import utils
     
-    # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = common_utils.estimate_zoom(bounds)
-    tile = common_utils.get_tiles(bounds, zoom=zoom)
-
-    arr = utils.dsm_to_tile(tile, z_levels=z_levels, verbose=verbose)
+    arr = utils.dsm_to_tile(bounds=bounds, z_levels=z_levels, verbose=verbose)
     return utils.common_utils.visualize(
         data=arr,
         min=0,

@@ -7,15 +7,11 @@ def udf(
 ):
     from utils import join_fsq_categories
 
-    # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = common_utils.estimate_zoom(bounds)
-    tile = common_utils.get_tiles(bounds, zoom=zoom)
-
+    utils = fused.load("https://github.com/fusedio/udfs/tree/91845c4/public/common/").utils
 
     path = f"s3://us-west-2.opendata.source.coop/fused/fsq-os-places/{release}/places/"
     df = utils.table_to_tile(
-        tile, table=path, min_zoom=min_zoom, use_columns=use_columns
+        bounds, table=path, min_zoom=min_zoom, use_columns=use_columns
     )
 
     df = join_fsq_categories(df, release=release)
