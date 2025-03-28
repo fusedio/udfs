@@ -107,7 +107,11 @@ class UdfMcpServer:
                     result = fused.run(udf, **arguments)
 
                     # Need ot use df.to_string() rather than str(df) because str(df) truncates the output
-                    return [types.TextContent(type="text", text=result.to_string())]
+                    if isinstance(result, pd.DataFrame):
+                        text_output = result.to_string()
+                    else:
+                        text_output = str(result)
+                    return [types.TextContent(type="text", text=text_output)]
 
                 except Exception as e:
                     logger.exception(f"Error executing UDF '{name}': {e}")
