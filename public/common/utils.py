@@ -3019,7 +3019,7 @@ def submit_job(udf, df_arg):
     #     udf_nail = fused.models.udf.udf.GeoPandasUdfV2.parse_raw(udf_nail_json)
     #     return fused.run(udf_nail, **args, engine="local")
     # runner = func_to_udf(runner)
-    runner = fused.load("""def runner(args:dict, udf_nail_json:str):
+    runner = fused.load("""def udf(args:dict, udf_nail_json:str):
     udf_nail = fused.models.udf.udf.GeoPandasUdfV2.parse_raw(udf_nail_json)
     return fused.run(udf_nail, ** args, engine='local')
     """)
