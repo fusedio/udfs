@@ -2993,3 +2993,29 @@ def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_pat
     # save config json
     json.dump(config_json, open(config_path, "w"), indent=4)
 
+def func_to_udf(func, cache_max_age='12h'):
+    import inspect
+    source_code = inspect.getsource(func)
+    udf = fused.load(f'@fused.udf(cache_max_age="{cache_max_age}")\n'+source_code)
+    udf.entrypoint = func.__name__
+    return udf
+
+def submit_batch(udf, df_arg):
+    try:
+        udf_nail_json = fused.load(udf).json()
+    except:
+        try:
+            udf_nail_json = udf.json()
+        except:
+            udf_nail_json = func_to_udf(udf).json()
+
+    @fused.udf
+    def runner(args:dict,udf_nail_json:str):
+        udf_nail = fused.models.udf.udf.GeoPandasUdfV2.parse_raw(udf_nail_json)
+        return fused.run(udf_nail, ** args, engine='local')
+    arg_list = df_arg.to_dict(orient='records')
+    job = runner(arg_list=arg_list, udf_nail_json=udf_nail_json)
+    return job.run_remote(instance_type='t3.small', disk_size_gb=990)
+
+
+

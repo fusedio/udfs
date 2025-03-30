@@ -84,7 +84,7 @@
                 ]
               }
             },
-            "fused:udfType": "auto",
+            "fused:udfType": "vector_single",
             "fused:slug": "common",
             "fused:name": "common",
             "fused:defaultViewState": {
@@ -95,9 +95,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/92ece07f346dea9d85129db8294d5a03124145ae/public/common/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/5bc22d7cbcfd84dd8ea9298296b3387538b2d2d6/public/common/",
             "fused:gitPath": "public/common",
-            "fused:gitRef": "92ece07f346dea9d85129db8294d5a03124145ae",
+            "fused:gitRef": "5bc22d7cbcfd84dd8ea9298296b3387538b2d2d6",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -150,8 +150,8 @@
               "https://avatars.githubusercontent.com/u/1020496?v=4",
               "https://avatars.githubusercontent.com/u/26461855?v=4"
             ],
-            "fused:gitLastModified": "2025-03-23T22:35:40+00:00",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/92ece07/public/common/",
+            "fused:gitLastModified": "2025-03-28T11:47:53+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/5bc22d7/public/common/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "sina-patch-de4d2d-remove-cache-for-tifftoxyz",
