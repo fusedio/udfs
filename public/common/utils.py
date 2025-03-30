@@ -3005,7 +3005,7 @@ def func_to_udf(func, cache_max_age='12h'):
     return udf
 
 
-def submit_job(udf, df_arg):
+def udf_to_json(udf):
     try:
         udf_nail_json = fused.load(udf).json()
     except:
@@ -3013,6 +3013,10 @@ def submit_job(udf, df_arg):
             udf_nail_json = udf.json()
         except:
             udf_nail_json = func_to_udf(udf).json()
+    return udf_nail_json
+
+def submit_job(udf, df_arg):
+    udf_nail_json = udf_to_json(udf)
     
     #TODO: fix dill issue in local machine
     # def runner(args: dict, udf_nail_json: str):
