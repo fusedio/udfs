@@ -7,7 +7,7 @@ submit_list = [{"i": i} for i in range(4)]
 
 
 ##============================= Batch Runner ======================================
-@fused.udf(cache_max_age="12h")
+@fused.udf(cache_max_age="0s")
 def udf(
     nail_udf=nail_udf,
     df_arg: list = submit_list,
@@ -33,7 +33,7 @@ def udf(
 
 @fused.cache(cache_max_age="12h")
 def submit_job_once(nail_udf, df_arg, instance_type="t3.small", disk_size_gb=100, verbose=False):
-    job = common.submit_job(nail_udf, df_arg)
+    job = common.submit_job(nail_udf, df_arg, cache_max_age="0s")
     j = job.run_remote(instance_type=instance_type, disk_size_gb=disk_size_gb)
     job_url = fused.options.base_url.replace("server/v1", f"job_status/{j.job_id}")
     if verbose:
@@ -42,4 +42,4 @@ def submit_job_once(nail_udf, df_arg, instance_type="t3.small", disk_size_gb=100
     return job_url
 
 
-common = fused.load("https://github.com/fusedio/udfs/tree/8ef709a/public/common/").utils
+common = fused.load("https://github.com/fusedio/udfs/tree/c39f643/public/common/").utils
