@@ -3015,7 +3015,7 @@ def udf_to_json(udf):
             udf_nail_json = func_to_udf(udf).json()
     return udf_nail_json
 
-def submit_job(udf, df_arg):
+def submit_job(udf, df_arg, cache_max_age='12h'):
     udf_nail_json = udf_to_json(udf)
     
     #TODO: fix dill issue in local machine
@@ -3023,7 +3023,8 @@ def submit_job(udf, df_arg):
     #     udf_nail = fused.models.udf.udf.GeoPandasUdfV2.parse_raw(udf_nail_json)
     #     return fused.run(udf_nail, **args, engine="local")
     # runner = func_to_udf(runner)
-    runner = fused.load("""def udf(args:dict, udf_nail_json:str):
+    runner = fused.load(f"""@fused.udf(cache_max_age="{cache_max_age}")
+def udf(args:dict, udf_nail_json:str):
     udf_nail = fused.models.udf.udf.GeoPandasUdfV2.parse_raw(udf_nail_json)
     return fused.run(udf_nail, ** args, engine='local')
     """)
