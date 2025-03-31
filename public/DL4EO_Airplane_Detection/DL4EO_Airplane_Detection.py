@@ -29,7 +29,10 @@ def udf(
     arr = fused.run(udf_rgb_tiles, tile=tile).astype(np.uint8)
     
     # Predict
-    boxes = predict(arr, weights_path=weights_path)
+    try:
+        boxes = predict(arr, weights_path=weights_path)
+    except FileNotFoundError as e:
+        raise AssertionError("It seems like weights are missing to run this...")
     print(boxes)
     if boxes is None:
         print("Warning: Unable to run inference...")
