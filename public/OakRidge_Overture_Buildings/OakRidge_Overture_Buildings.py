@@ -10,7 +10,7 @@ def udf(bounds: fused.types.Bounds = None):
     tile = common_utils.get_tiles(bounds, zoom=zoom)
 
     # 1. Load Overture Buildings
-    gdf_overture = overture_utils.get_overture(bounds=tile)
+    gdf_overture = overture_utils.get_overture(bbox=tile)
 
     # 2. Load Oak Ridge Buildings
     gdf_oakridge = common_utils.table_to_tile(
