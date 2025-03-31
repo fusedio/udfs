@@ -20,8 +20,6 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/comparison_overture_oakridge.png",
-            "fused:description": "## Overview\n\nContrast Overture Buildings with Oak Ridge Buildings.\n\nCredit goes to Mark Litwintschik for the workflow to ingest the Oak Ridge dataset.\n\nhttps://tech.marksblogg.com/ornl-fema-buildings.html\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -69,29 +67,43 @@
             "fused:slug": "OakRidge_Overture_Buildings",
             "fused:name": "OakRidge_Overture_Buildings",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/8c51ccfdfbfe728f9574c6a0d1d126f4b6c52ecd/public/OakRidge_Overture_Buildings/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/8c51ccf/public/OakRidge_Overture_Buildings/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/ace02593ec5681caec8614c3cca7acb2e69e4973/public/OakRidge_Overture_Buildings/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/ace0259/public/OakRidge_Overture_Buildings/",
             "fused:gitPath": "public/OakRidge_Overture_Buildings",
-            "fused:gitRef": "8c51ccfdfbfe728f9574c6a0d1d126f4b6c52ecd",
+            "fused:gitRef": "ace02593ec5681caec8614c3cca7acb2e69e4973",
             "fused:gitAuthorNames": [
               "Plinio Guzman",
-              null
+              null,
+              "Suryashankar Das",
+              "Suryashankar Das",
+              "Milind Soni"
             ],
             "fused:gitAuthorUsernames": [
               "pgzmnk",
-              "fused-io[bot]"
+              "fused-io[bot]",
+              "iamsdas-fused",
+              "iamsdas",
+              "milind-soni"
             ],
             "fused:gitAuthorUrls": [
               "https://github.com/pgzmnk",
-              "https://github.com/apps/fused-io"
+              "https://github.com/apps/fused-io",
+              "https://github.com/iamsdas-fused",
+              "https://github.com/iamsdas",
+              "https://github.com/milind-soni"
             ],
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/27398253?v=4",
-              "https://avatars.githubusercontent.com/in/834700?v=4"
+              "https://avatars.githubusercontent.com/in/834700?v=4",
+              "https://avatars.githubusercontent.com/u/200643783?v=4",
+              "https://avatars.githubusercontent.com/u/26461855?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2024-11-03T18:19:06+00:00",
+            "fused:gitLastModified": "2025-03-28T11:47:53+00:00",
             "fused:explorerTab": "public",
-            "fused:gitRepo": "fusedio/udfs"
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/comparison_overture_oakridge.png",
+            "fused:description": "## Overview\n\nContrast Overture Buildings with Oak Ridge Buildings.\n\nCredit goes to Mark Litwintschik for the workflow to ingest the Oak Ridge dataset.\n\nhttps://tech.marksblogg.com/ornl-fema-buildings.html\n"
           },
           "source": "OakRidge_Overture_Buildings.py",
           "headers": []
