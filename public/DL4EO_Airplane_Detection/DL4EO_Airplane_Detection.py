@@ -1,7 +1,9 @@
+import geopandas as gpd
+
 @fused.udf
-def udf_rgb_tiles(bounds: fused.types.Bounds):
+def udf_rgb_tiles(tile: gpd.GeoDataFrame):
     utils = fused.load('https://github.com/fusedio/udfs/tree/004b8d9/public/common/').utils
-    x, y, z = bounds[["x", "y", "z"]].iloc[0]
+    x, y, z = tile[["x", "y", "z"]].iloc[0]
     return utils.url_to_arr(f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}")
 
 @fused.udf
@@ -24,7 +26,7 @@ def udf(
 
     # Load imagery
     tile.geometry = tile.buffer(buffer_degree).geometry
-    arr = fused.run(udf_rgb_tiles, bounds=tile).astype(np.uint8)
+    arr = fused.run(udf_rgb_tiles, tile=tile).astype(np.uint8)
     
     # Predict
     boxes = predict(arr, weights_path=weights_path)
