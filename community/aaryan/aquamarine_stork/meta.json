@@ -1,0 +1,82 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "aquamarine_stork",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:tags": [
+              {
+                "id": "30-meter",
+                "label": "30-meter"
+              },
+              {
+                "id": "vector",
+                "label": "vector"
+              }
+            ],
+            "fused:mcp": {
+              "description": "## Overview\n\nShort description about the UDF.\n\n## External links\n\n- [Name of link](https://example.com)\n- [Name of link](https://example.com)",
+              "parameters": "[\n  {\n    \"name\": \"bounds\",\n    \"type\": \"string\"\n  },\n  {\n    \"name\": \"n\",\n    \"type\": \"int\"\n  }\n]"
+            },
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "SunsetDark",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "aquamarine_stork",
+            "fused:name": "aquamarine_stork",
+            "fused:id": null
+          },
+          "source": "aquamarine_stork.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
