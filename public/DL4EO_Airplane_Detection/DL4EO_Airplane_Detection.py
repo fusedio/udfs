@@ -24,6 +24,7 @@ def udf(
     zoom = common_utils.estimate_zoom(bounds)
     tile = common_utils.get_tiles(bounds, zoom=zoom)
 
+
     # Load imagery
     tile.geometry = tile.buffer(buffer_degree).geometry
     arr = fused.run(udf_rgb_tiles, tile=tile).astype(np.uint8)

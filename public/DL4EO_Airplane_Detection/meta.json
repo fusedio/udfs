@@ -14,9 +14,9 @@
           "metadata": {
             "fused:defaultViewState": {
               "enable": true,
-              "latitude": 32.152639774920026,
-              "longitude": -110.83748922629792,
-              "zoom": 16.587057319372757,
+              "latitude": 32.15244495880282,
+              "longitude": -110.83328109971882,
+              "zoom": 17.718078838444626,
               "pitch": 0,
               "bearing": 0
             },
@@ -49,43 +49,47 @@
             "fused:slug": "DL4EO_Airplane_Detection",
             "fused:name": "DL4EO_Airplane_Detection",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/08c478c04099ccb40ba9ffe1c48771639917c163/public/DL4EO_Airplane_Detection/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/08c478c/public/DL4EO_Airplane_Detection/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/46e58fb865e88e64acec4fbdbafec84b2dce5c8e/public/DL4EO_Airplane_Detection/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/46e58fb/public/DL4EO_Airplane_Detection/",
             "fused:gitPath": "public/DL4EO_Airplane_Detection",
-            "fused:gitRef": "08c478c04099ccb40ba9ffe1c48771639917c163",
+            "fused:gitRef": "46e58fb865e88e64acec4fbdbafec84b2dce5c8e",
             "fused:gitAuthorNames": [
               "Jeff Faudi",
               "Plinio Guzman",
               null,
               "Suryashankar Das",
-              "Milind Soni"
+              "Milind Soni",
+              "Maxime Lenormand"
             ],
             "fused:gitAuthorUsernames": [
               "jeffaudi",
               "pgzmnk",
               "fused-io[bot]",
               "iamsdas",
-              "milind-soni"
+              "milind-soni",
+              "MaxLenormand"
             ],
             "fused:gitAuthorUrls": [
               "https://github.com/jeffaudi",
               "https://github.com/pgzmnk",
               "https://github.com/apps/fused-io",
               "https://github.com/iamsdas",
-              "https://github.com/milind-soni"
+              "https://github.com/milind-soni",
+              "https://github.com/MaxLenormand"
             ],
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/6923608?v=4",
               "https://avatars.githubusercontent.com/u/27398253?v=4",
               "https://avatars.githubusercontent.com/in/834700?v=4",
               "https://avatars.githubusercontent.com/u/26461855?v=4",
-              "https://avatars.githubusercontent.com/u/46266943?v=4"
+              "https://avatars.githubusercontent.com/u/46266943?v=4",
+              "https://avatars.githubusercontent.com/u/44133329?v=4"
             ],
-            "fused:gitLastModified": "2025-03-31T16:11:15.829Z",
+            "fused:gitLastModified": "2025-04-01T07:48:30.958Z",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
-            "fused:gitPullRequestBranch": "max-patch-46555f-Fixing-DL4EO-example-still-missin",
-            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/780",
+            "fused:gitPullRequestBranch": "max-patch-b2c044-Updating-weight-tmp-location",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/781",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/dl4eo_cpu.png",
             "fused:tags": [
               {
