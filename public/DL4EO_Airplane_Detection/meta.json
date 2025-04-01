@@ -49,39 +49,43 @@
             "fused:slug": "DL4EO_Airplane_Detection",
             "fused:name": "DL4EO_Airplane_Detection",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/08c478c04099ccb40ba9ffe1c48771639917c163/public/DL4EO_Airplane_Detection/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/08c478c/public/DL4EO_Airplane_Detection/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/5ff426dbe09c1448190f1625d9d9ad36d9567396/public/DL4EO_Airplane_Detection/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/5ff426d/public/DL4EO_Airplane_Detection/",
             "fused:gitPath": "public/DL4EO_Airplane_Detection",
-            "fused:gitRef": "08c478c04099ccb40ba9ffe1c48771639917c163",
+            "fused:gitRef": "5ff426dbe09c1448190f1625d9d9ad36d9567396",
             "fused:gitAuthorNames": [
               "Jeff Faudi",
               "Plinio Guzman",
               null,
               "Suryashankar Das",
-              "Milind Soni"
+              "Milind Soni",
+              "Maxime Lenormand"
             ],
             "fused:gitAuthorUsernames": [
               "jeffaudi",
               "pgzmnk",
               "fused-io[bot]",
               "iamsdas",
-              "milind-soni"
+              "milind-soni",
+              "MaxLenormand"
             ],
             "fused:gitAuthorUrls": [
               "https://github.com/jeffaudi",
               "https://github.com/pgzmnk",
               "https://github.com/apps/fused-io",
               "https://github.com/iamsdas",
-              "https://github.com/milind-soni"
+              "https://github.com/milind-soni",
+              "https://github.com/MaxLenormand"
             ],
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/6923608?v=4",
               "https://avatars.githubusercontent.com/u/27398253?v=4",
               "https://avatars.githubusercontent.com/in/834700?v=4",
               "https://avatars.githubusercontent.com/u/26461855?v=4",
-              "https://avatars.githubusercontent.com/u/46266943?v=4"
+              "https://avatars.githubusercontent.com/u/46266943?v=4",
+              "https://avatars.githubusercontent.com/u/44133329?v=4"
             ],
-            "fused:gitLastModified": "2025-03-31T16:11:15.829Z",
+            "fused:gitLastModified": "2025-03-31T16:13:51+00:00",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "max-patch-46555f-Fixing-DL4EO-example-still-missin",

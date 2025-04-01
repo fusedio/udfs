@@ -20,7 +20,7 @@ def predict(
     print(f"Using device: {device}")
 
     # Set weights file
-    WEIGHTS_FILE = "/mnt/cache/best.onnx"
+    WEIGHTS_FILE = "/mnt/cache/tmp/best.onnx"
 
     try:
         if not os.path.exists(WEIGHTS_FILE):
