@@ -1,0 +1,86 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "hundred_parks_in_vancouver_stats_only",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:tags": [
+              {
+                "id": "collec-vancouver-open-data",
+                "label": "collec-vancouver-open-data"
+              }
+            ],
+            "fused:mcp": {
+              "description": "Model Context Protocol (MCP) Description:\n\nThe User-Defined Function (UDF) 'hundred_parks_in_vancouver_stats_only' is designed primarily for data extraction and transformation. It retrieves data on the polygon geometries of parks in Vancouver by leveraging the Open Data Portal.\n\nFunctionality:\nThis UDF performs multiple operations: data retrieval, data filtering, data conversion, and data processing. Firstly, it fetches data from the 'parks_polygon_representation' dataset available on the Open Data Portal, limiting the extraction to 100 records. Secondly, it filters out invalid geometries (items that are not type 'Polygon' or 'MultiPolygon') and drops the 'geom' column from the fetched data. Thirdly, it converts valid geometries into a shapely 'geometry' object to improve the efficiency and ease of subsequent data operations. Finally, it processes the dataset to estimate the average size of each park, adding this estimate to a new column 'buffer_radius' in the resultant dataset, before stripping of the 'geometry' column for output.\n\nInput Parameters:\nThe UDF does not have any user input parameters. It contains internally defined variables, like the 'limit' variable which is currently set to 100 and determines the number of records to be fetched from the Vancouver Open Data Portal. The 'parks_url' variable is a formatted string that constructs the URL to access the dataset.\n\nOutput:\nThe output of this UDF is a Pandas dataframe featuring details of up to 100 Vancouver parks, sans the geometric data. However, it includes an added 'buffer_radius' field that serves as an estimate of the average size of each park.\n\nTechnical Details/Limitations:\nOne primary limitation of this UDF is its dependency on the Open Data Portal for live data fetching, which makes it susceptible to potential loss of data accessibility. On technical aspects, it employs the 'requests' module for data fetching, 'pandas' and 'geopandas' for data manipulation and conversion, 'shapely' for geometric object handling, and 'math' for arithmetic computation. Another implicit limitation is that the function doesn't check or handle cases where the extracted data might not contain the 'geom' column which could cause runtime exceptions.",
+              "parameters": "[]"
+            },
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "BrwnYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "hundred_parks_in_vancouver_stats_only",
+            "fused:name": "hundred_parks_in_vancouver_stats_only",
+            "fused:id": null,
+            "fused:gitRepo": "fusedlabs/fusedudfs",
+            "fused:gitRef": "14fc86ac47da02ba0897512e444475db4c621165",
+            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/14fc86ac47da02ba0897512e444475db4c621165/parks_vancouver/",
+            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/14fc86a/parks_vancouver/",
+            "fused:gitPath": "parks_vancouver",
+            "fused:gitLastModified": "2025-03-28T11:33:47.758Z",
+            "fused:gitPullRequestBranch": "max-patch-95217d-Hundred-parks-in-Vancouver",
+            "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/647"
+          },
+          "source": "hundred_parks_in_vancouver_stats_only.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
