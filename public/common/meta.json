@@ -156,10 +156,10 @@
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "sina-patch-de4d2d-remove-cache-for-tifftoxyz",
             "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/744",
-            "fused:id": null,
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Fused_Logo.png",
             "fused:description": "## Overview\n\nThis UDF contains common utils that are being used for many public udfs.\n\n\nTo import common utils in your udf run the following command:\n\n`common = fused.utils.common`\n",
-            "fused:explorerPin": "90"
+            "fused:explorerPin": "90",
+            "fused:id": null
           },
           "source": "common.py",
           "headers": [
