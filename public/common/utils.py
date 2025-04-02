@@ -2893,13 +2893,14 @@ def estimate_zoom(bounds, target_num_tiles=1):
 
 
 def get_tiles(
-    bounds=None, target_num_tiles=1, zoom=None, max_tile_recursion=6, as_gdf=True
+    bounds=None, target_num_tiles=1, zoom=None, max_tile_recursion=6, as_gdf=True, verbose=False
 ):
     bounds = to_gdf(bounds)
     import mercantile
 
     if zoom is not None:
-        print("zoom is provided; target_num_tiles will be ignored.")
+        if verbose: 
+            print("zoom is provided; target_num_tiles will be ignored.")
         target_num_tiles = None
 
     if target_num_tiles is not None and target_num_tiles < 1:
@@ -2908,7 +2909,8 @@ def get_tiles(
     if target_num_tiles == 1:
         
         tile = mercantile.bounding_tile(*bounds.total_bounds)
-        print(to_gdf((0,0,0)))
+        if verbose: 
+            print(to_gdf((0,0,0)))
         gdf = to_gdf((tile.x, tile.y, tile.z))
     else:
         zoom_level = (
@@ -2920,16 +2922,19 @@ def get_tiles(
         if zoom_level > (base_zoom + max_tile_recursion + 1):
             zoom_level = base_zoom + max_tile_recursion + 1
             if zoom:
-                print(
+                if verbose: 
+                    print(
                     f"Warning: Maximum number of tiles is reached ({zoom=} > {base_zoom+max_tile_recursion+1=} tiles). Increase {max_tile_recursion=} to allow for deeper tile recursion"
-                )
+                    )
             else:
-                print(
+                if verbose: 
+                    print(
                     f"Warning: Maximum number of tiles is reached ({target_num_tiles} > {4**max_tile_recursion-1} tiles). Increase {max_tile_recursion=} to allow for deeper tile recursion"
-                )
+                    )
 
         gdf = mercantile_polyfill(bounds, zooms=[zoom_level], compact=False)
-        print(f"Generated {len(gdf)} tiles at zoom level {zoom_level}")
+        if verbose: 
+            print(f"Generated {len(gdf)} tiles at zoom level {zoom_level}")
 
     return gdf if as_gdf else gdf[["x", "y", "z"]].values
 
