@@ -352,6 +352,106 @@ def stac_to_gdf(bounds, datetime='2024', collections=["sentinel-2-l2a"], columns
         return gdf
 
 @fused.cache
+def stac_to_gdf_maxar(event_name, max_items=1000):
+    import geopandas as gpd
+    import requests
+    from shapely.geometry import shape, box
+    
+    base_url = "https://maxar-opendata.s3.amazonaws.com/events/"
+    
+    def resolve_url(base_url, relative_url):
+        if relative_url.startswith("../"):
+            base_dir = "/".join(base_url.split("/")[:-1])
+            parts = relative_url.split("/")
+            up_levels = len([p for p in parts if p == ".."])
+            base_parts = base_dir.split("/")
+            base_path = "/".join(base_parts[:-up_levels])
+            item_path = "/".join(parts[up_levels:])
+            return f"{base_path}/{item_path}"
+        elif relative_url.startswith("./"):
+            base_dir = "/".join(base_url.split("/")[:-1])
+            return f"{base_dir}/{relative_url[2:]}"
+        return relative_url
+    
+    event_collection_url = f"{base_url}{event_name}/collection.json"
+    response = requests.get(event_collection_url)
+    if response.status_code != 200:
+        return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
+    
+    event_collection = response.json()
+    acq_collection_links = []
+    for link in event_collection.get("links", []):
+        if link.get("rel") == "child" and "acquisition_collections" in link.get("href", ""):
+            href = link.get("href")
+            if href.startswith("./"):
+                href = f"{base_url}{event_name}/{href[2:]}"
+            acq_collection_links.append(href)
+    
+    all_items = []
+    item_count = 0
+    
+    for acq_url in acq_collection_links:
+        if item_count >= max_items:
+            break
+        
+        acq_response = requests.get(acq_url)
+        if acq_response.status_code != 200:
+            continue
+        
+        acq_collection = acq_response.json()
+        item_links = [link.get("href") for link in acq_collection.get("links", []) 
+                     if link.get("rel") == "item"]
+        
+        for item_link in item_links:
+            if item_count >= max_items:
+                break
+            
+            item_url = resolve_url(acq_url, item_link)
+            
+            try:
+                item_response = requests.get(item_url)
+                if item_response.status_code != 200:
+                    continue
+                
+                item = item_response.json()
+                
+                geom = None
+                if "geometry" in item and item["geometry"]:
+                    geom = shape(item["geometry"])
+                elif "bbox" in item and item["bbox"]:
+                    geom = box(*item["bbox"])
+                
+                if geom:
+                    props = item.get("properties", {})
+                    item_data = {
+                        "product_name": item.get("id", "Unknown"),
+                        "collection": event_name,
+                        "datetime": props.get("datetime", "Unknown"),
+                        "cloud_cover": props.get("eo:cloud_cover", "Unknown"),
+                        "gsd": props.get("gsd", "Unknown"),
+                        "item_url": item_url
+                    }
+                    
+                    assets = item.get("assets", {})
+                    for asset_key in ["thumbnail", "preview", "visual"]:
+                        if asset_key in assets:
+                            asset_href = assets[asset_key].get("href", "")
+                            item_data["preview_url"] = resolve_url(item_url, asset_href)
+                            break
+                    
+                    all_items.append((geom, item_data))
+                    item_count += 1
+            except Exception:
+                continue
+    
+    if all_items:
+        geometries = [item[0] for item in all_items]
+        properties = [item[1] for item in all_items]
+        return gpd.GeoDataFrame(properties, geometry=geometries, crs="EPSG:4326")
+    else:
+        return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
+
+@fused.cache
 def get_url_aws_stac(bounds, collections=["cop-dem-glo-30"]):
     import pystac_client
     catalog = pystac_client.Client.open("https://earth-search.aws.element84.com/v1")
