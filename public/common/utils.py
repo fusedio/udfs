@@ -463,12 +463,7 @@ def stac_to_gdf_maxar(event_name, max_items=1000):
     if all_items:
         geometries = [item[0] for item in all_items]
         properties = [item[1] for item in all_items]
-        gdf = gpd.GeoDataFrame(properties, geometry=geometries, crs="EPSG:4326")
-        
-        # Add centroid coordinates for mapping
-        gdf["longitude"] = gdf.geometry.centroid.x
-        gdf["latitude"] = gdf.geometry.centroid.y
-        
+        gdf = gpd.GeoDataFrame(properties, geometry=geometries, crs="EPSG:4326")        
         return gdf
     else:
         return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
