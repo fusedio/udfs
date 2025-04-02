@@ -427,17 +427,33 @@ def stac_to_gdf_maxar(event_name, max_items=1000):
                         "product_name": item.get("id", "Unknown"),
                         "collection": event_name,
                         "datetime": props.get("datetime", "Unknown"),
-                        "cloud_cover": props.get("eo:cloud_cover", "Unknown"),
+                        "platform": props.get("platform", "Unknown"),
                         "gsd": props.get("gsd", "Unknown"),
+                        "catalog_id": props.get("catalog_id", "Unknown"),
+                        "off_nadir": props.get("view:off_nadir", "Unknown"),
+                        "azimuth": props.get("view:azimuth", "Unknown"),
+                        "incidence_angle": props.get("view:incidence_angle", "Unknown"),
+                        "sun_azimuth": props.get("view:sun_azimuth", "Unknown"),
+                        "sun_elevation": props.get("view:sun_elevation", "Unknown"),
+                        "utm_zone": props.get("utm_zone", "Unknown"),
+                        "epsg": props.get("proj:epsg", "Unknown"),
+                        "quadkey": props.get("quadkey", "Unknown"),
+                        "cloud_percent": props.get("tile:clouds_percent", 0),
+                        "data_area": props.get("tile:data_area", 0),
                         "item_url": item_url
                     }
                     
+                    # Process all available assets
                     assets = item.get("assets", {})
-                    for asset_key in ["thumbnail", "preview", "visual"]:
-                        if asset_key in assets:
-                            asset_href = assets[asset_key].get("href", "")
-                            item_data["preview_url"] = resolve_url(item_url, asset_href)
-                            break
+                    asset_types = list(assets.keys())
+                    item_data["asset_types"] = ",".join(asset_types)
+                    
+                    # Store URLs for all assets
+                    for asset_key, asset_info in assets.items():
+                        asset_href = asset_info.get("href", "")
+                        if asset_href:
+                            resolved_url = resolve_url(item_url, asset_href)
+                            item_data[f"{asset_key}_url"] = resolved_url
                     
                     all_items.append((geom, item_data))
                     item_count += 1
@@ -447,7 +463,13 @@ def stac_to_gdf_maxar(event_name, max_items=1000):
     if all_items:
         geometries = [item[0] for item in all_items]
         properties = [item[1] for item in all_items]
-        return gpd.GeoDataFrame(properties, geometry=geometries, crs="EPSG:4326")
+        gdf = gpd.GeoDataFrame(properties, geometry=geometries, crs="EPSG:4326")
+        
+        # Add centroid coordinates for mapping
+        gdf["longitude"] = gdf.geometry.centroid.x
+        gdf["latitude"] = gdf.geometry.centroid.y
+        
+        return gdf
     else:
         return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
 
