@@ -352,123 +352,6 @@ def stac_to_gdf(bounds, datetime='2024', collections=["sentinel-2-l2a"], columns
         return gdf
 
 @fused.cache
-def stac_to_gdf_maxar(event_name, max_items=1000):
-    import geopandas as gpd
-    import requests
-    from shapely.geometry import shape, box
-    
-    base_url = "https://maxar-opendata.s3.amazonaws.com/events/"
-    
-    def resolve_url(base_url, relative_url):
-        if relative_url.startswith("../"):
-            base_dir = "/".join(base_url.split("/")[:-1])
-            parts = relative_url.split("/")
-            up_levels = len([p for p in parts if p == ".."])
-            base_parts = base_dir.split("/")
-            base_path = "/".join(base_parts[:-up_levels])
-            item_path = "/".join(parts[up_levels:])
-            return f"{base_path}/{item_path}"
-        elif relative_url.startswith("./"):
-            base_dir = "/".join(base_url.split("/")[:-1])
-            return f"{base_dir}/{relative_url[2:]}"
-        return relative_url
-    
-    event_collection_url = f"{base_url}{event_name}/collection.json"
-    response = requests.get(event_collection_url)
-    if response.status_code != 200:
-        return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
-    
-    event_collection = response.json()
-    acq_collection_links = []
-    for link in event_collection.get("links", []):
-        if link.get("rel") == "child" and "acquisition_collections" in link.get("href", ""):
-            href = link.get("href")
-            if href.startswith("./"):
-                href = f"{base_url}{event_name}/{href[2:]}"
-            acq_collection_links.append(href)
-    
-    all_items = []
-    item_count = 0
-    
-    for acq_url in acq_collection_links:
-        if item_count >= max_items:
-            break
-        
-        acq_response = requests.get(acq_url)
-        if acq_response.status_code != 200:
-            continue
-        
-        acq_collection = acq_response.json()
-        item_links = [link.get("href") for link in acq_collection.get("links", []) 
-                     if link.get("rel") == "item"]
-        
-        for item_link in item_links:
-            if item_count >= max_items:
-                break
-            
-            item_url = resolve_url(acq_url, item_link)
-            
-            try:
-                item_response = requests.get(item_url)
-                if item_response.status_code != 200:
-                    continue
-                
-                item = item_response.json()
-                
-                geom = None
-                if "geometry" in item and item["geometry"]:
-                    geom = shape(item["geometry"])
-                elif "bbox" in item and item["bbox"]:
-                    geom = box(*item["bbox"])
-                
-                if geom:
-                    props = item.get("properties", {})
-                    item_data = {
-                        "product_name": item.get("id", "Unknown"),
-                        "collection": event_name,
-                        "datetime": props.get("datetime", "Unknown"),
-                        "platform": props.get("platform", "Unknown"),
-                        "gsd": props.get("gsd", "Unknown"),
-                        "catalog_id": props.get("catalog_id", "Unknown"),
-                        "off_nadir": props.get("view:off_nadir", "Unknown"),
-                        "azimuth": props.get("view:azimuth", "Unknown"),
-                        "incidence_angle": props.get("view:incidence_angle", "Unknown"),
-                        "sun_azimuth": props.get("view:sun_azimuth", "Unknown"),
-                        "sun_elevation": props.get("view:sun_elevation", "Unknown"),
-                        "utm_zone": props.get("utm_zone", "Unknown"),
-                        "epsg": props.get("proj:epsg", "Unknown"),
-                        "quadkey": props.get("quadkey", "Unknown"),
-                        "cloud_percent": props.get("tile:clouds_percent", 0),
-                        "data_area": props.get("tile:data_area", 0),
-                        "item_url": item_url
-                    }
-                    
-                    # Process all available assets
-                    assets = item.get("assets", {})
-                    asset_types = list(assets.keys())
-                    item_data["asset_types"] = ",".join(asset_types)
-                    
-                    # Store URLs for all assets
-                    for asset_key, asset_info in assets.items():
-                        asset_href = asset_info.get("href", "")
-                        if asset_href:
-                            resolved_url = resolve_url(item_url, asset_href)
-                            item_data[f"{asset_key}_url"] = resolved_url
-                    
-                    all_items.append((geom, item_data))
-                    item_count += 1
-            except Exception:
-                continue
-    
-    if all_items:
-        geometries = [item[0] for item in all_items]
-        properties = [item[1] for item in all_items]
-        gdf = gpd.GeoDataFrame(properties, geometry=geometries, crs="EPSG:4326")        
-        return gdf
-    else:
-        return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
-
-@fused.cache
 def get_url_aws_stac(bounds, collections=["cop-dem-glo-30"]):
     import pystac_client
     catalog = pystac_client.Client.open("https://earth-search.aws.element84.com/v1")
@@ -2893,13 +2776,14 @@ def estimate_zoom(bounds, target_num_tiles=1):
 
 
 def get_tiles(
-    bounds=None, target_num_tiles=1, zoom=None, max_tile_recursion=6, as_gdf=True
+    bounds=None, target_num_tiles=1, zoom=None, max_tile_recursion=6, as_gdf=True, verbose=False
 ):
     bounds = to_gdf(bounds)
     import mercantile
 
     if zoom is not None:
-        print("zoom is provided; target_num_tiles will be ignored.")
+        if verbose: 
+            print("zoom is provided; target_num_tiles will be ignored.")
         target_num_tiles = None
 
     if target_num_tiles is not None and target_num_tiles < 1:
@@ -2908,7 +2792,8 @@ def get_tiles(
     if target_num_tiles == 1:
         
         tile = mercantile.bounding_tile(*bounds.total_bounds)
-        print(to_gdf((0,0,0)))
+        if verbose: 
+            print(to_gdf((0,0,0)))
         gdf = to_gdf((tile.x, tile.y, tile.z))
     else:
         zoom_level = (
@@ -2920,16 +2805,19 @@ def get_tiles(
         if zoom_level > (base_zoom + max_tile_recursion + 1):
             zoom_level = base_zoom + max_tile_recursion + 1
             if zoom:
-                print(
+                if verbose: 
+                    print(
                     f"Warning: Maximum number of tiles is reached ({zoom=} > {base_zoom+max_tile_recursion+1=} tiles). Increase {max_tile_recursion=} to allow for deeper tile recursion"
-                )
+                    )
             else:
-                print(
+                if verbose: 
+                    print(
                     f"Warning: Maximum number of tiles is reached ({target_num_tiles} > {4**max_tile_recursion-1} tiles). Increase {max_tile_recursion=} to allow for deeper tile recursion"
-                )
+                    )
 
         gdf = mercantile_polyfill(bounds, zooms=[zoom_level], compact=False)
-        print(f"Generated {len(gdf)} tiles at zoom level {zoom_level}")
+        if verbose: 
+            print(f"Generated {len(gdf)} tiles at zoom level {zoom_level}")
 
     return gdf if as_gdf else gdf[["x", "y", "z"]].values
 
@@ -3149,4 +3037,3 @@ def udf(args:dict, udf_nail_json:str):
     arg_list = df_arg.to_dict(orient="records")
     job = runner(arg_list=arg_list, udf_nail_json=udf_nail_json)
     return job
-
