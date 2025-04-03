@@ -10,7 +10,7 @@ Buildings footprints, places of interest (POIs), admin boundaries, and transport
 
 ## Parameters
 
-- `release`: Overture release ID. Defaults to `2024-12-18-0`. Note that `.` should be replaced with `-` in the ID.
+- `release`: Overture release ID. Defaults to `2024-11-13-0`. Note that `.` should be replaced with `-` in the ID.
 - `type`: One of `infrastructure`, `land`, `land_use`, `water`, `division`, `division_boundary`, `division_area`, `place`, `connector`, `segment`, `address`, `building` (default).
 - `theme`: One of `buildings`, `base`, `places`, `transportation`, `divisions`, `addresses`. If not specified, this will be inferred from the type.
 - `use_columns`: Load only these columns if specified. Default is to load all columns.
