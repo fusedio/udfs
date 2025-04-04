@@ -12,7 +12,7 @@ def udf(
     import pystac_client
     from pystac.extensions.eo import EOExtension as eo
 
-    # convert bounds to tile
+    # Load pinned versions of utility functions.
     utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
     zoom = utils.estimate_zoom(bounds)
 

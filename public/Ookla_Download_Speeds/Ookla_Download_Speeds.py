@@ -1,16 +1,12 @@
 @fused.udf
 def udf(bounds: fused.types.Bounds = None):
 
-    # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = common_utils.estimate_zoom(bounds)
-    tile = common_utils.get_tiles(bounds)
+    # Load pinned versions of utility functions.
+    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    tile = utils.get_tiles(bounds)
+    zoom = tile.iloc[0].z
 
     file_path='s3://ookla-open-data/parquet/performance/type=mobile/year=2024/quarter=3/2024-07-01_performance_mobile_tiles.parquet'
-    total_bounds = bounds
-
-    # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
 
     @fused.cache
     def get_data(bounds, file_path, h3_size):
@@ -24,8 +20,8 @@ def udf(bounds: fused.types.Bounds = None):
                     avg(avg_d_kbps) as metric
         from read_parquet("{file_path}") 
         where 1=1
-        and tile_x between {total_bounds[0]} and {total_bounds[2]}
-        and tile_y between {total_bounds[1]} and {total_bounds[3]}
+        and tile_x between {bounds[0]} and {bounds[2]}
+        and tile_y between {bounds[1]} and {bounds[3]}
         group by 1
         ''' 
         df = con.sql(qr).df()

@@ -8,7 +8,7 @@ def udf(
     import stacrs
     from pystac import Item
 
-    # convert bounds to tile
+    # Load pinned versions of utility functions.
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
     zoom = common_utils.estimate_zoom(bounds)
 
