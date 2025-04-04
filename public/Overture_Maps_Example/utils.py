@@ -19,7 +19,7 @@ def get_overture(
     from shapely.geometry import shape, box
 
     # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/3bb959a/public/common/").utils
+    utils = fused.load("https://github.com/fusedio/udfs/tree/d0e8eb0/public/common/").utils
 
     if release == "2024-02-15-alpha-0":
         if overture_type == "administrative_boundary":
