@@ -523,8 +523,7 @@ def table_to_tile(
     import pandas as pd
 
     version = "0.2.3"
-    zoom = estimate_zoom(bounds)
-    tile = get_tiles(bounds, zoom=zoom)
+    tile = get_tiles(bounds)
 
     try:
         x, y, z = tile[["x", "y", "z"]].iloc[0]
