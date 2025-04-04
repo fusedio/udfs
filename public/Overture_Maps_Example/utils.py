@@ -1,9 +1,9 @@
 def get_overture(
-    bounds: fused.types.Bounds = None,
-    release: str = "2025-03-19-1",
+    bbox: fused.types.TileGDF = None,
+    release: str = "2025-01-22-0",
     theme: str = None,
     overture_type: str = None,
-    use_columns: list = None,
+    use_columns: listw = None,
     num_parts: int = None,
     min_zoom: int = None,
     polygon: str = None,
@@ -18,8 +18,10 @@ def get_overture(
     import pandas as pd
     from shapely.geometry import shape, box
 
-    # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/3bb959a/public/common/").utils
+    # Load Fused helper functions
+    utils = fused.load(
+        "https://github.com/fusedio/udfs/tree/f8f0c0f/public/common/"
+    ).utils
 
     if release == "2024-02-15-alpha-0":
         if overture_type == "administrative_boundary":
@@ -91,16 +93,16 @@ def get_overture(
     table_path = table_path.rstrip("/")
 
     if polygon is not None:
-        polygon=gpd.GeoDataFrame.from_features(json.loads(polygon))
-        tile = polygon.geometry.bounds
-        tile = gpd.GeoDataFrame(
+        polygon=gpd.from_features(json.loads(polygon))
+        bounds = polygon.geometry.bounds
+        bbox = gpd.GeoDataFrame(
             {
                 "geometry": [
                     box(
-                        bounds[0],
-                        bounds[1],
-                        bounds[2],
-                        bounds[3],
+                        bounds.minx.loc[0],
+                        bounds.miny.loc[0],
+                        bounds.maxx.loc[0],
+                        bounds.maxy.loc[0],
                     )
                 ]
             }
@@ -110,7 +112,7 @@ def get_overture(
         part_path = f"{table_path}/part={part}/" if num_parts != 1 else table_path
         try:
             return utils.table_to_tile(
-                bounds, table=part_path, use_columns=use_columns, min_zoom=min_zoom
+                bbox, table=part_path, use_columns=use_columns, min_zoom=min_zoom
             )
         except ValueError:
             return None
