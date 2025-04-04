@@ -6,8 +6,7 @@ def udf(bounds: fused.types.Bounds, year: str = "2016", month: str = "07", perio
 
     # convert bounds to tile
     utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = utils.estimate_zoom(bounds)
-    tile = utils.get_tiles(bounds, zoom=zoom)
+    tile = utils.get_tiles(bounds)
     
     # Dynamically construct the path based on the year and month
     path = f's3://soldatanasasifglobalifoco2modis1863/Global_SIF_OCO2_MODIS_1863/data/sif_ann_{year}{month}{period}.nc'

@@ -2,8 +2,7 @@
 def udf(bounds: fused.types.Bounds = None):
     # Load pinned versions of utility functions.
     utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = utils.estimate_zoom(bounds)
-    bounds = utils.get_tiles(bounds, zoom=zoom)
+    bounds = utils.get_tiles(bounds)
     # Get the bounding box coordinates
     x, y, z = bounds[["x", "y", "z"]].iloc[0]
     # ArcGIS Online World Imagery basemap

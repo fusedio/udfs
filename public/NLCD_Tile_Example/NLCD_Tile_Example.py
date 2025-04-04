@@ -5,8 +5,7 @@ def udf(bounds: fused.types.Bounds, year:int=1985, land_type:str='', chip_len:in
 
     # convert bounds to tile
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = common_utils.estimate_zoom(bounds)
-    tile = common_utils.get_tiles(bounds, zoom=zoom)
+    tile = common_utils.get_tiles(bounds)
 
     
     arr_int, color_map = get_data(tile, year, land_type, chip_len)

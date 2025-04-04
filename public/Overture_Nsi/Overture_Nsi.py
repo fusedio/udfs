@@ -6,8 +6,7 @@ def udf(bounds: fused.types.Bounds = None, join_with_nsi: bool=True):
 
     # convert bounds to tile
     utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = utils.estimate_zoom(bounds)
-    tile = utils.get_tiles(bounds, zoom=zoom)
+    tile = utils.get_tiles(bounds)
 
     if tile.iloc[0].z < 10:
         return None

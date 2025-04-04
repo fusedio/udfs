@@ -11,8 +11,7 @@ def udf(bounds: fused.types.Bounds,
 
     # convert bounds to tile
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = common_utils.estimate_zoom(bounds)
-    tile = common_utils.get_tiles(bounds, zoom=zoom)
+    tile = common_utils.get_tiles(bounds)
 
     #get two placekey'd datasets; choose these based on what's available on the module tab
     df1 = get_placekeyd_dataset(tile, dataset1)

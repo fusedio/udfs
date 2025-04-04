@@ -6,8 +6,7 @@ def udf(bounds: fused.types.Bounds=None, resolution: int = 11, min_count: int = 
 
     # convert bounds to tile
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = common_utils.estimate_zoom(bounds)
-    tile = common_utils.get_tiles(bounds, zoom=zoom)
+    tile = common_utils.get_tiles(bounds)
 
 
     tile_bounds_gdf = gpd.GeoDataFrame.from_features({"type":"FeatureCollection","features":[{"type":"Feature","properties":{"shape":"Rectangle"},"geometry":{"type":"Polygon","coordinates":[[[-73.99322955922597,40.76627870054801],[-73.96753345042097,40.76627870054801],[-73.96753345042097,40.74825844008337],[-73.99322955922597,40.74825844008337],[-73.99322955922597,40.76627870054801]]]}}]})

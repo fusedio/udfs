@@ -10,8 +10,7 @@ def fetch_rgb_udf(
 
     # convert bounds to tile
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = common_utils.estimate_zoom(bounds)
-    tile = common_utils.get_tiles(bounds, zoom=zoom)
+    tile = common_utils.get_tiles(bounds)
 
     # Authenticate GEE
     key_path = "/mnt/cache/gp_creds.json"

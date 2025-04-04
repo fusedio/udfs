@@ -107,8 +107,7 @@ def udf(bounds: fused.types.Bounds = None, h3_size=8):
 
     # convert bounds to tile
     utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = utils.estimate_zoom(bounds)
-    tile = utils.get_tiles(bounds, zoom=zoom)
+    tile = utils.get_tiles(bounds)
 
     # 1. Polyfill AOI
     h3s = h3.polygon_to_cells(h3.geo_to_h3shape(tile.geometry.iloc[0]), h3_size)

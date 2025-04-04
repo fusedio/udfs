@@ -18,8 +18,7 @@ def udf(bounds: fused.types.Bounds = None, tech: str = 'Tarana', site_count: int
 
     # convert bounds to tile
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = common_utils.estimate_zoom(bounds)
-    tile = common_utils.get_tiles(bounds, zoom=zoom)
+    tile = common_utils.get_tiles(bounds)
 
     @fused.cache
     def read_data(bounds, url: str, tech: str, site_count: int, col_plot: str, con_ibis):
