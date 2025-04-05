@@ -9,10 +9,10 @@ def udf(
     from pystac.extensions.eo import EOExtension as eo
     import utils
 
-    # convert bounds to tile
+    # Load pinned versions of utility functions.
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = common_utils.estimate_zoom(bounds)
-    tile = common_utils.get_tiles(bounds, zoom=zoom)
+    tile = common_utils.get_tiles(bounds)
+    zoom = tile.iloc[0].z
 
     print(f'{type(tile) = }')
     

@@ -2,12 +2,11 @@
 def udf(bounds: fused.types.Bounds = None):
     import geopandas as gpd
     # Load pinned versions of utility functions.
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/91845c4/public/common/").utils
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/d0e8eb0/public/common/").utils
     overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.
 
     # Convert bounds to tile
-    zoom = common_utils.estimate_zoom(bounds)
-    tile = common_utils.get_tiles(bounds, zoom=zoom)
+    tile = common_utils.get_tiles(bounds)
 
     # 1. Load Overture Buildings
     gdf_overture = overture_utils.get_overture(bbox=tile)

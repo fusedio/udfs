@@ -9,10 +9,9 @@ def udf(
 
     # Load pinned versions of utility functions.
     overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/91845c4/public/common/").utils
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/d0e8eb0/public/common/").utils
     # convert bounds to tile
-    zoom = common_utils.estimate_zoom(bounds)
-    tile = common_utils.get_tiles(bounds, zoom=zoom)
+    tile = common_utils.get_tiles(bounds)
 
 
     conn = common_utils.duckdb_connect()

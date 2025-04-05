@@ -7,8 +7,7 @@ def udf(bounds: fused.types.Bounds = None, h3_size: int = None, h3_scale: int=2)
     utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
 
     # convert bounds to tile
-    zoom = utils.estimate_zoom(bounds)
-    tile = utils.get_tiles(bounds, zoom=zoom)
+    tile = utils.get_tiles(bounds)
 
 
     conn = utils.duckdb_connect()

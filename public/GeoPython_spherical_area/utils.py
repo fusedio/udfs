@@ -20,9 +20,8 @@ def get_overture(
     from shapely.geometry import shape, box
 
     # convert bounds to tile
-    utils = fused.load("https://github.com/fusedio/udfs/tree/91845c4/public/common/").utils
-    zoom = utils.estimate_zoom(bounds)
-    tile = utils.get_tiles(bounds, zoom=zoom)
+    utils = fused.load("https://github.com/fusedio/udfs/tree/d0e8eb0/public/common/").utils
+    tile = utils.get_tiles(bounds)
 
     if release == "2024-02-15-alpha-0":
         if overture_type == "administrative_boundary":

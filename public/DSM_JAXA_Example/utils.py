@@ -10,8 +10,8 @@ def dsm_to_tile(
     verbose=True
 ):
 
-    zoom = common_utils.estimate_zoom(bounds)
-    tile = common_utils.get_tiles(bounds, zoom=zoom)
+    tile = common_utils.get_tiles(bounds)
+    zoom = tile.iloc[0].z
 
     if zoom >= z_levels[2]:
         tiff_list = []
