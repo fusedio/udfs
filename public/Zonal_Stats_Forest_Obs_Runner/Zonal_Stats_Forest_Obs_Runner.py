@@ -17,7 +17,7 @@ def udf(
     import itertools
 
     # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/d0e8eb0/public/common/").utils
+    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
     zonal_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/community/plinio/Zonal_Stats_Forest_Obs/").utils
 
     # 1. Define `cell_id` from the input dictionary
