@@ -1,0 +1,83 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Overture_Vancouver_Conflation",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 49.28063043680268,
+              "longitude": -123.0508061125395,
+              "zoom": 17.67646699528013,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:assetUrl": "fused_uploaded_preview",
+            "fused:description": "## Overview\n\nConflate 3rd party and Overture Buildings.",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getFillColor": {
+                  "@@function": "colorCategories",
+                  "attr": "_src",
+                  "domain": [
+                    "OVERTURE",
+                    "INPUT_TABLE"
+                  ],
+                  "steps": 3,
+                  "colors": "Bold",
+                  "nullColor": [
+                    184,
+                    14,
+                    184
+                  ]
+                },
+                "getLineColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Overture_Vancouver_Conflation",
+            "fused:name": "Overture_Vancouver_Conflation",
+            "fused:id": null
+          },
+          "source": "Overture_Vancouver_Conflation.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
