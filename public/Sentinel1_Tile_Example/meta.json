@@ -54,9 +54,9 @@
             "fused:defaultParameters": [],
             "fused:datasets": "Sentinel 2",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/acf16186536b2556c7f559250e4c5ac91e4f8a80/public/Sentinel1_Tile_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/7fa139694ed84842e7039caa7f8f20c9e7291427/public/Sentinel1_Tile_Example/",
             "fused:gitPath": "public/Sentinel1_Tile_Example",
-            "fused:gitRef": "acf16186536b2556c7f559250e4c5ac91e4f8a80",
+            "fused:gitRef": "7fa139694ed84842e7039caa7f8f20c9e7291427",
             "fused:gitAuthorNames": [
               null,
               "Suryashankar Das"
@@ -73,12 +73,12 @@
               "https://avatars.githubusercontent.com/in/885821?v=4",
               "https://avatars.githubusercontent.com/u/26461855?v=4"
             ],
-            "fused:gitLastModified": "2025-03-07T08:34:08+00:00",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/acf1618/public/Sentinel1_Tile_Example/",
+            "fused:gitLastModified": "2025-04-07T10:34:37.061Z",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/7fa1396/public/Sentinel1_Tile_Example/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
-            "fused:gitPullRequestBranch": "sina@fused.io-patch-switch-to-sentinel-1-mspc",
-            "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/370",
+            "fused:gitPullRequestBranch": "milind-patch-eca47c-updated-bounds-for-UDF",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/807",
             "fused:gitHistory": [
               {
                 "fused:vizConfig": {
@@ -191,7 +191,7 @@
                 "label": "hillshade"
               }
             ],
-            "fused:description": "### Overview [link](https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a)\nThe [Sentinel-2](https://sentinel.esa.int/web/sentinel/missions/sentinel-2) program provides global imagery in thirteen spectral bands at 10m-60m resolution and a revisit time of approximately five days. This dataset represents the global Sentinel-2 archive, from 2016 to the present, processed to L2A (bottom-of-atmosphere) using Sen2Cor and converted to cloud-optimized GeoTIFF format.\n\n### External links\n* [Reference](https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a)\n* [AWS Earth Search STAC](https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a)\n* [Microsoft Planetary Computer STAC](https://planetarycomputer.microsoft.com/api/stac/v1/collections/sentinel-2-l2a)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Sentinel_Tile_Example\")\narr = fused.run(udf, x=5241, y=12667, z=15)\narr\n```\n",
+            "fused:description": "# Sentinel-1 Edge Detection\n\n## Description\nThis UDF processes Sentinel-1 radar data to detect edges and boundaries in landscapes using a multi-directional image shifting technique. By calculating pixel-wise standard deviation across shifted images, it highlights coastlines, urban boundaries, transportation networks, and topographic features. The radar-based approach works regardless of cloud cover or time of day, making it ideal for consistent monitoring of structural elements in the landscape.\n\n## External links\n* [Sentinel-1 Documentation](https://sentinels.copernicus.eu/web/sentinel/user-guides/sentinel-1-sar)\n* [Microsoft Planetary Computer STAC](https://planetarycomputer.microsoft.com/dataset/sentinel-1-rtc)\n\n## Run this in any Jupyter Notebook\n```python\nimport fused\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Sentinel1_Edge_Detection\")\narr = fused.run(udf, time_of_interest=\"2023-06-01/2023-12-31\")\narr\n```",
             "fused:explorerPin": "14",
             "fused:defaultViewState": {
               "enable": true,
