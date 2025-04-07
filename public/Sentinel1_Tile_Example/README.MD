@@ -1,6 +1,6 @@
 <!--fused:pin=14-->
 <!--fused:preview-->
-<p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Sentinel_Tile_Example.png" width="600" alt="UDF preview image"></p>
+<p align="center"><img src="fused_uploaded_preview" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
 Tags: `usgs` `hillshade`
