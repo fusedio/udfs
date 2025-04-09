@@ -11,6 +11,52 @@ from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union, Any
 from loguru import logger
 from fused.api.api import AnyBaseUdf
 
+def gdf_to_hex(gdf, res=11, add_latlng_cols=['lat','lng']):
+    import pandas as pd
+    con = duckdb_connect()
+    df_wkt = gdf.to_wkt()
+    if add_latlng_cols:
+        df_wkt[add_latlng_cols[0]] = gdf.centroid.y
+        df_wkt[add_latlng_cols[1]] = gdf.centroid.x
+    df_wkt['fused_index']=range(len(df_wkt))
+    df_hex1 = con.sql(f'''
+        with t as(
+            SELECT 
+                * exclude(geometry), 
+                h3_polygon_wkt_to_cells(geometry,{res}) AS hex 
+            FROM df_wkt)
+        SELECT 
+            * exclude(hex), 
+            unnest(hex) AS hex, 
+            len(hex) AS cell_count 
+        FROM t
+        '''
+    ).df()
+    
+    df_wkt2 = df_wkt[~df_wkt.fused_index.isin(df_hex1.fused_index.unique())]
+    df_hex2 = con.sql(f'''
+            SELECT * exclude(geometry), 
+            h3_latlng_to_cell(ST_Y(ST_Centroid(ST_GeomFromText(geometry))), ST_X(ST_Centroid(ST_GeomFromText(geometry))), {res}) AS hex,
+            1 AS cell_count
+            from df_wkt2
+            '''
+        ).df()
+    df_hex=pd.concat([df_hex1,df_hex2])
+    df_hex = df_hex.sort_values('fused_index').drop('fused_index', axis=1).reset_index(drop=True)
+    return df_hex
+
+def filter_hex_bounds(df_hex, bounds=[-180, -90, 180, 90], col_hex='hex'):
+    con = duckdb_connect()
+    df = con.sql(f'''
+        SELECT 
+            * 
+        FROM df_hex
+            where h3_cell_to_lat({col_hex}) between {bounds[1]} and {bounds[3]}
+            and h3_cell_to_lng({col_hex}) between {bounds[0]} and {bounds[2]}
+        '''
+    ).df()
+    return df
+
 def to_pickle(obj):
     """Encode an object to a pickle byte stream and store in DataFrame."""
     import pickle
