@@ -11,6 +11,25 @@ from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union, Any
 from loguru import logger
 from fused.api.api import AnyBaseUdf
 
+def bounds_to_file_chunk(bounds, target_num_files: int = 16, target_num_file_chunks: int = 4):
+    import pandas as pd
+
+    df = get_tiles(bounds, target_num_tiles=target_num_files)
+    all_tiles = []
+    for idx, row in df.iterrows():
+        sub_tiles = get_tiles(row["geometry"].bounds, target_num_tiles=target_num_file_chunks)
+        sub_tiles["file_id"] = idx
+        sub_tiles["chunk_id"] = range(len(sub_tiles))
+        sub_tiles["bbox_minx"] = sub_tiles["geometry"].bounds.minx
+        sub_tiles["bbox_miny"] = sub_tiles["geometry"].bounds.miny
+        sub_tiles["bbox_maxx"] = sub_tiles["geometry"].bounds.maxx
+        sub_tiles["bbox_maxy"] = sub_tiles["geometry"].bounds.maxy
+        all_tiles.append(sub_tiles)
+    df = pd.concat(all_tiles)
+    df = df[["bbox_minx", "bbox_miny", "bbox_maxx", "bbox_maxy", "file_id", "chunk_id", "geometry"]]
+    # print(df.chunk_id.value_counts())
+    return df
+
 def gdf_to_hex(gdf, res=11, add_latlng_cols=['lat','lng']):
     import pandas as pd
     con = duckdb_connect()
