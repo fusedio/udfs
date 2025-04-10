@@ -95,9 +95,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/ff2a8069821ab7e94013bf14f727f81ff55c28f1/public/common/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/2ec68a741e519a53ef2d7d416082ce8f220ccc2a/public/common/",
             "fused:gitPath": "public/common",
-            "fused:gitRef": "ff2a8069821ab7e94013bf14f727f81ff55c28f1",
+            "fused:gitRef": "2ec68a741e519a53ef2d7d416082ce8f220ccc2a",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -150,8 +150,8 @@
               "https://avatars.githubusercontent.com/u/1020496?v=4",
               "https://avatars.githubusercontent.com/u/26461855?v=4"
             ],
-            "fused:gitLastModified": "2025-04-09T22:50:02+00:00",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/ff2a806/public/common/",
+            "fused:gitLastModified": "2025-04-10T02:54:17+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/2ec68a7/public/common/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "sina-patch-de4d2d-remove-cache-for-tifftoxyz",
