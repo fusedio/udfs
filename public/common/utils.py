@@ -11,7 +11,8 @@ from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union, Any
 from loguru import logger
 from fused.api.api import AnyBaseUdf
 
-def bounds_to_file_chunk(bounds, target_num_files: int = 16, target_num_file_chunks: int = 4):
+@fused.cache(cache_max_age='30d')
+def bounds_to_file_chunk(bounds:list=[-180, -90, 180, 90], target_num_files: int = 64, target_num_file_chunks: int = 64):
     import pandas as pd
 
     df = get_tiles(bounds, target_num_tiles=target_num_files)
@@ -26,7 +27,6 @@ def bounds_to_file_chunk(bounds, target_num_files: int = 16, target_num_file_chu
         sub_tiles["bbox_maxy"] = sub_tiles["geometry"].bounds.maxy
         all_tiles.append(sub_tiles)
     df = pd.concat(all_tiles)
-    df = df[["bbox_minx", "bbox_miny", "bbox_maxx", "bbox_maxy", "file_id", "chunk_id", "geometry"]]
     # print(df.chunk_id.value_counts())
     return df
 
