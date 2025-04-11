@@ -16,7 +16,6 @@ def udf(
     disk_size_gb: int = 100,
     return_html: bool = True,  # to return html or job_id
     debug: bool = True,  # to run for only one arg
-    v='a'
 ):
     
     if isinstance(submit_list, list):  # todo: eval more types & add error handling
