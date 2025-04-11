@@ -95,9 +95,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/2eb463d5b083d4904d702690c517619017a2ab88/public/common/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/5cdfc38bcc3ab05b8b390ea5ee6648468b987a4a/public/common/",
             "fused:gitPath": "public/common",
-            "fused:gitRef": "2eb463d5b083d4904d702690c517619017a2ab88",
+            "fused:gitRef": "5cdfc38bcc3ab05b8b390ea5ee6648468b987a4a",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -150,12 +150,12 @@
               "https://avatars.githubusercontent.com/u/1020496?v=4",
               "https://avatars.githubusercontent.com/u/26461855?v=4"
             ],
-            "fused:gitLastModified": "2025-04-11T17:19:31.941Z",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/2eb463d/public/common/",
+            "fused:gitLastModified": "2025-04-11T17:43:30.436Z",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/5cdfc38/public/common/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
-            "fused:gitPullRequestBranch": "sina-patch-b9a8a4-add-duckdbconnect-home-dir",
-            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/819",
+            "fused:gitPullRequestBranch": "sina-patch-3a1e2a-set-duckdb-home-directory-to-tmp",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/820",
             "fused:id": null,
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Fused_Logo.png",
             "fused:description": "## Overview\n\nThis UDF contains common utils that are being used for many public udfs.\n\n\nTo import common utils in your udf run the following command:\n\n`common = fused.utils.common`\n",
