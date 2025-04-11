@@ -57,10 +57,10 @@
             "fused:slug": "Batch_Job",
             "fused:name": "Batch_Job",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/24061f15a31f8c4ba55d43a73d608b0dbeea04bf/community/sina/Batch_Job/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/24061f1/community/sina/Batch_Job/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/01856db59e5580922c052ea83b4a94911fd7b12c/community/sina/Batch_Job/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/01856db/community/sina/Batch_Job/",
             "fused:gitPath": "community/sina/Batch_Job",
-            "fused:gitRef": "24061f15a31f8c4ba55d43a73d608b0dbeea04bf",
+            "fused:gitRef": "01856db59e5580922c052ea83b4a94911fd7b12c",
             "fused:gitAuthorNames": [
               "Sina Kashuk"
             ],
@@ -73,10 +73,12 @@
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/12432685?v=4"
             ],
-            "fused:gitLastModified": "2025-03-31T00:35:42+00:00",
+            "fused:gitLastModified": "2025-04-11T15:10:26.381Z",
             "fused:gitRepo": "fusedio/udfs",
             "fused:explorerTab": "community",
-            "fused:description": "Exported from Fused UDF Workbench\n\n"
+            "fused:description": "Exported from Fused UDF Workbench\n\n",
+            "fused:gitPullRequestBranch": "sina-patch-323eeb-switch-to-udfnailjson",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/816"
           },
           "source": "Batch_Job.py",
           "headers": []
