@@ -3187,7 +3187,7 @@ def func_to_udf(func, cache_max_age='12h'):
     udf = fused.load(f'@fused.udf(cache_max_age="{cache_max_age}")\n'+dedent(source_code))
     udf.entrypoint = func.__name__
     udf.name = func.__name__
-    print(source_code)
+    # print(source_code)
     return udf
 
 
