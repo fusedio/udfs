@@ -2166,19 +2166,28 @@ def df_to_h3(df, res, latlng_cols=("lat", "lng"), ordered=False):
 def arr_to_h3(arr, bounds, res, ordered=False):
     return df_to_h3(arr_to_latlng(arr, bounds), res=res, ordered=ordered)
 
-def duckdb_connect(home_directory='/tmp/'):
+
+def duckdb_connect(home_directory='/tmp/', verbose=False):
     import duckdb 
+    @fused.cache
+    def install(home_directory):
+        con = duckdb.connect()
+        con.sql(
+        f"""SET home_directory='{home_directory}';
+        INSTALL h3 FROM community;
+        INSTALL 'httpfs';
+        INSTALL spatial;
+        """)
+    install(home_directory)
     con = duckdb.connect()
     con.sql(
     f"""SET home_directory='{home_directory}';
-    INSTALL h3 FROM community;
     LOAD h3;
-    install 'httpfs';
-    load 'httpfs';
-    INSTALL spatial;
+    LOAD 'httpfs';
     LOAD spatial;
     """)
-    print("duckdb version:", duckdb.__version__)
+    if verbose:
+        print("duckdb version:", duckdb.__version__)
     return con
 
 
