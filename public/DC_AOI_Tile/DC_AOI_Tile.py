@@ -10,7 +10,7 @@ def udf(bounds: fused.types.Bounds=None, time_of_interest="2021-09-01/2021-12-30
     tile = common_utils.get_tiles(bounds)
 
     # find the tiles with intersecting geom
-    gdf = gpd.read_file('https://www2.census.gov/geo/tiger/TIGER_RD18/STATE/11_DISTRICT_OF_COLUMBIA/11/tl_rd22_11_tract.zip')
+    gdf = gpd.read_file('s3://fused-users/fused/census/tiger/tl_rd22_11_tract.zip')
     gdf_clipped = gdf.dissolve().to_crs(4326).clip(tile)
     gdf_w_bounds = pd.concat([gdf_clipped,tile])
     if len(gdf_w_bounds)<=1:
