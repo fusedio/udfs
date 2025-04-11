@@ -95,9 +95,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/5cdfc38bcc3ab05b8b390ea5ee6648468b987a4a/public/common/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/7ec422b8f91ef5f80df8636beb9b2ef50525c776/public/common/",
             "fused:gitPath": "public/common",
-            "fused:gitRef": "5cdfc38bcc3ab05b8b390ea5ee6648468b987a4a",
+            "fused:gitRef": "7ec422b8f91ef5f80df8636beb9b2ef50525c776",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -150,8 +150,8 @@
               "https://avatars.githubusercontent.com/u/1020496?v=4",
               "https://avatars.githubusercontent.com/u/26461855?v=4"
             ],
-            "fused:gitLastModified": "2025-04-11T17:43:30.436Z",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/5cdfc38/public/common/",
+            "fused:gitLastModified": "2025-04-11T18:09:33+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/7ec422b/public/common/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "sina-patch-3a1e2a-set-duckdb-home-directory-to-tmp",
