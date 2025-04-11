@@ -21,6 +21,8 @@ def udf(
     if isinstance(submit_list, list):  # todo: eval more types & add error handling
         import pandas as pd
         df_args = pd.DataFrame(submit_list)
+    else:
+        df_args = submit_list
     if debug:
         udf_nail = fused.models.udf.udf.GeoPandasUdfV2.parse_raw(udf_nail_json)
         return fused.run(udf_nail, **df_args.to_dict(orient="records")[0], engine="remote")
