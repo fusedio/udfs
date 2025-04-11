@@ -11,6 +11,50 @@ from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union, Any
 from loguru import logger
 from fused.api.api import AnyBaseUdf
 
+import contextlib
+@contextlib.contextmanager
+def mutex(filename, wait=1, verbose=False):
+    """Create a mutex lock using a file on disk.
+    
+    Args:
+        filename: File path to use as mutex
+        wait: Seconds to wait between lock attempts
+        verbose: Whether to print status messages
+    """
+    import time
+    import os
+    while True:
+        try:
+            f = open(filename, 'x')
+            break
+        except OSError as e:
+            if verbose:
+                print(f"waiting {filename=} {e=}")
+            time.sleep(wait)
+    
+    if verbose:
+        print(f"acquired lock {filename=}")
+    
+    try:
+        yield
+    finally:
+        if verbose:
+            print(f"exited lock {filename=}")
+        f.close()
+        os.unlink(filename)
+
+
+def jam_lock(lock_second = 1):
+    import time    
+    current_second = int(time.time()) // (lock_second)
+    lock_file = f'/tmp/fused_lock_{current_second}'
+    with mutex(lock_file + '_lock', wait=1, verbose=True):
+        if os.path.exists(lock_file):
+            time.sleep(lock_second)
+        else:
+            open(lock_file, 'x').close()  
+
+
 @fused.cache(cache_max_age='30d')
 def bounds_to_file_chunk(bounds:list=[-180, -90, 180, 90], target_num_files: int = 64, target_num_file_chunks: int = 64):
     import pandas as pd
