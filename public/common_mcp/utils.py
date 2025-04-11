@@ -106,12 +106,28 @@ class UdfMcpServer:
                 try:
                     result = fused.run(udf, **arguments)
 
-                    # Need ot use df.to_string() rather than str(df) because str(df) truncates the output
                     if isinstance(result, pd.DataFrame):
-                        text_output = result.to_string()
+                        # DataFrame handling (keep as is)
+                        return [types.TextContent(type="text", text=result.to_string())]
+                    elif isinstance(result, bytes):
+                        # Bytes handling - return as base64 encoded with type info
+                        import base64
+                        encoded = base64.b64encode(result).decode('utf-8')
+                        return [
+                            types.TextContent(
+                                type="text", 
+                                text=f"content-type: bytes\ncontent-length: {len(result)}\n\n{encoded}"
+                            )
+                        ]
                     else:
+                        # Any other type - use str() but include type info
                         text_output = str(result)
-                    return [types.TextContent(type="text", text=text_output)]
+                        return [
+                            types.TextContent(
+                                type="text", 
+                                text=f"content-type: {type(result).__name__}\ncontent-length: {len(text_output)}\n\n{text_output}"
+                            )
+                        ]
 
                 except Exception as e:
                     logger.exception(f"Error executing UDF '{name}': {e}")
