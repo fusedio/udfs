@@ -44,11 +44,11 @@ def mutex(filename, wait=1, verbose=False):
         os.unlink(filename)
 
 
-def jam_lock(lock_second = 1):
+def jam_lock(lock_second=1, verbose=False):
     import time    
     current_second = int(time.time()) // (lock_second)
     lock_file = f'/tmp/fused_lock_{current_second}'
-    with mutex(lock_file + '_lock', wait=1, verbose=True):
+    with mutex(lock_file + '_lock', wait=0.5, verbose=verbose):
         if os.path.exists(lock_file):
             time.sleep(lock_second)
         else:
