@@ -61,16 +61,18 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/845c03d0052d56f7900d775fa1f9f30c0431207a/public/CDLs_Tile_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/0d377cc902d1d43fa680c4d28408b93321f31dc7/public/CDLs_Tile_Example/",
             "fused:gitPath": "public/CDLs_Tile_Example",
-            "fused:gitRef": "845c03d0052d56f7900d775fa1f9f30c0431207a",
+            "fused:gitRef": "0d377cc902d1d43fa680c4d28408b93321f31dc7",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
               null,
               "Plinio Guzman",
               "Isaac Brodsky",
-              null
+              null,
+              "Suryashankar Das",
+              "Milind Soni"
             ],
             "fused:gitAuthorUsernames": [
               "kashuk",
@@ -78,7 +80,9 @@
               "charlesfused",
               "pgzmnk",
               "isaacbrodsky",
-              "fused-io[bot]"
+              "fused-io[bot]",
+              "iamsdas",
+              "milind-soni"
             ],
             "fused:gitAuthorUrls": [
               "https://github.com/kashuk",
@@ -86,7 +90,9 @@
               "https://github.com/charlesfused",
               "https://github.com/pgzmnk",
               "https://github.com/isaacbrodsky",
-              "https://github.com/apps/fused-io"
+              "https://github.com/apps/fused-io",
+              "https://github.com/iamsdas",
+              "https://github.com/milind-soni"
             ],
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/u/12432685?v=4",
@@ -94,10 +100,12 @@
               "https://avatars.githubusercontent.com/u/148997493?v=4",
               "https://avatars.githubusercontent.com/u/27398253?v=4",
               "https://avatars.githubusercontent.com/u/9139378?v=4",
-              "https://avatars.githubusercontent.com/in/834700?v=4"
+              "https://avatars.githubusercontent.com/in/834700?v=4",
+              "https://avatars.githubusercontent.com/u/26461855?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2024-09-25T21:38:58+00:00",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/845c03d/public/CDLs_Tile_Example/",
+            "fused:gitLastModified": "2025-04-05T14:26:45+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/0d377cc/public/CDLs_Tile_Example/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/CDLS_Tile_Example.png",
