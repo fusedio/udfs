@@ -2,9 +2,9 @@
 def udf(bounds: fused.types.Tile, path: str, *, chip_len=256):
     import numpy as np
 
-    utils = fused.load("https://github.com/fusedio/udfs/tree/2ea46f3/public/common/").utils
+    utils = fused.load("https://github.com/fusedio/udfs/tree/fded0c8/public/common/").utils
     try:
-        arr, metadata = utils.read_tiff(bounds, path, output_shape=(chip_len, chip_len), return_colormap=True)
+        arr, metadata = utils.read_tiff(bounds, path, output_shape=(chip_len, chip_len), return_colormap=True , resampling = 'nearest')
         colormap = metadata['colormap']
         colored_array = (
             np.array([colormap[value] for value in arr.flat], dtype=np.uint8)
