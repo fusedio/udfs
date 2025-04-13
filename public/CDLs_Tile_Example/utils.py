@@ -1,7 +1,7 @@
 import fused
 
 read_tiff = fused.load(
-    "https://github.com/fusedio/udfs/tree/e1fefb7/public/common/"
+    "https://github.com/fusedio/udfs/tree/a18669/public/common/"
 ).utils.read_tiff
 
 

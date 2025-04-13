@@ -1,7 +1,7 @@
 @fused.udf
 def udf(
     bounds: fused.types.Bounds = None,
-    year: int = 2022,
+    year: int = 2024,
     crop_type: str = "",
     chip_len: int = 256,
     colored: bool = True
@@ -13,7 +13,7 @@ def udf(
     from utils import crop_counts, filter_crops, read_tiff
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/a18669/public/common/").utils
     tile = common_utils.get_tiles(bounds)
 
     input_tiff_path = f"s3://fused-asset/data/cdls/{year}_30m_cdls.tif"
@@ -21,7 +21,8 @@ def udf(
         tile,
         input_tiff_path,
         output_shape=(chip_len, chip_len),
-        return_colormap=True
+        return_colormap=True,
+        cache_max_age='90d'
     )
     
     if crop_type:
