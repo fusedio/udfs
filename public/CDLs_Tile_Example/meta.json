@@ -51,8 +51,37 @@
             "fused:udfType": "vector_tile",
             "fused:slug": "CDLs_Tile_Example",
             "fused:name": "CDLs_Tile_Example",
-            "fused:defaultParameters": [],
-            "fused:id": null,
+            "fused:defaultParameters": [
+              {
+                "parameter": "year",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "2015",
+                  "2016",
+                  "2017",
+                  "2018",
+                  "2019",
+                  "2020",
+                  "2021",
+                  "2022",
+                  "2023",
+                  "2024"
+                ]
+              },
+              {
+                "parameter": "crop_type",
+                "value": "",
+                "type": "string",
+                "suggestedValues": []
+              },
+              {
+                "parameter": "colored",
+                "value": "",
+                "type": "boolean",
+                "suggestedValues": []
+              }
+            ],
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 37.87977092640186,
@@ -61,9 +90,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/76e72b80f8f2badacad5797ea63686cd2da9d928/public/CDLs_Tile_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/877541625cdcfc12f5090ea6848b54d32c10382f/public/CDLs_Tile_Example/",
             "fused:gitPath": "public/CDLs_Tile_Example",
-            "fused:gitRef": "76e72b80f8f2badacad5797ea63686cd2da9d928",
+            "fused:gitRef": "877541625cdcfc12f5090ea6848b54d32c10382f",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -104,10 +133,12 @@
               "https://avatars.githubusercontent.com/u/26461855?v=4",
               "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-04-13T15:07:42.478Z",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/76e72b8/public/CDLs_Tile_Example/",
+            "fused:gitLastModified": "2025-04-13T15:19:37+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/8775416/public/CDLs_Tile_Example/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
+            "fused:gitPullRequestBranch": "sina-patch-bd011f-update-common-commit",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/829",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/CDLS_Tile_Example.png",
             "fused:tags": [
               {
@@ -125,8 +156,7 @@
             ],
             "fused:description": "# Overview\n\nThis UDF shows how to open [Cropland Data Layer](https://www.nass.usda.gov/Research_and_Science/Cropland/SARS1a.php) (CDL) tiff files. The CDL is a categorical land cover dataset that provides information about the types of crops and land cover on agricultural lands in the United States. The CDL is produced by the United States Department of Agriculture (USDA) National Agricultural Statistics Service (NASS) on an annual basis.\n\n# External links\n\n- [Original Download Links](https://www.nass.usda.gov/Research_and_Science/Cropland/Release/index.php)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/CDLs_Tile_Example\")\narr = fused.run(udf=udf, x=9646, y=12321, z=15)\narr\n```\n",
             "fused:explorerPin": "2",
-            "fused:gitPullRequestBranch": "sina-patch-bd011f-update-common-commit",
-            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/829"
+            "fused:id": null
           },
           "source": "CDLs_Tile_Example.py",
           "headers": [

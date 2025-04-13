@@ -17,14 +17,18 @@ def udf(
     tile = common_utils.get_tiles(bounds)
 
     input_tiff_path = f"s3://fused-asset/data/cdls/{year}_30m_cdls.tif"
-    array_int, metadata = read_tiff(
+    data = read_tiff(
         tile,
         input_tiff_path,
         output_shape=(chip_len, chip_len),
         return_colormap=True,
         cache_max_age='90d'
     )
-    
+    if data:
+        array_int, metadata = data
+    else:
+        print('no data')
+        return None
     if crop_type:
         array_int = filter_crops(array_int, crop_type, verbose=False)
 
