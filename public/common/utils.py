@@ -762,6 +762,7 @@ def read_tiff(
     return_bounds=False,
     return_meta=False,
     cred=None,
+    resampling = 'nearest'
 ):
     import os
     from contextlib import ExitStack
@@ -771,8 +772,12 @@ def read_tiff(
     from rasterio.coords import BoundingBox, disjoint_bounds
     from rasterio.warp import Resampling, reproject
     from scipy.ndimage import zoom
-
+        
     version = "0.2.0"
+
+    
+    if isinstance(resampling, str):
+        resampling = getattr(Resampling, resampling.lower())
 
     if not cred:
         context = rasterio.Env()
@@ -877,7 +882,7 @@ def read_tiff(
                 dst_transform=dst_transform,
                 dst_crs=dst_crs,
                 # TODO: rather than nearest, get all the values and then get pct
-                resampling=Resampling.bilinear,
+                resampling=resampling,
             )
 
             destination_mask = np.zeros(dst_shape, dtype="int8")
