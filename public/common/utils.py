@@ -835,7 +835,7 @@ def read_tiff(
                 source_data = src.read(
                     window=window,
                     out_shape=(src.count, int(window.height / factor), int(window.width / factor)),
-                    resampling=Resampling.bilinear,
+                    resampling=resampling,
                     boundless=True,
                     masked=True,
                 )
@@ -886,17 +886,17 @@ def read_tiff(
             )
 
             destination_mask = np.zeros(dst_shape, dtype="int8")
-            reproject(
-                source_data.mask.astype("uint8"),
-                destination_mask,
-                src_transform=src_transform,
-                src_crs=src_crs,
-                dst_transform=dst_transform,
-                dst_crs=dst_crs,
-                resampling=Resampling.nearest,
-            )
+            # reproject(
+            #     source_data.mask.astype("uint8"),
+            #     destination_mask,
+            #     src_transform=src_transform,
+            #     src_crs=src_crs,
+            #     dst_transform=dst_transform,
+            #     dst_crs=dst_crs,
+            #     resampling=Resampling.nearest,
+            # )
             destination_data = np.ma.masked_array(
-                destination_data, destination_mask
+                destination_data, destination_mask == nodata_value
             )
         else:
             dst_transform = src_transform
