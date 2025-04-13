@@ -21,7 +21,8 @@ def udf(
         tile,
         input_tiff_path,
         output_shape=(chip_len, chip_len),
-        return_colormap=True
+        return_colormap=True,
+        cache_max_age='90d'
     )
     
     if crop_type:
