@@ -73,7 +73,16 @@
                 "parameter": "crop_type",
                 "value": "",
                 "type": "string",
-                "suggestedValues": []
+                "suggestedValues": [
+                  "almond",
+                  "crop",
+                  "developed",
+                  "grass",
+                  "grape",
+                  "cherry",
+                  "water",
+                  "apple"
+                ]
               },
               {
                 "parameter": "colored",
@@ -90,9 +99,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/18525c0e8be0c47dace3aa05df56c27ae5b04894/public/CDLs_Tile_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/0df620c0f451ef8ebe90e5a7a00c48ae20e03288/public/CDLs_Tile_Example/",
             "fused:gitPath": "public/CDLs_Tile_Example",
-            "fused:gitRef": "18525c0e8be0c47dace3aa05df56c27ae5b04894",
+            "fused:gitRef": "0df620c0f451ef8ebe90e5a7a00c48ae20e03288",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -133,8 +142,8 @@
               "https://avatars.githubusercontent.com/u/26461855?v=4",
               "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-04-13T15:41:09.086Z",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/18525c0/public/CDLs_Tile_Example/",
+            "fused:gitLastModified": "2025-04-13T15:46:28.945Z",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/0df620c/public/CDLs_Tile_Example/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "sina-patch-c93ab0-fix-no-data-and-add-default-para",
@@ -220,7 +229,16 @@
                     "parameter": "crop_type",
                     "value": "",
                     "type": "string",
-                    "suggestedValues": []
+                    "suggestedValues": [
+                      "almond",
+                      "crop",
+                      "developed",
+                      "grass",
+                      "grape",
+                      "cherry",
+                      "water",
+                      "apple"
+                    ]
                   },
                   {
                     "parameter": "colored",
