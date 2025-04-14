@@ -13,7 +13,7 @@ def udf(
     utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
 
     # Lad the geometry
-    gdf = gpd.read_file('s3://fused-users/fused/census/tiger/tl_rd22_11_tract.zip')
+    gdf = gpd.read_file('s3://fused-asset/data/tiger/TIGER_RD18/STATE/11_DISTRICT_OF_COLUMBIA/11/tl_rd22_11_tract.zip')
     if not chip_len:
         xmin,ymin,xmax,ymax = utils.geo_convert(gdf, crs='UTM').total_bounds
         chip_len = int(max(xmax-xmin, ymax-ymin) / 10) # considering pixel size of 10m
