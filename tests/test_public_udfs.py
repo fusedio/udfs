@@ -17,9 +17,7 @@ UDFS_THAT_ERROR = [
     # None GDFs being returned
     "Overture_Places_Embedding_Clusters",
     # Network timeout
-    "Create_A_Placekey_Join",
-    # Unable to download files: 403
-    "Census_ACS_5yr"
+    "Create_A_Placekey_Join"
 ]
 
 
