@@ -75,10 +75,10 @@ def bounds_to_file_chunk(bounds:list=[-180, -90, 180, 90], target_num_files: int
     return df
 
 def bounds_to_hex(bounds: list = [-180, -90, 180, 90], res: int = 3, hex_col: str = "hex"):
-    bbox = get_tiles(bounds, 64).clip(bounds)
+    bbox = get_tiles(bounds, 4).clip(bounds)
     df = bbox.to_wkt()
     qr = f"""
-        SELECT unnest(h3_polygon_wkt_to_cells(geometry, {res})) AS {hex_col}
+        SELECT unnest(h3_polygon_wkt_to_cells_experimental(geometry, 'center', {res})) AS {hex_col}
         FROM df
         """
     con = duckdb_connect()
@@ -97,7 +97,7 @@ def gdf_to_hex(gdf, res=11, add_latlng_cols=['lat','lng']):
         with t as(
             SELECT 
                 * exclude(geometry), 
-                h3_polygon_wkt_to_cells(geometry,{res}) AS hex 
+                h3_polygon_wkt_to_cells_experimental(geometry, 'center', {res}) AS hex 
             FROM df_wkt)
         SELECT 
             * exclude(hex), 
