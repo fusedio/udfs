@@ -78,10 +78,10 @@ def bounds_to_hex(bounds: list = [-180, -90, 180, 90], res: int = 3, hex_col: st
     bbox = get_tiles(bounds, 64).clip(bounds)
     df = bbox.to_wkt()
     qr = f"""
-        SELECT unnest(h3_polygon_wkt_to_cells(geometry, {hex_res})) AS {hex_col}
+        SELECT unnest(h3_polygon_wkt_to_cells(geometry, {res})) AS {hex_col}
         FROM df
         """
-    con = common.duckdb_connect()
+    con = duckdb_connect()
     df = con.sql(qr).df()
     return df
 
