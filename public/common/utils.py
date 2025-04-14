@@ -74,6 +74,17 @@ def bounds_to_file_chunk(bounds:list=[-180, -90, 180, 90], target_num_files: int
     # print(df.chunk_id.value_counts())
     return df
 
+def bounds_to_hex(bounds: list = [-180, -90, 180, 90], res: int = 3, hex_col: str = "hex"):
+    bbox = get_tiles(bounds, 64).clip(bounds)
+    df = bbox.to_wkt()
+    qr = f"""
+        SELECT unnest(h3_polygon_wkt_to_cells(geometry, {hex_res})) AS {hex_col}
+        FROM df
+        """
+    con = common.duckdb_connect()
+    df = con.sql(qr).df()
+    return df
+
 def gdf_to_hex(gdf, res=11, add_latlng_cols=['lat','lng']):
     import pandas as pd
     con = duckdb_connect()

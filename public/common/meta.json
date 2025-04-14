@@ -95,9 +95,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/1142befdd9ebda8fa7990e2e5dc000aa694f0f0e/public/common/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/b651b3f148a18af8df0ecbf3fe0e244433ab729d/public/common/",
             "fused:gitPath": "public/common",
-            "fused:gitRef": "1142befdd9ebda8fa7990e2e5dc000aa694f0f0e",
+            "fused:gitRef": "b651b3f148a18af8df0ecbf3fe0e244433ab729d",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -150,8 +150,8 @@
               "https://avatars.githubusercontent.com/u/1020496?v=4",
               "https://avatars.githubusercontent.com/u/26461855?v=4"
             ],
-            "fused:gitLastModified": "2025-04-13T11:25:06+00:00",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/1142bef/public/common/",
+            "fused:gitLastModified": "2025-04-13T13:36:03+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/b651b3f/public/common/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "sina-patch-26f4f5-add-jam-lock",
