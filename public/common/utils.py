@@ -75,11 +75,16 @@ def bounds_to_file_chunk(bounds:list=[-180, -90, 180, 90], target_num_files: int
     return df
 
 def bounds_to_hex(bounds: list = [-180, -90, 180, 90], res: int = 3, hex_col: str = "hex"):
-    bbox = get_tiles(bounds, 4).clip(bounds)
+    bbox = get_tiles(bounds, 4)
+    bbox.geometry=bbox.buffer((bounds[2]-bounds[0])/20)
     df = bbox.to_wkt()
-    qr = f"""
-        SELECT unnest(h3_polygon_wkt_to_cells_experimental(geometry, 'center', {res})) AS {hex_col}
-        FROM df
+    qr = f""" with t as (
+        SELECT unnest(h3_polygon_wkt_to_cells_experimental(geometry, 'center' , {hex_res})) AS {hex_col}
+        FROM df)
+        select *,  from t
+        where h3_cell_to_lng({hex_col}) between {bounds[0]} and {bounds[2]}
+        and h3_cell_to_lat({hex_col}) between {bounds[1]} and {bounds[3]}
+        group by 1
         """
     con = duckdb_connect()
     df = con.sql(qr).df()
