@@ -1,8 +1,5 @@
 @fused.udf
-def udf(
-    bounds: fused.types.Bounds,
-    time_of_interest="2024-10-01/2024-12-10"
-):  
+def udf(time_of_interest="2024-10-01/2024-12-10"):
     import geopandas as gpd
     import shapely
     bounds = gpd.GeoDataFrame({}, geometry=[shapely.box(4.65, 52.25, 4.85, 52.35)])

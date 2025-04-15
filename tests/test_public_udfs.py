@@ -10,10 +10,6 @@ import pytest
 UDFS_THAT_ERROR = [
     # server_rt2.endpoints.secret_manager.SecretKeyNotFound: ARRAYLAKE_TOKEN
     "Arraylake_Example",
-    # Serialization error TODO: delete lines after deployment (already fixed in staging)
-    "DC_AOI_Example",
-    "Sentinel1_Tile_Example",
-    "SAR_Umbra_File_Example",
     # Misconfigured UDFs not present in repo
     "GOES_18_Runner",
     "GOES_18_Async",
@@ -21,7 +17,7 @@ UDFS_THAT_ERROR = [
     # None GDFs being returned
     "Overture_Places_Embedding_Clusters",
     # Network timeout
-    "Create_A_Placekey_Join",
+    "Create_A_Placekey_Join"
 ]
 
 

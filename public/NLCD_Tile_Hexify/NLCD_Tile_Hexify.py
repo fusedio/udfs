@@ -11,7 +11,7 @@ def udf(bounds: fused.types.Bounds, year:int=1985, land_type:str='', chip_len:in
     #initial parameters
     x, y, z = tile.iloc[0][["x", "y", "z"]]
     res_offset = 1  # lower makes the hex finer
-    res = max(min(int(3 + zoom / 1.5), 12) - res_offset, 2)
+    res = max(min(int(3 + z / 1.5), 12) - res_offset, 2)
     print(res)
     
     # read tiff file
