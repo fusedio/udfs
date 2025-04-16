@@ -106,7 +106,9 @@ def udf(bounds: fused.types.Bounds = None, h3_size=8):
 
     # convert bounds to tile
     utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = utils.get_tiles(bounds) if bounds is not None else aoi
+    tile = utils.get_tiles(bounds)
+    print(f"{bounds=}")
+    print(f"{tile.geometry.iloc[0]=}")
 
     # 1. Polyfill AOI
     h3s = h3.polygon_to_cells(h3.geo_to_h3shape(tile.geometry.iloc[0]), h3_size)
@@ -128,6 +130,8 @@ def udf(bounds: fused.types.Bounds = None, h3_size=8):
     gdf = pd.concat(gdfs)
 
     embeddings = gdf.embedding.tolist()
+    print(f"{len(embeddings)=}")
+    similarity_matrix = cosine_similarity(embeddings)
 
     # 3. Cluster using KMeans
     kmeans = KMeans(n_clusters=min(len(embeddings), 6), random_state=42)

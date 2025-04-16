@@ -103,12 +103,10 @@
                 "elevationScale": 10
               }
             },
-            "fused:udfType": "vector_single",
+            "fused:udfType": "vector_tile",
             "fused:slug": "Overture_Places_Embedding_Clusters",
             "fused:name": "Overture_Places_Embedding_Clusters",
             "fused:id": null,
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/cdmx.png",
-            "fused:description": "## Cluster Embeddings of Overture Places by H3\n\nThis UDF groups business categories in Overture Places at the H3 grid level, we can analyze the distribution of services and their accessibility. This approach provides a quantifiable way to compare cities globally, shedding light on the urban inclusivity of different regions.\nWorkflow\n\nThe UDF follows this workflow:\n\n1. Load Overture Places records for a given H3\n2. Create business category column\n3. Create an embedding to represent business categories\n4. Run UDF for all H3 spanning an area of interest (polyfill)\n5. Calculate Kmeans clustering based on cosine similarity. \n6. Describe each cluster\n\n",
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 19.410556062178546,
@@ -116,7 +114,40 @@
               "zoom": 10.158646158959794,
               "pitch": 0,
               "bearing": 0
-            }
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/d5f58fc6359ee1c04a9c970793cde8d805c2deba/public/Overture_Places_Embedding_Clusters/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/d5f58fc/public/Overture_Places_Embedding_Clusters/",
+            "fused:gitPath": "public/Overture_Places_Embedding_Clusters",
+            "fused:gitRef": "d5f58fc6359ee1c04a9c970793cde8d805c2deba",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/cdmx.png",
+            "fused:description": "## Cluster Embeddings of Overture Places by H3\n\nThis UDF groups business categories in Overture Places at the H3 grid level, we can analyze the distribution of services and their accessibility. This approach provides a quantifiable way to compare cities globally, shedding light on the urban inclusivity of different regions.\n\nThe UDF follows this workflow:\n\n1. Load Overture Places records for a given H3\n2. Create business category column\n3. Create an embedding to represent business categories\n4. Run UDF for all H3 spanning an area of interest (polyfill)\n5. Calculate Kmeans clustering based on cosine similarity.\n6. Describe each cluster\n",
+            "fused:gitAuthorNames": [
+              "Plinio Guzman",
+              "Suryashankar Das",
+              "Suryashankar Das",
+              "Milind Soni"
+            ],
+            "fused:gitAuthorUsernames": [
+              "pgzmnk",
+              "iamsdas-fused",
+              "iamsdas",
+              "milind-soni"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/pgzmnk",
+              "https://github.com/iamsdas-fused",
+              "https://github.com/iamsdas",
+              "https://github.com/milind-soni"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/27398253?v=4",
+              "https://avatars.githubusercontent.com/u/200643783?v=4",
+              "https://avatars.githubusercontent.com/u/26461855?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
+            ],
+            "fused:gitLastModified": "2025-04-05T14:26:45+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs"
           },
           "source": "Overture_Places_Embedding_Clusters.py",
           "headers": [
