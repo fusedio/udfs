@@ -3037,7 +3037,19 @@ def get_tiles(
 ):
     bounds = to_gdf(bounds)
     import mercantile
+    import geopandas as gpd
+    import numpy as np
 
+    if bounds.empty or bounds.geometry.isna().any() or len(bounds) == 0:
+        if verbose:
+            print("Warning: Empty or invalid bounds provided")
+        return gpd.GeoDataFrame(columns=["geometry", "x", "y", "z"])
+
+    if np.isnan(bounds.total_bounds).any():
+        if verbose:
+            print("Warning: Empty or invalid bounds provided")
+        return gpd.GeoDataFrame(columns=["geometry", "x", "y", "z"])
+    
     if zoom is not None:
         if verbose: 
             print("zoom is provided; target_num_tiles will be ignored.")
