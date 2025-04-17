@@ -95,9 +95,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/a2a81aad06ea1c8bbe89f73d044feeb9cb30a3ab/public/common/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/e6c341552deebc03ca2989fefc3acabddb89089f/public/common/",
             "fused:gitPath": "public/common",
-            "fused:gitRef": "a2a81aad06ea1c8bbe89f73d044feeb9cb30a3ab",
+            "fused:gitRef": "e6c341552deebc03ca2989fefc3acabddb89089f",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -150,8 +150,8 @@
               "https://avatars.githubusercontent.com/u/1020496?v=4",
               "https://avatars.githubusercontent.com/u/26461855?v=4"
             ],
-            "fused:gitLastModified": "2025-04-14T23:51:59+00:00",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/a2a81aa/public/common/",
+            "fused:gitLastModified": "2025-04-15T00:44:36+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/e6c3415/public/common/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "sina-patch-416166-add-bounds-to-hex",
