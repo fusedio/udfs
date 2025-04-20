@@ -20,8 +20,6 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:assetUrl": "fused_uploaded_preview",
-            "fused:description": "## Overview\n\nConflate 3rd party and Overture Buildings.",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -66,7 +64,30 @@
             "fused:udfType": "auto",
             "fused:slug": "Overture_Vancouver_Conflation",
             "fused:name": "Overture_Vancouver_Conflation",
-            "fused:id": null
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/ee5ca72bbf83d75fad94dc79178811f222514a95/community/plinio/Overture_Vancouver_Conflation/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/ee5ca72/community/plinio/Overture_Vancouver_Conflation/",
+            "fused:gitPath": "community/plinio/Overture_Vancouver_Conflation",
+            "fused:gitRef": "ee5ca72bbf83d75fad94dc79178811f222514a95",
+            "fused:assetUrl": "fused_uploaded_preview",
+            "fused:description": "## Overview\n\nConflate 3rd party and Overture Buildings.\n",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "fused-io[bot]"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/apps/fused-io"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/in/834700?v=4"
+            ],
+            "fused:gitLastModified": "2025-04-18T17:37:09.641Z",
+            "fused:explorerTab": "community",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitPullRequestBranch": "plinio-patch-d21146-update-vanc-udf",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/839"
           },
           "source": "Overture_Vancouver_Conflation.py",
           "headers": [

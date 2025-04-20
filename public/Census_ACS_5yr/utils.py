@@ -51,10 +51,10 @@ def acs_5yr_meta(
     import pandas as pd
 
     # Filter only records with cencus block groups data
-    tmp = pd.read_excel('https://www2.census.gov/programs-surveys/acs/summary_file/2021/sequence-based-SF/documentation/tech_docs/ACS_2021_SF_5YR_Appendices.xlsx')
+    tmp = pd.read_excel('s3://fused-asset/data/acs/summary_file/2021/sequence-based-SF/documentation/tech_docs/ACS_2021_SF_5YR_Appendices.xlsx')
     table_ids_cbgs = tmp[tmp['Geography Restrictions'].isna()]['Table Number']
     # Get the list of tables and filter by only totals (the first row of each table)
-    df_tables = pd.read_csv('https://www2.census.gov/programs-surveys/acs/summary_file/2022/table-based-SF/documentation/ACS20225YR_Table_Shells.txt', delimiter='|')
+    df_tables = pd.read_csv('s3://fused-asset/data/acs/summary_file/2022/table-based-SF/documentation/ACS20225YR_Table_Shells.txt', delimiter='|')
     if short:
         df_tables2 = df_tables.drop_duplicates('Table ID')
     else:
@@ -67,7 +67,7 @@ def acs_5yr_meta(
 @fused.cache
 def acs_5yr_table(tid, year=2022):
     import pandas as pd
-    url=f'https://www2.census.gov/programs-surveys/acs/summary_file/{year}/table-based-SF/data/5YRData/acsdt5y{year}-{tid.lower()}.dat'
+    url=f's3://fused-asset/data/acs/summary_file/{year}/table-based-SF/data/5YRData/acsdt5y{year}-{tid.lower()}.dat'
     return pd.read_csv(url, delimiter='|')
 
 def search_title(title):

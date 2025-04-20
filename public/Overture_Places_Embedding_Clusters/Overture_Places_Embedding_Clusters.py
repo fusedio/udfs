@@ -9,11 +9,10 @@ def udf_h3_embedding(h3_index="894509b022bffff", h3_size=8):
 
     # 1. Polygon from H3
     bounds = Polygon([coord[::-1] for coord in h3.cell_to_boundary(h3_index)])
-    bbox = gpd.GeoDataFrame({"h3_index": [h3_index], "geometry": [bounds]})
 
     # 2. Load Overture Places
     udf = fused.load("https://github.com/fusedio/udfs/tree/2ea46f3/public/Overture_Maps_Example/")
-    gdf = fused.run(udf, bounds=bbox, overture_type="place")
+    gdf = fused.run(udf, bounds=bounds, overture_type="place")
 
     # 3. Normalize the 'categories' column into individual columns
     categories_df = pd.json_normalize(gdf["categories"]).reset_index(drop=True)
@@ -107,7 +106,7 @@ def udf(bounds: fused.types.Bounds = None, h3_size=8):
 
     # convert bounds to tile
     utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = utils.get_tiles(bounds)
+    tile = utils.get_tiles(bounds) if bounds is not None else aoi
 
     # 1. Polyfill AOI
     h3s = h3.polygon_to_cells(h3.geo_to_h3shape(tile.geometry.iloc[0]), h3_size)
@@ -129,10 +128,9 @@ def udf(bounds: fused.types.Bounds = None, h3_size=8):
     gdf = pd.concat(gdfs)
 
     embeddings = gdf.embedding.tolist()
-    similarity_matrix = cosine_similarity(embeddings)
 
     # 3. Cluster using KMeans
-    kmeans = KMeans(n_clusters=6, random_state=42)
+    kmeans = KMeans(n_clusters=min(len(embeddings), 6), random_state=42)
     gdf["cluster"] = kmeans.fit_predict(embeddings)
 
     # 4. Describe each cluster

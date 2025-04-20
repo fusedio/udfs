@@ -1,19 +1,17 @@
-
-# Overture by chunks
-table = lambda part: f's3://us-west-2.opendata.source.coop/fused/overture/2024-08-20-0/theme=buildings/type=building/part={str(part)}/'
-# meta = pd.concat([fused.get_chunks_metadata(table(part)) for part in range(5)])
-def get_meta():
+@fused.cache
+def get_meta(table_base_path = "s3://us-west-2.opendata.source.coop/fused/overture/2024-08-20-0/theme=buildings/type=building", n_parts=5):
     import pandas as pd
+    table = lambda part: f'{table_base_path}/part={str(part)}/'
     a = []
-    for part in range(5):
+    for part in range(n_parts):
         a.append(fused.get_chunks_metadata(table(part)))
         a[-1]['part_id'] = part
     return pd.concat(a)
 
 
 @fused.cache
-def get_table(part_id, file_id, chunk_id):
-    table = lambda part: f's3://us-west-2.opendata.source.coop/fused/overture/2024-08-20-0/theme=buildings/type=building/part={str(part)}/'
+def get_table(part_id, file_id, chunk_id, table_base_path = "s3://us-west-2.opendata.source.coop/fused/overture/2024-08-20-0/theme=buildings/type=building"):
+    table = lambda part: f'{table_base_path}/part={str(part)}/'
     return fused.get_chunk_from_table(table(part_id), file_id=file_id, chunk_id=chunk_id)
 
 

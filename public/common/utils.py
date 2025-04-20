@@ -11,6 +11,50 @@ from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union, Any
 from loguru import logger
 from fused.api.api import AnyBaseUdf
 
+import contextlib
+@contextlib.contextmanager
+def mutex(filename, wait=1, verbose=False):
+    """Create a mutex lock using a file on disk.
+    
+    Args:
+        filename: File path to use as mutex
+        wait: Seconds to wait between lock attempts
+        verbose: Whether to print status messages
+    """
+    import time
+    import os
+    while True:
+        try:
+            f = open(filename, 'x')
+            break
+        except OSError as e:
+            if verbose:
+                print(f"waiting {filename=} {e=}")
+            time.sleep(wait)
+    
+    if verbose:
+        print(f"acquired lock {filename=}")
+    
+    try:
+        yield
+    finally:
+        if verbose:
+            print(f"exited lock {filename=}")
+        f.close()
+        os.unlink(filename)
+
+
+def jam_lock(lock_second=1, verbose=False):
+    import time    
+    current_second = int(time.time()) // (lock_second)
+    lock_file = f'/tmp/fused_lock_{current_second}'
+    with mutex(lock_file + '_lock', wait=0.5, verbose=verbose):
+        if os.path.exists(lock_file):
+            time.sleep(lock_second)
+        else:
+            open(lock_file, 'x').close()  
+
+
 @fused.cache(cache_max_age='30d')
 def bounds_to_file_chunk(bounds:list=[-180, -90, 180, 90], target_num_files: int = 64, target_num_file_chunks: int = 64):
     import pandas as pd
@@ -30,6 +74,22 @@ def bounds_to_file_chunk(bounds:list=[-180, -90, 180, 90], target_num_files: int
     # print(df.chunk_id.value_counts())
     return df
 
+def bounds_to_hex(bounds: list = [-180, -90, 180, 90], res: int = 3, hex_col: str = "hex"):
+    bbox = get_tiles(bounds, 4)
+    bbox.geometry=bbox.buffer((bounds[2]-bounds[0])/20)
+    df = bbox.to_wkt()
+    qr = f""" with t as (
+        SELECT unnest(h3_polygon_wkt_to_cells_experimental(geometry, 'center' , {res})) AS {hex_col}
+        FROM df)
+        select *,  from t
+        where h3_cell_to_lng({hex_col}) between {bounds[0]} and {bounds[2]}
+        and h3_cell_to_lat({hex_col}) between {bounds[1]} and {bounds[3]}
+        group by 1
+        """
+    con = duckdb_connect()
+    df = con.sql(qr).df()
+    return df
+
 def gdf_to_hex(gdf, res=11, add_latlng_cols=['lat','lng']):
     import pandas as pd
     con = duckdb_connect()
@@ -42,7 +102,7 @@ def gdf_to_hex(gdf, res=11, add_latlng_cols=['lat','lng']):
         with t as(
             SELECT 
                 * exclude(geometry), 
-                h3_polygon_wkt_to_cells(geometry,{res}) AS hex 
+                h3_polygon_wkt_to_cells_experimental(geometry, 'center', {res}) AS hex 
             FROM df_wkt)
         SELECT 
             * exclude(hex), 
@@ -718,6 +778,7 @@ def read_tiff(
     return_bounds=False,
     return_meta=False,
     cred=None,
+    resampling = 'nearest'
 ):
     import os
     from contextlib import ExitStack
@@ -727,8 +788,12 @@ def read_tiff(
     from rasterio.coords import BoundingBox, disjoint_bounds
     from rasterio.warp import Resampling, reproject
     from scipy.ndimage import zoom
-
+        
     version = "0.2.0"
+
+    
+    if isinstance(resampling, str):
+        resampling = getattr(Resampling, resampling.lower())
 
     if not cred:
         context = rasterio.Env()
@@ -786,7 +851,7 @@ def read_tiff(
                 source_data = src.read(
                     window=window,
                     out_shape=(src.count, int(window.height / factor), int(window.width / factor)),
-                    resampling=Resampling.bilinear,
+                    resampling=resampling,
                     boundless=True,
                     masked=True,
                 )
@@ -833,21 +898,21 @@ def read_tiff(
                 dst_transform=dst_transform,
                 dst_crs=dst_crs,
                 # TODO: rather than nearest, get all the values and then get pct
-                resampling=Resampling.bilinear,
+                resampling=resampling,
             )
 
             destination_mask = np.zeros(dst_shape, dtype="int8")
-            reproject(
-                source_data.mask.astype("uint8"),
-                destination_mask,
-                src_transform=src_transform,
-                src_crs=src_crs,
-                dst_transform=dst_transform,
-                dst_crs=dst_crs,
-                resampling=Resampling.nearest,
-            )
+            # reproject(
+            #     source_data.mask.astype("uint8"),
+            #     destination_mask,
+            #     src_transform=src_transform,
+            #     src_crs=src_crs,
+            #     dst_transform=dst_transform,
+            #     dst_crs=dst_crs,
+            #     resampling=Resampling.nearest,
+            # )
             destination_data = np.ma.masked_array(
-                destination_data, destination_mask
+                destination_data, destination_mask == nodata_value
             )
         else:
             dst_transform = src_transform
@@ -2166,19 +2231,30 @@ def df_to_h3(df, res, latlng_cols=("lat", "lng"), ordered=False):
 def arr_to_h3(arr, bounds, res, ordered=False):
     return df_to_h3(arr_to_latlng(arr, bounds), res=res, ordered=ordered)
 
-def duckdb_connect(home_directory='/tmp/'):
+def duckdb_connect(verbose=False, home_directory='/tmp/duckdb/'):
+    import os
+    os.makedirs(home_directory, exist_ok=True)
     import duckdb 
+    @fused.cache(storage='local')
+    def install(home_directory):
+        con = duckdb.connect()
+        con.sql(
+        f"""SET home_directory='{home_directory}';
+        INSTALL h3 FROM community;
+        INSTALL 'httpfs';
+        
+        INSTALL spatial;
+        """)
+    install(home_directory)
     con = duckdb.connect()
     con.sql(
     f"""SET home_directory='{home_directory}';
-    INSTALL h3 FROM community;
     LOAD h3;
-    install 'httpfs';
-    load 'httpfs';
-    INSTALL spatial;
+    LOAD 'httpfs';
     LOAD spatial;
     """)
-    print("duckdb version:", duckdb.__version__)
+    if verbose:
+        print(f"duckdb version: {duckdb.__version__} | {home_directory=}")
     return con
 
 
@@ -2961,7 +3037,19 @@ def get_tiles(
 ):
     bounds = to_gdf(bounds)
     import mercantile
+    import geopandas as gpd
+    import numpy as np
 
+    if bounds.empty or bounds.geometry.isna().any() or len(bounds) == 0:
+        if verbose:
+            print("Warning: Empty or invalid bounds provided")
+        return gpd.GeoDataFrame(columns=["geometry", "x", "y", "z"])
+
+    if np.isnan(bounds.total_bounds).any():
+        if verbose:
+            print("Warning: Empty or invalid bounds provided")
+        return gpd.GeoDataFrame(columns=["geometry", "x", "y", "z"])
+    
     if zoom is not None:
         if verbose: 
             print("zoom is provided; target_num_tiles will be ignored.")
@@ -3187,7 +3275,7 @@ def func_to_udf(func, cache_max_age='12h'):
     udf = fused.load(f'@fused.udf(cache_max_age="{cache_max_age}")\n'+dedent(source_code))
     udf.entrypoint = func.__name__
     udf.name = func.__name__
-    print(source_code)
+    # print(source_code)
     return udf
 
 
