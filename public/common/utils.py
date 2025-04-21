@@ -54,6 +54,56 @@ def jam_lock(lock_second=1, verbose=False):
         else:
             open(lock_file, 'x').close()  
 
+def file_exists(path, verbose=True):
+    """
+    Check if a file exists based on the path type:
+    - Local file system
+    - S3 path (starting with 's3:')
+    - HTTP/HTTPS URL
+    
+    Args:
+        path: Path to check
+        verbose: Whether to print status messages
+    
+    Returns:
+        bool: True if file exists, False otherwise
+    """
+    import os
+    
+    # Handle S3 paths
+    if path.startswith('s3:'):
+        try:
+            import s3fs
+            fs = s3fs.S3FileSystem()
+            exists = fs.exists(path)
+            if verbose and exists:
+                print(f'{path=} exists on S3.')
+            return exists
+        except ImportError:
+            if verbose:
+                print("s3fs package not installed. Please install with 'pip install s3fs'")
+            return False
+    
+    # Handle HTTP/HTTPS URLs
+    elif path.startswith(('http://', 'https://')):
+        try:
+            import requests
+            response = requests.head(path, allow_redirects=True)
+            exists = response.status_code == 200
+            if verbose and exists:
+                print(f'{path=} exists with status code 200.')
+            return exists
+        except Exception as e:
+            if verbose:
+                print(f"Error checking URL {path}: {str(e)}")
+            return False
+    
+    # Handle local files
+    else:
+        exists = os.path.exists(path)
+        if verbose and exists:
+            print(f'{path=} exists locally.')
+        return exists
 
 @fused.cache(cache_max_age='30d')
 def bounds_to_file_chunk(bounds:list=[-180, -90, 180, 90], target_num_files: int = 64, target_num_file_chunks: int = 64):
