@@ -124,7 +124,7 @@ def bounds_to_file_chunk(bounds:list=[-180, -90, 180, 90], target_num_files: int
     # print(df.chunk_id.value_counts())
     return df
 
-def bounds_to_hex(bounds: list = [-180, -90, 180, 90], res: int = 3, hex_col: str = "hex"):
+def bounds_to_hex(bounds: list = [-180, -90, 180, 90], res: int = 3, hex_col: str = "hex", k: int=0):
     bbox = get_tiles(bounds, 4)
     bbox.geometry=bbox.buffer((bounds[2]-bounds[0])/20)
     df = bbox.to_wkt()
@@ -138,7 +138,10 @@ def bounds_to_hex(bounds: list = [-180, -90, 180, 90], res: int = 3, hex_col: st
         """
     con = duckdb_connect()
     df = con.sql(qr).df()
-    return df
+    if k>0:
+        return con.sql(f'select hexk.unnest as {hex_col} from df, UNNEST(h3_grid_disk({hex_col}, {k})) AS hexk group by 1').df()
+    else:
+        return df
 
 def gdf_to_hex(gdf, res=11, add_latlng_cols=['lat','lng']):
     import pandas as pd
