@@ -99,9 +99,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/ee36aad60b739eedeb8b81abf715642d5e397586/public/CDLs_Tile_Example/",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/9de543959adc308a2c6da5e806da36076ecf7005/public/CDLs_Tile_Example/",
             "fused:gitPath": "public/CDLs_Tile_Example",
-            "fused:gitRef": "ee36aad60b739eedeb8b81abf715642d5e397586",
+            "fused:gitRef": "9de543959adc308a2c6da5e806da36076ecf7005",
             "fused:gitAuthorNames": [
               "Sina Kashuk",
               "Tyler Erickson",
@@ -142,8 +142,8 @@
               "https://avatars.githubusercontent.com/u/26461855?v=4",
               "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-04-24T09:57:27.497Z",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/ee36aad/public/CDLs_Tile_Example/",
+            "fused:gitLastModified": "2025-04-24T09:58:13.006Z",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/9de5439/public/CDLs_Tile_Example/",
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "iamsdas-patch-14166e-test-again",
