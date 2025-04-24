@@ -54,7 +54,7 @@
                 ]
               }
             },
-            "fused:udfType": "auto",
+            "fused:udfType": "vector_tile",
             "fused:slug": "Fused_Geopartitioned_Table",
             "fused:name": "Fused_Geopartitioned_Table",
             "fused:id": null
