@@ -6,6 +6,7 @@ def udf(
     import numpy as np
 
     # convert bounds to tile
+    print("hello")
     tile = common.get_tiles(bounds)
 
     input_tiff_path = f"s3://fused-asset/data/cdls/{year}_30m_cdls.tif"
