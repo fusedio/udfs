@@ -124,7 +124,7 @@ def bounds_to_file_chunk(bounds:list=[-180, -90, 180, 90], target_num_files: int
     # print(df.chunk_id.value_counts())
     return df
 
-def bounds_to_hex(bounds: list = [-180, -90, 180, 90], res: int = 3, hex_col: str = "hex", k: int=0):
+def bounds_to_hex(bounds: list = [-180, -90, 180, 90], res: int = 3, hex_col: str = "hex"):
     bbox = get_tiles(bounds, 4)
     bbox.geometry=bbox.buffer((bounds[2]-bounds[0])/20)
     df = bbox.to_wkt()
@@ -138,10 +138,7 @@ def bounds_to_hex(bounds: list = [-180, -90, 180, 90], res: int = 3, hex_col: st
         """
     con = duckdb_connect()
     df = con.sql(qr).df()
-    if k>0:
-        return con.sql(f'select hexk.unnest as {hex_col} from df, UNNEST(h3_grid_disk({hex_col}, {k})) AS hexk group by 1').df()
-    else:
-        return df
+    return df
 
 def gdf_to_hex(gdf, res=11, add_latlng_cols=['lat','lng']):
     import pandas as pd
@@ -3341,6 +3338,15 @@ def udf_to_json(udf):
         except:
             udf_nail_json = func_to_udf(udf).json()
     return udf_nail_json
+
+def get_query_embedding(client, query, model="text-embedding-3-large"):
+    """Generate embeddings for a query using OpenAI API
+    client = OpenAI(api_key=fused.secrets["my_fused_key"])"""
+    embedding = list(map(float, client.embeddings.create(
+        input=query, model=model
+    ).data[0].embedding))
+    return embedding
+
 
 def submit_job(udf, df_arg, cache_max_age='12h'):
     udf_nail_json = udf_to_json(udf)
