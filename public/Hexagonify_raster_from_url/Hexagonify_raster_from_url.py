@@ -5,7 +5,22 @@ def udf(raster_path = 'https://s3.amazonaws.com/elevation-tiles-prod/geotiff/4/4
         height_scale: int = 10,
          color_scale:float=1
     ):
+    import pandas as pd
+    import rioxarray
 
+    # 2. Read tiff
+    da_tiff = rioxarray.open_rasterio(raster_path).squeeze(drop=True).rio.reproject("EPSG:4326")
+    df_tiff = da_tiff.to_dataframe("data").reset_index()[["y", "x", "data"]]
+
+    # 3. Hexagonify & aggregate
+    df = aggregate_df_hex(
+        df_tiff, h3_res, latlng_cols=["y", "x"], stats_type=stats_type
+    )
+    df["elev_scale"] = height_scale
+    df["metric"]=df["metric"]*color_scale
+    df = df[df["metric"] > 0]
+    print(f"{df.shape=}")
+    return df
 
 @fused.cache
 def df_to_hex(df, res, latlng_cols=("lat", "lng")):

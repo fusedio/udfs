@@ -20,6 +20,28 @@
               "pitch": 0,
               "bearing": 0
             },
+            "fused:name": "Hexagonify_raster_from_url",
+            "fused:slug": "Hexagonify_raster_from_url",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "026421b362ae5b37a446754fb242bb93aacc873a",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/026421b362ae5b37a446754fb242bb93aacc873a/public/Hexagonify_raster_from_url/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/026421b/public/Hexagonify_raster_from_url/",
+            "fused:gitPath": "public/Hexagonify_raster_from_url",
+            "fused:gitLastModified": "2025-04-25T18:16:07.493Z",
+            "fused:gitHistory": [
+              {
+                "fused:defaultViewState": {
+                  "enable": true,
+                  "latitude": 34.57648672753711,
+                  "longitude": -80.33884456894795,
+                  "zoom": 4.141573809520789,
+                  "pitch": 0,
+                  "bearing": 0
+                }
+              }
+            ],
+            "fused:gitPullRequestBranch": "max-patch-f277f8-Hexagonify-raster-from-URL-Used-f",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/855",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -75,8 +97,6 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "Hexagonify_raster_from_url",
-            "fused:name": "Hexagonify_raster_from_url",
             "fused:id": null
           },
           "source": "Hexagonify_raster_from_url.py",
