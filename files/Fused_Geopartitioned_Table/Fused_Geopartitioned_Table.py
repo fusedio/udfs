@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds, path: str, preview: bool):
+def udf(bounds: fused.types.Bounds=None, path: str="", preview: bool = False):
     use_columns = ["geometry"] if preview else None
     common = fused.load(
         "https://github.com/fusedio/udfs/tree/b41216d/public/common/"

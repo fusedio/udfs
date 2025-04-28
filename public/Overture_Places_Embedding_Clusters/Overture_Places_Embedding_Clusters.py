@@ -125,6 +125,11 @@ def udf(bounds: fused.types.Bounds = None, h3_size=8):
 
     # 2. Run Embeddings UDF for each H3 cell
     gdfs = utils.run_pool(run_udfs, h3s, max_workers=100)
+    # Filter out failed outputs
+    gdfs = [gdf for gdf in gdfs if gdf is not None]
+    if len(gdfs) == 0:
+        return None
+
     gdf = pd.concat(gdfs)
 
     embeddings = gdf.embedding.tolist()
