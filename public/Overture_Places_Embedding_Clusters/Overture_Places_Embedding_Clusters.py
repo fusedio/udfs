@@ -8,11 +8,11 @@ def udf_h3_embedding(h3_index="894509b022bffff", h3_size=8):
     from utils import global_categories
 
     # 1. Polygon from H3
-    bounds = Polygon([coord[::-1] for coord in h3.cell_to_boundary(h3_index)])
+    polygon = Polygon([coord[::-1] for coord in h3.cell_to_boundary(h3_index)])
 
     # 2. Load Overture Places
     udf = fused.load("https://github.com/fusedio/udfs/tree/2ea46f3/public/Overture_Maps_Example/")
-    gdf = fused.run(udf, bounds=bounds, overture_type="place")
+    gdf = fused.run(udf, bounds=polygon.bounds, overture_type="place")
 
     # 3. Normalize the 'categories' column into individual columns
     categories_df = pd.json_normalize(gdf["categories"]).reset_index(drop=True)
