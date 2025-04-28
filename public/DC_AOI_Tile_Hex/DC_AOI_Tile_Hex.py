@@ -21,7 +21,7 @@ def udf(bounds: fused.types.Bounds=None, time_of_interest="2021-12-01/2021-12-30
         
     # read sentinel data
     udf_sentinel = fused.load('https://github.com/fusedio/udfs/tree/a1c01c6/public/DC_AOI_Example/')
-    arr = udf_sentinel.utils.get_arr(tile, time_of_interest=time_of_interest, output_shape=(chip_len, chip_len))
+    arr = udf_sentinel.utils.get_arr(tile, time_of_interest=time_of_interest, output_shape=(chip_len, chip_len), max_items=100)
     arr = np.clip(arr *  scale, 0, 255).astype("uint8")[:3]
     
     # Load pinned versions of utility functions.
@@ -32,6 +32,7 @@ def udf(bounds: fused.types.Bounds=None, time_of_interest="2021-12-01/2021-12-30
     
     # convert arr to xyz dataframe
     df = tile_to_df(tile, arr)
+    zoom = tile.z[0]
     h3_size = min(int(3+zoom/1.5),15)
     print(h3_size) 
     data_cols = [f'band{i+1}' for i in range(len(arr))]
