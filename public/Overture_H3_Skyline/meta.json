@@ -15,7 +15,7 @@
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
-                "minZoom": 0,
+                "minZoom": 11,
                 "maxZoom": 14,
                 "tileSize": 256,
                 "extrude": true,
@@ -47,9 +47,9 @@
             "fused:name": "Overture_H3_Skyline",
             "fused:defaultViewState": {
               "enable": true,
-              "latitude": 37.7713405836712,
-              "longitude": -122.42595460804577,
-              "zoom": 11.558541444855727,
+              "latitude": 37.78574117481262,
+              "longitude": -122.42039604816414,
+              "zoom": 12.798868824892553,
               "pitch": 0,
               "bearing": 0
             },
