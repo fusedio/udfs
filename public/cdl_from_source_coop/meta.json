@@ -21,7 +21,7 @@
               },
               "hexLayer": {
                 "@@type": "H3HexagonLayer",
-                "stroked": false,
+                "stroked": true,
                 "filled": true,
                 "pickable": true,
                 "extruded": false,
@@ -31,25 +31,10 @@
                 "getHexagon": "@@=properties.hex",
                 "getLineColor": {
                   "@@function": "colorContinuous",
-                  "attr": "cnt",
+                  "attr": "area",
                   "domain": [
-                    0,
-                    10000000
-                  ],
-                  "steps": 20,
-                  "colors": "DarkMint",
-                  "nullColor": [
-                    184,
-                    184,
-                    184
-                  ]
-                },
-                "getFillColor": {
-                  "@@function": "colorContinuous",
-                  "attr": "cnt",
-                  "domain": [
-                    0,
-                    100000
+                    10000000,
+                    0
                   ],
                   "steps": 20,
                   "colors": "RedOr",
@@ -59,6 +44,11 @@
                     184
                   ]
                 },
+                "getFillColor": [
+                  184,
+                  184,
+                  184
+                ],
                 "getElevation": {
                   "@@function": "hasProp",
                   "property": "value",
