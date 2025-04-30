@@ -134,6 +134,140 @@
                 "fused:slug": "viz_hex_file_one_udf_call",
                 "fused:name": "viz_hex_file_one_udf_call",
                 "fused:id": "2bdeed12-fad8-4db3-9c75-abd6224ef858"
+              },
+              {
+                "fused:vizConfig": {
+                  "tileLayer": {
+                    "@@type": "TileLayer",
+                    "minZoom": 0,
+                    "maxZoom": 19,
+                    "tileSize": 256
+                  },
+                  "hexLayer": {
+                    "@@type": "H3HexagonLayer",
+                    "stroked": false,
+                    "filled": true,
+                    "pickable": true,
+                    "extruded": false,
+                    "opacity": 1,
+                    "coverage": 0.9,
+                    "lineWidthMinPixels": 1,
+                    "getHexagon": "@@=properties.hex",
+                    "getLineColor": {
+                      "@@function": "colorContinuous",
+                      "attr": "cnt",
+                      "domain": [
+                        0,
+                        10000000
+                      ],
+                      "steps": 20,
+                      "colors": "DarkMint",
+                      "nullColor": [
+                        184,
+                        184,
+                        184
+                      ]
+                    },
+                    "getFillColor": {
+                      "@@function": "colorContinuous",
+                      "attr": "cnt",
+                      "domain": [
+                        0,
+                        100000
+                      ],
+                      "steps": 20,
+                      "colors": "RedOr",
+                      "nullColor": [
+                        184,
+                        184,
+                        184
+                      ]
+                    },
+                    "getElevation": {
+                      "@@function": "hasProp",
+                      "property": "value",
+                      "present": "@@=properties.value",
+                      "absent": 1
+                    },
+                    "elevationScale": 10
+                  }
+                },
+                "fused:udfType": "auto",
+                "fused:slug": "cdl_from_source_coop",
+                "fused:name": "cdl_from_source_coop",
+                "fused:id": "2bdeed12-fad8-4db3-9c75-abd6224ef858",
+                "fused:gitRepo": "fusedlabs/fusedudfs",
+                "fused:gitRef": "6faa8bbd3efba38a877f3e6908bc83138cfe53e1",
+                "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/6faa8bbd3efba38a877f3e6908bc83138cfe53e1/cdl_from_source_coop/",
+                "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/6faa8bb/cdl_from_source_coop/",
+                "fused:gitPath": "cdl_from_source_coop",
+                "fused:gitLastModified": "2025-04-30T12:41:27.403Z",
+                "fused:gitHistory": [
+                  {
+                    "fused:vizConfig": {
+                      "tileLayer": {
+                        "@@type": "TileLayer",
+                        "minZoom": 0,
+                        "maxZoom": 19,
+                        "tileSize": 256
+                      },
+                      "hexLayer": {
+                        "@@type": "H3HexagonLayer",
+                        "stroked": false,
+                        "filled": true,
+                        "pickable": true,
+                        "extruded": false,
+                        "opacity": 1,
+                        "coverage": 0.9,
+                        "lineWidthMinPixels": 1,
+                        "getHexagon": "@@=properties.hex",
+                        "getLineColor": {
+                          "@@function": "colorContinuous",
+                          "attr": "cnt",
+                          "domain": [
+                            0,
+                            10000000
+                          ],
+                          "steps": 20,
+                          "colors": "DarkMint",
+                          "nullColor": [
+                            184,
+                            184,
+                            184
+                          ]
+                        },
+                        "getFillColor": {
+                          "@@function": "colorContinuous",
+                          "attr": "cnt",
+                          "domain": [
+                            0,
+                            100000
+                          ],
+                          "steps": 20,
+                          "colors": "RedOr",
+                          "nullColor": [
+                            184,
+                            184,
+                            184
+                          ]
+                        },
+                        "getElevation": {
+                          "@@function": "hasProp",
+                          "property": "value",
+                          "present": "@@=properties.value",
+                          "absent": 1
+                        },
+                        "elevationScale": 10
+                      }
+                    },
+                    "fused:udfType": "auto",
+                    "fused:slug": "viz_hex_file_one_udf_call",
+                    "fused:name": "viz_hex_file_one_udf_call",
+                    "fused:id": "2bdeed12-fad8-4db3-9c75-abd6224ef858"
+                  }
+                ],
+                "fused:gitPullRequestBranch": "max-patch-6015bc-CDL-from-source-coop",
+                "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/783"
               }
             ]
           },

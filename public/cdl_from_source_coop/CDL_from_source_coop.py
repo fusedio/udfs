@@ -21,7 +21,7 @@ def udf(
     # Loading common Fused helper functions to setup DuckDB in this UDF
     common = fused.load("https://github.com/fusedio/udfs/tree/f5cf238/public/common/").utils
     con = common.duckdb_connect()
-    if cell_to_parent_res > 7:
+    if cell_to_parent_res < 7:
         qr_hex=f'h3_cell_to_parent(hex, {cell_to_parent_res})' 
     else:
         qr_hex = 'hex'
