@@ -1,0 +1,147 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "CDL_from_source_coop",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "hexLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "extruded": false,
+                "opacity": 1,
+                "coverage": 0.9,
+                "lineWidthMinPixels": 1,
+                "getHexagon": "@@=properties.hex",
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "cnt",
+                  "domain": [
+                    0,
+                    10000000
+                  ],
+                  "steps": 20,
+                  "colors": "DarkMint",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "cnt",
+                  "domain": [
+                    0,
+                    100000
+                  ],
+                  "steps": 20,
+                  "colors": "RedOr",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "value",
+                  "present": "@@=properties.value",
+                  "absent": 1
+                },
+                "elevationScale": 10
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "CDL_from_source_coop",
+            "fused:name": "CDL_from_source_coop",
+            "fused:id": null,
+            "fused:gitHistory": [
+              {
+                "fused:vizConfig": {
+                  "tileLayer": {
+                    "@@type": "TileLayer",
+                    "minZoom": 0,
+                    "maxZoom": 19,
+                    "tileSize": 256
+                  },
+                  "hexLayer": {
+                    "@@type": "H3HexagonLayer",
+                    "stroked": false,
+                    "filled": true,
+                    "pickable": true,
+                    "extruded": false,
+                    "opacity": 1,
+                    "coverage": 0.9,
+                    "lineWidthMinPixels": 1,
+                    "getHexagon": "@@=properties.hex",
+                    "getLineColor": {
+                      "@@function": "colorContinuous",
+                      "attr": "cnt",
+                      "domain": [
+                        0,
+                        10000000
+                      ],
+                      "steps": 20,
+                      "colors": "DarkMint",
+                      "nullColor": [
+                        184,
+                        184,
+                        184
+                      ]
+                    },
+                    "getFillColor": {
+                      "@@function": "colorContinuous",
+                      "attr": "cnt",
+                      "domain": [
+                        0,
+                        100000
+                      ],
+                      "steps": 20,
+                      "colors": "RedOr",
+                      "nullColor": [
+                        184,
+                        184,
+                        184
+                      ]
+                    },
+                    "getElevation": {
+                      "@@function": "hasProp",
+                      "property": "value",
+                      "present": "@@=properties.value",
+                      "absent": 1
+                    },
+                    "elevationScale": 10
+                  }
+                },
+                "fused:udfType": "auto",
+                "fused:slug": "viz_hex_file_one_udf_call",
+                "fused:name": "viz_hex_file_one_udf_call",
+                "fused:id": "2bdeed12-fad8-4db3-9c75-abd6224ef858"
+              }
+            ]
+          },
+          "source": "CDL_from_source_coop.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
