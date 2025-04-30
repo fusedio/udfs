@@ -129,7 +129,7 @@ def bounds_to_hex(bounds: list = [-180, -90, 180, 90], res: int = 3, hex_col: st
     bbox.geometry=bbox.buffer((bounds[2]-bounds[0])/20)
     df = bbox.to_wkt()
     qr = f""" with t as (
-        SELECT unnest(h3_polygon_wkt_to_cells_experimental(geometry, 'center' , {res})) AS {hex_col}
+        SELECT unnest(h3_polygon_wkt_to_cells_experimental(geometry, {res}, 'center')) AS {hex_col}
         FROM df)
         select *,  from t
         where h3_cell_to_lng({hex_col}) between {bounds[0]} and {bounds[2]}
@@ -152,7 +152,7 @@ def gdf_to_hex(gdf, res=11, add_latlng_cols=['lat','lng']):
         with t as(
             SELECT 
                 * exclude(geometry), 
-                h3_polygon_wkt_to_cells_experimental(geometry, 'center', {res}) AS hex 
+                h3_polygon_wkt_to_cells_experimental(geometry, {res}, 'center') AS hex 
             FROM df_wkt)
         SELECT 
             * exclude(hex), 
