@@ -1,9 +1,9 @@
 @fused.udf
 def udf(
     crop_value_list: list = [54], # 54 - Tomatoes
-    cell_to_parent_res: int = 4,
+    cell_to_parent_res: int = 5,
     min_ratio: float = 0, # Filtering any value below this percentage out
-    path: str='s3://us-west-2.opendata.source.coop/fused/hex/release_2025_04_beta/cdl/hex7_2020.parquet'
+    path: str='s3://us-west-2.opendata.source.coop/fused/hex/release_2025_04_beta/cdl/hex8_2020.parquet'
 ):
     """
     Load Hex data from fused-partitioned datasets hosted on source.coop
@@ -20,7 +20,7 @@ def udf(
     # Loading common Fused helper functions to setup DuckDB in this UDF
     common = fused.load("https://github.com/fusedio/udfs/tree/f5cf238/public/common/").utils
     con = common.duckdb_connect()
-    if cell_to_parent_res < 7:
+    if cell_to_parent_res < 8:
         qr_hex=f'h3_cell_to_parent(hex, {cell_to_parent_res})' 
     else:
         qr_hex = 'hex'
