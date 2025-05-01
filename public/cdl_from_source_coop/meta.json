@@ -25,15 +25,15 @@
                 "filled": true,
                 "pickable": true,
                 "extruded": false,
-                "opacity": 1,
+                "opacity": 0.9,
                 "coverage": 0.9,
                 "lineWidthMinPixels": 1,
                 "getHexagon": "@@=properties.hex",
-                "getLineColor": {
+                "getFillColor": {
                   "@@function": "colorContinuous",
                   "attr": "area",
                   "domain": [
-                    10000000,
+                    100000,
                     0
                   ],
                   "steps": 20,
@@ -44,11 +44,6 @@
                     184
                   ]
                 },
-                "getFillColor": [
-                  184,
-                  184,
-                  184
-                ],
                 "getElevation": {
                   "@@function": "hasProp",
                   "property": "value",
@@ -259,7 +254,9 @@
                 "fused:gitPullRequestBranch": "max-patch-6015bc-CDL-from-source-coop",
                 "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/783"
               }
-            ]
+            ],
+            "fused:assetUrl": "",
+            "fused:description": "## Overview\n\nExplore the Crop Data Layer data in hex form\n\nData available on [Source Coop](https://source.coop/repositories/fused/hex/description)."
           },
           "source": "CDL_from_source_coop.py",
           "headers": []
