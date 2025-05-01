@@ -1,13 +1,13 @@
 @fused.udf
 def udf(
-    crop_value_list: list = [54], # 54 - Tomatoes
-    cell_to_parent_res: int = 7,
+    crop_value_list: list = [1], # 54 - Tomatoes
+    cell_to_parent_res: int = 4,
     min_ratio: float = 0, # Filtering any value below this percentage out
-    path: str='s3://us-west-2.opendata.source.coop/fused/hex/cdl/hex7_2024.parquet'
+    path: str='s3://us-west-2.opendata.source.coop/fused/hex/release_2025_04_beta/cdl/hex7_2020.parquet'
 ):
     """
     Load Hex data from fused-partitioned datasets hosted on source.coop
-    https://source.coop/repositories/fused/hex
+    https://source.coop/repositories/fused/hex/
 
     Args:
         - crop_value_list: List of all the crop values for CDL
@@ -15,7 +15,6 @@ def udf(
         - cell_to_parent_res: Desired output Hex cell resolution
         - min_ratio: any percentage of crop below this value will be filtered out
         - path: Path to S3 bucket
-        
     """
 
     # Loading common Fused helper functions to setup DuckDB in this UDF
