@@ -255,7 +255,7 @@
                 "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/783"
               }
             ],
-            "fused:assetUrl": "",
+            "fused:assetUrl": "fused_uploaded_preview",
             "fused:description": "## Overview\n\nExplore the Crop Data Layer data in hex form\n\nData available on [Source Coop](https://source.coop/repositories/fused/hex/description)."
           },
           "source": "CDL_from_source_coop.py",
