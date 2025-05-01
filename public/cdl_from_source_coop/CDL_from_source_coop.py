@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    crop_value_list: list = [1], # 54 - Tomatoes
+    crop_value_list: list = [54], # 54 - Tomatoes
     cell_to_parent_res: int = 4,
     min_ratio: float = 0, # Filtering any value below this percentage out
     path: str='s3://us-west-2.opendata.source.coop/fused/hex/release_2025_04_beta/cdl/hex7_2020.parquet'
