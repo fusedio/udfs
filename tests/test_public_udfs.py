@@ -1,10 +1,12 @@
 import fused
 import math
+from fused.models.udf import AnyBaseUdf
 import mercantile
 from typing import Any
 import os
 import requests
 import pytest
+import ast
 
 
 UDFS_THAT_ERROR = [
@@ -78,12 +80,39 @@ def test_public_udfs(udf_name: str, udf_url: str):
         udf = fused.load(udf_url)
         metadata = udf.metadata
         udftype = metadata.get("fused:udfType")
+        if udftype == "auto":
+            udftype = _infer_udf_type_from_code(udf)
         if udftype in ["vector_tile", "raster"]:
             x, y, z = get_bbox_for_udf(metadata)
             fused.run(udf, x=x, y=y, z=z, engine="remote", cache_max_age="0s")
-        elif udftype in ["vector_single", "raster_single"]:
+        elif udftype in ["vector_single","raster_single", "vector_single_none"]:
             fused.run(udf, engine="remote", cache_max_age="0s")
         else:
-            return pytest.skip(f"Unsupported UDF type: {udftype}")
+            return pytest.skip("Unable to infer UDF type")
     except Exception as e:
         raise Exception(f"Failed to run {udf_name}: {repr(e)}")
+
+
+def _infer_udf_type_from_code(udf: AnyBaseUdf) -> str:
+    """
+    Infer the UDF type from the code based on whether the entrypoint has bounds as an arg or not
+    """
+    code_str = udf.code
+    entrypoint_name = udf.entrypoint
+    try:
+        tree = ast.parse(code_str)
+        for node in tree.body: # Iterate through top-level nodes only
+            if (
+                isinstance(node, ast.FunctionDef) # is method name
+                and node.name == entrypoint_name # method name matches entrypoint
+                and len(node.decorator_list) >0 # has some (fused) decorator
+            ):
+                # Check positional and keyword-only arguments
+                all_args = node.args.args + node.args.kwonlyargs
+                for arg in all_args:
+                    if arg.arg == 'bounds':
+                        return "vector_single"
+                return "vector_single_none"
+    except SyntaxError as e:
+        print(f"Error parsing UDF code: {e}")
+    return "auto" # Indicate parsing failed
