@@ -7,6 +7,7 @@ def udf(bounds: fused.types.Bounds=None):
     # convert bounds to tile
     utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
     tile = utils.get_tiles(bounds)
+    zoom = tile.iloc[0].z
     
     # This is the line that caculates the resolution based on zoom. You can overide the resolution parameter by hard coding it.
     resolution = max(min(int(6 + (zoom - 10) * (5/9)), 11), 0)

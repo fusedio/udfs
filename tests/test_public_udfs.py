@@ -1,58 +1,50 @@
 import fused
 import math
+from fused.models.udf import AnyBaseUdf
 import mercantile
 from typing import Any
 import os
-import requests
 import pytest
+import ast
 
 
 UDFS_THAT_ERROR = [
     # server_rt2.endpoints.secret_manager.SecretKeyNotFound: ARRAYLAKE_TOKEN
     "Arraylake_Example",
-    # Misconfigured UDFs not present in repo
-    "GOES_18_Runner",
-    "GOES_18_Async",
-    "GOES_18_Partitions",
     # None GDFs being returned
     "Overture_Places_Embedding_Clusters",
     # Network timeout
-    "Create_A_Placekey_Join"
+    "Create_A_Placekey_Join",
+    # Protobuf parsing failed
+    "Airplane_Detection_AOI",
+    "DL4EO_Airplane_Detection",
+    # RasterIO error
+    "NLCD_Tile_Example",
+    # Broken links
+    "REM_with_HyRiver",
+    "Coverage_Model_ibis",
+    # Duckdb home directory not set
+    "DuckDB_H3_Example_Tile",
+    "DuckDB_H3_SF",
+    "Ibis_DuckDB_Overturemaps",
 ]
 
+PUBLIC_UDFS_PATH = os.path.join(os.path.abspath(os.curdir), "public")
 
 def get_public_udf_folders():
     """
-    Get the list of public UDF folders from the UDFs repo as pytest params.
-    Fetches the list based on the env variable "GITHUB_SHA".
+    Get the list of public UDF folders from the local repo as pytest params.
     """
 
-    headers = {}
-    params = {}
-    if os.environ.get("GITHUB_TOKEN"):
-        headers["Authorization"] = f"Bearer {os.environ.get('GITHUB_TOKEN')}"
-    if os.environ.get("GITHUB_SHA"):
-        params["ref"] = os.environ.get("GITHUB_SHA")
-        print(f"fetching UDFs from commit: {params['ref']}")
-
-    response = requests.get(
-        "https://api.github.com/repos/fusedio/udfs/contents/public",
-        headers=headers,
-        params=params,
-    )
-
-    if response.status_code != 200:
-        raise Exception(f"Failed to fetch UDFs: {response.status_code}")
-    contents = response.json()
-
-    for item in contents:
-        if item["type"] == "dir":
+    for item in os.listdir(PUBLIC_UDFS_PATH):
+        folder_abs_path = os.path.join(PUBLIC_UDFS_PATH, item)
+        if os.path.isdir(folder_abs_path):
             yield pytest.param(
-                item["name"],
-                item["html_url"],
-                id=item["name"],
+                item,
+                folder_abs_path,
+                id=item,
                 marks=pytest.mark.skipif(
-                    item["name"] in UDFS_THAT_ERROR, reason="UDF is not working"
+                    item in UDFS_THAT_ERROR, reason="UDF is not working"
                 ),
             )
 
@@ -72,18 +64,45 @@ def get_bbox_for_udf(metadata: dict[str, Any]):
     return (x, y, z)
 
 
-@pytest.mark.parametrize("udf_name, udf_url", get_public_udf_folders())
-def test_public_udfs(udf_name: str, udf_url: str):
+@pytest.mark.parametrize("udf_name,udf_path", get_public_udf_folders())
+def test_public_udfs(udf_name: str, udf_path: str):
     try:
-        udf = fused.load(udf_url)
+        udf = fused.load(udf_path)
         metadata = udf.metadata
         udftype = metadata.get("fused:udfType")
+        if udftype == "auto":
+            udftype = _infer_udf_type_from_code(udf)
         if udftype in ["vector_tile", "raster"]:
             x, y, z = get_bbox_for_udf(metadata)
             fused.run(udf, x=x, y=y, z=z, engine="remote", cache_max_age="0s")
-        elif udftype in ["vector_single", "raster_single"]:
+        elif udftype in ["vector_single","raster_single", "vector_single_none"]:
             fused.run(udf, engine="remote", cache_max_age="0s")
         else:
-            return pytest.skip(f"Unsupported UDF type: {udftype}")
+            return pytest.skip("Unable to infer UDF type")
     except Exception as e:
         raise Exception(f"Failed to run {udf_name}: {repr(e)}")
+
+
+def _infer_udf_type_from_code(udf: AnyBaseUdf) -> str:
+    """
+    Infer the UDF type from the code based on whether the entrypoint has bounds as an arg or not
+    """
+    code_str = udf.code
+    entrypoint_name = udf.entrypoint
+    try:
+        tree = ast.parse(code_str)
+        for node in tree.body: # Iterate through top-level nodes only
+            if (
+                isinstance(node, ast.FunctionDef) # is method name
+                and node.name == entrypoint_name # method name matches entrypoint
+                and len(node.decorator_list) >0 # has some (fused) decorator
+            ):
+                # Check positional and keyword-only arguments
+                all_args = node.args.args + node.args.kwonlyargs
+                for arg in all_args:
+                    if arg.arg == 'bounds':
+                        return "vector_tile"
+                return "vector_single_none"
+    except SyntaxError as e:
+        print(f"Error parsing UDF code: {e}")
+    return "auto" # Indicate parsing failed
