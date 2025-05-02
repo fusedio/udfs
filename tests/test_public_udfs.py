@@ -72,7 +72,6 @@ def test_public_udfs(udf_name: str, udf_path: str):
         udftype = metadata.get("fused:udfType")
         if udftype == "auto":
             udftype = _infer_udf_type_from_code(udf)
-            print(f"Inferred UDF type: {udftype} for {udf_name}")
         if udftype in ["vector_tile", "raster"]:
             x, y, z = get_bbox_for_udf(metadata)
             fused.run(udf, x=x, y=y, z=z, engine="remote", cache_max_age="0s")
@@ -102,7 +101,7 @@ def _infer_udf_type_from_code(udf: AnyBaseUdf) -> str:
                 all_args = node.args.args + node.args.kwonlyargs
                 for arg in all_args:
                     if arg.arg == 'bounds':
-                        return "vector_single"
+                        return "vector_tile"
                 return "vector_single_none"
     except SyntaxError as e:
         print(f"Error parsing UDF code: {e}")
