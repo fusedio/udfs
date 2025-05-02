@@ -17,6 +17,7 @@ UDFS_THAT_ERROR = [
     "Create_A_Placekey_Join",
     # Protobuf parsing failed
     "Airplane_Detection_AOI",
+    "DL4EO_Airplane_Detection",
     # RasterIO error
     "NLCD_Tile_Example",
     # Broken links
@@ -25,7 +26,6 @@ UDFS_THAT_ERROR = [
     # Duckdb home directory not set
     "DuckDB_H3_Example_Tile",
     "DuckDB_H3_SF",
-    # Lots of errors
     "Ibis_DuckDB_Overturemaps",
 ]
 
