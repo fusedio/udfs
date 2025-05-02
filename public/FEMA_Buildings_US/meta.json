@@ -47,7 +47,7 @@
                 }
               }
             },
-            "fused:udfType": "auto",
+            "fused:udfType": "vector_tile",
             "fused:slug": "FEMA_Buildings_US",
             "fused:name": "FEMA_Buildings_US",
             "fused:id": null,
