@@ -387,8 +387,16 @@ def pointify(lines, point_distance, segment_col='segment_id'):
     points_gdf = gpd.GeoDataFrame(points_list, crs=lines.crs)
     return points_gdf.to_crs(crs_orig)
 
-def chunkify(lst, chunk_size):
-    return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
+def chunkify(lst, chunk_size=None, n_chunks=None):
+    if (chunk_size is not None) and (n_chunks is not None):
+        raise ValueError("Specify only one of chunk_size or n_chunks, not both.")
+    if chunk_size is not None:
+        return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
+    if n_chunks is not None:
+        k, m = divmod(len(lst), n_chunks)
+        return [lst[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n_chunks)]
+    raise ValueError("You must provide either chunk_size or n_chunks.")
+
 
 @fused.cache
 def get_meta_chunk_datestr(base_path, total_row_groups=52, start_year=2020, end_year=2024, n_chunks_row_group=2, n_chunks_datestr=90,):
