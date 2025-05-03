@@ -105,6 +105,12 @@ def file_exists(path, verbose=True):
             print(f'{path=} exists locally.')
         return exists
 
+@fused.cache
+def get_crs(path):
+    import rasterio
+    with rasterio.open(path) as src:
+        return src.crs
+
 @fused.cache(cache_max_age='30d')
 def bounds_to_file_chunk(bounds:list=[-180, -90, 180, 90], target_num_files: int = 64, target_num_file_chunks: int = 64):
     import pandas as pd
