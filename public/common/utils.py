@@ -3152,7 +3152,7 @@ def get_tiles(
             print(to_gdf((0,0,0)))
         gdf = to_gdf((tile.x, tile.y, tile.z))
     else:
-        if equator_crossing and target_num_tiles == 1:
+        if target_num_tiles == 1 and equator_crossing:
             base_zoom = estimate_zoom(bounds, target_num_tiles=1)
             zoom_level = base_zoom + 1
         else:
