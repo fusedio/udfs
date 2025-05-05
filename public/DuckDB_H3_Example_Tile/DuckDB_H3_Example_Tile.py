@@ -1,16 +1,12 @@
+common = fused.load("https://github.com/fusedio/udfs/tree/4d5ec01/public/common/").utils
+
 @fused.udf
 def udf(bounds: fused.types.Bounds = None, resolution: int = 11, min_count: int = 10):
-    import duckdb
     import shapely
     import geopandas as gpd
 
-    utils = fused.load("https://github.com/fusedio/udfs/tree/f928ee1/public/common/").utils
-    h3_utils = fused.load("https://github.com/fusedio/udfs/tree/870e162/public/DuckDB_H3_Example/").utils
-    con = duckdb.connect()
-
-    h3_utils.load_h3_duckdb(con)
-    con.sql(f"""INSTALL httpfs; LOAD httpfs;""")
-
+    con = common.duckdb_connect()
+    
     @fused.cache
     def read_data(url, resolution, min_count, bounds):
         xmin, ymin, xmax, ymax = bounds
