@@ -105,6 +105,26 @@ def file_exists(path, verbose=True):
             print(f'{path=} exists locally.')
         return exists
 
+def unzip_file(zip_path_str):
+    import zipfile
+    from pathlib import Path
+    zip_path = Path(zip_path_str)
+    extract_dir = zip_path.parent
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall(extract_dir)
+        extracted_files = zip_ref.namelist()
+
+    print(f"Extracted files: {extract_dir}")
+    for f in extracted_files:
+        full_path = extract_dir / f
+        if full_path.exists():
+            stat = full_path.stat()
+            size_kb = stat.st_size / 1024
+            print(f"{full_path.name:50} {size_kb:10.1f} KB")
+        else:
+            print(f"{full_path.name:50} <not found>")
+
+
 @fused.cache
 def get_crs(path):
     import rasterio
