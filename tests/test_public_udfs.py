@@ -11,9 +11,8 @@ import ast
 UDFS_THAT_ERROR = [
     # server_rt2.endpoints.secret_manager.SecretKeyNotFound: ARRAYLAKE_TOKEN
     "Arraylake_Example",
-    # None GDFs being returned
-    "Overture_Places_Embedding_Clusters",
     # Network timeout
+    "Overture_Places_Embedding_Clusters",
     "Create_A_Placekey_Join",
     # Protobuf parsing failed
     "Airplane_Detection_AOI",
@@ -24,8 +23,6 @@ UDFS_THAT_ERROR = [
     "REM_with_HyRiver",
     "Coverage_Model_ibis",
     # Duckdb home directory not set
-    "DuckDB_H3_Example_Tile",
-    "DuckDB_H3_SF",
     "Ibis_DuckDB_Overturemaps",
 ]
 

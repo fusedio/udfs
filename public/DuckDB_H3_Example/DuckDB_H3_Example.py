@@ -1,18 +1,13 @@
 # Note: This UDF is only for demo purposes. You may get `HTTP GET error` after several times calling it. This is the data retrieval issue caused by Cloudfront servers not responding.
 @fused.udf
 def udf(bounds: fused.types.Bounds = None, resolution: int = 9, min_count: int = 10):
-    import duckdb
-    from utils import duckdb_with_h3
+
     import shapely
     import geopandas as gpd
 
-    utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
-    ).utils
-    con = duckdb_with_h3()
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/3569595/public/common/").utils
+    con = common_utils.duckdb_connect()
 
-    con.sql("INSTALL httpfs; LOAD httpfs;")
-    
     @fused.cache
     def read_data(url, resolution, min_count):
         df = con.sql("""
