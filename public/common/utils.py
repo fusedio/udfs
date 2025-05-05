@@ -3133,7 +3133,11 @@ def get_tiles(
         if verbose:
             print("Warning: Empty or invalid bounds provided")
         return gpd.GeoDataFrame(columns=["geometry", "x", "y", "z"])
-    
+
+    #checking if the bounds is crossing equator 
+    minx, miny, maxx, maxy = bounds.total_bounds
+    equator_crossing = (miny < 0 and maxy > 0)
+
     if zoom is not None:
         if verbose: 
             print("zoom is provided; target_num_tiles will be ignored.")
@@ -3142,18 +3146,21 @@ def get_tiles(
     if target_num_tiles is not None and target_num_tiles < 1:
         raise ValueError("target_num_tiles should be more than zero.")
 
-    if target_num_tiles == 1:
-        
+    if target_num_tiles == 1 and not equator_crossing:
         tile = mercantile.bounding_tile(*bounds.total_bounds)
         if verbose: 
             print(to_gdf((0,0,0)))
         gdf = to_gdf((tile.x, tile.y, tile.z))
     else:
-        zoom_level = (
-            zoom
-            if zoom is not None
-            else estimate_zoom(bounds, target_num_tiles=target_num_tiles)
-        )
+        if equator_crossing and target_num_tiles == 1:
+            base_zoom = estimate_zoom(bounds, target_num_tiles=1)
+            zoom_level = base_zoom + 1
+        else:
+            zoom_level = (
+                zoom
+                if zoom is not None
+                else estimate_zoom(bounds, target_num_tiles=target_num_tiles)
+            )
         base_zoom = estimate_zoom(bounds, target_num_tiles=1)
         if zoom_level > (base_zoom + max_tile_recursion + 1):
             zoom_level = base_zoom + max_tile_recursion + 1
