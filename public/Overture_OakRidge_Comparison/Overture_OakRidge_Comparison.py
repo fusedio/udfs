@@ -8,10 +8,8 @@ def udf(
     import geopandas as gpd
 
     # Load pinned versions of utility functions.
-    overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/d0e8eb0/public/common/").utils
-    # convert bounds to tile
-    tile = common_utils.get_tiles(bounds)
+    overture_utils = fused.load("https://github.com/fusedio/udfs/tree/2f138dd/public/Overture_Maps_Example/").utils
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f138dd/public/common/").utils
 
 
     conn = common_utils.duckdb_connect()
@@ -24,7 +22,7 @@ def udf(
         metric = 'combined_source'
 
     # 1. Load Overture Buildings
-    gdf_overture = overture_utils.get_overture(bounds=tile)
+    gdf_overture = overture_utils.get_overture(bounds=bounds)
 
     # 2. Load Oak Ridge Buildings
     gdf_oakridge = common_utils.table_to_tile(
