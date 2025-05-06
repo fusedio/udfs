@@ -1,11 +1,12 @@
+common = fused.load("https://github.com/fusedio/udfs/tree/3569595/public/common/").utils
+
 @fused.udf
 def udf(bounds: fused.types.Bounds = None, resolution: int = 11, min_count: int = 10):
     import shapely
     import geopandas as gpd
 
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/3569595/public/common/").utils
-    con = common_utils.duckdb_connect()
-
+    con = common.duckdb_connect()
+    
     @fused.cache
     def read_data(url, resolution, min_count, bounds):
         xmin, ymin, xmax, ymax = bounds

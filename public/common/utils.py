@@ -105,6 +105,30 @@ def file_exists(path, verbose=True):
             print(f'{path=} exists locally.')
         return exists
 
+def encode_metadata_fused(fused_metadata: pd.DataFrame) -> bytes:
+    import base64
+    from io import BytesIO
+    with BytesIO() as bio:
+        fused_metadata.to_parquet(bio, index=False)
+        fused_metadata_bytes = bio.getvalue()
+
+    return base64.b64encode(fused_metadata_bytes)
+
+def create_sample_file(df_meta, file_path):
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    fused_metadata_b64 = encode_metadata_fused(df_meta)
+
+    table = pa.table({})
+    meta = {}
+    meta[b"fused:format_version"] = b"5"
+    meta[b"fused:_metadata"] = fused_metadata_b64
+    pq.write_table(
+        table.replace_schema_metadata(meta),
+        file_path,
+    )
+    return f"{file_path} written!"
+
 def unzip_file(zip_path_str):
     import zipfile
     from pathlib import Path
