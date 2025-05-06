@@ -1,6 +1,6 @@
 def df_to_hex(df, data_cols=['data'], h3_size=9, hex_col='hex', latlng_col=['lat','lng'], ordered=False, return_avg_lalng=True):
     duckdb_connect = fused.load(
-            "https://github.com/fusedio/udfs/tree/a1c01c6/public/common/"
+            "https://github.com/fusedio/udfs/tree/3569595/public/common/"
         ).utils.duckdb_connect
     agg_term = ', '.join([f'ARRAY_AGG({col}) as agg_{col}' for col in data_cols])
     if return_avg_lalng:

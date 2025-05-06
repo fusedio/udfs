@@ -1,4 +1,4 @@
-common = fused.load("https://github.com/fusedio/udfs/tree/4d5ec01/public/common/").utils
+common = fused.load("https://github.com/fusedio/udfs/tree/3569595/public/common/").utils
 
 @fused.udf
 def udf(bounds: fused.types.Bounds = None, resolution: int = 11, min_count: int = 10):
