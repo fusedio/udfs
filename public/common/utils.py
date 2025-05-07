@@ -54,6 +54,24 @@ def jam_lock(lock_second=1, verbose=False):
         else:
             open(lock_file, 'x').close()  
 
+
+def get_jobs_status(jobs, wait=True, sleep_seconds=3):
+    from datetime import datetime
+    s=datetime.now()
+    import pandas as pd
+    df = pd.DataFrame([i.job_id for i in jobs], columns=['job_id'])
+    def get_status(job_id):
+        return fused.api.job_get_status(job_id).status
+    df['status'] = df.job_id.map(get_status)
+    not_done=wait
+    while not_done:
+        import time
+        time.sleep(sleep_seconds)
+        df['status'] = df.apply(lambda row: 'terminated' if row.status in ['shutting-down','terminated'] else get_status(row.job_id) ,1)
+        not_done=(df.status=='terminated').mean()<1
+        print(f'\r{df.status.value_counts().to_dict()} | elapsed time: {datetime.now() - s}', end='', flush=True)
+    return df
+    
 def file_exists(path, verbose=True):
     """
     Check if a file exists based on the path type:
