@@ -71,6 +71,8 @@ def get_jobs_status(jobs, wait=True, sleep_seconds=3):
         not_done=(df.status=='terminated').mean()<1
         print(f'\r{df.status.value_counts().to_dict()} | elapsed time: {datetime.now() - s}', end='', flush=True)
     return df
+def get_s3_size(file_path):
+    return sum([i.size for i in fused.api.list(file_path, details=1) if i.size])/10**9
     
 def file_exists(path, verbose=True):
     """
