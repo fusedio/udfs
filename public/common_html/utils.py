@@ -1,6 +1,3 @@
-common = fused.load("https://github.com/fusedio/udfs/tree/1ed3d54/public/common/").utils
-pdf_to_html = fused.load("https://github.com/fusedlabs/fusedudfs/tree/7cc3899/html_to_pdf/").pdf_to_html
-
 def pdf_to_obj(pdf):
     return common.html_to_obj(pdf_to_html(pdf))
 
