@@ -347,6 +347,29 @@ def format_table_html(df, width="100%", title=None, max_rows=None):
     html_parts.append('</tbody></table></div>')
     return ''.join(html_parts)
 
+def pdf_to_html(pdf):
+    import io
+    import base64
+
+    if isinstance(pdf, io.BytesIO):
+        pdf_buffer = pdf
+    elif str(pdf)[:4] in (["s3:/", "http"]):
+        pdf = fused.download(pdf, pdf)
+        print(pdf)
+        with open(pdf, "rb") as f:
+            pdf_buffer = io.BytesIO(f.read())
+    else:
+        with open(pdf, "rb") as f:
+            pdf_buffer = io.BytesIO(f.read())
+
+    pdf_base64 = base64.b64encode(pdf_buffer.getvalue()).decode("utf-8")
+    html_str = f"""<!DOCTYPE html><html>
+    <title>Embedded PDF</title><style> .pdf-container {{ width: 100%; height: 100vh; }}</style><body>
+    <div class="pdf-container">
+        <object data="data:application/pdf;base64,{pdf_base64}" type="application/pdf" width="100%" height="100%">
+        </object></div></html>"""
+    return html_str
+
 def process_default(base_url):
     """Default processing for unknown formats - HTML only"""
     html_url = f"{base_url}&dtype_out_vector=html"
