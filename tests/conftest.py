@@ -40,7 +40,7 @@ def sample_geodataframe():
     return gpd.GeoDataFrame(
         pd.DataFrame(
             {
-                "data": pd.Series([1, 2, 3], dtype="int32"),
+                "data": pd.Series([1, 2, 3], dtype="int64"),
                 # geopandas converts column to int32 after reading from file
                 # test will fail if column is not int32
             }
