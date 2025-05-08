@@ -72,8 +72,7 @@ def create_cog(
             "BIGTIFF=YES",
         ],
     }
-    # print(srcNodata)
-    # print(out_nodata_value)
+
     # Use gdal.Warp to handle both reprojection and COG creation
     result = gdal.Warp(output_path, input_path, **warp_options)
 

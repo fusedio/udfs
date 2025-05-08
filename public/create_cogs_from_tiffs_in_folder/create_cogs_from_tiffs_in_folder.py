@@ -3,7 +3,9 @@ def create_cog_from_file(input_path: str = "download_test/5527-11.tif"):
     import pandas as pd
     from utils import create_cog
 
-    common = fused.utils.common
+    common = fused.load(
+        "https://github.com/fusedio/udfs/tree/b41216d/public/common/"
+    ).utils
 
     input_path = fused.file_path(input_path)
     output_path = input_path.replace(".tif", "_cog.tif")
