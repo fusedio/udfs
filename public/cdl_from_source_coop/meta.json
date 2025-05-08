@@ -21,7 +21,7 @@
               },
               "hexLayer": {
                 "@@type": "H3HexagonLayer",
-                "stroked": true,
+                "stroked": false,
                 "filled": true,
                 "pickable": true,
                 "extruded": false,
@@ -256,7 +256,7 @@
               }
             ],
             "fused:assetUrl": "fused_uploaded_preview",
-            "fused:description": "## Overview\n\nExplore the Crop Data Layer data in hex form\n\nData available on [Source Coop](https://source.coop/repositories/fused/hex/description)."
+            "fused:description": "## Overview\n\nExplore the Crop Data Layer data in hex form\n\nData available on [Source Coop](https://source.coop/repositories/fused/hex/description).\n"
           },
           "source": "CDL_from_source_coop.py",
           "headers": []
