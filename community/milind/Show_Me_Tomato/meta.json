@@ -61,7 +61,7 @@
             "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/942f6e7/cdl_from_source_coop/",
             "fused:gitPath": "cdl_from_source_coop",
             "fused:gitRef": "942f6e7e73ebfd06f0205b515c6a0ea3b2d76408",
-            "fused:description": "Exported from Fused UDF Workbench\n\n",
+            "fused:description": "This UDF can convert natural language queries to Parameters using RAG (Retrieval-Augmented Generation) and filter out the cdl dataset based on the best matching result using OpenAI Embeddings \n\n",
             "fused:gitAuthorNames": [
               null
             ],
@@ -75,7 +75,29 @@
               "https://avatars.githubusercontent.com/in/885821?v=4"
             ],
             "fused:gitLastModified": "2025-04-30T12:42:28+00:00",
-            "fused:gitRepo": "fusedlabs/fusedudfs"
+            "fused:gitRepo": "fusedlabs/fusedudfs",
+            "fused:assetUrl": "fused_uploaded_preview",
+            "fused:tags": [
+              {
+                "id": "rag",
+                "label": "rag",
+                "isCreatable": true
+              },
+              {
+                "id": "llm",
+                "label": "llm",
+                "isCreatable": true
+              },
+              {
+                "id": "openai",
+                "label": "openai",
+                "isCreatable": true
+              },
+              {
+                "id": "cdl",
+                "label": "cdl"
+              }
+            ]
           },
           "source": "Show_Me_Tomato.py",
           "headers": []
