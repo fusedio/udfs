@@ -1,0 +1,87 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Show_Me_Tomato",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "hexLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "extruded": false,
+                "opacity": 1,
+                "coverage": 0.9,
+                "lineWidthMinPixels": 1,
+                "getHexagon": "@@=properties.hex",
+                "getFillColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "area",
+                  "domain": [
+                    500000,
+                    0
+                  ],
+                  "steps": 20,
+                  "colors": "PinkYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "value",
+                  "present": "@@=properties.value",
+                  "absent": 1
+                },
+                "elevationScale": 10
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Show_Me_Tomato",
+            "fused:name": "Show_Me_Tomato",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/942f6e7e73ebfd06f0205b515c6a0ea3b2d76408/cdl_from_source_coop/",
+            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/942f6e7/cdl_from_source_coop/",
+            "fused:gitPath": "cdl_from_source_coop",
+            "fused:gitRef": "942f6e7e73ebfd06f0205b515c6a0ea3b2d76408",
+            "fused:description": "Exported from Fused UDF Workbench\n\n",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "fused-io-staging[bot]"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/apps/fused-io-staging"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/in/885821?v=4"
+            ],
+            "fused:gitLastModified": "2025-04-30T12:42:28+00:00",
+            "fused:gitRepo": "fusedlabs/fusedudfs"
+          },
+          "source": "Show_Me_Tomato.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
