@@ -6,16 +6,15 @@ def udf(
         -125.82165127797666,21.313670812049978,-65.62955940309448,52.58604956417555
     ], # Default to global contentinal US (without Alaska)
     vals: list = [111], # 111 - Water bodies
-    year: int = 2024,
 ):
-    path = f"s3://fused-users/fused/asset/CDL_h12k1p1/year={str(year)}/"
+    # Only contains 2024 for now
+    path = "s3://fused-asset/data/cdls/public_demo_2024/"
 
     hex_res = 5 # overwriting for visual
     df = read_hex_table(hex_res, bounds, path)
     df = df[df["data"].isin(vals)]
 
     return df
-
 
 def bounds_to_res(bounds, res_offset=0, max_res=11, min_res=3):
     z = common.estimate_zoom(bounds)
