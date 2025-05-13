@@ -16,7 +16,7 @@ def udf(target_gdf: gpd.GeoDataFrame = j, zoom: int=17):
 
     # Tile the AOI
     bounds = target_gdf.total_bounds
-    gdf_tiles = make_tiles_gdf(bounds,zoom = zoom)
+    gdf_tiles = make_tiles_gdf(bounds, zoom = zoom)
 
     # Structure array of tile GeoDataFrames 
     list_of_tile_gdfs = [gpd.GeoDataFrame(row.to_frame().T) for _, row in gdf_tiles.iterrows()]
