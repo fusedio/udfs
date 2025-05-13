@@ -1,7 +1,7 @@
 @fused.udf
 def udf(
-    crop_value_list: list = [111], # 54 - Tomatoes
-    cell_to_parent_res: int = 9,
+    crop_value_list: list = [54], # 54 - Tomatoes
+    cell_to_parent_res: int = 5,
     min_ratio: float = 0, # Filtering any value below this percentage out
     year: int = 2024,
 ):
@@ -34,8 +34,6 @@ def udf(
         s3_resolution = 8
         
     path = f's3://us-west-2.opendata.source.coop/fused/hex/release_2025_04_beta/cdl/hex{s3_resolution}_{year}.parquet'
-    print(f"{s3_resolution=}")
-    print(f"{path=}")
 
     @fused.cache
     def get_hex_data(qr_hex, path):
@@ -54,6 +52,5 @@ def udf(
 
     df2 = df2[df2['value'].isin(crop_value_list)]
     df2 = df2[df2['pct']>100*min_ratio]
-    print(f"{df2.shape=}")
-    return
-    # return df2
+
+    return df2
