@@ -39,6 +39,7 @@ def udf(
 common = fused.load("https://github.com/fusedio/udfs/tree/a18669/public/common/").utils
 
 
+@fused.cache
 def crop_to_int(crop_type, verbose=True):
     import pandas as pd
     import requests
@@ -51,6 +52,16 @@ def crop_to_int(crop_type, verbose=True):
         print(f"{df_meta_masked=}")
         print("crop type options", df_meta.description.values)
     return df_meta_masked.value.values
+
+
+@fused.cache
+def int_to_crop(val):
+    import requests
+    import pandas as pd
+
+    url = "https://storage.googleapis.com/earthengine-stac/catalog/USDA/USDA_NASS_CDL.json"
+    df_meta = pd.DataFrame(requests.get(url).json()["summaries"]["eo:bands"][0]["gee:classes"]).set_index("value")
+    return df_meta.loc[val].description
 
 
 def filter_crops(arr, crop_type, verbose=True):
