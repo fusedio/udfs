@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "Flood_Risk_Analysis",
+          "name": "Flood_Risk_Analysis_v2",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -60,8 +60,8 @@
               }
             },
             "fused:udfType": "raster",
-            "fused:slug": "Flood_Risk_Analysis",
-            "fused:name": "Flood_Risk_Analysis",
+            "fused:slug": "Flood_Risk_Analysis_v2 ",
+            "fused:name": "Flood_Risk_Analysis_v2",
             "fused:id": null,
             "fused:defaultViewState": {
               "enable": true,
@@ -72,7 +72,7 @@
               "bearing": 0
             },
             "fused:gitUrl": "https://github.com/fusedio/udfs/tree/5b17f579e7154f85b6ae628b8ced5ee83b413611/public/LULC_Tile_Example/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/5b17f57/public/LULC_Tile_Example/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/5b17f57/public/LULC_Tile_Example_v2/",
             "fused:gitPath": "public/LULC_Tile_Example",
             "fused:gitRef": "5b17f579e7154f85b6ae628b8ced5ee83b413611",
             "fused:gitAuthorNames": [
@@ -103,7 +103,7 @@
             "fused:explorerTab": "public",
             "fused:gitRepo": "fusedio/udfs"
           },
-          "source": "Flood_Risk_Analysis.py",
+          "source": "Flood_Risk_Analysis_v2.py",
           "headers": [
             {
               "module_name": "utils",
