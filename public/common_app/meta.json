@@ -1,0 +1,70 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "common_app",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:description": "## Overview\n\nThis UDF contains common utils that are being used for many public udfs.\n\n\nTo import common utils in your udf run the following command:\n\n`common = fused.load('UDF_common_app')`\n",
+            "fused:assetUrl": "fused_uploaded_preview",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "Sunset",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "common_app",
+            "fused:name": "common_app",
+            "fused:id": null
+          },
+          "source": "common_app.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
