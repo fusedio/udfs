@@ -3,7 +3,7 @@ def udf(
     crop_value_list: list = [54], # 54 - Tomatoes
     cell_to_parent_res: int = 5,
     min_ratio: float = 0, # Filtering any value below this percentage out
-    path: str='s3://us-west-2.opendata.source.coop/fused/hex/release_2025_04_beta/cdl/hex8_2020.parquet'
+    year: int = 2024,
 ):
     """
     Load Hex data from fused-partitioned datasets hosted on source.coop
@@ -14,16 +14,26 @@ def udf(
             Metadata details: https://www.nass.usda.gov/Research_and_Science/Cropland/metadata/metadata_CDL24_FGDC-STD-001-1998.htm
         - cell_to_parent_res: Desired output Hex cell resolution
         - min_ratio: any percentage of crop below this value will be filtered out
-        - path: Path to S3 bucket
+        - year: Year to display data from (only supports available years from data on Source Coop: 2012, 2014, 2016, 2018, 2020, 2022, 2024)
     """
 
     # Loading common Fused helper functions to setup DuckDB in this UDF
     common = fused.load("https://github.com/fusedio/udfs/tree/f5cf238/public/common/").utils
     con = common.duckdb_connect()
-    if cell_to_parent_res < 8:
+
+    # Default to using the low resolution version first
+    s3_resolution = 7
+    qr_hex = 'hex'
+    
+    if cell_to_parent_res < 7:
         qr_hex=f'h3_cell_to_parent(hex, {cell_to_parent_res})' 
-    else:
-        qr_hex = 'hex'
+    elif cell_to_parent_res == 8:
+        s3_resolution = 8
+    elif cell_to_parent_res >= 8:
+        print("Any resolution above 8 isn't currently supported. Defaulting to hex8 dataset...")
+        s3_resolution = 8
+        
+    path = f's3://us-west-2.opendata.source.coop/fused/hex/release_2025_04_beta/cdl/hex{s3_resolution}_{year}.parquet'
 
     @fused.cache
     def get_hex_data(qr_hex, path):
@@ -42,5 +52,5 @@ def udf(
 
     df2 = df2[df2['value'].isin(crop_value_list)]
     df2 = df2[df2['pct']>100*min_ratio]
-    print(f"{df2.shape=}")
+
     return df2
