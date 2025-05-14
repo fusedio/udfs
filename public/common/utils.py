@@ -3161,7 +3161,7 @@ def estimate_zoom(bounds, target_num_tiles=1):
 
 
 def get_tiles(
-    bounds=None, target_num_tiles=1, zoom=None, max_tile_recursion=6, as_gdf=True, verbose=False
+    bounds=None, target_num_tiles=1, zoom=None, max_tile_recursion=6, as_gdf=True, clip=False, verbose=False
 ):
     bounds = to_gdf(bounds)
     import mercantile
@@ -3216,7 +3216,10 @@ def get_tiles(
         if verbose: 
             print(f"Generated {len(gdf)} tiles at zoom level {zoom_level}")
 
-    return gdf if as_gdf else gdf[["x", "y", "z"]].values
+    if clip:
+        return gdf.clip(bounds) if as_gdf else gdf[["x", "y", "z"]].values
+    else:
+        return gdf if as_gdf else gdf[["x", "y", "z"]].values
 
 def get_utm_epsg(geometry):
     utm_zone = int((geometry.centroid.x + 180) / 6) + 1
