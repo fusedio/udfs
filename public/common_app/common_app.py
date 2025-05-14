@@ -1,21 +1,27 @@
-
 @fused.udf
 def udf():
     """common utils for Fused App. Please do not run this as UDF."""
-    return 
+    return
 
-async def async_button(label, spinner):
-        import streamlit as st    
-        import asyncio
-    
-        status = st.empty()
-        if st.button(label): 
-            with status.status(spinner, expanded=False):
-                await asyncio.sleep(0.0025)
-            status.empty() 
-            return True
+
+async def async_button(button_label, status_label, st_button=None, st_status=None, end_label=None):
+    import streamlit as st
+    import asyncio
+
+    if not st_button:
+        st_button = st.empty()
+    if not st_status:
+        st_status = st.empty()
+    if st_button.button(button_label):
+        with st_status.status(status_label, expanded=False):
+            await asyncio.sleep(0.0025)
+        if end_label:
+            with st_status.status(f'{end_label}', expanded=False):
+                return True
         else:
-            return False
+            st_status.empty()
+    else:
+        return False
 
 
 def to_sync(fn, *args, _wait_second=0.1, **kwargs):
