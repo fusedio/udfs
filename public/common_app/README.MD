@@ -1,5 +1,5 @@
 <!--fused:preview-->
-<p align="center"><img src="https://fused-image-assets.s3.amazonaws.com/ca71302e-f9ce-429d-8dd4-f7cbd3e56c73/thumbnail" width="600" alt="UDF preview image"></p>
+<p align="center"><img src="fused_uploaded_preview" width="600" alt="UDF preview image"></p>
 
 <!--fused:readme-->
 ## Overview
