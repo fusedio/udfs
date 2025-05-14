@@ -4,7 +4,7 @@ def udf():
     return
 
 
-async def async_status(status_label, end_label=None, st_status=None):
+async def async_status(status_label="Running...", end_label=None, st_status=None):
     import streamlit as st
     import asyncio
 
@@ -17,7 +17,6 @@ async def async_status(status_label, end_label=None, st_status=None):
             pass
     else:
         st_status.empty()
-    return True
 
 
 async def async_button(button_label, status_label, end_label=None, st_button=None, st_status=None):
