@@ -17,9 +17,10 @@ async def async_button(button_label, status_label, st_button=None, st_status=Non
             await asyncio.sleep(0.0025)
         if end_label:
             with st_status.status(f'{end_label}', expanded=False):
-                return True
+                pass
         else:
             st_status.empty()
+        return True
     else:
         return False
 
