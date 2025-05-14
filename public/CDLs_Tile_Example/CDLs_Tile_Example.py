@@ -1,12 +1,13 @@
+common = fused.load("https://github.com/fusedio/udfs/tree/b3a7ff8/public/common/").utils
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds = None, year: int = 2024, crop_type: str = "", chip_len: int = 256, colored: bool = True
+    bounds: fused.types.Bounds = [-121.525, 37.70, -120.96, 38.06], year: int = 2024, crop_type: str = "", chip_len: int = 256, colored: bool = True
 ):
     """"""
     import numpy as np
 
     # convert bounds to tile
-    tile = common.get_tiles(bounds)
+    tile = common.get_tiles(bounds, clip=True)
 
     input_tiff_path = f"s3://fused-asset/data/cdls/{year}_30m_cdls.tif"
     data = common.read_tiff(
@@ -30,13 +31,9 @@ def udf(
     )
 
     if colored:
-        return colored_array
+        return colored_array, bounds
     else:
-        return array_int
-
-
-# %% utils
-common = fused.load("https://github.com/fusedio/udfs/tree/a18669/public/common/").utils
+        return array_int, bounds
 
 
 @fused.cache
