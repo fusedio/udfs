@@ -73,7 +73,19 @@ def get_jobs_status(jobs, wait=True, sleep_seconds=3):
     return df
 def get_s3_size(file_path):
     return sum([i.size for i in fused.api.list(file_path, details=1) if i.size])/10**9
-    
+
+def s3_tmp_path(path, folder="tmp/new", user_env="fused"):
+    import re
+
+    base_tmp_path = f"s3://fused-users/{user_env}/fused-tmp"
+    fname = path.split("/")[-1]
+    path = "/".join(path.split("/")[:-1])
+    cleaned = re.sub(r"[^a-zA-Z0-9/]", "", path)  # remove non-alphanumeric except /
+    cleaned = cleaned.replace("/", "")  # flatten path
+    folder = folder.strip("/")
+    s3_path = f"{base_tmp_path}/{folder}/{cleaned}/"
+    return s3_path + fname
+
 def file_exists(path, verbose=True):
     """
     Check if a file exists based on the path type:
