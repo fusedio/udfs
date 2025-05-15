@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "LA_PARKING_METER_OCCUPANCY_v2",
+          "name": "LA_PARKING_METER_OCCUPANCY",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -50,8 +50,8 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "LA_PARKING_METER_OCCUPANCY_v2",
-            "fused:name": "LA_PARKING_METER_OCCUPANCY_v2",
+            "fused:slug": "LA_PARKING_METER_OCCUPANCY",
+            "fused:name": "LA_PARKING_METER_OCCUPANCY",
             "fused:id": null,
             "fused:assetUrl": "https://luke2019-eng.github.io/Fused-LA_parking_occupancy/LA_Fused.png",
             "fused:tags": [
@@ -74,7 +74,7 @@
             },
             "fused:defaultParameters": []
           },
-          "source": "LA_PARKING_METER_OCCUPANCY_v2.py",
+          "source": "LA_PARKING_METER_OCCUPANCY.py",
           "headers": [
             {
               "module_name": "utils",
