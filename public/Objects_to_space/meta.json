@@ -14,6 +14,8 @@
           "metadata": {
             "fused:name": "Objects_to_space",
             "fused:slug": "Objects_to_space",
+            "fused:assetUrl": "fused_uploaded_preview",
+            "fused:description": "Who knew natural evolution led to sending things to Space? Turns out we're sending more & more!\n\nThis app visualizes data from Our World In Data",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
