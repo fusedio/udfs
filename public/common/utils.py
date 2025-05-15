@@ -79,7 +79,10 @@ def s3_tmp_path(path, folder="tmp/new", user_env="fused"):
 
     base_tmp_path = f"s3://fused-users/{user_env}/fused-tmp"
     fname = path.split("/")[-1]
-    path = "/".join(path.split("/")[:-1])
+    if '.' in fname:
+        path = "/".join(path.split("/")[:-1])
+    else:
+        fname=''
     cleaned = re.sub(r"[^a-zA-Z0-9/]", "", path)  # remove non-alphanumeric except /
     cleaned = cleaned.replace("/", "")  # flatten path
     folder = folder.strip("/")
