@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "Ibis_DuckDB_Overturemaps_v2",
+          "name": "Ibis_DuckDB_Overturemaps",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -71,12 +71,12 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "Ibis_DuckDB_Overturemaps_v2",
-            "fused:name": "Ibis_DuckDB_Overturemaps_v2",
+            "fused:slug": "Ibis_DuckDB_Overturemaps",
+            "fused:name": "Ibis_DuckDB_Overturemaps",
             "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/f9329bfe9f1f6846ac206746ab55bebaf9a91c78/public/Ibis_DuckDB_Overturemaps_v2/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/f9329bf/public/Ibis_DuckDB_Overturemaps_v2/",
-            "fused:gitPath": "public/Ibis_DuckDB_Overturemaps_v2",
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/f9329bfe9f1f6846ac206746ab55bebaf9a91c78/public/Ibis_DuckDB_Overturemaps/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/f9329bf/public/Ibis_DuckDB_Overturemaps/",
+            "fused:gitPath": "public/Ibis_DuckDB_Overturemaps",
             "fused:gitRef": "f9329bfe9f1f6846ac206746ab55bebaf9a91c78",
             "fused:description": "# Ibis DuckDB Overturemaps v2\n\nThanks to the support for DuckDB geospatial operations in Ibis, we can query the datasets from Overture Maps using Python with the performance of DuckDB without having to write SQL. \n\nUsing Ibis with DuckDB as the backend, this UDF reads the Overture Maps data directly from the source Overture S3 bucket. These queries will only fetch the attributes and rows that meet specified conditions, minimizing how much data is processed. ",
             "fused:gitAuthorNames": [
@@ -96,7 +96,7 @@
             "fused:gitRepo": "fusedio/udfs",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/ibis_overture.png"
           },
-          "source": "Ibis_DuckDB_Overturemaps_v2.py",
+          "source": "Ibis_DuckDB_Overturemaps.py",
           "headers": []
         }
       }
