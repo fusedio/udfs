@@ -50,3 +50,6 @@ year_filtered_data = filtered_data[
 
 # Display the chart with the correct column name "annual_launches"
 st.line_chart(year_filtered_data, x="Year", y="annual_launches", color="Country")
+
+# Add data source attribution
+st.caption("[Data source](https://ourworldindata.org/grapher/yearly-number-of-objects-launched-into-outer-space): Our World in Data - Yearly Number of Objects Launched into Outer Space")

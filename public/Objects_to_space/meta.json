@@ -12,6 +12,8 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
+            "fused:name": "Objects_to_space",
+            "fused:slug": "Objects_to_space",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -54,8 +56,6 @@
               }
             },
             "fused:udfType": "app",
-            "fused:slug": "Objects_to_space",
-            "fused:name": "Objects_to_space",
             "fused:id": null
           },
           "source": "Objects_to_space.py",
