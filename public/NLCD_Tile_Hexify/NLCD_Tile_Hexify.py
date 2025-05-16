@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds, year:int=1985, land_type:str='', chip_len:int=256):
+def udf(bounds: fused.types.Bounds=[-121.673,37.561,-120.778,38.314], year:int=1985, land_type:str='', chip_len:int=256):
     import numpy as np        
     import pandas as pd
     from utils import get_data, arr_to_h3, nlcd_category_dict, rgb_to_hex

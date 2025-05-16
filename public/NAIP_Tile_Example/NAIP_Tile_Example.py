@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds,
+    bounds: fused.types.Bounds = [-122.408,37.781,-122.391,37.796],
     var="NDVI",
     chip_len: int=256,
     buffer_degree=0.000,

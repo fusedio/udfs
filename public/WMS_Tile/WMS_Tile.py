@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds = None,
+    bounds: fused.types.Bounds = [6.581,45.869,10.164,47.573],
     wms_url: str = "https://wms.geo.admin.ch/",
     layer: str = "ch.swisstopo.pixelkarte-farbe",
     width: int = 256,

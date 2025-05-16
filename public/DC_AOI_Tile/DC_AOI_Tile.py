@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds=None, time_of_interest="2021-09-01/2021-12-30", chip_len:int=512, scale:float=0.1):
+def udf(bounds: fused.types.Bounds=[-77.083,38.849,-76.969,38.938], time_of_interest="2021-09-01/2021-12-30", chip_len:int=512, scale:float=0.1):
     import geopandas as gpd
     import shapely
     import pandas as pd

@@ -41,7 +41,7 @@ sentinel_params = json.dumps(
 
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds = None,
+    bounds: fused.types.Bounds = [-122.463,37.755,-122.376,37.803],
     collection_params=sentinel_params,
     chip_len: int = 512,
     how: str = "max",  # median, min. default is max

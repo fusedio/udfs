@@ -2,7 +2,7 @@
 
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds=None,
+    bounds: fused.types.Bounds=[-110.936,31.761,-110.793,31.890],
     acct_serv: str = "wgewneondataexplorer-7cd53ea0f@eminent-tesla-172116.iam.gserviceaccount.com"
 ):
     import ee

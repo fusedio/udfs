@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds,
+    bounds: fused.types.Bounds=[-122.463,37.755,-122.376,37.803],
     provider="AWS",
     time_of_interest="2023-11-01/2023-12-30"
 ):  

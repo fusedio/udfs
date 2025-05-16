@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds,
+    bounds: fused.types.Bounds = [-101.412,35.659,-101.391,35.677],
     cmap_name: str = None,  # 'tab20c'
 ):
     import rasterio

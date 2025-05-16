@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds=None):
+def udf(bounds: fused.types.Bounds=[7.872,46.906,7.886,46.913]):
     import pandas as pd
     import geopandas as gpd
 

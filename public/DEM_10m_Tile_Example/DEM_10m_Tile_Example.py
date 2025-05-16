@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds,
+    bounds: fused.types.Bounds = [-77.606,38.202,-77.373,38.569],
     collection="3dep-seamless",
     band="data",
     res_factor:int=1

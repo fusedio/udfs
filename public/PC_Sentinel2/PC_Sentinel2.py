@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds = None,
+    bounds: fused.types.Bounds = [-74.008,40.684,-73.971,40.713],
     time_of_interest="2020-09-01/2021-10-30",
     collection="sentinel-2-l2a",
 ):

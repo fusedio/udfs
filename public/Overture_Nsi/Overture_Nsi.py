@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds = None, join_with_nsi: bool=True):
+def udf(bounds: fused.types.Bounds = [-123.864,46.175,-123.832,46.199], join_with_nsi: bool=True):
     import geopandas as gpd
     import pandas as pd
     import requests

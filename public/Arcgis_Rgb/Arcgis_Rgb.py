@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds = None):
+def udf(bounds: fused.types.Bounds = [5.494,46.050,15.443,56.132]):
     # Load pinned versions of utility functions.
     utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
     bounds = utils.get_tiles(bounds)

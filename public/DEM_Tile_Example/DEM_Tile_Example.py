@@ -1,5 +1,5 @@
 def udf(
-    bounds: fused.types.Bounds = None,
+    bounds: fused.types.Bounds = [-77.083,38.804,-76.969,38.983],
     provider: str = "AWS"
 ):
     import odc.stac

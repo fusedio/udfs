@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds):
+def udf(bounds: fused.types.Bounds = [-2.997,53.399,-2.975,53.412]):
 
     # convert bounds to tile
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils

@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds,
+def udf(bounds: fused.types.Bounds = [-122.438,37.774,-122.434,37.777],
         dataset1: str = 'home-health-agency-medicare-enrollments',
         dataset2: str = 'national-provider-identifier',
         preview: bool=False):

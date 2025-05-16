@@ -1,6 +1,6 @@
 @fused.udf 
 def udf(
-    bounds: fused.types.Bounds = None,
+    bounds: fused.types.Bounds = [-122.300,37.520,-122.249,37.568],
     h3_res: int=12
 ):
     import h3

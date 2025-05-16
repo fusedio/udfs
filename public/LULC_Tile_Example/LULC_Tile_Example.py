@@ -1,7 +1,7 @@
 import fused
 
 @fused.udf
-def udf(bounds: fused.types.Bounds, year="2022", chip_len:int=256):
+def udf(bounds: fused.types.Bounds = [-122.499,37.707,-122.381,37.808], year="2022", chip_len:int=256):
 
     # Load pinned versions of utility functions.
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils

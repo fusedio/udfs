@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds = None, crs="EPSG:4326", res=7):
+def udf(bounds: fused.types.Bounds = [-113.334,22.124,-76.388,52.627], crs="EPSG:4326", res=7):
     import fused
     import pandas as pd
     import geopandas as gpd

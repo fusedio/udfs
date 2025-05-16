@@ -54,7 +54,7 @@
                 "getFillColor": "@@=[properties.cnt/3+200, properties.cnt/5+50, properties.cnt/20]"
               }
             },
-            "fused:udfType": "vector_single",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "DuckDB_NYC_Example",
             "fused:name": "DuckDB_NYC_Example",
             "fused:id": null,

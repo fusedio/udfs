@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds = None, tech: str = 'Tarana', site_count: int = 1, col_plot: str = 'Rx_dBm'):
+def udf(bounds: fused.types.Bounds = [-122.438,37.774,-122.434,37.777], tech: str = 'Tarana', site_count: int = 1, col_plot: str = 'Rx_dBm'):
     """
     Function to read the data from the fused coverage model
     :param bounds:

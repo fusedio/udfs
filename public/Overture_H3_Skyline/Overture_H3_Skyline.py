@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds = None, h3_size: int = None, h3_scale: int=2):
+def udf(bounds: fused.types.Bounds = [-122.437,37.772,-122.404,37.799], h3_size: int = None, h3_scale: int=2):
     import h3
 
     # Load pinned versions of utility functions.

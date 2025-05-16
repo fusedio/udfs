@@ -17,7 +17,7 @@ wbt_args = {
 min_max = (0, 15)
 
 @fused.udf
-def udf(bounds: fused.types.Bounds, out_tif_name: str ='output', wbt_args: dict = wbt_args, min_max=min_max):
+def udf(bounds: fused.types.Bounds = [-77.595,38.250,-77.383,38.520], out_tif_name: str ='output', wbt_args: dict = wbt_args, min_max=min_max):
     import wbt
     # convert bounds to tile
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils

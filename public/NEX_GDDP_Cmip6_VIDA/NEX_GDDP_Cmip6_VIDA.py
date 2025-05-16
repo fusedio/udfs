@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds = None,
+    bounds: fused.types.Bounds = [44.935,-10.364,106.628,48.359],
     layer: str = "tas",
     time: int = 2,
     target_shape: list = [512, 512],

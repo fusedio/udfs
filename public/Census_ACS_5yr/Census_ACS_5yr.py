@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds = None,
+    bounds: fused.types.Bounds = [-74.014,40.700,-74.000,40.717],
     census_variable: str = "Total Pop",
     scale_factor: float = 200,
     is_density: bool = True,

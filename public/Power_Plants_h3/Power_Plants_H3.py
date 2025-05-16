@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds=None):
+def udf(bounds: fused.types.Bounds=[-49.108,-35.500,72.922,67.364]):
     import duckdb
     import pandas as pd
     from utils import add_rgb_cmap, CMAP, get_data, run_query

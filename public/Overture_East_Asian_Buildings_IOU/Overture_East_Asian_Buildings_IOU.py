@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds = None, res=14):
+def udf(bounds: fused.types.Bounds = [121.460,31.228,121.463,31.231], res=14):
     import h3
     import pandas as pd
 

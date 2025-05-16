@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds):
+def udf(bounds: fused.types.Bounds = [7.634,47.528,7.651,47.540]):
     # adding custom path for spherely (not yet installed by default)
     import sys;
     sys.path.append(f"/mnt/cache/envs/geopython/lib/python3.11/site-packages")
