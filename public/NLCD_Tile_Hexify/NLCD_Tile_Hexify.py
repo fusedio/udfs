@@ -5,7 +5,7 @@ def udf(bounds: fused.types.Bounds=[-121.673,37.561,-120.778,38.314], year:int=1
     from utils import get_data, arr_to_h3, nlcd_category_dict, rgb_to_hex
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
     tile = common_utils.get_tiles(bounds, clip=True)
 
     #initial parameters

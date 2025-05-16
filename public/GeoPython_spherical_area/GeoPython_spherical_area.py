@@ -5,7 +5,7 @@ def udf(bounds: fused.types.Bounds = [7.634,47.528,7.651,47.540]):
     sys.path.append(f"/mnt/cache/envs/geopython/lib/python3.11/site-packages")
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
     tile = common_utils.get_tiles(bounds, clip=True)
 
     # loading the Overture building polygons for the current bounds

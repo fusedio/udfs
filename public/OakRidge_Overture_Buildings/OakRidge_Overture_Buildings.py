@@ -2,8 +2,8 @@
 def udf(bounds: fused.types.Bounds = [-122.432,37.800,-122.430,37.802]):
     import geopandas as gpd
     # Load pinned versions of utility functions.
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/d0e8eb0/public/common/").utils
-    overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    overture_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.
 
     # Convert bounds to tile
     tile = common_utils.get_tiles(bounds, clip=True)

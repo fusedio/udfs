@@ -5,7 +5,7 @@ def udf(bounds: fused.types.Bounds = [-90.691,-21.719,-21.300,75.897], stats_typ
     from utils import aggregate_df_hex, url_to_plasma
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
     tile = common_utils.get_tiles(bounds, clip=True)
 
     # 1. Initial parameters

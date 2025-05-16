@@ -13,7 +13,7 @@ def udf(bounds: fused.types.Bounds = [-73.941,40.690,-73.892,40.740],
     from utils import get_fsq_isochrones_gdf, fsq_isochrones_to_h3, bushwick_boundary
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
     tile = common_utils.get_tiles(bounds, clip=True)
 
     

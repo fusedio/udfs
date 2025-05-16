@@ -11,7 +11,7 @@ def udf(
     import xarray as xr
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
     tile = common_utils.get_tiles(bounds, clip=True)
 
 

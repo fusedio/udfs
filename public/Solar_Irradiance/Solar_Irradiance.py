@@ -8,7 +8,7 @@ def udf(
     import palettable
 
     # convert bounds to tile
-    common = fused.load("https://github.com/fusedio/udfs/tree/39d93ca/public/common/").utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
     tile = common.get_tiles(bounds, clip=True)
 
     input_tiff_path = (

@@ -15,7 +15,7 @@ def udf(
     from utils_local import list_stac_collections
 
     # convert bounds to tile
-    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
     tile = utils.get_tiles(bounds, clip=True)
 
     STAC_URL = "https://cmr.earthdata.nasa.gov/stac"
