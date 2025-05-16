@@ -8,7 +8,7 @@ def udf(bounds: fused.types.Bounds = [121.460,31.228,121.463,31.231], res=14):
     utils = fused.load("https://github.com/fusedio/udfs/tree/d0e8eb0/public/common/").utils
 
     # convert bounds to tile
-    tile = utils.get_tiles(bounds)
+    tile = utils.get_tiles(bounds, clip=True)
 
     # 1. Load East Asia Zenodo Buildings
     path = "s3://fused-asset/misc/jennings/East_Asian_buildings_parquet3_ingested_3dec/"

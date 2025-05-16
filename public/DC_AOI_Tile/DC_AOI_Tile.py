@@ -7,7 +7,7 @@ def udf(bounds: fused.types.Bounds=[-77.083,38.849,-76.969,38.938], time_of_inte
 
     # convert bounds to tile
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds)
+    tile = common_utils.get_tiles(bounds, clip=True)
 
     # find the tiles with intersecting geom
     gdf = gpd.read_file('s3://fused-asset/data/tiger/TIGER_RD18/STATE/11_DISTRICT_OF_COLUMBIA/11/tl_rd22_11_tract.zip')

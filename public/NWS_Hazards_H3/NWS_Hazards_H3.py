@@ -9,7 +9,7 @@ def udf(bounds: fused.types.Bounds = [-113.334,22.124,-76.388,52.627], crs="EPSG
 
     # convert bounds to tile
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds)
+    tile = common_utils.get_tiles(bounds, clip=True)
 
     # Generate ESRI-friendly envelope bounds
     total_bounds = tile.geometry.total_bounds

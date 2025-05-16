@@ -6,7 +6,7 @@ def udf(bounds: fused.types.Bounds = [-90.691,-21.719,-21.300,75.897], stats_typ
 
     # convert bounds to tile
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds)
+    tile = common_utils.get_tiles(bounds, clip=True)
 
     # 1. Initial parameters
     x, y, z = tile.iloc[0][["x", "y", "z"]]

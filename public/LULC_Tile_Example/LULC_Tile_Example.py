@@ -5,7 +5,7 @@ def udf(bounds: fused.types.Bounds = [-122.499,37.707,-122.381,37.808], year="20
 
     # Load pinned versions of utility functions.
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds)
+    tile = common_utils.get_tiles(bounds, clip=True)
     zoom = tile.iloc[0].z
 
     if zoom >= 5:

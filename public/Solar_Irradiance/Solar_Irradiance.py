@@ -9,7 +9,7 @@ def udf(
 
     # convert bounds to tile
     common = fused.load("https://github.com/fusedio/udfs/tree/39d93ca/public/common/").utils
-    tile = common.get_tiles(bounds)
+    tile = common.get_tiles(bounds, clip=True)
 
     input_tiff_path = (
         f"s3://fused-asset/solar_irradiance/DNI_LTAy_Avg_Daily_Totals_DNI.tif"
