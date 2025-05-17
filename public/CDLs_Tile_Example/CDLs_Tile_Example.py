@@ -1,7 +1,13 @@
 common = fused.load("https://github.com/fusedio/udfs/tree/b3a7ff8/public/common/").utils
+
+
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds = [-121.525, 37.70, -120.96, 38.06], year: int = 2024, crop_type: str = "", chip_len: int = 256, colored: bool = True
+    bounds: fused.types.Bounds = [-121.525, 37.70, -120.96, 38.06],
+    year: int = 2024,
+    crop_type: str = "",
+    chip_len: int = 256,
+    colored: bool = True,
 ):
     """"""
     import numpy as np
@@ -18,8 +24,9 @@ def udf(
     else:
         print("no data")
         return None
-    if crop_type:
-        array_int = filter_crops(array_int, crop_type, verbose=False)
+    # if crop_type:
+    
+    array_int = filter_crops(array_int, crop_type, verbose=False)
 
     # Print out the top 20 classes
     print(crop_counts(array_int).head(20))
@@ -61,10 +68,19 @@ def int_to_crop(val):
     return df_meta.loc[val].description
 
 
+@fused.cache
+def crop_type_list(crop_type):
+    CDL = fused.load("UDF_CDLs_Tile_Example")
+    try:
+        vals = [int(i) for i in crop_type.split(',')]
+    except:
+        vals = CDL.crop_to_int(crop_type, verbose=False)
+    return vals
+
 def filter_crops(arr, crop_type, verbose=True):
     import numpy as np
-
-    values_to_keep = crop_to_int(crop_type, verbose=verbose)
+    
+    values_to_keep = crop_type_list(crop_type)
     if len(values_to_keep) > 0:
         mask = np.isin(arr, values_to_keep, invert=True)
         arr[mask] = 0
