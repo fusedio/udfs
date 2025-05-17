@@ -1,12 +1,12 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds, year:int=1985, land_type:str='', chip_len:int=256):
+def udf(bounds: fused.types.Bounds=[-121.673,37.561,-120.778,38.314], year:int=1985, land_type:str='', chip_len:int=256):
     import numpy as np        
     import pandas as pd
     from utils import get_data, arr_to_h3, nlcd_category_dict, rgb_to_hex
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds)
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = common_utils.get_tiles(bounds, clip=True)
 
     #initial parameters
     x, y, z = tile.iloc[0][["x", "y", "z"]]

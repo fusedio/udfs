@@ -1,12 +1,12 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds):
+def udf(bounds: fused.types.Bounds = [7.634,47.528,7.651,47.540]):
     # adding custom path for spherely (not yet installed by default)
     import sys;
     sys.path.append(f"/mnt/cache/envs/geopython/lib/python3.11/site-packages")
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds)
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = common_utils.get_tiles(bounds, clip=True)
 
     # loading the Overture building polygons for the current bounds
     from utils import get_overture

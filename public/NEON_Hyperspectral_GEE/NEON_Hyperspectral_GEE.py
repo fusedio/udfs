@@ -2,7 +2,7 @@
 
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds=None,
+    bounds: fused.types.Bounds=[-110.936,31.761,-110.793,31.890],
     acct_serv: str = "wgewneondataexplorer-7cd53ea0f@eminent-tesla-172116.iam.gserviceaccount.com"
 ):
     import ee
@@ -14,6 +14,7 @@ def udf(
     # convert bounds to tile
     utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
     tile = utils.get_tiles(bounds)
+    zoom = tile.iloc[0].z
 
     # Authenticate GEE
     key_path = '/mnt/cache/gp_creds.json'

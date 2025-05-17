@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds = None, tech: str = 'Tarana', site_count: int = 1, col_plot: str = 'Rx_dBm'):
+def udf(bounds: fused.types.Bounds = [-122.438,37.774,-122.434,37.777], tech: str = 'Tarana', site_count: int = 1, col_plot: str = 'Rx_dBm'):
     """
     Function to read the data from the fused coverage model
     :param bounds:
@@ -18,7 +18,7 @@ def udf(bounds: fused.types.Bounds = None, tech: str = 'Tarana', site_count: int
 
     # convert bounds to tile
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds)
+    tile = common_utils.get_tiles(bounds, clip=True)
 
     @fused.cache
     def read_data(bounds, url: str, tech: str, site_count: int, col_plot: str, con_ibis):

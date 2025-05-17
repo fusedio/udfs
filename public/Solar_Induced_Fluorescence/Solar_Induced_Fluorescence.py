@@ -1,12 +1,12 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds, year: str = "2016", month: str = "07", period: str ="b", chip_len: int = 1024):
+def udf(bounds: fused.types.Bounds=[-143.184,7.090,-39.292,61.808], year: str = "2016", month: str = "07", period: str ="b", chip_len: int = 1024):
     xy_cols = ['lon', 'lat']
     from utils import get_masked_array, get_da, get_da_bounds, clip_arr
     import pandas as pd
 
     # convert bounds to tile
-    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = utils.get_tiles(bounds)
+    utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = utils.get_tiles(bounds, clip=True)
     
     # Dynamically construct the path based on the year and month
     path = f's3://soldatanasasifglobalifoco2modis1863/Global_SIF_OCO2_MODIS_1863/data/sif_ann_{year}{month}{period}.nc'

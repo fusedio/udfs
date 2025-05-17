@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds=None, lat: float=37.7749, lon: float=-122.4194):
+def udf(bounds: fused.types.Bounds=[-92.317,-64.329,116.124,79.475], lat: float=37.7749, lon: float=-122.4194):
     
     file_path='s3://ookla-open-data/parquet/performance/type=mobile/year=2024/quarter=3/2024-07-01_performance_mobile_tiles.parquet'
     

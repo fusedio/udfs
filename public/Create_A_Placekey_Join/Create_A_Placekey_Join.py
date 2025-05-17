@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds,
+def udf(bounds: fused.types.Bounds = [-122.438,37.774,-122.434,37.777],
         dataset1: str = 'home-health-agency-medicare-enrollments',
         dataset2: str = 'national-provider-identifier',
         preview: bool=False):
@@ -11,7 +11,7 @@ def udf(bounds: fused.types.Bounds,
 
     # convert bounds to tile
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds)
+    tile = common_utils.get_tiles(bounds, clip=True)
 
     #get two placekey'd datasets; choose these based on what's available on the module tab
     df1 = get_placekeyd_dataset(tile, dataset1)

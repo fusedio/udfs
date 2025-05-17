@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds = None, crs="EPSG:4326", res=7):
+def udf(bounds: fused.types.Bounds = [-113.334,22.124,-76.388,52.627], crs="EPSG:4326", res=7):
     import fused
     import pandas as pd
     import geopandas as gpd
@@ -8,8 +8,8 @@ def udf(bounds: fused.types.Bounds = None, crs="EPSG:4326", res=7):
     from utils import fetch_all_features, add_rgb_cmap, CMAP
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds)
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = common_utils.get_tiles(bounds, clip=True)
 
     # Generate ESRI-friendly envelope bounds
     total_bounds = tile.geometry.total_bounds

@@ -1,12 +1,12 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds = None, join_with_nsi: bool=True):
+def udf(bounds: fused.types.Bounds = [-123.864,46.175,-123.832,46.199], join_with_nsi: bool=True):
     import geopandas as gpd
     import pandas as pd
     import requests
 
     # convert bounds to tile
-    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = utils.get_tiles(bounds)
+    utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = utils.get_tiles(bounds, clip=True)
 
     if tile.iloc[0].z < 10:
         return None

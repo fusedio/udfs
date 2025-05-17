@@ -1,13 +1,13 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds,
+    bounds: fused.types.Bounds = [-122.408,37.781,-122.391,37.796],
     var="NDVI",
     chip_len: int=256,
     buffer_degree=0.000,
 ):
     # convert bounds to tile
-    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = utils.get_tiles(bounds)
+    utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = utils.get_tiles(bounds, clip=True)
     zoom = tile.iloc[0].z
 
     min_zoom = 15

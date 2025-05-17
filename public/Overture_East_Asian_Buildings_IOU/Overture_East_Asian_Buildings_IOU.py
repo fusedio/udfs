@@ -1,14 +1,14 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds = None, res=14):
+def udf(bounds: fused.types.Bounds = [121.460,31.228,121.463,31.231], res=14):
     import h3
     import pandas as pd
 
     # Load pinned versions of utility functions.
     overture_utils = fused.load("https://github.com/fusedio/udfs/tree/99dbfec/public/Overture_Maps_Example/").utils
-    utils = fused.load("https://github.com/fusedio/udfs/tree/d0e8eb0/public/common/").utils
+    utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
 
     # convert bounds to tile
-    tile = utils.get_tiles(bounds)
+    tile = utils.get_tiles(bounds, clip=True)
 
     # 1. Load East Asia Zenodo Buildings
     path = "s3://fused-asset/misc/jennings/East_Asian_buildings_parquet3_ingested_3dec/"

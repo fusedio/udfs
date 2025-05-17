@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds = None,
+    bounds: fused.types.Bounds = [-74.008,40.684,-73.971,40.713],
     class_source: str = 'combined', 
     building_source: str = 'Overture'
 ):

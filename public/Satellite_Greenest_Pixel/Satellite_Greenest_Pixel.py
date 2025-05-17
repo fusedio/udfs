@@ -41,7 +41,7 @@ sentinel_params = json.dumps(
 
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds = None,
+    bounds: fused.types.Bounds = [-122.463,37.755,-122.376,37.803],
     collection_params=sentinel_params,
     chip_len: int = 512,
     how: str = "max",  # median, min. default is max
@@ -61,8 +61,8 @@ def udf(
     )
 
     # convert bounds to tile
-    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = utils.get_tiles(bounds)
+    utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = utils.get_tiles(bounds, clip=True)
 
     collection, band_list, time_of_interest, query, scale = json.loads(
         collection_params

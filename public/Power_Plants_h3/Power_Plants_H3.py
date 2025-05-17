@@ -1,12 +1,12 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds=None):
+def udf(bounds: fused.types.Bounds=[-49.108,-35.500,72.922,67.364]):
     import duckdb
     import pandas as pd
     from utils import add_rgb_cmap, CMAP, get_data, run_query
 
     # convert bounds to tile
-    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = utils.get_tiles(bounds)
+    utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = utils.get_tiles(bounds, clip=True)
     zoom = tile.iloc[0].z
     
     # This is the line that caculates the resolution based on zoom. You can overide the resolution parameter by hard coding it.
