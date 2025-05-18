@@ -104,3 +104,14 @@ def crop_counts(arr):
     df.columns = ["crop_type", "color", "n_pixel"]
     df = df.sort_values("n_pixel", ascending=False)
     return df.dropna()
+
+def crop_stats(df, n=100):
+    stats = (
+        df.groupby("data")
+        .area.sum()
+        .map(lambda x: round(x * 0.000247105, 2)) #conveting m2 to acre
+        .sort_values(ascending=False)
+        .to_frame("area (Acre)")
+    )
+    stats["name"] = stats.index.map(CDL.int_to_crop)
+    return stats.head(n)
