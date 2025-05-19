@@ -15,7 +15,7 @@ UDFS_THAT_ERROR = [
     "Overture_Places_Embedding_Clusters",
     "Create_A_Placekey_Join",
     # Protobuf parsing failed
-    "Airplane_Detection_AOI",
+    "Airplane_Detection_AOI_v2",
     "DL4EO_Airplane_Detection",
     # RasterIO error
     "NLCD_Tile_Example",
