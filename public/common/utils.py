@@ -73,6 +73,7 @@ def get_jobs_status(jobs, wait=True, sleep_seconds=3):
         not_done=(df.status=='terminated').mean()<1
         print(f'\r{df.status.value_counts().to_dict()} | elapsed time: {datetime.now() - s}', end='', flush=True)
     return df
+    
 def get_s3_size(file_path):
     return sum([i.size for i in fused.api.list(file_path, details=1) if i.size])/10**9
 
@@ -169,6 +170,30 @@ def create_sample_file(df_meta, file_path):
         file_path,
     )
     return f"{file_path} written!"
+
+def read_hexfile(bounds, path, clip=True, verbose=True, return_meta=False):
+    from io import BytesIO
+    import geopandas as gpd
+    import pandas as pd
+    import pyarrow.parquet as pq
+    import base64
+    import shapely
+    table = pq.ParquetFile(path)
+    metadata = table.metadata.metadata[b"fused:_metadata"]
+    df = pd.read_parquet(BytesIO(base64.decodebytes(metadata)))
+    geoms = shapely.box(df["bbox_minx"], df["bbox_miny"], df["bbox_maxx"], df["bbox_maxy"])
+    df_meta = gpd.GeoDataFrame(df, geometry=geoms, crs="EPSG:4326")
+    if return_meta:
+        return df_meta
+    df_meta = df_meta.sjoin(to_gdf(bounds))
+    chunk_ids = df_meta.index.values
+    if verbose:
+        print(chunk_ids)
+    df = table.read_row_groups(chunk_ids).to_pandas()  # , columns=columns).to_pandas()
+    if clip:
+        return filter_hex_bounds(df, bounds)
+    return df
+
 
 def unzip_file(zip_path_str):
     import zipfile
