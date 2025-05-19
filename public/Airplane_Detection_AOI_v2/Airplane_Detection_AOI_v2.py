@@ -24,18 +24,8 @@ def udf(target_gdf: gpd.GeoDataFrame = j, zoom: int=17):
     if len(list_of_tile_gdfs)>400:
         print('Too many ',len(list_of_tile_gdfs), 'tiles, too large a bounds, shrink it until there are less than 400 tiles.')
         return gpd.GeoDataFrame({'a':[1]})
-    
-    # Function to run UDF 
-    @fused.cache
-    def run_udf(bounds):
-        out = fused.run("UDF_DL4EO_Airplane_Detection", bounds=bounds)
-        if len(out)>0:
-            return out
 
-    # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
     # Run the UDF concurrently for each tile
-    gdfs = utils.run_pool(run_udf, list_of_tile_gdfs)
-    gdf_out = pd.concat(gdfs)
+    gdf_out = fused.submit("UDF_DL4EO_Airplane_Detection", [{"bounds": bounds} for bounds in list_of_tile_gdfs])
     print('Total airplanes: ', len(gdf_out))
     return gdf_out
