@@ -95,6 +95,7 @@ aoi = gpd.GeoDataFrame.from_features(
 
 @fused.udf
 def udf(bounds: fused.types.Bounds = None, h3_size=8):
+    # we are using the aoi as the bounds, so no default params in this UDF
     import duckdb
     import geopandas as gpd
     import h3
