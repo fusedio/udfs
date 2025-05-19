@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds,
+    bounds: fused.types.Bounds = [-110.834,32.152,-110.833,32.153],
     min_max=(0, 255),
     z_levels=[4, 6, 9, 11],
     verbose=False

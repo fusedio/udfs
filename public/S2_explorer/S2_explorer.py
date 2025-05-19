@@ -1,5 +1,5 @@
 def udf(
-    bounds: fused.types.Bounds,
+    bounds: fused.types.Bounds = [-119.566,39.240,-119.494,39.300],
     provider="AWS",
     channels=["B11", "veg", "snow"],
     time_of_interest="2023-05-01/2023-09-13",

@@ -1,6 +1,6 @@
 # Note: This UDF is only for demo purposes. You may get `HTTP GET error` after several times calling it. This is the data retrieval issue caused by Cloudfront servers not responding.
 @fused.udf
-def udf(bounds: fused.types.Bounds = None, resolution: int = 9, min_count: int = 10):
+def udf(bounds: fused.types.Bounds = [-74.033,40.648,-73.788,40.846], resolution: int = 9, min_count: int = 10):
 
     import shapely
     import geopandas as gpd

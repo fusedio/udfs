@@ -1,6 +1,6 @@
 @fused.udf 
 def udf(
-    bounds: fused.types.Bounds = None,
+    bounds: fused.types.Bounds = [-122.300,37.520,-122.249,37.568],
     h3_res: int=12
 ):
     import h3
@@ -8,8 +8,8 @@ def udf(
     from utils import get_strahler_gdf, create_h3_buffer_scored
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds)
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = common_utils.get_tiles(bounds, clip=True)
 
 
     overture_utils = fused.load("https://github.com/fusedio/udfs/tree/2ea46f3/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.

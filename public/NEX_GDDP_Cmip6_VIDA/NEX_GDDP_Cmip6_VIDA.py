@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds = None,
+    bounds: fused.types.Bounds = [44.935,-10.364,106.628,48.359],
     layer: str = "tas",
     time: int = 2,
     target_shape: list = [512, 512],
@@ -11,8 +11,8 @@ def udf(
     import xarray as xr
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds)
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = common_utils.get_tiles(bounds, clip=True)
 
 
     ds = xr.open_zarr("gs://fused_public/zarr/wri_cmip6_median_ssp585.zarr")

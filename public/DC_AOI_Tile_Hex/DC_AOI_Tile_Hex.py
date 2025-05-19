@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds=None, time_of_interest="2021-12-01/2021-12-30", chip_len:int=256, scale:float=0.1):
+def udf(bounds: fused.types.Bounds=[-77.083,38.804,-76.969,38.983], time_of_interest="2021-12-01/2021-12-30", chip_len:int=256, scale:float=0.1):
     import geopandas as gpd
     import shapely
     import pandas as pd
@@ -7,8 +7,8 @@ def udf(bounds: fused.types.Bounds=None, time_of_interest="2021-12-01/2021-12-30
     from utils import tile_to_df, df_to_hex
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds)
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = common_utils.get_tiles(bounds, clip=True)
 
     
     # find the tiles with intersecting geom

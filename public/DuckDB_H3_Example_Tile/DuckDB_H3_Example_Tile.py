@@ -1,7 +1,7 @@
 common = fused.load("https://github.com/fusedio/udfs/tree/3569595/public/common/").utils
 
 @fused.udf
-def udf(bounds: fused.types.Bounds = None, resolution: int = 11, min_count: int = 10):
+def udf(bounds: fused.types.Bounds = [-74.033,40.648,-73.788,40.846], resolution: int = 11, min_count: int = 10):
     import shapely
     import geopandas as gpd
 

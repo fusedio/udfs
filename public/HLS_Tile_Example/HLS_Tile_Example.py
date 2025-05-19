@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds,
+    bounds: fused.types.Bounds = [7.634,47.528,7.651,47.540],
     collection_id="HLSS30_2.0",  # Landsat:'HLSL30_2.0' & Sentinel:'HLSS30_2.0'
     band="B8A",  # Landsat:'B05' & Sentinel:'B8A'
     date_range="2023-10/2024-01",
@@ -15,8 +15,8 @@ def udf(
     from utils_local import list_stac_collections
 
     # convert bounds to tile
-    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = utils.get_tiles(bounds)
+    utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = utils.get_tiles(bounds, clip=True)
 
     STAC_URL = "https://cmr.earthdata.nasa.gov/stac"
 

@@ -95,6 +95,7 @@ aoi = gpd.GeoDataFrame.from_features(
 
 @fused.udf
 def udf(bounds: fused.types.Bounds = None, h3_size=8):
+    # we are using the aoi as the bounds, so no default params in this UDF
     import duckdb
     import geopandas as gpd
     import h3
@@ -106,7 +107,7 @@ def udf(bounds: fused.types.Bounds = None, h3_size=8):
 
     # convert bounds to tile
     utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = utils.get_tiles(bounds) if bounds is not None else aoi
+    tile = utils.get_tiles(bounds, clip=True) if bounds is not None else aoi
 
     # 1. Polyfill AOI
     h3s = h3.polygon_to_cells(h3.geo_to_h3shape(tile.geometry.iloc[0]), h3_size)

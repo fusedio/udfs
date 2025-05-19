@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds,
+    bounds: fused.types.Bounds=[-122.463,37.755,-122.376,37.803],
     provider="AWS",
     time_of_interest="2023-11-01/2023-12-30"
 ):  
@@ -15,8 +15,8 @@ def udf(
     import utils
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds)
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = common_utils.get_tiles(bounds, clip=True)
     zoom = tile.iloc[0].z
     
     if provider == "AWS":

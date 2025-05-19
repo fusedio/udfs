@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds = None,
+    bounds: fused.types.Bounds = [-74.008,40.684,-73.971,40.713],
     time_of_interest="2020-09-01/2021-10-30",
     collection="sentinel-2-l2a",
 ):
@@ -12,8 +12,8 @@ def udf(
     from pystac.extensions.eo import EOExtension as eo
 
     # convert bounds to tile
-    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = utils.get_tiles(bounds)
+    utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = utils.get_tiles(bounds, clip=True)
 
     odc.stac.configure_s3_access(requester_pays=True)
 

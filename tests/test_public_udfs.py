@@ -15,15 +15,22 @@ UDFS_THAT_ERROR = [
     "Overture_Places_Embedding_Clusters",
     "Create_A_Placekey_Join",
     # Protobuf parsing failed
-    "Airplane_Detection_AOI",
+    "Airplane_Detection_AOI_v2",
     "DL4EO_Airplane_Detection",
     # RasterIO error
     "NLCD_Tile_Example",
     # Broken links
     "REM_with_HyRiver",
     "Coverage_Model_ibis",
+    "Five_Minutes_Away_in_Bushwick_Brooklyn",
     # Duckdb home directory not set
     "Ibis_DuckDB_Overturemaps",
+    # No data available for params
+    "download_images_for_bbox_arcgis_imageserver_rest",
+    # Missing creds
+    "NEON_Hyperspectral_GEE",
+    # Multiple errors
+    "NLCD_Tile_Hexify",
 ]
 
 PUBLIC_UDFS_PATH = os.path.join(os.path.abspath(os.curdir), "public")

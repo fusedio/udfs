@@ -1,5 +1,5 @@
 def udf(
-    bounds: fused.types.Bounds = None,
+    bounds: fused.types.Bounds = [-77.083,38.804,-76.969,38.983],
     provider: str = "AWS"
 ):
     import odc.stac
@@ -10,8 +10,8 @@ def udf(
     import utils
 
     # Load pinned versions of utility functions.
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds)
+    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = common_utils.get_tiles(bounds, clip=True)
     zoom = tile.iloc[0].z
 
     print(f'{type(tile) = }')

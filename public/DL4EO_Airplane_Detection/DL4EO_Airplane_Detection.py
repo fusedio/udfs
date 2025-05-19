@@ -8,7 +8,7 @@ def udf_rgb_tiles(tile: gpd.GeoDataFrame):
 
 @fused.udf
 def udf(    
-    bounds: fused.types.Bounds=None,
+    bounds: fused.types.Bounds=[-110.834,32.152,-110.833,32.153],
     chip_len=256,
     buffer_degree=0.00001,
     weights_path = "s3://fused-asset/misc/dl4eo/best.onnx"
@@ -21,7 +21,7 @@ def udf(
 
     # convert bounds to tile
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds)
+    tile = common_utils.get_tiles(bounds, clip=True)
 
 
     # Load imagery
