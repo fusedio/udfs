@@ -260,6 +260,7 @@ def bounds_to_hex(bounds: list = [-180, -90, 180, 90], res: int = 3, hex_col: st
 def gdf_to_hex(gdf, res=11, add_latlng_cols=['lat','lng']):
     import pandas as pd
     con = duckdb_connect()
+    gdf = gdf.explode(index_parts=False)
     df_wkt = gdf.to_wkt()
     if add_latlng_cols:
         df_wkt[add_latlng_cols[0]] = gdf.centroid.y
