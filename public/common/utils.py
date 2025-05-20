@@ -171,6 +171,7 @@ def create_sample_file(df_meta, file_path):
     )
     return f"{file_path} written!"
 
+@fused.cache
 def read_hexfile(bounds, path, clip=True, verbose=True, return_meta=False):
     from io import BytesIO
     import geopandas as gpd
