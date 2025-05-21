@@ -1,9 +1,6 @@
 <!--fused:preview-->
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/H3_Hexagon_Layer_Example.png" width="600" alt="UDF preview image"></p>
 
-<!--fused:tags-->
-Tags:  `Aggregation` `H3-polygon` `NYC Open Data` `parquet`
-
 <!--fused:readme-->
 ## Overview
 
