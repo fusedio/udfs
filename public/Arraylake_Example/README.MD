@@ -2,7 +2,7 @@
 <p align="center"><img src="https://docs.earthmover.io/assets/images/fused-screenshot-Arraylake_RGB_Image-c42900408564d13df871564d416f6c9c.png" width="600" alt="Arraylake UDF preview image"></p>
 
 <!--fused:tags-->
-Tags:  `raster` `Zarr` `Arraylake` `datacube`
+Tags: `raster` `Zarr` `Arraylake` `datacube`
 
 <!--fused:readme-->
 ## Overview

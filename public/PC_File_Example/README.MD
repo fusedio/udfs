@@ -2,7 +2,7 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/PC_File_Example.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags:  `STAC` `MSFT-PC` `Rasterio` `Hillshade`
+Tags: `STAC` `MSFT-PC` `Rasterio` `Hillshade`
 
 <!--fused:readme-->
 # Overview
