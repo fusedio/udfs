@@ -2,7 +2,7 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/landfire-fused.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags:  `rasterio` `tiff` `band algebra`
+Tags: `rasterio` `tiff` `band algebra`
 
 <!--fused:readme-->
 #### Overview

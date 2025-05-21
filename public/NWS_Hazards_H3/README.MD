@@ -2,7 +2,7 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/nws_hazard_preview.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags:  `H3-vector` `geojson` `NOAA`
+Tags: `H3-vector` `geojson` `NOAA`
 
 <!--fused:readme-->
 # Overview
