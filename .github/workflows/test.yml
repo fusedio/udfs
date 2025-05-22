@@ -36,6 +36,7 @@ jobs:
       #----------------------------------------------
       - name: Run tests for files udfs
         shell: bash
+        AUTH0_REFRESH_TOKEN: ${{ secrets.AUTH0_REFRESH_TOKEN }}
         run: pytest tests/test_file_udfs.py --tb=short
 
       #----------------------------------------------
