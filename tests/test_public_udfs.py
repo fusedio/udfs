@@ -64,7 +64,6 @@ def get_changed_udfs() -> list[str] | None:
     If the environment variable is not set, return None
     """
     files = os.environ.get("CHANGED_FILES")
-    print(f"Changed files: {files}")
     if files:
         file_names = files.split(",")
         # public/UDF_NAME/UDF_NAME.py
