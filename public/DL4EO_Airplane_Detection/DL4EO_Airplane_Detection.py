@@ -11,8 +11,10 @@ def udf(
     bounds: fused.types.Bounds=[-110.834,32.152,-110.833,32.153],
     chip_len=256,
     buffer_degree=0.00001,
-    weights_path = "s3://fused-asset/misc/dl4eo/best.onnx"
+    weights_path = "s3://fused-users/fused/asset/dl4eo/best.onnx",
+    return_predictions: bool = True
 ):
+    
     import geopandas as gpd
     import shapely
     import rasterio
@@ -21,12 +23,17 @@ def udf(
 
     # convert bounds to tile
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds, clip=True)
+    zoom = common_utils.estimate_zoom(bounds)
+    tile = common_utils.get_tiles(bounds, zoom=zoom)
 
 
     # Load imagery
     tile.geometry = tile.buffer(buffer_degree).geometry
     arr = fused.run(udf_rgb_tiles, tile=tile).astype(np.uint8)
+
+    if not return_predictions:
+        # Display the actual image used for prediction
+        return arr
     
     # Predict
     try:
