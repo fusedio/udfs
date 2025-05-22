@@ -18,8 +18,6 @@ def udf(target_gdf: gpd.GeoDataFrame = j, zoom: int=17):
     bounds = target_gdf.total_bounds
     gdf_tiles = common.get_tiles(bounds, zoom=zoom)
 
-    print(gdf_tiles)
-
     # Structure array of tile GeoDataFrames 
     list_of_tile_gdfs = [gpd.GeoDataFrame(row.to_frame().T) for _, row in gdf_tiles.iterrows()]
     print('Total tiles: ', len(list_of_tile_gdfs))
