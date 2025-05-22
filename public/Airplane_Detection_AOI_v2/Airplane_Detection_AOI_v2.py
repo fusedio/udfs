@@ -9,8 +9,6 @@ def udf(target_gdf: gpd.GeoDataFrame = j, zoom: int=17):
     import geopandas as gpd
     import pandas as pd
     import json
-    # from utils import make_tiles_gdf
-    
 
     # Convert to GeoDataFrame, if needed
     if isinstance(target_gdf, str):
@@ -18,10 +16,7 @@ def udf(target_gdf: gpd.GeoDataFrame = j, zoom: int=17):
 
     # Tile the AOI
     bounds = target_gdf.total_bounds
-    # gdf_tiles = make_tiles_gdf(bounds, zoom = zoom)
     gdf_tiles = common.get_tiles(bounds, zoom=zoom)
-
-    print(gdf_tiles)
 
     # Structure array of tile GeoDataFrames 
     list_of_tile_gdfs = [gpd.GeoDataFrame(row.to_frame().T) for _, row in gdf_tiles.iterrows()]
@@ -34,7 +29,6 @@ def udf(target_gdf: gpd.GeoDataFrame = j, zoom: int=17):
     gdf_out = fused.submit(
         "UDF_DL4EO_Airplane_Detection", 
         [{"bounds": list(bounds.total_bounds)} for bounds in list_of_tile_gdfs],
-        # debug_mode=True
     )
     print('Total airplanes: ', len(gdf_out))
     return gdf_out
