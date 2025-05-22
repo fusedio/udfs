@@ -67,8 +67,9 @@ def get_changed_udfs() -> list[str] | None:
     print(f"Changed files: {files}")
     if files:
         file_names = files.split(",")
-        folders = [file.rsplit("/", 1)[0] for file in file_names]
-        return folders
+        # public/UDF_NAME/UDF_NAME.py
+        udf = [file.split("/", 2)[1] for file in file_names]
+        return udf
     return None
 
 
