@@ -30,5 +30,6 @@ def udf(target_gdf: gpd.GeoDataFrame = j, zoom: int=17):
         "UDF_DL4EO_Airplane_Detection", 
         [{"bounds": list(bounds.total_bounds)} for bounds in list_of_tile_gdfs],
     )
+    gdf_out = gdf_out.reset_index()
     print('Total airplanes: ', len(gdf_out))
     return gdf_out
