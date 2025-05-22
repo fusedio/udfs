@@ -1,8 +1,8 @@
 @fused.cache
 def predict(
     arr,
+    weights_path,
     threshold=0.5,
-    weights_path = "s3://fused-users/fused/asset/dl4eo/best.onnx"
 ):
     import os
     import time
@@ -20,11 +20,11 @@ def predict(
     print(f"Using device: {device}")
 
     # Set weights file
-    WEIGHTS_FILE = "/mnt/cache/tmp/best.onnx"
+    mount_weights_path = fused.file_path("mount_best.onnx")
 
     try:
-        if not os.path.exists(WEIGHTS_FILE):
-            path = fused.download(weights_path, 'best.onnx')
+        if not os.path.exists(mount_weights_path):
+            path = fused.download(weights_path, "mount_best.onnx")
             print(f"Downloaded: {path}")
     except Exception as e:
         print("Error", e)
@@ -32,8 +32,7 @@ def predict(
     
     # Load a model
     start_time = time.time()
-    model = ultralytics.YOLO('/mnt/cache/yolov8s.pt', task='detect')  # load an official model
-    model = ultralytics.YOLO(WEIGHTS_FILE, task='detect')  # previously trained YOLOv8n model
+    model = ultralytics.YOLO(mount_weights_path, task='detect')  # previously trained YOLOv8n model
     end_time = time.time()
     print(f"Model loaded in: {round(end_time-start_time, 3)} sec.")
 
@@ -49,7 +48,7 @@ def predict(
     print(f"Inference took: {round(end_time-start_time, 3)} sec.")
     boxes = results[0].boxes
     boxes = [box.xyxy.cpu().squeeze().int().tolist() for box in boxes]
-    print(f"Aircrafts in Tile: {len(boxes)}.")
+    print(f"Nb aircrafts in Tile: {len(boxes)}")
     
     return boxes
 
