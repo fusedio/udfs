@@ -4,7 +4,7 @@ def udf():
     import requests
     import pytz
     from datetime import datetime
-    
+
     geo_json_data = {
        "type": "FeatureCollection",
        "features": []
@@ -23,7 +23,7 @@ def udf():
                 station['lat']]
     for status in stations_status['data']['stations']:
         unixts = int(status['last_reported'])
-        
+
         ts = datetime.fromtimestamp(unixts, pytz.timezone('America/New_York')).strftime('%Y-%m-%d %H:%M:%S')
         if status['station_id'] in stations_dict:
             r,g,b = [100,100,100]

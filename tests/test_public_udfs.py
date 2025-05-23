@@ -39,6 +39,7 @@ def get_public_udf_folders():
     """
     Get the list of public UDF folders from the local repo as pytest params.
     """
+    changed_udfs = get_changed_udfs()
 
     for item in os.listdir(PUBLIC_UDFS_PATH):
         folder_abs_path = os.path.join(PUBLIC_UDFS_PATH, item)
@@ -47,10 +48,28 @@ def get_public_udf_folders():
                 item,
                 folder_abs_path,
                 id=item,
-                marks=pytest.mark.skipif(
+                marks=[pytest.mark.skipif(
                     item in UDFS_THAT_ERROR, reason="UDF is not working"
                 ),
+                pytest.mark.skipif(
+                    changed_udfs is not None and item not in changed_udfs,
+                    reason="UDF is not changed",
+                ),
+            ]
             )
+
+def get_changed_udfs() -> list[str] | None:
+    """
+    Get the list of changed UDFs from the environment variable CHANGED_FILES
+    If the environment variable is not set, return None
+    """
+    files = os.environ.get("CHANGED_FILES")
+    if files:
+        file_names = files.split(",")
+        # public/UDF_NAME/UDF_NAME.py
+        udf = [file.split("/", 2)[1] for file in file_names]
+        return udf
+    return None
 
 
 def get_bbox_for_udf(metadata: dict[str, Any]):

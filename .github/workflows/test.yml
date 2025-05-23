@@ -32,9 +32,25 @@ jobs:
         run: pip install fused[batch] pytest openpyxl duckdb fiona scipy
 
       #----------------------------------------------
+      #       get all changed UDFs
+      #----------------------------------------------
+      - name: Get all changed UDFs
+        id: changed-udfs
+        if: github.event_name == 'pull_request'
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46
+        with:
+          separator: ","
+          files_yaml: |
+            public:
+              - public/**
+            files:
+              - files/**
+
+      #----------------------------------------------
       #       run tests for files udfs
       #----------------------------------------------
       - name: Run tests for files udfs
+        if: github.event_name == 'push' || steps.changed-udfs.outputs.files_any_changed == 'true'
         shell: bash
         env:
           AUTH0_REFRESH_TOKEN: ${{ secrets.AUTH0_REFRESH_TOKEN }}
@@ -44,10 +60,10 @@ jobs:
       #       run tests for public udfs
       #----------------------------------------------
       - name: Run tests for public udfs
+        if: github.event_name == 'push' || steps.changed-udfs.outputs.public_any_changed == 'true'
         env:
-          GITHUB_SHA: ${{ github.event.pull_request.head.sha }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AUTH0_REFRESH_TOKEN: ${{ secrets.AUTH0_REFRESH_TOKEN }}
+          CHANGED_FILES: ${{ steps.changed-udfs.outputs.public_all_changed_files }}
         shell: bash
         run: pytest tests/test_public_udfs.py --tb=short
 
