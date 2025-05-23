@@ -6,20 +6,20 @@ def get_overture(
     use_columns: list = None,
     num_parts: int = None,
     min_zoom: int = None,
-    polygon: str = None,
-    point_convert: str = None
+    clip: bool = None,
+    point_convert: str = None,
 ):
     """Returns Overture data as a GeoDataFrame."""
     import logging
     import concurrent.futures
     import json
-    
+
     import geopandas as gpd
     import pandas as pd
     from shapely.geometry import shape, box
 
     # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/d0e8eb0/public/common/").utils
+    utils = fused.load("https://github.com/fusedio/udfs/tree/36f4e97/public/common/").utils
 
     if release == "2024-02-15-alpha-0":
         if overture_type == "administrative_boundary":
@@ -90,28 +90,10 @@ def get_overture(
     table_path = f"s3://us-west-2.opendata.source.coop/fused/overture/{release}/theme={theme}/type={overture_type}"
     table_path = table_path.rstrip("/")
 
-    if polygon is not None:
-        polygon=gpd.GeoDataFrame.from_features(json.loads(polygon))
-        tile = polygon.geometry.bounds
-        tile = gpd.GeoDataFrame(
-            {
-                "geometry": [
-                    box(
-                        bounds[0],
-                        bounds[1],
-                        bounds[2],
-                        bounds[3],
-                    )
-                ]
-            }
-        )
-
     def get_part(part):
         part_path = f"{table_path}/part={part}/" if num_parts != 1 else table_path
         try:
-            return utils.table_to_tile(
-                bounds, table=part_path, use_columns=use_columns, min_zoom=min_zoom
-            )
+            return utils.table_to_tile(bounds, table=part_path, use_columns=use_columns, min_zoom=min_zoom)
         except ValueError:
             return None
 
@@ -128,10 +110,13 @@ def get_overture(
         gdf = pd.concat(dfs)
 
     else:
-        logging.warn("Failed to get any data")
+        print("Failed to get any data")
         return None
 
     if point_convert is not None:
         gdf["geometry"] = gdf.geometry.centroid
+
+    if clip:
+        gdf = gdf.clip(bounds)
 
     return gdf
