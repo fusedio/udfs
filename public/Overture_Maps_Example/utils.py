@@ -1,6 +1,6 @@
 def get_overture(
     bounds: fused.types.Bounds = None,
-    release: str = "2025-03-19-1",
+    release: str = "2025-05-21-0",
     theme: str = None,
     overture_type: str = None,
     use_columns: list = None,
