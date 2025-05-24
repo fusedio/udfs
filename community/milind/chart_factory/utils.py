@@ -17,7 +17,7 @@ def create_chart(chart_type, library, data, params):
     Main factory function to create charts
     
     Args:
-        chart_type: Type of chart ('line', 'scatter', 'histogram', 'box', 'pie', 'heatmap', 'card', 'kepler')
+        chart_type: Type of chart ('line', 'scatter', 'histogram', 'box', 'pie', 'heatmap', 'card', 'grouped_bar')
         library: Chart library ('echarts' or 'altair')
         data: pandas DataFrame with the data
         params: Dictionary of chart parameters
@@ -34,7 +34,7 @@ def create_chart(chart_type, library, data, params):
             "pie": create_echarts_pie_chart,
             "heatmap": create_echarts_heatmap_chart,
             "card": create_echarts_card_component,
-            "kepler": create_kepler_map_component,
+            "grouped_bar": create_echarts_grouped_bar_chart,
         }
         
         if chart_type in chart_creators:
@@ -52,7 +52,7 @@ def create_chart(chart_type, library, data, params):
             "pie": create_pie_chart,
             "heatmap": create_heatmap_chart,
             "card": create_card_component,
-            "kepler": create_kepler_map_component,
+            "grouped_bar": create_grouped_bar_chart,
         }
         
         if chart_type in chart_creators:
@@ -83,7 +83,7 @@ def create_chart_html(chart_type, library, data, params):
         option = create_chart(chart_type, library, data, params)
         
         # Special handling for components that return HTML directly
-        if chart_type in ["card", "kepler"]:
+        if chart_type in ["card"]:
             return option
             
         # Convert any timestamps to strings for JSON serialization
@@ -127,7 +127,7 @@ def create_chart_html(chart_type, library, data, params):
         chart = create_chart(chart_type, library, data, params)
         
         # Special case for card component which returns HTML directly
-        if chart_type in ["card", "kepler"]:
+        if chart_type in ["card"]:
             return chart
             
         # Apply common properties and return HTML
@@ -335,6 +335,67 @@ def create_card_component(df, params):
     return create_echarts_card_component(df, params)
 
 
+def create_grouped_bar_chart(chart_data, params):
+    """Create a grouped bar chart using Altair."""
+    import altair as alt
+    category_column = params.get("category_column", "Date")
+    value_columns = params.get("value_columns", [])
+    
+    # If no value columns specified, use all numeric columns except the category column
+    if not value_columns:
+        value_columns = [col for col in chart_data.columns if col != category_column and pd.api.types.is_numeric_dtype(chart_data[col])]
+    
+    # Melt the dataframe to long format for Altair
+    melted_df = chart_data.melt(
+        id_vars=[category_column], 
+        value_vars=value_columns,
+        var_name='Metric',
+        value_name='Value'
+    )
+    
+    # Format large numbers for better readability
+    max_value = melted_df['Value'].max()
+    if max_value > 1000000:
+        melted_df['Formatted_Value'] = melted_df['Value'] / 1000000
+        value_title = 'Value (Millions)'
+    elif max_value > 1000:
+        melted_df['Formatted_Value'] = melted_df['Value'] / 1000
+        value_title = 'Value (Thousands)'
+    else:
+        melted_df['Formatted_Value'] = melted_df['Value']
+        value_title = 'Value'
+    
+    # Create the grouped bar chart
+    chart = alt.Chart(melted_df).mark_bar().encode(
+        x=alt.X(f'{category_column}:N', 
+                title=category_column.capitalize(),
+                axis=alt.Axis(labelAngle=30, labelPadding=12, labelFontSize=11, labelColor="#374151")),
+        y=alt.Y('Formatted_Value:Q', 
+                title=value_title,
+                axis=alt.Axis(labelFontSize=11, labelColor="#374151")),
+        color=alt.Color('Metric:N', 
+                       title='Metrics',
+                       scale=alt.Scale(range=['#2563EB', '#DC2626', '#059669', '#D97706', '#7C3AED', '#DB2777', '#0891B2', '#65A30D']),
+                       legend=alt.Legend(titleFontSize=12, labelFontSize=11, labelColor="#374151")),
+        xOffset='Metric:N',
+        tooltip=[
+            alt.Tooltip(f'{category_column}:N', title=category_column.capitalize()),
+            alt.Tooltip('Metric:N', title='Metric'),
+            alt.Tooltip('Value:Q', title='Original Value', format=',.0f'),
+            alt.Tooltip('Formatted_Value:Q', title=value_title, format=',.2f')
+        ]
+    ).properties(
+        title=alt.TitleParams(
+            text=params.get("title", "Grouped Bar Chart"),
+            fontSize=16,
+            color="#111827"
+        ),
+        height=400
+    ).interactive()
+    
+    return chart
+
+
 # =============================================================================
 # ECHARTS CHART CREATORS
 # =============================================================================
@@ -517,11 +578,33 @@ def create_echarts_histogram_chart(df, params):
 
     # Calculate histogram bins
     values = df[x_column].values
-    min_val = values.min()
-    max_val = values.max()
-    bin_size = (max_val - min_val) / bin_count
-    bins = [min_val + i * bin_size for i in range(bin_count)]
-    counts = np.histogram(values, bins=bin_count)[0]
+    
+    # Check if values are numeric or can be converted to numeric
+    try:
+        # Try to convert to numeric
+        numeric_values = pd.to_numeric(values, errors='coerce')
+        if numeric_values.isna().all():
+            # If all values are NaN after conversion, treat as categorical
+            raise ValueError("Non-numeric data")
+        
+        # Use only non-NaN values for histogram
+        numeric_values = numeric_values.dropna()
+        
+        min_val = numeric_values.min()
+        max_val = numeric_values.max()
+        bin_size = (max_val - min_val) / bin_count
+        bins = [min_val + i * bin_size for i in range(bin_count)]
+        counts = np.histogram(numeric_values, bins=bin_count)[0]
+        
+        # Format bin labels
+        bin_labels = [f"{bins[i]:.1f}-{bins[i+1]:.1f}" for i in range(len(bins)-1)]
+        
+    except (ValueError, TypeError):
+        # Handle string/categorical data
+        # For string dates or categorical data, use value counts
+        value_counts = pd.Series(values).value_counts().head(bin_count)
+        counts = value_counts.values
+        bin_labels = [str(label) for label in value_counts.index]
 
     option = {
         "title": {
@@ -536,7 +619,7 @@ def create_echarts_histogram_chart(df, params):
         },
         "xAxis": {
             "type": "category",
-            "data": [f"{bins[i]:.1f}-{bins[i+1]:.1f}" for i in range(len(bins)-1)],
+            "data": bin_labels,
             "axisLabel": {
                 "interval": 0,
                 "rotate": 30,
@@ -759,6 +842,150 @@ def create_echarts_heatmap_chart(df, params):
     return option
 
 
+def create_echarts_grouped_bar_chart(df, params):
+    """Create a grouped bar chart using ECharts for comparing multiple metrics across categories."""
+    category_column = params.get("category_column", "Date")
+    value_columns = params.get("value_columns", [])
+    
+    # If no value columns specified, use all numeric columns except the category column
+    if not value_columns:
+        value_columns = [col for col in df.columns if col != category_column and pd.api.types.is_numeric_dtype(df[col])]
+    
+    # Prepare data for ECharts
+    categories = df[category_column].astype(str).tolist()
+    
+    # Create series for each value column
+    series = []
+    colors = ['#2563EB', '#DC2626', '#059669', '#D97706', '#7C3AED', '#DB2777', '#0891B2', '#65A30D']
+    
+    for i, col in enumerate(value_columns):
+        # Convert to millions for better readability if values are large
+        values = df[col].values
+        if values.max() > 1000000:
+            formatted_values = (values / 1000000).tolist()
+            unit_suffix = "M"
+        elif values.max() > 1000:
+            formatted_values = (values / 1000).tolist()
+            unit_suffix = "K"
+        else:
+            formatted_values = values.tolist()
+            unit_suffix = ""
+            
+        series.append({
+            "name": f"{col} {unit_suffix}".strip(),
+            "type": "bar",
+            "data": formatted_values,
+            "itemStyle": {
+                "color": colors[i % len(colors)]
+            },
+            "emphasis": {
+                "itemStyle": {
+                    "shadowBlur": 10,
+                    "shadowOffsetX": 0,
+                    "shadowColor": "rgba(0, 0, 0, 0.5)"
+                }
+            }
+        })
+
+    option = {
+        "title": {
+            "text": params.get("title", "Grouped Bar Chart"),
+            "left": "center",
+            "textStyle": {
+                "fontSize": 18,
+                "color": "#111827"
+            }
+        },
+        "tooltip": {
+            "trigger": "axis",
+            "axisPointer": {
+                "type": "shadow"
+            },
+            "formatter": "function(params) { \
+                var result = params[0].name + '<br/>'; \
+                params.forEach(function(item) { \
+                    result += item.marker + ' ' + item.seriesName + ': ' + item.value.toLocaleString() + '<br/>'; \
+                }); \
+                return result; \
+            }"
+        },
+        "legend": {
+            "data": [series_item["name"] for series_item in series],
+            "top": 40,
+            "textStyle": {
+                "fontSize": 12,
+                "color": "#374151"
+            }
+        },
+        "grid": {
+            "left": "3%",
+            "right": "4%",
+            "bottom": "3%",
+            "top": "20%",
+            "containLabel": True
+        },
+        "xAxis": {
+            "type": "category",
+            "data": categories,
+            "axisLabel": {
+                "interval": 0,
+                "rotate": 30,
+                "margin": 12,
+                "fontSize": 11,
+                "color": "#374151"
+            },
+            "axisTick": {
+                "alignWithLabel": True
+            },
+            "axisLine": {
+                "lineStyle": {
+                    "color": "#E5E7EB"
+                }
+            }
+        },
+        "yAxis": {
+            "type": "value",
+            "name": "Count",
+            "axisLabel": {
+                "fontSize": 11,
+                "color": "#374151",
+                "formatter": "function(value) { return value.toLocaleString(); }"
+            },
+            "axisLine": {
+                "lineStyle": {
+                    "color": "#E5E7EB"
+                }
+            },
+            "splitLine": {
+                "lineStyle": {
+                    "color": "#F3F4F6",
+                    "type": "dashed"
+                }
+            }
+        },
+        "series": series,
+        "dataZoom": [
+            {
+                "type": "inside",
+                "start": 0,
+                "end": 100
+            },
+            {
+                "type": "slider",
+                "start": 0,
+                "end": 100,
+                "height": 20,
+                "bottom": 10,
+                "textStyle": {
+                    "color": "#374151"
+                }
+            }
+        ]
+    }
+
+    return option
+
+
 def create_echarts_card_component(df, params):
     """Create card components."""
     import html
@@ -891,216 +1118,6 @@ def create_echarts_card_component(df, params):
     return ''.join(html_parts)
 
 
-def create_kepler_map_component(df, params):
-    """Create a simple Kepler map using iframe to load Fused UDF directly."""
-    import json
-    import urllib.parse
-    
-    # Default parameters
-    latlng = params.get('latlng', [40.73, -74.00]) 
-    readOnly = params.get('readOnly', False)
-    title = params.get('title', 'Kepler Map')
-    height = params.get('height', 400)
-    buffer_distance = params.get('buffer_distance', 1000)
-    
-    # Use the token provided by the user or default
-    kepler_token = params.get('kepler_token', 'fsh_6t3VDs74eL0rQ0ocFzPH7H')
-    
-    # Build the Fused URL with parameters
-    base_url = f"https://staging.fused.io/server/v1/realtime-shared/{kepler_token}/run/file"
-    
-    # Create URL parameters
-    url_params = {
-        'latlng': json.dumps(latlng),
-        'readOnly': json.dumps(readOnly),
-        'buffer_distance': buffer_distance
-    }
-    
-    # Encode parameters
-    query_string = urllib.parse.urlencode(url_params)
-    full_url = f"{base_url}?{query_string}"
-    
-    # Create simple iframe HTML
-    html = f'''
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="UTF-8"/>
-        <title>{title}</title>
-        <style>
-          body {{
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-          }}
-          .header {{
-            padding: 10px 20px;
-            background: white;
-            border-bottom: 1px solid #ddd;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          }}
-          .header h3 {{
-            margin: 0;
-            color: #333;
-            font-size: 18px;
-          }}
-          .iframe-container {{
-            width: 100%;
-            height: {height - 60}px;
-            background: white;
-            position: relative;
-          }}
-          .iframe-container iframe {{
-            width: 100%;
-            height: 100%;
-            border: none;
-          }}
-          .loading {{
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f9f9f9;
-            color: #666;
-            font-size: 16px;
-            z-index: 10;
-          }}
-          .loading.hidden {{
-            display: none;
-          }}
-          .error {{
-            color: #c33;
-            text-align: center;
-            padding: 20px;
-          }}
-          .fallback {{
-            margin-top: 10px;
-            font-size: 14px;
-          }}
-          .fallback a {{
-            color: #2563eb;
-            text-decoration: none;
-          }}
-          .fallback a:hover {{
-            text-decoration: underline;
-          }}
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h3>🗺️ {title}</h3>
-        </div>
-        <div class="iframe-container">
-          <div id="loading" class="loading">
-            <div>
-              <div style="margin-bottom: 10px;">🗺️ Loading Kepler Map...</div>
-              <div style="font-size: 12px; color: #888;">Token: {kepler_token}</div>
-            </div>
-          </div>
-          <iframe 
-            id="kepler-iframe" 
-            src="{full_url}"
-            title="Kepler Map"
-            onload="hideLoading()"
-            onerror="showError()"
-          ></iframe>
-        </div>
-        
-        <script>
-          function hideLoading() {{
-            const loading = document.getElementById('loading');
-            if (loading) {{
-              loading.classList.add('hidden');
-            }}
-          }}
-          
-          function showError() {{
-            const loading = document.getElementById('loading');
-            if (loading) {{
-              loading.innerHTML = `
-                <div class="error">
-                  ❌ Failed to load Kepler map
-                  <div class="fallback">
-                    <a href="{full_url}" target="_blank">🔗 Open in new tab</a>
-                  </div>
-                </div>
-              `;
-            }}
-          }}
-          
-          // Fallback timeout
-          setTimeout(function() {{
-            const loading = document.getElementById('loading');
-            const iframe = document.getElementById('kepler-iframe');
-            if (loading && !loading.classList.contains('hidden')) {{
-              loading.innerHTML = `
-                <div class="error">
-                  ⏱️ Map loading timeout
-                  <div class="fallback">
-                    <a href="{full_url}" target="_blank">🔗 Open in new tab</a>
-                  </div>
-                </div>
-              `;
-            }}
-          }}, 15000); // 15 second timeout
-          
-          // Handle iframe communication if needed
-          window.addEventListener('message', function(event) {{
-            if (event.data && event.data.type === 'kepler-loaded') {{
-              hideLoading();
-            }}
-          }});
-        </script>
-      </body>
-    </html>
-    '''
-    
-    return html
-
-
-def get_kepler_html_template():
-    """Get a basic Kepler.gl HTML template - simplified version"""
-    return '''
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="UTF-8"/>
-        <title>Kepler.gl Map</title>
-        <link rel="stylesheet" href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
-        <link href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet">
-        <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
-        <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
-        <script src="https://unpkg.com/redux@4.2.1/dist/redux.js" crossorigin></script>
-        <script src="https://unpkg.com/react-redux@8.1.2/dist/react-redux.min.js" crossorigin></script>
-        <script src="https://unpkg.com/styled-components@4.4.1/dist/styled-components.min.js" crossorigin></script>
-        <script src="https://unpkg.com/kepler.gl@3.1.0-alpha.3/umd/keplergl.min.js" crossorigin></script>
-        <style type="text/css">
-          body {{margin: 0; padding: 0; overflow: hidden;}}
-        </style>
-        <script>
-          const MAPBOX_TOKEN = 'pk.eyJ1IjoidWNmLW1hcGJveCIsImEiOiJjbDBiYzlveHgwdnF0M2NtZzUzZWZuNWZ4In0.l9J8ptz3MKwaU9I4PtCcig';
-        </script>
-      </head>
-      <body>
-        <div id="app"></div>
-        <script>
-          // Basic Kepler implementation - placeholder for template
-          console.log("Kepler template loaded");
-        </script>
-      </body>
-    </html>
-    '''
-
-
-# =============================================================================
-# CHART PARAMETER DEFINITIONS
-# =============================================================================
-
 def get_chart_params():
     """Get chart parameters configuration."""
     return {
@@ -1120,6 +1137,11 @@ def get_chart_params():
             "x_column": "Numeric column to bin (str, default: 'value')",
             "bin_count": "Number of bins (int, default: 20)",
         },
+        "grouped_bar": {
+            "category_column": "Column for x-axis categories (str, default: 'Date')",
+            "value_columns": "List of columns to plot as bars (list, default: all numeric columns)",
+            "title": "Chart title (str, default: 'Grouped Bar Chart')",
+        },
         "box": {
             "category_column": "Category for x-axis (str, default: 'category')",
             "value_column": "Numeric values for y-axis (str, default: 'value')",
@@ -1138,13 +1160,12 @@ def get_chart_params():
             "color": "Color scheme for cards (str, default: 'minimal', options: 'minimal', 'white', 'blue', 'green')",
             "layout": "Layout direction for cards (str, default: 'horizontal', options: 'horizontal', 'vertical')",
         },
-        "kepler": {
-            "latlng": "Center latitude/longitude as [lat, lng] (list, default: [40.73, -74.00])",
-            "buffer_distance": "Buffer distance in meters (float, default: 500)",
-            "readOnly": "Read-only mode for map (bool, default: False)",
-            "latitude_col": "Column name for latitude values (str, optional)",
-            "longitude_col": "Column name for longitude values (str, optional)",
-        },
+    }
+
+
+def get_library_params():
+    """Get library-specific parameters configuration."""
+    return {
     }
 
 
