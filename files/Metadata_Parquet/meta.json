@@ -1,0 +1,81 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Metadata_Parquet",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:description": "Read a Parquet or Geoparquet metadata only.\n\n<!-- fused:previewExt -->\nExtensions: `parquet` `pq` `gpq` `geoparquet`",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "Teal",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Metadata_Parquet",
+            "fused:name": "Metadata_Parquet",
+            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/04b915b1715759da021f33154cc15e35a42bf77d/metadata_parquet_reader/",
+            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/04b915b/metadata_parquet_reader/",
+            "fused:gitPath": "metadata_parquet_reader",
+            "fused:gitRef": "04b915b1715759da021f33154cc15e35a42bf77d",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udf_cards/duckdb_parquet.png",
+            "fused:description": "Read a Parquet or Geoparquet file with DuckDB.\n",
+            "fused:gitAuthorNames": [],
+            "fused:gitAuthorUsernames": [],
+            "fused:gitAuthorUrls": [],
+            "fused:gitAuthorAvatarUrls": [],
+            "fused:gitLastModified": "2025-04-30T12:40:33+00:00",
+            "fused:gitRepo": "fusedlabs/fusedudfs",
+            "fused:id": null
+          },
+          "source": "Metadata_Parquet.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
