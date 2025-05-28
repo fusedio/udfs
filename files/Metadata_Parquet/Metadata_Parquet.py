@@ -3,9 +3,7 @@ def udf(
     path: str,
 ):
     import pyarrow.parquet as pq
-    import s3fs
 
-    # Create S3 filesystem object
     parquet_file = pq.ParquetFile(path)
     
     print("Schema:")
