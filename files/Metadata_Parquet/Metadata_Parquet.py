@@ -6,8 +6,7 @@ def udf(
     import s3fs
 
     # Create S3 filesystem object
-    fs = s3fs.S3FileSystem()
-    parquet_file = pq.ParquetFile(fs.open(path))
+    parquet_file = pq.ParquetFile(path)
     
     print("Schema:")
     print(parquet_file.schema)
