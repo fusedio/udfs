@@ -4,8 +4,14 @@ def load_fire_buffer_gdf():
     import geopandas as gpd
     import datetime
     import pandas as pd
+    from math import isnan
+
     # Function to convert unix to datetime
-    date_string = lambda x: datetime.datetime.utcfromtimestamp(x / 1000).strftime("%Y-%m-%d")
+    def date_string(timestamp: int | float):
+        if not timestamp or isnan(timestamp):
+            return None
+        return datetime.datetime.utcfromtimestamp(timestamp / 1000).strftime("%Y-%m-%d")
+
     # Fetch the GeoJSON data from the remote URL
     @fused.cache
     def load_data():
