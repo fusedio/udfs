@@ -124,4 +124,23 @@ def test_loading_gpx(sample_gpx_file: str):
     assert res.shape == (86, 20)
 
 
+@pytest.mark.parametrize(
+    "file_format,udf_name",
+    [
+        ("parquet", "Metadata_Parquet"),
+    ],
+)
+def test_loading_metadata(sample_dataframe: pd.DataFrame, temp_directory: str, file_format: str, udf_name: str):
+    """
+    Tests loading and processing metadata files using Metadata UDFs.
+    Verifies that the UDF can load and process metadata files without errors.
+    """
+    file_path = get_sample_file_from_dataframe(
+        temp_directory, sample_dataframe, file_format
+    )
+    udf = fused.load(os.path.join(FILES_PATH, udf_name))
+    # UDF only prints the metadata, so we just check that it runs without errors
+    fused.run(udf, path=file_path, engine="local")
+
+
 # TODO: add tests for `Fused_Geopartitioned_Table`, `ImageIO_FIle`, `Join_with_Overture` and `NetCDF_File`

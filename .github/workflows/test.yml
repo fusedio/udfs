@@ -45,12 +45,14 @@ jobs:
               - public/**
             files:
               - files/**
+            tests:
+              - tests/**
 
       #----------------------------------------------
       #       run tests for files udfs
       #----------------------------------------------
       - name: Run tests for files udfs
-        if: github.event_name == 'push' || steps.changed-udfs.outputs.files_any_changed == 'true'
+        if: github.event_name == 'push' || steps.changed-udfs.outputs.files_any_changed == 'true' || steps.changed-udfs.outputs.tests_any_changed == 'true'
         shell: bash
         env:
           AUTH0_REFRESH_TOKEN: ${{ secrets.AUTH0_REFRESH_TOKEN }}
@@ -60,7 +62,7 @@ jobs:
       #       run tests for public udfs
       #----------------------------------------------
       - name: Run tests for public udfs
-        if: github.event_name == 'push' || steps.changed-udfs.outputs.public_any_changed == 'true'
+        if: github.event_name == 'push' || steps.changed-udfs.outputs.public_any_changed == 'true' || steps.changed-udfs.outputs.tests_any_changed == 'true'
         env:
           AUTH0_REFRESH_TOKEN: ${{ secrets.AUTH0_REFRESH_TOKEN }}
           CHANGED_FILES: ${{ steps.changed-udfs.outputs.public_all_changed_files }}
