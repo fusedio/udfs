@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    path: str,
+    path: str= "",
 ):
     import pyarrow.parquet as pq
 
