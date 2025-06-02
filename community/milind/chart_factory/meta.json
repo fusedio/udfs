@@ -56,7 +56,9 @@
             "fused:udfType": "auto",
             "fused:slug": "chart_factory",
             "fused:name": "chart_factory",
-            "fused:id": null
+            "fused:id": null,
+            "fused:description": "Exported from Fused UDF Workbench\n\n",
+            "fused:assetUrl": "fused_uploaded_preview"
           },
           "source": "chart_factory.py",
           "headers": [
