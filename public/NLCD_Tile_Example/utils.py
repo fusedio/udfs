@@ -1,7 +1,7 @@
 utils = fused.load('https://github.com/fusedio/udfs/tree/e1fefb7/public/common/').utils
 
 def get_data(bounds, year, land_type, chip_len):
-        path= f"https://s3-us-west-2.amazonaws.com/mrlc/Annual_NLCD_LndCov_{year}_CU_C1V0.tif"
+        path = f"https://www.mrlc.gov/downloads/sciweb1/shared/mrlc/data-bundles/Annual_NLCD_LndCov_{year}_CU_C1V0.tif"
         arr_int, metadata = utils.read_tiff(bounds, path, output_shape=(chip_len, chip_len), return_colormap=True)
         colormap = metadata['colormap']
         if land_type:
