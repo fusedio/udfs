@@ -14,10 +14,6 @@ UDFS_THAT_ERROR = [
     # Network timeout
     "Overture_Places_Embedding_Clusters",
     "Create_A_Placekey_Join",
-    # Protobuf parsing failed
-    "Airplane_Detection_AOI_v2",
-    # RasterIO error
-    "NLCD_Tile_Example",
     # Broken links
     "REM_with_HyRiver",
     "Coverage_Model_ibis",
@@ -28,8 +24,6 @@ UDFS_THAT_ERROR = [
     "download_images_for_bbox_arcgis_imageserver_rest",
     # Missing creds
     "NEON_Hyperspectral_GEE",
-    # Multiple errors
-    "NLCD_Tile_Hexify",
 ]
 
 PUBLIC_UDFS_PATH = os.path.join(os.path.abspath(os.curdir), "public")
