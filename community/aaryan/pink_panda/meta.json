@@ -12,6 +12,8 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
+            "fused:name": "pink_panda",
+            "fused:slug": "pink_panda",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -53,9 +55,7 @@
                 ]
               }
             },
-            "fused:udfType": "auto",
-            "fused:slug": "pink_panda",
-            "fused:name": "pink_panda"
+            "fused:udfType": "auto"
           },
           "source": "pink_panda.py",
           "headers": []
