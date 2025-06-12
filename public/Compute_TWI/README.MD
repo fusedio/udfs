@@ -6,7 +6,7 @@ Tags: `whitebox`
 
 <!--fused:readme-->
 #### Overview
-Apply [WhitboxTools](https://www.whiteboxgeo.com/manual/wbt_book/) workflows across the US using the USGS 3D Elevation Program (3DEP) Datasets from the National Map at 30-m resolution as the source for elevation data. WhitboxTools provides a wide range of functionalities for geospatial analysis. This UDF relies on [PyWBT](https://pywbt.readthedocs.io) to run the WhitboxTools.
+Apply [WhiteboxTools](https://www.whiteboxgeo.com/manual/wbt_book/) workflows across the US using the USGS 3D Elevation Program (3DEP) Datasets from the National Map at 30-m resolution as the source for elevation data. WhiteboxTools provides a wide range of functionalities for geospatial analysis. This UDF relies on [PyWBT](https://pywbt.readthedocs.io) to run the WhiteboxTools to compute [TWI](https://en.wikipedia.org/wiki/Topographic_wetness_index).
 
 ## Run this in any Jupyter Notebook
 
