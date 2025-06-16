@@ -8,8 +8,6 @@ def udf(path: str, preview: bool=False):
         return gpd.read_file(path)
 
     gdf = get_geojson(path)
-    
-    print(gdf.tile)
     if preview:
         return gdf.geometry
     return gdf
