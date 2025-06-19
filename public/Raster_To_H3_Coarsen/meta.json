@@ -62,7 +62,7 @@
             "fused:slug": "Raster_To_H3_Coarsen",
             "fused:name": "Raster_To_H3_Coarsen",
             "fused:defaultViewState": {
-              "enable": false,
+              "enable": true,
               "latitude": 55.19720052984756,
               "longitude": 27.5740489675406,
               "zoom": 4.686826021433388,
