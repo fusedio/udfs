@@ -15,32 +15,57 @@
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
-                "minZoom": 5,
+                "minZoom": 0,
                 "maxZoom": 19,
-                "tileSize": 256,
-                "pickable": true
+                "tileSize": 256
               },
               "hexLayer": {
-                "opacity": 0.6,
                 "@@type": "H3HexagonLayer",
                 "stroked": true,
                 "filled": true,
                 "pickable": true,
+                "extruded": false,
+                "opacity": 1,
+                "coverage": 0.9,
+                "lineWidthMinPixels": 1,
                 "getHexagon": "@@=properties.hex",
-                "getFillColor": "@@=[properties.agg_data*2000, properties.agg_data*300, properties.agg_data*100]",
-                "getElevation": "@@=properties.agg_data",
-                "elevationScale": 1
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "agg_data",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "DarkMint",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  184,
+                  184,
+                  184
+                ],
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "value",
+                  "present": "@@=properties.value",
+                  "absent": 1
+                },
+                "elevationScale": 10
               }
             },
             "fused:udfType": "vector_single",
             "fused:slug": "Raster_To_H3_Coarsen",
             "fused:name": "Raster_To_H3_Coarsen",
-            "fused:id": null,
             "fused:defaultViewState": {
-              "enable": false,
-              "latitude": 9.990360508611749,
-              "longitude": 10.142004327038668,
-              "zoom": 11.242460654045457,
+              "enable": true,
+              "latitude": 55.19720052984756,
+              "longitude": 27.5740489675406,
+              "zoom": 4.686826021433388,
               "pitch": 0,
               "bearing": 0
             },
@@ -56,33 +81,6 @@
               }
             ],
             "fused:description": "## Overview\n\nRaster to H3 Tile Converter\n\nConverts raster data to H3 hexagonal tiles. It processes a section of a GeoTIFF file and aggregates the data into H3 cells.\n\nThe function returns a pandas DataFrame with the following columns:\n- hex: H3 cell ID (as a hexadecimal string)\n- agg_data: Sum of data values in the cell\n- metric: Same as agg_data (for compatibility)\n",
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/0d120dfb62732a337093cd73f479c586194be267/public/Raster_To_H3_Coarsen/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/0d120df/public/Raster_To_H3_Coarsen/",
-            "fused:gitPath": "public/Raster_To_H3_Coarsen",
-            "fused:gitRef": "0d120dfb62732a337093cd73f479c586194be267",
-            "fused:gitAuthorNames": [
-              "Plinio Guzman",
-              "Isaac Brodsky",
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "pgzmnk",
-              "isaacbrodsky",
-              "fused-io[bot]"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/pgzmnk",
-              "https://github.com/isaacbrodsky",
-              "https://github.com/apps/fused-io"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/27398253?v=4",
-              "https://avatars.githubusercontent.com/u/9139378?v=4",
-              "https://avatars.githubusercontent.com/in/834700?v=4"
-            ],
-            "fused:gitLastModified": "2024-10-21T22:53:46+00:00",
-            "fused:explorerTab": "public",
-            "fused:gitRepo": "fusedio/udfs",
             "fused:explorerPin": "11"
           },
           "source": "Raster_To_H3_Coarsen.py",
