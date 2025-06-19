@@ -15,7 +15,7 @@
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
-                "minZoom": 0,
+                "minZoom": 5,
                 "maxZoom": 19,
                 "tileSize": 256,
                 "pickable": true
