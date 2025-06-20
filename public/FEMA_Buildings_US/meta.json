@@ -27,7 +27,7 @@
               "vectorLayer": {
                 "@@type": "GeoJsonLayer",
                 "stroked": true,
-                "filled": false,
+                "filled": true,
                 "pickable": true,
                 "lineWidthMinPixels": 0.95,
                 "pointRadiusMinPixels": 1,
@@ -44,7 +44,13 @@
                     "Government"
                   ],
                   "colors": "Bold"
-                }
+                },
+                "getFillColor": [
+                  255,
+                  255,
+                  255,
+                  25
+                ]
               }
             },
             "fused:udfType": "vector_tile",
