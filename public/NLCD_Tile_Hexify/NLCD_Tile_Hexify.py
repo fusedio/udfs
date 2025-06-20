@@ -18,6 +18,7 @@ def udf(bounds: fused.types.Bounds=[-121.673,37.561,-120.778,38.314], year:int=1
     # read tiff file
     data = get_data(tile, year, land_type, chip_len)
     if data is None:
+        print(f"No data found for tile {tile}")
         return None
     arr_int, color_map = data
 
@@ -28,7 +29,9 @@ def udf(bounds: fused.types.Bounds=[-121.673,37.561,-120.778,38.314], year:int=1
     df['most_freq'] = df.agg_data.map(lambda x: np.unique(x, return_counts=True)[0][np.argmax(np.unique(x, return_counts=True)[1])])
     df['n_pixel'] = df.agg_data.map(lambda x: np.unique(x, return_counts=True)[1].max())
     df=df[df['most_freq']>0]
-    if len(df)==0: return
+    if len(df)==0:
+        print(f"Empty dataframe for tile {tile}")
+        return
 
     # get the color and land_type
     df[['r', 'g', 'b', 'a']] = df.most_freq.map(lambda x: pd.Series(color_map[x])).apply(pd.Series)
