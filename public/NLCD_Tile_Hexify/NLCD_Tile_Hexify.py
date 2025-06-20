@@ -50,7 +50,8 @@ def get_data(bounds, year, land_type, chip_len):
         tiff = common_utils.read_tiff(bounds, path, output_shape=(chip_len, chip_len), return_colormap=True)
         if tiff is None:
             return None
-        arr_int, colormap = tiff
+        arr_int, metadata = tiff
+        colormap = metadata['colormap']
         if land_type:
-            arr_int = filter_lands(arr_int, land_type, verbose=False)
+            arr_int = filter_lands(arr_int, land_type, verbose=False)    
         return arr_int, colormap
