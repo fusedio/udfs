@@ -2,7 +2,10 @@ utils = fused.load('https://github.com/fusedio/udfs/tree/e1fefb7/public/common/'
 
 def get_data(bounds, year, land_type, chip_len):
         path = f"https://www.mrlc.gov/downloads/sciweb1/shared/mrlc/data-bundles/Annual_NLCD_LndCov_{year}_CU_C1V0.tif"
-        arr_int, metadata = utils.read_tiff(bounds, path, output_shape=(chip_len, chip_len), return_colormap=True)
+        tiff = utils.read_tiff(bounds, path, output_shape=(chip_len, chip_len), return_colormap=True)
+        if tiff is None:
+            return None
+        arr_int, metadata = tiff
         colormap = metadata['colormap']
         if land_type:
             arr_int = filter_lands(arr_int, land_type, verbose=False)    

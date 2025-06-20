@@ -8,7 +8,11 @@ def udf(bounds: fused.types.Bounds=[-121.673,37.561,-120.778,38.314], year:int=1
     tile = common_utils.get_tiles(bounds, clip=True)
 
     
-    arr_int, color_map = get_data(tile, year, land_type, chip_len)
+    data = get_data(tile, year, land_type, chip_len)
+    if data is None:
+        print(f"No data found for tile {tile}")
+        return None
+    arr_int, color_map = data
     print(get_summary(arr_int, color_map))
     
     if colored:
