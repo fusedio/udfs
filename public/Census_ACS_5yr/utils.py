@@ -34,7 +34,7 @@ def acs_5yr_bounds(
         bounds,
         table_path,
         use_columns=['GEOID','geometry'],
-        min_zoom=12
+        min_zoom=10
     )
     if len(gdf) > 0:
         gdf2 = gdf.merge(df)
@@ -67,7 +67,9 @@ def acs_5yr_meta(
 @fused.cache
 def acs_5yr_table(tid, year=2022):
     import pandas as pd
-    url=f's3://fused-asset/data/acs/summary_file/{year}/table-based-SF/data/5YRData/acsdt5y{year}-{tid.lower()}.dat'
+    # url=f's3://fused-asset/data/acs/summary_file/{year}/table-based-SF/data/5YRData/acsdt5y{year}-{tid.lower()}.dat'
+    url=f'https://www2.census.gov/programs-surveys/acs/summary_file/{year}/table-based-SF/data/5YRData/acsdt5y{year}-{tid.lower()}.dat'
+
     return pd.read_csv(url, delimiter='|')
 
 def search_title(title):
