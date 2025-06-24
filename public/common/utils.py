@@ -55,7 +55,7 @@ def jam_lock(lock_second=1, verbose=False):
             open(lock_file, 'x').close()  
 
 def get_catalog_url(udf):
-    return f"http://{fused.options.base_url.split('/')[2]}/workbench/catalog/{udf.entrypoint}-{udf.metadata['fused:id']}"
+    return f"https://{fused.options.base_url.split('/')[2]}/workbench/catalog/{udf.entrypoint}-{udf.metadata['fused:id']}"
     
 def get_jobs_status(jobs, wait=True, sleep_seconds=3):
     from datetime import datetime
