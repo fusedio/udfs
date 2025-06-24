@@ -10,7 +10,7 @@ def udf(
     
     common = fused.load('https://github.com/fusedio/udfs/tree/36f4e97/public/common/').utils
 
-    image_id = fused.run("fsh_50wMhqTy4WBAQ3TIwV1URZ", bounds=bounds, use_centroid_method=False)
+    image_id = fused.run("UDF_Meta_CHM_tiles_geojson", bounds=bounds, use_centroid_method=False)
     path_of_chm = f"s3://dataforgood-fb-data/forests/v1/alsgedi_global_v6_float/chm/{image_id['tile'].iloc[0]}.tif"
     print(f"Using {path_of_chm=}")
     
