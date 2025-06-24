@@ -1,7 +1,7 @@
 @fused.udf
 def udf(
     bounds: fused.types.Bounds, 
-    path: str='s3://fused-users/fused/max/my_data/utilities/ingested/_sample', 
+    path: str='s3://fused-asset/data/us_electric_utilities/ingested/_sample', 
     preview: bool=False,
     buffer_size_m: float = 150,
     min_zoom: int = 10,
