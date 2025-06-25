@@ -50,6 +50,8 @@ def udf(
         
     df2 = get_hex_data(qr_hex, path)
 
+    # Coerce to integer even if deserialized otherwise
+    crop_value_list = [int(x) for x in crop_value_list]
     df2 = df2[df2['value'].isin(crop_value_list)]
     df2 = df2[df2['pct']>100*min_ratio]
 
