@@ -1,4 +1,4 @@
-nlcd_example_utils = fused.load('https://github.com/fusedio/udfs/tree/c0a9abf/public/NLCD_Tile_Example/').utils
+nlcd_example_utils = fused.load('https://github.com/fusedio/udfs/tree/1b2b7e3/public/NLCD_Tile_Example/').utils
 common_utils = fused.load("https://github.com/fusedio/udfs/tree/36f4e97/public/common/").utils
 
 @fused.udf
@@ -16,7 +16,7 @@ def udf(bounds: fused.types.Bounds=[-121.673,37.561,-120.778,38.314], year:int=1
     print(res)
 
     # read tiff file
-    data = get_data(tile, year, land_type, chip_len)
+    data = nlcd_example_utils.get_data(tile, year, land_type, chip_len)
     if data is None:
         print(f"No data found for tile {tile}")
         return None
@@ -43,15 +43,3 @@ def udf(bounds: fused.types.Bounds=[-121.673,37.561,-120.778,38.314], year:int=1
     print(df.groupby(['color','land_type'])['n_pixel'].sum().sort_values(ascending=False))
 
     return df
-
-
-def get_data(bounds, year, land_type, chip_len):
-        path = f"https://www.mrlc.gov/downloads/sciweb1/shared/mrlc/data-bundles/Annual_NLCD_LndCov_{year}_CU_C1V0.tif"
-        tiff = common_utils.read_tiff(bounds, path, output_shape=(chip_len, chip_len), return_colormap=True)
-        if tiff is None:
-            return None
-        arr_int, metadata = tiff
-        colormap = metadata['colormap']
-        if land_type:
-            arr_int = filter_lands(arr_int, land_type, verbose=False)    
-        return arr_int, colormap
