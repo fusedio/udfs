@@ -26,7 +26,8 @@
                   "2025-01-22-0",
                   "2025-03-19-1",
                   "2025-04-23-0",
-                  "2025-05-21-0"
+                  "2025-05-21-0",
+                  "2025-06-25-0"
                 ]
               },
               {
@@ -123,7 +124,6 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:id": null,
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Overture_Map_Example2.png",
             "fused:tags": [
               {
