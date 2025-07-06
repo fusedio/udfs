@@ -1,12 +1,14 @@
-@fused.udf
-def udf(path: str):
+@fused.udf(cache_max_age='30m')
+def udf(
+    path: str,
+):
     import requests
     import json
-    
+
     # Use Fused's built-in signed URL functionality
     signed_url = fused.api.sign_url(path)
     print(signed_url)
-    
+
     # Create HTML with JavaScript to fetch and display content
     html_content = f"""
     <!DOCTYPE html>
@@ -32,7 +34,7 @@ def udf(path: str):
             .text-content {{
                 background: #1a1a1a;
                 color: #cccccc;
-                padding: 20px;
+                padding: 20px 20px 0 20px;
                 height: 100vh;
                 width: 100vw;
                 overflow-y: auto;
@@ -48,7 +50,7 @@ def udf(path: str):
             .markdown-content {{
                 background: #1a1a1a;
                 color: #cccccc;
-                padding: 20px;
+                padding: 20px 20px 0 20px;
                 height: 100vh;
                 width: 100vw;
                 overflow-y: auto;
@@ -216,6 +218,30 @@ def udf(path: str):
                 color: #cccccc;
                 text-align: center;
             }}
+            
+            .truncation-message {{
+                background: #2a2a2a;
+                border: 2px solid #D1E550;
+                border-radius: 8px;
+                padding: 15px;
+                margin: 20px 0;
+                color: #D1E550;
+                font-weight: bold;
+                text-align: center;
+                font-size: 16px;
+            }}
+            
+            .truncation-end {{
+                background: #2a2a2a;
+                border: 1px solid #666;
+                border-radius: 5px;
+                padding: 0;
+                margin: 0;
+                color: #D1E550;
+                font-style: italic;
+                text-align: center;
+                font-size: 12px;
+            }}
         </style>
     </head>
     <body>
@@ -233,7 +259,7 @@ def udf(path: str):
         <script>
             const signedUrl = '{signed_url}';
             const maxChars = 10000;
-            const charsPerSection = 4000; // Show 4000 chars from beginning and 4000 from end
+            const charsPerSection = 100000; // Show 100k chars from beginning and 100k from end
             
             // Configure marked.js for better rendering
             marked.setOptions({{
@@ -269,17 +295,17 @@ def udf(path: str):
             
             async function loadContent() {{
                 try {{
-                    // Start smooth progress simulation - more aggressive
+                    // Start conservative progress simulation
                     let progress = 0;
-                    const targetProgress = 85;
-                    const progressStep = 5; // Increased from 2 to 5 for more aggressive progress
+                    const targetProgress = 50;
+                    const progressStep = 0.5;
                     
                     const progressInterval = setInterval(() => {{
                         if (progress < targetProgress) {{
                             progress += progressStep;
                             updateProgress(progress);
                         }}
-                    }}, 50); // Reduced from 100ms to 50ms for faster updates
+                    }}, 200);
                     
                     const response = await fetch(signedUrl);
                     if (!response.ok) {{
@@ -287,19 +313,19 @@ def udf(path: str):
                         throw new Error(`HTTP error! status: ${{response.status}}`);
                     }}
                     
-                    // Smooth progression to completion - ensure no decrease
-                    const currentProgress = Math.max(progress, 85); // Never go below current progress
-                    updateProgress(currentProgress);
-                    await new Promise(resolve => setTimeout(resolve, 100)); // Reduced delay
-                    updateProgress(Math.max(currentProgress + 5, 90));
-                    await new Promise(resolve => setTimeout(resolve, 100)); // Reduced delay
+                    // Conservative progression to completion
+                    updateProgress(Math.max(progress, 60));
+                    await new Promise(resolve => setTimeout(resolve, 400));
+                    updateProgress(Math.max(progress, 75));
+                    await new Promise(resolve => setTimeout(resolve, 400));
                     
                     const text = await response.text();
-                    updateProgress(100);
+                    updateProgress(Math.max(progress, 90));
                     clearInterval(progressInterval);
                     
                     // Small delay to show 100%
-                    await new Promise(resolve => setTimeout(resolve, 200)); // Reduced delay
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    updateProgress(100);
                     
                     const totalChars = text.length;
                     const isMarkdownContent = isMarkdown(text);
@@ -315,9 +341,9 @@ def udf(path: str):
                             const middleChars = totalChars - (charsPerSection * 2);
                             
                             displayContent = beginning + 
-                                `\\n\\n--- CONTENT TRUNCATED (${{middleChars.toLocaleString()}} characters hidden) ---\\n` +
+                                `\\n\\n<div style="color: #D1E550; font-weight: bold; text-align: center; padding: 10px; background: #2a2a2a; border-radius: 5px; margin: 60px 0;">--- CONTENT TRUNCATED (${{middleChars.toLocaleString()}} characters hidden) ---</div>\\n\\n` +
                                 ending;
-                            truncationMessage = `\\n\\n--- END OF DISPLAY ---\\nTotal file size: ${{totalChars.toLocaleString()}} characters`;
+                            truncationMessage = `\\n\\n<div class="truncation-end"></div>`;
                         }}
                         
                         // Render markdown to HTML
@@ -325,6 +351,7 @@ def udf(path: str):
                         
                         document.getElementById('content').innerHTML = `
                             <div class="markdown-content">${{renderedMarkdown}}</div>
+                            ${{totalChars > maxChars ? `<div class="truncation-end">Truncated preview. Full size: ${{(totalChars / 1000000).toFixed(1)}}M chars.</div>` : ''}}
                         `;
                     }} else {{
                         // For regular text, display as before
@@ -337,13 +364,14 @@ def udf(path: str):
                             const middleChars = totalChars - (charsPerSection * 2);
                             
                             displayContent = beginning + 
-                                `\\n\\n--- CONTENT TRUNCATED (${{middleChars.toLocaleString()}} characters hidden) ---\\n` +
+                                `\\n\\n<div style="color: #D1E550; font-weight: bold; text-align: center; padding: 10px; background: #2a2a2a; border-radius: 5px; margin: 60px 0;">--- CONTENT TRUNCATED (${{middleChars.toLocaleString()}} characters hidden) ---</div>\\n\\n` +
                                 ending;
-                            truncationMessage = `\\n\\n--- END OF DISPLAY ---\\nTotal file size: ${{totalChars.toLocaleString()}} characters`;
+                            truncationMessage = `\\n\\n<div class="truncation-end"></div>`;
                         }}
                         
                         document.getElementById('content').innerHTML = `
                             <div class="text-content">${{displayContent}}${{truncationMessage}}</div>
+                            ${{totalChars > maxChars ? `<div class="truncation-end">Truncated preview. Full size: ${{(totalChars / 1000000).toFixed(1)}}M chars.</div>` : ''}}
                         `;
                     }}
                     
@@ -358,15 +386,16 @@ def udf(path: str):
                 }}
             }}
             
+            let highestProgress = 0;
+            
             function updateProgress(percent) {{
+                // Never go backwards - only show the highest percentage reached
+                highestProgress = Math.max(highestProgress, percent);
                 const progressFill = document.getElementById('progressFill');
                 const progressText = document.getElementById('progressText');
                 if (progressFill && progressText) {{
-                    // Ensure progress never decreases
-                    const currentWidth = parseFloat(progressFill.style.width) || 0;
-                    const newWidth = Math.max(currentWidth, percent);
-                    progressFill.style.width = newWidth + '%';
-                    progressText.textContent = Math.round(newWidth) + '%';
+                    progressFill.style.width = highestProgress + '%';
+                    progressText.textContent = Math.round(highestProgress) + '%';
                 }}
             }}
             
@@ -375,5 +404,5 @@ def udf(path: str):
     </body>
     </html>
     """
-      
+
     return html_content
