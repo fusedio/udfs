@@ -1,4 +1,4 @@
-@fused.udf(cache_max_age='30m')
+@fused.udf(cache_max_age="30m")
 def udf(
     path: str,
 ):
@@ -10,6 +10,7 @@ def udf(
     print(signed_url)
 
     # Create HTML with JavaScript to fetch and display content
+    max_chars: int = 100_000
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -258,8 +259,7 @@ def udf(
         
         <script>
             const signedUrl = '{signed_url}';
-            const maxChars = 10000;
-            const charsPerSection = 100000; // Show 100k chars from beginning and 100k from end
+            const charsPerSection = {max_chars};
             
             // Configure marked.js for better rendering
             marked.setOptions({{
@@ -335,7 +335,7 @@ def udf(
                         let displayContent = text;
                         let truncationMessage = '';
                         
-                        if (totalChars > maxChars) {{
+                        if (totalChars > charsPerSection * 2) {{
                             const beginning = text.substring(0, charsPerSection);
                             const ending = text.substring(totalChars - charsPerSection);
                             const middleChars = totalChars - (charsPerSection * 2);
@@ -351,14 +351,14 @@ def udf(
                         
                         document.getElementById('content').innerHTML = `
                             <div class="markdown-content">${{renderedMarkdown}}</div>
-                            ${{totalChars > maxChars ? `<div class="truncation-end">Truncated preview. Full size: ${{(totalChars / 1000000).toFixed(1)}}M chars.</div>` : ''}}
+                            ${{totalChars > charsPerSection * 2 ? `<div class="truncation-end">Truncated preview. Full size: ${{(totalChars / 1000000).toFixed(1)}}M chars.</div>` : ''}}
                         `;
                     }} else {{
                         // For regular text, display as before
                         let displayContent = text;
                         let truncationMessage = '';
                         
-                        if (totalChars > maxChars) {{
+                        if (totalChars > charsPerSection * 2) {{
                             const beginning = text.substring(0, charsPerSection);
                             const ending = text.substring(totalChars - charsPerSection);
                             const middleChars = totalChars - (charsPerSection * 2);
@@ -371,7 +371,7 @@ def udf(
                         
                         document.getElementById('content').innerHTML = `
                             <div class="text-content">${{displayContent}}${{truncationMessage}}</div>
-                            ${{totalChars > maxChars ? `<div class="truncation-end">Truncated preview. Full size: ${{(totalChars / 1000000).toFixed(1)}}M chars.</div>` : ''}}
+                            ${{totalChars > charsPerSection * 2 ? `<div class="truncation-end">Truncated preview. Full size: ${{(totalChars / 1000000).toFixed(1)}}M chars.</div>` : ''}}
                         `;
                     }}
                     
