@@ -12,6 +12,8 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
+            "fused:name": "green_tarsier",
+            "fused:slug": "green_tarsier",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -53,9 +55,7 @@
                 ]
               }
             },
-            "fused:udfType": "auto",
-            "fused:slug": "green_tarsier",
-            "fused:name": "green_tarsier"
+            "fused:udfType": "auto"
           },
           "source": "green_tarsier.py",
           "headers": []
