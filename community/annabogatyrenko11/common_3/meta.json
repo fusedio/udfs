@@ -1,0 +1,113 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "common_3",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    255,
+                    255,
+                    255,
+                    40
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  255,
+                  255,
+                  40
+                ]
+              },
+              "loadingLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "themeColor",
+                  "key": "backgroundAccent"
+                },
+                "getFillColor": {
+                  "@@function": "themeColor",
+                  "key": "backgroundAccent",
+                  "alpha": 50
+                }
+              },
+              "errorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": [
+                  255,
+                  0,
+                  0,
+                  255
+                ],
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "common_3",
+            "fused:name": "common_3",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Fused_Logo.png",
+            "fused:description": "## Overview\n\nThis UDF contains common utils that are being used for many public udfs. \n\n\nTo import common utils in your udf run the following command:\n\n`common = fused.public.common`\n",
+            "fused:defaultViewState": {
+              "enable": false,
+              "latitude": 0,
+              "longitude": 0,
+              "zoom": 0,
+              "pitch": 0,
+              "bearing": 0
+            }
+          },
+          "source": "common_3.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
