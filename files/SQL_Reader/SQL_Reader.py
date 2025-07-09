@@ -2,7 +2,7 @@ import fused
 
 @fused.udf
 def udf(
-    path: str,
+    path: str = "s3://fused-users/fused/sina/overture_overview/2024-09-18-0/hex4.parquet",
 ):
 
     data_url = fused.api.sign_url(path)
@@ -274,7 +274,11 @@ def udf(
         <div class="query-container" id="queryContainer">
             <textarea 
                 id="queryInput" 
-                placeholder="SELECT * FROM @{data_url} LIMIT 100">SELECT * FROM @{data_url} LIMIT 100</textarea>
+                placeholder="SELECT *
+FROM @{path}
+LIMIT 100;">SELECT *
+FROM @{path}
+LIMIT 100;</textarea>
         </div>
         
         <div class="results-container" id="resultsContainer">
@@ -290,7 +294,9 @@ def udf(
             // ========================================
             
             // Query state management
-            let currentQuery = 'SELECT * FROM @{data_url} LIMIT 100';
+            let currentQuery = `SELECT *
+FROM @{path}
+LIMIT 100;`;
             let queryTimeout = null;
             let currentAbortController = null;
             
@@ -470,14 +476,57 @@ def udf(
             // ENHANCED @URL PROCESSING WITH ARROW
             // ========================================
             
+            // ========================================
+            // URL MAPPING AND S3 PATH HANDLING
+            // ========================================
+            
+            // Mapping from clean S3 paths to signed URLs
+            const s3PathToSignedUrl = new Map();
+            s3PathToSignedUrl.set('{path}', '{data_url}');
+            
             function extractURLsFromQuery(query) {{
-                const urlRegex = /@(https?:\\/\\/[^\\s]+)/gi;
+                // Extract both HTTP URLs and S3 paths
+                const httpUrlRegex = /@(https?:\\/\\/[^\\s]+)/gi;
+                const s3PathRegex = /@(s3:\\/\\/[^\\s]+)/gi;
+                const pathVariableRegex = /@\\{{([^}}]+)\\}}/gi;
+                
                 const urls = [];
                 let match;
-                while ((match = urlRegex.exec(query)) !== null) {{
-                    urls.push(match[1]);
+                
+                // Extract HTTP URLs
+                while ((match = httpUrlRegex.exec(query)) !== null) {{
+                    urls.push({{ type: 'http', value: match[1] }});
                 }}
+                
+                // Extract S3 paths
+                query = query.replace(httpUrlRegex, ''); // Reset regex
+                while ((match = s3PathRegex.exec(query)) !== null) {{
+                    urls.push({{ type: 's3', value: match[1] }});
+                }}
+                
+                // Extract path variables like {{path}}
+                query = query.replace(s3PathRegex, ''); // Reset regex
+                while ((match = pathVariableRegex.exec(query)) !== null) {{
+                    const varName = match[1];
+                    if (s3PathToSignedUrl.has(varName)) {{
+                        const signedUrl = s3PathToSignedUrl.get(varName);
+                        urls.push({{ type: 'http', value: signedUrl, displayAs: `${{varName}}` }});
+                    }}
+                }}
+                
                 return urls;
+            }}
+            
+            function getSignedUrlForS3Path(s3Path) {{
+                // In a real implementation, this would call your signing service
+                // For now, we'll use the existing signed URL if it matches the path pattern
+                if (s3Path.includes('{path}') || s3PathToSignedUrl.has(s3Path)) {{
+                    return s3PathToSignedUrl.get('{path}') || s3PathToSignedUrl.get(s3Path);
+                }}
+                
+                // If no mapping found, return the S3 path as-is (will likely fail but shows the issue)
+                console.warn(`No signed URL mapping found for S3 path: ${{s3Path}}`);
+                return s3Path;
             }}
             
             function detectFormatFromURL(url) {{
@@ -676,34 +725,61 @@ def udf(
             }}
             
             async function processQueryWithURLs(query, signal) {{
-                const urls = extractURLsFromQuery(query);
+                const urlEntries = extractURLsFromQuery(query);
                 
-                if (urls.length === 0) {{
+                if (urlEntries.length === 0) {{
                     return {{ processedQuery: query, tableInfo: [] }};
                 }}
                 
-                console.log('[URL] Found URLs in query:', urls);
+                console.log('[URL] Found URL entries in query:', urlEntries);
                 
                 let processedQuery = query;
                 const tableInfo = [];
-                const uniqueUrls = [...new Set(urls)];
                 
-                for (const url of uniqueUrls) {{
+                for (const urlEntry of urlEntries) {{
                     try {{
                         urlTableCounter++;
                         const tableName = `url_table_${{urlTableCounter}}`;
                         
-                        const info = await registerURLDataInDuckDB(url, tableName, signal);
-                        tableInfo.push({{ url, ...info }});
+                        let actualUrl = urlEntry.value;
+                        let displayUrl = urlEntry.displayAs || urlEntry.value;
                         
-                        // Replace @URL with table name
-                        const urlPattern = new RegExp(`@${{url.replace(/[.*+?^${{}}()|[\\]\\\\]/g, '\\\\$&')}}`, 'gi');
-                        processedQuery = processedQuery.replace(urlPattern, tableName);
+                        // Handle S3 paths by getting signed URLs
+                        if (urlEntry.type === 's3') {{
+                            actualUrl = getSignedUrlForS3Path(urlEntry.value);
+                            displayUrl = urlEntry.value; // Keep showing the clean S3 path
+                        }}
                         
-                        console.log(`[URL] ${{tableName}} ready`);
+                        console.log(`[URL] Processing: Display="${{displayUrl}}", Actual="${{actualUrl.substring(0, 50)}}..."`);
+                        
+                        const info = await registerURLDataInDuckDB(actualUrl, tableName, signal);
+                        tableInfo.push({{ 
+                            url: actualUrl, 
+                            displayUrl: displayUrl,
+                            tableName,
+                            ...info 
+                        }});
+                        
+                        // Replace the original reference with table name
+                        let searchPattern;
+                        if (urlEntry.displayAs) {{
+                            // Handle variables like @{{path}}
+                            searchPattern = `@\\{{${{urlEntry.displayAs}}\\}}`;
+                        }} else if (urlEntry.type === 's3') {{
+                            // Handle S3 paths like @s3://bucket/file
+                            searchPattern = `@${{urlEntry.value.replace(/[.*+?^${{}}()|[\\]\\\\]/g, '\\\\$&')}}`;
+                        }} else {{
+                            // Handle HTTP URLs
+                            searchPattern = `@${{urlEntry.value.replace(/[.*+?^${{}}()|[\\]\\\\]/g, '\\\\$&')}}`;
+                        }}
+                        
+                        const regex = new RegExp(searchPattern, 'gi');
+                        processedQuery = processedQuery.replace(regex, tableName);
+                        
+                        console.log(`[URL] ${{tableName}} ready for ${{displayUrl}}`);
                         
                     }} catch (error) {{
-                        console.error(`[URL] Failed to load ${{url}}:`, error);
+                        console.error(`[URL] Failed to load ${{urlEntry.value}}:`, error);
                         throw error;
                     }}
                 }}
@@ -759,7 +835,11 @@ def udf(
                     updateProgress(50);
                     
                     if (tableInfo.length > 0) {{
-                        statusInfo.textContent = `Loading data from ${{tableInfo.length}} source${{tableInfo.length > 1 ? 's' : ''}}...`;
+                        const displaySources = tableInfo.map(info => info.displayUrl || info.url).join(', ');
+                        const truncatedSources = displaySources.length > 50 
+                            ? displaySources.substring(0, 50) + '...' 
+                            : displaySources;
+                        statusInfo.textContent = `Loading data from: ${{truncatedSources}}`;
                     }}
                     
                     console.log('[QUERY] Processed query:', processedQuery);
@@ -1040,7 +1120,7 @@ def udf(
                     // Debounced execution - 800ms after user stops typing
                     queryTimeout = setTimeout(() => {{
                         executeQuery(currentQuery);
-                    }}, 800);
+                    }}, 100);
                 }});
                 
                 queryInput.addEventListener('keydown', function(e) {{
