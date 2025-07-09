@@ -11,32 +11,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  change-detection:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
+    outputs:
+      files_changed: ${{ steps.changed-udfs.outputs.files_any_changed }}
+      public_changed: ${{ steps.changed-udfs.outputs.public_any_changed }}
+      tests_changed: ${{ steps.changed-udfs.outputs.tests_any_changed }}
+      public_files: ${{ steps.changed-udfs.outputs.public_all_changed_files }}
     steps:
-      #----------------------------------------------
-      #       check-out repo and set-up python
-      #----------------------------------------------
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      #----------------------------------------------
-      # install dependencies
-      #----------------------------------------------
-      - name: Install dependencies
-        shell: bash
-        run: pip install fused[batch] pytest openpyxl duckdb fiona scipy
-
-      #----------------------------------------------
-      #       get all changed UDFs
-      #----------------------------------------------
       - name: Get all changed UDFs
         id: changed-udfs
-        if: github.event_name == 'pull_request'
         uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46
         with:
           separator: ","
@@ -48,25 +36,66 @@ jobs:
             tests:
               - tests/**
 
-      #----------------------------------------------
-      #       run tests for files udfs
-      #----------------------------------------------
+  files-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: change-detection
+    if: github.event_name == 'push' || needs.change-detection.outputs.files_changed == 'true' || needs.change-detection.outputs.tests_changed == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        shell: bash
+        run: pip install fused[batch] pytest openpyxl duckdb fiona scipy
+
       - name: Run tests for files udfs
-        if: github.event_name == 'push' || steps.changed-udfs.outputs.files_any_changed == 'true' || steps.changed-udfs.outputs.tests_any_changed == 'true'
         shell: bash
         env:
           AUTH0_REFRESH_TOKEN: ${{ secrets.AUTH0_REFRESH_TOKEN }}
         run: pytest tests/test_file_udfs.py --tb=short
 
-      #----------------------------------------------
-      #       run tests for public udfs
-      #----------------------------------------------
+  public-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: change-detection
+    if: github.event_name == 'push' || needs.change-detection.outputs.public_changed == 'true' || needs.change-detection.outputs.tests_changed == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        shell: bash
+        run: pip install fused[batch] pytest openpyxl duckdb fiona scipy
+
       - name: Run tests for public udfs
-        if: github.event_name == 'push' || steps.changed-udfs.outputs.public_any_changed == 'true' || steps.changed-udfs.outputs.tests_any_changed == 'true'
         env:
           AUTH0_REFRESH_TOKEN: ${{ secrets.AUTH0_REFRESH_TOKEN }}
-          CHANGED_FILES: ${{ steps.changed-udfs.outputs.public_all_changed_files }}
+          CHANGED_FILES: ${{ needs.change-detection.outputs.public_files }}
         shell: bash
         run: pytest tests/test_public_udfs.py --tb=short
 
+  report-status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [files-tests, public-tests]
+    if: always()
+    steps:
+      - name: Report test status
+        run: |
+          echo "Files tests: ${{ needs.files-tests.result }}"
+          echo "Public tests: ${{ needs.public-tests.result }}"
+
+          if [ "${{ needs.files-tests.result }}" == "failure" ] || [ "${{ needs.public-tests.result }}" == "failure" ]; then
+            # Overall workflow failure
+            exit 1
+          fi
+
+          # tests passed or skipped
 
