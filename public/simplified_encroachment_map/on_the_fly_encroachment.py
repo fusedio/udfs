@@ -13,14 +13,16 @@ def udf(
     import rasterio.transform
     from scipy.ndimage import distance_transform_edt
     
-    power_lines = fused.run("UDF_ingested_utilities", bounds=list(bounds), min_zoom=0, buffer_size_m=0)
+    ingested_utilities_udf = fused.load('https://github.com/fusedio/udfs/tree/0858846/public/ingested_utilities/')
+    power_lines = fused.run(ingested_utilities_udf, bounds=list(bounds), min_zoom=0, buffer_size_m=0)
 
     if power_lines.shape[0] == 0:
         return None
     buffered_lines = power_lines.copy()
     buffered_lines.geometry = power_lines.to_crs(power_lines.estimate_utm_crs()).geometry.buffer(lines_buffer_size_m).to_crs(4326)
     
-    chm = fused.run('UDF_stream_CHM', bounds=bounds, visualize=False) # This uses 256 chip len all the time
+    stream_chm_udf = fused.load('https://github.com/fusedio/udfs/tree/ba469a3/public/get_CHM_from_meta/')
+    chm = fused.run(stream_chm_udf, bounds=bounds, visualize=False) # This uses 256 chip len all the time
 
     height, width = chm.shape
     xmin, ymin, xmax, ymax = bounds
