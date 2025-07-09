@@ -78,12 +78,7 @@
             "fused:description": "This UDF can convert natural language queries to Parameters using RAG (Retrieval-Augmented Generation) and filter out the cdl dataset based on the best matching result using OpenAI Embeddings \n\n"
           },
           "source": "Show_Me_Tomato.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],
