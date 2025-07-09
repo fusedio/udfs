@@ -1,4 +1,5 @@
 import os
+import uuid
 import pandas as pd
 import fused
 import geopandas as gpd
@@ -98,10 +99,14 @@ def test_loading_with_text(temp_directory: str, sample_text: str):
     Verifies that the UDF can load and process text files without errors.
     """
 
-    file_path = get_sample_file_from_text(temp_directory, sample_text)
+    file_local_path = get_sample_file_from_text(temp_directory, sample_text)
+    id = str(uuid.uuid4())
+    file_path = f"s3://fused-asset/tmp/{id}.txt"
+    fused.api.upload(file_local_path, file_path)
     udf = fused.load(os.path.join(FILES_PATH, "Text_File"))
     fused.run(udf, path=file_path, engine="local", cache=False)
     # just check that the function runs with no errors
+    fused.api.delete(file_path)
 
 
 def test_loading_geotiff(sample_geotiff_file: str):

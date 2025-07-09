@@ -32,7 +32,7 @@ def udf(
     
         @fused.cache()
         def getting_yearly_data(year):
-            path = f"s3://fused-users/fused/max/maxar_ted_demo/crimedata_csv_AllNeighbourhoods_{str(year)}.csv"
+            path = f"s3://fused-asset/maxar-ted-demo/crimedata_csv_AllNeighbourhoods_{str(year)}.csv"
             
             df = pd.read_csv(path)
             df["geometry"] = gpd.points_from_xy(df["X"], df["Y"], crs="EPSG:32610")
