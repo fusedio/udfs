@@ -2,7 +2,7 @@ import fused
 
 @fused.udf
 def udf(
-    path: str = "s3://fused-users/fused/sina/overture_overview/2024-09-18-0/hex4.parquet",
+    path: str,
 ):
 
     data_url = fused.api.sign_url(path)
@@ -383,7 +383,7 @@ def udf(
                     const initTime = performance.now() - initStartTime;
                     isDuckDBReady = true;
                     
-                    statusInfo.textContent = `DuckDB ready (${{initTime.toFixed(0)}}ms) - Arrow optimized`;
+                    statusInfo.textContent = `DuckDB ready (${{initTime.toFixed(0)}}ms)`;
                     console.log(`[DUCKDB] ✅ Enhanced initialization completed in ${{initTime.toFixed(0)}}ms`);
                     
                     onDuckDBReady();
