@@ -1,0 +1,72 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "vancouver_crime_url_or_data_yearly",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "PurpOr",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "vancouver_crime_url_or_data_yearly",
+            "fused:name": "vancouver_crime_url_or_data_yearly",
+            "fused:mcp": {
+              "description": "Model Context Protocol (MCP) Description for UDF \"url_or_data_crime\":\n\n\"Url_or_data_crime\" is a User Defined Function (UDF) within the Fused AI framework that returns crime statistics for any given latitude / longitude in Vancouver utilizing data derived from the open data portal of the city.\n\nFunctionality:\n\nThe UDF operates on two functional modes – 'data' and 'chart-url', determined by the input parameter 'output_format'. When the output_format is set to 'data', the UDF executes and returns the output of another UDF named \"vancouver_yearly_crime_per_category\". When the output_format is set as 'chart-url', the UDF generates and returns a unique URL which points to a dynamic png chart rendering of crime data.\n\nInput Parameters:\n\n1. output_format (str, default = 'chart-url'): Determines the output format of the function. It can be either 'data' or 'chart-url'.\n2. analysis_start_year (int, default = 2021): Determines the year from which the function begins its data analysis.\n3. lat (float, default = 49.2806): The latitude coordinate where the crime analysis starts.\n4. lon (float, default = -123.1259): The longitude coordinate where the crime analysis starts.\n5. buffer_amount (float, default = 100): Defines the radius for the region around the specified lat/lon for which the crime data is analyzed.\n\nOutput:\n\nIf the output_format parameter is set to 'data', the function returns a pandas DataFrame that contains data output from \"vancouver_yearly_crime_per_category\". If output_format is set to 'chart-url', the function generates a URL and returns a pandas DataFrame with this URL string.\n\nTechnical Details and Limitations:\n\n'Url_or_data_crime' function relies on availability of Vancouver open data portal; causing potential limitation if the data portal goes offline or becomes unavailable. Implementation errors are raised if the 'output_format' is set to anything other than 'data' or 'chart-url'.\n\nThis function is optimized for technical usage in AI systems, offering a balance between detailed data output or simple data visualization. Accuracy of data is directly dependent on the precision of the input parameters, especially correct latitudinal/longitudinal coordinates and the buffer amount. Last but not least, the generated URL for the 'chart-url' output option is linked to a system internal staging server and is therefore subject to server availability.",
+              "parameters": "[\n  {\n    \"name\": \"output_format\",\n    \"type\": \"Literal['data', 'chart-url']\"\n  },\n  {\n    \"name\": \"analysis_start_year\",\n    \"type\": \"int\"\n  },\n  {\n    \"name\": \"lat\",\n    \"type\": \"float\"\n  },\n  {\n    \"name\": \"lon\",\n    \"type\": \"float\"\n  },\n  {\n    \"name\": \"buffer_amount\",\n    \"type\": \"float\"\n  }\n]"
+            },
+            "fused:description": "Exported from Fused UDF Workbench\n\n"
+          },
+          "source": "vancouver_crime_url_or_data_yearly.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
