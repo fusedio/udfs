@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "on_the_fly_encroachment",
+          "name": "complicated_encroachment_map",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -20,8 +20,8 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:name": "on_the_fly_encroachment",
-            "fused:slug": "on_the_fly_encroachment",
+            "fused:name": "complicated_encroachment_map",
+            "fused:slug": "complicated_encroachment_map",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -68,7 +68,7 @@
                 ]
               }
             },
-            "fused:udfType": "vector_tile",
+            "fused:udfType": "vector_single",
             "fused:assetUrl": "https://fused-magic.s3.amazonaws.com/thumbnails/preview/fusedlabs/fusedudfs/encroachment_mapping/84877e0b-c56b-4a2d-b654-08c5d4237e59",
             "fused:tags": [
               {
@@ -76,41 +76,9 @@
                 "label": "vegetation_management_demo"
               }
             ],
-            "fused:description": "## Overview\n\nJoin a Canopy Height Map and Power Lines into a simplified vegetation encroachment model\n",
-            "fused:defaultParameters": [
-              {
-                "parameter": "h_bucket_meters",
-                "value": "",
-                "type": "float",
-                "suggestedValues": [
-                  "5"
-                ]
-              },
-              {
-                "parameter": "w_bucket_meters",
-                "value": "",
-                "type": "float",
-                "suggestedValues": [
-                  "5"
-                ]
-              },
-              {
-                "parameter": "lines_buffer_size_m",
-                "value": "",
-                "type": "float",
-                "suggestedValues": [
-                  "150"
-                ]
-              },
-              {
-                "parameter": "return_risk_array",
-                "value": "",
-                "type": "boolean",
-                "suggestedValues": []
-              }
-            ]
+            "fused:description": "## Overview\n\nJoin a Canopy Height Map and Power Lines into a simplified vegetation encroachment model\n"
           },
-          "source": "on_the_fly_encroachment.py",
+          "source": "complicated_encroachment_map.py",
           "headers": []
         }
       }
