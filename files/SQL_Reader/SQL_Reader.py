@@ -380,10 +380,6 @@ LIMIT 100;`;
                     }});
                     
                     connection = await duckDB.connect();
-                    
-                    // Install extensions
-                    await connection.query("INSTALL spatial;");
-                    await connection.query("LOAD spatial;");
                     updateProgress(100);
                     
                     const initTime = performance.now() - initStartTime;
@@ -438,10 +434,6 @@ LIMIT 100;`;
                     updateProgress(85);
                     
                     connection = await duckDB.connect();
-                    
-                    // Install basic extensions
-                    await connection.query("INSTALL spatial;");
-                    await connection.query("LOAD spatial;");
                     updateProgress(100);
                     
                     isDuckDBReady = true;
