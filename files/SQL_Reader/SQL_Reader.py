@@ -839,7 +839,7 @@ LIMIT 100;`;
                     // Execute with Arrow streaming for better performance
                     const startTime = performance.now();
                     
-                    // Create a new connection for this query (SQLrooms pattern)
+
                     const queryConnection = await duckDB.connect();
                     
                     try {{
