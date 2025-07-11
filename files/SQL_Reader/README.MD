@@ -4,7 +4,7 @@
 
 <!--fused:filePreview-->
 Extensions: `json` `geojson` `csv` `tsv` `txt` `parquet` `arrow` `feather` `ipc` `xlsx` `xls`
-Menu order: 1
+Menu order: 2
 
 <!--fused:readme-->
 Read a SQL file.
