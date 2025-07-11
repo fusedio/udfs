@@ -2,7 +2,7 @@ nlcd_example_utils = fused.load('https://github.com/fusedio/udfs/tree/1b2b7e3/pu
 common_utils = fused.load("https://github.com/fusedio/udfs/tree/36f4e97/public/common/").utils
 
 @fused.udf
-def udf(bounds: fused.types.Bounds=[-121.673,37.561,-120.778,38.314], year:int=1985, land_type:str='', chip_len:int=256):
+def udf(bounds: fused.types.Bounds=[-121.673,37.561,-120.778,38.314], year: int=1985, land_type: str='', chip_len: int=256):
     import numpy as np
     import pandas as pd
 
