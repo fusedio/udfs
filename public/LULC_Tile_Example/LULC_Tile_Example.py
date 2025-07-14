@@ -34,6 +34,6 @@ def udf(bounds: fused.types.Bounds = [-122.499,37.707,-122.381,37.808], year="20
         )
         data = arr_to_color(data, color_map=LULC_IO_COLORS)
         print(data.shape)
-        return data
+        return data, bounds
     else:
         print("Please zoom in more.")

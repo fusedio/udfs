@@ -53,4 +53,4 @@ def udf(
         min=0,
         max=0.5,
         colormap=palettable.scientific.sequential.Bamako_20_r,
-    )
+    ), bounds
