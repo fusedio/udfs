@@ -1,4 +1,3 @@
-# todo: investigate why sometime configure_s3_access get cached
 @fused.udf
 def udf(
     bounds: fused.types.Bounds = [-101.412,35.659,-101.391,35.677],
