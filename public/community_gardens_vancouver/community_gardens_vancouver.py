@@ -10,7 +10,7 @@ def udf():
     r = requests.get(url, params=params)
 
     gdf = gpd.GeoDataFrame(r.json()["results"])
-    gdf["geometry"] = gdf["geom"].apply(lambda x: shape(x["geometry"]))
+    gdf["geometry"] = gdf["geom"].apply(lambda x: shape(x["geometry"]) if x else None)
     gdf = gdf.set_geometry("geometry")
     
     del gdf["geom"]
