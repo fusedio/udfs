@@ -12,8 +12,7 @@ def udf(
 
     # convert bounds to tile
     common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
-    tile = common_utils.get_tiles(bounds, clip=True)
-
+    tile = common_utils.get_tiles(bounds, target_num_tiles=1)
     
     # Get the bounding box coordinates
     x, y, z = tile[["x", "y", "z"]].iloc[0]
@@ -36,6 +35,6 @@ def udf(
         )
         mask = (vegetation_mask * 255).astype("uint8")
     
-        return np.stack([mask * 0, mask * 1, mask * 0, mask // 2]), bounds
+        return np.stack([mask * 0, mask * 1, mask * 0, mask // 2]), list(tile.total_bounds)
     else:
-        return url_to_arr(image_path), bounds
+        return url_to_arr(image_path), list(tile.total_bounds)
