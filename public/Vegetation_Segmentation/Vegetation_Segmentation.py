@@ -36,6 +36,6 @@ def udf(
         )
         mask = (vegetation_mask * 255).astype("uint8")
     
-        return np.stack([mask * 0, mask * 1, mask * 0, mask // 2])
+        return np.stack([mask * 0, mask * 1, mask * 0, mask // 2]), bounds
     else:
-        return url_to_arr(image_path)
+        return url_to_arr(image_path), bounds
