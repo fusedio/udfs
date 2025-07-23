@@ -1,0 +1,102 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Overture_East_Asian_Buildings_IOU",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 14,
+                "tileSize": 256,
+                "extrude": true,
+                "pickable": true
+              },
+              "hexLayer": {
+                "opacity": 0.5,
+                "@@type": "H3HexagonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "extruded": true,
+                "getFillColor": {
+                  "@@function": "colorCategories",
+                  "attr": "how",
+                  "domain": [
+                    "intersection",
+                    "symmetric_difference"
+                  ],
+                  "colors": "TealRose"
+                },
+                "getHexagon": "@@=properties.hex",
+                "getElevation": "@@=properties.ratio",
+                "elevationScale": 50
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Overture_East_Asian_Buildings_IOU",
+            "fused:name": "Overture_East_Asian_Buildings_IOU",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/4cf590ab3d93f3b9d0d216facfe0390389a145d0/public/Overture_East_Asian_Buildings_IOU/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/4cf590a/public/Overture_East_Asian_Buildings_IOU/",
+            "fused:gitPath": "public/Overture_East_Asian_Buildings_IOU",
+            "fused:gitRef": "4cf590ab3d93f3b9d0d216facfe0390389a145d0",
+            "fused:gitAuthorNames": [
+              "Plinio Guzman",
+              "Isaac Brodsky",
+              "Suryashankar Das",
+              "Suryashankar Das",
+              "Milind Soni"
+            ],
+            "fused:gitAuthorUsernames": [
+              "pgzmnk",
+              "isaacbrodsky",
+              "iamsdas-fused",
+              "iamsdas",
+              "milind-soni"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/pgzmnk",
+              "https://github.com/isaacbrodsky",
+              "https://github.com/iamsdas-fused",
+              "https://github.com/iamsdas",
+              "https://github.com/milind-soni"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/27398253?v=4",
+              "https://avatars.githubusercontent.com/u/9139378?v=4",
+              "https://avatars.githubusercontent.com/u/200643783?v=4",
+              "https://avatars.githubusercontent.com/u/26461855?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
+            ],
+            "fused:gitLastModified": "2025-03-07T09:19:42+00:00",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 31.22901878458391,
+              "longitude": 121.46146153018861,
+              "zoom": 16.484759096971484,
+              "pitch": 42.284710017574696,
+              "bearing": 0.3797829912048632
+            },
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/overture_iou.png",
+            "fused:description": "# IOU Between Overture and East Asian Buildings\n\nCalculates the Intersection over Union (IOU) ratio between Overture Buildings and the East Asian Buildings dataset (https://zenodo.org/records/8174931) by leveraging hex-based discretization of geometries. This UDF is compares the ratio between overlapping and non-overlapping regions of buildings and can be used to quantify overlap between buildings in each dataset, detect discrepancies, or evaluating changes.\n\n- Blue is the `intersection`\n- Red is the `symmetric_difference`\n- Height, for each Overture Building, is based on the intersection over union score\n",
+            "fused:explorerTab": "public"
+          },
+          "source": "Overture_East_Asian_Buildings_IOU.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

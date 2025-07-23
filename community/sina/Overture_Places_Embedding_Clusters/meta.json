@@ -1,0 +1,133 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Overture_Places_Embedding_Clusters",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "TealGrn",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              },
+              "hexLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "extruded": false,
+                "opacity": 0.3,
+                "coverage": 0.8,
+                "lineWidthMinPixels": 0,
+                "getHexagon": "@@=properties.h3_index",
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "TealGrn",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": {
+                  "@@function": "colorCategories",
+                  "attr": "cluster",
+                  "domain": [
+                    0,
+                    1,
+                    2,
+                    4,
+                    5,
+                    6,
+                    7
+                  ],
+                  "colors": "Bold",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "value",
+                  "present": "@@=properties.value",
+                  "absent": 1
+                },
+                "elevationScale": 10
+              }
+            },
+            "fused:udfType": "vector_single",
+            "fused:slug": "Overture_Places_Embedding_Clusters",
+            "fused:name": "Overture_Places_Embedding_Clusters",
+            "fused:id": null,
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/cdmx.png",
+            "fused:description": "## Cluster Embeddings of Overture Places by H3\n\nThis UDF groups business categories in Overture Places at the H3 grid level, we can analyze the distribution of services and their accessibility. This approach provides a quantifiable way to compare cities globally, shedding light on the urban inclusivity of different regions.\nWorkflow\n\nThe UDF follows this workflow:\n\n1. Load Overture Places records for a given H3\n2. Create business category column\n3. Create an embedding to represent business categories\n4. Run UDF for all H3 spanning an area of interest (polyfill)\n5. Calculate Kmeans clustering based on cosine similarity. \n6. Describe each cluster\n\n",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 19.410556062178546,
+              "longitude": -99.10223788572502,
+              "zoom": 10.158646158959794,
+              "pitch": 0,
+              "bearing": 0
+            }
+          },
+          "source": "Overture_Places_Embedding_Clusters.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

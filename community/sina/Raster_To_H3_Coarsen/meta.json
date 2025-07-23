@@ -1,0 +1,98 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Raster_To_H3_Coarsen",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "hexLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "extruded": false,
+                "opacity": 1,
+                "coverage": 0.9,
+                "lineWidthMinPixels": 1,
+                "getHexagon": "@@=properties.hex",
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "agg_data",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "DarkMint",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  184,
+                  184,
+                  184
+                ],
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "value",
+                  "present": "@@=properties.value",
+                  "absent": 1
+                },
+                "elevationScale": 10
+              }
+            },
+            "fused:udfType": "vector_single",
+            "fused:slug": "Raster_To_H3_Coarsen",
+            "fused:name": "Raster_To_H3_Coarsen",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 55.19720052984756,
+              "longitude": 27.5740489675406,
+              "zoom": 4.686826021433388,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/raster_to_h3.png",
+            "fused:tags": [
+              {
+                "id": "raster",
+                "label": "raster"
+              },
+              {
+                "id": "h3",
+                "label": "h3"
+              }
+            ],
+            "fused:description": "## Overview\n\nRaster to H3 Tile Converter\n\nConverts raster data to H3 hexagonal tiles. It processes a section of a GeoTIFF file and aggregates the data into H3 cells.\n\nThe function returns a pandas DataFrame with the following columns:\n- hex: H3 cell ID (as a hexadecimal string)\n- agg_data: Sum of data values in the cell\n- metric: Same as agg_data (for compatibility)\n",
+            "fused:explorerPin": "11"
+          },
+          "source": "Raster_To_H3_Coarsen.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

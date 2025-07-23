@@ -1,0 +1,146 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Ookla_Download_Speeds_lat_lon_speed",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "hexLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "extruded": false,
+                "opacity": 1,
+                "coverage": 0.9,
+                "lineWidthMinPixels": 10,
+                "getHexagon": "@@=properties.hex",
+                "getFillColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "metric",
+                  "domain": [
+                    100000,
+                    0
+                  ],
+                  "colors": "TealGrn",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getLineColor": [
+                  200,
+                  200,
+                  200
+                ],
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "metric",
+                  "present": "@@=properties.metric",
+                  "absent": 1
+                },
+                "elevationScale": 2
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "Ookla_Download_Speeds_lat_lon_speed",
+            "fused:name": "Ookla_Download_Speeds_lat_lon_speed",
+            "fused:id": null,
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 25.103577058765545,
+              "longitude": 11.903392271218976,
+              "zoom": 0.20354839125710023,
+              "pitch": 0,
+              "bearing": -2.054208273894437
+            },
+            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/8f65565582c67f1ebf3f73683d40fd3e52e86929/Ookla_Download_Speeds_lat_lon_speed/",
+            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/8f65565/Ookla_Download_Speeds_lat_lon_speed/",
+            "fused:gitPath": "Ookla_Download_Speeds_lat_lon_speed",
+            "fused:gitRef": "8f65565582c67f1ebf3f73683d40fd3e52e86929",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/milind.png",
+            "fused:tags": [
+              {
+                "id": "aws",
+                "label": "aws"
+              },
+              {
+                "id": "broadband",
+                "label": "broadband"
+              },
+              {
+                "id": "hex",
+                "label": "hex"
+              },
+              {
+                "id": "collec-vancouver-open-data",
+                "label": "collec-vancouver-open-data",
+                "isCreatable": true
+              }
+            ],
+            "fused:description": "## Overview\n\nThis example demonstrates how Ookla's mobile performance data can be dynamically processed into an H3 hexagonal grid system. The network metrics are aggregated (averaging download speeds) for H3 hexes at a resolution that adapts based on the zoom level. The performance data comes from Ookla's global speed test infrastructure, capturing real-world mobile network performance across diverse network operators and technologies. The data is stored in Parquet format on S3, structured by year and quarter, allowing for efficient geographic querying and temporal analysis. The resulting hexagonal grid provides a standardized way to visualize and analyze mobile network performance patterns across different geographic scales and regions.\n\n##External Links\n\n- [Ookla Open Dataset on AWS Marketplace](https://aws.amazon.com/marketplace/pp/prodview-breawk6ljkovm)\n",
+            "fused:gitAuthorNames": [
+              "Milind Soni",
+              "Isaac Brodsky",
+              "Suryashankar Das",
+              "Suryashankar Das"
+            ],
+            "fused:gitAuthorUsernames": [
+              "milind-soni",
+              "isaacbrodsky",
+              "iamsdas-fused",
+              "iamsdas"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/milind-soni",
+              "https://github.com/isaacbrodsky",
+              "https://github.com/iamsdas-fused",
+              "https://github.com/iamsdas"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/46266943?v=4",
+              "https://avatars.githubusercontent.com/u/9139378?v=4",
+              "https://avatars.githubusercontent.com/u/200643783?v=4",
+              "https://avatars.githubusercontent.com/u/26461855?v=4"
+            ],
+            "fused:gitLastModified": "2025-03-20T16:01:30.470Z",
+            "fused:gitRepo": "fusedlabs/fusedudfs",
+            "fused:defaultParameters": [
+              {
+                "parameter": "return_code",
+                "value": "",
+                "type": "boolean",
+                "suggestedValues": []
+              }
+            ],
+            "fused:mcp": {
+              "description": "## Overview\n\nThis example demonstrates how Ookla's mobile performance data can be dynamically processed into an H3 hexagonal grid system. The network metrics are aggregated (averaging download speeds) for H3 hexes at a resolution that adapts based on the zoom level. The performance data comes from Ookla's global speed test infrastructure, capturing real-world mobile network performance across diverse network operators and technologies. The data is stored in Parquet format on S3, structured by year and quarter, allowing for efficient geographic querying and temporal analysis. The resulting hexagonal grid provides a standardized way to visualize and analyze mobile network performance patterns across different geographic scales and regions.\n\n##External Links\n\n- [Ookla Open Dataset on AWS Marketplace](https://aws.amazon.com/marketplace/pp/prodview-breawk6ljkovm)\n",
+              "parameters": "[\n  {\n    \"name\": \"lat\",\n    \"type\": \"float\"\n  },\n  {\n    \"name\": \"lon\",\n    \"type\": \"float\"\n  }\n]"
+            },
+            "fused:gitPullRequestBranch": "max-patch-f98698-Milinds-Ookla-download-speed-taki",
+            "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/598"
+          },
+          "source": "Ookla_Download_Speeds_lat_lon_speed.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

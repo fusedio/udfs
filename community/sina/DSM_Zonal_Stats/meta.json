@@ -1,0 +1,167 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "DSM_Zonal_Stats",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 15,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "extruded": true,
+                "getElevation": "@@=properties.stats*1",
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "stats",
+                  "present": "@@=[properties.stats*5, properties.stats*3, properties.stats*2]",
+                  "absent": [
+                    255,
+                    0,
+                    255
+                  ]
+                },
+                "getFillColor": "@@=[properties.stats*5, properties.stats*3, properties.stats*2]"
+              },
+              "loadingLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1
+              },
+              "errorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": [
+                  255,
+                  0,
+                  0,
+                  255
+                ],
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "DSM_Zonal_Stats",
+            "fused:id": null,
+            "fused:name": "DSM_Zonal_Stats",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.78564721441817,
+              "longitude": -122.39155496452223,
+              "zoom": 14.101653480876822,
+              "pitch": 54.31525094227026,
+              "bearing": 260
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/0302f1d386383fef9106a926c5a052f81f64dd1a/public/DSM_Zonal_Stats/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/0302f1d/public/DSM_Zonal_Stats/",
+            "fused:gitPath": "public/DSM_Zonal_Stats",
+            "fused:gitRef": "0302f1d386383fef9106a926c5a052f81f64dd1a",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk",
+              "Tyler Erickson",
+              "Marko Letic",
+              null,
+              "Plinio Guzman",
+              "Isaac Brodsky",
+              null,
+              "Suryashankar Das",
+              "Milind Soni"
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk",
+              "tylere",
+              "mletic",
+              "charlesfused",
+              "pgzmnk",
+              "isaacbrodsky",
+              "sterfd",
+              "iamsdas",
+              "milind-soni"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk",
+              "https://github.com/tylere",
+              "https://github.com/mletic",
+              "https://github.com/charlesfused",
+              "https://github.com/pgzmnk",
+              "https://github.com/isaacbrodsky",
+              "https://github.com/sterfd",
+              "https://github.com/iamsdas",
+              "https://github.com/milind-soni"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/u/92862?v=4",
+              "https://avatars.githubusercontent.com/u/7241522?v=4",
+              "https://avatars.githubusercontent.com/u/148997493?v=4",
+              "https://avatars.githubusercontent.com/u/27398253?v=4",
+              "https://avatars.githubusercontent.com/u/9139378?v=4",
+              "https://avatars.githubusercontent.com/u/132007843?v=4",
+              "https://avatars.githubusercontent.com/u/26461855?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
+            ],
+            "fused:gitLastModified": "2025-03-28T11:47:53+00:00",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DSM_Zonal_Stats.png",
+            "fused:tags": [
+              {
+                "id": "Zonal stats",
+                "label": "Zonal stats"
+              },
+              {
+                "id": "tiff",
+                "label": "tiff"
+              },
+              {
+                "id": "S3",
+                "label": "S3"
+              }
+            ],
+            "fused:description": "## Overview\n\nThis UDF calculate average DSM for every buildings in the United States. ALOS Global Digital Surface Model \"ALOS World 3D - 30m (AW3D30)\" captured by the PRISM optical sensor on the ALOS satellite, with a 30-meter horizontal resolution.\n\n## External links\n- [JAXA Digital Surface Model](https://data.earth.jaxa.jp/en/datasets/#/id/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global)\n- [STAC Collection File](https://s3.ap-northeast-1.wasabisys.com/je-pds/cog/v1/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global/collection.json)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/DSM_Zonal_Stats\")\ngdf = fused.run(udf=udf, x=5241, y=12667, z=15)\ngdf\n```\n",
+            "fused:explorerPin": "3",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs"
+          },
+          "source": "DSM_Zonal_Stats.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

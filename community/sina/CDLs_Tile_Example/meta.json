@@ -1,0 +1,128 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "CDLs_Tile_Example",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    255,
+                    0,
+                    255
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "CDLs_Tile_Example",
+            "fused:name": "CDLs_Tile_Example",
+            "fused:defaultParameters": [
+              {
+                "parameter": "year",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "2015",
+                  "2016",
+                  "2017",
+                  "2018",
+                  "2019",
+                  "2020",
+                  "2021",
+                  "2022",
+                  "2023",
+                  "2024"
+                ]
+              },
+              {
+                "parameter": "crop_type",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "almond",
+                  "crop",
+                  "developed",
+                  "grass",
+                  "grape",
+                  "cherry",
+                  "water",
+                  "apple"
+                ]
+              },
+              {
+                "parameter": "colored",
+                "value": "",
+                "type": "boolean",
+                "suggestedValues": []
+              }
+            ],
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.87977092640186,
+              "longitude": -121.24227271927563,
+              "zoom": 9.474375639374612,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:id": null,
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/CDLS_Tile_Example.png",
+            "fused:tags": [
+              {
+                "id": "mask",
+                "label": "mask"
+              },
+              {
+                "id": "aws",
+                "label": "aws"
+              },
+              {
+                "id": "rasterio",
+                "label": "rasterio"
+              }
+            ],
+            "fused:description": "# Overview\n\nThis UDF shows how to open [Cropland Data Layer](https://www.nass.usda.gov/Research_and_Science/Cropland/SARS1a.php) (CDL) tiff files. The CDL is a categorical land cover dataset that provides information about the types of crops and land cover on agricultural lands in the United States. The CDL is produced by the United States Department of Agriculture (USDA) National Agricultural Statistics Service (NASS) on an annual basis.\n\n# External links\n\n- [Original Download Links](https://www.nass.usda.gov/Research_and_Science/Cropland/Release/index.php)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/CDLs_Tile_Example\")\narr = fused.run(udf=udf, x=9646, y=12321, z=15)\narr\n```\n",
+            "fused:explorerPin": "2"
+          },
+          "source": "CDLs_Tile_Example.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

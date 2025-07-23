@@ -1,0 +1,99 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Aggregated_Traffic_Incidents_by_Accident_Severity__H3",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:description": "Visualizing Traffic Accident Severity in Germany\n\n🔍 What It Shows:\nEach hexagon on the map represents an aggregated view of traffic accident data for that specific area:\n\n • Green hexagons indicate areas where accidents with slight injuries are most common.\n • Orange hexagons represent areas with a higher occurrence of serious injuries.\n • Red hexagons highlight zones with fatalities, marking critical areas for potential safety improvements.\n\n📈 How We Built It:\nUsing Fused’s powerful geospatial tools, we:\n\n 1. Aggregated 270,000+ traffic incident records by location and accident severity, grouping them into hexagons.\n 2. Dynamically mapped each hexagon’s color based on the predominant accident severity, allowing for easy, high-level insights.\n 3. Achieved near-instant processing times, enabling rapid updates and real-time data exploration.\n\n🚀 Why This Matters:\nWith this kind of data-driven visualization, city planners, public safety officials, and transportation authorities can quickly identify high-risk areas. This helps to inform decisions on resource allocation, targeted safety campaigns, and road infrastructure improvements.\n\nData Source: https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getFillColor": {
+                  "@@function": "colorCategories",
+                  "attr": "UKATEGORIE",
+                  "domain": [
+                    3,
+                    2,
+                    1
+                  ],
+                  "colors": [
+                    [
+                      0,
+                      128,
+                      0
+                    ],
+                    [
+                      255,
+                      165,
+                      0
+                    ],
+                    [
+                      255,
+                      0,
+                      0
+                    ]
+                  ],
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                }
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Aggregated_Traffic_Incidents_by_Accident_Severity__H3",
+            "fused:name": "Aggregated_Traffic_Incidents_by_Accident_Severity__H3",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/511adcba2d78d1b79688c87b92dd0e48fafc6e6a/files/Pandas_CSV/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/511adcb/files/Pandas_CSV/",
+            "fused:gitPath": "files/Pandas_CSV",
+            "fused:gitRef": "511adcba2d78d1b79688c87b92dd0e48fafc6e6a",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/h3_marko.png",
+            "fused:gitAuthorNames": [
+              "Marko Letic"
+            ],
+            "fused:gitAuthorUsernames": [
+              "mletic"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/mletic"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/7241522?v=4"
+            ],
+            "fused:gitLastModified": "2024-11-04T17:26:12+00:00",
+            "fused:gitRepo": "fusedio/udfs"
+          },
+          "source": "Aggregated_Traffic_Incidents_by_Accident_Severity__H3.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

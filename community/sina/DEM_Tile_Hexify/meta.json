@@ -1,0 +1,101 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "DEM_Tile_Hexify",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 27.732105361652867,
+              "longitude": -55.9958824893417,
+              "zoom": 2.2104491222292344,
+              "pitch": 40,
+              "bearing": 0
+            },
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 14,
+                "tileSize": 256,
+                "extrude": true,
+                "pickable": true
+              },
+              "hexLayer": {
+                "opacity": 1,
+                "@@type": "H3HexagonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "getHexagon": "@@=properties.hex",
+                "getFillColor": "@@=[properties.metric*1, properties.metric*0.3, properties.metric*0.1]",
+                "getElevation": "@@=properties.metric",
+                "elevationScale": 20
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "DEM_Tile_Hexify",
+            "fused:name": "DEM_Tile_Hexify",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/743a6f777bca66209cc8c66b868f8a9ca9c59efe/public/DEM_Tile_Hexify/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/743a6f7/public/DEM_Tile_Hexify/",
+            "fused:gitPath": "public/DEM_Tile_Hexify",
+            "fused:gitRef": "743a6f777bca66209cc8c66b868f8a9ca9c59efe",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DEM_Tile_Hexify.png",
+            "fused:tags": [
+              {
+                "id": "dem",
+                "label": "dem"
+              },
+              {
+                "id": "aws",
+                "label": "aws"
+              },
+              {
+                "id": "h3",
+                "label": "h3"
+              }
+            ],
+            "fused:description": "#### Overview\nThis example demonstrates how terrain TIFF tiles can be dynamically converted into an H3 grid. The raster values are aggregated (sum or mean) for H3 hexes at a resolution dependent on the zoom level. The terrain data come from diverse global sources, including ArcticDEM funded by the NSF, Geoscience Australia, Austria’s Digital Terrain Model, Canada's Open Government License, EU Copernicus data, NOAA's ETOPO1, INEGI in Mexico, New Zealand's Land Information authority, Kartverket in Norway, the UK's Environment Agency, and the U.S. Geological Survey for 3DEP and SRTM. \n\n## External links\n\n- [AWS open data](https://registry.opendata.aws/terrain-tiles/)\n- [Attribution link](https://github.com/tilezen/joerd/blob/master/docs/attribution.md)\n",
+            "fused:explorerPin": "9",
+            "fused:gitAuthorNames": [
+              "Sina Kashuk",
+              "Isaac Brodsky"
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk",
+              "isaacbrodsky"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk",
+              "https://github.com/isaacbrodsky"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4",
+              "https://avatars.githubusercontent.com/u/9139378?v=4"
+            ],
+            "fused:gitLastModified": "2024-12-20T00:09:37+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs"
+          },
+          "source": "DEM_Tile_Hexify.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

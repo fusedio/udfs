@@ -1,0 +1,137 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "common_mcp",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    255,
+                    255,
+                    255,
+                    40
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  255,
+                  255,
+                  40
+                ]
+              },
+              "loadingLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "themeColor",
+                  "key": "backgroundAccent"
+                },
+                "getFillColor": {
+                  "@@function": "themeColor",
+                  "key": "backgroundAccent",
+                  "alpha": 50
+                }
+              },
+              "errorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": [
+                  255,
+                  0,
+                  0,
+                  255
+                ],
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "common_mcp",
+            "fused:name": "common_mcp",
+            "fused:defaultViewState": {
+              "enable": false,
+              "latitude": 0,
+              "longitude": 0,
+              "zoom": 0,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/c16e835e5a4de1ff259dea1061b0d78260d8b0a3/public/common_mcp/",
+            "fused:gitPath": "public/common_mcp",
+            "fused:gitRef": "c16e835e5a4de1ff259dea1061b0d78260d8b0a3",
+            "fused:gitAuthorNames": [
+              "Suryashankar Das",
+              "Joris Van den Bossche"
+            ],
+            "fused:gitAuthorUsernames": [
+              "iamsdas",
+              "jorisvandenbossche"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/iamsdas",
+              "https://github.com/jorisvandenbossche"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/26461855?v=4",
+              "https://avatars.githubusercontent.com/u/1020496?v=4"
+            ],
+            "fused:gitLastModified": "2025-03-25T09:23:47+00:00",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/c16e835/public/common_mcp/",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitPullRequestBranch": "max-patch-49087a-FIxing-savetoagents",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/723",
+            "fused:id": null
+          },
+          "source": "common_mcp.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

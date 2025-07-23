@@ -1,0 +1,72 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "nominatim_geocoder",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:mcp": {
+              "description": "Model Context Protocol (MCP) Description\n\nName: nominatim_geocoder\nFunctionality:\nThe nominatim_geocoder User-Defined Function (UDF) is a Python function intended for geocoding location-based strings into their respective latitude and longitude coordinates. Its main purpose is to transform a location expressed in plain-text into geospatial information that can be leveraged in data analysis and location-based services. This function leverages the Geopy library's Nominatim geocoder to perform the geocoding process.\n\nInput Parameters:\nThe UDF accepts one parameter: 'location.' The 'location' parameter should be a string that describes a location (for example, \"San Francisco, CA\", \"1600 Pennsylvania Ave, Washington DC\"). This is the piece of information that will be geocoded into latitude and longitude coordinates.\n\nOutput:\nThe output of this UDF is a pandas DataFrame or GeoDataFrame (if the geocoding is successful) with the resulting geocoded information. The DataFrame includes columns for the original location string ('location'), latitude ('lat'), longitude ('lon'), and the full address returned by the geocoder ('address'). If geocoded successfully, a 'geometry' column is also included, containing a Point object with the geocoded coordinates. In case the geocoding fails, either due to an invalid or ambiguous location string or other geocoding errors, the function will instead return an empty DataFrame with the appropriate column names.\n\nTechnical Details and Limitations:\nThis UDF employs the Nominatim geocoder from the Geopy library. As such, the function's performance is reliant on the Geopy's performance and Nominatim's service availability. The given user-agent is 'fused_geocoding_udf'. In case of misuse or overuse, the Nominatim service might issue a temporary or permanent ban for the user-agent. To circumvent over-usage, the function is equipped with an exception handler to manage errors resulting from geocoding failures. Following a failure, an empty DataFrame with appropriate column names is returned. \n\nClear, detailed exceptions are printed to the console to facilitate error interpretation and troubleshooting. These exceptions include any Python exceptions raised during geocoding, as well as custom messages for instances when the geocoding process does not return data. The function does not currently accommodate bulk geocoding or address cleaning prior to geocoding, so high degree of precision and specificity in location strings are crucial for optimal performance. \n\nWriting Style: \nThis MCP description is written in clear technical style, ideal for AI systems that need concrete, detailed documentation about a function’s structure, parameters, and behavior. It maintains a granular level of detail to support programming and analytics use cases.",
+              "parameters": "[\n  {\n    \"name\": \"location\",\n    \"type\": \"str\"\n  }\n]"
+            },
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "RedOr",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "nominatim_geocoder",
+            "fused:name": "nominatim_geocoder",
+            "fused:id": null
+          },
+          "source": "nominatim_geocoder.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

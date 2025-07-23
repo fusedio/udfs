@@ -1,0 +1,324 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Zonal_Stats_Forest_Obs_Runner",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getFillColor": {
+                  "@@function": "hasProp",
+                  "property": "stats_mean",
+                  "present": "@@=[properties.stats_mean*10, properties.stats_mean*255, properties.stats_mean*10, properties.stats_mean*255]",
+                  "absent": [
+                    25,
+                    0,
+                    255,
+                    100
+                  ]
+                },
+                "getLineColor": [
+                  255,
+                  0,
+                  0,
+                  60
+                ]
+              }
+            },
+            "fused:udfType": "vector_single",
+            "fused:slug": "Zonal_Stats_Forest_Obs_Runner",
+            "fused:name": "Zonal_Stats_Forest_Obs_Runner",
+            "fused:id": null,
+            "fused:defaultViewState": {
+              "enable": false,
+              "latitude": -15.035221844958741,
+              "longitude": 179.9999595468193,
+              "zoom": 20,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/c744949293bc992ba0b250f27384f4fa184d7336/community/plinio/Zonal_Stats_Forest_Obs_Runner/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/c744949/community/plinio/Zonal_Stats_Forest_Obs_Runner/",
+            "fused:gitPath": "community/plinio/Zonal_Stats_Forest_Obs_Runner",
+            "fused:gitRef": "c744949293bc992ba0b250f27384f4fa184d7336",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "fused-io[bot]"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/apps/fused-io"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/in/834700?v=4"
+            ],
+            "fused:gitLastModified": "2025-01-24T15:18:00+00:00",
+            "fused:explorerTab": "community",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitHistory": [
+              {
+                "fused:vizConfig": {
+                  "tileLayer": {
+                    "@@type": "TileLayer",
+                    "minZoom": 0,
+                    "maxZoom": 19,
+                    "tileSize": 256,
+                    "pickable": true
+                  },
+                  "rasterLayer": {
+                    "@@type": "BitmapLayer",
+                    "pickable": true
+                  },
+                  "vectorLayer": {
+                    "@@type": "GeoJsonLayer",
+                    "stroked": true,
+                    "filled": true,
+                    "pickable": true,
+                    "lineWidthMinPixels": 1,
+                    "pointRadiusMinPixels": 1,
+                    "getFillColor": {
+                      "@@function": "hasProp",
+                      "property": "stats_mean",
+                      "present": "@@=[properties.stats_mean*10, properties.stats_mean*255, properties.stats_mean*10]",
+                      "absent": [
+                        255,
+                        0,
+                        255
+                      ]
+                    },
+                    "getLineColor": [
+                      255,
+                      0,
+                      0,
+                      40
+                    ]
+                  }
+                },
+                "fused:udfType": "vector_single",
+                "fused:slug": "Zonal_Stats_Live_V2",
+                "fused:name": "Zonal_Stats_Live_V2",
+                "fused:id": "3fd99f24-e0b4-4312-b013-903d62260b76",
+                "fused:defaultViewState": {
+                  "enable": false,
+                  "latitude": -15.035221844958741,
+                  "longitude": 179.9999595468193,
+                  "zoom": 20,
+                  "pitch": 0,
+                  "bearing": 0
+                },
+                "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/991cff5fd64fffa5253f9a3b664f01e6bc04ce75/Zonal_Stats_Live/",
+                "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/991cff5/Zonal_Stats_Live/",
+                "fused:gitPath": "Zonal_Stats_Live",
+                "fused:gitRef": "991cff5fd64fffa5253f9a3b664f01e6bc04ce75",
+                "fused:description": "Zonal stats at municipality level for forest observation tiffs",
+                "fused:gitAuthorNames": [
+                  "Plinio Guzman"
+                ],
+                "fused:gitAuthorUsernames": [
+                  "pgzmnk"
+                ],
+                "fused:gitAuthorUrls": [
+                  "https://github.com/pgzmnk"
+                ],
+                "fused:gitAuthorAvatarUrls": [
+                  "https://avatars.githubusercontent.com/u/27398253?v=4"
+                ],
+                "fused:gitLastModified": "2024-06-25T19:05:41+00:00",
+                "fused:explorerTab": "team",
+                "fused:gitRepo": "fusedlabs/fusedudfs",
+                "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/forobs.png"
+              },
+              {
+                "fused:vizConfig": {
+                  "tileLayer": {
+                    "@@type": "TileLayer",
+                    "minZoom": 0,
+                    "maxZoom": 19,
+                    "tileSize": 256,
+                    "pickable": true
+                  },
+                  "rasterLayer": {
+                    "@@type": "BitmapLayer",
+                    "pickable": true
+                  },
+                  "vectorLayer": {
+                    "@@type": "GeoJsonLayer",
+                    "stroked": true,
+                    "filled": true,
+                    "pickable": true,
+                    "lineWidthMinPixels": 1,
+                    "pointRadiusMinPixels": 1,
+                    "getFillColor": {
+                      "@@function": "hasProp",
+                      "property": "stats_mean",
+                      "present": "@@=[properties.stats_mean*10, properties.stats_mean*255, properties.stats_mean*10, properties.stats_mean*255]",
+                      "absent": [
+                        25,
+                        0,
+                        255,
+                        100
+                      ]
+                    },
+                    "getLineColor": [
+                      255,
+                      0,
+                      0,
+                      60
+                    ]
+                  }
+                },
+                "fused:udfType": "vector_single",
+                "fused:slug": "Zonal_Stats_Forest_Obs",
+                "fused:name": "Zonal_Stats_Forest_Obs",
+                "fused:id": null,
+                "fused:defaultViewState": {
+                  "enable": false,
+                  "latitude": -15.035221844958741,
+                  "longitude": 179.9999595468193,
+                  "zoom": 20,
+                  "pitch": 0,
+                  "bearing": 0
+                },
+                "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/a332ba116db9c3fe4a0e433458fb946d0b57bbee/community/plinio/Zonal_Stats_Forest_Obs/",
+                "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/a332ba1/community/plinio/Zonal_Stats_Forest_Obs/",
+                "fused:gitPath": "community/plinio/Zonal_Stats_Forest_Obs",
+                "fused:gitRef": "a332ba116db9c3fe4a0e433458fb946d0b57bbee",
+                "fused:gitAuthorNames": [
+                  null
+                ],
+                "fused:gitAuthorUsernames": [
+                  "fused-io[bot]"
+                ],
+                "fused:gitAuthorUrls": [
+                  "https://github.com/apps/fused-io"
+                ],
+                "fused:gitAuthorAvatarUrls": [
+                  "https://avatars.githubusercontent.com/in/834700?v=4"
+                ],
+                "fused:gitLastModified": "2025-01-18T22:51:27+00:00",
+                "fused:explorerTab": "team",
+                "fused:gitRepo": "fusedlabs/fusedudfs",
+                "fused:gitHistory": [
+                  {
+                    "fused:vizConfig": {
+                      "tileLayer": {
+                        "@@type": "TileLayer",
+                        "minZoom": 0,
+                        "maxZoom": 19,
+                        "tileSize": 256,
+                        "pickable": true
+                      },
+                      "rasterLayer": {
+                        "@@type": "BitmapLayer",
+                        "pickable": true
+                      },
+                      "vectorLayer": {
+                        "@@type": "GeoJsonLayer",
+                        "stroked": true,
+                        "filled": true,
+                        "pickable": true,
+                        "lineWidthMinPixels": 1,
+                        "pointRadiusMinPixels": 1,
+                        "getFillColor": {
+                          "@@function": "hasProp",
+                          "property": "stats_mean",
+                          "present": "@@=[properties.stats_mean*10, properties.stats_mean*255, properties.stats_mean*10]",
+                          "absent": [
+                            255,
+                            0,
+                            255
+                          ]
+                        },
+                        "getLineColor": [
+                          255,
+                          0,
+                          0,
+                          40
+                        ]
+                      }
+                    },
+                    "fused:udfType": "vector_single",
+                    "fused:slug": "Zonal_Stats_Live_V2",
+                    "fused:name": "Zonal_Stats_Live_V2",
+                    "fused:id": "3fd99f24-e0b4-4312-b013-903d62260b76",
+                    "fused:defaultViewState": {
+                      "enable": false,
+                      "latitude": -15.035221844958741,
+                      "longitude": 179.9999595468193,
+                      "zoom": 20,
+                      "pitch": 0,
+                      "bearing": 0
+                    },
+                    "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/991cff5fd64fffa5253f9a3b664f01e6bc04ce75/Zonal_Stats_Live/",
+                    "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/991cff5/Zonal_Stats_Live/",
+                    "fused:gitPath": "Zonal_Stats_Live",
+                    "fused:gitRef": "991cff5fd64fffa5253f9a3b664f01e6bc04ce75",
+                    "fused:description": "Zonal stats at municipality level for forest observation tiffs",
+                    "fused:gitAuthorNames": [
+                      "Plinio Guzman"
+                    ],
+                    "fused:gitAuthorUsernames": [
+                      "pgzmnk"
+                    ],
+                    "fused:gitAuthorUrls": [
+                      "https://github.com/pgzmnk"
+                    ],
+                    "fused:gitAuthorAvatarUrls": [
+                      "https://avatars.githubusercontent.com/u/27398253?v=4"
+                    ],
+                    "fused:gitLastModified": "2024-06-25T19:05:41+00:00",
+                    "fused:explorerTab": "team",
+                    "fused:gitRepo": "fusedlabs/fusedudfs",
+                    "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/forobs.png"
+                  }
+                ],
+                "fused:gitPullRequestBranch": "plinio-patch-f3bb6c-update-zstats",
+                "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/509",
+                "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/forobs.png",
+                "fused:description": "Zonal stats at municipality level for forest observation tiffs\n"
+              }
+            ],
+            "fused:gitPullRequestBranch": "plinio-patch-fad3d8-ZonalStatsForestObs-UDF",
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/614",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/forobs.png",
+            "fused:description": "# Zonal Stats Forest Observations - runner\n\nThis UDF calculates zonal statistics for forest cover for municipal areas around the world. The workflow aggregates a raster of global forest cover across zones defined by a vector table of municipalities. The final result is a table with records for every municipality and columns with summary metrics such as percent forest coverage. This type of analysis can help identify regions with significant forest loss to prioritize conservation efforts or support sustainable land-use planning. \n\nThis UDF is called \"runner\" because it loads raster and municipal data from a for the area defined by a predefined cell id, performs zonal statistics, and writes the result to a Parquet file stored on S3. This approach promotes scalability as the UDF can run concurrently for multiple grid cells. The resulting Parquet files can be structured to be read as a single table for downstream analysis.\n\n## Datasets\n\n🌲 [JRC Global map of Forest Cover for year 2020](https://forest-observatory.ec.europa.eu/forest/gfc2020) (forest cover raster)\n🇪🇨 [Geo Boundaries ADM2](https://github.com/wmgeolab/geoBoundaries/) (municipality polygons)\n\nThe UDF returns a `GeoDataFrame` with polygons corresponding to municipalities that fall within the rectangular area defined by a given cell bounds. Each polygon is colored green with an opacity that corresponds to the calculated tree cover percentage. \n\nThe output parameters to keep in mind are:\n- `shapeID` is the unique identifier for the municipality polygon\n- `tiff_url` is the S3 part of the GeoTIFF file the cell falls within\n- `stats_sum` is the number of pixels within the polygon with a value of 1, indicating presence of forest\n- `stats_count` is the total number of pixels within the polygon\n- `stats_mean` is the ratio of forest pixels over the total `stats_sum / stats_count`\n\nFor each municipality polygon, defined by `shapeID`, `stats_count` is the total number of pixels and `stats_sum` the total number of forest pixels. The ratio between the two values gives the percentage of tree cover for each municipality. This effectively calculates statistical summaries for a zone, givin the analysis its name.\n"
+          },
+          "source": "Zonal_Stats_Forest_Obs_Runner.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

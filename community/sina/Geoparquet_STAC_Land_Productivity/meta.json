@@ -1,0 +1,147 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Geoparquet_STAC_Land_Productivity",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultParameters": [
+              {
+                "parameter": "year",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "2000",
+                  "2001",
+                  "2022",
+                  "2023"
+                ]
+              },
+              {
+                "parameter": "variable",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "evi2",
+                  "ndvi",
+                  "msavi"
+                ]
+              }
+            ],
+            "fused:datasets": "Digital Elevation Model",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "Magenta",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "raster",
+            "fused:slug": "Geoparquet_STAC_Land_Productivity",
+            "fused:name": "Geoparquet_STAC_Land_Productivity",
+            "fused:id": null,
+            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/3796a00e2c62f8a8a672d9b1e9e9ee25db9e78df/public/Geoparquet_STAC_Land_Productivity/",
+            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/3796a00/public/Geoparquet_STAC_Land_Productivity/",
+            "fused:gitPath": "public/Geoparquet_STAC_Land_Productivity",
+            "fused:gitRef": "3796a00e2c62f8a8a672d9b1e9e9ee25db9e78df",
+            "fused:gitAuthorNames": [
+              "Alex Leith",
+              null,
+              "Vincent Buscarello"
+            ],
+            "fused:gitAuthorUsernames": [
+              "alexgleith",
+              "fused-io[bot]",
+              "KeynesYouDigIt"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/alexgleith",
+              "https://github.com/apps/fused-io",
+              "https://github.com/KeynesYouDigIt"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/3445853?v=4",
+              "https://avatars.githubusercontent.com/in/834700?v=4",
+              "https://avatars.githubusercontent.com/u/10255911?v=4"
+            ],
+            "fused:gitLastModified": "2025-01-27T18:44:56+00:00",
+            "fused:explorerTab": "public",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 16.81999640421226,
+              "longitude": -88.16544896940422,
+              "zoom": 7.42017091785984,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/alexgleith1.png",
+            "fused:tags": [
+              {
+                "id": "band-algebra",
+                "label": "band-algebra"
+              },
+              {
+                "id": "aws",
+                "label": "aws"
+              },
+              {
+                "id": "msft-pc",
+                "label": "msft-pc"
+              },
+              {
+                "id": "stac",
+                "label": "stac"
+              }
+            ],
+            "fused:description": "# Geoparquet STAC Example Publishing Land Productivity Analysis\n\n## Overview\n\nThis visualisation is from a Land Productivity analysis as part of the\n[Land Degradation Neutrality](https://www.unccd.int/land-and-life/land-degradation-neutrality/overview)\ncomponent of the UN Sustainability Goal, 15.3.\n\nThe interesting part of this use case for Fused is that it all runs serverless, so there are\nhundreds of data packages on S3, containing STAC Items pointing at Cloud Optimised GeoTIFF assets\nand rather than running a STAC API service as an index, we've created a single Geoparquet\nfile using [STAC Geoparquet](https://stac-utils.github.io/stac-geoparquet), which is then accessed\nusing the [stac-rs](https://github.com/stac-utils/stac-rs) tool and\n[odc-stac](https://odc-stac.readthedocs.io/en/latest/_api/odc.stac.load.html).\n\nThe end result is a scalable, dynamic visualisation with only Fused as a backend.\n\n## External links\n\n- [Leaflet visualisation](https://data.ldn.auspatious.com/testing/map.html?year=2023#10/17.2975/-88.3088)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Geoparquet_STAC_Land_Productivity\")\narr = fused.run(udf=udf, x=4092, y=2241, z=15)\narr\n```\n",
+            "fused:explorerPin": "13"
+          },
+          "source": "Geoparquet_STAC_Land_Productivity.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

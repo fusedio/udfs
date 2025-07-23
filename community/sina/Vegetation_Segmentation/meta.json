@@ -1,0 +1,98 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Vegetation_Segmentation",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "opacity": 0.3,
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "RedOr",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "Vegetation_Segmentation",
+            "fused:name": "Vegetation_Segmentation",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 49.291155,
+              "longitude": -122.837838,
+              "zoom": 16,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/veg_segmentation_v2.png",
+            "fused:tags": [
+              {
+                "id": "computer-vision",
+                "label": "computer-vision"
+              },
+              {
+                "id": "vegetation-analysis",
+                "label": "vegetation-analysis"
+              },
+              {
+                "id": "segmentation",
+                "label": "segmentation"
+              }
+            ],
+            "fused:description": "## Overview\n\nThis UDF performs scalable vegetation analysis using classical computer vision techniques. It allows users to choose a vegetation index, set threshold values, and dynamically process satellite imagery for real-time global vegetation segmentation, all without relying on machine learning models.\n\n## External links\n\n- [Visible Atmospherically Resistant Index (VARI)](https://space4water.org/space/visible-atmospherically-resistant-index-vari)\n",
+            "fused:explorerPin": "7"
+          },
+          "source": "Vegetation_Segmentation.py",
+          "headers": [
+            {
+              "module_name": "utils",
+              "source_file": "utils.py"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
