@@ -24,6 +24,17 @@ The Fused Python SDK is available at [PyPI](https://pypi.org/project/fused/). Us
 pip install "fused[all]"
 ```
 
+Authenticate:
+
+```python
+from fused.api import NotebookCredentials
+
+credentials = NotebookCredentials()
+print(credentials.url)
+```
+
+Follow the URL in your browser to authenticate.
+
 Refer to the [official documentation](https://docs.fused.io/python-sdk/#python-install) for more
 
 ### 2. Load a UDF into a workflow
