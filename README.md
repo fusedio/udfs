@@ -24,11 +24,6 @@ The Fused Python SDK is available at [PyPI](https://pypi.org/project/fused/). Us
 pip install "fused[all]"
 ```
 
-It's possible that to run UDFs locally the local environment might require additional packages not found locally. If that is the case, this command installs all required dependencies.
-```bash
-!pip install "fused[all]" odc-stac duckdb numba xarray-spatial planetary-computer 'odc-stac[botocore]' py3dep stackstac pynhd boto3
-```
-
 Refer to the [official documentation](https://docs.fused.io/python-sdk/#python-install) for more
 
 ### 2. Load a UDF into a workflow
@@ -100,7 +95,7 @@ Clone this repo to your local system and add the UDF folder under `public` or `c
 
 ## Ecosystem
 
-Build any scale workflows with the [Fused Python SDK](https://docs.fused.io/python-sdk/) and [Workbench webapp](https://docs.fused.io/workbench/), and integrate them into your stack by [calling then via HTTP](https://docs.fused.io/user-guide/out/http/)
+Build any scale workflows with the [Fused Python SDK](https://docs.fused.io/python-sdk/) and [Workbench webapp](https://docs.fused.io/workbench/), and integrate them into your stack by [calling then via HTTP](https://docs.fused.io/core-concepts/run-udfs/run-small-udfs/#http-requests)
 
 ![alt text](https://fused-magic.s3.us-west-2.amazonaws.com/docs_assets/ecosystem_diagram.png)
 
