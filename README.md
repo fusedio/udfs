@@ -2,7 +2,7 @@
   Fused Python UDFs
 </h1>
 <h3 align="center">
-  🌎 Code to Map. Instantly.
+  Analytics to Action, Faster
 </h3>
 <br><br>
 
@@ -10,7 +10,7 @@
 
 This repo is a public collection of Fused User Defined Functions (UDFs).
 
-Fused is the glue layer that interfaces data platforms and data tools via a managed serverless API. With Fused, you can write, share, or discover UDFs which are the building blocks of serverless geospatial operations. UDFs are Python functions that turn into live HTTP endpoints that load their output into any tools that can call an API.
+Fused is the glue layer that interfaces data platforms and data tools via a managed serverless API. With Fused, you can write, share, or discover UDFs which are the building blocks of serverless operations. UDFs are Python functions that turn into live HTTP endpoints that load their output into any tools that can call an API.
 
 ## Quickstart
 
@@ -21,15 +21,21 @@ Fused is the glue layer that interfaces data platforms and data tools via a mana
 The Fused Python SDK is available at [PyPI](https://pypi.org/project/fused/). Use the standard Python [installation tools](https://packaging.python.org/en/latest/tutorials/installing-packages/). UDFs this repo expect the most recent version.
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install fused
+pip install "fused[all]"
 ```
 
-It's possible that to run UDFs locally the local environment might require additional packages not found locally. If that is the case, this command installs all required dependencies.
-```bash
-!pip install fused odc-stac duckdb numba xarray-spatial planetary-computer 'odc-stac[botocore]' py3dep stackstac pynhd boto3
+Authenticate:
+
+```python
+from fused.api import NotebookCredentials
+
+credentials = NotebookCredentials()
+print(credentials.url)
 ```
+
+Follow the URL in your browser to authenticate.
+
+Refer to the [official documentation](https://docs.fused.io/python-sdk/#python-install) for more
 
 ### 2. Load a UDF into a workflow
 
@@ -38,15 +44,9 @@ This snippet shows how to import a UDF from this repo into a Python environment.
 ```python
 import fused
 
-udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/DuckDB_NYC_Example")
+udf = fused.load("https://github.com/fusedio/udfs/tree/cleanup_readme/public/Overture_Maps_Example")
 gdf = fused.run(udf=udf)
 gdf
-```
-
-Similarly, as a bash oneliner.
-
-```python
-python -c "import fused; udf = fused.load('https://github.com/fusedio/udfs/tree/main/public/DuckDB_NYC_Example'); print(fused.run(udf=udf));"
 ```
 
 ## Walkthrough
@@ -106,7 +106,7 @@ Clone this repo to your local system and add the UDF folder under `public` or `c
 
 ## Ecosystem
 
-Build any scale workflows with the [Fused Python SDK](https://docs.fused.io/python-sdk/) and [Workbench webapp](https://docs.fused.io/workbench/), and integrate them into your stack by [calling then via HTTP](https://docs.fused.io/user-guide/out/http/)
+Build any scale workflows with the [Fused Python SDK](https://docs.fused.io/python-sdk/) and [Workbench webapp](https://docs.fused.io/workbench/), and integrate them into your stack by [calling then via HTTP](https://docs.fused.io/core-concepts/run-udfs/run-small-udfs/#http-requests)
 
 ![alt text](https://fused-magic.s3.us-west-2.amazonaws.com/docs_assets/ecosystem_diagram.png)
 
@@ -125,7 +125,7 @@ Please run pre-commit hooks on your UDF prior to submitting.
 
 ```
 pre-commit install
-pre-commit run --files public/PC_Sentinel2/*
+pre-commit run --files public/DuckDB_NYC_Example/*
 ```
 
 ## License
