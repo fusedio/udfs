@@ -15,8 +15,8 @@ def udf(
     import utils
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
-    tile = common_utils.get_tiles(bounds, clip=True)
+    common = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = common.get_tiles(bounds, clip=True)
     zoom = tile.iloc[0].z
     
     if provider == "AWS":
@@ -63,7 +63,7 @@ def udf(
         print(ndvi.shape)
         arr = ndvi.max(dim="time")
         
-        rgb_image = common_utils.visualize(
+        rgb_image = common.visualize(
             data=arr,
             min=0,
             max=1,

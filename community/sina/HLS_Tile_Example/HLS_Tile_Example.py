@@ -15,8 +15,10 @@ def udf(
     from utils_local import list_stac_collections
 
     # convert bounds to tile
-    utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
-    tile = utils.get_tiles(bounds, clip=True)
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/2f41ae1/public/common/"
+    ).utils
+    tile = common.get_tiles(bounds, clip=True)
 
     STAC_URL = "https://cmr.earthdata.nasa.gov/stac"
 
@@ -90,7 +92,7 @@ def udf(
             cred=cred,
         )
         # Visualize data as an RGB image.
-        rgb_image = utils.visualize(
+        rgb_image = common.visualize(
             data=arr,
             min=min_max[0],
             max=min_max[1],

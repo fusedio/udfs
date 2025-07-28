@@ -1,11 +1,11 @@
-import geopandas as gpd
-from shapely.geometry import box
-from datetime import datetime, timedelta
 
+from shapely.geometry import box
 aoi = gpd.GeoDataFrame({'geometry': [box(*[-77.0685986328125, -12.055065023002463, -77.04211914062499, -12.032977469134593])]}).set_crs('EPSG:4326', allow_override=True)
 
 @fused.udf
 def udf(
+    import geopandas as gpd
+    from datetime import datetime, timedelta
     aoi: gpd.GeoDataFrame = aoi,
     start_hour: str = datetime.now(), 
     end_hour: str = datetime.now() + timedelta(hours=15),

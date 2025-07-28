@@ -42,7 +42,7 @@ def udf(
     from utils import bounds_fused_to_gdf, get_urls_from_arcgis_imageserver_rest
 
     if (bounds is not None) & (bbox_gpkg_path is None):
-        utils = fused.load(
+        common = fused.load(
             "https://github.com/fusedio/udfs/tree/e74035a1/public/common/"
         ).utils
         bounds_gdf = bounds_fused_to_gdf(bounds)

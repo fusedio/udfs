@@ -45,7 +45,9 @@ def get_strahler_gdf(bounds):
     VARNAME='b1'
 
     # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/ee9bec5/public/common/"
+    ).utils
 
     # Set your own creds
     utils.ee_initialize(service_account_name='fused-nyt-gee@fused-nyt.iam.gserviceaccount.com',key_path="/mnt/cache/gee_creds/fusedbenchmark-513a57ac463f.json")

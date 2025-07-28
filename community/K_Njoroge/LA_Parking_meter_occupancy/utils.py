@@ -17,8 +17,10 @@ def get_overture(
     import geopandas as gpd
     from shapely.geometry import shape, box
 
-    utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/main/public/common/"
+    common = fused.load(
+
+    "https://github.com/fusedio/udfs/tree/main/public/common/"
+
     ).utils
 
     #if polygon is not None:
@@ -88,7 +90,7 @@ def get_overture(
     def get_part(part):
         part_path = f"{table_path}/part={part}/" if num_parts != 1 else table_path
         try:
-            return utils.table_to_tile(
+            return common.table_to_tile(
                 bbox, table=part_path, use_columns=use_columns, min_zoom=min_zoom
             )
         except ValueError:

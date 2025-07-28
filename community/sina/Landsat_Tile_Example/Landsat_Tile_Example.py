@@ -14,8 +14,10 @@ def udf(
     from pystac.extensions.eo import EOExtension as eo
 
     # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = utils.estimate_zoom(bounds)
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/bb712a5/public/common/"
+    ).utils
+    zoom = common.estimate_zoom(bounds)
 
     catalog = pystac_client.Client.open("https://earth-search.aws.element84.com/v1")
     
@@ -48,7 +50,7 @@ def udf(
     # Select the maximum value across all times
     arr = ndvi.max(dim="time")
   
-    return utils.visualize(
+    return common.visualize(
         arr.values,
         min=0,
         max=0.5,

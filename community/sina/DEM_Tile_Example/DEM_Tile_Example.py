@@ -10,8 +10,8 @@ def udf(
     import utils
 
     # Load pinned versions of utility functions.
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
-    tile = common_utils.get_tiles(bounds, clip=True)
+    common = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = common.get_tiles(bounds, clip=True)
     zoom = tile.iloc[0].z
 
     print(f'{type(tile) = }')
@@ -56,7 +56,7 @@ def udf(
     arr = xarray_dataset["data"].max(dim="time")
 
     # Visualize that data as an RGB image.
-    rgb_image = utils.visualize(
+    rgb_image = common.visualize(
         data=arr,
         min=0,
         max=3000,

@@ -8,19 +8,18 @@ This UDF opens a dataset from Arraylake, subsets it to a bounding box, and coars
 NOTE: using Arraylake requires an Earthmover account. This UDF will only work for Earthmover customers.
 """
 
-from datetime import datetime
 
-import xarray as xr
-import fused
 
-import arraylake
 
 # remove this after Arraylake v0.13 is released an it becomes default
+import arraylake
 arraylake.config.set({"chunkstore.use_delegated_credentials": True})
 
 
 @fused.udf
 def udf(
+    from datetime import datetime
+    import xarray as xr
     bounds: fused.types.Bounds = [-58.483,-34.702,-58.376,-34.560],
     repo_name="earthmover-demos/sentinel-datacube-South-America-3",
     varname="rgb_median",

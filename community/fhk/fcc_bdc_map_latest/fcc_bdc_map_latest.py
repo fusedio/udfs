@@ -39,9 +39,9 @@ def udf(
     tech_codes="[10,11,12,20,30,40,41,42,43,50]"): # Filter the data to only include these, https://www.fcc.gov/general/technology-codes-used-fixed-broadband-deployment-data
     # 10,11,12,20,30,40,41,42,43,50,60,70,90,0
     import json
-    utils = fused.load(
-            "https://github.com/fusedio/udfs/tree/f8f0c0f/public/common/"
-        ).utils
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/f8f0c0f/public/common/"
+    ).utils
 
     unserved = json.loads(unserved)
     underserved = json.loads(underserved)
@@ -50,7 +50,7 @@ def udf(
     table_path = f"s3://fused-asset/data/fcc_bdc_map_latest/"
     table_path = table_path.rstrip("/")
     
-    gdf = utils.table_to_tile(bbox, table=table_path, use_columns=use_columns, min_zoom=8)
+    gdf = common.table_to_tile(bbox, table=table_path, use_columns=use_columns, min_zoom=8)
 
     gdf['brand_info'] = gdf.brand_info.apply(json.loads)
 

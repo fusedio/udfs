@@ -2,7 +2,7 @@ import fused
 import geopandas as gpd
 
 # Load utility functions.
-common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+common = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
 
 def dsm_to_tile(
     bounds: fused.types.Bounds,
@@ -10,7 +10,7 @@ def dsm_to_tile(
     verbose=True
 ):
 
-    tile = common_utils.get_tiles(bounds)
+    tile = common.get_tiles(bounds)
     zoom = tile.iloc[0].z
 
     if zoom >= z_levels[2]:
@@ -47,7 +47,7 @@ def dsm_to_tile(
         return tile
     if verbose:
         print(tiff_list)
-    arr = common_utils.mosaic_tiff(tile, tiff_list, overview_level=overview_level)
+    arr = common.mosaic_tiff(tile, tiff_list, overview_level=overview_level)
     return arr
 
 

@@ -79,7 +79,7 @@ def udf(time_of_interest="2024-10-01/2024-12-10"):
     image=stacked_image.std(axis=0)
     print(image.shape)
     # return (image).astype('uint8'), bounds.total_bounds
-    utils = fused.load(
+    common = fused.load(
     "https://github.com/fusedio/udfs/tree/2b25cb3/public/common/"
     ).utils
-    return utils.arr_to_plasma(image), bounds.total_bounds
+    return common.arr_to_plasma(image), bounds.total_bounds

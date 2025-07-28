@@ -1,7 +1,7 @@
 def df_to_hex(df, data_cols=['data'], h3_size=9, hex_col='hex', latlng_col=['lat','lng'], ordered=False, return_avg_lalng=True):
     duckdb_connect = fused.load(
             "https://github.com/fusedio/udfs/tree/3569595/public/common/"
-        ).utils.duckdb_connect
+        ).common.duckdb_connect
     agg_term = ', '.join([f'ARRAY_AGG({col}) as agg_{col}' for col in data_cols])
     if return_avg_lalng:
         agg_term+=f', avg({latlng_col[0]}) as {latlng_col[0]}_avg, avg({latlng_col[1]}) as {latlng_col[1]}_avg'
@@ -37,7 +37,9 @@ def tile_to_df(bounds, arr, return_geometry=False):
     df["lat"] = Y.flatten()
 
     # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/3569595/public/common/"
+    ).utils
 
     # convert back to 4326
     df = utils.geo_convert(df).set_crs(3857, allow_override=True).to_crs(bounds.crs)

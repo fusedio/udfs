@@ -1,8 +1,8 @@
 common = fused.load("https://github.com/fusedio/udfs/tree/1469dfc/public/common/").utils
-import utils
 
 @fused.udf
 def udf(
+    import utils
     query: str = "show me water",
     bounds: fused.types.Bounds = [
         -125.82165127797666,21.313670812049978,-65.62955940309448,52.58604956417555

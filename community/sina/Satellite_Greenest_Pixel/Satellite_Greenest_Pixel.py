@@ -61,8 +61,8 @@ def udf(
     )
 
     # convert bounds to tile
-    utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
-    tile = utils.get_tiles(bounds, clip=True)
+    common = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = common.get_tiles(bounds, clip=True)
 
     collection, band_list, time_of_interest, query, scale = json.loads(
         collection_params

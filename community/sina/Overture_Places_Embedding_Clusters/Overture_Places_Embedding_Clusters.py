@@ -106,8 +106,8 @@ def udf(bounds: fused.types.Bounds = None, h3_size=8):
     from utils import global_categories
 
     # convert bounds to tile
-    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = utils.get_tiles(bounds, clip=True) if bounds is not None else aoi
+    common = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    tile = common.get_tiles(bounds, clip=True) if bounds is not None else aoi
 
     # 1. Polyfill AOI
     h3s = h3.polygon_to_cells(h3.geo_to_h3shape(tile.geometry.iloc[0]), h3_size)
@@ -125,7 +125,7 @@ def udf(bounds: fused.types.Bounds = None, h3_size=8):
             print(e)
 
     # 2. Run Embeddings UDF for each H3 cell
-    gdfs = utils.run_pool(run_udfs, h3s, max_workers=100)
+    gdfs = common.run_pool(run_udfs, h3s, max_workers=100)
     # Filter out failed outputs
     gdfs = [gdf for gdf in gdfs if gdf is not None]
     if len(gdfs) == 0:

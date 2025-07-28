@@ -5,8 +5,8 @@ def udf(bounds: fused.types.Bounds=[-143.184,7.090,-39.292,61.808], year: str = 
     import pandas as pd
 
     # convert bounds to tile
-    utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
-    tile = utils.get_tiles(bounds, clip=True)
+    common = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = common.get_tiles(bounds, clip=True)
     
     # Dynamically construct the path based on the year and month
     path = f's3://soldatanasasifglobalifoco2modis1863/Global_SIF_OCO2_MODIS_1863/data/sif_ann_{year}{month}{period}.nc'
@@ -33,7 +33,7 @@ def udf(bounds: fused.types.Bounds=[-143.184,7.090,-39.292,61.808], year: str = 
 
     # Convert the array to an image with the specified colormap
     img = (arr_aoi * 255).astype('uint8')
-    img = utils.arr_to_plasma(arr_aoi, min_max=(0, 1), colormap="rainbow", include_opacity=False, reverse=False)
+    img = common.arr_to_plasma(arr_aoi, min_max=(0, 1), colormap="rainbow", include_opacity=False, reverse=False)
 
     return img
 

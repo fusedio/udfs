@@ -14,7 +14,9 @@ def udf(engine='realtime', year: str = "2016", month: str = "07", period: str ="
         all_params = [{'geoid': geoid, 'year': year, 'crop_type': crop_type} for geoid in target_counties]
 
         # Load pinned versions of utility functions.
-        utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+        common = fused.load(
+        "https://github.com/fusedio/udfs/tree/ee9bec5/public/common/"
+        ).utils
 
         # Run UDF in parallel
         @fused.cache
@@ -26,7 +28,7 @@ def udf(engine='realtime', year: str = "2016", month: str = "07", period: str ="
             df = fused.run(udf_nail, geoid=geoid, year=year, month=month, period=period, crop_type=crop_type, engine=engine)
             return df
     
-        dfs_out = utils.run_pool(hammer_udf, all_params, max_workers=64)
+        dfs_out = common.run_pool(hammer_udf, all_params, max_workers=64)
     
         # Concatenate all output tables
         gdf = pd.concat(dfs_out)
@@ -55,10 +57,12 @@ def udf(crop_type ="corn", geoid: str = '19119', year: str = "2015", month: str 
     print(area)
 
     # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/ee9bec5/public/common/"
+    ).utils
 
     # Get box around the geometry
-    geom_bbox = utils.geo_bbox(gdf)
+    geom_bbox = common.geo_bbox(gdf)
     
     # Dynamically construct the path based on the year and month
     path = f's3://soldatanasasifglobalifoco2modis1863/Global_SIF_OCO2_MODIS_1863/data/sif_ann_{year}{month}{period}.nc'
@@ -76,11 +80,13 @@ def udf(crop_type ="corn", geoid: str = '19119', year: str = "2015", month: str 
     sif_resized = resize(img, (arr_crop.shape[0],arr_crop.shape[1]), anti_aliasing=True, preserve_range=True).astype('uint8')
 
     # Sif for entire county prior to corn mask
-    utils = fused.load('https://github.com/fusedio/udfs/tree/ba8aeee/public/common/').utils
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/ee9bec5/public/common/"
+    ).utils
     county_geom_mask = utils.gdf_to_mask_arr(gdf, sif_resized.shape[-2:], first_n=1) 
     sif_resized_county = np.ma.masked_array(sif_resized, mask=county_geom_mask)
     # return sif_resized_county, geom_bbox.total_bounds
-    # return utils.arr_to_plasma(sif_resized), geom_bbox.total_bounds # preview
+    # return common.arr_to_plasma(sif_resized), geom_bbox.total_bounds # preview
 
     # Preview clipped raster
     sif_resized_county_corn = sif_resized_county.copy()

@@ -6,8 +6,10 @@ def udf(
     buffer_degree=0.000,
 ):
     # convert bounds to tile
-    utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
-    tile = utils.get_tiles(bounds, clip=True)
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/2f41ae1/public/common/"
+    ).utils
+    tile = common.get_tiles(bounds, clip=True)
     zoom = tile.iloc[0].z
 
     min_zoom = 15

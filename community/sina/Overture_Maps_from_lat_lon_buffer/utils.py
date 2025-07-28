@@ -21,8 +21,8 @@ def get_overture(
     from shapely.geometry import shape, box
 
     # Load Fused helper functions
-    utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/d0e8eb0/public/common/"
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/d0e8eb0/public/common/"
     ).utils
 
     if release == "2024-02-15-alpha-0":
@@ -113,7 +113,7 @@ def get_overture(
     def get_part(part):
         part_path = f"{table_path}/part={part}/" if num_parts != 1 else table_path
         try:
-            return utils.table_to_tile(
+            return common.table_to_tile(
                 bbox, table=part_path, use_columns=use_columns, min_zoom=min_zoom
             )
         except ValueError:

@@ -1,6 +1,6 @@
-import geopandas as gpd
 @fused.udf
 def udf(
+    import geopandas as gpd
     bbox: fused.types.Bbox= None,
     polygon: gpd.GeoDataFrame = None,
     day: str = '2024-04-24',

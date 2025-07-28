@@ -37,11 +37,17 @@ def ee_initialize(service_account_name="", key_path=""):
     ee.Initialize(opt_url='https://earthengine-highvolume.googleapis.com', credentials=credentials)
 
 
-utils = fused.load('https://github.com/fusedio/udfs/tree/004b8d9/public/common/').utils
+common = fused.load(
+
+
+"https://github.com/fusedio/udfs/tree/004b8d9/public/common/"
+
+
+).utils
 
 def get_data(bbox, year, land_type, chip_len):
         path= f"https://s3-us-west-2.amazonaws.com/mrlc/Annual_NLCD_LndCov_{year}_CU_C1V0.tif"
-        arr_int, color_map = utils.read_tiff(bbox, path, output_shape=(chip_len, chip_len), return_colormap=True)
+        arr_int, color_map = common.read_tiff(bbox, path, output_shape=(chip_len, chip_len), return_colormap=True)
         if land_type:
             arr_int = filter_lands(arr_int, land_type, verbose=False)    
         return arr_int, color_map

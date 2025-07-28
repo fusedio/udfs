@@ -7,10 +7,14 @@ def udf(
 ):
     from utils import join_fsq_categories
 
-    utils = fused.load("https://github.com/fusedio/udfs/tree/d0e8eb0/public/common/").utils
+    common = fused.load(
+
+    "https://github.com/fusedio/udfs/tree/d0e8eb0/public/common/"
+
+    ).utils
 
     path = f"s3://us-west-2.opendata.source.coop/fused/fsq-os-places/{release}/places/"
-    df = utils.table_to_tile(
+    df = common.table_to_tile(
         bounds, table=path, min_zoom=min_zoom, use_columns=use_columns
     )
 

@@ -20,8 +20,10 @@ def get_overture(
     from shapely.geometry import shape, box
 
     # convert bounds to tile
-    utils = fused.load("https://github.com/fusedio/udfs/tree/d0e8eb0/public/common/").utils
-    tile = utils.get_tiles(bounds)
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/d0e8eb0/public/common/"
+    ).utils
+    tile = common.get_tiles(bounds)
 
     if release == "2024-02-15-alpha-0":
         if overture_type == "administrative_boundary":
@@ -103,7 +105,7 @@ def get_overture(
     def get_part(part):
         part_path = f"{table_path}/part={part}/" if num_parts != 1 else table_path
         try:
-            return utils.table_to_tile(
+            return common.table_to_tile(
                 tile, table=part_path, use_columns=use_columns, min_zoom=min_zoom
             )
         except ValueError:

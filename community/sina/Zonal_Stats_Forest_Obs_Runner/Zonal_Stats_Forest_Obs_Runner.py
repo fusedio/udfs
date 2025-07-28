@@ -17,7 +17,7 @@ def udf(
     import itertools
 
     # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
     zonal_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/community/plinio/Zonal_Stats_Forest_Obs/").utils
 
     # 1. Define `cell_id` from the input dictionary
@@ -57,7 +57,7 @@ def udf(
         translate = True
 
     # 3. Create gdf_muni
-    gdf_muni = utils.table_to_tile(
+    gdf_muni = common.table_to_tile(
         gdf_cell,
         table_muni_geoboundaries,
         use_columns=["shapeID", "geometry"],
@@ -78,7 +78,7 @@ def udf(
     # 4. Load tiff
     filename = gdf_cell[["url"]].iloc[0].values[0]
     tiff_url = f"s3://fused-asset/gfc2020/{filename}"
-    geom_bounds_muni = utils.geo_bbox(gdf_muni).geometry[0]
+    geom_bounds_muni = common.geo_bbox(gdf_muni).geometry[0]
 
     # 5. Get TIFF dataset
     da, _ = zonal_utils.rio_clip_geom_from_url(geom_bounds_muni, tiff_url)

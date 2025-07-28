@@ -1,7 +1,7 @@
-from typing import Literal
 
 @fused.udf
 def udf(
+    from typing import Literal
     output_format: Literal['data', 'chart-url'] = 'data',
     analysis_start_year: int = 2021, 
     lat: float=49.2806, 

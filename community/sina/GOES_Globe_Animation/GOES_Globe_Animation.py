@@ -23,7 +23,11 @@ def udf(
         import imageio
         import numpy as np
 
-        utils = fused.load("https://github.com/fusedio/udfs/tree/7306c98/public/common/").utils  
+        common = fused.load(
+
+        "https://github.com/fusedio/udfs/tree/7306c98/public/common/"
+
+        ).utils  
     
         bounds = [float(i) for i in bounds.split(",")]
 
@@ -58,7 +62,9 @@ def udf(
 
 @fused.udf   
 def udf_nail(i: int = 0, datestr:str ='2024-06-19',coarsen_factor:int=20, bounds:str ='-180,-10,-65,70' , product_name:str ='ABI-L2-CMIPF', bucket_name:str ='noaa-goes18', offset:str ='0', band: int=8, x_res: int=40, y_res: int=40): 
-    utils = fused.load("https://github.com/fusedio/udfs/tree/7306c98/public/common/").utils  
+    common = fused.load( 
+    "https://github.com/fusedio/udfs/tree/7306c98/public/common/" 
+    ).utils  
     import geopandas as gpd 
     import shapely
     import json
@@ -80,6 +86,6 @@ def udf_nail(i: int = 0, datestr:str ='2024-06-19',coarsen_factor:int=20, bounds
         ds = xds_roi = (xds.coarsen(x=coarsen_factor, y=coarsen_factor, boundary='trim').max())
         return ds[var]  
     da = fn(bbox, i, product_name, var, datestr=datestr, offset=offset, band=band, x_res=x_res, y_res=y_res, coarsen_factor=coarsen_factor)
-    arr = utils.arr_to_plasma(da.values.squeeze(), min_max=min_max, colormap='')
+    arr = common.arr_to_plasma(da.values.squeeze(), min_max=min_max, colormap='')
     return arr
     

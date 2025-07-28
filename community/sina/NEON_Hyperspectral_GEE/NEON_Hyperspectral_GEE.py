@@ -12,8 +12,10 @@ def udf(
     import json
      
     # convert bounds to tile
-    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = utils.get_tiles(bounds)
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/bb712a5/public/common/"
+    ).utils
+    tile = common.get_tiles(bounds)
     zoom = tile.iloc[0].z
 
     # Authenticate GEE

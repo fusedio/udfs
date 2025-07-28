@@ -11,8 +11,8 @@ def udf(
     from utils import acs_5yr_bounds
 
     # Load pinned versions of utility functions.
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = common_utils.estimate_zoom(bounds)
+    common = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    zoom = common.estimate_zoom(bounds)
 
     # different geometry details per zoom level
     if zoom > 12:

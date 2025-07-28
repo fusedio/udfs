@@ -10,8 +10,8 @@ def udf(bounds: fused.types.Bounds = [-122.438,37.774,-122.434,37.777],
     import shapely
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds, clip=True)
+    common = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    tile = common.get_tiles(bounds, clip=True)
 
     #get two placekey'd datasets; choose these based on what's available on the module tab
     df1 = get_placekeyd_dataset(tile, dataset1)

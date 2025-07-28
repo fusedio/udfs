@@ -10,7 +10,9 @@ def udf(
     from utils import get_arr, rgbi_to_ndvi
 
     # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/ee9bec5/public/common/"
+    ).utils
 
     # Lad the geometry
     gdf = gpd.read_file('s3://fused-asset/data/tiger/TIGER_RD18/STATE/11_DISTRICT_OF_COLUMBIA/11/tl_rd22_11_tract.zip')

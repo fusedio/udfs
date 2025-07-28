@@ -1,12 +1,12 @@
-utils = fused.load("https://github.com/fusedio/udfs/tree/be3bc93/public/common/").utils
+common = fused.load("https://github.com/fusedio/udfs/tree/be3bc93/public/common/").utils
 url_to_arr=utils.url_to_arr
 def url_to_plasma(url, min_max=None, colormap='plasma'):
-    return utils.arr_to_plasma(utils.url_to_arr(url).squeeze(), min_max=min_max, colormap=colormap, reverse=False)
+    return common.arr_to_plasma(utils.url_to_arr(url).squeeze(), min_max=min_max, colormap=colormap, reverse=False)
     
 @fused.cache
 def df_to_hex(df, res, latlng_cols=("lat", "lng")):
-    utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/be3bc93/public/common/"
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/be3bc93/public/common/"
     ).utils
     qr = f"""
             SELECT h3_latlng_to_cell({latlng_cols[0]}, {latlng_cols[1]}, {res}) AS hex, ARRAY_AGG(data) as agg_data
@@ -14,7 +14,7 @@ def df_to_hex(df, res, latlng_cols=("lat", "lng")):
             group by 1
           --  order by 1
         """
-    con = utils.duckdb_connect()
+    con = common.duckdb_connect()
     return con.query(qr).df()
 
 

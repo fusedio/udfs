@@ -7,8 +7,8 @@ def udf(bounds: fused.types.Bounds=[-77.083,38.804,-76.969,38.983], time_of_inte
     from utils import tile_to_df, df_to_hex
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
-    tile = common_utils.get_tiles(bounds, clip=True)
+    common = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = common.get_tiles(bounds, clip=True)
 
     
     # find the tiles with intersecting geom
@@ -25,7 +25,9 @@ def udf(bounds: fused.types.Bounds=[-77.083,38.804,-76.969,38.983], time_of_inte
     arr = np.clip(arr *  scale, 0, 255).astype("uint8")[:3]
     
     # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/2f41ae1/public/common/"
+    ).utils
     # create a geom mask
     geom_mask = utils.gdf_to_mask_arr(gdf_w_bounds, arr.shape[-2:], first_n=1)    
     arr = np.ma.masked_array(arr, [geom_mask]*arr.shape[0])

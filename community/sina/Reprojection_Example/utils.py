@@ -4,11 +4,11 @@
 
 def transform_to_gdf(transform, shape, crs):
     import rasterio
-    utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/fd32f9c/public/common/"
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/fd32f9c/public/common/"
     ).utils
     bounds = rasterio.transform.array_bounds(shape[-2], shape[-1], transform)
-    return utils.bounds_to_gdf(bounds, crs=crs)
+    return common.bounds_to_gdf(bounds, crs=crs)
 
 def reproject_bounds_shape(arr, src_crs, src_bounds, dst_crs, dst_bounds, dst_shape=(256, 256)):
     import rasterio

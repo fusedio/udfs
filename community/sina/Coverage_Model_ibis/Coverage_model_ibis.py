@@ -17,8 +17,8 @@ def udf(bounds: fused.types.Bounds = [-122.438,37.774,-122.434,37.777], tech: st
     from utils import h3_cell_to_parent, h3_cell_to_boundary_wkt, ST_GeomFromText
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds, clip=True)
+    common = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
+    tile = common.get_tiles(bounds, clip=True)
 
     @fused.cache
     def read_data(bounds, url: str, tech: str, site_count: int, col_plot: str, con_ibis):

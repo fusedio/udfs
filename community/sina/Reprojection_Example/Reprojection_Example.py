@@ -9,7 +9,7 @@ def udf(path:str = f"s3://fused-asset/data/cdls/2022_30m_cdls.tif",
         fused_metadata:dict={}, 
         verbose:bool=True):
     from utils import transform_to_gdf, reproject_bounds_shape, reproject_transform_crs, reproject_crs_shape
-    utils = fused.load("https://github.com/fusedio/udfs/tree/fd32f9c/public/common/").utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/fd32f9c/public/common/").utils
     if not crs:
         crs='4326'
     ############ read_tiff (raw pixels) ########### 
@@ -17,7 +17,7 @@ def udf(path:str = f"s3://fused-asset/data/cdls/2022_30m_cdls.tif",
     import shapely
     bbox = gpd.GeoDataFrame(geometry=[shapely.box(*bounds)], crs=crs)
     # bbox = gpd.GeoDataFrame(geometry=[shapely.box(-120.53035513070277,37.98012159397518,-120.41893689940078,38.03204439357735)], crs=4326)
-    arr, metadata = utils.read_tiff(bbox, path, output_shape=None, return_colormap=False, return_transform=True, return_crs=True, return_bounds=True, return_meta=True,)
+    arr, metadata = common.read_tiff(bbox, path, output_shape=None, return_colormap=False, return_transform=True, return_crs=True, return_bounds=True, return_meta=True,)
     if verbose:
         print(metadata["meta"])
         print(arr.shape)

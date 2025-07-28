@@ -1,12 +1,11 @@
-import pandas as pd
-
 @fused.udf
 def udf(locations: pd.DataFrame = None, h3_res: int = 11, distance: int = 10):
+    import pandas as pd
     import json
     import geopandas as gpd
     import shapely
     from shapely.geometry import Polygon, MultiPolygon
-    utils = fused.load(
+    common = fused.load(
     "https://github.com/fusedio/udfs/tree/f8f0c0f/public/common/"
     ).utils
 

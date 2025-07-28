@@ -4,13 +4,13 @@ def udf(bounds: fused.types.Bounds = [-122.437,37.772,-122.404,37.799], h3_size:
 
     # Load pinned versions of utility functions.
     overture_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/Overture_Maps_Example/").utils
-    utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
 
     # convert bounds to tile
-    tile = utils.get_tiles(bounds, clip=True)
+    tile = common.get_tiles(bounds, clip=True)
 
 
-    conn = utils.duckdb_connect()
+    conn = common.duckdb_connect()
 
     # 1. Set H3 resolution
     x, y, z = tile.iloc[0][["x", "y", "z"]]

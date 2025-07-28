@@ -8,8 +8,8 @@ def udf(bounds: fused.types.Bounds = None, layer: str = "ndvi", time: int = 2, t
     
 
     # Load utils
-    utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/cbc5482/public/common/"
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/cbc5482/public/common/"
     ).utils
     
     # Open dataset
@@ -47,7 +47,7 @@ def udf(bounds: fused.types.Bounds = None, layer: str = "ndvi", time: int = 2, t
     ).isel(time=time)
     
     # Process data
-    da = utils.da_fit_to_resolution(ds_buffer[layer], target_shape)
+    da = common.da_fit_to_resolution(ds_buffer[layer], target_shape)
     da = da.sel(latitude=slice(miny, maxy), longitude=slice(minx, maxx))
     
     # Reproject to Web Mercator for visualization
@@ -58,6 +58,6 @@ def udf(bounds: fused.types.Bounds = None, layer: str = "ndvi", time: int = 2, t
     
     # Mask and normalize
     masked_data = np.nan_to_num(data_array, nan=-2)
-    arr = utils.arr_to_plasma(masked_data, min_max=(-1, 1))
+    arr = common.arr_to_plasma(masked_data, min_max=(-1, 1))
     
     return arr

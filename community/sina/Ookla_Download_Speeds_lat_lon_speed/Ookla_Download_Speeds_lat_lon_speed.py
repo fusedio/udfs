@@ -4,7 +4,7 @@ def udf(bounds: fused.types.Bounds=[-92.317,-64.329,116.124,79.475], lat: float=
     file_path='s3://ookla-open-data/parquet/performance/type=mobile/year=2024/quarter=3/2024-07-01_performance_mobile_tiles.parquet'
     
     # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
     
     # Sample usage: Set default lat/lon for San Francisco if none provided
     if lat is None and lon is None and bounds is None:
@@ -25,7 +25,7 @@ def udf(bounds: fused.types.Bounds=[-92.317,-64.329,116.124,79.475], lat: float=
     
     @fused.cache
     def get_data(total_bounds, file_path, h3_size):
-        con = utils.duckdb_connect()
+        con = common.duckdb_connect()
         # DuckDB query to:
         # 1. Convert lat/long to H3 cells
         # 2. Calculate average download speed per cell
@@ -52,7 +52,7 @@ def udf(bounds: fused.types.Bounds=[-92.317,-64.329,116.124,79.475], lat: float=
     
     # For point queries, find the closest H3 cell and return its speed
     if using_point_query:
-        con = utils.duckdb_connect()
+        con = common.duckdb_connect()
         
         # Convert the input lat/lon to an H3 cell
         point_cell_query = f'''

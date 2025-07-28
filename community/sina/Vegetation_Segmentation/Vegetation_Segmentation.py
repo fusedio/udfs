@@ -11,8 +11,8 @@ def udf(
     from utils import process_image, url_to_arr
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
-    tile = common_utils.get_tiles(bounds, target_num_tiles=1)
+    common = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    tile = common.get_tiles(bounds, target_num_tiles=1)
     
     # Get the bounding box coordinates
     x, y, z = tile[["x", "y", "z"]].iloc[0]

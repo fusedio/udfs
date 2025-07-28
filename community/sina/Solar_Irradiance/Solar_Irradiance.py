@@ -1,8 +1,8 @@
-import geopandas as gpd
-from shapely import box
 
 @fused.udf
 def udf(
+    import geopandas as gpd
+    from shapely import box
     bounds: fused.types.Bounds = [-122.549, 37.681, -122.341, 37.818]
 ):
     import palettable

@@ -28,7 +28,9 @@ def udf(bbox: fused.types.Tile, preview: bool = False):
         return None
 
     # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/ee9bec5/public/common/"
+    ).utils
     overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils
     # Load Overture Buildings
     gdf_overture = overture_utils.get_overture(bbox=bbox)

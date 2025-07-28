@@ -37,9 +37,11 @@ def run_query(bounds, pplant_table, resolution):
     
         """
         # Load pinned versions of utility functions.
-        utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+        common = fused.load(
+        "https://github.com/fusedio/udfs/tree/ee9bec5/public/common/"
+        ).utils
         # Connect to DuckDB
-        con = utils.duckdb_connect()
+        con = common.duckdb_connect()
 
         # Execute the query and get the DataFrame
         return con.sql(query, params={'xmin': xmin, 'xmax': xmax, 'ymin': ymin, "ymax": ymax, 'resolution': resolution}).df()

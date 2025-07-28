@@ -4,8 +4,8 @@ def udf(bounds: fused.types.Bounds=[-121.673,37.561,-120.778,38.314], year:int=1
     from utils import get_data, get_summary
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/36f4e97/public/common/").utils
-    tile = common_utils.get_tiles(bounds, clip=True)
+    common = fused.load("https://github.com/fusedio/udfs/tree/36f4e97/public/common/").utils
+    tile = common.get_tiles(bounds, clip=True)
 
     
     data = get_data(tile, year, land_type, chip_len)

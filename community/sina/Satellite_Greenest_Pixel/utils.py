@@ -8,7 +8,7 @@ def run_pool_tiffs(bounds, df_tiffs, output_shape):
     def fn_read_tiff(tiff_url, bounds=bounds, output_shape=output_shape):
         read_tiff = fused.load(
             "https://github.com/fusedio/udfs/tree/eda5aec/public/common/"
-        ).utils.read_tiff
+        ).common.read_tiff
         return read_tiff(bounds, tiff_url, output_shape=output_shape)
 
     tiff_list = []
@@ -17,9 +17,11 @@ def run_pool_tiffs(bounds, df_tiffs, output_shape):
             tiff_list.append(df_tiffs[band].iloc[i])
 
     # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/eda5aec/public/common/"
+    ).utils
 
-    arrs_tmp = utils.run_pool(fn_read_tiff, tiff_list)
+    arrs_tmp = common.run_pool(fn_read_tiff, tiff_list)
     arrs_out = np.stack(arrs_tmp)
     arrs_out = arrs_out.reshape(len(columns), len(df_tiffs), output_shape[-2], output_shape[-1])
     return arrs_out

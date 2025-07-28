@@ -16,7 +16,9 @@ def acs_5yr_bounds(
         raise ValueError('The only available years are 2021 and 2022')
 
     # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/d0e8eb0/public/common/").utils
+    common = fused.load(
+    "https://github.com/fusedio/udfs/tree/d0e8eb0/public/common/"
+    ).utils
 
     bounds = gpd.GeoDataFrame(geometry=[shapely.box(*bounds)], crs=4326)
     utils.import_env()
@@ -30,7 +32,7 @@ def acs_5yr_bounds(
     if suffix:
         table_path += f'_{suffix}'
     print(table_path)
-    gdf = utils.table_to_tile(
+    gdf = common.table_to_tile(
         bounds,
         table_path,
         use_columns=['GEOID','geometry'],

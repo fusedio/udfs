@@ -13,7 +13,7 @@ def udf(
     import utils
     
     arr = utils.dsm_to_tile(bounds=bounds, z_levels=z_levels, verbose=verbose)
-    return utils.common_utils.visualize(
+    return utils.common.visualize(
         data=arr,
         min=0,
         max=3000,

@@ -2,8 +2,10 @@ import fused
 import numpy as np
 import palettable
 
-utils = fused.load(
-    "https://github.com/fusedio/udfs/tree/2b25cb3/public/common/"
+common = fused.load(
+
+"https://github.com/fusedio/udfs/tree/2b25cb3/public/common/"
+
 ).utils
 
 @fused.cache
@@ -42,7 +44,7 @@ def rgbi_to_ndvi(arr_rgbi):
     ndvi = (arr_rgbi[-1] * 1.0 - arr_rgbi[-2] * 1.0) / (
         arr_rgbi[-1] * 1.0 + arr_rgbi[-2] * 1.0
     )
-    rgb_image = utils.visualize(
+    rgb_image = common.visualize(
         data=ndvi,
         min=0,
         max=1,

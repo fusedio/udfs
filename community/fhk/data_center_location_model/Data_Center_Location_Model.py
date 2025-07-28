@@ -1,16 +1,11 @@
 # Note: This UDF is only for demo purposes. You may get `HTTP GET error` after several times calling it. This is the data retrieval issue caused by Cloudfront servers not responding.
-from geopy.geocoders import Nominatim
 
-import geopandas as gpd
-import h3
 
-import highspy
-import numpy as np
-import networkx as nx
     
 
 @fused.cache
 def add_lat_lon(df):
+from geopy.geocoders import Nominatim
     geolocator = Nominatim(user_agent="fused")
     df['location'] = df.apply(lambda x: geolocator.geocode(x.city), axis=1)
 
@@ -20,6 +15,7 @@ def add_lat_lon(df):
     return df
 
 @fused.cache
+import h3
 def get_h3s():
     usa = gpd.read_file('https://raw.githubusercontent.com/scdoshi/us-geojson/master/geojson/nation/US.geojson')
     polygons = list(list(x.geoms) for x in usa.geometry)[0]
@@ -42,6 +38,7 @@ def int_var_dict(h, var_str, name, variable_index_count=0, lb=0, ub=1):
 
 
 def formulation(h, graph):
+import highspy
     inf = highspy.kHighsInf
     tasks = {j: f'{j}' for j in graph.nodes() if graph.out_degree[j] == 0}
     print(f'{len(tasks)} demand locations')
@@ -116,6 +113,9 @@ def create_assignment_graph(edges):
 
 @fused.udf
 def udf(bbox=None):
+    import geopandas as gpd
+    import numpy as np
+    import networkx as nx
     import re
     import requests
     import shapely
