@@ -7,7 +7,7 @@ def udf(city='Paris', resolution=11):
     # set a resolution limit 
     if resolution > 11:resolution=11
 
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/3569595/public/common/").utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/364f5dd/public/common/")
         
     @fused.cache
     def get_city_data(city):
@@ -35,7 +35,7 @@ def udf(city='Paris', resolution=11):
         out_path = f'{city}.csv.gz'
         csv_file = fused.core.download(url=url, file_path=out_path)
         
-        con = common_utils.duckdb_connect()
+        con = common.duckdb_connect()
         # reading data with duckDB and generating H3 cells
         @fused.cache
         def read_data(url, resolution):
