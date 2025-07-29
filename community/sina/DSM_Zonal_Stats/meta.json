@@ -153,12 +153,7 @@
             "fused:gitRepo": "fusedio/udfs"
           },
           "source": "DSM_Zonal_Stats.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],
