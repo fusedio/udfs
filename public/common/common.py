@@ -1,44 +1,46 @@
-# To use these functions, add the following command in your UDF:
-# `common = fused.utils.common`
-from __future__ import annotations
+@fused.udf
+def udf(bounds: fused.types.Bounds = [-122.4194, 37.7749, -122.4094, 37.7849]):
+    import fused
+    
+    gdf = to_gdf(bounds)
+    return gdf
+
+
+import contextlib
+@contextlib.contextmanager
 def mutex(filename, wait=1, verbose=False):
-    import contextlib
-    @contextlib.contextmanager
-    def _mutex():
-        """Create a mutex lock using a file on disk.
-        
-        Args:
-            filename: File path to use as mutex
-            wait: Seconds to wait between lock attempts
-            verbose: Whether to print status messages
-        """
-        import time
-        import os
-        while True:
-            try:
-                f = open(filename, 'x')
-                break
-            except OSError as e:
-                if verbose:
-                    print(f"waiting {filename=} {e=}")
-                time.sleep(wait)
-        
-        if verbose:
-            print(f"acquired lock {filename=}")
-        
+    """Create a mutex lock using a file on disk.
+    
+    Args:
+        filename: File path to use as mutex
+        wait: Seconds to wait between lock attempts
+        verbose: Whether to print status messages
+    """
+    import time
+    import os
+    while True:
         try:
-            yield
-        finally:
+            f = open(filename, 'x')
+            break
+        except OSError as e:
             if verbose:
-                print(f"exited lock {filename=}")
-            f.close()
-            os.unlink(filename)
-    return _mutex()
+                print(f"waiting {filename=} {e=}")
+            time.sleep(wait)
+    
+    if verbose:
+        print(f"acquired lock {filename=}")
+    
+    try:
+        yield
+    finally:
+        if verbose:
+            print(f"exited lock {filename=}")
+        f.close()
+        os.unlink(filename)
 
 
 def jam_lock(lock_second=1, verbose=False):
-    import time
-    import os    
+    import time    
     current_second = int(time.time()) // (lock_second)
     lock_file = f'/tmp/fused_lock_{current_second}'
     with mutex(lock_file + '_lock', wait=0.5, verbose=verbose):
@@ -53,9 +55,8 @@ def get_catalog_url(udf):
     
 def get_jobs_status(jobs, wait=True, sleep_seconds=3):
     from datetime import datetime
-    import pandas as pd
-    import time
     import fused
+    import pandas as pd
     s=datetime.now()
     df = pd.DataFrame([i.job_id for i in jobs], columns=['job_id'])
     def get_status(job_id):
@@ -63,6 +64,7 @@ def get_jobs_status(jobs, wait=True, sleep_seconds=3):
     df['status'] = df.job_id.map(get_status)
     not_done=wait
     while not_done:
+        import time
         time.sleep(sleep_seconds)
         df['status'] = df.apply(lambda row: 'terminated' if row.status in ['shutting-down','terminated'] else get_status(row.job_id) ,1)
         not_done=(df.status=='terminated').mean()<1
@@ -144,8 +146,9 @@ def file_exists(path, verbose=True):
         return exists
 
 def encode_metadata_fused(fused_metadata) -> bytes:
-    import base64
+    from __future__ import annotations
     import pandas as pd
+    import base64
     from io import BytesIO
     with BytesIO() as bio:
         fused_metadata.to_parquet(bio, index=False)
@@ -170,6 +173,7 @@ def create_sample_file(df_meta, file_path):
 
 @fused.cache
 def read_hexfile(bounds, path, clip=True, verbose=True, return_meta=False):
+    import fused
     from io import BytesIO
     import geopandas as gpd
     import pandas as pd
@@ -221,6 +225,7 @@ def get_crs(path):
 
 @fused.cache(cache_max_age='30d')
 def bounds_to_file_chunk(bounds:list=[-180, -90, 180, 90], target_num_files: int = 64, target_num_file_chunks: int = 64):
+    import fused
     import pandas as pd
 
     df = get_tiles(bounds, target_num_tiles=target_num_files)
@@ -315,7 +320,6 @@ def from_pickle(df):
     return pickle.loads(df["data_content"].iloc[0])
 
 def df_summary(df, description="", n_head=5, n_tail=5, n_sample=5, n_unique=100, add_details=True):
-    import pandas as pd
     val = description+"\n\n"
     val += "These are stats for df (pd.DataFrame):\n"
     val += f"{list(df.columns)=} \n\n"
@@ -385,9 +389,9 @@ def get_diff_text(text1: str, text2: str, as_html: bool=True, only_diff: bool=Fa
 
 
 def json_path_from_secret(var='gcs_fused'):
+    import fused
     import json
     import tempfile
-    import fused
     with tempfile.NamedTemporaryFile(suffix=".json", delete=False, mode="w") as tmp_file:
         json.dump(json.loads(fused.secrets[var]), tmp_file)
         tmp_file_path = tmp_file.name
@@ -397,9 +401,9 @@ def gcs_credentials_from_secret(var='gcs_fused'):
     """
     example: 
     """
+    import fused
     import gcsfs
     import json
-    import fused
     from google.oauth2 import service_account
     
     gcs_secret = json.loads(fused.secrets[var])
@@ -525,9 +529,8 @@ def get_meta_chunk_datestr(base_path, total_row_groups=52, start_year=2020, end_
     return df
 
 def write_log(msg="Your message.", name='//default', log_type='info', rotation="10 MB"):
-    from loguru import logger
-    from datetime import datetime
     import fused
+    from loguru import logger
     path = fused.file_path('logs/' + name + '.log')
     logger.add(path, rotation=rotation)
     if log_type=='warning':
@@ -535,6 +538,7 @@ def write_log(msg="Your message.", name='//default', log_type='info', rotation="
     else:
         logger.info(msg)  # Write the log message
     logger.remove()  # Remove the log handler
+    from datetime import datetime
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     print(f"{timestamp} | {path} |msg: {msg}" )
 
@@ -824,6 +828,7 @@ def table_to_tile(
     import fused
     import geopandas as gpd
     import pandas as pd
+    import numpy as np
 
     version = "0.2.3"
     tile = get_tiles(bounds)
@@ -883,7 +888,7 @@ def table_to_tile(
 
 
 def rasterize_geometry(
-    geom, shape, affine, all_touched: bool = False
+    geom: Dict, shape: Tuple[int, int], affine, all_touched: bool = False
 ):
     """Return an image array with input geometries burned in.
 
@@ -896,9 +901,10 @@ def rasterize_geometry(
     Returns:
         numpy array with input geometries burned in.
     """
+    from __future__ import annotations
     import numpy as np
-    from typing import Dict, Tuple
     from numpy.typing import NDArray
+    from typing import Dict, Tuple
     from rasterio import features
 
     geoms = [(geom, 1)]
@@ -1479,14 +1485,13 @@ def read_module(url, remove_strings=[]):
     return module
 
 
-def get_geo_cols(data):
+def get_geo_cols(data) -> List[str]:
     """Get the names of the geometry columns.
 
     The first item in the result is the name of the primary geometry column. Following
     items are other columns with a type of GeoSeries.
     """
     import geopandas as gpd
-    from typing import List
     main_col = data.geometry.name
     cols = [
         i for i in data.columns if (type(data[i]) == gpd.GeoSeries) & (i != main_col)
@@ -1510,7 +1515,10 @@ def crs_display(crs):
         return crs
 
 
-def resolve_crs(gdf, crs, verbose=False):
+def resolve_crs(gdf,
+                crs,
+                verbose= False
+):
     """Reproject a GeoDataFrame to the given CRS
 
     Args:
@@ -1521,7 +1529,6 @@ def resolve_crs(gdf, crs, verbose=False):
     Returns:
         _description_
     """
-    from loguru import logger
     if str(crs).lower() == "utm":
         if gdf.crs is None:
             gdf = gdf.set_crs(4326)
@@ -1557,7 +1564,7 @@ def resolve_crs(gdf, crs, verbose=False):
         return gdf
 
 
-def infer_lonlat(columns):
+def infer_lonlat(columns: Sequence[str]) -> Optional[Tuple[str, str]]:
     """Infer longitude and latitude columns from the column names of the DataFrame
 
     Args:
@@ -1566,7 +1573,6 @@ def infer_lonlat(columns):
     Returns:
         The pair of (longitude, latitude) column names, if found. Otherwise None.
     """
-    from typing import Sequence, Optional, Tuple
     columns_set = set(columns)
     allowed_column_pairs = [
         ("longitude", "latitude"),
@@ -1825,8 +1831,8 @@ def geo_bbox(
 def clip_bbox_gdfs(
     left,
     right,
-    buffer_distance = 1000,
-    join_type = "left",
+    buffer_distance: Union[int, float] = 1000,
+    join_type: Literal["left", "right"] = "left",
     verbose: bool = True,
 ):
     """Clip a DataFrame by a bounding box and then join to another DataFrame
@@ -1838,7 +1844,6 @@ def clip_bbox_gdfs(
         join_type: _description_. Defaults to "left".
         verbose: Provide extra logging output. Defaults to False.
     """
-    from typing import Union, Literal
 
     def fn(df1, df2, buffer_distance=buffer_distance):
         if buffer_distance:
@@ -1870,7 +1875,7 @@ def clip_bbox_gdfs(
 def geo_join(
     left,
     right,
-    buffer_distance = None,
+    buffer_distance: Union[int, float, None] = None,
     utm_crs="utm",
     clip_bbox="left",
     drop_extra_geoms: bool = True,
@@ -1892,8 +1897,6 @@ def geo_join(
     """
     import geopandas as gpd
     import shapely
-    from typing import Union
-    from loguru import logger
     if type(left) != gpd.GeoDataFrame:
         left = to_gdf(left, verbose=verbose)
     if type(right) != gpd.GeoDataFrame:
@@ -1980,17 +1983,16 @@ def geo_join(
 def geo_distance(
     left,
     right,
-    search_distance = 1000,
+    search_distance: Union[int, float] = 1000,
     utm_crs="utm",
     clip_bbox="left",
     col_distance: str = "distance",
     k_nearest: int = 1,
-    cols_agg = ("fused_index",),
-    cols_right = (),
+    cols_agg: Sequence[str] = ("fused_index",),
+    cols_right: Sequence[str] = (),
     drop_extra_geoms: bool = True,
     verbose: bool = False,
 ):
-    from typing import Union, Sequence
     """Compute the distance from rows in one dataframe to another.
 
     First this performs an geo_join, and then finds the nearest rows in right to left.
@@ -2724,13 +2726,14 @@ def clip_arr(arr, bounds_aoi, bounds_total=(-180, -90, 180, 90)):
 
 def visualize(
     data,
-    mask: float | np.ndarray = None,
+    mask = None,
     min: float = 0,
     max: float = 1,
     opacity: float = 1,
     colormap = None,
 ):
     """Convert objects into visualization tiles."""
+    import numpy as np
     import xarray as xr
     import palettable
     from matplotlib.colors import LinearSegmentedColormap
@@ -3119,6 +3122,7 @@ def scipy_voronoi(gdf):
     Probably not the most optimised funciton but it gets the job done. 
     Irrelevant once we move to geopandas 1.0+
     """
+    import numpy as np
     from shapely.geometry import Polygon, Point
     from scipy.spatial import Voronoi
 
@@ -3371,8 +3375,13 @@ def test_udf(udf_token: str, cache_length: str = "9999d", arg_token: Optional[st
 
   
 def save_to_agent(
-    agent_json_path: str, udf: AnyBaseUdf, agent_name: str, udf_name: str, mcp_metadata: dict[str, Any], overwrite: bool = True,
+    agent_json_path: str, udf, agent_name: str, udf_name: str, mcp_metadata, overwrite: bool = True,
 ):
+    from __future__ import annotations
+    from fused.api.api import AnyBaseUdf
+    from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union, Any
+    import json
+    import os
     """
     Save UDF to agent of udf_ai directory
     Args:
@@ -3457,6 +3466,7 @@ def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_pat
 
 #TODO: fix dill issue in local machine
 def func_to_udf(func, cache_max_age='12h'):
+    import fused
     import dill 
     from textwrap import dedent
     source_code = dill.source.getsource(func)
@@ -3468,6 +3478,7 @@ def func_to_udf(func, cache_max_age='12h'):
 
 
 def udf_to_json(udf):
+    import fused
     try:
         udf_nail_json = fused.load(udf).json()
     except:
@@ -3486,6 +3497,7 @@ def get_query_embedding(client, query, model="text-embedding-3-large"):
     return embedding
 
 def query_to_params(query, num_match=1, rerank=True, embedding_path="s3://fused-users/fused/misc/embedings/CDL_crop_name.parquet"):
+    import fused
     import pandas as pd
     from openai import OpenAI
     
@@ -3545,6 +3557,8 @@ def cosine_similarity(a, b):
 
 
 def submit_job(udf, df_arg, cache_max_age='12h'):
+    import fused
+    import pandas as pd
     udf_nail_json = udf_to_json(udf)
     
     #TODO: fix dill issue in local machine
@@ -3561,4 +3575,3 @@ def udf(args:dict, udf_nail_json:str):
     arg_list = df_arg.to_dict(orient="records")
     job = runner(arg_list=arg_list, udf_nail_json=udf_nail_json)
     return job
-
