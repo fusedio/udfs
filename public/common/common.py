@@ -1,3 +1,4 @@
+
 @fused.udf
 def udf(bounds: fused.types.Bounds = [-122.4194, 37.7749, -122.4094, 37.7849]):
     import fused
@@ -145,7 +146,7 @@ def file_exists(path, verbose=True):
             print(f'{path=} exists locally.')
         return exists
 
-def encode_metadata_fused(fused_metadata) -> bytes:
+def encode_metadata_fused(fused_metadata):
     import pandas as pd
     import base64
     from io import BytesIO
@@ -223,7 +224,7 @@ def get_crs(path):
         return src.crs
 
 @fused.cache(cache_max_age='30d')
-def bounds_to_file_chunk(bounds:list=[-180, -90, 180, 90], target_num_files: int = 64, target_num_file_chunks: int = 64):
+def bounds_to_file_chunk(bounds=[-180, -90, 180, 90], target_num_files=64, target_num_file_chunks=64):
     import fused
     import pandas as pd
 
@@ -242,7 +243,7 @@ def bounds_to_file_chunk(bounds:list=[-180, -90, 180, 90], target_num_files: int
     # print(df.chunk_id.value_counts())
     return df
 
-def bounds_to_hex(bounds: list = [-180, -90, 180, 90], res: int = 3, hex_col: str = "hex"):
+def bounds_to_hex(bounds=[-180, -90, 180, 90], res=3, hex_col="hex"):
     bbox = get_tiles(bounds, 4)
     bbox.geometry=bbox.buffer((bounds[2]-bounds[0])/20)
     df = bbox.to_wkt()
@@ -339,7 +340,7 @@ def df_summary(df, description="", n_head=5, n_tail=5, n_sample=5, n_unique=100,
                 val += f"{df[c].unique()[:n_unique]} \n\n"
     return val
 
-def get_diff_text(text1: str, text2: str, as_html: bool=True, only_diff: bool=False) -> str:
+def get_diff_text(text1, text2, as_html=True, only_diff=False):
     import difflib
     import html
     
@@ -887,7 +888,7 @@ def table_to_tile(
 
 
 def rasterize_geometry(
-    geom: Dict, shape: Tuple[int, int], affine, all_touched: bool = False
+    geom, shape, affine, all_touched=False
 ):
     """Return an image array with input geometries burned in.
 
@@ -901,8 +902,6 @@ def rasterize_geometry(
         numpy array with input geometries burned in.
     """
     import numpy as np
-    from numpy.typing import NDArray
-    from typing import Dict, Tuple
     from rasterio import features
 
     geoms = [(geom, 1)]
@@ -1483,7 +1482,7 @@ def read_module(url, remove_strings=[]):
     return module
 
 
-def get_geo_cols(data) -> List[str]:
+def get_geo_cols(data):
     """Get the names of the geometry columns.
 
     The first item in the result is the name of the primary geometry column. Following
@@ -1562,7 +1561,7 @@ def resolve_crs(gdf,
         return gdf
 
 
-def infer_lonlat(columns: Sequence[str]) -> Optional[Tuple[str, str]]:
+def infer_lonlat(columns):
     """Infer longitude and latitude columns from the column names of the DataFrame
 
     Args:
@@ -1634,7 +1633,7 @@ def to_gdf(
     crs=None,
     cols_lonlat=None,
     col_geom="geometry",
-    verbose: bool = False,
+    verbose=False,
 ):
     """Convert input data into a GeoPandas GeoDataFrame."""
     import geopandas as gpd
@@ -1748,7 +1747,7 @@ def geo_buffer(
     utm_crs="utm",
     dst_crs="original",
     col_geom_buff="geom_buff",
-    verbose: bool=False,
+    verbose=False,
 ):
     """Buffer the geometry column in a GeoDataFrame in UTM projection.
 
@@ -1796,7 +1795,7 @@ def geo_buffer(
 def geo_bbox(
     data,
     dst_crs=None,
-    verbose: bool = False,
+    verbose=False,
 ):
     """Generate a GeoDataFrame that has the bounds of the current data frame.
 
@@ -1829,9 +1828,9 @@ def geo_bbox(
 def clip_bbox_gdfs(
     left,
     right,
-    buffer_distance: Union[int, float] = 1000,
-    join_type: Literal["left", "right"] = "left",
-    verbose: bool = True,
+    buffer_distance=1000,
+    join_type="left",
+    verbose=True,
 ):
     """Clip a DataFrame by a bounding box and then join to another DataFrame
 
@@ -1873,11 +1872,11 @@ def clip_bbox_gdfs(
 def geo_join(
     left,
     right,
-    buffer_distance: Union[int, float, None] = None,
+    buffer_distance=None,
     utm_crs="utm",
     clip_bbox="left",
-    drop_extra_geoms: bool = True,
-    verbose: bool = False,
+    drop_extra_geoms=True,
+    verbose=False,
 ):
     """Join two GeoDataFrames
 
@@ -1981,15 +1980,15 @@ def geo_join(
 def geo_distance(
     left,
     right,
-    search_distance: Union[int, float] = 1000,
+    search_distance=1000,
     utm_crs="utm",
     clip_bbox="left",
-    col_distance: str = "distance",
-    k_nearest: int = 1,
-    cols_agg: Sequence[str] = ("fused_index",),
-    cols_right: Sequence[str] = (),
-    drop_extra_geoms: bool = True,
-    verbose: bool = False,
+    col_distance="distance",
+    k_nearest=1,
+    cols_agg=("fused_index",),
+    cols_right=(),
+    drop_extra_geoms=True,
+    verbose=False,
 ):
     """Compute the distance from rows in one dataframe to another.
 
@@ -2063,7 +2062,7 @@ def geo_distance(
 
 
 def geo_samples(
-    n_samples: int, min_x: float, max_x: float, min_y: float, max_y: float
+    n_samples, min_x, max_x, min_y, max_y
 ):
     """
     Generate sample points in a bounding box, uniformly.
@@ -2340,7 +2339,7 @@ def create_chunk_metadata(df, chunk_size=10_000, cols_lonlat=['lng', 'lat']):
     import pandas as pd
     return pd.DataFrame.from_records(meta)
 
-def chunked_tiff_to_points(tiff_path, i: int = 0, x_chunks: int = 2, y_chunks: int = 2):
+def chunked_tiff_to_points(tiff_path, i=0, x_chunks=2, y_chunks=2):
     import numpy as np
     import pandas as pd
     import rasterio
@@ -2725,9 +2724,9 @@ def clip_arr(arr, bounds_aoi, bounds_total=(-180, -90, 180, 90)):
 def visualize(
     data,
     mask = None,
-    min: float = 0,
-    max: float = 1,
-    opacity: float = 1,
+    min = 0,
+    max = 1,
+    opacity = 1,
     colormap = None,
 ):
     """Convert objects into visualization tiles."""
@@ -3304,7 +3303,7 @@ def add_utm_area(gdf, utm_col='utm_epsg', utm_area_col='utm_area_sqm'):
     return gdf
 
 
-def run_submit_with_defaults(udf_token: str, cache_length: str = "9999d", default_params_token: Optional[str] = None):
+def run_submit_with_defaults(udf_token, cache_length="9999d", default_params_token=None):
     """
     Uses fused.submit() to run a UDF over:
     - A UDF that returns a pd.DataFrame of test arguments (`default_params_token`)
@@ -3348,7 +3347,7 @@ def run_submit_with_defaults(udf_token: str, cache_length: str = "9999d", defaul
         wait_on_results=True,
     )
 
-def test_udf(udf_token: str, cache_length: str = "9999d", arg_token: Optional[str] = None):
+def test_udf(udf_token, cache_length="9999d", arg_token=None):
     """
     Testing a UDF:
     1. Does it run and return successful result for all its default parameters?
@@ -3373,11 +3372,8 @@ def test_udf(udf_token: str, cache_length: str = "9999d", arg_token: Optional[st
 
   
 def save_to_agent(
-    agent_json_path: str, udf, agent_name: str, udf_name: str, mcp_metadata, overwrite: bool = True,
+    agent_json_path, udf, agent_name, udf_name, mcp_metadata, overwrite=True,
 ):
-
-    from fused.api.api import AnyBaseUdf
-    from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union, Any
     import json
     import os
     """
@@ -3418,7 +3414,7 @@ def save_to_agent(
     # save agent.json
     json.dump(agent_json, open(agent_json_path, "w"), indent=4)
 
-def generate_local_mcp_config(config_path: str, agents_list: list[str], repo_path: str, uv_path: str = 'uv', script_path: str = 'main.py'):
+def generate_local_mcp_config(config_path, agents_list, repo_path, uv_path='uv', script_path='main.py'):
     """
     Generate MCP configuration file based on list of agents from the udf_ai directory
     Args:
