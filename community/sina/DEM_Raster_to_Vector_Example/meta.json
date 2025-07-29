@@ -12,7 +12,6 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DEM_Raster_to_Vector_Example.png",
             "fused:defaultParameters": [
               {
                 "parameter": "min_elevation",
@@ -27,25 +26,6 @@
               }
             ],
             "fused:datasets": "Digital Elevation Model",
-            "fused:tags": [
-              {
-                "id": "raster-to-vector",
-                "label": "raster-to-vector"
-              },
-              {
-                "id": "band-algebra",
-                "label": "band-algebra"
-              },
-              {
-                "id": "aws",
-                "label": "aws"
-              },
-              {
-                "id": "stac",
-                "label": "stac"
-              }
-            ],
-            "fused:description": "#### Overview\n\nThis UDF shows an example of vectorizing a raster image, based on a minimum elevation threshold.\n\nThe data for this UDF comes from the [Copernicus DEM](https://github.com/fusedio/udfs/tree/main/public/DEM_Tile_Example) example UDF.\n\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/DEM_Raster_to_Vector_Example\")\ngdf = fused.run(udf=udf)\ngdf\n```\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -86,42 +66,48 @@
             "fused:udfType": "auto",
             "fused:slug": "DEM_Raster_to_Vector_Example",
             "fused:name": "DEM_Raster_to_Vector_Example",
-            "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/c71b1fa4e40918e31c4341ccf00bc2f5b8f5cabb/public/DEM_Raster_to_Vector_Example/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/c71b1fa/public/DEM_Raster_to_Vector_Example/",
-            "fused:gitPath": "public/DEM_Raster_to_Vector_Example",
-            "fused:gitRef": "c71b1fa4e40918e31c4341ccf00bc2f5b8f5cabb",
+            "fused:gitPath": "community/sina/DEM_Raster_to_Vector_Example",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
             "fused:gitAuthorNames": [
-              "Isaac Brodsky",
-              "Plinio Guzman",
               null
             ],
             "fused:gitAuthorUsernames": [
-              "isaacbrodsky",
-              "pgzmnk",
-              "fused-io[bot]"
+              "MaxLenormand"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/isaacbrodsky",
-              "https://github.com/pgzmnk",
-              "https://github.com/apps/fused-io"
+              "https://github.com/MaxLenormand"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/9139378?v=4",
-              "https://avatars.githubusercontent.com/u/27398253?v=4",
-              "https://avatars.githubusercontent.com/in/834700?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4"
             ],
-            "fused:gitLastModified": "2024-10-15T17:13:31+00:00",
-            "fused:explorerTab": "public",
-            "fused:gitRepo": "fusedio/udfs"
+            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DEM_Raster_to_Vector_Example.png",
+            "fused:tags": [
+              {
+                "id": "raster-to-vector",
+                "label": "raster-to-vector"
+              },
+              {
+                "id": "band-algebra",
+                "label": "band-algebra"
+              },
+              {
+                "id": "aws",
+                "label": "aws"
+              },
+              {
+                "id": "stac",
+                "label": "stac"
+              }
+            ],
+            "fused:description": "#### Overview\n\nThis UDF shows an example of vectorizing a raster image, based on a minimum elevation threshold.\n\nThe data for this UDF comes from the [Copernicus DEM](https://github.com/fusedio/udfs/tree/main/public/DEM_Tile_Example) example UDF.\n\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/DEM_Raster_to_Vector_Example\")\ngdf = fused.run(udf=udf)\ngdf\n```\n",
+            "fused:userCreatedShareToken": "fsh_4mvSarg7HPdaUQky36ljDQ",
+            "fused:id": null
           },
           "source": "DEM_Raster_to_Vector_Example.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],

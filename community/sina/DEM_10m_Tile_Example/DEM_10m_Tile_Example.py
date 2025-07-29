@@ -13,8 +13,8 @@ def udf(
     from pystac.extensions.eo import EOExtension as eo
 
     # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = utils.estimate_zoom(bounds)
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    zoom = common.estimate_zoom(bounds)
 
     catalog = pystac_client.Client.open(
         "https://planetarycomputer.microsoft.com/api/stac/v1",
@@ -40,7 +40,7 @@ def udf(
     arr = ds[band].max(dim="time")
     
     # Visualize that data as an RGB image.
-    rgb_image = utils.visualize(
+    rgb_image = common.visualize(
         data=arr,
         min=0,
         max=100,
