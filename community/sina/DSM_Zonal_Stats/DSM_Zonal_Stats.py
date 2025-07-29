@@ -3,7 +3,7 @@ def udf(
     bounds: fused.types.Bounds= [-122.416,37.773,-122.383,37.792], min_zoom=15, table="s3://fused-asset/infra/building_msft_us/", chip_len=256
 ):
     # Load pinned versions of utility functions.
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/c682e4e/public/common/")
     dsm_jaxa = fused.load("https://github.com/fusedio/udfs/tree/c682e4e/community/sina/DSM_JAXA_Example/")
 
     zoom = common.estimate_zoom(bounds)
