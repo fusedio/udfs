@@ -1,5 +1,6 @@
 @fused.udf
 def udf(bounds: fused.types.Bounds = [-122.4194, 37.7749, -122.4094, 37.7849]):
+    import fused
     
     gdf = to_gdf(bounds)
     return gdf
@@ -49,12 +50,14 @@ def jam_lock(lock_second=1, verbose=False):
             open(lock_file, 'x').close()  
 
 def get_catalog_url(udf):
+    import fused
     return f"https://{fused.options.base_url.split('/')[2]}/workbench/catalog/{udf.entrypoint}-{udf.metadata['fused:id']}"
     
 def get_jobs_status(jobs, wait=True, sleep_seconds=3):
     from datetime import datetime
-    s=datetime.now()
+    import fused
     import pandas as pd
+    s=datetime.now()
     df = pd.DataFrame([i.job_id for i in jobs], columns=['job_id'])
     def get_status(job_id):
         return fused.api.job_get_status(job_id).status
@@ -69,6 +72,7 @@ def get_jobs_status(jobs, wait=True, sleep_seconds=3):
     return df
     
 def get_s3_size(file_path):
+    import fused
     return sum([i.size for i in fused.api.list(file_path, details=1) if i.size])/10**9
 
 def s3_tmp_path(path, folder="tmp/new", user_env="fused"):
@@ -141,7 +145,9 @@ def file_exists(path, verbose=True):
             print(f'{path=} exists locally.')
         return exists
 
-def encode_metadata_fused(fused_metadata: pd.DataFrame) -> bytes:
+def encode_metadata_fused(fused_metadata) -> bytes:
+    from __future__ import annotations
+    import pandas as pd
     import base64
     from io import BytesIO
     with BytesIO() as bio:
@@ -167,6 +173,7 @@ def create_sample_file(df_meta, file_path):
 
 @fused.cache
 def read_hexfile(bounds, path, clip=True, verbose=True, return_meta=False):
+    import fused
     from io import BytesIO
     import geopandas as gpd
     import pandas as pd
@@ -218,6 +225,7 @@ def get_crs(path):
 
 @fused.cache(cache_max_age='30d')
 def bounds_to_file_chunk(bounds:list=[-180, -90, 180, 90], target_num_files: int = 64, target_num_file_chunks: int = 64):
+    import fused
     import pandas as pd
 
     df = get_tiles(bounds, target_num_tiles=target_num_files)
@@ -381,6 +389,7 @@ def get_diff_text(text1: str, text2: str, as_html: bool=True, only_diff: bool=Fa
 
 
 def json_path_from_secret(var='gcs_fused'):
+    import fused
     import json
     import tempfile
     with tempfile.NamedTemporaryFile(suffix=".json", delete=False, mode="w") as tmp_file:
@@ -392,6 +401,7 @@ def gcs_credentials_from_secret(var='gcs_fused'):
     """
     example: 
     """
+    import fused
     import gcsfs
     import json
     from google.oauth2 import service_account
@@ -519,6 +529,7 @@ def get_meta_chunk_datestr(base_path, total_row_groups=52, start_year=2020, end_
     return df
 
 def write_log(msg="Your message.", name='//default', log_type='info', rotation="10 MB"):
+    import fused
     from loguru import logger
     path = fused.file_path('logs/' + name + '.log')
     logger.add(path, rotation=rotation)
@@ -532,6 +543,7 @@ def write_log(msg="Your message.", name='//default', log_type='info', rotation="
     print(f"{timestamp} | {path} |msg: {msg}" )
 
 def read_log(n=None, name='default', return_log=False):
+    import fused
     path = fused.file_path('logs/' + name + '.log')
     try:
         with open(path, 'r') as file:
@@ -816,6 +828,7 @@ def table_to_tile(
     import fused
     import geopandas as gpd
     import pandas as pd
+    import numpy as np
 
     version = "0.2.3"
     tile = get_tiles(bounds)
@@ -876,7 +889,7 @@ def table_to_tile(
 
 def rasterize_geometry(
     geom: Dict, shape: Tuple[int, int], affine, all_touched: bool = False
-) -> NDArray[np.uint8]:
+):
     """Return an image array with input geometries burned in.
 
     Args:
@@ -888,6 +901,10 @@ def rasterize_geometry(
     Returns:
         numpy array with input geometries burned in.
     """
+    from __future__ import annotations
+    import numpy as np
+    from numpy.typing import NDArray
+    from typing import Dict, Tuple
     from rasterio import features
 
     geoms = [(geom, 1)]
@@ -2709,13 +2726,14 @@ def clip_arr(arr, bounds_aoi, bounds_total=(-180, -90, 180, 90)):
 
 def visualize(
     data,
-    mask: float | np.ndarray = None,
+    mask = None,
     min: float = 0,
     max: float = 1,
     opacity: float = 1,
     colormap = None,
 ):
     """Convert objects into visualization tiles."""
+    import numpy as np
     import xarray as xr
     import palettable
     from matplotlib.colors import LinearSegmentedColormap
@@ -3104,6 +3122,7 @@ def scipy_voronoi(gdf):
     Probably not the most optimised funciton but it gets the job done. 
     Irrelevant once we move to geopandas 1.0+
     """
+    import numpy as np
     from shapely.geometry import Polygon, Point
     from scipy.spatial import Voronoi
 
@@ -3356,8 +3375,13 @@ def test_udf(udf_token: str, cache_length: str = "9999d", arg_token: Optional[st
 
   
 def save_to_agent(
-    agent_json_path: str, udf: AnyBaseUdf, agent_name: str, udf_name: str, mcp_metadata: dict[str, Any], overwrite: bool = True,
+    agent_json_path: str, udf, agent_name: str, udf_name: str, mcp_metadata, overwrite: bool = True,
 ):
+    from __future__ import annotations
+    from fused.api.api import AnyBaseUdf
+    from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union, Any
+    import json
+    import os
     """
     Save UDF to agent of udf_ai directory
     Args:
@@ -3454,6 +3478,7 @@ def func_to_udf(func, cache_max_age='12h'):
 
 
 def udf_to_json(udf):
+    import fused
     try:
         udf_nail_json = fused.load(udf).json()
     except:
@@ -3472,6 +3497,7 @@ def get_query_embedding(client, query, model="text-embedding-3-large"):
     return embedding
 
 def query_to_params(query, num_match=1, rerank=True, embedding_path="s3://fused-users/fused/misc/embedings/CDL_crop_name.parquet"):
+    import fused
     import pandas as pd
     from openai import OpenAI
     
