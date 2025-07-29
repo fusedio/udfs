@@ -1,6 +1,3 @@
-common = fused.load("https://github.com/fusedio/udfs/tree/b3a7ff8/public/common/").utils
-
-
 @fused.udf
 def udf(
     bounds: fused.types.Bounds = [-121.525, 37.70, -120.96, 38.06],
@@ -11,8 +8,8 @@ def udf(
 ):
     """"""
     import numpy as np
-
-    # convert bounds to tile
+    
+    common = fused.load("https://github.com/fusedio/udfs/tree/364f5dd/public/common/")
     tile = common.get_tiles(bounds, clip=True)
 
     input_tiff_path = f"s3://fused-asset/data/cdls/{year}_30m_cdls.tif"
@@ -70,11 +67,14 @@ def int_to_crop(val):
 
 @fused.cache
 def crop_type_list(crop_type):
-    CDL = fused.load("UDF_CDLs_Tile_Example")
+    # Loading from itself through Github so this specific function can also be loaded 
+    # by another UDF later. This would break if we didn't do fused.load() here 
+    # and simply refered to the function in same file
+    cdl_tiles = fused.load("UDF_CDLs_Tile_Example")
     try:
         vals = [int(i) for i in crop_type.split(',')]
     except:
-        vals = CDL.crop_to_int(crop_type, verbose=False)
+        vals = cdl_tiles.crop_to_int(crop_type, verbose=False)
     return vals
 
 def filter_crops(arr, crop_type, verbose=True):

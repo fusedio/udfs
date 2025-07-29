@@ -99,7 +99,6 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:id": null,
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/CDLS_Tile_Example.png",
             "fused:tags": [
               {
