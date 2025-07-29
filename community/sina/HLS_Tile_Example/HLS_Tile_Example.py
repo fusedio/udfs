@@ -12,11 +12,10 @@ def udf(
     import numpy as np
     import palettable
     from pystac_client import Client
-    from utils_local import list_stac_collections
 
     # convert bounds to tile
-    utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
-    tile = utils.get_tiles(bounds, clip=True)
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    tile = common.get_tiles(bounds, clip=True)
 
     STAC_URL = "https://cmr.earthdata.nasa.gov/stac"
 
@@ -50,7 +49,7 @@ def udf(
 
         # Check authentication.
         cred = {"env": env, "username": username, "password": password}
-        aws_session = utils.earth_session(cred=cred)
+        aws_session = common.earth_session(cred=cred)
 
         search = catalog.search(
             collections=[collection_id],
@@ -82,7 +81,7 @@ def udf(
                 print(f"Collection '{collection_id}' was not found in the catalog.")
             return None
 
-        arr = utils.mosaic_tiff(
+        arr = common.mosaic_tiff(
             tile,
             band_urls[:n_mosaic],
             reduce_function=lambda x: np.max(x, axis=0),
@@ -90,7 +89,7 @@ def udf(
             cred=cred,
         )
         # Visualize data as an RGB image.
-        rgb_image = utils.visualize(
+        rgb_image = common.visualize(
             data=arr,
             min=min_max[0],
             max=min_max[1],
@@ -101,3 +100,7 @@ def udf(
         print("Almost there! Please zoom in a bit more. 😀")
     else:
         print("Please zoom in more.")
+
+def list_stac_collections(catalog):
+    names = [x.id for x in catalog.get_collections()]
+    for x in names: print(x)
