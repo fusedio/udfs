@@ -420,7 +420,6 @@ def simplify_gdf(gdf, pct=1, args='-o force -clean'):
     print(file_path)
     with open(file_path, "w") as f:
         json.dump(gdf.__geo_interface__, f)
-    # print(fused.utils.common.run_cmd('npm install -g mapshaper',communicate=True)[1].decode())    
     print(run_cmd(f'/mount/npm/bin/mapshaper {file_path} -simplify {pct}% {args} -o {file_path.replace(".json","2.json")}',communicate=True))
     return gpd.read_file(file_path.replace(".json","2.json"))
 
@@ -2265,9 +2264,7 @@ def run_pool_tiffs(bounds, df_tiffs, output_shape):
 
     @fused.cache
     def fn_read_tiff(tiff_url, bounds=bounds, output_shape=output_shape):
-        read_tiff = fused.load(
-            "https://github.com/fusedio/udfs/tree/3c4bc47/public/common/"
-        ).utils.read_tiff
+        read_tiff = fused.load("https://github.com/fusedio/udfs/tree/364f5dd/public/common/").read_tiff
         return read_tiff(bounds, tiff_url, output_shape=output_shape)
 
     tiff_list = []
