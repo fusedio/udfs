@@ -19,7 +19,7 @@ This UDF calculate average DSM for every buildings in the United States. ALOS Gl
 ```python
 import fused
 
-udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/DSM_Zonal_Stats")
+udf = fused.load("https://github.com/fusedio/udfs/tree/main/community/sina/DSM_Zonal_Stats")
 gdf = fused.run(udf=udf, x=5241, y=12667, z=15)
 gdf
 ```
