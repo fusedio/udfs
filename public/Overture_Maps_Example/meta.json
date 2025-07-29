@@ -139,12 +139,7 @@
             "fused:explorerPin": "1"
           },
           "source": "Overture_Maps_Example.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],
