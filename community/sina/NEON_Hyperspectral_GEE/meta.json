@@ -64,36 +64,29 @@
             "fused:udfType": "auto",
             "fused:slug": "NEON_Hyperspectral_GEE",
             "fused:name": "NEON_Hyperspectral_GEE",
-            "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/0a03cfb8986c5f348ad9b132cc0f7a956b7f8fa6/public/NEON_Hyperspectral_GEE/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/0a03cfb/public/NEON_Hyperspectral_GEE/",
-            "fused:gitPath": "public/NEON_Hyperspectral_GEE",
-            "fused:gitRef": "0a03cfb8986c5f348ad9b132cc0f7a956b7f8fa6",
-            "fused:description": "# NEON Hyperspectral Signature Explorer\n\nNEON AOP is an NSF-funded initiative that's revolutionizing ecological observation. Using advanced imaging spectrometers, NEON collects hyperspectral data across 426 distinct wavelength bands at 1-meter resolution. Imagine having 426 different perspectives of the same landscape, each revealing unique insights about vegetation, soil composition, and ecosystem health.\n\nThis UDF powers an app where users can select any NEON site and survey year from a dynamically populated list - a feature that automatically stays current with GEE's data catalog, as NEON sites are surveyed at different frequencies. Once a site is selected, users can click anywhere within the highlighted area to instantly view all 426 bands of spectral data in an interactive plot.\n\n\n",
+            "fused:gitPath": "community/sina/NEON_Hyperspectral_GEE",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
             "fused:gitAuthorNames": [
-              "Guillermo E. Ponce-Campos"
+              null
             ],
             "fused:gitAuthorUsernames": [
-              "gponce-ars"
+              "MaxLenormand"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/gponce-ars"
+              "https://github.com/MaxLenormand"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/20215136?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4"
             ],
-            "fused:gitLastModified": "2024-11-26T22:45:02+00:00",
-            "fused:explorerTab": "public",
+            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:explorerTab": "self",
             "fused:gitRepo": "fusedio/udfs",
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/neon_hyperspectral.png"
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/neon_hyperspectral.png",
+            "fused:description": "# NEON Hyperspectral Signature Explorer\n\nNEON AOP is an NSF-funded initiative that's revolutionizing ecological observation. Using advanced imaging spectrometers, NEON collects hyperspectral data across 426 distinct wavelength bands at 1-meter resolution. Imagine having 426 different perspectives of the same landscape, each revealing unique insights about vegetation, soil composition, and ecosystem health.\n\nThis UDF powers an app where users can select any NEON site and survey year from a dynamically populated list - a feature that automatically stays current with GEE's data catalog, as NEON sites are surveyed at different frequencies. Once a site is selected, users can click anywhere within the highlighted area to instantly view all 426 bands of spectral data in an interactive plot.\n\n\n",
+            "fused:id": null
           },
           "source": "NEON_Hyperspectral_GEE.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],
