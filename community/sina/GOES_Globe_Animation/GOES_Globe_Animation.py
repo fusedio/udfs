@@ -23,14 +23,14 @@ def udf(
         import imageio
         import numpy as np
 
-        utils = fused.load("https://github.com/fusedio/udfs/tree/7306c98/public/common/").utils  
-    
+        common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+
         bounds = [float(i) for i in bounds.split(",")]
 
         @fused.cache
         def get_frame(i, datestr=datestr, coarsen_factor=coarsen_factor, bucket_name=bucket_name):
             return fused.run(udf_nail, i=i, datestr=datestr,coarsen_factor=coarsen_factor, bucket_name=bucket_name).image.values  
-        runner = utils.PoolRunner(get_frame, range(n_frames))
+        runner = common.PoolRunner(get_frame, range(n_frames))
         runner.get_result_all()
         out=runner.result
         dataframes = []
@@ -58,8 +58,8 @@ def udf(
 
 @fused.udf   
 def udf_nail(i: int = 0, datestr:str ='2024-06-19',coarsen_factor:int=20, bounds:str ='-180,-10,-65,70' , product_name:str ='ABI-L2-CMIPF', bucket_name:str ='noaa-goes18', offset:str ='0', band: int=8, x_res: int=40, y_res: int=40): 
-    utils = fused.load("https://github.com/fusedio/udfs/tree/7306c98/public/common/").utils  
-    import geopandas as gpd 
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    import geopandas as gpd  
     import shapely
     import json
     bounds=[float(i) for i in bounds.split(',')]
@@ -70,7 +70,6 @@ def udf_nail(i: int = 0, datestr:str ='2024-06-19',coarsen_factor:int=20, bounds
     bbox=gpd.GeoDataFrame(geometry=[shapely.box(*bounds)], crs=4326).to_crs(3857)
     # @fused.cache
     def fn(bbox, i, product_name, var, datestr, offset, band, x_res, y_res,coarsen_factor):
-        from utils import file_of_day
         import rioxarray
         file_path = file_of_day(i, bucket_name, product_name, band, datestr,offset) 
         filename = file_path.split('/')[-1]
@@ -80,6 +79,39 @@ def udf_nail(i: int = 0, datestr:str ='2024-06-19',coarsen_factor:int=20, bounds
         ds = xds_roi = (xds.coarsen(x=coarsen_factor, y=coarsen_factor, boundary='trim').max())
         return ds[var]  
     da = fn(bbox, i, product_name, var, datestr=datestr, offset=offset, band=band, x_res=x_res, y_res=y_res, coarsen_factor=coarsen_factor)
-    arr = utils.arr_to_plasma(da.values.squeeze(), min_max=min_max, colormap='')
+    arr = common.arr_to_plasma(da.values.squeeze(), min_max=min_max, colormap='')
     return arr
-    
+
+
+
+def file_of_day(i, bucket_name, product_name, band, start_datestr='2024-01-30', hour_offset='7'):
+    if product_name in ('ABI-L1b-RadF', 'ABI-L2-CMIPF'):
+        nfile=6
+        prename=f'M6C{band:02.0f}'
+    elif product_name in ('ABI-L1b-RadC', 'ABI-L2-CMIPC'):
+        nfile=12
+        prename=f'M6C{band:02.0f}'
+    elif product_name in ('ABI-L2-RRQPEF'):
+        nfile=6
+        prename=f'M6_G' 
+    else:
+        print(f'{product_name} not in ABI-L1b-RadF | ABI-L1b-RadC | ABI-L2-CMIPF')
+
+    import datetime
+    import numpy as np
+    import s3fs
+    start_time = int(datetime.datetime.strptime(start_datestr, '%Y-%m-%d').timestamp())
+    hourly_timestamps = []
+    hour = i//nfile
+    hour_timestamp = start_time + hour * 3600  
+    start_datetime = datetime.datetime.strptime(start_datestr, '%Y-%m-%d')
+    hour_datetime = start_datetime + datetime.timedelta(hours=hour+int(hour_offset))
+    day_of_year = hour_datetime.timetuple().tm_yday
+    hourly_timestamps.append([hour_datetime.year, day_of_year, hour_datetime.hour])
+    blob = f'{product_name}/{hour_datetime.year}/{day_of_year:03.0f}/{hour_datetime.hour:02.0f}'
+    prefix = f'OR_{product_name}-{prename}'
+    s3 = s3fs.S3FileSystem(anon=True)
+    flist = s3.ls(f'{bucket_name}/{blob}')
+    flist = np.sort([i for i in flist if i.split('/')[-1].startswith(prefix)])
+    return flist[i%nfile][len(bucket_name)+1:]
+
