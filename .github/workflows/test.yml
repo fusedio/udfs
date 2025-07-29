@@ -48,6 +48,14 @@ jobs:
             tests:
               - tests/**
 
+
+      # ----------------------------------------------
+      #       run tests for utils
+      # ----------------------------------------------
+      - name: Run tests for utils
+        shell: bash
+        run: pytest tests/test_utils.py --tb=short
+
       #----------------------------------------------
       #       run tests for files udfs
       #----------------------------------------------
