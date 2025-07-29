@@ -5,8 +5,8 @@ def udf(bounds: fused.types.Bounds = [-74.033,40.648,-73.788,40.846], resolution
     import shapely
     import geopandas as gpd
 
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/3569595/public/common/").utils
-    con = common_utils.duckdb_connect()
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    con = common.duckdb_connect()
 
     @fused.cache
     def read_data(url, resolution, min_count):
