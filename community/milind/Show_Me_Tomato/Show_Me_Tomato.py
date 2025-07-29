@@ -1,14 +1,14 @@
 common = fused.load("https://github.com/fusedio/udfs/tree/1469dfc/public/common/").utils
-import utils
+
 
 @fused.udf
 def udf(
-    query: str = "show me water",
+    query: str = "show me water only",
     bounds: fused.types.Bounds = [
         -125.82165127797666,21.313670812049978,-65.62955940309448,52.58604956417555
-    ], # Default to global continental US (without Alaska)
+    ],
+    hex_res: int = 5,
     min_ratio: float = 0,
-    res_offset: int = 0,
 ):
     # Convert query to crop values
     crop_value_list = common.query_to_params(query)
@@ -17,8 +17,6 @@ def udf(
     # Data path
     path = "s3://fused-asset/data/cdls/public_demo_2024/"
     
-    # Determine hex resolution based on bounds
-    hex_res = bounds_to_res(bounds, res_offset)
     print(f"Using hex resolution: {hex_res}")
     
     # Read hex data
