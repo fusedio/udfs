@@ -146,7 +146,6 @@ def file_exists(path, verbose=True):
         return exists
 
 def encode_metadata_fused(fused_metadata) -> bytes:
-    from __future__ import annotations
     import pandas as pd
     import base64
     from io import BytesIO
@@ -901,7 +900,6 @@ def rasterize_geometry(
     Returns:
         numpy array with input geometries burned in.
     """
-    from __future__ import annotations
     import numpy as np
     from numpy.typing import NDArray
     from typing import Dict, Tuple
@@ -3377,7 +3375,7 @@ def test_udf(udf_token: str, cache_length: str = "9999d", arg_token: Optional[st
 def save_to_agent(
     agent_json_path: str, udf, agent_name: str, udf_name: str, mcp_metadata, overwrite: bool = True,
 ):
-    from __future__ import annotations
+
     from fused.api.api import AnyBaseUdf
     from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union, Any
     import json
