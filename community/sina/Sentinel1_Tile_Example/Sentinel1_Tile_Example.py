@@ -9,7 +9,6 @@ def udf(time_of_interest="2024-10-01/2024-12-10"):
         import planetary_computer
         import pystac_client
         from pystac.extensions.eo import EOExtension as eo
-        import utils
         catalog = pystac_client.Client.open(
                 "https://planetarycomputer.microsoft.com/api/stac/v1",
                 modifier=planetary_computer.sign_inplace,
@@ -79,7 +78,6 @@ def udf(time_of_interest="2024-10-01/2024-12-10"):
     image=stacked_image.std(axis=0)
     print(image.shape)
     # return (image).astype('uint8'), bounds.total_bounds
-    utils = fused.load(
-    "https://github.com/fusedio/udfs/tree/2b25cb3/public/common/"
-    ).utils
-    return utils.arr_to_plasma(image), bounds.total_bounds
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+
+    return common.arr_to_plasma(image), bounds.total_bounds

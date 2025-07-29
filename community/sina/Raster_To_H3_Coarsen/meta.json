@@ -69,6 +69,8 @@
               "pitch": 0,
               "bearing": 0
             },
+            "fused:gitPath": "community/sina/Raster_To_H3_Coarsen",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/raster_to_h3.png",
             "fused:tags": [
               {
@@ -81,15 +83,26 @@
               }
             ],
             "fused:description": "## Overview\n\nRaster to H3 Tile Converter\n\nConverts raster data to H3 hexagonal tiles. It processes a section of a GeoTIFF file and aggregates the data into H3 cells.\n\nThe function returns a pandas DataFrame with the following columns:\n- hex: H3 cell ID (as a hexadecimal string)\n- agg_data: Sum of data values in the cell\n- metric: Same as agg_data (for compatibility)\n",
-            "fused:explorerPin": "11"
+            "fused:explorerPin": "11",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "MaxLenormand"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/MaxLenormand"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/44133329?v=4"
+            ],
+            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:id": null
           },
           "source": "Raster_To_H3_Coarsen.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],

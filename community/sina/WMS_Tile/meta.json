@@ -64,29 +64,39 @@
             "fused:udfType": "vector_tile",
             "fused:slug": "WMS_Tile",
             "fused:name": "WMS_Tile",
-            "fused:id": null,
-            "fused:assetUrl": "fused_uploaded_preview",
+            "fused:gitPath": "community/sina/WMS_Tile",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:assetUrl": null,
             "fused:tags": [
               {
                 "id": "wms-tile",
-                "label": "wms-tile",
-                "isCreatable": true
+                "label": "wms-tile"
               },
               {
                 "id": "image",
-                "label": "image",
-                "isCreatable": true
+                "label": "image"
               }
             ],
-            "fused:description": "## Overview\n\nThis UDF fetches high-resolution topographic map tiles from the Swiss Federal Geoportal (geo.admin.ch) using Web Map Service (WMS). \n\n## External links\n\n- [WMS Swiss geo-portal](https://www.geo.admin.ch/en/wms-available-services-an-data)\n"
+            "fused:description": "## Overview\n\nThis UDF fetches high-resolution topographic map tiles from the Swiss Federal Geoportal (geo.admin.ch) using Web Map Service (WMS).\n\n## External links\n\n- [WMS Swiss geo-portal](https://www.geo.admin.ch/en/wms-available-services-an-data)\n",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "MaxLenormand"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/MaxLenormand"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/44133329?v=4"
+            ],
+            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:id": null
           },
           "source": "WMS_Tile.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],

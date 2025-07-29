@@ -58,7 +58,9 @@
             "fused:udfType": "auto",
             "fused:slug": "Power_Plants_H3",
             "fused:name": "Power_Plants_H3",
-            "fused:id": null,
+            "fused:gitPath": "community/sina/Power_Plants_h3",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/powerplant.png",
             "fused:tags": [
               {
                 "id": "vector",
@@ -66,30 +68,37 @@
               },
               {
                 "id": "h3",
-                "label": "h3",
-                "isCreatable": true
+                "label": "h3"
               },
               {
                 "id": "duckdb",
-                "label": "duckdb",
-                "isCreatable": true
+                "label": "duckdb"
               },
               {
                 "id": "energy",
-                "label": "energy",
-                "isCreatable": true
+                "label": "energy"
               }
             ],
-            "fused:description": "## Overview\n\nAggregate data from the Global Power Plant Database using dynamic H3 levels based on zoom.\n\nI recommend using a light base map for this. You can change the opacity in the Visualize tab.\n\n\n## External links\n\n- [Data Source: A Global Database of Power Plants](https://www.wri.org/research/global-database-power-plants",
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/powerplant.png"
+            "fused:description": "## Overview\n\nAggregate data from the Global Power Plant Database using dynamic H3 levels based on zoom.\n\nI recommend using a light base map for this. You can change the opacity in the Visualize tab.\n\n\n## External links\n\n- [Data Source: A Global Database of Power Plants](https://www.wri.org/research/global-database-power-plants\n",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "MaxLenormand"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/MaxLenormand"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/44133329?v=4"
+            ],
+            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:id": null
           },
           "source": "Power_Plants_H3.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],

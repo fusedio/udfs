@@ -2,7 +2,7 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/route_lax.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `Routing` `Valhalla` `Calculate distance`
+Tags: `routing` `valhalla` `calculate-distance`
 
 <!--fused:readme-->
 ## Overview

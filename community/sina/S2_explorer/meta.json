@@ -12,30 +12,6 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:tags": [
-              {
-                "id": "Band algebra",
-                "label": "Band algebra"
-              },
-              {
-                "id": "Remove-clouds",
-                "label": "Remove-clouds"
-              },
-              {
-                "id": "MSFT-PC",
-                "label": "MSFT-PC"
-              },
-              {
-                "id": "AWS",
-                "label": "AWS"
-              },
-              {
-                "id": "STAC",
-                "label": "STAC"
-              }
-            ],
-            "fused:description": "## Overview\n\nThree channel Sentinel 2 satellite imaging: pseudo RGB bands composed from the original 13 Sentinel 2 bands: the defaults are: pseudoRed = Glacier Index = (B3 – B4) / (B3 + B4), \npseudoGreen= B8 (Near InfraRed), \npseudoBlue = B11 (Short Wave InfraRed) \n",
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/s3_explorer_udf_2.png",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -75,32 +51,29 @@
             "fused:udfType": "vector_tile",
             "fused:slug": "S2_explorer",
             "fused:name": "S2_explorer",
-            "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/cf0454d921646973fdf180ca8c38c81b5c7624f9/public/S2_explorer/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/cf0454d/public/S2_explorer/",
-            "fused:gitPath": "public/S2_explorer",
-            "fused:gitRef": "cf0454d921646973fdf180ca8c38c81b5c7624f9",
+            "fused:gitPath": "community/sina/S2_explorer",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
             "fused:gitAuthorNames": [
-              "Gabriel Durkin"
+              null
             ],
             "fused:gitAuthorUsernames": [
-              "gdurkin"
+              "MaxLenormand"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/gdurkin"
+              "https://github.com/MaxLenormand"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/8119745?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4"
             ],
-            "fused:gitLastModified": "2024-03-04T20:50:18+00:00"
+            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/s3_explorer_udf_2.png",
+            "fused:description": "## Overview\n\nSentinel 2 satellite imaging pseudo RGB bands composed from the original 13 Sentinel 2 bands. The defaults are:\n\n* `pseudoRed = Glacier Index = (B3 – B4) / (B3 + B4)`\n* `pseudoGreen = B8 (Near InfraRed)`\n* `pseudoBlue = B11 (Short Wave InfraRed)`\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/S2_explorer\")\ndf = fused.run(udf, x=1270, y=3048, z=13)\ndf.image.isel(band=0).plot()\n```\n",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:id": null
           },
           "source": "S2_explorer.py",
-          "headers": [
-            {
-              "module_name": "gabeutils",
-              "source_file": "gabeutils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],
