@@ -53,45 +53,22 @@
             "fused:udfType": "auto",
             "fused:slug": "NWS_Hazards_H3",
             "fused:name": "NWS_Hazards_H3",
-            "fused:description": "# Overview\nThis Fused.io UDF fetches National Weather Service (NWS) / National Oceanic and Atmospheric Admin (NOAA) weather & hazard boundary polygons, converts their geometries to h3 cells at the users desired resolution (default res=7), and returns a GeoDataFrame.\n\n# Terminology\n\n**Watch**\n: A watch is used when the risk of a hazardous weather or hydrologic event has increased significantly, but its occurrence, location, and/or timing is still uncertain. It is intended to provide enough lead time so that those who need to set their plans in motion can do so.\n\n**Warning**\n: A warning is issued when a hazardous weather or hydrologic event is occurring, is imminent, or has a very high probability of occurring. A warning is used for conditions posing a threat to life or property.\n\n**Advisory**\n: The expected weather condition has a pretty good chance of occurring, even a likely chance of occurring, but typically an advisory is used for less severe type of weather conditions. A Wind Advisory might be issued or a Freezing Rain Advisory issued instead of a High Wind Warning or an ice Storm Warning.\n\n# External links\n* [NWS Weather & Hazard Data Viewer](https://www.wrh.noaa.gov/map/)\n* [NWS Watch/Warning/Advisory (WWA) FeatureServer](https://mapservices.weather.noaa.gov/eventdriven/rest/services/WWA/watch_warn_adv/FeatureServer)\n* [h3-py Polygon Tutorial](https://uber.github.io/h3-py/polygon_tutorial.html)\n",
-            "fused:tags": [
-              {
-                "id": "NOAA",
-                "label": "NOAA"
-              },
-              {
-                "id": "geojson",
-                "label": "geojson"
-              },
-              {
-                "id": "H3-vector",
-                "label": "H3-vector"
-              }
-            ],
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/nws_hazard_preview.png",
-            "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/c31310af5d5b9e549990a64fd2de45e5e3e4db66/public/NWS_Hazards_H3/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/c31310a/public/NWS_Hazards_H3/",
-            "fused:gitPath": "public/NWS_Hazards_H3",
-            "fused:gitRef": "c31310af5d5b9e549990a64fd2de45e5e3e4db66",
+            "fused:gitPath": "community/sina/NWS_Hazards_H3",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
             "fused:gitAuthorNames": [
-              "Alex Martin",
-              "Plinio Guzman"
+              null
             ],
             "fused:gitAuthorUsernames": [
-              "alexlowellmartin",
-              "pgzmnk"
+              "MaxLenormand"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/alexlowellmartin",
-              "https://github.com/pgzmnk"
+              "https://github.com/MaxLenormand"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/28570222?v=4",
-              "https://avatars.githubusercontent.com/u/27398253?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4"
             ],
-            "fused:gitLastModified": "2024-06-13T18:28:09+00:00",
-            "fused:explorerTab": "public",
+            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:explorerTab": "self",
             "fused:gitRepo": "fusedio/udfs",
             "fused:defaultViewState": {
               "enable": true,
@@ -100,15 +77,27 @@
               "zoom": 2.646448412443991,
               "pitch": 0,
               "bearing": 0
-            }
+            },
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/nws_hazard_preview.png",
+            "fused:tags": [
+              {
+                "id": "H3-vector",
+                "label": "H3-vector"
+              },
+              {
+                "id": "geojson",
+                "label": "geojson"
+              },
+              {
+                "id": "NOAA",
+                "label": "NOAA"
+              }
+            ],
+            "fused:description": "# Overview\nThis Fused.io UDF fetches National Weather Service (NWS) / National Oceanic and Atmospheric Admin (NOAA) weather & hazard boundary polygons, converts their geometries to h3 cells at the users desired resolution (default res=7), and returns a GeoDataFrame.\n\n# Terminology\n\n**Watch**\n: A watch is used when the risk of a hazardous weather or hydrologic event has increased significantly, but its occurrence, location, and/or timing is still uncertain. It is intended to provide enough lead time so that those who need to set their plans in motion can do so.\n\n**Warning**\n: A warning is issued when a hazardous weather or hydrologic event is occurring, is imminent, or has a very high probability of occurring. A warning is used for conditions posing a threat to life or property.\n\n**Advisory**\n: The expected weather condition has a pretty good chance of occurring, even a likely chance of occurring, but typically an advisory is used for less severe type of weather conditions. A Wind Advisory might be issued or a Freezing Rain Advisory issued instead of a High Wind Warning or an ice Storm Warning.\n\n# External links\n* [NWS Weather & Hazard Data Viewer](https://www.wrh.noaa.gov/map/)\n* [NWS Watch/Warning/Advisory (WWA) FeatureServer](https://mapservices.weather.noaa.gov/eventdriven/rest/services/WWA/watch_warn_adv/FeatureServer)\n* [h3-py Polygon Tutorial](https://uber.github.io/h3-py/polygon_tutorial.html)\n",
+            "fused:id": null
           },
           "source": "NWS_Hazards_H3.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],

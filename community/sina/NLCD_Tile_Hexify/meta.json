@@ -45,6 +45,8 @@
               "pitch": 0,
               "bearing": 0
             },
+            "fused:gitPath": "community/sina/NLCD_Tile_Hexify",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/NLCD_Tile_Hexify.png",
             "fused:tags": [
               {
@@ -65,7 +67,24 @@
               }
             ],
             "fused:description": "# Overview\n\nThis UDF shows how to open annual [National Land Cover Database (National Land Cover Database) data](https://www.usgs.gov/centers/eros/science/annual-national-land-cover-database#overview) (NLCD) tiff files and dynamically converted into an H3 grid. The NLCD is a categorical land cover dataset with applications like carbon emission estimates, urban development analysis, wildfire hazard modeling, and tracking ecological and habitat changes. This dataset has annual coverage from 1985 to 2023.\n",
-            "fused:explorerPin": "9"
+            "fused:explorerPin": "9",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "MaxLenormand"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/MaxLenormand"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/44133329?v=4"
+            ],
+            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:userCreatedShareToken": "fsh_2NArOpUjV2Vi37ymPp3O1X",
+            "fused:id": null
           },
           "source": "NLCD_Tile_Hexify.py",
           "headers": []

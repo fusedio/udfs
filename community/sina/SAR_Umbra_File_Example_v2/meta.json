@@ -51,44 +51,21 @@
             "fused:udfType": "vector_single",
             "fused:slug": "SAR_Umbra_File_Example_v2",
             "fused:name": "SAR_Umbra_File_Example_v2",
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/SAR_Umbra_File_Example.png",
-            "fused:tags": [
-              {
-                "id": "sar",
-                "label": "sar"
-              },
-              {
-                "id": "Buffer",
-                "label": "Buffer"
-              }
-            ],
-            "fused:description": "# Overview\n\nUmbra satellites provide high-resolution Synthetic Aperture Radar (SAR) imagery, with up to 16-cm resolution, capable of capturing images at night and in adverse weather conditions. \n\n# External links\n\n- [stac link](https://radiantearth.github.io/stac-browser/#/external/s3.us-west-2.amazonaws.com/umbra-open-data-catalog/stac/catalog.json)\n- [aws open data](https://registry.opendata.aws/umbra-open-data/)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/SAR_Umbra_File_Example\")\narr = fused.run(udf=udf)\narr\n```",
-            "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/20bef59896da3eb0eab72c39da329b11fee5618d/public/SAR_Umbra_File_Example_v2/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/20bef59/public/SAR_Umbra_File_Example_v2/",
-            "fused:gitPath": "public/SAR_Umbra_File_Example_v2",
-            "fused:gitRef": "20bef59896da3eb0eab72c39da329b11fee5618d",
+            "fused:gitPath": "community/sina/SAR_Umbra_File_Example_v2",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
             "fused:gitAuthorNames": [
-              "Sina Kashuk",
-              "Tyler Erickson",
-              "Plinio Guzman"
+              null
             ],
             "fused:gitAuthorUsernames": [
-              "kashuk",
-              "tylere",
-              "pgzmnk"
+              "MaxLenormand"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/kashuk",
-              "https://github.com/tylere",
-              "https://github.com/pgzmnk"
+              "https://github.com/MaxLenormand"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/12432685?v=4",
-              "https://avatars.githubusercontent.com/u/92862?v=4",
-              "https://avatars.githubusercontent.com/u/27398253?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4"
             ],
-            "fused:gitLastModified": "2024-03-13T17:22:21+00:00",
+            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
             "fused:defaultParameters": [
               {
                 "parameter": "name",
@@ -101,15 +78,33 @@
                   "colombia_taparal"
                 ]
               }
-            ]
+            ],
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/SAR_Umbra_File_Example.png",
+            "fused:tags": [
+              {
+                "id": "sar",
+                "label": "sar"
+              },
+              {
+                "id": "raster",
+                "label": "raster"
+              },
+              {
+                "id": "high-res",
+                "label": "high-res"
+              },
+              {
+                "id": "file",
+                "label": "file"
+              }
+            ],
+            "fused:description": "# Overview\n\nUmbra satellites provide high-resolution Synthetic Aperture Radar (SAR) imagery, with up to 16-cm resolution, capable of capturing images at night and in adverse weather conditions. \n\n# External links\n\n- [stac link](https://radiantearth.github.io/stac-browser/#/external/s3.us-west-2.amazonaws.com/umbra-open-data-catalog/stac/catalog.json)\n- [aws open data](https://registry.opendata.aws/umbra-open-data/)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/SAR_Umbra_File_Example\")\narr = fused.run(udf=udf)\narr.image.plot()\n```\n",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:id": null
           },
           "source": "SAR_Umbra_File_Example_v2.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],

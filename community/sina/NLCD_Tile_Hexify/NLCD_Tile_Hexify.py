@@ -1,13 +1,13 @@
-nlcd_example_utils = fused.load('https://github.com/fusedio/udfs/tree/1b2b7e3/public/NLCD_Tile_Example/').utils
-common_utils = fused.load("https://github.com/fusedio/udfs/tree/36f4e97/public/common/").utils
-
 @fused.udf
 def udf(bounds: fused.types.Bounds=[-121.673,37.561,-120.778,38.314], year: int=1985, land_type: str='', chip_len: int=256):
     import numpy as np
     import pandas as pd
+    
+    nlcd_example_utils = fused.load('https://github.com/fusedio/udfs/blob/main/community/sina/NLCD_Tile_Example/')
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
 
     # convert bounds to tile
-    tile = common_utils.get_tiles(bounds, clip=True)
+    tile = common.get_tiles(bounds, clip=True)
 
     #initial parameters
     x, y, z = tile.iloc[0][["x", "y", "z"]]
@@ -23,7 +23,7 @@ def udf(bounds: fused.types.Bounds=[-121.673,37.561,-120.778,38.314], year: int=
     arr_int, color_map = data
 
     # hexify tiff array
-    df = common_utils.arr_to_h3(arr_int, bounds, res=res, ordered=False)
+    df = common.arr_to_h3(arr_int, bounds, res=res, ordered=False)
 
     # find most frequet land_type
     df['most_freq'] = df.agg_data.map(lambda x: np.unique(x, return_counts=True)[0][np.argmax(np.unique(x, return_counts=True)[1])])

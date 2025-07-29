@@ -12,7 +12,6 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:description": "# Solar Induced Fluorescence\n\nVisualize global photosynthesis with this solar-induced fluorescence (SIF) dataset. The dataset bridges satellite and ground-based photosynthesis measurements, unlocking new insights into Earth's biomes.\n\nCovering September 2014 to July 2020, this dataset provides 16-day mean SIF estimates at 0.05° (5 km) resolution using an ANN trained on OCO-2 and MODIS data. Adjust the \"month\", \"year\" and \"period\" parameter to explore SIF patterns by time, supporting applications like drought monitoring, yield estimation, and agricultural planning. \n\n\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -57,106 +56,25 @@
             "fused:udfType": "vector_tile",
             "fused:slug": "Solar_Induced_Fluorescence",
             "fused:name": "Solar_Induced_Fluorescence",
-            "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/8dfc92c381ba36b7fa5c1c1c8d5d729e5d7bb864/public/Solar_Induced_Fluorescence/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/8dfc92c/public/Solar_Induced_Fluorescence/",
-            "fused:gitPath": "public/Solar_Induced_Fluorescence",
-            "fused:gitRef": "8dfc92c381ba36b7fa5c1c1c8d5d729e5d7bb864",
+            "fused:gitPath": "community/sina/Solar_Induced_Fluorescence",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
             "fused:gitAuthorNames": [
-              null,
-              "Plinio Guzman",
               null
             ],
             "fused:gitAuthorUsernames": [
-              "fused-io[bot]",
-              "pgzmnk",
-              "krissykodes"
+              "MaxLenormand"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/apps/fused-io",
-              "https://github.com/pgzmnk",
-              "https://github.com/krissykodes"
+              "https://github.com/MaxLenormand"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/in/834700?v=4",
-              "https://avatars.githubusercontent.com/u/27398253?v=4",
-              "https://avatars.githubusercontent.com/u/80126562?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4"
             ],
-            "fused:gitLastModified": "2025-01-04T20:16:10+00:00",
-            "fused:explorerTab": "public",
+            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:explorerTab": "self",
             "fused:gitRepo": "fusedio/udfs",
-            "fused:gitHistory": [
-              {
-                "fused:description": "Read a NetCDF image file with rioxarray.\n",
-                "fused:vizConfig": {
-                  "tileLayer": {
-                    "@@type": "TileLayer",
-                    "minZoom": 0,
-                    "maxZoom": 19,
-                    "tileSize": 256,
-                    "pickable": true
-                  },
-                  "rasterLayer": {
-                    "@@type": "BitmapLayer",
-                    "pickable": true
-                  },
-                  "vectorLayer": {
-                    "@@type": "GeoJsonLayer",
-                    "stroked": true,
-                    "filled": false,
-                    "pickable": true,
-                    "lineWidthMinPixels": 1,
-                    "pointRadiusMinPixels": 1,
-                    "getLineColor": {
-                      "@@function": "colorContinuous",
-                      "attr": "value",
-                      "domain": [
-                        0,
-                        10
-                      ],
-                      "colors": "Teal",
-                      "nullColor": [
-                        184,
-                        184,
-                        184
-                      ]
-                    },
-                    "getFillColor": [
-                      208,
-                      208,
-                      208,
-                      40
-                    ]
-                  }
-                },
-                "fused:udfType": "vector_tile",
-                "fused:slug": "Solar_Induced_Florescence",
-                "fused:name": "Solar_Induced_Florescence",
-                "fused:id": "2882297a-0555-4ed7-a5c2-eb0e1b74d2ac",
-                "fused:gitUrl": "https://github.com/fusedio/udfs/tree/6107b2d000faa86a98810391fb11a9b20c6a87b9/files/NetCDF_File/",
-                "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/6107b2d/files/NetCDF_File/",
-                "fused:gitPath": "files/NetCDF_File",
-                "fused:gitRef": "6107b2d000faa86a98810391fb11a9b20c6a87b9",
-                "fused:gitAuthorNames": [
-                  "Isaac Brodsky"
-                ],
-                "fused:gitAuthorUsernames": [
-                  "isaacbrodsky"
-                ],
-                "fused:gitAuthorUrls": [
-                  "https://github.com/isaacbrodsky"
-                ],
-                "fused:gitAuthorAvatarUrls": [
-                  "https://avatars.githubusercontent.com/u/9139378?v=4"
-                ],
-                "fused:gitLastModified": "2024-08-15T17:57:01+00:00",
-                "fused:explorerTab": "public",
-                "fused:gitRepo": "fusedio/udfs"
-              }
-            ],
             "fused:gitPullRequestBranch": "kristinscholten@gmail.com-patch-making-this-udf-pu",
             "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/543",
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/sif.png",
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 39.562333308752294,
@@ -164,15 +82,13 @@
               "zoom": 1.7759115916353163,
               "pitch": 0,
               "bearing": 0
-            }
+            },
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/sif.png",
+            "fused:description": "# Solar Induced Fluorescence\n\nVisualize global photosynthesis with this solar-induced fluorescence (SIF) dataset. The dataset bridges satellite and ground-based photosynthesis measurements, unlocking new insights into Earth's biomes.\n\nCovering September 2014 to July 2020, this dataset provides 16-day mean SIF estimates at 0.05° (5 km) resolution using an ANN trained on OCO-2 and MODIS data. Adjust the \"month\", \"year\" and \"period\" parameter to explore SIF patterns by time, supporting applications like drought monitoring, yield estimation, and agricultural planning. \n\n\n",
+            "fused:id": null
           },
           "source": "Solar_Induced_Fluorescence.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],
