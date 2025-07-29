@@ -12,8 +12,6 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:assetUrl": "",
-            "fused:description": "## Worldwide Global Temperature\n\nData based on 20 years of ERA 5 worldwide data",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -57,7 +55,10 @@
             },
             "fused:udfType": "auto",
             "fused:slug": "worldwide_global_temp",
-            "fused:name": "worldwide_global_temp"
+            "fused:name": "worldwide_global_temp",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/global_temperature.png",
+            "fused:description": "## Worldwide Global Temperature\n\nData based on 20 years of ERA 5 worldwide data\n",
+            "fused:explorerPin": "5"
           },
           "source": "worldwide_global_temp.py",
           "headers": []

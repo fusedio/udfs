@@ -5,6 +5,7 @@ def udf():
     import duckdb
     
     common = fused.load("https://github.com/fusedio/udfs/tree/7918aff/public/common/").utils
+
     
     files = [
         f"s3://fused-sample/demo_data/ERA5/climate_data/{year:04d}-{month:02d}.pq"
