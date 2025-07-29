@@ -3,9 +3,8 @@
 def udf(agg_factor=3, min_count=5):
     import duckdb
 
-    utils = fused.load("https://github.com/fusedio/udfs/tree/3569595/public/common/").utils
-    old_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
-    con = utils.duckdb_connect()
+    common = fused.load("https://github.com/fusedio/udfs/tree/364f5dd/public/common/")
+    con = common.duckdb_connect()
 
     print("duckdb version:", duckdb.__version__)
     df = con.sql(
@@ -20,5 +19,6 @@ def udf(agg_factor=3, min_count=5):
     """
     ).df()
     print("number of trips:", df.cnt.sum())
-    gdf = old_utils.geo_convert(df)
+
+    gdf = common.df_to_gdf(df)
     return gdf
