@@ -12,7 +12,7 @@ def udf(
     """
     
     use_columns = ['geometry'] if preview else None
-    common = fused.load('https://github.com/fusedio/udfs/tree/36f4e97/public/common/').utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
 
     base_path = path.rsplit('/', maxsplit=1)[0] if path.endswith('/_sample') or path.endswith('/_metadata') else path
     # This uses the closes tile with get_tiles(clip=False), so it doesn't clip to tile

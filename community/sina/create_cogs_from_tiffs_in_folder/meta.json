@@ -56,15 +56,28 @@
             "fused:udfType": "auto",
             "fused:slug": "create_cogs_from_tiffs_in_folder",
             "fused:name": "create_cogs_from_tiffs_in_folder",
+            "fused:gitPath": "community/sina/create_cogs_from_tiffs_in_folder",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:description": "# Create COGs from TIFFs in Folder\n\nThis Fused UDF converts all standard TIFF (Tagged Image File Format) files in a specified folder, into Cloud Optimized GeoTIFFs (COGs). It uses parallel processing with `fused.submit` to speed up the process.\n",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "MaxLenormand"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/MaxLenormand"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/44133329?v=4"
+            ],
+            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
             "fused:id": null
           },
           "source": "create_cogs_from_tiffs_in_folder.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],

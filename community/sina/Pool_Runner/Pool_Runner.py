@@ -7,9 +7,9 @@ param_json = param_list[0]
 def udf(param_list: dict = param_list):
     import pandas as pd
     # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
     df = fused.run(udf_nail, engine='realtime')
-    output = utils.run_pool(lambda x:fused.run(udf_nail,param_json=x, 
+    output = common.run_pool(lambda x:fused.run(udf_nail,param_json=x, 
                                                             engine='local'), param_list)
     df = pd.concat(output)
     print(df)

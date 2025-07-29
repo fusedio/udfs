@@ -3,15 +3,13 @@ def udf(bounds: fused.types.Bounds=[7.872,46.906,7.886,46.913]):
     import pandas as pd
     import geopandas as gpd
 
-    # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
-    tile = common_utils.get_tiles(bounds, clip=True)
-
-    zonal_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/community/plinio/Zonal_Stats_Forest_Obs/").utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    zonal_stats_forest = fused.load("https://github.com/fusedio/udfs/blob/b603e45/community/plinio/Zonal_Stats_Forest_Obs/")
+    tile = common.get_tiles(bounds, clip=True)
 
     # 1. Determine which Zonal Stats grid cells fall within the `bounds`
     s3_file_path = f"s3://fused-asset/data/zonal_stats_example/assets_with_bounds_4_4.parquet"
-    gdf_bounds = zonal_utils.get_asset_dissolve(s3_file_path)
+    gdf_bounds = zonal_stats_forest.get_asset_dissolve(s3_file_path)
     gdf = gdf_bounds.sjoin(tile)
     target_cells = list(set(gdf.ind.values))
 

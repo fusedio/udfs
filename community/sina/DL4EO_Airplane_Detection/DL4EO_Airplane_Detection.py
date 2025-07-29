@@ -2,9 +2,9 @@ import geopandas as gpd
 
 @fused.udf
 def udf_rgb_tiles(tile: gpd.GeoDataFrame):
-    utils = fused.load('https://github.com/fusedio/udfs/tree/004b8d9/public/common/').utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
     x, y, z = tile[["x", "y", "z"]].iloc[0]
-    return utils.url_to_arr(f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}")
+    return common.url_to_arr(f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}")
 
 @fused.udf
 def udf(    
@@ -23,9 +23,9 @@ def udf(
     import numpy as np
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = common_utils.estimate_zoom(bounds)
-    tile = common_utils.get_tiles(bounds, zoom=zoom)
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    zoom = common.estimate_zoom(bounds)
+    tile = common.get_tiles(bounds, zoom=zoom)
 
 
     # Load imagery

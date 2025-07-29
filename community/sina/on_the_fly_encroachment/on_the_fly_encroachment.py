@@ -1,4 +1,4 @@
-common = fused.load('https://github.com/fusedio/udfs/tree/36f4e97/public/common/').utils
+common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
 
 @fused.udf
 def udf(

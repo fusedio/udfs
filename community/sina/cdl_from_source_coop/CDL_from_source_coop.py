@@ -18,7 +18,7 @@ def udf(
     """
 
     # Loading common Fused helper functions to setup DuckDB in this UDF
-    common = fused.load("https://github.com/fusedio/udfs/tree/f5cf238/public/common/").utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
     con = common.duckdb_connect()
 
     # Default to using the low resolution version first

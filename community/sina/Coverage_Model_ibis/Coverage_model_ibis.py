@@ -14,11 +14,10 @@ def udf(bounds: fused.types.Bounds = [-122.438,37.774,-122.434,37.777], tech: st
 
     from palettable.colorbrewer.sequential import YlOrRd_9  # as color_map_used
     import matplotlib as mpl
-    from utils import h3_cell_to_parent, h3_cell_to_boundary_wkt, ST_GeomFromText
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    tile = common_utils.get_tiles(bounds, clip=True)
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    tile = common.get_tiles(bounds, clip=True)
 
     @fused.cache
     def read_data(bounds, url: str, tech: str, site_count: int, col_plot: str, con_ibis):
@@ -69,3 +68,20 @@ def udf(bounds: fused.types.Bounds = [-122.438,37.774,-122.434,37.777], tech: st
                )
 
     return gdf
+
+
+import ibis
+
+@ibis.udf.scalar.builtin
+def h3_cell_to_boundary_wkt(h3_cell: int) -> str:
+    """ Function to convert h3 cell to boundary wkt """
+
+@ibis.udf.scalar.builtin
+def h3_cell_to_parent(h3_cell: int, parent_res: int) -> int:
+    """ Function to convert h3 cell to parent """
+
+
+@ibis.udf.scalar.builtin
+def ST_GeomFromText(wkt: str) -> ibis.dtype('Polygon'):
+    """ Function to convert wkt to geometry """
+
