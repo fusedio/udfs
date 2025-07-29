@@ -1,0 +1,77 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "DC_AOI_Tile_manual_fixing",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "colors": "PurpOr",
+                  "nullColor": [
+                    200,
+                    0,
+                    0
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "DC_AOI_Tile_manual_fixing",
+            "fused:name": "DC_AOI_Tile_manual_fixing",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 38.89339221145854,
+              "longitude": -77.02621396941808,
+              "zoom": 10.983614041519468,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DC_AOI_Example.png",
+            "fused:description": "Exported from Fused UDF Workbench\n\n"
+          },
+          "source": "DC_AOI_Tile_manual_fixing.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
