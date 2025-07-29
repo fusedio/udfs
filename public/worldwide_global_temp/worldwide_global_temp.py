@@ -4,7 +4,7 @@ def udf():
     import altair as alt
     import duckdb
     
-    common = fused.load("https://github.com/fusedio/udfs/tree/7918aff/public/common/").utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/364f5dd/public/common/")
     
     files = [
         f"s3://fused-sample/demo_data/ERA5/climate_data/{year:04d}-{month:02d}.pq"
