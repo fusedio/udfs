@@ -9,16 +9,9 @@ def udf(
     from pystac import Item
 
     # Load pinned versions of utility functions.
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = common_utils.estimate_zoom(bounds)
-
-    # Load utility functions
-    visualize = fused.load(
-        "https://github.com/fusedio/udfs/tree/5cfb808/public/common/"
-    ).utils.visualize
-
-    # Author: Alex Leith, with inspiration from other examples
-
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    zoom = common.estimate_zoom(bounds)
+    
     # Find Items that intersect the bounding box and time period
     # year can be passed in as a parameter for the function
     item_dicts = stacrs.search(
@@ -54,7 +47,7 @@ def udf(
     mask = (~data[variable].isnull()).squeeze().to_numpy()
 
     # Visualize that data as an RGB image.
-    rgb_image = visualize(
+    rgb_image = common.visualize(
         data=data[variable],
         mask=mask,
         min=0,

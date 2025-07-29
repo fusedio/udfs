@@ -12,7 +12,6 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/chris_fire.png",
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 34.41854838655976,
@@ -21,7 +20,6 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:description": "## Fire Risk Buffer\n\nCreates a buffer around a fire polygon. The fire rating is calculated with a buffer to represent proximity to a fire from the [WFIGS Current Interagency Fire Perimeters](https://data-nifc.opendata.arcgis.com/datasets/nifc::wfigs-current-interagency-fire-perimeters/about) dataset.\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -108,40 +106,31 @@
             "fused:udfType": "vector_tile",
             "fused:slug": "Fire_Proximity_Buffer",
             "fused:name": "Fire_Proximity_Buffer",
-            "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/dbd5afb9ae365cc9de22d02116dd3c6a9a5a2fa6/community/pgzmnk/Fire_Proximity_Buffer/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/dbd5afb/community/pgzmnk/Fire_Proximity_Buffer/",
-            "fused:gitPath": "community/pgzmnk/Fire_Proximity_Buffer",
-            "fused:gitRef": "dbd5afb9ae365cc9de22d02116dd3c6a9a5a2fa6",
+            "fused:gitPath": "community/sina/Fire_Proximity_Buffer",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
             "fused:gitAuthorNames": [
-              "Plinio Guzman",
               null
             ],
             "fused:gitAuthorUsernames": [
-              "pgzmnk",
-              "fused-io[bot]"
+              "MaxLenormand"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/pgzmnk",
-              "https://github.com/apps/fused-io"
+              "https://github.com/MaxLenormand"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/27398253?v=4",
-              "https://avatars.githubusercontent.com/in/834700?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4"
             ],
-            "fused:gitLastModified": "2025-01-09T17:54:04+00:00",
-            "fused:explorerTab": "community",
+            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:explorerTab": "self",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "plinio@fused.io-patch-polyIncidentName",
-            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/566"
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/566",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/chris_fire.png",
+            "fused:description": "## Fire Risk Buffer\n\nCreates a buffer around a fire polygon. The fire rating is calculated with a buffer to represent proximity to a fire from the [WFIGS Current Interagency Fire Perimeters](https://data-nifc.opendata.arcgis.com/datasets/nifc::wfigs-current-interagency-fire-perimeters/about) dataset.\n",
+            "fused:id": null
           },
           "source": "Fire_Proximity_Buffer.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],

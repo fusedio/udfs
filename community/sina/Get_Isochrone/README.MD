@@ -3,7 +3,7 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Get_Isochrone.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `Isochrone` `Valhalla`
+Tags: `isochrone` `valhalla`
 
 <!--fused:readme-->
 # Overview

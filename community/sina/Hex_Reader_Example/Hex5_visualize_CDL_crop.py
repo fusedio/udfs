@@ -1,5 +1,3 @@
-common = fused.load("https://github.com/fusedio/udfs/tree/b41216d/public/common/").utils
-
 @fused.udf
 def udf(
     bounds: fused.types.Bounds = [
@@ -17,12 +15,14 @@ def udf(
     return df
 
 def bounds_to_res(bounds, res_offset=0, max_res=11, min_res=3):
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
     z = common.estimate_zoom(bounds)
     return max(min(int(3 + z / 1.5 - res_offset), max_res), min_res)
 
 
 def read_overview(hex_res, bounds, path):
-    con = common.duckdb_connect()
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    con = common.duckdb_connect() 
     df = con.sql(f'select * from read_parquet("{path}_hex{hex_res}")').df()
     df["pct"] = 255 * df["area"] / df["area"].max()
     df = common.filter_hex_bounds(df, bounds, col_hex="hex")
@@ -31,10 +31,10 @@ def read_overview(hex_res, bounds, path):
 
 def read_hex_table(hex_res, bounds, path, base_res=7):
     import pandas as pd
-
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
     if hex_res <= base_res:
         return read_overview(hex_res, bounds, path)
-
+        
     con = common.duckdb_connect()
     bbox = bbox = common.to_gdf(bounds)
     df_meta = fused.get_chunks_metadata(path)

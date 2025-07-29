@@ -51,7 +51,6 @@
             "fused:udfType": "vector_single",
             "fused:slug": "Get_Isochrone",
             "fused:name": "Get_Isochrone",
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Get_Isochrone.png",
             "fused:defaultParameters": [
               {
                 "parameter": "costing",
@@ -66,6 +65,32 @@
                 ]
               }
             ],
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 40.80720563114003,
+              "longitude": -73.84687500006956,
+              "zoom": 8.74116447522721,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:gitPath": "community/sina/Get_Isochrone",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "MaxLenormand"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/MaxLenormand"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/44133329?v=4"
+            ],
+            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Get_Isochrone.png",
             "fused:tags": [
               {
                 "id": "Isochrone",
@@ -76,55 +101,12 @@
                 "label": "Valhalla"
               }
             ],
-            "fused:description": "# Overview\n\nThis UDF is using Valhalla API to create an isochrone. Valhalla, an open-source routing engine, and its accompanying libraries are designed for OpenStreetMap data, offering features such as time+distance matrix computation, isochrones, elevation sampling, map matching, and tour optimization (Travelling Salesman).\n\n# External links\n\n- [Valhalla Github repo](https://github.com/valhalla/valhalla)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Get_Isochrone\")\ngdf = fused.run(udf=udf)\ngdf\n```",
-            "fused:id": null,
-            "fused:defaultViewState": {
-              "enable": true,
-              "latitude": 40.80720563114003,
-              "longitude": -73.84687500006956,
-              "zoom": 8.74116447522721,
-              "pitch": 0,
-              "bearing": 0
-            },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/1e9dba937a4544980ce6ef6233b4b12a8f91252a/public/Get_Isochrone/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/1e9dba9/public/Get_Isochrone/",
-            "fused:gitPath": "public/Get_Isochrone",
-            "fused:gitRef": "1e9dba937a4544980ce6ef6233b4b12a8f91252a",
-            "fused:gitAuthorNames": [
-              "Sina Kashuk",
-              "Tyler Erickson",
-              "Plinio Guzman",
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "kashuk",
-              "tylere",
-              "pgzmnk",
-              "ncray"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/kashuk",
-              "https://github.com/tylere",
-              "https://github.com/pgzmnk",
-              "https://github.com/ncray"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/12432685?v=4",
-              "https://avatars.githubusercontent.com/u/92862?v=4",
-              "https://avatars.githubusercontent.com/u/27398253?v=4",
-              "https://avatars.githubusercontent.com/u/322031?v=4"
-            ],
-            "fused:gitLastModified": "2024-03-13T17:22:21+00:00",
-            "fused:explorerTab": "public",
-            "fused:gitRepo": "fusedio/udfs"
+            "fused:description": "# Overview\n\nThis UDF is using Valhalla API to create an isochrone. Valhalla, an open-source routing engine, and its accompanying libraries are designed for OpenStreetMap data, offering features such as time+distance matrix computation, isochrones, elevation sampling, map matching, and tour optimization (Travelling Salesman).\n\n# External links\n\n- [Valhalla Github repo](https://github.com/valhalla/valhalla)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Get_Isochrone\")\ngdf = fused.run(udf=udf)\ngdf\n```\n",
+            "fused:explorerPin": "10",
+            "fused:id": null
           },
           "source": "Get_Isochrone.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],
