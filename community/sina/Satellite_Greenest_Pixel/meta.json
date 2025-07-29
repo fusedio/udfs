@@ -12,24 +12,6 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:tags": [
-              {
-                "id": "dem",
-                "label": "dem"
-              },
-              {
-                "id": "raster",
-                "label": "raster"
-              },
-              {
-                "id": "file",
-                "label": "file"
-              },
-              {
-                "id": "pc",
-                "label": "pc"
-              }
-            ],
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 37.779237599648496,
@@ -82,36 +64,48 @@
             "fused:udfType": "auto",
             "fused:slug": "Satellite_Greenest_Pixel",
             "fused:name": "Satellite_Greenest_Pixel",
-            "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/77b2e3124b8490059af79d086baece40ba458fb4/public/Satellite_Greenest_Pixel/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/77b2e31/public/Satellite_Greenest_Pixel/",
-            "fused:gitPath": "public/Satellite_Greenest_Pixel",
-            "fused:gitRef": "77b2e3124b8490059af79d086baece40ba458fb4",
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/cuatrocienegas.png",
-            "fused:description": "# Overview\n\nThis UDF is particularly useful for generating cloud-free, vegetation-optimized composite images from time series satellite data, which can be used for various remote sensing applications and analyses.\n\nIt first retrieves satellite imagery data from Microsoft's Planetary Computer based on specified parameters (collection, bands, time range, and query). It then processes the retrieved data to create a composite image using a selected method (max, median, or min) across the time series.\n\nThe function allows for flexibility in choosing the satellite data source (MODIS, Landsat, or Sentinel-2), specifying the area of interest (bounds), time range, and cloud cover constraints. It also provides options for customizing the output, such as the chip size and compositing method.\n\n# External links\n\n- [source](https://planetarycomputer.microsoft.com/dataset/)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Satellite_Greenest_Pixel\")\narr = fused.run(udf=udf, x=2915, y=6546, z=14)\narr\n```\n",
+            "fused:gitPath": "community/sina/Satellite_Greenest_Pixel",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
             "fused:gitAuthorNames": [
-              "Plinio Guzman"
+              null
             ],
             "fused:gitAuthorUsernames": [
-              "pgzmnk"
+              "MaxLenormand"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/pgzmnk"
+              "https://github.com/MaxLenormand"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/27398253?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4"
             ],
-            "fused:gitLastModified": "2024-07-30T21:22:32+00:00",
-            "fused:explorerTab": "public",
-            "fused:gitRepo": "fusedio/udfs"
+            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/cuatrocienegas.png",
+            "fused:tags": [
+              {
+                "id": "dem",
+                "label": "dem"
+              },
+              {
+                "id": "raster",
+                "label": "raster"
+              },
+              {
+                "id": "file",
+                "label": "file"
+              },
+              {
+                "id": "pc",
+                "label": "pc"
+              }
+            ],
+            "fused:description": "# Overview\n\nThis UDF is particularly useful for generating cloud-free, vegetation-optimized composite images from time series satellite data, which can be used for various remote sensing applications and analyses.\n\nIt first retrieves satellite imagery data from Microsoft's Planetary Computer based on specified parameters (collection, bands, time range, and query). It then processes the retrieved data to create a composite image using a selected method (max, median, or min) across the time series.\n\nThe function allows for flexibility in choosing the satellite data source (MODIS, Landsat, or Sentinel-2), specifying the area of interest (bounds), time range, and cloud cover constraints. It also provides options for customizing the output, such as the chip size and compositing method.\n\n# External links\n\n- [source](https://planetarycomputer.microsoft.com/dataset/)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Satellite_Greenest_Pixel\")\narr = fused.run(udf=udf, x=2915, y=6546, z=14)\narr\n```\n",
+            "fused:userCreatedShareToken": "fsh_7HPkSFPuWBUguS9b0qpmPg",
+            "fused:id": null
           },
           "source": "Satellite_Greenest_Pixel.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],
