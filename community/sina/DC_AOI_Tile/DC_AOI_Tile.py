@@ -6,8 +6,9 @@ def udf(bounds: fused.types.Bounds=[-77.083,38.849,-76.969,38.938], time_of_inte
     import numpy as np
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
-    tile = common_utils.get_tiles(bounds, clip=True)
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+
+    tile = common.get_tiles(bounds, clip=True)
 
     # find the tiles with intersecting geom
     gdf = gpd.read_file('s3://fused-asset/data/tiger/TIGER_RD18/STATE/11_DISTRICT_OF_COLUMBIA/11/tl_rd22_11_tract.zip')
@@ -18,9 +19,9 @@ def udf(bounds: fused.types.Bounds=[-77.083,38.849,-76.969,38.938], time_of_inte
         return 
         
     # read sentinel data
-    udf_sentinel = fused.load('https://github.com/fusedio/udfs/tree/7b98f99/public/DC_AOI_Example/')
-    arr = udf_sentinel.utils.get_arr(tile, time_of_interest=time_of_interest, output_shape=(chip_len, chip_len))
-    arr = np.clip(arr *  scale, 0, 255).astype("uint8")[:3]
+    udf_sentinel = fused.load('https://github.com/fusedio/udfs/blob/b2381e/community/sina/DC_AOI_Example/')
+    arr = udf_sentinel.get_arr(tile, time_of_interest=time_of_interest, output_shape=(chip_len, chip_len))
+    arr = np.clip(arr *  scale, 0, 255).astype("uint8")[:3] 
 
     # Load pinned versions of utility functions.
     utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils
