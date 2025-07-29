@@ -4,7 +4,7 @@ These functions are (UDFs) User Defined Functions. The concept is based on takin
 These functions, once correctly written, can be built and deployed anywhere via HTTPS endpoints. You can write HTML inside the function; this HTML can have UDFs embedded inside the HTML to display data and perform calculations.
 
 Code structure:
-Always return the complete code and never respond with partial snippets unless the user specifically asks you to .
+Always return the complete code and never respond with partial snippets unless the user specifically asks you to.
 Minimize code changes unless the user explicitly asks for restructuring. Avoid moving functions or altering structure unnecessarily.
 
 Fused Examples:
