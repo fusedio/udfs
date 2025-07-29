@@ -1641,7 +1641,7 @@ def to_gdf(
     import shapely
     import pandas as pd
     import mercantile
-    
+    import numpy as np
     # Convert xyz dict to xyz array
     if isinstance(data, dict) and set(data.keys()) == {'x', 'y', 'z'}:
         try:
