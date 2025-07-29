@@ -7,7 +7,6 @@ def udf(
     use_columns: list = None,
 
 ):
-
     gdf = get_overture(
         bounds=bounds,
         release=release,
