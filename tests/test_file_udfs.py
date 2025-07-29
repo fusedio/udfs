@@ -36,7 +36,7 @@ def test_udf_loading_with_duckdb(
     )
     udf_path = os.path.join(FILES_PATH, udf_name)
     udf = fused.load(udf_path)
-    result = fused.run(udf, path=file_path, engine="local", cache=False)
+    result = fused.run(udf, path=file_path, engine="local", cache_max_age="0s")
     pd_testing.assert_frame_equal(result, sample_dataframe)
 
 
@@ -65,7 +65,7 @@ def test_loading_with_geopandas(
         temp_directory, sample_geodataframe, file_format
     )
     udf = fused.load(os.path.join(FILES_PATH, udf_name))
-    result = fused.run(udf, path=file_path, engine="local", cache=False)
+    result = fused.run(udf, path=file_path, engine="local", cache_max_age="0s")
     gpd_testing.assert_geodataframe_equal(result, sample_geodataframe)
 
 
@@ -89,7 +89,7 @@ def test_loading_with_pandas(
         temp_directory, sample_dataframe, file_format
     )
     udf = fused.load(os.path.join(FILES_PATH, udf_name))
-    result = fused.run(udf, path=file_path, engine="local", cache=False)
+    result = fused.run(udf, path=file_path, engine="local", cache_max_age="0s")
     pd_testing.assert_frame_equal(result, sample_dataframe)
 
 
@@ -104,7 +104,7 @@ def test_loading_with_text(temp_directory: str, sample_text: str):
     file_path = f"s3://fused-asset/tmp/{id}.txt"
     fused.api.upload(file_local_path, file_path)
     udf = fused.load(os.path.join(FILES_PATH, "Text_File"))
-    fused.run(udf, path=file_path, engine="local", cache=False)
+    fused.run(udf, path=file_path, engine="local", cache_max_age="0s")
     # just check that the function runs with no errors
     fused.api.delete(file_path)
 
@@ -115,7 +115,7 @@ def test_loading_geotiff(sample_geotiff_file: str):
     Verifies that the UDF can load and process geotiff files without errors.
     """
     udf = fused.load(os.path.join(FILES_PATH, "GeoTIFF_File"))
-    fused.run(udf, path=sample_geotiff_file, x=1, y=2, z=1, engine="local", cache=False)
+    fused.run(udf, path=sample_geotiff_file, x=1, y=2, z=1, engine="local", cache_max_age="0s")
 
 
 def test_loading_gpx(sample_gpx_file: str):
@@ -124,7 +124,7 @@ def test_loading_gpx(sample_gpx_file: str):
     Verifies that the UDF can load and process gpx files without errors.
     """
     udf = fused.load(os.path.join(FILES_PATH, "GeoPandas_GPX"))
-    res = fused.run(udf, path=sample_gpx_file, layer=None, engine="local", cache=False)
+    res = fused.run(udf, path=sample_gpx_file, layer=None, engine="local", cache_max_age="0s")
     assert isinstance(res, gpd.GeoDataFrame)
     assert res.shape == (86, 20)
 
@@ -145,7 +145,7 @@ def test_loading_metadata(sample_dataframe: pd.DataFrame, temp_directory: str, f
     )
     udf = fused.load(os.path.join(FILES_PATH, udf_name))
     # UDF only prints the metadata, so we just check that it runs without errors
-    fused.run(udf, path=file_path, engine="local", cache=False)
+    fused.run(udf, path=file_path, engine="local", cache_max_age="0s")
 
 
 # TODO: add tests for `Fused_Geopartitioned_Table`, `ImageIO_FIle`, `Join_with_Overture` and `NetCDF_File`
