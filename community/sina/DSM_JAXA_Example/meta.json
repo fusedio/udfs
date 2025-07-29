@@ -130,12 +130,7 @@
             "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/370"
           },
           "source": "DSM_JAXA_Example.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],

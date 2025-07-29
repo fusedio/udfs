@@ -18,7 +18,7 @@ ALOS Global Digital Surface Model "ALOS World 3D - 30m (AW3D30)" captured by the
 ```python
 import fused
 
-udf = fused.load("https://github.com/fusedio/udfs/tree/main/public/DSM_JAXA_Example")
+udf = fused.load("https://github.com/fusedio/udfs/tree/main/community/sina/DSM_JAXA_Example")
 arr = fused.run(udf=udf, x=655, y=1583, z=12)
 arr
 ```
