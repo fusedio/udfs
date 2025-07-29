@@ -9,10 +9,10 @@ def udf(
 
     # Load pinned versions of utility functions.
     overture_utils = fused.load("https://github.com/fusedio/udfs/tree/2f138dd/public/Overture_Maps_Example/").utils
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f138dd/public/common/").utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
 
 
-    conn = common_utils.duckdb_connect()
+    conn = common.duckdb_connect()
 
     if class_source=='Overture':
         metric = 'subtype'
@@ -25,7 +25,7 @@ def udf(
     gdf_overture = overture_utils.get_overture(bounds=bounds)
 
     # 2. Load Oak Ridge Buildings
-    gdf_oakridge = common_utils.table_to_tile(
+    gdf_oakridge = common.table_to_tile(
         bounds,
         table="s3://fused-asset/infra/building_oak/",
         use_columns=None,

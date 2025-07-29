@@ -16,7 +16,7 @@ def udf(
     import osmnx as ox
     import pandas as pd
     
-    utils = fused.load("https://github.com/fusedio/udfs/blob/main/public/common/").utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
 
     # Process input parameters
     area_of_interest = aoi.total_bounds
@@ -159,7 +159,7 @@ def udf(
 
     # Generate the trips to work and to home
     start = time.time()
-    result = utils.run_pool(generate_single_trip_v2, param_list)
+    result = common.run_pool(generate_single_trip_v2, param_list)
     print(len(result))
     print(f"Trips generated in {time.time() - start:.2f} seconds")
     

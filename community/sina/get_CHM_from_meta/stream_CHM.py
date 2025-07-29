@@ -8,7 +8,7 @@ def udf(
     import numpy as np
     import palettable
     
-    common = fused.load('https://github.com/fusedio/udfs/tree/36f4e97/public/common/').utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
     meta_chm_tiles_geojson_udf = fused.load('https://github.com/fusedio/udfs/tree/0858846/public/Meta_CHM_tiles_geojson/')
     image_id = fused.run(meta_chm_tiles_geojson_udf, bounds=bounds, use_centroid_method=False)
     path_of_chm = f"s3://dataforgood-fb-data/forests/v1/alsgedi_global_v6_float/chm/{image_id['tile'].iloc[0]}.tif"

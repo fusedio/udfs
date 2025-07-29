@@ -5,14 +5,14 @@ def udf(bounds: fused.types.Bounds = [121.460,31.228,121.463,31.231], res=14):
 
     # Load pinned versions of utility functions.
     overture_utils = fused.load("https://github.com/fusedio/udfs/tree/99dbfec/public/Overture_Maps_Example/").utils
-    utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
 
     # convert bounds to tile
-    tile = utils.get_tiles(bounds, clip=True)
+    tile = common.get_tiles(bounds, clip=True)
 
     # 1. Load East Asia Zenodo Buildings
     path = "s3://fused-asset/misc/jennings/East_Asian_buildings_parquet3_ingested_3dec/"
-    gdf_zenodo = utils.table_to_tile(bounds, table=path)
+    gdf_zenodo = common.table_to_tile(bounds, table=path)
     print("Bulding Count EA: ", len(gdf_zenodo))
 
     # 2. Load Overture Buildings

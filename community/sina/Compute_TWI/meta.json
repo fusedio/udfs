@@ -65,6 +65,8 @@
               "pitch": 0,
               "bearing": 0
             },
+            "fused:gitPath": "community/sina/Compute_TWI",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Compute_TWI.png",
             "fused:tags": [
               {
@@ -72,15 +74,27 @@
                 "label": "whitebox"
               }
             ],
-            "fused:description": "#### Overview\nApply [WhiteboxTools](https://www.whiteboxgeo.com/manual/wbt_book/) workflows across the US using the USGS 3D Elevation Program (3DEP) Datasets from the National Map at 30-m resolution as the source for elevation data. WhiteboxTools provides a wide range of functionalities for geospatial analysis. This UDF relies on [PyWBT](https://pywbt.readthedocs.io) to run the WhiteboxTools to compute [TWI](https://en.wikipedia.org/wiki/Topographic_wetness_index).\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Compute_TWI\")\narr = fused.run(udf=udf, x=2411, y=3079, z=13)\narr\n```\n"
+            "fused:description": "#### Overview\nApply [WhiteboxTools](https://www.whiteboxgeo.com/manual/wbt_book/) workflows across the US using the USGS 3D Elevation Program (3DEP) Datasets from the National Map at 30-m resolution as the source for elevation data. WhiteboxTools provides a wide range of functionalities for geospatial analysis. This UDF relies on [PyWBT](https://pywbt.readthedocs.io) to run the WhiteboxTools to compute [TWI](https://en.wikipedia.org/wiki/Topographic_wetness_index).\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Compute_TWI\")\narr = fused.run(udf=udf, x=2411, y=3079, z=13)\narr\n```\n",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "MaxLenormand"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/MaxLenormand"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/44133329?v=4"
+            ],
+            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:userCreatedShareToken": "fsh_2U5Ynyp0KjKaewVXzmxTlI",
+            "fused:id": null
           },
           "source": "Compute_TWI.py",
-          "headers": [
-            {
-              "module_name": "wbt",
-              "source_file": "wbt.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],

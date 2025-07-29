@@ -2,14 +2,14 @@
 def udf(bounds: fused.types.Bounds = [-92.317,-64.329,116.124,79.475]):
 
     # Load pinned versions of utility functions.
-    utils = fused.load("https://github.com/fusedio/udfs/tree/bb712a5/public/common/").utils
-    zoom = utils.estimate_zoom(bounds)
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    zoom = common.estimate_zoom(bounds)
 
     file_path='s3://ookla-open-data/parquet/performance/type=mobile/year=2024/quarter=3/2024-07-01_performance_mobile_tiles.parquet'
 
     @fused.cache
     def get_data(bounds, file_path, h3_size):
-        con = utils.duckdb_connect()
+        con = common.duckdb_connect()
 
         # DuckDB query to:
         # 1. Convert lat/long to H3 cells

@@ -11,8 +11,8 @@ def udf(
     import xarray as xr
 
     # convert bounds to tile
-    common_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/common/").utils
-    tile = common_utils.get_tiles(bounds, clip=True)
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    tile = common.get_tiles(bounds, clip=True)
 
 
     ds = xr.open_zarr("gs://fused_public/zarr/wri_cmip6_median_ssp585.zarr")
@@ -20,7 +20,6 @@ def udf(
     if tile["z"].iloc[0] < 1:
         print("z less than 1")
         return
-    utils = fused.load("https://github.com/fusedio/udfs/tree/cbc5482/public/common/").utils
 
     minx, miny, maxx, maxy = bounds
     variable_names = list(ds.data_vars)
@@ -38,7 +37,7 @@ def udf(
     buffer = ds.lon[1] - ds.lon[0]
     ds = ds.sel(time=2080)
     ds_buffer = ds.sel(lat=slice(miny - buffer, maxy + buffer), lon=slice(minx - buffer, maxx + buffer))
-    da = utils.da_fit_to_resolution(ds_buffer[layer], target_shape)
+    da = common.da_fit_to_resolution(ds_buffer[layer], target_shape)
     da = da.sel(lat=slice(miny, maxy), lon=slice(minx, maxx))
     da = da.rename({"lat": "y", "lon": "x"})
     # Reprojecting to Web Mercator for visualization
@@ -55,7 +54,7 @@ def udf(
     # Masking the NaN values and replcing with values outside min max
     masked_data = np.nan_to_num(data_array, nan=valid_min - 1)
     # Using the minmax for color mapping
-    arr = utils.arr_to_plasma(
+    arr = common.arr_to_plasma(
         masked_data, min_max=(valid_min, valid_max), colormap="RdYlBu"
     )
     return arr

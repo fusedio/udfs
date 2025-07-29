@@ -1,4 +1,4 @@
-common = fused.load("https://github.com/fusedio/udfs/tree/eae1d64/public/common/").utils
+common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
 @fused.udf
 def udf_nail(i=1):
     return i + 1 * 150
