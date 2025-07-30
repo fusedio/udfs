@@ -56,7 +56,8 @@
             "fused:udfType": "auto",
             "fused:slug": "Show_Me_Tomato",
             "fused:name": "Show_Me_Tomato",
-            "fused:assetUrl": null,
+            "fused:gitPath": "community/milind/Show_Me_Tomato",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
             "fused:tags": [
               {
                 "id": "rag",
@@ -75,15 +76,26 @@
                 "label": "cdl"
               }
             ],
-            "fused:description": "This UDF can convert natural language queries to Parameters using RAG (Retrieval-Augmented Generation) and filter out the cdl dataset based on the best matching result using OpenAI Embeddings \n\n"
+            "fused:description": "This UDF can convert natural language queries to Parameters using RAG (Retrieval-Augmented Generation) and filter out the cdl dataset based on the best matching result using OpenAI Embeddings \n\n",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "milind-soni"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/milind-soni"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
+            ],
+            "fused:gitLastModified": "2025-07-09T16:13:35+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:id": null
           },
           "source": "Show_Me_Tomato.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],

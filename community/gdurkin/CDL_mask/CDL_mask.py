@@ -4,9 +4,13 @@ def udf(west="-120.485537", south="34.879334",  east="-120.400163", north="34.95
     north=float(north);south=float(south);east=float(east);west=float(west);year=int(year);zoom=int(zoom);
     import numpy as np
     import rasterio
+    import geopandas as gpd
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import shapely
+    from matplotlib import colors
+    from rasterio.warp import reproject, Resampling 
     
-    from rasterio.warp import reproject, Resampling
-    from gabeutils import read_tiff, bounds_to_gdf
     bounds = [west, south, east,north]
     bbox = bounds_to_gdf(bounds)
     
@@ -60,3 +64,13 @@ def udf(west="-120.485537", south="34.879334",  east="-120.400163", north="34.95
     arr = destination_data
     print('destination array size d:',arr.shape)
     return np.array(arr,'uint8'), bbox.total_bounds
+
+
+
+def bounds_to_gdf(bounds_list, crs=4326):
+    import shapely
+    import geopandas as gpd
+    box = shapely.box(*bounds_list) 
+    return gpd.GeoDataFrame(geometry=[box], crs=crs)
+
+

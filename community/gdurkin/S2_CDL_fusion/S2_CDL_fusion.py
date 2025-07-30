@@ -4,9 +4,9 @@ def udf(west="-120.485537", south="34.879334",  east="-120.400163", north="34.95
     north=float(north);south=float(south);east=float(east);west=float(west);zoom=float(zoom);cloud_cover_perc = int(cloud_cover_perc);pixel_perc = int(pixel_perc);
     import numpy as np
     import rasterio, shapely
-    from gabeutils import bounds_to_gdf
+    common = fused.load("https://github.com/fusedio/udfs/tree/6e8abb9/public/common/")
     bounds = [west, south, east,north]
-    bbox = bounds_to_gdf(bounds)
+    bbox = common.to_gdf(bounds)
     def try_func():
         success = False
         i = cloud_cover_perc

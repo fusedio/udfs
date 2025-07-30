@@ -52,18 +52,6 @@
             "fused:udfType": "auto",
             "fused:slug": "LA_PARKING_METER_OCCUPANCY",
             "fused:name": "LA_PARKING_METER_OCCUPANCY",
-            "fused:id": null,
-            "fused:assetUrl": "https://luke2019-eng.github.io/Fused-LA_parking_occupancy/LA_Fused.png",
-            "fused:tags": [
-              {
-                "id": "Aggregation",
-                "label": "Aggregation"
-              },
-              {
-                "id": "json",
-                "label": "json"
-              }
-            ],
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 34.04476287922765,
@@ -72,15 +60,53 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:defaultParameters": []
+            "fused:defaultParameters": [],
+            "fused:gitPath": "community/K_Njoroge/LA_Parking_meter_occupancy",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:assetUrl": "https://luke2019-eng.github.io/Fused-LA_parking_occupancy/LA_Fused.png",
+            "fused:tags": [
+              {
+                "id": "json",
+                "label": "json"
+              },
+              {
+                "id": "Aggregation",
+                "label": "Aggregation"
+              }
+            ],
+            "fused:description": "Exported from Fused UDF Workbench\n\nThis User-Defined Function (UDF) integrates two datasets, the PMO (Parking Meter Occupancy) and PIP (Parking Inventory Program), to provide insights into parking occupancy and adjacent buildings. It starts by fetching data from the provided URLs, converting them into Pandas DataFrames, and merging them based on a shared identifier, 'spaceid'. The UDF then converts latitude and longitude coordinates from the PIP dataset into Point geometries and filters out rows with missing geometry values. It further converts the resulting DataFrame into a GeoDataFrame, merging it with the PMO DataFrame. Subsequently, it filters out rows with missing occupancy states and geometry values, printing the number of occupied and vacant parking spots. It defines a function to fetch adjacent buildings for each parking spot, buffers the parking spot geometry, retrieves buildings using a custom function, and concatenates the results into a GeoDataFrame. If adjacent buildings are found, they are printed; otherwise, a message indicating no adjacent buildings are found is printed. Finally, the UDF returns the GeoDataFrame with adjacent buildings, or None if no buildings are found. The UDF aims at combining parking meter data (Space_ID, Event time, Blockface, Ratetype, meter_type, rate_range) as well as Building information from the overture dataset (Building_ID, BBox, Class) and transform the data to geoparquet files. This UDF facilitates comprehensive parking analysis, including occupancy status and nearby infrastructure, supporting urban planning and mobility initiatives.\n",
+            "fused:gitAuthorNames": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "pgzmnk",
+              "milind-soni",
+              "MaxLenormand",
+              "iamsdas"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/pgzmnk",
+              "https://github.com/milind-soni",
+              "https://github.com/MaxLenormand",
+              "https://github.com/iamsdas"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/27398253?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4",
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/26461855?v=4"
+            ],
+            "fused:gitLastModified": "2025-05-15T08:16:25+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:userCreatedShareToken": "fsh_6o33iLsCXLU7Z7Zar0zxTE",
+            "fused:id": null
           },
           "source": "LA_PARKING_METER_OCCUPANCY.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],

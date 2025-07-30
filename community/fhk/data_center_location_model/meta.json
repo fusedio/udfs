@@ -12,18 +12,6 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:assetUrl": "https://fused-asset.s3.amazonaws.com/misc/data-centers.png",
-            "fused:tags": [
-              {
-                "id": "H3-polygon",
-                "label": "H3-polygon"
-              },
-              {
-                "id": "Network analysis",
-                "label": "Network analysis"
-              }
-            ],
-            "fused:description": "## Overview\n\nBuild a e2e optimization / operations research solution.\n\nShow that it's possible to dynamically model the network design problem interactively.\n\nBuild this for the US Azure Data Center locations\n\n## Blog post\n\nhttps://pozibl.com/work/data-center-site-selection/\n\n## External links\n\nhttps://blog.wesleyac.com/posts/ping-lightspeed\nhttps://datacenters.microsoft.com/globe/explore/\nhttps://github.com/ergo-code/highs\n\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -59,7 +47,6 @@
             "fused:udfType": "auto",
             "fused:slug": "Data_Center_Location_Model",
             "fused:name": "Data_Center_Location_Model",
-            "fused:id": null,
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 37.62220043970982,
@@ -68,25 +55,44 @@
               "pitch": 41.33553393757667,
               "bearing": 35.59426229508197
             },
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/5b17f579e7154f85b6ae628b8ced5ee83b413611/community/isaacbrodsky/H3_Hexagon_Layer_Example/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/5b17f57/community/isaacbrodsky/H3_Hexagon_Layer_Example/",
-            "fused:gitPath": "community/isaacbrodsky/H3_Hexagon_Layer_Example",
-            "fused:gitRef": "5b17f579e7154f85b6ae628b8ced5ee83b413611",
+            "fused:gitPath": "community/fhk/data_center_location_model",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
             "fused:gitAuthorNames": [
-              "Isaac Brodsky"
+              null,
+              null,
+              null
             ],
             "fused:gitAuthorUsernames": [
+              "fhk",
+              "pgzmnk",
               "isaacbrodsky"
             ],
             "fused:gitAuthorUrls": [
+              "https://github.com/fhk",
+              "https://github.com/pgzmnk",
               "https://github.com/isaacbrodsky"
             ],
             "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/4031392?v=4",
+              "https://avatars.githubusercontent.com/u/27398253?v=4",
               "https://avatars.githubusercontent.com/u/9139378?v=4"
             ],
-            "fused:gitLastModified": "2024-04-26T17:48:19+00:00",
-            "fused:explorerTab": "community",
-            "fused:gitRepo": "fusedio/udfs"
+            "fused:gitLastModified": "2024-12-20T00:24:53+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:assetUrl": "https://fused-asset.s3.amazonaws.com/misc/data-centers.png",
+            "fused:tags": [
+              {
+                "id": "H3-polygon",
+                "label": "H3-polygon"
+              },
+              {
+                "id": "Network analysis",
+                "label": "Network analysis"
+              }
+            ],
+            "fused:description": "## Overview\n\nBuild a e2e optimization / operations research solution.\n\nShow that it's possible to dynamically model the network design problem interactively.\n\nBuild this for the US Azure Data Center locations\n\n## Blog post\n\nhttps://pozibl.com/work/data-center-site-selection/\n\n## External links\n\nhttps://blog.wesleyac.com/posts/ping-lightspeed\nhttps://datacenters.microsoft.com/globe/explore/\nhttps://github.com/ergo-code/highs\n",
+            "fused:id": null
           },
           "source": "Data_Center_Location_Model.py",
           "headers": []

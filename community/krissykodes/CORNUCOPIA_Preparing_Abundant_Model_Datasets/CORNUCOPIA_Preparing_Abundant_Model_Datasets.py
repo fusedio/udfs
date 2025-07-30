@@ -10,15 +10,16 @@ def udf():
     import matplotlib.pyplot as plt
     from sklearn.linear_model import LinearRegression
     from sklearn.metrics import mean_squared_error
-    from utils import load_target_data
 
-    conn = duckdb.connect()
 
+
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    con = common.duckdb_connect()
+    
     @fused.cache
     def load_sif_data():
-        conn.sql("INSTALL spatial; LOAD spatial; INSTALL httpfs; LOAD httpfs;")
         table = 's3://fused-asset/misc/plinio/sif_output/county=*/year=*/month=*/*.parquet'
-        df = conn.sql(f"""SELECT * FROM read_parquet('{table}',hive_partitioning = true)""").df()
+        df = con.sql(f"""SELECT * FROM read_parquet('{table}',hive_partitioning = true)""").df()
         df['geometry'] = df['geometry'].apply(loads)
         gdf_sif = gpd.GeoDataFrame(df)
         return gdf_sif
@@ -43,7 +44,7 @@ def udf():
     result['geometry'] = result['geometry'].to_wkt()
     
     # Structure training table with DuckDB
-    out = conn.sql("""
+    out = con.sql("""
         SELECT 
             ROUND(corn_sif_sum/county_sif_sum, 2) AS m_pct, 
             corn_sif_mean,
@@ -91,4 +92,32 @@ def udf():
     print(result.head().drop(columns='geometry').T)
     
     return result
+
+
+@fused.cache
+def load_target_data():
+    import pandas as pd
+    # Bring in target data
+    years = ["2015", "2016", "2017", "2018", "2019", "2020"]
+    dfs = []
+    # path = 's3://soldatanasasifglobalifoco2modis1863/USDA/data/Actual_yields/USDA_crop_yields_2018.csv'
+    # Fetch for each year
+    for year in years:
+        path = f's3://soldatanasasifglobalifoco2modis1863/USDA/data/Actual_yields/USDA_crop_yields_{year}.csv'
+        df = pd.read_csv(path)
+        
+        # Select only the relevant columns
+        cols = [
+            'Value',  # Bushels / acre
+            'Year',
+            'County ANSI',
+        ]
+        # df = df[cols]
+        
+        dfs.append(df)
+    
+    # Concatenate all DataFrames into a single DataFrame
+    df_actuals = pd.concat(dfs, ignore_index=True)
+    print(df_actuals)
+    return df_actuals
 
