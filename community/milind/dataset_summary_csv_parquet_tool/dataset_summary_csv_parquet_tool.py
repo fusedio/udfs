@@ -1,65 +1,40 @@
 @fused.udf
-def udf(path: str = "s3://fused-users/fused/milind/ipinfo_lite.parquet"):
+def udf(path: str = "s3://fused-asset/optimized_t2m_data_small(1).parquet"):
     """
-    Inspect file schema and structure - supports CSV, Parquet, JSON, GeoJSON
+    Simplified file inspector - returns key info needed for charting
     """
     import duckdb
     import pandas as pd
     from pathlib import Path
-    
-    # Initialize DuckDB connection with S3 support
-    con = duckdb.connect()
-    con.sql("install 'httpfs'; load 'httpfs';")
-    con.sql("install 'spatial'; load 'spatial';")  # For GeoJSON support
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+
+    # Initialize DuckDB connection
+    con = common.duckdb_connect()
+
     
     # Determine file type
     file_ext = Path(path).suffix.lower()
     
     try:
-        # Handle different file formats
+        # Build queries based on file type
         if file_ext == '.csv':
-            # Get schema
-            schema_query = f"DESCRIBE SELECT * FROM read_csv('{path}')"
-            sample_query = f"SELECT * FROM read_csv('{path}') LIMIT 5"
-            count_query = f"SELECT COUNT(*) as row_count FROM read_csv('{path}')"
-            
+            base_query = f"SELECT * FROM read_csv('{path}')"
         elif file_ext in ['.parquet', '.pq']:
-            # Get schema
-            schema_query = f"DESCRIBE SELECT * FROM read_parquet('{path}')"
-            sample_query = f"SELECT * FROM read_parquet('{path}') LIMIT 5"
-            count_query = f"SELECT COUNT(*) as row_count FROM read_parquet('{path}')"
-            
+            base_query = f"SELECT * FROM read_parquet('{path}')"
         elif file_ext == '.json':
-            # Get schema
-            schema_query = f"DESCRIBE SELECT * FROM read_json('{path}')"
-            sample_query = f"SELECT * FROM read_json('{path}') LIMIT 5"
-            count_query = f"SELECT COUNT(*) as row_count FROM read_json('{path}')"
-            
-        elif file_ext == '.geojson':
-            # Try to read as GeoJSON first, fallback to JSON
-            try:
-                schema_query = f"DESCRIBE SELECT * FROM ST_Read('{path}')"
-                sample_query = f"SELECT * FROM ST_Read('{path}') LIMIT 5"
-                count_query = f"SELECT COUNT(*) as row_count FROM ST_Read('{path}')"
-            except:
-                # Fallback to JSON reader
-                schema_query = f"DESCRIBE SELECT * FROM read_json('{path}')"
-                sample_query = f"SELECT * FROM read_json('{path}') LIMIT 5"
-                count_query = f"SELECT COUNT(*) as row_count FROM read_json('{path}')"
-                
+            base_query = f"SELECT * FROM read_json('{path}')"
         else:
             raise ValueError(f"Unsupported file format: {file_ext}")
         
-        # Execute queries
-        schema_df = con.sql(schema_query).df()
-        sample_df = con.sql(sample_query).df()
-        row_count = con.sql(count_query).df().iloc[0]['row_count']
+        # Get essential info
+        schema_df = con.sql(f"DESCRIBE {base_query}").df()
+        sample_df = con.sql(f"{base_query} LIMIT 10").df()
+        row_count = con.sql(f"SELECT COUNT(*) as count FROM ({base_query})").df().iloc[0]['count']
         
-        # Analyze column types
+        # Categorize columns for charting
         numeric_cols = []
-        categorical_cols = []
-        datetime_cols = []
-        geometry_cols = []
+        text_cols = []
+        date_cols = []
         
         for _, row in schema_df.iterrows():
             col_name = row['column_name']
@@ -68,56 +43,31 @@ def udf(path: str = "s3://fused-users/fused/milind/ipinfo_lite.parquet"):
             if any(t in col_type for t in ['int', 'float', 'double', 'decimal', 'numeric']):
                 numeric_cols.append(col_name)
             elif any(t in col_type for t in ['date', 'time', 'timestamp']):
-                datetime_cols.append(col_name)
-            elif any(t in col_type for t in ['geometry', 'point', 'polygon', 'linestring']):
-                geometry_cols.append(col_name)
+                date_cols.append(col_name)
             else:
-                categorical_cols.append(col_name)
+                text_cols.append(col_name)
         
-        # Create comprehensive report
-        schema_report = f"""
-        FILE: {path} ({file_ext.upper()})
-        ROWS: {row_count:,}
-        COLUMNS: {len(schema_df)}
+        # Create simple summary
+        print(f"FILE: {Path(path).name}")
+        print(f"ROWS: {row_count:,} | COLUMNS: {len(schema_df)}")
+        print(f"NUMERIC: {numeric_cols}")
+        print(f"TEXT/CATEGORICAL: {text_cols}")
+        print(f"DATES: {date_cols}")
+        print("\nSAMPLE DATA:")
+        print(sample_df.to_string(index=False, max_rows=5))
         
-        COLUMN TYPES:
-        - Numeric: {', '.join(numeric_cols) if numeric_cols else 'None'}
-        - Categorical: {', '.join(categorical_cols) if categorical_cols else 'None'}
-        - DateTime: {', '.join(datetime_cols) if datetime_cols else 'None'}
-        - Geometry: {', '.join(geometry_cols) if geometry_cols else 'None'}
-        
-        SCHEMA:
-        {schema_df.to_string(index=False)}
-        
-        SAMPLE DATA (first 5 rows):
-        {sample_df.to_string(index=False)}
-        """
-        
-        print(schema_report)
-        
-        # Return DataFrame with comprehensive info
-        result = pd.DataFrame({
-            'file_path': [path],
-            'file_format': [file_ext.upper()],
-            'row_count': [row_count],
-            'column_count': [len(schema_df)],
-            'columns': [', '.join(schema_df['column_name'].tolist())],
-            'numeric_columns': [', '.join(numeric_cols) if numeric_cols else 'None'],
-            'categorical_columns': [', '.join(categorical_cols) if categorical_cols else 'None'],
-            'datetime_columns': [', '.join(datetime_cols) if datetime_cols else 'None'],
-            'geometry_columns': [', '.join(geometry_cols) if geometry_cols else 'None'],
-            'description': [schema_report.strip()]
-        })
-        
-        return result
+        # Return structured data for charting
+        return {
+            'file_name': Path(path).name,
+            'rows': row_count,
+            'columns': len(schema_df),
+            'numeric_columns': numeric_cols,
+            'text_columns': text_cols,
+            'date_columns': date_cols,
+            'sample_data': sample_df,
+            'all_columns': schema_df['column_name'].tolist()
+        }
         
     except Exception as e:
-        # Return error info as DataFrame
-        error_df = pd.DataFrame({
-            'file_path': [path],
-            'file_format': [file_ext.upper()],
-            'error': [str(e)],
-            'description': [f"Error reading {path}: {str(e)}"]
-        })
-        print(f"Error reading {path}: {str(e)}")
-        return error_df
+        print(f"Error: {str(e)}")
+        return {'error': str(e), 'file_name': Path(path).name}
