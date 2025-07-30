@@ -12,29 +12,6 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:tags": [
-              {
-                "id": "fcc",
-                "label": "fcc",
-                "isCreatable": true
-              },
-              {
-                "id": "broadband",
-                "label": "broadband",
-                "isCreatable": true
-              },
-              {
-                "id": "internet",
-                "label": "internet",
-                "isCreatable": true
-              },
-              {
-                "id": "viewer",
-                "label": "viewer",
-                "isCreatable": true
-              }
-            ],
-            "fused:description": "## Overview\n\nGet access to the FCC broadband map in a new scalable way\n\n## External links\n\n- https://broadbandmap.fcc.gov/home",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -74,6 +51,55 @@
             "fused:udfType": "auto",
             "fused:slug": "fcc_bdc_map_latest",
             "fused:name": "fcc_bdc_map_latest",
+            "fused:gitPath": "community/fhk/fcc_bdc_map_latest",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:tags": [
+              {
+                "id": "fcc",
+                "label": "fcc"
+              },
+              {
+                "id": "broadband",
+                "label": "broadband"
+              },
+              {
+                "id": "internet",
+                "label": "internet"
+              },
+              {
+                "id": "viewer",
+                "label": "viewer"
+              }
+            ],
+            "fused:description": "## Overview\n\nGet access to the FCC broadband map in a new scalable way\n\n## External links\n\n- https://broadbandmap.fcc.gov/home\n",
+            "fused:gitAuthorNames": [
+              null,
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "fhk",
+              "milind-soni"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/fhk",
+              "https://github.com/milind-soni"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/4031392?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
+            ],
+            "fused:gitLastModified": "2025-03-07T09:19:42+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.72855954479996,
+              "longitude": -122.39558465974955,
+              "zoom": 10.998954966930617,
+              "pitch": 37.6056338028169,
+              "bearing": -3.3285917496443798
+            },
+            "fused:userCreatedShareToken": "fsh_130tV5bOUterObwYFys5zu",
             "fused:id": null
           },
           "source": "fcc_bdc_map_latest.py",

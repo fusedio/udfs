@@ -37,23 +37,31 @@ def udf(
 ):
     import os
     import sys
-
-
     if (bounds is not None) & (bbox_gpkg_path is None):
         common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
-        bounds_gdf = bounds_fused_to_gdf(bounds)
+        bounds_gdf = common.to_gdf(bounds)
         print(bounds_gdf)
         temp_bounds_gpkg_file_pth = fused.file_path(
             os.path.join(output_directory, "download_bounds.gpkg")
         ) 
-        bounds_gdf.to_file(temp_bounds_gpkg_file_pth, driver="GPKG")
+        
+        # Fix: Add mode='w' to overwrite existing file, or use layer parameter with overwrite
+        try:
+            bounds_gdf.to_file(temp_bounds_gpkg_file_pth, driver="GPKG", mode='w')
+        except Exception as e:
+            print(f"Error writing GPKG file: {e}")
+            # Alternative approach: delete existing file and recreate
+            if os.path.exists(temp_bounds_gpkg_file_pth):
+                os.remove(temp_bounds_gpkg_file_pth)
+            bounds_gdf.to_file(temp_bounds_gpkg_file_pth, driver="GPKG")
+        
         bbox_gpkg_path = temp_bounds_gpkg_file_pth
     elif (bbox_gpkg_path is not None) & (bounds is None):
         bbox_gpkg_path = fused.file_path(bbox_gpkg_path)
     else:
         print("Please provide either bounds or path to a gpkg with a single bbox")
         sys.exit()
-
+    
     result_df = get_urls_from_arcgis_imageserver_rest(
         service_url=service_url,
         outSRS=outSRS,
@@ -61,10 +69,8 @@ def udf(
         output_directory=output_directory,
         service_name=service_name,
     )
-
     file_param_dict = result_df["file_param_list"].iloc[0]
     arcgis_rest_urls_dict = result_df["arcgis_rest_urls"].iloc[0]
-
     arg_list = []
     for filename, file_params in file_param_dict.items():
         arg_list.append(
@@ -75,7 +81,6 @@ def udf(
                 "arcgis_rest_urls_dict": arcgis_rest_urls_dict,
             }
         )
-
     # Run multiple workers to download images
     job_pool = fused.submit(
         "download_single_image",
@@ -84,9 +89,7 @@ def udf(
         wait_on_results=True,
         debug_mode=False,
     )
-
     print("success")
-
     # Todo: Convert downloaded files to COG -> use this UDF:
     # fused.load(hkristen@posteo.at/create_cog_from_file)
     # fused.run(create_cogs_from_tiffs_in_folder(input_dir=output_directory))
@@ -405,13 +408,3 @@ def download_single_image_func(
 
     return print(output_filepath + " successfully downloaded!")
 
-
-def bounds_fused_to_gdf(bounds: fused.types.Bounds):
-    import geopandas as gpd
-    import shapely
-
-    bounds_gdf = gpd.GeoDataFrame(
-        {"geometry": [shapely.box(bounds[0], bounds[1], bounds[2], bounds[3])]},
-        crs="EPSG:4326",
-    )
-    return bounds_gdf
