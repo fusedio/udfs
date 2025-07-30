@@ -52,15 +52,32 @@
             "fused:udfType": "auto",
             "fused:slug": "S2_CDL_fusion",
             "fused:name": "S2_CDL_fusion",
+            "fused:gitPath": "community/gdurkin/S2_CDL_fusion",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:description": "Exported from Fused UDF Workbench\n\n",
+            "fused:gitAuthorNames": [
+              null,
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "gdurkin",
+              "jorisvandenbossche"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/gdurkin",
+              "https://github.com/jorisvandenbossche"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/8119745?v=4",
+              "https://avatars.githubusercontent.com/u/1020496?v=4"
+            ],
+            "fused:gitLastModified": "2025-01-28T13:07:22+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
             "fused:id": null
           },
           "source": "S2_CDL_fusion.py",
-          "headers": [
-            {
-              "module_name": "gabeutils",
-              "source_file": "gabeutils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],

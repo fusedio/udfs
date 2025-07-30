@@ -2,7 +2,7 @@
 <p align="center"><img src="https://fused-asset.s3.amazonaws.com/misc/data-centers.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `H3-polygon` `Network analysis`
+Tags: `h3-polygon` `network-analysis`
 
 <!--fused:readme-->
 ## Overview

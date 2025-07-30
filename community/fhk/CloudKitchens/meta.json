@@ -14,12 +14,10 @@
           "metadata": {
             "fused:name": "CloudKitchens",
             "fused:slug": "CloudKitchens",
-            "fused:gitRepo": "pozibl/fused_utils",
-            "fused:gitRef": "fbc53e82602d60156d937f4c3f75d4239859a655",
-            "fused:gitUrl": "https://github.com/pozibl/fused_utils/tree/fbc53e82602d60156d937f4c3f75d4239859a655/CloudKitchens/",
-            "fused:gitShortUrl": "https://github.com/pozibl/fused_utils/tree/fbc53e8/CloudKitchens/",
-            "fused:gitPath": "CloudKitchens",
-            "fused:gitLastModified": "2024-10-12T22:09:56.998Z",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:gitPath": "community/fhk/CloudKitchens",
+            "fused:gitLastModified": "2024-11-03T00:40:00+00:00",
             "fused:gitPullRequestBranch": "fabion@pozibl.com-patch-clean",
             "fused:gitPullRequestLink": "https://github.com/pozibl/fused_utils/pull/6",
             "fused:vizConfig": {
@@ -64,15 +62,24 @@
               }
             },
             "fused:udfType": "vector_single",
+            "fused:description": "Exported from Fused UDF Workbench\n\n",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "kashuk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/kashuk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/12432685?v=4"
+            ],
+            "fused:explorerTab": "self",
             "fused:id": null
           },
           "source": "CloudKitchens.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],
