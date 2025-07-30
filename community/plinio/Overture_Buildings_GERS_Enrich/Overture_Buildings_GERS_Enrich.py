@@ -11,8 +11,8 @@ def udf(bbox: fused.types.Tile=aoi):
         bbox = gpd.GeoDataFrame.from_features(json.loads(bbox))
 
     # 2. Load Overture Buildings that intersect the given bbox centroid
-    overture_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/Overture_Maps_Example/").utils # Load pinned versions of utility functions.
-    gdf = overture_utils.get_overture(bbox=bbox.geometry.centroid, overture_type='building', min_zoom=10)
+    overture_maps = fused.load("https://github.com/fusedio/udfs/tree/38ff24d/public/Overture_Maps_Example/") # Load pinned versions of utility functions.
+    gdf = overture_maps.get_overture(bbox=bbox.geometry.centroid, overture_type='building', min_zoom=10)
 
     # How many Overture buildings fall within the bbox centroid?
     print("Buildings in centroid: ", len(gdf))

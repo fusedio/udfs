@@ -9,7 +9,8 @@ def udf():
     import json
     from shapely.geometry import Polygon
     import numpy as np
-    conn = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/common/").utils.duckdb_connect() #use pinned version of utility function
+    common = fused.load("https://github.com/fusedio/udfs/tree/6e8abb9/public/common/")
+    con = common.duckdb_connect()
     h3_size=8
     
     # 1. Load data from output directories
@@ -17,7 +18,7 @@ def udf():
     @fused.cache
     def load(table):
         v=1
-        df = conn.sql(f"""
+        df = con.sql(f"""
             SELECT * FROM read_parquet('{table}',hive_partitioning = true)
             WHERE geoid='06'
             """).df()
