@@ -1,7 +1,6 @@
 @fused.udf
 def udf():
     import geopandas as gpd
-    from utils import get_meta, get_table, load_input_gdf
     import numpy as np
     import pandas as pd
 
@@ -17,7 +16,9 @@ def udf():
 
     # 2. Determine chunks of Overture Table that intersect
     chunks_metadata = get_meta()
-    bounds = fused.utils.common.bounds_to_gdf(gdf_input.total_bounds)
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+
+    bounds = common.bounds_to_gdf(gdf_input.total_bounds)
     intersecting_chunks = chunks_metadata.sjoin(bounds, how='inner')
 
     # 3. Run UDF across intersecting chunks
@@ -26,7 +27,6 @@ def udf():
 
 @fused.udf
 def udf_nail(part_id: int=0, file_id: str= '16', chunk_id: int = 79, path: str = 'https://opendata.vancouver.ca/api/explore/v2.1/catalog/datasets/building-footprints-2015/exports/parquet?lang=en'): # todo one is str
-    from utils import get_meta, get_table, load_input_gdf
     import geopandas as gpd
     import pandas as pd
 
@@ -67,4 +67,31 @@ def udf_nail(part_id: int=0, file_id: str= '16', chunk_id: int = 79, path: str =
 
     return gdf_conflated[['id', '_src', 'geometry']]
     
+@fused.cache
+def get_meta(table_base_path = "s3://us-west-2.opendata.source.coop/fused/overture/2024-08-20-0/theme=buildings/type=building", n_parts=5):
+    import pandas as pd
+    table = lambda part: f'{table_base_path}/part={str(part)}/'
+    a = []
+    for part in range(n_parts):
+        a.append(fused.get_chunks_metadata(table(part)))
+        a[-1]['part_id'] = part
+    return pd.concat(a)
+
+
+@fused.cache
+def get_table(part_id, file_id, chunk_id, table_base_path = "s3://us-west-2.opendata.source.coop/fused/overture/2024-08-20-0/theme=buildings/type=building"):
+    table = lambda part: f'{table_base_path}/part={str(part)}/'
+    return fused.get_chunk_from_table(table(part_id), file_id=file_id, chunk_id=chunk_id)
+
+
+@fused.cache
+def load_input_gdf(path):
+    import geopandas as gpd
+    path = fused.download(path, path)
+    df = gpd.read_parquet(path)
+    df=df.rename(columns={'geom': 'geometry'}).set_geometry('geometry')
+    df = df.to_crs('EPSG:4326')
+    return df
+
+
 
