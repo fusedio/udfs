@@ -12,7 +12,6 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:description": "Read a Parquet or Geoparquet file.\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -62,28 +61,34 @@
             "fused:udfType": "auto",
             "fused:slug": "sample_nyc_similarity",
             "fused:name": "sample_nyc_similarity",
-            "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/b959b518d98ff89bd4542f3b18adc4be9f191504/community/pgzmnk/sample_nyc_similarity/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/b959b51/community/pgzmnk/sample_nyc_similarity/",
             "fused:gitPath": "community/pgzmnk/sample_nyc_similarity",
-            "fused:gitRef": "b959b518d98ff89bd4542f3b18adc4be9f191504",
-            "fused:assetUrl": "",
-            "fused:explorerPin": "99",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
             "fused:gitAuthorNames": [
-              "Plinio Guzman"
+              null,
+              null,
+              null
             ],
             "fused:gitAuthorUsernames": [
-              "pgzmnk"
+              "pgzmnk",
+              "isaacbrodsky",
+              "iamsdas-fused"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/pgzmnk"
+              "https://github.com/pgzmnk",
+              "https://github.com/isaacbrodsky",
+              "https://github.com/iamsdas-fused"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/27398253?v=4"
+              "https://avatars.githubusercontent.com/u/27398253?v=4",
+              "https://avatars.githubusercontent.com/u/9139378?v=4",
+              "https://avatars.githubusercontent.com/u/200643783?v=4"
             ],
-            "fused:gitLastModified": "2024-10-15T21:51:53+00:00",
-            "fused:explorerTab": "community",
-            "fused:gitRepo": "fusedio/udfs"
+            "fused:gitLastModified": "2025-02-26T19:55:15+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:description": "Read a Parquet or Geoparquet file.\n",
+            "fused:explorerPin": "99",
+            "fused:id": null
           },
           "source": "sample_nyc_similarity.py",
           "headers": []

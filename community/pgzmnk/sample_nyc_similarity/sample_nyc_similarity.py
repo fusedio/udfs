@@ -9,9 +9,9 @@ def udf(h3_res: int = 11, lat: float = 40.647395, lng: float = -73.788927):
     from shapely.geometry import Polygon
 
     # Load pinned versions of utility functions.
-    duckdb_utils = fused.load("https://github.com/fusedio/udfs/tree/ee9bec5/public/DuckDB_H3_Example/").utils
-    con = duckdb_utils.duckdb_with_h3()
-    con.sql("INSTALL httpfs; LOAD httpfs;")
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+
+    con = common.duckdb_connect()
 
     target_h3_cell = h3.latlng_to_cell(lat, lng, h3_res)
     print("target_h3_cell: ", target_h3_cell)
