@@ -118,7 +118,35 @@
             "fused:udfType": "auto",
             "fused:slug": "NEX_GDDP_Cmip6_VIDA",
             "fused:name": "NEX_GDDP_Cmip6_VIDA",
-            "fused:id": null,
+            "fused:gitPath": "community/sina/NEX_GDDP_Cmip6_VIDA",
+            "fused:gitRef": "c19a49eda87ac2e2aa3567470f4f67baaab4e797",
+            "fused:gitAuthorNames": [
+              null,
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "MaxLenormand",
+              "milind-soni"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/MaxLenormand",
+              "https://github.com/milind-soni"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
+            ],
+            "fused:gitLastModified": "2025-07-29T22:09:45+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 20.343124974837764,
+              "longitude": 80.70852883009755,
+              "zoom": 3.3714329917980885,
+              "pitch": 0,
+              "bearing": 0
+            },
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/nex_gddp_cmip6.png",
             "fused:tags": [
               {
@@ -131,33 +159,8 @@
               }
             ],
             "fused:description": "# Vida NEX-GDDP-based climate model\n\nThis UDF operates on a given bounding box ('bounds') to select and show the output from\nVida's processed NEX-GDDP-based ensemble climate data for the year 2080 by default.\n",
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/f96ca22af9eceb56ee6518b0c6adafe0dddd0111/public/NEX_GDDP_Cmip6_VIDA/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/f96ca22/public/NEX_GDDP_Cmip6_VIDA/",
-            "fused:gitPath": "public/NEX_GDDP_Cmip6_VIDA",
-            "fused:gitRef": "f96ca22af9eceb56ee6518b0c6adafe0dddd0111",
-            "fused:gitAuthorNames": [
-              "Jacob Prince-Bieker"
-            ],
-            "fused:gitAuthorUsernames": [
-              "jacobbieker"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/jacobbieker"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/7170359?v=4"
-            ],
-            "fused:gitLastModified": "2024-12-04T14:08:56+00:00",
-            "fused:explorerTab": "public",
-            "fused:gitRepo": "fusedio/udfs",
-            "fused:defaultViewState": {
-              "enable": true,
-              "latitude": 21.932266976283955,
-              "longitude": 75.78150420155161,
-              "zoom": 1.9067527966901476,
-              "pitch": 0,
-              "bearing": 0
-            }
+            "fused:userCreatedShareToken": "fsh_7eVqJKkovwEvRaRsSNKQOJ",
+            "fused:id": null
           },
           "source": "NEX_GDDP_Cmip6_VIDA.py",
           "headers": []

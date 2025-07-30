@@ -3,32 +3,33 @@ def udf(bounds=None):
     import nest_asyncio
     import numpy as np
     import py3dep
-    import pynhd
     import shapely.ops as ops
     import xarray as xr
     import xrspatial as xs
     from datashader import transfer_functions as tf
     from datashader.colors import Greys9, inferno
-
-
     nest_asyncio.apply()
-
+    
     @fused.cache
     def fn(bounds, res=10):
-        # Get the DEM and the river network
         dem = py3dep.get_dem(bounds, res)
-        wd = pynhd.WaterData("nhdflowline_network")
-        flw = wd.bybox(bounds)
-
-        # Prepare the river network by removing isolated nodes and selecting the main stem
-        flw = pynhd.prepare_nhdplus(flw, 0, 0, 0, remove_isolated=True)
-        flw = flw[flw.levelpathi == flw.levelpathi.min()].copy()
+        flw = get_osm_waterways(bounds)
+        if 'waterway' in flw.columns:
+            main_rivers = flw[flw.waterway.isin(['river', 'stream'])]
+            if len(main_rivers) > 0:
+                flw = main_rivers
+        
         lines = ops.linemerge(flw.geometry.tolist())
+        if hasattr(lines, 'geoms'):
+            lines = max(lines.geoms, key=lambda x: x.length)
+        elif not hasattr(lines, 'coords'):
+            lines = max(flw.geometry, key=lambda x: x.length)
+            
         riv_dem = py3dep.elevation_profile(lines, 10, crs=flw.crs)
         elevation = idw(riv_dem, dem, 20)
         rem = dem - elevation
         return rem, dem
-
+    
     bounds = (-119.59, 39.24, -119.47, 39.30) if bounds is None else bounds
     rem, dem = fn(bounds)
     illuminated = xs.hillshade(dem, angle_altitude=10, azimuth=90)
@@ -40,12 +41,45 @@ def udf(bounds=None):
     )
     return img[::-1]
 
+def get_osm_waterways(bounds):
+    import geopandas as gpd
+    import requests
+    from shapely.geometry import LineString
+    
+    west, south, east, north = bounds
+    overpass_query = f"""
+    [out:json][timeout:25];
+    (
+      way["waterway"~"^(river|stream|creek|canal)$"]({south},{west},{north},{east});
+    );
+    out geom;
+    """
+    
+    response = requests.get(
+        "http://overpass-api.de/api/interpreter",
+        params={'data': overpass_query},
+        timeout=30
+    )
+    data = response.json()
+    
+    features = []
+    for element in data.get('elements', []):
+        if element['type'] == 'way' and 'geometry' in element:
+            coords = [(node['lon'], node['lat']) for node in element['geometry']]
+            if len(coords) >= 2:
+                features.append({
+                    'geometry': LineString(coords),
+                    'waterway': element.get('tags', {}).get('waterway', 'unknown'),
+                    'name': element.get('tags', {}).get('name', '')
+                })
+    
+    return gpd.GeoDataFrame(features, crs='EPSG:4326')
+
 import numpy as np
 import xarray as xr
 from scipy.spatial import KDTree
 
 def idw(riv_dem: xr.DataArray, dem: xr.DataArray, n_nb: int) -> xr.DataArray:
-    """Interpolate grid DEM from river DEM using Inverse Distance Weighting."""
     riv_coords = np.column_stack((riv_dem.x, riv_dem.y))
     kdt = KDTree(riv_coords)
     dem_grid = np.dstack(np.meshgrid(dem.x, dem.y)).reshape(-1, 2)
@@ -55,4 +89,3 @@ def idw(riv_dem: xr.DataArray, dem: xr.DataArray, n_nb: int) -> xr.DataArray:
     interp = weights * riv_dem.to_numpy()[idx]
     interp = interp.sum(axis=1).reshape((dem.sizes["y"], dem.sizes["x"]))
     return xr.DataArray(interp, dims=("y", "x"), coords={"x": dem.x, "y": dem.y})
-
