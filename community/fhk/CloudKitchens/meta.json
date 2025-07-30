@@ -76,6 +76,15 @@
               "https://avatars.githubusercontent.com/u/12432685?v=4"
             ],
             "fused:explorerTab": "self",
+            "fused:userCreatedShareToken": "fsh_5dd1Npk4JjxUSHOZc8CRRg",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.69291296645745,
+              "longitude": -122.32413904023593,
+              "zoom": 9.56162695296103,
+              "pitch": 23.639284582170944,
+              "bearing": 42.461732174600044
+            },
             "fused:id": null
           },
           "source": "CloudKitchens.py",
