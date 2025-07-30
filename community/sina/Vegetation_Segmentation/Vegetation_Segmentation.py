@@ -12,7 +12,6 @@ def udf(
     common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
     tile = common.get_tiles(bounds, target_num_tiles=1)
     
-    # Get the bounding box coordinates
     x, y, z = tile[["x", "y", "z"]].iloc[0]
     print("Zoom level:", z)
 
