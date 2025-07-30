@@ -6,7 +6,7 @@ def udf(
     buffer_degree=0.000,
 ):
     # convert bounds to tile
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/6e8abb9/public/common/")
     tile = common.get_tiles(bounds, clip=True)
     zoom = tile.iloc[0].z
 
@@ -15,11 +15,11 @@ def udf(
         import numpy as np
 
         output_shape = (chip_len, chip_len)
-        matching_items = common.bounds_stac_items(
+        matching_items = common.bbox_stac_items(
             tile.geometry[0], table="s3://fused-asset/imagery/naip/"
         )
         max_matching_items = 10
-        print(f"{len(matching_items)=}")
+        print(f"{len(matching_items)=}") 
         if len(matching_items) < max_matching_items:
             input_tiff_path = matching_items.iloc[0].assets["naip-analytic"]["href"]
             crs = matching_items.iloc[0]["proj:epsg"]
