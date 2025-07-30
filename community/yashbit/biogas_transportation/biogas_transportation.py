@@ -1,8 +1,6 @@
 @fused.udf
 def udf(bbox: fused.types.Tile = None, n=10):
     import json
-
-    import core_utils
     import ee
     import geopandas as gpd
     import pandas as pd
@@ -30,7 +28,7 @@ def udf(bbox: fused.types.Tile = None, n=10):
     """
 
     try:
-        service_account_info = core_utils.generate_service_account_info()
+        service_account_info = generate_service_account_info()
         credentials = ee.ServiceAccountCredentials("", service_account_info)
         ee.Initialize(
             opt_url="https://earthengine.googleapis.com", credentials=credentials
@@ -49,7 +47,7 @@ def udf(bbox: fused.types.Tile = None, n=10):
     info = methane_air_l4.getInfo()
     features_2 = info["features"]
     gdf = gpd.GeoDataFrame.from_features(features_2)
-    features_2 = gdf.apply(core_utils.create_geojson_feature, axis=1).tolist()
+    features_2 = gdf.apply(create_geojson_feature, axis=1).tolist()
     gdf_with_geojson = gpd.GeoDataFrame(gdf, geometry="geometry")
     gdf_with_geojson["geometry"] = features_2
     features_2 = []
@@ -82,7 +80,7 @@ def udf(bbox: fused.types.Tile = None, n=10):
         ~us_geo_df.WKTFormat.str.contains("MULTILINESTRING")
     ].copy()
     linestring_df["ls"] = linestring_df.WKTFormat.apply(
-        core_utils.convert_linestr_to_linestr
+        convert_linestr_to_linestr
     )
     linestring_df.head()
 
@@ -118,5 +116,88 @@ def udf(bbox: fused.types.Tile = None, n=10):
     gdf_from_features = gpd.GeoDataFrame.from_features(features)
     geojson_data = gdf_from_features.__geo_interface__
     geojson_str = json.dumps(geojson_data)
-    combined_gdf = core_utils.combine_gdfs(gdf_from_features, gdf_from_features_2)
+    combined_gdf = combine_gdfs(gdf_from_features, gdf_from_features_2)
     return combined_gdf
+
+
+
+def combine_gdfs(gdf_from_features, gdf_from_features_2):
+    import geopandas as gpd
+    import pandas as pd
+    
+    combined_gdf = gpd.GeoDataFrame(
+        pd.concat([gdf_from_features, gdf_from_features_2], ignore_index=True)
+    )
+    return combined_gdf
+
+
+def generate_service_account_info():
+    import json
+    
+    service_account_info = {
+        "type": "",
+        "project_id": "",
+        "private_key_id": "",
+        "private_key": "-----BEGIN PRIVATE KEY-----",
+        "client_email": "",
+        "client_id": "",
+        "auth_uri": "",
+        "token_uri": "",
+        "auth_provider_x509_cert_url": "",
+        "client_x509_cert_url": "",
+        "universe_domain": "",
+    }
+    file_path = "service_account_info.json"
+    with open(file_path, "w") as json_file:
+        json.dump(service_account_info, json_file)
+    return file_path
+
+
+def convert_linestr_to_linestr(s):
+    import pandas as pd
+    import shapely.geometry
+    
+    cc = s.lstrip("LINESTRING (").rstrip(")").split(",")
+    cc[0] = " " + cc[0]
+    ccc = pd.DataFrame(cc)[0].str.split(" ", expand=True)
+    ls = shapely.geometry.linestring.LineString(
+        list(ccc[[1, 2]].astype(float).to_records(index=False))
+    )
+    return ls
+
+
+def create_geojson_feature(row):
+    import shapely.geometry
+    
+    lon, lat = row["geometry"].x, row["geometry"].y
+    delta = 0.005
+    row_flux_multiple = row["Flux_kg_hr"]
+    true_delta = delta * (row_flux_multiple / 500)
+    lon2 = lon + true_delta
+    lat2 = lat + true_delta
+    lon3 = lon - true_delta
+    lat3 = lat + true_delta
+    coordinates = [
+        [lon, lat],
+        [lon2, lat2],
+        [lon, lat + 2 * true_delta],
+        [lon3, lat3],
+        [lon, lat],
+    ]
+    properties = {
+        "Name": "Methane Gas Density",
+        "Country": "USA",
+        "Flux_kg_hr": row["Flux_kg_hr"],
+        "flt": row["flt"],
+        "plume_numb": row["plume_numb"],
+        "sd": row["sd"],
+        "r": 255,
+        "g": 255,
+        "b": 0,
+    }
+    feature = {
+        "type": "Feature",
+        "geometry": {"type": "Polygon", "coordinates": [coordinates]},
+        "properties": properties,
+    }
+    return feature
