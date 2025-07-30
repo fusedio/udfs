@@ -2116,7 +2116,7 @@ def read_tiff_naip(
     bounds, input_tiff_path, crs, buffer_degree, output_shape, resample_order=0
 ):
     from io import BytesIO
-
+    import numpy as np
     import rasterio
     from rasterio.session import AWSSession
     from scipy.ndimage import zoom
