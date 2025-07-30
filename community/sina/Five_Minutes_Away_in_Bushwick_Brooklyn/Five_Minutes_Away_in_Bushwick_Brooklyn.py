@@ -19,7 +19,7 @@ def udf(bounds: fused.types.Bounds = [-73.941,40.690,-73.892,40.740],
     # This pulls 5 minute walking isochrones around FSQ coffee shops
     gdf_fsq_isochrones = get_fsq_isochrones_gdf(costing, time_steps, poi_category)
     
-    # Converts geometries to WKT for DuckDB 
+    # Converts geometries to WKT for DuckDB  
     gdf_fsq_isochrones['geometry'] = gdf_fsq_isochrones['geometry'].apply(shapely.wkt.dumps)
     
     # Better to use Pandas with DuckDB
@@ -50,13 +50,13 @@ def get_fsq_points(bounds, poi_category):
     import pandas as pd
     import shapely
     import geopandas as gpd
-
-    df = fused.run("UDF_Foursquare_Open_Source_Places", bounds=bounds, min_zoom=0)
+    fsq_udf = fused.load("https://github.com/fusedio/udfs/tree/d1216b1/community/sina/Foursquare_Open_Source_Places")
+    df = fused.run(fsq_udf, bounds=bounds, min_zoom=0)
     # Check if the df is empty
     if len(df) < 1:
         return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
     # Define the dictionary for filtering
-    category_dict = {
+    category_dict = { 
         "Bar": df[df["level2_category_name"].str.contains("Bar", case=False, na=False)],
         "Coffee Shop": df[df["level3_category_name"].str.contains("Coffee Shop", case=False, na=False)],
         "Grocery Store": df[df["level3_category_name"].str.contains("Grocery Store", case=False, na=False)],
@@ -111,6 +111,8 @@ def get_pool_isochrones(df, costing, time_steps):
     return result
 def get_fsq_isochrones_gdf(costing, time_steps, poi_category): 
     # Greater Bushwick
+    import geopandas as gpd
+    import shapely
     bounds = gpd.GeoDataFrame(
        geometry=[shapely.box(-73.966036,40.666722,-73.875359,40.726179)], 
        crs=4326
@@ -162,7 +164,7 @@ def get_nyc_boundary():
     gdf_bushwick = gdf_nyc[gdf_nyc['ntaname'].str.contains('Bushwick', na=False)].dissolve(by='ntaname').reset_index()
     
     # Keep only geometry column for overlay
-    return gdf_bushwick[['geometry']]
+    return gdf_bushwick[['geometry']]    
 
 def bushwick_boundary(gdf_h3):
     # Run get_boundary

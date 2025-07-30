@@ -89,7 +89,7 @@ def tile_to_df(bounds, arr, return_geometry=False):
     common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
 
     # convert back to 4326
-    df = common.geo_convert(df).set_crs(3857, allow_override=True).to_crs(bounds.crs)
+    df = common.to_gdf(df).set_crs(3857, allow_override=True).to_crs(bounds.crs)
     df["lat"]=df.geometry.y
     df["lng"]=df.geometry.x
     if not return_geometry:

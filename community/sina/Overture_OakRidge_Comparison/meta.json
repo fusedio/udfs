@@ -14,14 +14,12 @@
           "metadata": {
             "fused:defaultViewState": {
               "enable": true,
-              "latitude": 40.698455181624645,
-              "longitude": -73.98940044276189,
-              "zoom": 12.629122337297975,
-              "pitch": 0,
-              "bearing": 0
+              "latitude": 40.70355232173729,
+              "longitude": -74.01432271622005,
+              "zoom": 15.31812412847855,
+              "pitch": 30.205479452054796,
+              "bearing": -0.6451612903225806
             },
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/portland.png",
-            "fused:description": "## Overview\n\nThis UDF performs a spatial join between the Overture Buildings and Oak Ridge Buildings datasets, using Oak Ridge data to fill in gaps in Overture’s building categories. Note that Oak Ridge coverage is limited to the USA.\n\nSet the 'metric' parameter to view data from Overture, Oak Ridge, or both combined.\n",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -65,28 +63,29 @@
             "fused:udfType": "auto",
             "fused:slug": "Overture_OakRidge_Comparison",
             "fused:name": "Overture_OakRidge_Comparison",
-            "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/222e02b174fcf88209ce44f1346377c68eddfbb3/public/Overture_OakRidge_Comparison/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/222e02b/public/Overture_OakRidge_Comparison/",
-            "fused:gitPath": "public/Overture_OakRidge_Comparison",
-            "fused:gitRef": "222e02b174fcf88209ce44f1346377c68eddfbb3",
+            "fused:gitPath": "community/sina/Overture_OakRidge_Comparison",
+            "fused:gitRef": "1d4c5fce4800eb1a498d1511d48831f2e9295555",
             "fused:gitAuthorNames": [
-              "Plinio Guzman"
+              null,
+              null
             ],
             "fused:gitAuthorUsernames": [
-              "pgzmnk"
+              "MaxLenormand",
+              "milind-soni"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/pgzmnk"
+              "https://github.com/MaxLenormand",
+              "https://github.com/milind-soni"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/27398253?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2024-11-06T12:19:14+00:00",
+            "fused:gitLastModified": "2025-07-30T01:01:18+00:00",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "plinio@fused.io-patch-update-url-v2",
             "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/398",
-            "fused:explorerTab": "public",
+            "fused:explorerTab": "self",
             "fused:defaultParameters": [
               {
                 "parameter": "class_source",
@@ -107,7 +106,10 @@
                   "Overture"
                 ]
               }
-            ]
+            ],
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/portland.png",
+            "fused:description": "## Overview\n\nThis UDF performs a spatial join between the Overture Buildings and Oak Ridge Buildings datasets, using Oak Ridge data to fill in gaps in Overture’s building categories. Note that Oak Ridge coverage is limited to the USA.\n\nSet the 'metric' parameter to view data from Overture, Oak Ridge, or both combined.\n",
+            "fused:id": null
           },
           "source": "Overture_OakRidge_Comparison.py",
           "headers": []
