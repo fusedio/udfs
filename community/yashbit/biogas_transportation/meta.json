@@ -53,7 +53,7 @@
             "fused:slug": "biogas_transportation",
             "fused:name": "biogas_transportation",
             "fused:gitPath": "community/yashbit/biogas_transportation",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:gitRef": "95aa9085e9e8c578945c95525cfc24e84bd3e147",
             "fused:gitAuthorNames": [
               null,
               null,
@@ -74,7 +74,7 @@
               "https://avatars.githubusercontent.com/u/27398253?v=4",
               "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-03-07T09:19:42+00:00",
+            "fused:gitLastModified": "2025-07-30T09:37:22+00:00",
             "fused:explorerTab": "self",
             "fused:gitRepo": "fusedio/udfs",
             "fused:defaultViewState": {
@@ -88,8 +88,8 @@
             "fused:assetUrl": "https://raw.githubusercontent.com/fusedio/udfs/main/community/yashbit/biogas_transportation/fused-screenshot-biogas_transportation_copy.png",
             "fused:tags": [
               {
-                "id": "GEE",
-                "label": "GEE"
+                "id": "gee",
+                "label": "gee"
               },
               {
                 "id": "csv",

@@ -55,15 +55,29 @@
             },
             "fused:udfType": "auto",
             "fused:slug": "LULC_Impact_Observatory",
-            "fused:name": "LULC_Impact_Observatory"
+            "fused:name": "LULC_Impact_Observatory",
+            "fused:gitPath": "community/plinio/LULC_Impact_Observatory",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:description": "Exported from Fused UDF Workbench\n\n",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitLastModified": "2025-07-01T15:52:41+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:id": null
           },
           "source": "LULC_Impact_Observatory.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],

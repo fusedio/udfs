@@ -6,9 +6,8 @@ def udf(bbox: fused.types.Tile = None, n=10):
     import pandas as pd
     import shapely
 
-    utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/f928ee1/public/common/"
-    ).utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+
 
     """
     User Needs to: Create GCP Account (Free) and do the following:
@@ -29,10 +28,8 @@ def udf(bbox: fused.types.Tile = None, n=10):
 
     try:
         service_account_info = generate_service_account_info()
-        credentials = ee.ServiceAccountCredentials("", service_account_info)
-        ee.Initialize(
-            opt_url="https://earthengine.googleapis.com", credentials=credentials
-        )
+        common.ee_initialize(service_account_name='fused-nyt-gee@fused-nyt.iam.gserviceaccount.com',key_path="/mnt/cache/geecreds.json")
+
     except Exception as e:
         print(
             "Error initializing Earth Engine. Please ensure that you have set up your API keys correctly in core_utils.py."

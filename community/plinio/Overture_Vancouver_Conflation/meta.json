@@ -64,13 +64,8 @@
             "fused:udfType": "auto",
             "fused:slug": "Overture_Vancouver_Conflation",
             "fused:name": "Overture_Vancouver_Conflation",
-            "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/ee5ca72bbf83d75fad94dc79178811f222514a95/community/plinio/Overture_Vancouver_Conflation/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/ee5ca72/community/plinio/Overture_Vancouver_Conflation/",
             "fused:gitPath": "community/plinio/Overture_Vancouver_Conflation",
-            "fused:gitRef": "ee5ca72bbf83d75fad94dc79178811f222514a95",
-            "fused:assetUrl": "fused_uploaded_preview",
-            "fused:description": "## Overview\n\nConflate 3rd party and Overture Buildings.\n",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
             "fused:gitAuthorNames": [
               null
             ],
@@ -83,19 +78,17 @@
             "fused:gitAuthorAvatarUrls": [
               "https://avatars.githubusercontent.com/in/834700?v=4"
             ],
-            "fused:gitLastModified": "2025-04-18T17:37:09.641Z",
-            "fused:explorerTab": "community",
+            "fused:gitLastModified": "2025-04-18T17:52:53+00:00",
+            "fused:explorerTab": "self",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "plinio-patch-d21146-update-vanc-udf",
-            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/839"
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/839",
+            "fused:assetUrl": null,
+            "fused:description": "## Overview\n\nConflate 3rd party and Overture Buildings.\n",
+            "fused:id": null
           },
           "source": "Overture_Vancouver_Conflation.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],

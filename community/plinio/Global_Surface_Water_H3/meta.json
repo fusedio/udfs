@@ -59,15 +59,30 @@
             },
             "fused:udfType": "auto",
             "fused:slug": "Global_Surface_Water_H3",
-            "fused:name": "Global_Surface_Water_H3"
+            "fused:name": "Global_Surface_Water_H3",
+            "fused:gitPath": "community/plinio/Global_Surface_Water_H3",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:description": "Exported from Fused UDF Workbench\n\n",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "pgzmnk"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/pgzmnk"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/27398253?v=4"
+            ],
+            "fused:gitLastModified": "2025-07-04T18:26:37+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:userCreatedShareToken": "fsh_4oHz3QnjcBp0hmG2tK5fmO",
+            "fused:id": null
           },
           "source": "Global_Surface_Water_H3.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],
