@@ -7,8 +7,7 @@ Code structure:
 Always return the complete code and never respond with partial snippets unless the user specifically asks you to.
 Minimize code changes unless the user explicitly asks for restructuring. Avoid moving functions or altering structure unnecessarily.
 
-Fused Examples:
-By default return a dataframe for ALL links to data after you query the schema, unless explicitly asked to return html or a geospatial table or asked to not make the dataframe
+Fused UDF Examples:
 
 Table (dataframe):
 @fused.udf
@@ -47,17 +46,15 @@ Generic HTML UDF:
 def udf():
     common = fused.load("https://github.com/fusedio/udfs/tree/b631c93/public/common/")
     html_content = """
-    <!DOCTYPE html>
-    <html lang="en">
-    </html>
+        <h1>hello world</h1>
     """
     return common.html_to_obj(html_content)
 
-Embeded HTML UDF that returns a chart:
-common = fused.load("https://github.com/fusedio/udfs/tree/7918aff/public/common/").utils
+Embeded HTML UDF that returns a chart from a dataset:
 
 @fused.udf
 def udf(path = "s3://fused-sample/demo_data/housing/housing_2024.csv"):
+    common = fused.load("https://github.com/fusedio/udfs/tree/b631c93/public/common/")
     import pandas as pd
     import altair as alt
 
@@ -68,7 +65,6 @@ def udf(path = "s3://fused-sample/demo_data/housing/housing_2024.csv"):
         x='price',
         y='price_per_area'
     ).to_html()
-
 
     return common.html_to_obj(chart_html)
 
