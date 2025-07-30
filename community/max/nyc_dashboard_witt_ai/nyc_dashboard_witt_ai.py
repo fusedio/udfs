@@ -3,11 +3,10 @@ def udf(path: str = "s3://fused-sample/demo_data/nyc_taxi/yellow_tripdata_2025-0
     import duckdb
     import json
     
-    common = fused.load("https://github.com/fusedio/udfs/tree/7918aff/public/common/").utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/6e8abb9/public/common/")    
+    con = common.duckdb_connect()
     
-    conn = duckdb.connect()
-    
-    df = conn.execute(f"""
+    df = con.execute(f"""
         SELECT 
             EXTRACT(hour FROM tpep_pickup_datetime) as pickup_hour,
             COUNT(*) as pickup_count
