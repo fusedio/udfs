@@ -44,26 +44,30 @@
               "bearing": 0
             },
             "fused:gitPath": "community/sina/DC_AOI_Tile_Hex",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:gitRef": "c19a49eda87ac2e2aa3567470f4f67baaab4e797",
             "fused:gitAuthorNames": [
+              null,
               null
             ],
             "fused:gitAuthorUsernames": [
-              "MaxLenormand"
+              "MaxLenormand",
+              "milind-soni"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
+              "https://github.com/MaxLenormand",
+              "https://github.com/milind-soni"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:gitLastModified": "2025-07-29T22:09:45+00:00",
             "fused:explorerTab": "self",
             "fused:gitRepo": "fusedio/udfs",
+            "fused:userCreatedShareToken": "fsh_553hzHM4xk3l8XNzbixpCw",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DC_AOI_Example.png",
             "fused:description": "Exported from Fused UDF Workbench\n\n",
             "fused:explorerPin": "9",
-            "fused:userCreatedShareToken": "fsh_553hzHM4xk3l8XNzbixpCw",
             "fused:id": null
           },
           "source": "DC_AOI_Tile_Hex.py",
