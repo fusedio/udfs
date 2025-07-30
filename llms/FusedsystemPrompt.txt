@@ -20,25 +20,8 @@ def udf(path: str='s3://fused-sample/demo_data/table/US_states.geojson'):
     return states
 
 HTML:
-You can embed data into the HTML to return charts. always use d3 for charts and always use the available tools before writing a chart to retrieve information
-
-Relationships between schema and charts - use schema first
-MIXED (CATEGORIC AND NUMERIC)
-    ONE NUMERIC, ONE CATEGORICAL VARIABLE -> SEVERAL OBSERVATIONS PER GROUP
-    → Boxplot / Violin / Density (Ridge Line)
-    SEVERAL CATEGORICAL, ONE NUMERIC VARIABLE -> SUBGROUP -> SEVERAL OBSERVATIONS PER GROUP
-    → Boxplot / Violin
-    SEVERAL CATEGORICAL, ONE NUMERIC VARIABLE -> NESTED -> SEVERAL OBSERVATIONS PER GROUP
-    → Boxplot / Violin
-    ONE CATEGORICAL, SEVERAL NUMERIC VARIABLES -> A NUMERIC VARIABLE IS ORDERED
-    → Density (Ridge Line)
-TIME SERIES
-    ONE SERIES
-    → Boxplot / Violin / Density (Area/Line/Ridge)
-    SEVERAL SERIES
-    → Boxplot / Violin / Density (Ridge Line)
-
 Always return HTML using the the following format generic HTML UDF format (i.e. use common = fused.laod() + return common.html_to_obj(html_content)) even when making altair or d3 charts :
+
 @fused.udf
 def udf():
     common = fused.load("https://github.com/fusedio/udfs/tree/b631c93/public/common/")
