@@ -12,16 +12,8 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:assetUrl": "",
             "fused:defaultParameters": [],
             "fused:datasets": "Digital Elevation Model",
-            "fused:tags": [
-              {
-                "id": "raster",
-                "label": "raster"
-              }
-            ],
-            "fused:description": "Utility functions for visualizing data.",
             "fused:vizConfig": {
               "@@type": "TileLayer",
               "minZoom": 7,
@@ -35,15 +27,34 @@
             "fused:udfType": "raster",
             "fused:slug": "common_vis",
             "fused:name": "common_vis",
+            "fused:gitPath": "community/tylere/common_vis",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:tags": [
+              {
+                "id": "raster",
+                "label": "raster"
+              }
+            ],
+            "fused:description": "Utility functions for visualizing data.\n",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "tylere"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/tylere"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/92862?v=4"
+            ],
+            "fused:gitLastModified": "2024-09-25T00:23:00+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
             "fused:id": null
           },
           "source": "common_vis.py",
-          "headers": [
-            {
-              "module_name": "utils",
-              "source_file": "utils.py"
-            }
-          ]
+          "headers": []
         }
       }
     ],
