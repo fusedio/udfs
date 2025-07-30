@@ -14,11 +14,11 @@
           "metadata": {
             "fused:defaultViewState": {
               "enable": true,
-              "latitude": 40.698455181624645,
-              "longitude": -73.98940044276189,
-              "zoom": 12.629122337297975,
-              "pitch": 0,
-              "bearing": 0
+              "latitude": 40.70355232173729,
+              "longitude": -74.01432271622005,
+              "zoom": 15.31812412847855,
+              "pitch": 30.205479452054796,
+              "bearing": -0.6451612903225806
             },
             "fused:vizConfig": {
               "tileLayer": {
@@ -64,7 +64,7 @@
             "fused:slug": "Overture_OakRidge_Comparison",
             "fused:name": "Overture_OakRidge_Comparison",
             "fused:gitPath": "community/sina/Overture_OakRidge_Comparison",
-            "fused:gitRef": "c19a49eda87ac2e2aa3567470f4f67baaab4e797",
+            "fused:gitRef": "1d4c5fce4800eb1a498d1511d48831f2e9295555",
             "fused:gitAuthorNames": [
               null,
               null
@@ -81,7 +81,7 @@
               "https://avatars.githubusercontent.com/u/44133329?v=4",
               "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-07-29T22:09:45+00:00",
+            "fused:gitLastModified": "2025-07-30T01:01:18+00:00",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "plinio@fused.io-patch-update-url-v2",
             "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/398",
