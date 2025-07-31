@@ -54,19 +54,38 @@
                 ]
               }
             },
-            "fused:udfType": "vector_tile",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "Vegetation_Segmentation",
             "fused:name": "Vegetation_Segmentation",
             "fused:defaultViewState": {
               "enable": true,
-              "latitude": 49.291155,
-              "longitude": -122.837838,
-              "zoom": 16,
+              "latitude": 49.28782537647372,
+              "longitude": -122.83490617772695,
+              "zoom": 13.506985674416756,
               "pitch": 0,
               "bearing": 0
             },
             "fused:gitPath": "community/sina/Vegetation_Segmentation",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:gitRef": "b603e4541b174b691fa03abd0443169a5962bb58",
+            "fused:gitAuthorNames": [
+              null,
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "MaxLenormand",
+              "milind-soni"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/MaxLenormand",
+              "https://github.com/milind-soni"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
+            ],
+            "fused:gitLastModified": "2025-07-29T20:33:11+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/veg_segmentation_v2.png",
             "fused:tags": [
               {
@@ -84,21 +103,6 @@
             ],
             "fused:description": "## Overview\n\nThis UDF performs scalable vegetation analysis using classical computer vision techniques. It allows users to choose a vegetation index, set threshold values, and dynamically process satellite imagery for real-time global vegetation segmentation, all without relying on machine learning models.\n\n## External links\n\n- [Visible Atmospherically Resistant Index (VARI)](https://space4water.org/space/visible-atmospherically-resistant-index-vari)\n",
             "fused:explorerPin": "7",
-            "fused:gitAuthorNames": [
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
             "fused:id": null
           },
           "source": "Vegetation_Segmentation.py",

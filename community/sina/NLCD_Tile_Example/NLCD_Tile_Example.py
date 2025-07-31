@@ -16,9 +16,9 @@ def udf(bounds: fused.types.Bounds=[-121.673,37.561,-120.778,38.314], year:int=1
     
     if colored:
         arr_flat = np.array([color_map[value] for value in arr_int.data.flat], dtype=np.uint8)
-        return arr_flat.reshape(arr_int.shape + (4,)).transpose(2, 0, 1)
+        return arr_flat.reshape(arr_int.shape + (4,)).transpose(2, 0, 1), bounds
     else:
-        return arr_int
+        return arr_int, bounds
 
 
 def get_data(bounds, year, land_type, chip_len):

@@ -10,7 +10,7 @@ def udf(
     tile = common.get_tiles(bounds, clip=True)
     zoom = tile.iloc[0].z
 
-    min_zoom = 15
+    min_zoom = 10
     if zoom >= min_zoom:
         import numpy as np
 
@@ -39,7 +39,7 @@ def udf(
                 raise ValueError(
                     f'{var=} does not exist. var options are "RGB" and "NDVI"'
                 )
-            return arr
+            return arr, bounds
         else:
             print(
                 f"{matching_items} images exceeded max of {max_matching_items}. "

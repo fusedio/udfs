@@ -1,11 +1,11 @@
-import geopandas as gpd
-from shapely import box
 
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds = [-122.549, 37.681, -122.341, 37.818]
+    bounds: fused.types.Bounds =[-143.184,7.090,-39.292,61.808]
 ):
     import palettable
+    import geopandas as gpd
+    from shapely import box
 
     # convert bounds to tile
     common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
@@ -29,4 +29,4 @@ def udf(
         colormap=palettable.scientific.sequential.LaJolla_20_r,
     )
 
-    return rgb_image
+    return rgb_image, bounds

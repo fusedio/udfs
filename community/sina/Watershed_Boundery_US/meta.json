@@ -48,27 +48,44 @@
                 ]
               }
             },
-            "fused:udfType": "vector_tile",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "Watershed_Boundery_US",
             "fused:name": "Watershed_Boundery_US",
-            "fused:id": null,
             "fused:defaultViewState": {
               "enable": true,
-              "latitude": 40.730981012032494,
-              "longitude": -73.77617446174428,
-              "zoom": 7.904403407182891,
+              "latitude": 40.712660598044785,
+              "longitude": -73.90554827890774,
+              "zoom": 8.943602312657054,
               "pitch": 0,
               "bearing": 0
             },
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Watershed_Boundery_US.png",
             "fused:gitRepo": "fusedio/udfs",
-            "fused:gitRef": "e7a06ccd5b404537f04b9121b4be1e850df411d4",
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/e7a06ccd5b404537f04b9121b4be1e850df411d4/public/Watershed_Boundery_US/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/e7a06cc/public/Watershed_Boundery_US/",
-            "fused:gitPath": "public/Watershed_Boundery_US",
-            "fused:gitLastModified": "2025-01-25T22:59:11.720Z",
+            "fused:gitRef": "c19a49eda87ac2e2aa3567470f4f67baaab4e797",
+            "fused:gitPath": "community/sina/Watershed_Boundery_US",
+            "fused:gitLastModified": "2025-07-29T22:09:45+00:00",
             "fused:gitPullRequestBranch": "sina_000002-patch-46038a-add-WatershedBounderyUS",
-            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/619"
+            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/619",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Watershed_Boundery_US.png",
+            "fused:description": "Exported from Fused UDF Workbench\n\n",
+            "fused:gitAuthorNames": [
+              null,
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "MaxLenormand",
+              "milind-soni"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/MaxLenormand",
+              "https://github.com/milind-soni"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
+            ],
+            "fused:explorerTab": "self",
+            "fused:userCreatedShareToken": "fsh_5AesHEQZmKHV9Endv4bZZZ",
+            "fused:id": null
           },
           "source": "Watershed_Boundery_US.py",
           "headers": []

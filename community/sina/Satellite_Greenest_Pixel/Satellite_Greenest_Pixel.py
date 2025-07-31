@@ -82,7 +82,7 @@ def udf(
 
     arr_scaled = arr * 1.0 * scale
     arr_scaled = np.clip(arr_scaled, 0, 255).astype("uint8")
-    return arr_scaled
+    return arr_scaled, bounds
     # TODO: color correction https://custom-scripts.sentinel-hub.com/custom-scripts/sentinel-2/poor_mans_atcor/
 
 

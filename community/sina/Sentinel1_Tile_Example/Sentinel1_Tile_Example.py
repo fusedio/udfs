@@ -1,8 +1,8 @@
 @fused.udf
-def udf(time_of_interest="2024-10-01/2024-12-10"):
+def udf(bounds: fused.types.Bounds = [4.65, 52.25, 4.85, 52.35], time_of_interest="2024-10-01/2024-12-10"):
     import geopandas as gpd
     import shapely
-    bounds = gpd.GeoDataFrame({}, geometry=[shapely.box(4.65, 52.25, 4.85, 52.35)])
+
     @fused.cache
     def get_data(bounds, time_of_interest):
         import odc.stac
@@ -15,7 +15,7 @@ def udf(time_of_interest="2024-10-01/2024-12-10"):
             )
         items = catalog.search(
             collections=["sentinel-1-grd"],
-            bbox=bounds.total_bounds,
+            bbox=bounds,
             datetime=time_of_interest,
             query=None,
         ).item_collection()
@@ -35,7 +35,7 @@ def udf(time_of_interest="2024-10-01/2024-12-10"):
                         crs="EPSG:3857",
                         bands=['vv'],
                         resolution=resolution,
-                        bbox=bounds.total_bounds,
+                        bbox=bounds,
                     ).astype(float)
                 return ds
             ds=fn(bounds,resolution, time_of_interest)
@@ -80,4 +80,4 @@ def udf(time_of_interest="2024-10-01/2024-12-10"):
     # return (image).astype('uint8'), bounds.total_bounds
     common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
 
-    return common.arr_to_plasma(image), bounds.total_bounds
+    return common.arr_to_plasma(image), bounds

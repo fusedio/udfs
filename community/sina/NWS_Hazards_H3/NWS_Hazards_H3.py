@@ -106,6 +106,7 @@ def add_rgb_cmap(gdf, key_field, cmap_dict):
     Returns:
     GeoDataFrame: The input GeoDataFrame with additional 'r', 'g', and 'b' columns.
     """
+    import pandas as pd
     
     gdf[["r", "g", "b"]] = gdf[key_field].apply(
         lambda key_field: pd.Series(cmap_dict.get(key_field, [255, 0, 255]))

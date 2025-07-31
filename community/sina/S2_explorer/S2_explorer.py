@@ -1,5 +1,5 @@
 def udf(
-    bounds: fused.types.Bounds = [-119.566,39.240,-119.494,39.300],
+    bounds: fused.types.Bounds = [-119.59, 39.24, -119.47, 39.30],
     provider="AWS",
     channels=["B11", "veg", "snow"],
     time_of_interest="2023-05-01/2023-09-13",
@@ -156,7 +156,7 @@ def udf(
         img_arr = np.stack([Ch0_agg, Ch1_agg, Ch2_agg])
         img_arr = np.array(img_arr, "float")
         print("array shape", img_arr.shape)
-        return np.array(np.clip(brightness * img_arr, 0, 252), "uint8")
+        return np.array(np.clip(brightness * img_arr, 0, 252), "uint8"), bounds
     else:
         Ch0_agg = np.percentile(ch_set[0], perc_arr[0], axis=0)
         print("max pixel:", np.max(Ch0_agg))
@@ -164,7 +164,7 @@ def udf(
         img_arr = np.array(Ch0_agg, "float")
         print("array shape", img_arr.shape)
         arr = np.array(np.clip(brightness * img_arr, 0, 255), "uint8")
-        return arr_to_cmap(arr, cmap=palette, norm_range=[0, 220])
+        return arr_to_cmap(arr, cmap=palette, norm_range=[0, 220]), bounds
 
 import fused
 import matplotlib.pyplot as plt

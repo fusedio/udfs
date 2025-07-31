@@ -1,5 +1,5 @@
 @fused.udf
-def udf(hex_res:int=11, path: str='s3://fused-asset/misc/nyc/TLC_2010_count_hourly_hex12.parquet', hourly=True):
+def udf(hex_res:int=10, path: str='s3://fused-asset/misc/nyc/TLC_2010_count_hourly_hex12.parquet', hourly=True):
     import h3
     import pandas as pd
     hex_res=min(hex_res,12)

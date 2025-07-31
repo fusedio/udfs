@@ -9,7 +9,7 @@ def udf(
     min_max=(0, 3000), 
 ):
     import json
-    import numpy as np
+    import numpy as np 
     import palettable
     from pystac_client import Client
 
@@ -95,7 +95,7 @@ def udf(
             max=min_max[1],
             colormap=palettable.scientific.sequential.Oslo_20,
         )
-        return rgb_image
+        return rgb_image , bounds
     elif z >= 8:
         print("Almost there! Please zoom in a bit more. 😀")
     else:

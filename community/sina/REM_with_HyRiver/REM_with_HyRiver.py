@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds=None):
+def udf(bounds= [-119.59, 39.24, -119.47, 39.30] ):
     import nest_asyncio
     import numpy as np
     import py3dep

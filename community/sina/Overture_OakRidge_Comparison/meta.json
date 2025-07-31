@@ -60,11 +60,11 @@
                 }
               }
             },
-            "fused:udfType": "auto",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "Overture_OakRidge_Comparison",
             "fused:name": "Overture_OakRidge_Comparison",
             "fused:gitPath": "community/sina/Overture_OakRidge_Comparison",
-            "fused:gitRef": "1d4c5fce4800eb1a498d1511d48831f2e9295555",
+            "fused:gitRef": "0b1a0450e5929456eb19e18b79fdaeb779dfb73f",
             "fused:gitAuthorNames": [
               null,
               null
@@ -81,7 +81,7 @@
               "https://avatars.githubusercontent.com/u/44133329?v=4",
               "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-07-30T01:01:18+00:00",
+            "fused:gitLastModified": "2025-07-30T08:29:34+00:00",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "plinio@fused.io-patch-update-url-v2",
             "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/398",
