@@ -48,26 +48,30 @@
                 ]
               }
             },
-            "fused:udfType": "vector_single",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "Sentinel1_Tile_Example",
             "fused:name": "Sentinel1_Tile_Example",
             "fused:defaultParameters": [],
             "fused:datasets": "Sentinel 2",
             "fused:gitPath": "community/sina/Sentinel1_Tile_Example",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:gitRef": "b603e4541b174b691fa03abd0443169a5962bb58",
             "fused:gitAuthorNames": [
+              null,
               null
             ],
             "fused:gitAuthorUsernames": [
-              "MaxLenormand"
+              "MaxLenormand",
+              "milind-soni"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
+              "https://github.com/MaxLenormand",
+              "https://github.com/milind-soni"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:gitLastModified": "2025-07-29T20:33:11+00:00",
             "fused:explorerTab": "self",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "milind-patch-eca47c-updated-bounds-for-UDF",
@@ -80,7 +84,6 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:assetUrl": null,
             "fused:tags": [
               {
                 "id": "usgs",

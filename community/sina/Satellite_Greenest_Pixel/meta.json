@@ -14,9 +14,9 @@
           "metadata": {
             "fused:defaultViewState": {
               "enable": true,
-              "latitude": 37.779237599648496,
-              "longitude": -122.41935901767579,
-              "zoom": 12.000000000259256,
+              "latitude": 37.77900389604087,
+              "longitude": -122.4195,
+              "zoom": 11.90833183741693,
               "pitch": 0,
               "bearing": 0
             },
@@ -61,26 +61,31 @@
                 ]
               }
             },
-            "fused:udfType": "auto",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "Satellite_Greenest_Pixel",
             "fused:name": "Satellite_Greenest_Pixel",
             "fused:gitPath": "community/sina/Satellite_Greenest_Pixel",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:gitRef": "a0af8a08f551bb30703b6f61463d17a4c929049a",
             "fused:gitAuthorNames": [
+              null,
               null
             ],
             "fused:gitAuthorUsernames": [
-              "MaxLenormand"
+              "MaxLenormand",
+              "milind-soni"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
+              "https://github.com/MaxLenormand",
+              "https://github.com/milind-soni"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:gitLastModified": "2025-07-29T16:43:41+00:00",
             "fused:explorerTab": "self",
             "fused:gitRepo": "fusedio/udfs",
+            "fused:userCreatedShareToken": "fsh_7HPkSFPuWBUguS9b0qpmPg",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/cuatrocienegas.png",
             "fused:tags": [
               {
@@ -101,7 +106,6 @@
               }
             ],
             "fused:description": "# Overview\n\nThis UDF is particularly useful for generating cloud-free, vegetation-optimized composite images from time series satellite data, which can be used for various remote sensing applications and analyses.\n\nIt first retrieves satellite imagery data from Microsoft's Planetary Computer based on specified parameters (collection, bands, time range, and query). It then processes the retrieved data to create a composite image using a selected method (max, median, or min) across the time series.\n\nThe function allows for flexibility in choosing the satellite data source (MODIS, Landsat, or Sentinel-2), specifying the area of interest (bounds), time range, and cloud cover constraints. It also provides options for customizing the output, such as the chip size and compositing method.\n\n# External links\n\n- [source](https://planetarycomputer.microsoft.com/dataset/)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Satellite_Greenest_Pixel\")\narr = fused.run(udf=udf, x=2915, y=6546, z=14)\narr\n```\n",
-            "fused:userCreatedShareToken": "fsh_7HPkSFPuWBUguS9b0qpmPg",
             "fused:id": null
           },
           "source": "Satellite_Greenest_Pixel.py",
