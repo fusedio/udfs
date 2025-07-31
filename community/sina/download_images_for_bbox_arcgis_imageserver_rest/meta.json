@@ -56,26 +56,7 @@
             "fused:udfType": "auto",
             "fused:slug": "download_images_for_bbox_arcgis_imageserver_rest",
             "fused:name": "download_images_for_bbox_arcgis_imageserver_rest",
-            "fused:gitPath": "community/sina/download_images_for_bbox_arcgis_imageserver_rest",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
-            "fused:description": "# Download Images from ArcGIS ImageServer for Bounding Box\n\nThis Fused UDF downloads images from an ArcGIS ImageServer REST service that intersect with a given geographical bounding box, preserving their original resolution and CRS. This is useful for downloading large areas while maintaining control over image pre-processing.\n\n## Description\n\nThe UDF accepts a bounding box (as a Fused `Bounds` object or GeoPackage file) and downloads intersecting images in parallel to a specified directory. The default example downloads images from GIS STMK's [REST interface](https://gis.stmk.gv.at/image/rest/services/OGD_DOP) for a small area in Austria covering a national park.\n\n## Hint\nAlso checkout the `create_cogs_from_tiffs_in_folder` UDF to create COGs from the downloaded images.\n",
-            "fused:gitAuthorNames": [
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
-            "fused:userCreatedShareToken": "fsh_45bsQ3j4KpOIEHAzupIHQu",
-            "fused:id": null
+            "fused:description": "# Download Images from ArcGIS ImageServer for Bounding Box\n\nThis Fused UDF downloads images from an ArcGIS ImageServer REST service that intersect with a given geographical bounding box, preserving their original resolution and CRS. This is useful for downloading large areas while maintaining control over image pre-processing.\n\n## Description\n\nThe UDF accepts a bounding box (as a Fused `Bounds` object or GeoPackage file) and downloads intersecting images in parallel to a specified directory. The default example downloads images from GIS STMK's [REST interface](https://gis.stmk.gv.at/image/rest/services/OGD_DOP) for a small area in Austria covering a national park.\n\n## Hint\nAlso checkout the `create_cogs_from_tiffs_in_folder` UDF to create COGs from the downloaded images.\n"
           },
           "source": "download_images_for_bbox_arcgis_imageserver_rest.py",
           "headers": []
