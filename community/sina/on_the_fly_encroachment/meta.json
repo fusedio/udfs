@@ -13,7 +13,7 @@
           "parameters": {},
           "metadata": {
             "fused:defaultViewState": {
-              "enable": false,
+              "enable": true,
               "latitude": 33.34143619460421,
               "longitude": -115.76413900940834,
               "zoom": 8.689762764512906,
@@ -69,14 +69,6 @@
               }
             },
             "fused:udfType": "vector_tile",
-            "fused:assetUrl": "https://fused-magic.s3.amazonaws.com/thumbnails/preview/fusedlabs/fusedudfs/encroachment_mapping/84877e0b-c56b-4a2d-b654-08c5d4237e59",
-            "fused:tags": [
-              {
-                "id": "vegetation_management_demo",
-                "label": "vegetation_management_demo"
-              }
-            ],
-            "fused:description": "## Overview\n\nJoin a Canopy Height Map and Power Lines into a simplified vegetation encroachment model\n",
             "fused:defaultParameters": [
               {
                 "parameter": "h_bucket_meters",
@@ -108,7 +100,15 @@
                 "type": "boolean",
                 "suggestedValues": []
               }
-            ]
+            ],
+            "fused:assetUrl": "https://fused-magic.s3.amazonaws.com/thumbnails/preview/fusedlabs/fusedudfs/encroachment_mapping/84877e0b-c56b-4a2d-b654-08c5d4237e59",
+            "fused:tags": [
+              {
+                "id": "vegetation_management_demo",
+                "label": "vegetation_management_demo"
+              }
+            ],
+            "fused:description": "## Overview\n\nJoin a Canopy Height Map and Power Lines into a simplified vegetation encroachment model\n"
           },
           "source": "on_the_fly_encroachment.py",
           "headers": []
