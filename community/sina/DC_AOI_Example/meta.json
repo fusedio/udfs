@@ -53,11 +53,11 @@
                 ]
               }
             },
-            "fused:udfType": "vector_single",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "DC_AOI_Example",
             "fused:name": "DC_AOI_Example",
             "fused:gitPath": "community/sina/DC_AOI_Example",
-            "fused:gitRef": "b2381e441cde201d55819168f7c5ba422869ef67",
+            "fused:gitRef": "5cce1cb833b21a163bfdbfa99d525d45e917aa8c",
             "fused:gitAuthorNames": [
               null,
               null
@@ -74,20 +74,12 @@
               "https://avatars.githubusercontent.com/u/44133329?v=4",
               "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-07-29T16:55:12+00:00",
+            "fused:gitLastModified": "2025-07-31T11:28:48+00:00",
             "fused:explorerTab": "self",
             "fused:gitRepo": "fusedio/udfs",
             "fused:userCreatedShareToken": "fsh_3uirIuScragFQJOve3sTZm",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DC_AOI_Example2.png",
             "fused:description": "Exported from Fused UDF Workbench\n\n",
-            "fused:defaultViewState": {
-              "enable": true,
-              "latitude": 38.89381838738696,
-              "longitude": -77.01457599999807,
-              "zoom": 10.25193925034004,
-              "pitch": 0,
-              "bearing": 0
-            },
             "fused:id": null
           },
           "source": "DC_AOI_Example.py",

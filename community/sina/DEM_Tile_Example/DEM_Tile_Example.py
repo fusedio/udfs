@@ -1,5 +1,5 @@
 def udf(
-    bounds: fused.types.Bounds = [-77.083,38.804,-76.969,38.983],
+    bounds: fused.types.Bounds = [-106.96156249817892,38.49642653503317,-104.18933702452173,40.14358900040209],
     provider: str = "MSPC"
 ):
     import odc.stac
@@ -62,4 +62,4 @@ def udf(
         max=3000,
         colormap=palettable.matplotlib.Viridis_20,
     )
-    return rgb_image
+    return rgb_image, bounds

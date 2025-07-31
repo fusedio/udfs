@@ -46,4 +46,4 @@ def udf(
         max=100,
         colormap=palettable.matplotlib.Viridis_20,
     )
-    return rgb_image
+    return rgb_image, bounds

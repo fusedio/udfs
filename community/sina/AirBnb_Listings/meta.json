@@ -30,7 +30,7 @@
                 "getFillColor": "@@=[properties.cnt*255/properties.val, properties.cnt*100/properties.val, properties.cnt*40/properties.val]"
               }
             },
-            "fused:udfType": "auto",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "AirBnb_Listings",
             "fused:name": "AirBnb_Listings",
             "fused:defaultViewState": {
@@ -42,7 +42,7 @@
               "bearing": 0
             },
             "fused:gitPath": "community/sina/AirBnb_Listings",
-            "fused:gitRef": "ad1afcfb692ebfaab980ae6fb239a18306d412ff",
+            "fused:gitRef": "5cce1cb833b21a163bfdbfa99d525d45e917aa8c",
             "fused:gitAuthorNames": [
               null,
               null
@@ -59,7 +59,7 @@
               "https://avatars.githubusercontent.com/u/44133329?v=4",
               "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-07-29T13:33:01+00:00",
+            "fused:gitLastModified": "2025-07-31T11:12:40+00:00",
             "fused:defaultParameters": [
               {
                 "parameter": "city",
@@ -88,23 +88,26 @@
                 ]
               }
             ],
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:userCreatedShareToken": "fsh_4SEcdvJs6m1M88CvbaSC1u",
             "fused:assetUrl": "https://www.geomermaids.com/wp-content/uploads/2024/04/airbnb_new_orleans.png",
             "fused:tags": [
               {
-                "id": "H3-vector",
-                "label": "H3-vector"
+                "id": "h3-vector",
+                "label": "h3-vector"
               },
               {
                 "id": "airbnb",
                 "label": "airbnb"
               },
               {
-                "id": "Aggregation",
-                "label": "Aggregation"
+                "id": "aggregation",
+                "label": "aggregation"
               },
               {
-                "id": "DuckDB",
-                "label": "DuckDB"
+                "id": "duckdb",
+                "label": "duckdb"
               },
               {
                 "id": "csv",
@@ -112,9 +115,6 @@
               }
             ],
             "fused:description": "## Overview\n\nInteractive AirBnB offer map, generated from the data located at https://insideairbnb.com/get-the-data/\n",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
-            "fused:userCreatedShareToken": "fsh_4SEcdvJs6m1M88CvbaSC1u",
             "fused:id": null
           },
           "source": "AirBnb_Listings.py",

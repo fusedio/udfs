@@ -25,4 +25,4 @@ def udf(bounds: fused.types.Bounds=[-77.083,38.849,-76.969,38.938], time_of_inte
 
     # create a geom mask
     geom_mask = common.gdf_to_mask_arr(gdf_w_bounds, arr.shape[-2:], first_n=1)    
-    return np.ma.masked_array(arr, [geom_mask]*arr.shape[0])
+    return np.ma.masked_array(arr, [geom_mask]*arr.shape[0]), bounds
