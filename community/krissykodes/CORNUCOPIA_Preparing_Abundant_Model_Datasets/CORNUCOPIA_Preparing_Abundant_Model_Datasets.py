@@ -14,7 +14,7 @@ def udf():
 
 
     common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
-    con = common.duckdb_connect()
+    con = duckdb.connect()  
     
     @fused.cache
     def load_sif_data():

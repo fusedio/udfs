@@ -4,11 +4,10 @@ def udf(bbox=None, resolution: int = 9, min_count: int = 10):
     import duckdb
     import shapely
     import geopandas as gpd
-
     common = fused.load("https://github.com/fusedio/udfs/tree/6e8abb9/public/common/")
-    con = common.duckdb_connect()
+    con = duckdb.connect()
 
-    con.sql(f"""INSTALL httpfs; LOAD httpfs;""")
+    con.sql(f"""INSTALL httpfs; LOAD httpfs;""") 
     
     @fused.cache
     def read_data(url, resolution, min_count):

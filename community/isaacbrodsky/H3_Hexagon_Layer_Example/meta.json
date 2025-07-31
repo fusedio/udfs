@@ -39,7 +39,6 @@
             "fused:udfType": "auto",
             "fused:slug": "H3_Hexagon_Layer_Example",
             "fused:name": "H3_Hexagon_Layer_Example",
-            "fused:id": null,
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 40.746878986881775,
@@ -49,6 +48,24 @@
               "bearing": -13.670886075949367
             },
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/H3_Hexagon_Layer_Example.png",
+            "fused:tags": [
+              {
+                "id": "Aggregation",
+                "label": "Aggregation"
+              },
+              {
+                "id": "H3-polygon",
+                "label": "H3-polygon"
+              },
+              {
+                "id": "NYC Open Data",
+                "label": "NYC Open Data"
+              },
+              {
+                "id": "parquet",
+                "label": "parquet"
+              }
+            ],
             "fused:description": "## Overview\n\nThis UDF shows how to open NYC yellow taxi trip dataset using DuckDB and aggregate the pickups using [H3-DuckDB](https://github.com/isaacbrodsky/h3-duckdb). Results are visualized as [hexagons](https://deck.gl/docs/api-reference/geo-layers/h3-hexagon-layer).\n\n## External links\n\n- [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/H3_Hexagon_Layer_Example\")\ngdf = fused.run(udf=udf)\ngdf\n```\n"
           },
           "source": "H3_Hexagon_Layer_Example.py",
