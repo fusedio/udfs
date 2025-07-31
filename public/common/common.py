@@ -2412,7 +2412,7 @@ def df_to_h3(df, res, latlng_cols=("lat", "lng"), ordered=False):
 def arr_to_h3(arr, bounds, res, ordered=False):
     return df_to_h3(arr_to_latlng(arr, bounds), res=res, ordered=ordered)
 
-def duckdb_connect(verbose=False, home_directory='/tmp/duckdb'):
+def duckdb_connect(verbose=False, home_directory='/tmp/duckdb/'):
     import os
     os.makedirs(home_directory, exist_ok=True)
     import duckdb 
