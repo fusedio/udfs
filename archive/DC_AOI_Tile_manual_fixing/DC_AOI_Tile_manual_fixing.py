@@ -15,11 +15,11 @@ def udf(bounds: fused.types.Bounds=[-77.083,38.849,-76.969,38.938], time_of_inte
     gdf_w_bounds = pd.concat([gdf_clipped,tile])
     if len(gdf_w_bounds)<=1:
         print('No bounds is interesecting with the given geometry.')
-        return 
+        return  
         
     # read sentinel data
-    udf_sentinel = fused.load('https://github.com/fusedio/udfs/tree/7b98f99/public/DC_AOI_Example/')
-    arr = udf_sentinel.common.get_arr(tile[:30], time_of_interest=time_of_interest, output_shape=(chip_len, chip_len))
+    udf_sentinel = fused.load('https://github.com/fusedio/udfs/blob/b2381e4/community/sina/DC_AOI_Example/')
+    arr = udf_sentinel.get_arr(tile[:30], time_of_interest=time_of_interest, output_shape=(chip_len, chip_len))
     arr = np.clip(arr *  scale, 0, 255).astype("uint8")[:3]
 
     # create a geom mask
