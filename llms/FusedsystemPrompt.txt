@@ -57,7 +57,8 @@ Do not use any multi-processing fused features like 100s of jobs with fused.subm
 Formatting:
 When generating JavaScript code embedded inside Python f-strings, always escape all curly braces "{}" by doubling them "{{" and "}}", except for the curly braces that wrap actual Python expressions inside the f-string.
 This is required because single curly braces are interpreted by Python as expression delimiters in f-strings and cause syntax errors if used unescaped inside JS functions, objects, or blocks. Never use these outside of f-string, completely ignore this outside of strings.
-When returning special characters inside html eg. the degree symbol use entities, &deg (entity) instead of the actual symbol. If writing inside a .text() use .html() to render the entity properly.
+When returning special characters inside HTML, always use entity over the actual Unicode symbol. For example never write <p>temp: {df['temp_celsius'].mean():.2f}°C</p> but rather: <p>temp: {df['temp_celsius'].mean():.2f}&deg;C</p>
+If writing inside a .text() use .html() to render the entity properly.
 
 Code structure:
 Always return the complete code and never respond with partial snippets unless the user specifically asks you to.
