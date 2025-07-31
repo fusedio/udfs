@@ -14,12 +14,6 @@
           "metadata": {
             "fused:name": "CloudKitchens",
             "fused:slug": "CloudKitchens",
-            "fused:gitRepo": "fusedio/udfs",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
-            "fused:gitPath": "community/fhk/CloudKitchens",
-            "fused:gitLastModified": "2024-11-03T00:40:00+00:00",
-            "fused:gitPullRequestBranch": "fabion@pozibl.com-patch-clean",
-            "fused:gitPullRequestLink": "https://github.com/pozibl/fused_utils/pull/6",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -62,21 +56,6 @@
               }
             },
             "fused:udfType": "vector_single",
-            "fused:description": "Exported from Fused UDF Workbench\n\n",
-            "fused:gitAuthorNames": [
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "kashuk"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/kashuk"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/12432685?v=4"
-            ],
-            "fused:explorerTab": "self",
-            "fused:userCreatedShareToken": "fsh_5dd1Npk4JjxUSHOZc8CRRg",
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 37.69291296645745,
@@ -85,7 +64,7 @@
               "pitch": 23.639284582170944,
               "bearing": 42.461732174600044
             },
-            "fused:id": null
+            "fused:description": "Exported from Fused UDF Workbench\n\n"
           },
           "source": "CloudKitchens.py",
           "headers": []
