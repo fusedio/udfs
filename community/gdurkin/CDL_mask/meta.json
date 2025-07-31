@@ -102,33 +102,13 @@
               }
             ],
             "fused:defaultViewState": {
-              "enable": false,
-              "latitude": 37.87977092640186,
-              "longitude": -121.24227271927563,
-              "zoom": 9.474375639374612,
+              "enable": true,
+              "latitude": 34.91548145562223,
+              "longitude": -120.44285,
+              "zoom": 11.825546403753485,
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitPath": "community/gdurkin/CDL_mask",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
-            "fused:gitAuthorNames": [
-              null,
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "gdurkin",
-              "pgzmnk"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/gdurkin",
-              "https://github.com/pgzmnk"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/8119745?v=4",
-              "https://avatars.githubusercontent.com/u/27398253?v=4"
-            ],
-            "fused:gitLastModified": "2024-07-30T19:49:03+00:00",
-            "fused:explorerTab": "self",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/CDLS_Tile_Example.png",
             "fused:tags": [
               {
@@ -152,9 +132,7 @@
                 "label": "30-meter"
               }
             ],
-            "fused:description": "# Overview\n\nThis UDF shows how to open [Cropland Data Layer](https://www.nass.usda.gov/Research_and_Science/Cropland/SARS1a.php) (CDL) tiff files. The CDL is a categorical land cover dataset that provides information about the types of crops and land cover on agricultural lands in the United States. The CDL is produced by the United States Department of Agriculture (USDA) National Agricultural Statistics Service (NASS) on an annual basis.\n\n# External links\n\n- [Original Download Links](https://www.nass.usda.gov/Research_and_Science/Cropland/Release/index.php)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/CDLs_Tile_Example\")\narr = fused.run(udf=udf, x=9646, y=12321, z=15)\narr\n```\n",
-            "fused:gitRepo": "fusedio/udfs",
-            "fused:id": null
+            "fused:description": "# Overview\n\nThis UDF shows how to open [Cropland Data Layer](https://www.nass.usda.gov/Research_and_Science/Cropland/SARS1a.php) (CDL) tiff files. The CDL is a categorical land cover dataset that provides information about the types of crops and land cover on agricultural lands in the United States. The CDL is produced by the United States Department of Agriculture (USDA) National Agricultural Statistics Service (NASS) on an annual basis.\n\n# External links\n\n- [Original Download Links](https://www.nass.usda.gov/Research_and_Science/Cropland/Release/index.php)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/CDLs_Tile_Example\")\narr = fused.run(udf=udf, x=9646, y=12321, z=15)\narr\n```\n"
           },
           "source": "CDL_mask.py",
           "headers": []
