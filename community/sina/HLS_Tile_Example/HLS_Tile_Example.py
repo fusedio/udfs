@@ -6,7 +6,7 @@ def udf(
     date_range="2023-10/2024-01",
     max_cloud_cover=25,
     n_mosaic=5,
-    min_max=(0, 3000),
+    min_max=(0, 3000), 
 ):
     import json
     import numpy as np
