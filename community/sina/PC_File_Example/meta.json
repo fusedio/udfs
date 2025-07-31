@@ -21,24 +21,31 @@
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/PC_File_Example.png",
             "fused:tags": [
               {
-                "id": "Hillshade",
-                "label": "Hillshade"
-              },
-              {
-                "id": "Rasterio",
-                "label": "Rasterio"
+                "id": "STAC",
+                "label": "STAC"
               },
               {
                 "id": "MSFT-PC",
                 "label": "MSFT-PC"
               },
               {
-                "id": "STAC",
-                "label": "STAC"
+                "id": "Rasterio",
+                "label": "Rasterio"
+              },
+              {
+                "id": "Hillshade",
+                "label": "Hillshade"
               }
             ],
-            "fused:description": "# Overview\n\nThis udf uses Xarray-Spatial's surface tools on Planetary Computer data to quantify and visualize terrain landform data from the NASADEM digital elevation model for McMinnville, Tennessee.\n\n# External links\n\n- [source](https://github.com/microsoft/PlanetaryComputerExamples/blob/main/tutorials/surface_analysis.ipynb)",
-            "fused:id": null
+            "fused:description": "# Overview\n\nThis udf uses Xarray-Spatial's surface tools on Planetary Computer data to quantify and visualize terrain landform data from the NASADEM digital elevation model for McMinnville, Tennessee.\n\n# External links\n\n- [source](https://github.com/microsoft/PlanetaryComputerExamples/blob/main/tutorials/surface_analysis.ipynb)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/PC_File_Example\")\narr = fused.run(udf=udf)\narr\n```\n",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 35.501685590703964,
+              "longitude": -85.50013889106128,
+              "zoom": 8.029274502251173,
+              "pitch": 0,
+              "bearing": 0
+            }
           },
           "source": "PC_File_Example.py",
           "headers": []
