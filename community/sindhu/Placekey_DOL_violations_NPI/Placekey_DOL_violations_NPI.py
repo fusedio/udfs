@@ -10,7 +10,7 @@ def udf(bounds: fused.types.Bounds, preview: bool=False):
     df2 = get_placekeyd_dataset(bounds, "department-of-labor-wage-and-hour-compliance")
 
     #join the datasets on placekey
-    return placekey_merge(df1, df2)
+    return placekey_merge(df1, df2) 
 
 
 @fused.cache
