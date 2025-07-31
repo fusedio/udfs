@@ -53,25 +53,6 @@
             "fused:name": "Sentinel_Tile_Example",
             "fused:defaultParameters": [],
             "fused:datasets": "Sentinel 2",
-            "fused:gitPath": "community/sina/Sentinel_Tile_Example",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
-            "fused:gitAuthorNames": [
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
-            "fused:gitPullRequestBranch": "max@fused.io-patch-Fixing-min-resolution-requireme",
-            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/372",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Sentinel_Tile_Example.png",
             "fused:tags": [
               {
@@ -85,7 +66,14 @@
             ],
             "fused:description": "### Overview [link](https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a)\nThe [Sentinel-2](https://sentinel.esa.int/web/sentinel/missions/sentinel-2) program provides global imagery in thirteen spectral bands at 10m-60m resolution and a revisit time of approximately five days. This dataset represents the global Sentinel-2 archive, from 2016 to the present, processed to L2A (bottom-of-atmosphere) using Sen2Cor and converted to cloud-optimized GeoTIFF format.\n\n### External links\n* [Reference](https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a)\n* [AWS Earth Search STAC](https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a)\n* [Microsoft Planetary Computer STAC](https://planetarycomputer.microsoft.com/api/stac/v1/collections/sentinel-2-l2a)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/Sentinel_Tile_Example\")\narr = fused.run(udf, x=5241, y=12667, z=15)\narr\n```\n",
             "fused:explorerPin": "14",
-            "fused:id": null
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 52.29669473963622,
+              "longitude": 4.74874028550846,
+              "zoom": 10.846603257649459,
+              "pitch": 0,
+              "bearing": 0
+            }
           },
           "source": "Sentinel_Tile_Example.py",
           "headers": []
