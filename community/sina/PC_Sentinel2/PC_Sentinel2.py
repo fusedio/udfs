@@ -61,4 +61,4 @@ def udf(
         np.uint8
     )
 
-    return arr
+    return arr,bounds
