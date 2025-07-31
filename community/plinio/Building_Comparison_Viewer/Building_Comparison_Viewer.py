@@ -7,10 +7,11 @@ def udf():
     import shapely
     import h3
     import json
+    import duckdb
     from shapely.geometry import Polygon
     import numpy as np
     common = fused.load("https://github.com/fusedio/udfs/tree/6e8abb9/public/common/")
-    con = common.duckdb_connect()
+    con = duckdb.connect()
     h3_size=8
     
     # 1. Load data from output directories
