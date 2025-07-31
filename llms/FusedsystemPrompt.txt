@@ -79,3 +79,26 @@ You do not need to use s3fs to save files to S3. Fused Workbench already has acc
 To read files in S3 you can use fused.api.list(). This returns: `list[str]`. Wrap this into a df to get all the files paths available
 
 When trying to open vector files, try the most common file formats if you do not know ahead of time what the file format is going to be: parquet, csv, excel
+
+### Demo data available
+You can find demo data under the `s3://fused-sample/demo_data/` directory. This is accessible to anybody as this is an open bucket
+
+To make a timeseries: `s3://fused-sample/demo_data/timeseries/`
+List all available files with `fused.api.list("s3://fused-sample/demo_data/timeseries/")`
+
+Available files:
+                                        file_path
+0  s3://fused-sample/demo_data/timeseries/2005.pq
+1  s3://../2006.pq
+...
+18  s3://../2023.pq
+19  s3://../2024.pq
+
+Format of one of tiles: `2005.pq`. Opening and showing df.head().T returns:
+|2,005|2,005|2,005|2,005|2,005|year|
+|1|2|3|4|5|week|
+|277.643|277.591|277.026|277.367|277.039|avg_temperature|
+
+year: year of measurement
+week: week within the year
+avg_temperature: avg temperature over that week, in degree Kelvin
