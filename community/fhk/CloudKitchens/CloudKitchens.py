@@ -6,8 +6,7 @@ def udf(locations: pd.DataFrame = None, h3_res: int = 11, distance: int = 10):
     import geopandas as gpd
     import shapely
     from shapely.geometry import Polygon, MultiPolygon
-    common = fused.load("https://github.com/fusedio/udfs/tree/3f26eef/public/common/")
-
+    common = fused.load("https://github.com/fusedio/udfs/tree/3670b6b/public/common/")
     import duckdb
     con = common.duckdb_connect()
 
@@ -17,14 +16,14 @@ def udf(locations: pd.DataFrame = None, h3_res: int = 11, distance: int = 10):
     df['geometry'] = df.apply(lambda x: get_isochrone(x['x'], x['y'], costing="auto", time_steps=[distance]), axis=1)
     
     gdf = gpd.GeoDataFrame(df, geometry='geometry')
-    con.sql("LOAD httpfs; LOAD spatial;")
+    con.sql("LOAD httpfs; LOAD spatial;") 
     if len(df) > 0:
         gdf['wkt'] = gdf.geometry.to_wkt()
 
         del gdf['geometry']
         print(gdf)
         con.sql("CREATE TABLE my_table AS SELECT * FROM gdf")
-        df = con.sql(f"""WITH cells AS (SELECT  \
+        df = con.sql(f"""WITH cells AS (SELECT  
                     DISTINCT(UNNEST(h3_polygon_wkt_to_cells(wkt, {h3_res}))) cell_id
                    FROM my_table),
                    h3_smooth AS (
@@ -39,33 +38,6 @@ def udf(locations: pd.DataFrame = None, h3_res: int = 11, distance: int = 10):
         df = gpd.GeoDataFrame(df, geometry='geometry')
 
     return df
-
-
-
-def duckdb_with_h3(extra_config=None, extra_connect_args=None):
-    import duckdb
-
-    con = duckdb.connect(
-        config={
-            "allow_unsigned_extensions": True,
-            **(extra_config if extra_config is not None else {}),
-        },
-        **(extra_connect_args if extra_connect_args is not None else {}),
-    )
-    load_h3_duckdb(con)
-    return con
-
-
-def load_h3_duckdb(con):
-    import duckdb
-
-    new_home_path = fused.core.create_path(f"duckdb/{duckdb.__version__}/")
-    con.sql(f"SET home_directory='{new_home_path}';")
-    con.sql("INSTALL spatial; INSTALL httpfs")
-    con.sql("INSTALL h3 FROM 'https://pub-cc26a6fd5d8240078bd0c2e0623393a5.r2.dev';")
-    con.sql("LOAD h3;")
-
-import fused
 
 
 @fused.cache
