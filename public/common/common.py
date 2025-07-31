@@ -831,7 +831,7 @@ def table_to_tile(
 
     version = "0.2.3"
     tile = get_tiles(bounds)
-
+    bounds_gdf = to_gdf(bounds)
     try:
         x, y, z = tile[["x", "y", "z"]].iloc[0]
         if print_xyz:
@@ -875,7 +875,7 @@ def table_to_tile(
         ):  # switch to centroid for the last one zoom level before showing metadata
             df.geometry = df.geometry.centroid
         if clip:
-            return df.clip(tile).explode()
+            return df.clip(bounds_gdf.geometry[0]).explode()
         else:
             return df
     else:
