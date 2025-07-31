@@ -2416,7 +2416,7 @@ def duckdb_connect(verbose=False, home_directory='/tmp/duckdb'):
     import os
     os.makedirs(home_directory, exist_ok=True)
     import duckdb 
-    @fused.cache(storage='local')
+    @fused.cache(cache_storage='local')
     def install(home_directory):
         con = duckdb.connect()
         con.sql(
