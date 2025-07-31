@@ -152,11 +152,11 @@
                 "elevationScale": 10
               }
             },
-            "fused:udfType": "vector_tile",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "Invasive_Species_Hotspot",
             "fused:name": "Invasive_Species_Hotspot",
             "fused:defaultViewState": {
-              "enable": true,
+              "enable": false,
               "latitude": 37.550183916165025,
               "longitude": -122.26785932585092,
               "zoom": 12.671829017615035,
@@ -164,20 +164,24 @@
               "bearing": -163.97661346157315
             },
             "fused:gitPath": "community/sina/Invasive_Species_Hotspot",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:gitRef": "60869555d01a6323ba7bd85573c021412c5ee7e2",
             "fused:gitAuthorNames": [
+              null,
               null
             ],
             "fused:gitAuthorUsernames": [
-              "MaxLenormand"
+              "MaxLenormand",
+              "milind-soni"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
+              "https://github.com/MaxLenormand",
+              "https://github.com/milind-soni"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:gitLastModified": "2025-07-29T19:28:57+00:00",
             "fused:gitRepo": "fusedio/udfs",
             "fused:explorerTab": "self",
             "fused:gitPullRequestBranch": "plinio-patch-022b92-Update-comment-on-hotspot-udf",

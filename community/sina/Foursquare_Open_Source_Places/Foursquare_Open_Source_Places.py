@@ -1,20 +1,20 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds,
+    bounds: fused.types.Bounds = [-122.43021262458805,37.784599909261026,-122.39510368982017,37.81320400189578],
     release: str = "2024-11-19",
     min_zoom: int = 6,
     use_columns: list = ["geometry", "name", "fsq_category_ids"],
 ):
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3ac8eaf/public/common/")
 
     path = f"s3://us-west-2.opendata.source.coop/fused/fsq-os-places/{release}/places/"
     df = common.table_to_tile(
-        bounds, table=path, min_zoom=min_zoom, use_columns=use_columns
+        bounds, table=path, min_zoom=min_zoom, use_columns=use_columns, clip = True
     )
 
     df = join_fsq_categories(df, release=release)
-
+ 
     return df
 
 

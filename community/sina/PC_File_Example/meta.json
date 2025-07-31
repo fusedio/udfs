@@ -15,37 +15,59 @@
             "fused:vizConfig": {
               "@@type": "BitmapLayer"
             },
-            "fused:udfType": "raster_single",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "PC_File_Example",
             "fused:name": "PC_File_Example",
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/PC_File_Example.png",
-            "fused:tags": [
-              {
-                "id": "STAC",
-                "label": "STAC"
-              },
-              {
-                "id": "MSFT-PC",
-                "label": "MSFT-PC"
-              },
-              {
-                "id": "Rasterio",
-                "label": "Rasterio"
-              },
-              {
-                "id": "Hillshade",
-                "label": "Hillshade"
-              }
-            ],
-            "fused:description": "# Overview\n\nThis udf uses Xarray-Spatial's surface tools on Planetary Computer data to quantify and visualize terrain landform data from the NASADEM digital elevation model for McMinnville, Tennessee.\n\n# External links\n\n- [source](https://github.com/microsoft/PlanetaryComputerExamples/blob/main/tutorials/surface_analysis.ipynb)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/PC_File_Example\")\narr = fused.run(udf=udf)\narr\n```\n",
             "fused:defaultViewState": {
               "enable": true,
-              "latitude": 35.501685590703964,
-              "longitude": -85.50013889106128,
+              "latitude": 35.52362449812721,
+              "longitude": -86.01688986032083,
               "zoom": 8.029274502251173,
               "pitch": 0,
               "bearing": 0
-            }
+            },
+            "fused:gitPath": "community/sina/PC_File_Example",
+            "fused:gitRef": "6355a1aaf8662a91981f8c8b926d0c27073420fd",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/PC_File_Example.png",
+            "fused:tags": [
+              {
+                "id": "stac",
+                "label": "stac"
+              },
+              {
+                "id": "msft-pc",
+                "label": "msft-pc"
+              },
+              {
+                "id": "rasterio",
+                "label": "rasterio"
+              },
+              {
+                "id": "hillshade",
+                "label": "hillshade"
+              }
+            ],
+            "fused:description": "# Overview\n\nThis udf uses Xarray-Spatial's surface tools on Planetary Computer data to quantify and visualize terrain landform data from the NASADEM digital elevation model for McMinnville, Tennessee.\n\n# External links\n\n- [source](https://github.com/microsoft/PlanetaryComputerExamples/blob/main/tutorials/surface_analysis.ipynb)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/PC_File_Example\")\narr = fused.run(udf=udf)\narr\n```\n",
+            "fused:gitAuthorNames": [
+              null,
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "MaxLenormand",
+              "milind-soni"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/MaxLenormand",
+              "https://github.com/milind-soni"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
+            ],
+            "fused:gitLastModified": "2025-07-31T12:11:58+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:id": null
           },
           "source": "PC_File_Example.py",
           "headers": []

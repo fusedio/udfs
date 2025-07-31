@@ -17,9 +17,9 @@ def udf(
 
     ds = xr.open_zarr("gs://fused_public/zarr/wri_cmip6_median_ssp585.zarr")
 
-    if tile["z"].iloc[0] < 1:
-        print("z less than 1")
-        return
+    # if tile["z"].iloc[0] < 1:
+    #     print("z less than 1")
+    #     return
 
     minx, miny, maxx, maxy = bounds
     variable_names = list(ds.data_vars)
@@ -57,4 +57,4 @@ def udf(
     arr = common.arr_to_plasma(
         masked_data, min_max=(valid_min, valid_max), colormap="RdYlBu"
     )
-    return arr
+    return arr, bounds

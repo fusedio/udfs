@@ -48,7 +48,7 @@
                 ]
               }
             },
-            "fused:udfType": "vector_single",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "Get_Isochrone",
             "fused:name": "Get_Isochrone",
             "fused:defaultParameters": [

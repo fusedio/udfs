@@ -1,6 +1,6 @@
 # Ref: https://github.com/microsoft/PlanetaryComputerExamples/blob/main/tutorials/surface_analysis.ipynb
 @fused.udf
-def udf():
+def udf(bounds: fused.types.Bounds = [-86.23623988112621,35.11513233659201,-84.76403790099684,35.886387427376675]):
     import numba
 
     numba.config.CACHE_DIR = "/tmp/numba_cache"
@@ -20,8 +20,8 @@ def udf():
         modifier=planetary_computer.sign_inplace,
     )
 
-    point = {"type": "Point", "coordinates": [-85.990693, 35.718427]}
-    search = catalog.search(collections=["nasadem"], intersects=point, limit=5)
+    # Use bounds instead of point
+    search = catalog.search(collections=["nasadem"], bbox=bounds, limit=5)
     nasadem_item = next(search.items())
     elevation_raster = stackstac.stack(
         [nasadem_item.to_dict()],
@@ -30,16 +30,9 @@ def udf():
         chunksize=2048,
     ).squeeze()
 
-    # get full extent of raster
-    full_extent = (
-        elevation_raster.coords["x"].min().item(),
-        elevation_raster.coords["y"].min().item(),
-        elevation_raster.coords["x"].max().item(),
-        elevation_raster.coords["y"].max().item(),
-    )
-    # get ranges
-    x_range = (full_extent[0], full_extent[2])
-    y_range = (full_extent[1], full_extent[3])
+    # Use the bounds directly for the extent
+    x_range = (bounds[0], bounds[2])
+    y_range = (bounds[1], bounds[3])
 
     # set width and height
     W = 300
@@ -61,4 +54,4 @@ def udf():
     )
     terrain_img = shade(elevation_small, cmap=Elevation, alpha=100, how="linear")
     da_final = stack(hillshade_img, terrain_img)
-    return da_final
+    return da_final, bounds

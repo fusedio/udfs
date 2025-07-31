@@ -48,7 +48,7 @@
                 ]
               }
             },
-            "fused:udfType": "vector_single",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "REM_with_HyRiver",
             "fused:name": "REM_with_HyRiver",
             "fused:defaultViewState": {
@@ -60,7 +60,26 @@
               "bearing": 0
             },
             "fused:gitPath": "community/sina/REM_with_HyRiver",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:gitRef": "0b1a0450e5929456eb19e18b79fdaeb779dfb73f",
+            "fused:gitAuthorNames": [
+              null,
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "MaxLenormand",
+              "milind-soni"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/MaxLenormand",
+              "https://github.com/milind-soni"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
+            ],
+            "fused:gitLastModified": "2025-07-30T08:29:34+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/REM_with_HyRiver.png",
             "fused:tags": [
               {
@@ -81,21 +100,6 @@
               }
             ],
             "fused:description": "## Overview\n\nHeight Above River (HAR) rasters, also known as Relative Elevation Models, are normalized rasters created by detrending a DEM and then subtracting this from the bare-earth DEM. These models facilitate the visualization of fluvial landforms, which might be difficult to identify using only an aerial image or a standard DEM. This UDF computes REM for a segment of Carson River and visualizes the results using `xarray-spatial` and `datashader`.\n\nWe use HyRiver software stack to download the required Digital Elevation Model (DEM) and river flowlines within a bounding box.\n\n## External links\n\n- [HyRiver](https://docs.hyriver.io/)\n- [REM](https://wadnr.maps.arcgis.com/apps/Cascade/index.html?appid=36b4887370d141fcbb35392f996c82d9)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/REM_with_HyRiver\")\nimg = fused.run(udf=udf)\nimg\n```\n",
-            "fused:gitAuthorNames": [
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
             "fused:id": null
           },
           "source": "REM_with_HyRiver.py",

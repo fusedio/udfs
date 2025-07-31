@@ -45,52 +45,39 @@
             "fused:udfType": "auto",
             "fused:slug": "Overture_East_Asian_Buildings_IOU",
             "fused:name": "Overture_East_Asian_Buildings_IOU",
-            "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/4cf590ab3d93f3b9d0d216facfe0390389a145d0/public/Overture_East_Asian_Buildings_IOU/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/4cf590a/public/Overture_East_Asian_Buildings_IOU/",
-            "fused:gitPath": "public/Overture_East_Asian_Buildings_IOU",
-            "fused:gitRef": "4cf590ab3d93f3b9d0d216facfe0390389a145d0",
+            "fused:gitPath": "community/sina/Overture_East_Asian_Buildings_IOU",
+            "fused:gitRef": "c19a49eda87ac2e2aa3567470f4f67baaab4e797",
             "fused:gitAuthorNames": [
-              "Plinio Guzman",
-              "Isaac Brodsky",
-              "Suryashankar Das",
-              "Suryashankar Das",
-              "Milind Soni"
+              null,
+              null
             ],
             "fused:gitAuthorUsernames": [
-              "pgzmnk",
-              "isaacbrodsky",
-              "iamsdas-fused",
-              "iamsdas",
+              "MaxLenormand",
               "milind-soni"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/pgzmnk",
-              "https://github.com/isaacbrodsky",
-              "https://github.com/iamsdas-fused",
-              "https://github.com/iamsdas",
+              "https://github.com/MaxLenormand",
               "https://github.com/milind-soni"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/27398253?v=4",
-              "https://avatars.githubusercontent.com/u/9139378?v=4",
-              "https://avatars.githubusercontent.com/u/200643783?v=4",
-              "https://avatars.githubusercontent.com/u/26461855?v=4",
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
               "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-03-07T09:19:42+00:00",
+            "fused:gitLastModified": "2025-07-29T22:09:45+00:00",
             "fused:gitRepo": "fusedio/udfs",
             "fused:defaultViewState": {
               "enable": true,
-              "latitude": 31.22901878458391,
-              "longitude": 121.46146153018861,
-              "zoom": 16.484759096971484,
+              "latitude": 31.229720259398054,
+              "longitude": 121.45551683640763,
+              "zoom": 15.590665567960334,
               "pitch": 42.284710017574696,
               "bearing": 0.3797829912048632
             },
+            "fused:explorerTab": "self",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/overture_iou.png",
             "fused:description": "# IOU Between Overture and East Asian Buildings\n\nCalculates the Intersection over Union (IOU) ratio between Overture Buildings and the East Asian Buildings dataset (https://zenodo.org/records/8174931) by leveraging hex-based discretization of geometries. This UDF is compares the ratio between overlapping and non-overlapping regions of buildings and can be used to quantify overlap between buildings in each dataset, detect discrepancies, or evaluating changes.\n\n- Blue is the `intersection`\n- Red is the `symmetric_difference`\n- Height, for each Overture Building, is based on the intersection over union score\n",
-            "fused:explorerTab": "public"
+            "fused:userCreatedShareToken": "fsh_7c0MvUPz3VA2IJ2GUIXGhU",
+            "fused:id": null
           },
           "source": "Overture_East_Asian_Buildings_IOU.py",
           "headers": []

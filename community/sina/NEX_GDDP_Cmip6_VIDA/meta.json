@@ -115,11 +115,11 @@
                 }
               }
             },
-            "fused:udfType": "auto",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "NEX_GDDP_Cmip6_VIDA",
             "fused:name": "NEX_GDDP_Cmip6_VIDA",
             "fused:gitPath": "community/sina/NEX_GDDP_Cmip6_VIDA",
-            "fused:gitRef": "c19a49eda87ac2e2aa3567470f4f67baaab4e797",
+            "fused:gitRef": "0b1a0450e5929456eb19e18b79fdaeb779dfb73f",
             "fused:gitAuthorNames": [
               null,
               null
@@ -136,17 +136,18 @@
               "https://avatars.githubusercontent.com/u/44133329?v=4",
               "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-07-29T22:09:45+00:00",
+            "fused:gitLastModified": "2025-07-30T08:29:34+00:00",
             "fused:explorerTab": "self",
             "fused:gitRepo": "fusedio/udfs",
             "fused:defaultViewState": {
-              "enable": true,
+              "enable": false,
               "latitude": 20.343124974837764,
               "longitude": 80.70852883009755,
               "zoom": 3.3714329917980885,
               "pitch": 0,
               "bearing": 0
             },
+            "fused:userCreatedShareToken": "fsh_7eVqJKkovwEvRaRsSNKQOJ",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/nex_gddp_cmip6.png",
             "fused:tags": [
               {
@@ -159,7 +160,6 @@
               }
             ],
             "fused:description": "# Vida NEX-GDDP-based climate model\n\nThis UDF operates on a given bounding box ('bounds') to select and show the output from\nVida's processed NEX-GDDP-based ensemble climate data for the year 2080 by default.\n",
-            "fused:userCreatedShareToken": "fsh_7eVqJKkovwEvRaRsSNKQOJ",
             "fused:id": null
           },
           "source": "NEX_GDDP_Cmip6_VIDA.py",
