@@ -53,11 +53,11 @@
                 ]
               }
             },
-            "fused:udfType": "auto",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "Arcgis_Rgb",
             "fused:name": "Arcgis_Rgb",
             "fused:gitPath": "community/sina/Arcgis_Rgb",
-            "fused:gitRef": "ad1afcfb692ebfaab980ae6fb239a18306d412ff",
+            "fused:gitRef": "52a16a40ce9743526a19828af6b87c2a678c8f27",
             "fused:gitAuthorNames": [
               null,
               null
@@ -74,11 +74,9 @@
               "https://avatars.githubusercontent.com/u/44133329?v=4",
               "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-07-29T13:33:01+00:00",
+            "fused:gitLastModified": "2025-07-31T11:29:50+00:00",
             "fused:explorerTab": "self",
             "fused:gitRepo": "fusedio/udfs",
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/arcgis_rgb_tiles.png",
-            "fused:description": "# ArcGIS RGB\n\nSatellite RGB Tiles from ArcGIS endpoint.\n\n\n",
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 12.897489183755892,
@@ -88,6 +86,8 @@
               "bearing": 0
             },
             "fused:userCreatedShareToken": "fsh_1d8li9uemZkmY3PaqNfmCH",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/arcgis_rgb_tiles.png",
+            "fused:description": "# ArcGIS RGB\n\nSatellite RGB Tiles from ArcGIS endpoint.\n\n\n",
             "fused:id": null
           },
           "source": "Arcgis_Rgb.py",

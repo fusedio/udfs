@@ -1,0 +1,94 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "BostonBlueBikes",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "getTextSize": 12,
+                "pointRadiusMinPixels": 3,
+                "getText": "test",
+                "getFillColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b, 200]",
+                  "absent": [
+                    100,
+                    100,
+                    100,
+                    200
+                  ]
+                }
+              }
+            },
+            "fused:udfType": "vector_single_none",
+            "fused:slug": "BostonBlueBikes",
+            "fused:name": "BostonBlueBikes",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 42.34986928193666,
+              "longitude": -71.08157866743917,
+              "zoom": 11.95186270989124,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:gitPath": "community/sina/Boston_Bikes_Example",
+            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:assetUrl": "https://www.geomermaids.com/wp-content/uploads/2024/04/BBBikes.png",
+            "fused:tags": [
+              {
+                "id": "lyft",
+                "label": "lyft"
+              },
+              {
+                "id": "geojson",
+                "label": "geojson"
+              }
+            ],
+            "fused:description": "## Overview\n\nLive view of Boston's Blue Bikes availability by stations.\n",
+            "fused:gitAuthorNames": [
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "MaxLenormand"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/MaxLenormand"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/44133329?v=4"
+            ],
+            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:userCreatedShareToken": "fsh_2DreMql1DDqEVqPWZXdHgx",
+            "fused:id": null
+          },
+          "source": "BostonBlueBikes.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

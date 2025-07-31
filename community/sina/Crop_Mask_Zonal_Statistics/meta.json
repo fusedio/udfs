@@ -47,11 +47,9 @@
                 }
               }
             },
-            "fused:udfType": "vector_single",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "Crop_Mask_Zonal_Statistics",
             "fused:name": "Crop_Mask_Zonal_Statistics",
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/cropmask_zstats.png",
-            "fused:description": "Calculates Solar-Induced Fluorescence (SIF) data for U.S. counties with a focus on crop-specific insights using USDA Cropland Data Layers. Computes key SIF metrics—sums, means, and ratios—for crops (e.g., corn) and non-crop areas by masking a NetCDF with GeoTiff. Users can customize parameters such as year, month, period, and county FIPS codes to track temporal and spatial trends. The result is a GeoDataFrame with detailed, spatially-referenced statistics, supporting applications in crop yield prediction, drought monitoring, and agricultural planning.\n",
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 43.37900043758388,
@@ -59,7 +57,31 @@
               "zoom": 8.881157010667897,
               "pitch": 0,
               "bearing": 0
-            }
+            },
+            "fused:gitPath": "community/sina/Crop_Mask_Zonal_Statistics",
+            "fused:gitRef": "b7ede6a5ed5e78a0ea7bcdc93dbb1fcecd066f59",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/cropmask_zstats.png",
+            "fused:description": "Calculates Solar-Induced Fluorescence (SIF) data for U.S. counties with a focus on crop-specific insights using USDA Cropland Data Layers. Computes key SIF metrics—sums, means, and ratios—for crops (e.g., corn) and non-crop areas by masking a NetCDF with GeoTiff. Users can customize parameters such as year, month, period, and county FIPS codes to track temporal and spatial trends. The result is a GeoDataFrame with detailed, spatially-referenced statistics, supporting applications in crop yield prediction, drought monitoring, and agricultural planning.\n",
+            "fused:gitAuthorNames": [
+              null,
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "MaxLenormand",
+              "milind-soni"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/MaxLenormand",
+              "https://github.com/milind-soni"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
+            ],
+            "fused:gitLastModified": "2025-07-31T11:29:00+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:id": null
           },
           "source": "Crop_Mask_Zonal_Statistics.py",
           "headers": []
