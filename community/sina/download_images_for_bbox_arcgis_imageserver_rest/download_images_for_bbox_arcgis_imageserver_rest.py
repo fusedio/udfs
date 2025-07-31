@@ -83,11 +83,11 @@ def udf(
         )
     # Run multiple workers to download images
     job_pool = fused.submit(
-        "download_single_image",
+        download_single_image,
         arg_list,
         max_workers=max_workers,
-        wait_on_results=True,
         debug_mode=False,
+
     )
     print("success")
     # Todo: Convert downloaded files to COG -> use this UDF:
