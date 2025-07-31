@@ -40,26 +40,16 @@
             "fused:udfType": "auto",
             "fused:slug": "Airplane_Detection_AOI_v2",
             "fused:name": "Airplane_Detection_AOI_v2",
-            "fused:gitPath": "community/sina/Airplane_Detection_AOI_v2",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/dl4eo_aoi.png",
             "fused:description": "# Airplane Detection\n\nThis UDF detects airplanes within a specified Area of Interest (AOI) by leveraging a deep learning model for object detection.\n\nThe UDF runs inference atop the RGB satellite image from the [Public ArcGIS RGB UDF](https://www.fused.io/workbench/catalog/Arcgis_Rgb-b58b7a3c-3dc0-4e9d-9bdd-7092f3ea9817). For best visualization effects, render the output of that UDF as layer underneath.\n\n## How It Works\n\n1. Tile Generation: The UDF divides the AOI into smaller tiles based on a given zoom level.\n2. Model Inference: It applies the publicly available UDF, [DL4EO_Airplane_Detection](https://www.fused.io/workbench/catalog/DL4EO_Airplane_Detection-d0d1cee6-f7fe-4f26-9a84-a7cb130d20cb), to each tile.\n3. Output: The result is a GeoDataFrame containing bounding box records for each detected airplane.\n\n\nThe development of this UDF was led by [Jeff Faudi](https://www.linkedin.com/in/faudi/) @ DL4EO. For a detailed overview of the methods and applications, refer to Jeff's [blog post](https://docs.fused.io/blog/ai-for-object-detection-on-50cm-imagery/).\n\n\n",
-            "fused:gitAuthorNames": [
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
-            "fused:id": null
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.61831068160206,
+              "longitude": -122.37882256493903,
+              "zoom": 13.32066122341704,
+              "pitch": 0,
+              "bearing": 0
+            }
           },
           "source": "Airplane_Detection_AOI_v2.py",
           "headers": []

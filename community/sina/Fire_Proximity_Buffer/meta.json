@@ -14,9 +14,9 @@
           "metadata": {
             "fused:defaultViewState": {
               "enable": true,
-              "latitude": 34.41854838655976,
-              "longitude": -117.64118284555663,
-              "zoom": 15.52595305646848,
+              "latitude": 37.68746554783553,
+              "longitude": -96.37813163932806,
+              "zoom": 2.474716576058339,
               "pitch": 0,
               "bearing": 0
             },
@@ -106,28 +106,8 @@
             "fused:udfType": "vector_tile",
             "fused:slug": "Fire_Proximity_Buffer",
             "fused:name": "Fire_Proximity_Buffer",
-            "fused:gitPath": "community/sina/Fire_Proximity_Buffer",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
-            "fused:gitAuthorNames": [
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
-            "fused:gitPullRequestBranch": "plinio@fused.io-patch-polyIncidentName",
-            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/566",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/chris_fire.png",
-            "fused:description": "## Fire Risk Buffer\n\nCreates a buffer around a fire polygon. The fire rating is calculated with a buffer to represent proximity to a fire from the [WFIGS Current Interagency Fire Perimeters](https://data-nifc.opendata.arcgis.com/datasets/nifc::wfigs-current-interagency-fire-perimeters/about) dataset.\n",
-            "fused:id": null
+            "fused:description": "## Fire Risk Buffer\n\nCreates a buffer around a fire polygon. The fire rating is calculated with a buffer to represent proximity to a fire from the [WFIGS Current Interagency Fire Perimeters](https://data-nifc.opendata.arcgis.com/datasets/nifc::wfigs-current-interagency-fire-perimeters/about) dataset.\n"
           },
           "source": "Fire_Proximity_Buffer.py",
           "headers": []

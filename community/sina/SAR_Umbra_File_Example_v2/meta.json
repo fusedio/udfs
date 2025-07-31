@@ -51,21 +51,6 @@
             "fused:udfType": "vector_single",
             "fused:slug": "SAR_Umbra_File_Example_v2",
             "fused:name": "SAR_Umbra_File_Example_v2",
-            "fused:gitPath": "community/sina/SAR_Umbra_File_Example_v2",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
-            "fused:gitAuthorNames": [
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
             "fused:defaultParameters": [
               {
                 "parameter": "name",
@@ -99,9 +84,14 @@
               }
             ],
             "fused:description": "# Overview\n\nUmbra satellites provide high-resolution Synthetic Aperture Radar (SAR) imagery, with up to 16-cm resolution, capable of capturing images at night and in adverse weather conditions. \n\n# External links\n\n- [stac link](https://radiantearth.github.io/stac-browser/#/external/s3.us-west-2.amazonaws.com/umbra-open-data-catalog/stac/catalog.json)\n- [aws open data](https://registry.opendata.aws/umbra-open-data/)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/SAR_Umbra_File_Example\")\narr = fused.run(udf=udf)\narr.image.plot()\n```\n",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
-            "fused:id": null
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 3.7587271811679184,
+              "longitude": -77.0643782565585,
+              "zoom": 12.30464161597171,
+              "pitch": 0,
+              "bearing": 0
+            }
           },
           "source": "SAR_Umbra_File_Example_v2.py",
           "headers": []

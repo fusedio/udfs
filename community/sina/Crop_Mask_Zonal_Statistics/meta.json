@@ -50,28 +50,16 @@
             "fused:udfType": "vector_single",
             "fused:slug": "Crop_Mask_Zonal_Statistics",
             "fused:name": "Crop_Mask_Zonal_Statistics",
-            "fused:gitPath": "community/sina/Crop_Mask_Zonal_Statistics",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
-            "fused:gitAuthorNames": [
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
-            "fused:gitPullRequestBranch": "kristinscholten@gmail.com-patch-updated-data-link",
-            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/544",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/cropmask_zstats.png",
             "fused:description": "Calculates Solar-Induced Fluorescence (SIF) data for U.S. counties with a focus on crop-specific insights using USDA Cropland Data Layers. Computes key SIF metrics—sums, means, and ratios—for crops (e.g., corn) and non-crop areas by masking a NetCDF with GeoTiff. Users can customize parameters such as year, month, period, and county FIPS codes to track temporal and spatial trends. The result is a GeoDataFrame with detailed, spatially-referenced statistics, supporting applications in crop yield prediction, drought monitoring, and agricultural planning.\n",
-            "fused:id": null
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 43.37900043758388,
+              "longitude": -96.23172050000001,
+              "zoom": 8.881157010667897,
+              "pitch": 0,
+              "bearing": 0
+            }
           },
           "source": "Crop_Mask_Zonal_Statistics.py",
           "headers": []
