@@ -51,26 +51,16 @@
             "fused:udfType": "vector_tile",
             "fused:slug": "S2_explorer",
             "fused:name": "S2_explorer",
-            "fused:gitPath": "community/sina/S2_explorer",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
-            "fused:gitAuthorNames": [
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/s3_explorer_udf_2.png",
             "fused:description": "## Overview\n\nSentinel 2 satellite imaging pseudo RGB bands composed from the original 13 Sentinel 2 bands. The defaults are:\n\n* `pseudoRed = Glacier Index = (B3 – B4) / (B3 + B4)`\n* `pseudoGreen = B8 (Near InfraRed)`\n* `pseudoBlue = B11 (Short Wave InfraRed)`\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/S2_explorer\")\ndf = fused.run(udf, x=1270, y=3048, z=13)\ndf.image.isel(band=0).plot()\n```\n",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
-            "fused:id": null
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 38.01135922696118,
+              "longitude": -120.47917786589237,
+              "zoom": 12.785725584317015,
+              "pitch": 0,
+              "bearing": 0
+            }
           },
           "source": "S2_explorer.py",
           "headers": []

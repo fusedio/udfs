@@ -13,10 +13,10 @@
           "parameters": {},
           "metadata": {
             "fused:defaultViewState": {
-              "enable": false,
-              "latitude": 0,
-              "longitude": 0,
-              "zoom": 0,
+              "enable": true,
+              "latitude": 33.98195402953887,
+              "longitude": -118.31562900000002,
+              "zoom": 10.9217683007207,
               "pitch": 0,
               "bearing": 0
             },
@@ -66,40 +66,22 @@
             "fused:udfType": "auto",
             "fused:slug": "single_route",
             "fused:name": "single_route",
-            "fused:gitPath": "community/sina/single_route",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/route_lax.png",
             "fused:tags": [
               {
-                "id": "Routing",
-                "label": "Routing"
+                "id": "routing",
+                "label": "routing"
               },
               {
-                "id": "Valhalla",
-                "label": "Valhalla"
+                "id": "valhalla",
+                "label": "valhalla"
               },
               {
-                "id": "Calculate distance",
-                "label": "Calculate distance"
+                "id": "calculate-distance",
+                "label": "calculate-distance"
               }
             ],
-            "fused:description": "## Overview\n\nThis UDF returns a single optimal (time minimized) route as a function of origin and destination coordinate pairs (input variables), using the Valhalla routing engine API. The geopandas dataframe returned contains three rows: start and end point geometries and the linestring geometry of the optimal path. (Simple driving directions are also printed.)\n\n## External links\n\n- [Valhalla GitHub Docs](https://valhalla.github.io/valhalla/)\n",
-            "fused:gitAuthorNames": [
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
-            "fused:id": null
+            "fused:description": "## Overview\n\nThis UDF returns a single optimal (time minimized) route as a function of origin and destination coordinate pairs (input variables), using the Valhalla routing engine API. The geopandas dataframe returned contains three rows: start and end point geometries and the linestring geometry of the optimal path. (Simple driving directions are also printed.)\n\n## External links\n\n- [Valhalla GitHub Docs](https://valhalla.github.io/valhalla/)\n"
           },
           "source": "single_route.py",
           "headers": []
