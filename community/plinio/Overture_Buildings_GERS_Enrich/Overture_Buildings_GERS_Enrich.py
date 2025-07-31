@@ -12,8 +12,8 @@ def udf(bbox: fused.types.Tile=aoi):
 
     # 2. Load Overture Buildings that intersect the given bbox centroid
     overture_maps = fused.load("https://github.com/fusedio/udfs/tree/38ff24d/public/Overture_Maps_Example/") # Load pinned versions of utility functions.
-    gdf = overture_maps.get_overture(bbox=bbox.geometry.centroid, overture_type='building', min_zoom=10)
-
+    bounds_tuple = bbox.total_bounds 
+    gdf = overture_maps.get_overture(bounds=bounds_tuple, overture_type='building', min_zoom=10)
     # How many Overture buildings fall within the bbox centroid?
     print("Buildings in centroid: ", len(gdf))
     
