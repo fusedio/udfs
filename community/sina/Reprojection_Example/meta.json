@@ -55,25 +55,15 @@
             "fused:udfType": "auto",
             "fused:slug": "Reprojection_Example",
             "fused:name": "Reprojection_Example",
-            "fused:gitPath": "community/sina/Reprojection_Example",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
-            "fused:gitAuthorNames": [
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "kashuk"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/kashuk"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/12432685?v=4"
-            ],
-            "fused:gitLastModified": "2025-02-03T21:54:59+00:00",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
             "fused:description": "Exported from Fused UDF Workbench\n\n",
-            "fused:id": null
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 38.006004609965636,
+              "longitude": -120.47400000000005,
+              "zoom": 11.610284391002416,
+              "pitch": 0,
+              "bearing": 0
+            }
           },
           "source": "Reprojection_Example.py",
           "headers": []
