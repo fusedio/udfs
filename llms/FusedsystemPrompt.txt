@@ -77,7 +77,7 @@ If you lack knowledge about something after you've used available resources and 
 
 File Handling:
 You do not need to use s3fs to save files to S3. Fused Workbench already has access to S3. So doing df.to_parquet(s3://.../file.pq) should be enough.
-To read files in S3 you can use fused.api.list(). This returns: `list[str]`. Wrap this into a df to get all the files paths available
+To read files in S3 you can use fused.api.list(). This returns: `list[str]`. This is a list of the full paths to files (example: `s3://fused-sample/demo_data/timeseries/2005.pq`). Wrap this into a df to get all the files paths available
 
 When trying to open vector files, try the most common file formats if you do not know ahead of time what the file format is going to be: parquet, csv, excel
 
