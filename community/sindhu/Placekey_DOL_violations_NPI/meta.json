@@ -56,29 +56,33 @@
             "fused:udfType": "vector_tile",
             "fused:slug": "Placekey_DOL_violations_NPI",
             "fused:name": "Placekey_DOL_violations_NPI",
-            "fused:gitPath": "community/sindhu/Placekey_DOL-violations_NPI",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
-            "fused:description": "## Overview\n\nUsing Placekey to merge the [National Provider Identifier dataset](https://www.placekey.io/datasets/national-provider-identifier) and the [Department of Labor Wage and Hour Compliance Dataset](https://www.placekey.io/datasets/department-of-labor-wage-and-hour-compliance-data). \n",
+            "fused:gitPath": "community/sindhu/Placekey_DOL_violations_NPI",
+            "fused:gitRef": "95aa9085e9e8c578945c95525cfc24e84bd3e147",
             "fused:gitAuthorNames": [
-              null,
               null
             ],
             "fused:gitAuthorUsernames": [
-              "isaacbrodsky",
               "milind-soni"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/isaacbrodsky",
               "https://github.com/milind-soni"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/9139378?v=4",
               "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-03-07T09:19:42+00:00",
+            "fused:gitLastModified": "2025-07-30T09:37:22+00:00",
             "fused:explorerTab": "self",
             "fused:gitRepo": "fusedio/udfs",
             "fused:userCreatedShareToken": "fsh_7dXBEz3QgZbU5HPftTtw8J",
+            "fused:description": "## Overview\n\nUsing Placekey to merge the [National Provider Identifier dataset](https://www.placekey.io/datasets/national-provider-identifier) and the [Department of Labor Wage and Hour Compliance Dataset](https://www.placekey.io/datasets/department-of-labor-wage-and-hour-compliance-data). \n",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.78765509612438,
+              "longitude": -122.40362729173731,
+              "zoom": 15.426333931598887,
+              "pitch": 0,
+              "bearing": 0
+            },
             "fused:id": null
           },
           "source": "Placekey_DOL_violations_NPI.py",
