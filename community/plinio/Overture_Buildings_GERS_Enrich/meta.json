@@ -50,8 +50,6 @@
               }
             },
             "fused:udfType": "vector_single",
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/gers_enrich.png",
-            "fused:description": "## Overture Buildings GERS Enrichment\n\nThis UDF  accepts a geojson of a Polygon and returns the same polygon with an `id` column of its corresponding Overture Buildings GERS ID.\n\n",
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 40.75054432433991,
@@ -59,7 +57,9 @@
               "zoom": 17.206504575671225,
               "pitch": 0,
               "bearing": 0
-            }
+            },
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/gers_enrich.png",
+            "fused:description": "## Overture Buildings GERS Enrichment\n\nThis UDF  accepts a geojson of a Polygon and returns the same polygon with an `id` column of its corresponding Overture Buildings GERS ID.\n\n"
           },
           "source": "Overture_Buildings_GERS_Enrich.py",
           "headers": []
