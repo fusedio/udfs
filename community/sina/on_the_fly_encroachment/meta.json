@@ -68,7 +68,7 @@
                 ]
               }
             },
-            "fused:udfType": "vector_tile",
+            "fused:udfType": "vector_single_none",
             "fused:defaultParameters": [
               {
                 "parameter": "h_bucket_meters",
