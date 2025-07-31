@@ -103,7 +103,7 @@
                 "elevationScale": 10
               }
             },
-            "fused:udfType": "vector_tile",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "Fire_Proximity_Buffer",
             "fused:name": "Fire_Proximity_Buffer",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/chris_fire.png",
