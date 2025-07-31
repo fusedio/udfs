@@ -12,21 +12,11 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:tags": [
-              {
-                "id": "USGS",
-                "label": "USGS"
-              },
-              {
-                "id": "Hillshade",
-                "label": "Hillshade"
-              }
-            ],
             "fused:defaultViewState": {
-              "enable": false,
-              "latitude": 33.93986525365819,
-              "longitude": -115.89837033461225,
-              "zoom": 12.623129178162976,
+              "enable": true,
+              "latitude": 40.70419098370886,
+              "longitude": -74.0141419010041,
+              "zoom": 15.057482318818426,
               "pitch": 0,
               "bearing": 0
             },
@@ -70,7 +60,26 @@
             "fused:udfType": "auto",
             "fused:slug": "PC_Sentinel2",
             "fused:name": "PC_Sentinel2",
-            "fused:id": null
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/docs_assets/github_udfs_repo/mecca_sentinel2.png",
+            "fused:tags": [
+              {
+                "id": "dem",
+                "label": "dem"
+              },
+              {
+                "id": "raster",
+                "label": "raster"
+              },
+              {
+                "id": "file",
+                "label": "file"
+              },
+              {
+                "id": "pc",
+                "label": "pc"
+              }
+            ],
+            "fused:description": "# Overview\n\nThis UDF renders a RGB image from the Planetary Computer Sentinel-2 dataset.\n\nThe Sentinel-2 program offers global imagery across thirteen spectral bands with resolutions ranging from 10m to 60m and a revisit interval of about five days. This dataset encompasses the global Sentinel-2 archive from 2016 to the present, processed to Level 2A (bottom-of-atmosphere) using Sen2Cor and converted to cloud-optimized GeoTIFF format.\n\n\n# External links\n\n- [source](https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/PC_Sentinel2\")\narr = fused.run(udf=udf, x=2915, y=6546, z=14)\narr\n```"
           },
           "source": "PC_Sentinel2.py",
           "headers": []
