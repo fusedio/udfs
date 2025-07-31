@@ -1,8 +1,6 @@
-common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
-
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds = None,
+    bounds: fused.types.Bounds = [-78.6916757112907,41.484235127904775,-78.66192229153643,41.496588655879975],
     h_bucket_meters: float = 5,
     w_bucket_meters: float = 5,
     lines_buffer_size_m: float = 150,
@@ -12,7 +10,8 @@ def udf(
     import rasterio.features
     import rasterio.transform
     from scipy.ndimage import distance_transform_edt
-    
+    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+
     ingested_utilities_udf = fused.load('https://github.com/fusedio/udfs/tree/0858846/public/ingested_utilities/')
     power_lines = fused.run(ingested_utilities_udf, bounds=list(bounds), min_zoom=0, buffer_size_m=0)
 
@@ -90,7 +89,7 @@ def udf(
     
     buffered_lines['max_risk'] = max_risks
     print(f"{max(max_risks)=}")
-    return buffered_lines[['geometry', 'max_risk', 'VOLTAGE', 'pole_height_m']]
+    return buffered_lines[['geometry', 'max_risk', 'VOLTAGE', 'pole_height_m']], bounds
 
 def get_pixel_res_in_meters(bounds, transform):
     import geopandas as gpd
