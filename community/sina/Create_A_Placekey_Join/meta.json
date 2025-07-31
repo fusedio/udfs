@@ -56,25 +56,15 @@
             "fused:udfType": "vector_tile",
             "fused:slug": "Create_A_Placekey_Join",
             "fused:name": "Create_A_Placekey_Join",
-            "fused:gitPath": "community/sina/Create_A_Placekey_Join",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
             "fused:description": "## Overview\n\nUsing Placekey to create a shareable map on Fused.io\n",
-            "fused:gitAuthorNames": [
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
-            "fused:id": null
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.78538674515848,
+              "longitude": -122.42472206259572,
+              "zoom": 16.316047069409727,
+              "pitch": 37.63440860215054,
+              "bearing": 17.027027027027028
+            }
           },
           "source": "Create_A_Placekey_Join.py",
           "headers": []
