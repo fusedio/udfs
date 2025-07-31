@@ -12,18 +12,6 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:tags": [
-              {
-                "id": "babyai",
-                "label": "babyai",
-                "isCreatable": true
-              },
-              {
-                "id": "tool",
-                "label": "tool",
-                "isCreatable": true
-              }
-            ],
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -67,7 +55,18 @@
             },
             "fused:udfType": "auto",
             "fused:slug": "dataset_summary_csv_parquet_tool",
-            "fused:name": "dataset_summary_csv_parquet_tool"
+            "fused:name": "dataset_summary_csv_parquet_tool",
+            "fused:tags": [
+              {
+                "id": "babyai",
+                "label": "babyai"
+              },
+              {
+                "id": "tool",
+                "label": "tool"
+              }
+            ],
+            "fused:description": "Exported from Fused UDF Workbench\n\n"
           },
           "source": "dataset_summary_csv_parquet_tool.py",
           "headers": []

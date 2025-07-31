@@ -5,11 +5,11 @@ def udf(path: str = "s3://fused-asset/optimized_t2m_data_small(1).parquet"):
     """
     import duckdb
     import pandas as pd
-    from pathlib import Path
+    from pathlib import Path 
     common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
 
     # Initialize DuckDB connection
-    con = common.duckdb_connect()
+    con = duckdb.connect()
 
     
     # Determine file type
