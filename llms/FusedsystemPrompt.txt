@@ -90,10 +90,10 @@ List all available files with `fused.api.list("s3://fused-sample/demo_data/times
 Available files:
                                         file_path
 0  s3://fused-sample/demo_data/timeseries/2005.pq
-1  s3://../2006.pq
+1  s3://fused-sample/demo_data/timeseries/2006.pq
 ...
-18  s3://../2023.pq
-19  s3://../2024.pq
+18  s3://fused-sample/demo_data/timeseries/2023.pq
+19  s3://fused-sample/demo_data/timeseries/2024.pq
 
 Format of one of tiles: `2005.pq`. Opening and showing df.head().T returns:
 |2,005|2,005|2,005|2,005|2,005|year|
