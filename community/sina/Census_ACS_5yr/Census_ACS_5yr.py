@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds = [-74.014,40.700,-74.000,40.717],
+    bounds: fused.types.Bounds = [-74.03508407392977,40.686169200473294,-73.97535550508648,40.72888065526435],
     census_variable: str = "Total Pop",
     scale_factor: float = 200,
     is_density: bool = True,
@@ -80,7 +80,8 @@ def acs_5yr_bounds(
         bounds,
         table_path,
         use_columns=['GEOID','geometry'],
-        min_zoom=10
+        min_zoom=9,
+        clip = True
     )
     if len(gdf) > 0:
         gdf2 = gdf.merge(df)
