@@ -56,20 +56,39 @@
             "fused:udfType": "auto",
             "fused:slug": "Arcgis_Rgb",
             "fused:name": "Arcgis_Rgb",
-            "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedlabs/fusedudfs/tree/ba4c3722ea24a9568049836e0027df9995628638/Arcgis_Rgb/",
-            "fused:gitShortUrl": "https://github.com/fusedlabs/fusedudfs/tree/ba4c372/Arcgis_Rgb/",
-            "fused:gitPath": "Arcgis_Rgb",
-            "fused:gitRef": "ba4c3722ea24a9568049836e0027df9995628638",
+            "fused:gitPath": "community/sina/Arcgis_Rgb",
+            "fused:gitRef": "ad1afcfb692ebfaab980ae6fb239a18306d412ff",
+            "fused:gitAuthorNames": [
+              null,
+              null
+            ],
+            "fused:gitAuthorUsernames": [
+              "MaxLenormand",
+              "milind-soni"
+            ],
+            "fused:gitAuthorUrls": [
+              "https://github.com/MaxLenormand",
+              "https://github.com/milind-soni"
+            ],
+            "fused:gitAuthorAvatarUrls": [
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
+            ],
+            "fused:gitLastModified": "2025-07-29T13:33:01+00:00",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/arcgis_rgb_tiles.png",
             "fused:description": "# ArcGIS RGB\n\nSatellite RGB Tiles from ArcGIS endpoint.\n\n\n",
-            "fused:gitAuthorNames": [],
-            "fused:gitAuthorUsernames": [],
-            "fused:gitAuthorUrls": [],
-            "fused:gitAuthorAvatarUrls": [],
-            "fused:gitLastModified": "2024-09-06T00:29:34+00:00",
-            "fused:explorerTab": "team",
-            "fused:gitRepo": "fusedlabs/fusedudfs",
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/arcgis_rgb_tiles.png"
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 12.897489183755892,
+              "longitude": -0.04929861376394661,
+              "zoom": 0,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:userCreatedShareToken": "fsh_1d8li9uemZkmY3PaqNfmCH",
+            "fused:id": null
           },
           "source": "Arcgis_Rgb.py",
           "headers": []
