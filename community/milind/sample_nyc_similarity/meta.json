@@ -1,0 +1,82 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "sample_nyc_similarity",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "hexLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "extruded": true,
+                "opacity": 1,
+                "coverage": 1,
+                "lineWidthMinPixels": 1,
+                "getHexagon": "@@=properties.hex",
+                "getLineColor": [
+                  200,
+                  200,
+                  200
+                ],
+                "getFillColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "sim",
+                  "domain": [
+                    0.9,
+                    1
+                  ],
+                  "colors": "Tropic",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "sim",
+                  "present": "@@=(1-properties.sim)*100",
+                  "absent": 1
+                },
+                "elevationScale": 20
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "sample_nyc_similarity",
+            "fused:name": "sample_nyc_similarity",
+            "fused:description": "Read a Parquet or Geoparquet file.\n",
+            "fused:explorerPin": "99",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 40.71540954948281,
+              "longitude": -73.92244395331046,
+              "zoom": 9.543885555775715,
+              "pitch": 0,
+              "bearing": 0
+            }
+          },
+          "source": "sample_nyc_similarity.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
