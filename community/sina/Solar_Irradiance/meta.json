@@ -48,34 +48,39 @@
                 ]
               }
             },
-            "fused:udfType": "vector_tile",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "Solar_Irradiance",
             "fused:name": "Solar_Irradiance",
             "fused:gitPath": "community/sina/Solar_Irradiance",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:gitRef": "b603e4541b174b691fa03abd0443169a5962bb58",
             "fused:gitAuthorNames": [
+              null,
               null
             ],
             "fused:gitAuthorUsernames": [
-              "MaxLenormand"
+              "MaxLenormand",
+              "milind-soni"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
+              "https://github.com/MaxLenormand",
+              "https://github.com/milind-soni"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:gitLastModified": "2025-07-29T20:33:11+00:00",
             "fused:explorerTab": "self",
             "fused:gitRepo": "fusedio/udfs",
             "fused:defaultViewState": {
-              "enable": true,
+              "enable": false,
               "latitude": 17.50656453288313,
               "longitude": 24.04074720996509,
               "zoom": 2.3287175451117874,
               "pitch": 0,
               "bearing": 0
             },
+            "fused:userCreatedShareToken": "fsh_70dEIs1F1wVGWiezr0AOnQ",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/solar_irradiance.png",
             "fused:tags": [
               {
@@ -84,7 +89,6 @@
               }
             ],
             "fused:description": "#### Overview\nWorld - Solar Irradiance DNI(Direct Normal Irradiance) data.\n\nThe Solargis DNI (Direct Normal Irradiance) data provides a comprehensive view of the potential for solar energy generation across the world by focusing on the amount of solar radiation received per unit area by a surface that is perpendicular to the sun's rays.\n\n#### Data Source\n* [SolarGIS](https://solargis.com/maps-and-gis-data/download/world)\n",
-            "fused:userCreatedShareToken": "fsh_70dEIs1F1wVGWiezr0AOnQ",
             "fused:id": null
           },
           "source": "Solar_Irradiance.py",

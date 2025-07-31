@@ -53,24 +53,28 @@
                 ]
               }
             },
-            "fused:udfType": "vector_tile",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "Solar_Induced_Fluorescence",
             "fused:name": "Solar_Induced_Fluorescence",
             "fused:gitPath": "community/sina/Solar_Induced_Fluorescence",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:gitRef": "b603e4541b174b691fa03abd0443169a5962bb58",
             "fused:gitAuthorNames": [
+              null,
               null
             ],
             "fused:gitAuthorUsernames": [
-              "MaxLenormand"
+              "MaxLenormand",
+              "milind-soni"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
+              "https://github.com/MaxLenormand",
+              "https://github.com/milind-soni"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:gitLastModified": "2025-07-29T20:33:11+00:00",
             "fused:explorerTab": "self",
             "fused:gitRepo": "fusedio/udfs",
             "fused:gitPullRequestBranch": "kristinscholten@gmail.com-patch-making-this-udf-pu",

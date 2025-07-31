@@ -34,7 +34,7 @@ def udf(bounds: fused.types.Bounds=[-143.184,7.090,-39.292,61.808], year: str = 
     img = (arr_aoi * 255).astype('uint8')
     img = common.arr_to_plasma(arr_aoi, min_max=(0, 1), colormap="rainbow", include_opacity=False, reverse=False)
 
-    return img
+    return img, bounds
 
 
 def get_masked_array(gdf_aoi, arr_aoi):
