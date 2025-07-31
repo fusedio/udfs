@@ -12,8 +12,6 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:assetUrl": " https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/samroy.png",
-            "fused:description": "## Preview output of Overture/OakRidge H3 building metrics\n\nQuickly compare different Building datasets: Overture Buildings and Oak Ridge Buildings. A count comparison reveals spatial variability in the data across data sources.\n\nBy: Sam Roy\n\n\n\n\n\n",
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 35.94875943573597,
@@ -65,7 +63,8 @@
             "fused:udfType": "auto",
             "fused:slug": "Building_Comparison_Viewer",
             "fused:name": "Building_Comparison_Viewer",
-            "fused:id": null
+            "fused:assetUrl": null,
+            "fused:description": "## Preview output of Overture/OakRidge H3 building metrics\n\nQuickly compare different Building datasets: Overture Buildings and Oak Ridge Buildings. A count comparison reveals spatial variability in the data across data sources.\n\nBy: Sam Roy\n\n\n\n\n\n"
           },
           "source": "Building_Comparison_Viewer.py",
           "headers": []
