@@ -2,7 +2,7 @@
 <p align="center"><img src="https://www.geomermaids.com/wp-content/uploads/2024/04/airbnb_new_orleans.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `H3-vector` `airbnb` `Aggregation` `DuckDB` `csv`
+Tags: `h3-vector` `airbnb` `aggregation` `duckdb` `csv`
 
 <!--fused:readme-->
 ## Overview

@@ -12,28 +12,6 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:tags": [
-              {
-                "id": "H3-vector",
-                "label": "H3-vector"
-              },
-              {
-                "id": "airbnb",
-                "label": "airbnb"
-              },
-              {
-                "id": "Aggregation",
-                "label": "Aggregation"
-              },
-              {
-                "id": "DuckDB",
-                "label": "DuckDB"
-              },
-              {
-                "id": "csv",
-                "label": "csv"
-              }
-            ],
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -55,34 +33,33 @@
             "fused:udfType": "auto",
             "fused:slug": "AirBnb_Listings",
             "fused:name": "AirBnb_Listings",
-            "fused:id": null,
-            "fused:assetUrl": "https://www.geomermaids.com/wp-content/uploads/2024/04/BBBikes.png",
             "fused:defaultViewState": {
-              "enable": false,
-              "latitude": 42.34986928193666,
-              "longitude": -71.08157866743917,
-              "zoom": 11.95186270989124,
+              "enable": true,
+              "latitude": 48.85874354191289,
+              "longitude": 2.3491434999999914,
+              "zoom": 10.517140771313574,
               "pitch": 0,
               "bearing": 0
             },
-            "fused:description": "## Overview\n\nInteractive AirBnB offer map, generated from the data located at https://insideairbnb.com/get-the-data/\n\n\n",
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/05da6dee2b597f20d8ba779734f00960921119e9/public/Boston_Bikes_Example/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/05da6de/public/Boston_Bikes_Example/",
-            "fused:gitPath": "public/Boston_Bikes_Example",
-            "fused:gitRef": "05da6dee2b597f20d8ba779734f00960921119e9",
+            "fused:gitPath": "community/sina/AirBnb_Listings",
+            "fused:gitRef": "ad1afcfb692ebfaab980ae6fb239a18306d412ff",
             "fused:gitAuthorNames": [
-              "Guillaume SUEUR"
+              null,
+              null
             ],
             "fused:gitAuthorUsernames": [
-              "gsueur"
+              "MaxLenormand",
+              "milind-soni"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/gsueur"
+              "https://github.com/MaxLenormand",
+              "https://github.com/milind-soni"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/1681817?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2024-04-03T20:12:49+00:00",
+            "fused:gitLastModified": "2025-07-29T13:33:01+00:00",
             "fused:defaultParameters": [
               {
                 "parameter": "city",
@@ -110,7 +87,35 @@
                   "Brussels"
                 ]
               }
-            ]
+            ],
+            "fused:assetUrl": "https://www.geomermaids.com/wp-content/uploads/2024/04/airbnb_new_orleans.png",
+            "fused:tags": [
+              {
+                "id": "H3-vector",
+                "label": "H3-vector"
+              },
+              {
+                "id": "airbnb",
+                "label": "airbnb"
+              },
+              {
+                "id": "Aggregation",
+                "label": "Aggregation"
+              },
+              {
+                "id": "DuckDB",
+                "label": "DuckDB"
+              },
+              {
+                "id": "csv",
+                "label": "csv"
+              }
+            ],
+            "fused:description": "## Overview\n\nInteractive AirBnB offer map, generated from the data located at https://insideairbnb.com/get-the-data/\n",
+            "fused:explorerTab": "self",
+            "fused:gitRepo": "fusedio/udfs",
+            "fused:userCreatedShareToken": "fsh_4SEcdvJs6m1M88CvbaSC1u",
+            "fused:id": null
           },
           "source": "AirBnb_Listings.py",
           "headers": []
