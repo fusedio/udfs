@@ -70,16 +70,14 @@
             "fused:udfType": "vector_single",
             "fused:slug": "DuckDB_H3_SF",
             "fused:name": "DuckDB_H3_SF",
-            "fused:id": null,
-            "fused:description": "## Overview\n\nH3 visualization of [DeckGL sample data](https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/sf.h3cells.json).",
             "fused:assetUrl": "https://fused-magic.s3.amazonaws.com/thumbnails/udfs-staging/h3_sf.png",
             "fused:tags": [
               {
                 "id": "h3",
-                "label": "h3",
-                "isCreatable": true
+                "label": "h3"
               }
-            ]
+            ],
+            "fused:description": "## Overview\n\nH3 visualization of [DeckGL sample data](https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/sf.h3cells.json).\n"
           },
           "source": "DuckDB_H3_SF.py",
           "headers": []

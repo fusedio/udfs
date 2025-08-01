@@ -77,29 +77,9 @@
                 }
               }
             },
-            "fused:udfType": "vector_single_none",
+            "fused:udfType": "auto",
             "fused:slug": "Foursquare_Open_Source_Places",
             "fused:name": "Foursquare_Open_Source_Places",
-            "fused:gitPath": "community/sina/Foursquare_Open_Source_Places",
-            "fused:gitRef": "1837a24d69a479e7d3949e8f29eedd27a2042ba5",
-            "fused:gitAuthorNames": [
-              null,
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand",
-              "milind-soni"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand",
-              "https://github.com/milind-soni"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4",
-              "https://avatars.githubusercontent.com/u/46266943?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-31T12:14:23+00:00",
-            "fused:gitRepo": "fusedio/udfs",
             "fused:defaultParameters": [
               {
                 "parameter": "release",
@@ -122,9 +102,6 @@
                 "suggestedValues": []
               }
             ],
-            "fused:gitPullRequestBranch": "isaac@fused.io-patch-fsq-poi-udf",
-            "fused:gitPullRequestLink": "https://github.com/fusedlabs/fusedudfs/pull/358",
-            "fused:explorerTab": "self",
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 37.80112431727441,
@@ -133,7 +110,6 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:userCreatedShareToken": "fsh_q6tdW2vF7FG2FvSsbuZQq",
             "fused:tags": [
               {
                 "id": "fsq",
@@ -148,8 +124,7 @@
                 "label": "coop"
               }
             ],
-            "fused:description": "Places of interest (POIs) from [Foursquare Open Source Places](https://opensource.foursquare.com/os-places/) hosted on [Source Coop](https://source.coop/repositories/fused/fsq-os-places)\n",
-            "fused:id": null
+            "fused:description": "Places of interest (POIs) from [Foursquare Open Source Places](https://opensource.foursquare.com/os-places/) hosted on [Source Coop](https://source.coop/repositories/fused/fsq-os-places)\n"
           },
           "source": "Foursquare_Open_Source_Places.py",
           "headers": []

@@ -53,7 +53,7 @@
                 ]
               }
             },
-            "fused:udfType": "vector_single_none",
+            "fused:udfType": "auto",
             "fused:slug": "HLS_Tile_Example",
             "fused:name": "HLS_Tile_Example",
             "fused:defaultParameters": [
@@ -102,8 +102,6 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitPath": "community/sina/HLS_Tile_Example",
-            "fused:gitRef": "2d8c7d23590da20a01b1b73726adbeb111f19a0e",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/HLS_Tile_Example.png",
             "fused:tags": [
               {
@@ -128,27 +126,7 @@
               }
             ],
             "fused:description": "## Overview\nThis UDF demonstrate how to access the NASA’s Harmonized Landsat Sentinel-2 (HLS) version 2 assets. Please visit [Earth Data Portal](https://urs.earthdata.nasa.gov) to register and manage your Earthdata Login account.\n\n## External links\n\n- [Data Discovery Example](https://nasa-openscapes.github.io/2021-Cloud-Hackathon/tutorials/02_Data_Discovery_CMR-STAC_API.html)\n\n## Run this in any Jupyter Notebook\n\nPlease set `earthdata` [secret](https://docs.fused.io/workbench/account/#secrets-management) in Fused with a JSON dictionary of `username` and `password`.\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/HLS_Tile_Example\")\ngdf = fused.run(udf=udf, x=5241, y=12667, z=15)\ngdf\n```\n",
-            "fused:explorerPin": "15",
-            "fused:gitAuthorNames": [
-              null,
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand",
-              "milind-soni"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand",
-              "https://github.com/milind-soni"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4",
-              "https://avatars.githubusercontent.com/u/46266943?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-31T12:12:48+00:00",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
-            "fused:id": null
+            "fused:explorerPin": "15"
           },
           "source": "HLS_Tile_Example.py",
           "headers": []

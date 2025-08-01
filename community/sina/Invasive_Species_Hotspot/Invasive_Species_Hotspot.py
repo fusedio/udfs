@@ -7,7 +7,7 @@ def udf(
     import pandas as pd
 
     # convert bounds to tile
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
     tile = common.get_tiles(bounds, clip=True)
 
 
@@ -117,7 +117,7 @@ def get_strahler_gdf(bounds):
     VARNAME='b1'
 
     # Load pinned versions of utility functions.
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
 
     # Set your own creds
     common.ee_initialize(service_account_name='fused-nyt-gee@fused-nyt.iam.gserviceaccount.com',key_path="/mnt/cache/gee_creds/fusedbenchmark-513a57ac463f.json")

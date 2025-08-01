@@ -2,7 +2,7 @@
 def udf(bounds: fused.types.Bounds = [-2.997,53.399,-2.975,53.412]):
 
     # convert bounds to tile
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
     tile = common.get_tiles(bounds, clip=True)
 
     # Load Addresscloud data

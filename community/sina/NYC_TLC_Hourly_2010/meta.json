@@ -54,26 +54,9 @@
                 "elevationScale": 2
               }
             },
-            "fused:udfType": "vector_single_none",
+            "fused:udfType": "auto",
             "fused:slug": "NYC_TLC_Hourly_2010",
             "fused:name": "NYC_TLC_Hourly_2010",
-            "fused:gitPath": "community/sina/NYC_TLC_Hourly_2010",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
-            "fused:gitAuthorNames": [
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 40.70575158757331,
@@ -82,13 +65,9 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitPullRequestBranch": "sina@fused.io-patch-add-NYC_TLC",
-            "fused:gitPullRequestLink": "https://github.com/fusedio/udfs/pull/345",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Duckdb_NYC311_Example.png",
             "fused:description": "Read a Parquet or Geoparquet file.\n",
-            "fused:explorerPin": "99",
-            "fused:userCreatedShareToken": "fsh_1iVilgrwbqziFAb0YpKvh6",
-            "fused:id": null
+            "fused:explorerPin": "99"
           },
           "source": "NYC_TLC_Hourly_2010.py",
           "headers": []

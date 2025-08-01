@@ -12,16 +12,8 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:description": "Explore the USDA's Crop Data Layer dataset as hexagons. ",
-            "fused:assetUrl": "fused_uploaded_preview",
             "fused:name": "Hex_CDL_explorer",
             "fused:slug": "Hex_CDL_explorer",
-            "fused:gitHistory": [
-              {
-                "fused:description": "Explore the USDA's Crop Data Layer dataset as hexagons. ",
-                "fused:assetUrl": "fused_uploaded_preview"
-              }
-            ],
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 38.545830157822195,
@@ -120,7 +112,8 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:id": null
+            "fused:assetUrl": "https://fused-image-assets.s3.amazonaws.com/d55665f4-e606-4fb5-a36c-38ca39fe6607/thumbnail",
+            "fused:description": "Explore the USDA's Crop Data Layer dataset as hexagons. \n"
           },
           "source": "Hex_CDL_explorer.py",
           "headers": []

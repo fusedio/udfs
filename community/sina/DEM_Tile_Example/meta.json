@@ -54,31 +54,9 @@
                 ]
               }
             },
-            "fused:udfType": "vector_single_none",
+            "fused:udfType": "vector_tile",
             "fused:slug": "DEM_Tile_Example",
             "fused:name": "DEM_Tile_Example",
-            "fused:gitPath": "community/sina/DEM_Tile_Example",
-            "fused:gitRef": "1837a24d69a479e7d3949e8f29eedd27a2042ba5",
-            "fused:gitAuthorNames": [
-              null,
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand",
-              "milind-soni"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand",
-              "https://github.com/milind-soni"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4",
-              "https://avatars.githubusercontent.com/u/46266943?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-31T12:14:23+00:00",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
-            "fused:userCreatedShareToken": "fsh_6qDvivboWoWGuPx4iaaw8y",
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 39.026200954098776,
@@ -107,8 +85,7 @@
               }
             ],
             "fused:description": "#### Overview\nThe Copernicus DEM is a digital surface model (DSM), which represents the surface of the Earth including buildings, infrastructure, and vegetation. This DSM is based on radar satellite data acquired during the TanDEM-X Mission, which was funded by a public-private partnership between the German Aerospace Centre (DLR) and Airbus Defence and Space.\n\n\nCopernicus DEM is available at both 30-meter and 90-meter resolution.\n\n\nSee the [Product Handbook](https://object.cloud.sdsc.edu/v1/AUTH_opentopography/www/metadata/Copernicus_metadata.pdf) for more information.\n\nSee the dataset page on [OpenTopography](https://doi.org/10.5069/G9028PQB).\n#### STAC Collections\n*  [AWS Earth Search](https://earth-search.aws.element84.com/v1/collections/cop-dem-glo-30)\n* [Microsoft Planetary Computer](https://planetarycomputer.microsoft.com/api/stac/v1/collections/cop-dem-glo-30)\n\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\nimport geopandas as gpd\n\nudf_url = \"https://github.com/fusedio/udfs/tree/main/public/DEM_Tile_Example\"\nudf = fused.load(udf_url)\n\nbounds = gpd.GeoDataFrame.from_features(\n    {\"type\": \"FeatureCollection\", \"features\": [{\"id\": \"0\", \"type\": \"Feature\", \"properties\": {\"x\": 1311, \"y\": 3164, \"z\": 13}, \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[[-124.1455078125, 41.77131167976406], [-124.1455078125, 41.73852846935915], [-124.189453125, 41.73852846935915], [-124.189453125, 41.77131167976406], [-124.1455078125, 41.77131167976406]]]}}]}\n)\n\narr = udf.run_local(bounds=bounds)\narr\n```\n",
-            "fused:explorerPin": "13",
-            "fused:id": null
+            "fused:explorerPin": "13"
           },
           "source": "DEM_Tile_Example.py",
           "headers": [

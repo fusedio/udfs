@@ -78,6 +78,14 @@
             "fused:slug": "DSM_JAXA_Example",
             "fused:name": "DSM_JAXA_Example",
             "fused:defaultParameters": [],
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": -11.058051062900535,
+              "longitude": -59.25515478217631,
+              "zoom": 2.7471382477556374,
+              "pitch": 0.7836392490343473,
+              "bearing": -0.6949806949806949
+            },
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DSM_JAXA_Example.png",
             "fused:tags": [
               {
@@ -93,15 +101,7 @@
                 "label": "s3"
               }
             ],
-            "fused:description": "## Overview\n\nALOS Global Digital Surface Model \"ALOS World 3D - 30m (AW3D30)\" captured by the PRISM optical sensor on the ALOS satellite, with a 30-meter horizontal resolution.\n\n## External links\n- [JAXA Digital Surface Model](https://data.earth.jaxa.jp/en/datasets/#/id/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global)\n- [STAC Collection File](https://s3.ap-northeast-1.wasabisys.com/je-pds/cog/v1/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global/collection.json)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/community/sina/DSM_JAXA_Example\")\narr = fused.run(udf=udf, x=655, y=1583, z=12)\narr\n```\n",
-            "fused:defaultViewState": {
-              "enable": true,
-              "latitude": -11.058051062900535,
-              "longitude": -59.25515478217631,
-              "zoom": 2.7471382477556374,
-              "pitch": 0.7836392490343473,
-              "bearing": -0.6949806949806949
-            }
+            "fused:description": "## Overview\n\nALOS Global Digital Surface Model \"ALOS World 3D - 30m (AW3D30)\" captured by the PRISM optical sensor on the ALOS satellite, with a 30-meter horizontal resolution.\n\n## External links\n- [JAXA Digital Surface Model](https://data.earth.jaxa.jp/en/datasets/#/id/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global)\n- [STAC Collection File](https://s3.ap-northeast-1.wasabisys.com/je-pds/cog/v1/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global/collection.json)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/community/sina/DSM_JAXA_Example\")\narr = fused.run(udf=udf, x=655, y=1583, z=12)\narr\n```\n"
           },
           "source": "DSM_JAXA_Example.py",
           "headers": []

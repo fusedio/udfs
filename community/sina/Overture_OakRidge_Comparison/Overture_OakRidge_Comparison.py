@@ -9,10 +9,10 @@ def udf(
     # Load pinned versions of utility functions.
     overture_maps = fused.load("https://github.com/fusedio/udfs/tree/38ff24d/public/Overture_Maps_Example/")
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/3ac8eaf/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
     conn = common.duckdb_connect()
     if class_source=='Overture':
-        metric = 'subtype'
+        metric = 'subtype' 
     elif class_source=='ORNL':
         metric = 'OCC_CLS'
     else: 
@@ -40,7 +40,7 @@ def udf(
     joined["combined_source"] = joined["combined_source"].apply(
         lambda x: "government" if x == "civic" else x
     )
-    # 4. Print stats with DuckDB
+    # 4. Print stats with DuckDB 
     joined_str = joined.copy()
     joined_str["geometry"] = joined_str["geometry"].astype(str)
     df = conn.sql(
