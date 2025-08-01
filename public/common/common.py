@@ -814,7 +814,7 @@ def get_pc_token(url):
     response = requests.get(url)
     return response.json()
 
-@fused.cache(path="table_to_tile")
+@fused.cache(cache_folder_path="table_to_tile")
 def table_to_tile(
     bounds: fused.types.Bounds,
     table="s3://fused-asset/imagery/naip/",
@@ -916,7 +916,7 @@ def rasterize_geometry(
     return rv_array.astype(bool)
 
 
-@fused.cache(path="geom_stats")
+@fused.cache(cache_folder_path="geom_stats")
 def geom_stats(gdf, arr, output_shape=(255, 255)):
     import numpy as np
 
@@ -948,7 +948,7 @@ def earth_session(cred):
     return AWSSession(aws_session, requester_pays=False)
 
 
-@fused.cache(path="read_tiff")
+@fused.cache(cache_folder_path="read_tiff")
 def read_tiff(
     bounds,
     input_tiff_path,
