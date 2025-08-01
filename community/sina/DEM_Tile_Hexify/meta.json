@@ -45,22 +45,27 @@
             "fused:slug": "DEM_Tile_Hexify",
             "fused:name": "DEM_Tile_Hexify",
             "fused:gitPath": "community/sina/DEM_Tile_Hexify",
-            "fused:gitRef": "2528576155696ad0aa24beef28643891343f2211",
+            "fused:gitRef": "b8ac67d5c05ae8f3d2908dcef5f07b25362f9b92",
             "fused:gitAuthorNames": [
+              null,
               null
             ],
             "fused:gitAuthorUsernames": [
-              "MaxLenormand"
+              "MaxLenormand",
+              "milind-soni"
             ],
             "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
+              "https://github.com/MaxLenormand",
+              "https://github.com/milind-soni"
             ],
             "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
+              "https://avatars.githubusercontent.com/u/44133329?v=4",
+              "https://avatars.githubusercontent.com/u/46266943?v=4"
             ],
-            "fused:gitLastModified": "2025-07-23T14:53:34+00:00",
+            "fused:gitLastModified": "2025-07-29T14:44:16+00:00",
             "fused:explorerTab": "self",
             "fused:gitRepo": "fusedio/udfs",
+            "fused:userCreatedShareToken": "fsh_6Vrv8Jqg7KrUZFmEPolOME",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DEM_Tile_Hexify.png",
             "fused:tags": [
               {
@@ -78,7 +83,6 @@
             ],
             "fused:description": "#### Overview\nThis example demonstrates how terrain TIFF tiles can be dynamically converted into an H3 grid. The raster values are aggregated (sum or mean) for H3 hexes at a resolution dependent on the zoom level. The terrain data come from diverse global sources, including ArcticDEM funded by the NSF, Geoscience Australia, Austria’s Digital Terrain Model, Canada's Open Government License, EU Copernicus data, NOAA's ETOPO1, INEGI in Mexico, New Zealand's Land Information authority, Kartverket in Norway, the UK's Environment Agency, and the U.S. Geological Survey for 3DEP and SRTM. \n\n## External links\n\n- [AWS open data](https://registry.opendata.aws/terrain-tiles/)\n- [Attribution link](https://github.com/tilezen/joerd/blob/master/docs/attribution.md)\n",
             "fused:explorerPin": "9",
-            "fused:userCreatedShareToken": "fsh_6Vrv8Jqg7KrUZFmEPolOME",
             "fused:id": null
           },
           "source": "DEM_Tile_Hexify.py",
