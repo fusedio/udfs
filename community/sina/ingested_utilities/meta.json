@@ -45,25 +45,17 @@
                 ]
               }
             },
-            "fused:udfType": "vector_tile",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "ingested_utilities",
             "fused:name": "ingested_utilities",
             "fused:defaultViewState": {
-              "enable": true,
+              "enable": false,
               "latitude": 41.24075510148416,
               "longitude": -78.34628671592925,
               "zoom": 9.224527487041115,
               "pitch": 0,
               "bearing": 0
             },
-            "fused:assetUrl": "https://fused-magic.s3.amazonaws.com/thumbnails/preview/fusedlabs/fusedudfs/ingested_utilities/06244ee2-8075-4afc-b614-46af8a965120",
-            "fused:tags": [
-              {
-                "id": "vegetation_management_demo",
-                "label": "vegetation_management_demo"
-              }
-            ],
-            "fused:description": "Read US Transmission power lines \n",
             "fused:defaultParameters": [
               {
                 "parameter": "buffer_size_m",
@@ -73,7 +65,15 @@
                   "150"
                 ]
               }
-            ]
+            ],
+            "fused:assetUrl": "https://fused-magic.s3.amazonaws.com/thumbnails/preview/fusedlabs/fusedudfs/ingested_utilities/06244ee2-8075-4afc-b614-46af8a965120",
+            "fused:tags": [
+              {
+                "id": "vegetation_management_demo",
+                "label": "vegetation_management_demo"
+              }
+            ],
+            "fused:description": "Read US Transmission power lines \n"
           },
           "source": "ingested_utilities.py",
           "headers": []
