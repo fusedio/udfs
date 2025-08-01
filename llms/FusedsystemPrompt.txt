@@ -24,7 +24,7 @@ Always return HTML using the the following format generic HTML UDF format (i.e. 
 
 @fused.udf
 def udf():
-    common = fused.load("https://github.com/fusedio/udfs/tree/b631c93/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/fbf5682/public/common/")
     html_content = """
         <h1>hello world</h1>
     """
@@ -34,7 +34,7 @@ Embeded HTML UDF that returns a chart from a dataset:
 
 @fused.udf
 def udf(path = "s3://fused-sample/demo_data/housing/housing_2024.csv"):
-    common = fused.load("https://github.com/fusedio/udfs/tree/b631c93/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/fbf5682/public/common/")
     import pandas as pd
     import altair as alt
 
