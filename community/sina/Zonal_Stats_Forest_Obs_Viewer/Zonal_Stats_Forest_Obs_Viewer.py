@@ -7,7 +7,7 @@ def udf(bounds: fused.types.Bounds= [-89.4859409525646,23.27628480644696,-73.603
     zonal_stats_forest = fused.load("https://github.com/fusedio/udfs/blob/b603e45/community/plinio/Zonal_Stats_Forest_Obs/")
     tile = common.get_tiles(bounds, clip=True)
 
-    # 1. Determine which Zonal Stats grid cells fall within the `bounds`
+    # 1. Determine which Zonal Stats grid cells fall within `bounds`
     s3_file_path = f"s3://fused-asset/data/zonal_stats_example/assets_with_bounds_4_4.parquet"
     gdf_bounds = zonal_stats_forest.get_asset_dissolve(s3_file_path)
     gdf = gdf_bounds.sjoin(tile)
