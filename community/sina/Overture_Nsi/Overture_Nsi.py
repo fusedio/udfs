@@ -8,7 +8,7 @@ def udf(bounds: fused.types.Bounds = [-123.86438687695097,46.1795089730952,-123.
     common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
     tile = common.get_tiles(bounds, clip=True)
 
-    if tile.iloc[0].z < 10:
+    if common.estimate_zoom(bounds) < 10:
         return None
 
     overture_maps = fused.load("https://github.com/fusedio/udfs/tree/38ff24d/public/Overture_Maps_Example/")
