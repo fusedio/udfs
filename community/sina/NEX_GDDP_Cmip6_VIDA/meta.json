@@ -115,39 +115,17 @@
                 }
               }
             },
-            "fused:udfType": "vector_single_none",
+            "fused:udfType": "auto",
             "fused:slug": "NEX_GDDP_Cmip6_VIDA",
             "fused:name": "NEX_GDDP_Cmip6_VIDA",
-            "fused:gitPath": "community/sina/NEX_GDDP_Cmip6_VIDA",
-            "fused:gitRef": "0b1a0450e5929456eb19e18b79fdaeb779dfb73f",
-            "fused:gitAuthorNames": [
-              null,
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand",
-              "milind-soni"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand",
-              "https://github.com/milind-soni"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4",
-              "https://avatars.githubusercontent.com/u/46266943?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-30T08:29:34+00:00",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
             "fused:defaultViewState": {
-              "enable": false,
-              "latitude": 20.343124974837764,
-              "longitude": 80.70852883009755,
-              "zoom": 3.3714329917980885,
+              "enable": true,
+              "latitude": -30.056942534618376,
+              "longitude": -63.850457764663815,
+              "zoom": 2.142928165487409,
               "pitch": 0,
               "bearing": 0
             },
-            "fused:userCreatedShareToken": "fsh_7eVqJKkovwEvRaRsSNKQOJ",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/nex_gddp_cmip6.png",
             "fused:tags": [
               {
@@ -159,8 +137,7 @@
                 "label": "climate"
               }
             ],
-            "fused:description": "# Vida NEX-GDDP-based climate model\n\nThis UDF operates on a given bounding box ('bounds') to select and show the output from\nVida's processed NEX-GDDP-based ensemble climate data for the year 2080 by default.\n",
-            "fused:id": null
+            "fused:description": "# Vida NEX-GDDP-based climate model\n\nThis UDF operates on a given bounding box ('bounds') to select and show the output from\nVida's processed NEX-GDDP-based ensemble climate data for the year 2080 by default.\n"
           },
           "source": "NEX_GDDP_Cmip6_VIDA.py",
           "headers": []

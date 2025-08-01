@@ -14,8 +14,8 @@ def udf(
     from pystac_client import Client
 
     # convert bounds to tile
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
-    tile = common.get_tiles(bounds, clip=True)
+    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
+    tile = common.get_tiles(bounds, clip=True)  
 
     STAC_URL = "https://cmr.earthdata.nasa.gov/stac"
 
@@ -81,7 +81,7 @@ def udf(
                 print(f"Collection '{collection_id}' was not found in the catalog.")
             return None
 
-        arr = common.mosaic_tiff(
+        arr = common.mosaic_tiff(  
             tile,
             band_urls[:n_mosaic],
             reduce_function=lambda x: np.max(x, axis=0),

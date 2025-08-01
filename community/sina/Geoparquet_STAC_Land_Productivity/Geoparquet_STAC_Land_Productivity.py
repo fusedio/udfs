@@ -9,7 +9,7 @@ def udf(
     from pystac import Item
 
     # Load pinned versions of utility functions.
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
     zoom = common.estimate_zoom(bounds)
     
     # Find Items that intersect the bounding box and time period

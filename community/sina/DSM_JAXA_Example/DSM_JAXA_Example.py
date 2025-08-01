@@ -12,7 +12,7 @@ def udf(
     import palettable
     import geopandas as gpd
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
     
     arr = dsm_to_tile(bounds=bounds, z_levels=z_levels, verbose=verbose)
     print(arr)
@@ -29,7 +29,7 @@ def dsm_to_tile(
     z_levels=[4, 6, 9, 11],
     verbose=True
 ):
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
     tile = common.get_tiles(bounds)
     zoom = tile.iloc[0].z
 

@@ -76,37 +76,9 @@
                 ]
               }
             },
-            "fused:udfType": "raster",
+            "fused:udfType": "auto",
             "fused:slug": "Geoparquet_STAC_Land_Productivity",
             "fused:name": "Geoparquet_STAC_Land_Productivity",
-            "fused:id": null,
-            "fused:gitUrl": "https://github.com/fusedio/udfs/tree/3796a00e2c62f8a8a672d9b1e9e9ee25db9e78df/public/Geoparquet_STAC_Land_Productivity/",
-            "fused:gitShortUrl": "https://github.com/fusedio/udfs/tree/3796a00/public/Geoparquet_STAC_Land_Productivity/",
-            "fused:gitPath": "public/Geoparquet_STAC_Land_Productivity",
-            "fused:gitRef": "3796a00e2c62f8a8a672d9b1e9e9ee25db9e78df",
-            "fused:gitAuthorNames": [
-              "Alex Leith",
-              null,
-              "Vincent Buscarello"
-            ],
-            "fused:gitAuthorUsernames": [
-              "alexgleith",
-              "fused-io[bot]",
-              "KeynesYouDigIt"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/alexgleith",
-              "https://github.com/apps/fused-io",
-              "https://github.com/KeynesYouDigIt"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/3445853?v=4",
-              "https://avatars.githubusercontent.com/in/834700?v=4",
-              "https://avatars.githubusercontent.com/u/10255911?v=4"
-            ],
-            "fused:gitLastModified": "2025-01-27T18:44:56+00:00",
-            "fused:explorerTab": "public",
-            "fused:gitRepo": "fusedio/udfs",
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 16.81999640421226,

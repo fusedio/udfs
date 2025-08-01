@@ -53,7 +53,7 @@
                 ]
               }
             },
-            "fused:udfType": "vector_single_none",
+            "fused:udfType": "vector_tile",
             "fused:slug": "DC_AOI_Tile",
             "fused:name": "DC_AOI_Tile",
             "fused:defaultViewState": {
@@ -64,31 +64,8 @@
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitPath": "community/sina/DC_AOI_Tile",
-            "fused:gitRef": "1d4c5fce4800eb1a498d1511d48831f2e9295555",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DC_AOI_Example.png",
-            "fused:description": "Exported from Fused UDF Workbench\n\n",
-            "fused:gitAuthorNames": [
-              null,
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand",
-              "milind-soni"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand",
-              "https://github.com/milind-soni"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4",
-              "https://avatars.githubusercontent.com/u/46266943?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-29T22:09:45+00:00",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
-            "fused:userCreatedShareToken": "fsh_3Jck0O63cddMsGFR6A8Tp",
-            "fused:id": null
+            "fused:description": "Exported from Fused UDF Workbench\n\n"
           },
           "source": "DC_AOI_Tile.py",
           "headers": []

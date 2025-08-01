@@ -52,42 +52,19 @@
                 ]
               }
             },
-            "fused:udfType": "vector_single_none",
+            "fused:udfType": "auto",
             "fused:slug": "NAIP_Tile_Example",
             "fused:name": "NAIP_Tile_Example",
             "fused:defaultViewState": {
-              "enable": false,
-              "latitude": 37.78859906367361,
-              "longitude": -122.39950821441626,
-              "zoom": 13.690647419290904,
+              "enable": true,
+              "latitude": 37.78850038060564,
+              "longitude": -122.39950000002618,
+              "zoom": 14.298641796211204,
               "pitch": 0,
               "bearing": 0
             },
-            "fused:gitPath": "community/sina/NAIP_Tile_Example",
-            "fused:gitRef": "d1216b178dab804df66b57d14b8f12864c5ab1ae",
-            "fused:gitAuthorNames": [
-              null,
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand",
-              "milind-soni"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand",
-              "https://github.com/milind-soni"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4",
-              "https://avatars.githubusercontent.com/u/46266943?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-30T06:32:56+00:00",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/NAIP_Tile_Example.png",
-            "fused:description": "# Overview\n\nNAIP aerial imagery, obtained seasonally in the U.S., aims to deliver digital ortho photography to the government and the public within a year of acquisition.\n\n# External links\n\n- [National Agriculture Imagery Program (NAIP)](https://naip-usdaonline.hub.arcgis.com/)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/NAIP_Tile_Example\")\narr = fused.run(udf=udf, x=5241, y=12667, z=15)\narr\n```\n",
-            "fused:userCreatedShareToken": "fsh_5tid5gNJebyAY4fhIAMNDx",
-            "fused:id": null
+            "fused:description": "# Overview\n\nNAIP aerial imagery, obtained seasonally in the U.S., aims to deliver digital ortho photography to the government and the public within a year of acquisition.\n\n# External links\n\n- [National Agriculture Imagery Program (NAIP)](https://naip-usdaonline.hub.arcgis.com/)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/NAIP_Tile_Example\")\narr = fused.run(udf=udf, x=5241, y=12667, z=15)\narr\n```\n"
           },
           "source": "NAIP_Tile_Example.py",
           "headers": []
