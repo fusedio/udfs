@@ -49,10 +49,10 @@
             "fused:slug": "ingested_utilities",
             "fused:name": "ingested_utilities",
             "fused:defaultViewState": {
-              "enable": false,
-              "latitude": 41.24075510148416,
-              "longitude": -78.34628671592925,
-              "zoom": 9.224527487041115,
+              "enable": true,
+              "latitude": 39.803564823478396,
+              "longitude": -91.03018153471027,
+              "zoom": 9.48023785250782,
               "pitch": 0,
               "bearing": 0
             },
