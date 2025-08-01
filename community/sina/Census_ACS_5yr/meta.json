@@ -34,7 +34,7 @@
                 "getLineColor": "@@=[properties.metric, properties.metric/4, properties.metric]"
               }
             },
-            "fused:udfType": "vector_single_none",
+            "fused:udfType": "vector_tile",
             "fused:slug": "Census_ACS_5yr",
             "fused:name": "Census_ACS_5yr",
             "fused:defaultViewState": {
