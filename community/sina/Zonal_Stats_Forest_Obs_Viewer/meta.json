@@ -50,19 +50,19 @@
                 ]
               }
             },
-            "fused:udfType": "vector_tile",
+            "fused:udfType": "vector_single_none",
             "fused:slug": "Zonal_Stats_Forest_Obs_Viewer",
             "fused:name": "Zonal_Stats_Forest_Obs_Viewer",
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/blog-assets/zstats_viewer_mx.png",
-            "fused:description": "# Zonal Stats Forest Observations - viewer\n\nThis UDF visualizes the final output of a zonal statistics workflow for forest cover for municipal areas around the world. This table shows aggregates of a raster of global forest cover across zones defined by a vector table of municipalities. The output table contains records for every municipality and columns with summary metrics such as percent forest coverage.\n\nThis UDF is called \"viewer\" because it clips the table of outputs it to fit within the bounds of the tile as a tile UDF and renders it as a choroplet map. The maps shows differences in color intensity, from 0 to 1, within municipality polygons to indicate the average values of forest cover.\n",
             "fused:defaultViewState": {
               "enable": true,
-              "latitude": 40.19138430555365,
-              "longitude": -71.80494198024793,
-              "zoom": 5.439523246255502,
+              "latitude": 27.83257666277819,
+              "longitude": -82.58984925351372,
+              "zoom": 4.5870061746172945,
               "pitch": 0,
               "bearing": 0
-            }
+            },
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/blog-assets/zstats_viewer_mx.png",
+            "fused:description": "# Zonal Stats Forest Observations - viewer\n\nThis UDF visualizes the final output of a zonal statistics workflow for forest cover for municipal areas around the world. This table shows aggregates of a raster of global forest cover across zones defined by a vector table of municipalities. The output table contains records for every municipality and columns with summary metrics such as percent forest coverage.\n\nThis UDF is called \"viewer\" because it clips the table of outputs it to fit within the bounds of the tile as a tile UDF and renders it as a choroplet map. The maps shows differences in color intensity, from 0 to 1, within municipality polygons to indicate the average values of forest cover.\n"
           },
           "source": "Zonal_Stats_Forest_Obs_Viewer.py",
           "headers": []
