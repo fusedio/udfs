@@ -61,7 +61,7 @@
                 ]
               }
             },
-            "fused:udfType": "vector_single_none",
+            "fused:udfType": "auto",
             "fused:slug": "Overture_Nsi",
             "fused:name": "Overture_Nsi",
             "fused:defaultViewState": {
@@ -72,27 +72,6 @@
               "pitch": 27.21228670200425,
               "bearing": -19.66068910110218
             },
-            "fused:gitPath": "community/sina/Overture_Nsi",
-            "fused:gitRef": "c19a49eda87ac2e2aa3567470f4f67baaab4e797",
-            "fused:gitAuthorNames": [
-              null,
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand",
-              "milind-soni"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand",
-              "https://github.com/milind-soni"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4",
-              "https://avatars.githubusercontent.com/u/46266943?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-29T22:09:45+00:00",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
             "fused:defaultParameters": [
               {
                 "parameter": "join_with_nsi",
@@ -102,9 +81,7 @@
               }
             ],
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/overture_nsi2.png",
-            "fused:description": "## Overview\n\nThis UDF uses the `get_overture` helper function to read from the Overture dataset hosted in Source Coop. It then queries the NSI API to load NSI structures as a feature collection of points.\n\nThe UDF then performs spatial join between Overture Buildings and NSI using GeoPandas with `gdf_overture.sjoin(gdf)`. This operation returns a unified table with Overture building footprints enriched with NSI attributes. Any duplicates, where multiple NSI points fall within the same building footprint, can be dropped. The resulting dataset will have NSI attributes enriched with GERS IDs and the building polygons.\n\nRead more in the associated [blog post](https://docs.fused.io/blog/overture-tiles/).\n",
-            "fused:userCreatedShareToken": "fsh_13vwSU70PXlbhQCKxaIaVL",
-            "fused:id": null
+            "fused:description": "## Overview\n\nThis UDF uses the `get_overture` helper function to read from the Overture dataset hosted in Source Coop. It then queries the NSI API to load NSI structures as a feature collection of points.\n\nThe UDF then performs spatial join between Overture Buildings and NSI using GeoPandas with `gdf_overture.sjoin(gdf)`. This operation returns a unified table with Overture building footprints enriched with NSI attributes. Any duplicates, where multiple NSI points fall within the same building footprint, can be dropped. The resulting dataset will have NSI attributes enriched with GERS IDs and the building polygons.\n\nRead more in the associated [blog post](https://docs.fused.io/blog/overture-tiles/).\n"
           },
           "source": "Overture_Nsi.py",
           "headers": []
