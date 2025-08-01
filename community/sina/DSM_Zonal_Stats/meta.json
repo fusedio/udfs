@@ -71,34 +71,17 @@
                 ]
               }
             },
-            "fused:udfType": "vector_single_none",
+            "fused:udfType": "vector_tile",
             "fused:slug": "DSM_Zonal_Stats",
             "fused:name": "DSM_Zonal_Stats",
             "fused:defaultViewState": {
               "enable": true,
-              "latitude": 37.785942301580604,
-              "longitude": -122.40686504524115,
-              "zoom": 13.79939484693888,
-              "pitch": 39.45762711864407,
-              "bearing": -2.712328767123288
+              "latitude": 37.787986421274965,
+              "longitude": -122.39474773475325,
+              "zoom": 13.930697206131597,
+              "pitch": 56.520956447299156,
+              "bearing": -73.27702702702703
             },
-            "fused:gitPath": "community/sina/DSM_Zonal_Stats",
-            "fused:gitRef": "b430be1c8a5c845ea1ccbe6e4961ddee823e67a4",
-            "fused:gitAuthorNames": [
-              null
-            ],
-            "fused:gitAuthorUsernames": [
-              "MaxLenormand"
-            ],
-            "fused:gitAuthorUrls": [
-              "https://github.com/MaxLenormand"
-            ],
-            "fused:gitAuthorAvatarUrls": [
-              "https://avatars.githubusercontent.com/u/44133329?v=4"
-            ],
-            "fused:gitLastModified": "2025-07-29T14:28:52+00:00",
-            "fused:explorerTab": "self",
-            "fused:gitRepo": "fusedio/udfs",
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/DSM_Zonal_Stats.png",
             "fused:tags": [
               {
@@ -115,9 +98,7 @@
               }
             ],
             "fused:description": "## Overview\n\nThis UDF calculate average DSM for every buildings in the United States. ALOS Global Digital Surface Model \"ALOS World 3D - 30m (AW3D30)\" captured by the PRISM optical sensor on the ALOS satellite, with a 30-meter horizontal resolution.\n\n## External links\n- [JAXA Digital Surface Model](https://data.earth.jaxa.jp/en/datasets/#/id/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global)\n- [STAC Collection File](https://s3.ap-northeast-1.wasabisys.com/je-pds/cog/v1/JAXA.EORC_ALOS.PRISM_AW3D30.v3.2_global/collection.json)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/community/sina/DSM_Zonal_Stats\")\ngdf = fused.run(udf=udf, x=5241, y=12667, z=15)\ngdf\n```\n",
-            "fused:explorerPin": "3",
-            "fused:userCreatedShareToken": "fsh_6878CaKNsCXORw3XgAzEvJ",
-            "fused:id": null
+            "fused:explorerPin": "3"
           },
           "source": "DSM_Zonal_Stats.py",
           "headers": []
