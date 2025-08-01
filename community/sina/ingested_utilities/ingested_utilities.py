@@ -1,13 +1,13 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds, 
+    bounds: fused.types.Bounds = [-91.17890286963457,39.69943402027741,-90.78358724244136,39.85369200032875], 
     path: str='s3://fused-asset/data/us_electric_utilities/ingested/_sample', 
     preview: bool=False,
     buffer_size_m: float = 150,
-    min_zoom: int = 10,
+    min_zoom: int = 4 ,
 ):
     """
-    Taking power lines only within a `bounds`
+    Taking power lines only within a `bounds` 
     Returns bounding boxes of partitions if above min_zoom
     """
     
