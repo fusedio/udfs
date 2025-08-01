@@ -9,7 +9,7 @@ def udf(
     import numpy as np
     
     # Load pinned versions of utility functions.
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
     zoom = common.estimate_zoom(bounds)
 
     # different geometry details per zoom level
