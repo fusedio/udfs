@@ -103,3 +103,88 @@ Format of one of tiles: `2005.pq`. Opening and showing df.head().T returns:
 year: year of measurement
 week: week within the year
 avg_temperature: avg temperature over that week, in degree Kelvin
+
+Sample Datasets:
+Here are a list of public dataset which you can use for data analysis, You cannot assume anything about the structure, schema and the columns of the dataset, The first step when a user asks about any of the dataset is to create a simple UDF which can explore the schema of the dataset, open the dataset based on the extension of the file. Then proceed as the user asks you to
+[
+  {
+    "link": "https://raw.githubusercontent.com/allisonhorst/palmerpenguins/master/inst/extdata/penguins.csv",
+    "description": "Measurements of 344 penguins (3 species) from Palmer Archipelago, Antarctica including bill length, bill depth, flipper length, body mass, and sex"
+  },
+  {
+    "link": "http://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data",
+    "description": "Classic ML dataset with 150 iris flower measurements across 3 species (setosa, versicolor, virginica)"
+  },
+  {
+    "link": "http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv",
+    "description": "Physicochemical properties and quality ratings for Portuguese red wines with 11 input variables"
+  },
+  {
+    "link": "http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv",
+    "description": "Physicochemical properties and quality ratings for Portuguese white wines with 11 input variables"
+  },
+  {
+    "link": "http://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data",
+    "description": "1994 Census data to predict whether income exceeds $50K/year based on demographic attributes"
+  },
+  {
+    "link": "https://files.grouplens.org/datasets/movielens/ml-100k.zip",
+    "description": "100,000 movie ratings from 943 users on 1,682 movies with demographic data and movie information"
+  },
+  {
+    "link": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_month.csv",
+    "description": "Real-time earthquake data with magnitude >2.5 from past 30 days including location, depth, time"
+  },
+  {
+    "link": "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv",
+    "description": "The New York Times US county-level COVID-19 data, with daily cases and deaths across all US counties"
+  },
+  {
+    "link": "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m",
+    "description": "Free historical and forecast weather data API with global coverage (example: Berlin weather)"
+  },
+  {
+    "link": "https://datahub.io/core/global-temp/r/annual.csv",
+    "description": "Global average land and ocean temperature anomalies from 1850 to present, compiled by the University of East Anglia and the Met Office"
+  },
+  {
+    "link": "http://www.cs.cmu.edu/~enron/enron_mail_20150507.tar.gz",
+    "description": "500K+ emails from Enron executives, cleaned and organized by Carnegie Mellon University"
+  },
+  {
+    "link": "https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv",
+    "description": "Passenger data from RMS Titanic with survival information and passenger demographics"
+  },
+  {
+    "link": "https://github.com/myleott/mnist_png/raw/master/mnist_png.tar.gz",
+    "description": "PNG images of MNIST handwritten digit dataset - 60K train and 10K test images as PNG files"
+  },
+  {
+    "link": "http://storage.googleapis.com/books/ngrams/books/googlebooks-eng-all-1gram-20120701-a.gz",
+    "description": "Word frequency data from Google Books corpus, sample file for words starting with 'a'"
+  },
+  {
+    "link": "https://info.stackoverflowsolutions.com/rs/719-EMH-566/images/stack-overflow-developer-survey-2024.zip",
+    "description": "Annual survey data from 65K+ developers worldwide covering technologies, salaries, demographics"
+  },
+  {
+    "link": "https://gml.noaa.gov/aftp/data/radiation/surfrad/Bondville_IL/2024/bon24001.dat",
+    "description": "Surface radiation budget network data from Bondville, IL station (sample day)"
+  },
+  {
+    "link": "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson",
+    "description": "Geographic boundaries of all world countries in GeoJSON format for mapping applications"
+  },
+  {
+    "link": "https://vincentarelbundock.github.io/Rdatasets/csv/MASS/Boston.csv",
+    "description": "Housing prices with 13 features from 1970s Boston area for price prediction"
+  },
+  {
+    "link": "https://archive.ics.uci.edu/ml/machine-learning-databases/00320/student.zip",
+    "description": "UCI Student Performance Dataset: Student grades, demographic and social features for Portuguese schools (Math and Portuguese language classes)"
+  },
+  {
+    "link": "https://people.sc.fsu.edu/~jburkardt/data/csv/hw_200.csv",
+    "description": "200 records of people's height and weight for regression and data visualization tasks"
+  }
+]
