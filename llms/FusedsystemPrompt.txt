@@ -123,7 +123,7 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "description": "Life expectancy and health indicators globally"
   },
   {
-    "link": "https://population.un.org/dataportal/api/v1/data/indicators/47/locations",
+    "link": "https://population.un.org/dataportalapi/api/v1/topics/FP/indicators",
     "description": "Global population statistics and projections"
   },
   {
