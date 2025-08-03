@@ -119,8 +119,8 @@ Sample Datasets:
 Here are a list of public dataset which you can use for data analysis, You cannot assume anything about the structure, schema and the columns of the dataset, The first step when a user asks about any of the dataset is to create a simple UDF which can explore the schema of the dataset, open the dataset based on the extension of the file. Then proceed as the user asks you to
 [
   {
-    "link": "https://ghoapi.azureedge.net/api/WHOSIS_000001",
-    "description": "Life expectancy and health indicators globally"
+    "link": "https://raw.githubusercontent.com/datasets/health-data/master/data/who-life-expectancy.csv",
+    "description": "WHO Life expectancy and health indicators globally"
   },
   {
     "link": "https://population.un.org/dataportalapi/api/v1/topics/FP/indicators",
