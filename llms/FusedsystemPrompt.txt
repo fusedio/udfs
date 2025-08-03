@@ -119,6 +119,194 @@ Sample Datasets:
 Here are a list of public dataset which you can use for data analysis, You cannot assume anything about the structure, schema and the columns of the dataset, The first step when a user asks about any of the dataset is to create a simple UDF which can explore the schema of the dataset, open the dataset based on the extension of the file. Then proceed as the user asks you to
 [
   {
+    "link": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/nama_10_gdp",
+    "description": "European Union economic statistics"
+  },
+  {
+    "link": "https://ghoapi.azureedge.net/api/WHOSIS_000001",
+    "description": "Life expectancy and health indicators globally"
+  },
+  {
+    "link": "https://population.un.org/dataportal/api/v1/data/indicators/47/locations",
+    "description": "Global population statistics and projections"
+  },
+  {
+    "link": "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv",
+    "description": "Global COVID-19 cases and deaths time series"
+  },
+  {
+    "link": "https://wikimedia.org/api/rest_v1/metrics/pageviews/aggregate/all-projects/all-access/all-agents/daily/20230101/20231231",
+    "description": "Wikipedia article popularity and trends"
+  },
+  {
+    "link": "https://stats.wto.org/api/v1/data",
+    "description": "International trade statistics and agreements"
+  },
+  {
+    "link": "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd",
+    "description": "Real-time cryptocurrency prices and market cap"
+  },
+  {
+    "link": "https://apps.who.int/nha/database/api/countries",
+    "description": "Healthcare spending by countries"
+  },
+  {
+    "link": "http://data.uis.unesco.org/api/v1/data/",
+    "description": "Global education indicators and literacy rates"
+  },
+  {
+    "link": "https://data.police.uk/api/forces",
+    "description": "List of all UK police forces"
+  },
+  {
+    "link": "https://data.police.uk/api/crimes-street-dates",
+    "description": "List of street crime dates UK"
+  },
+  {
+    "link": "http://pokeapi.co/api/v2/pokemon/1/",
+    "description": "Pok\u00e9mon data by number (replace 1)"
+  },
+  {
+    "link": "https://raw.githubusercontent.com/Biuni/PokemonGO-Pokedex/master/pokedx.json",
+    "description": "Complete Pok\u00e9dex JSON"
+  },
+  {
+    "link": "https://data.police.uk/api/leicestershire/neighbourhoods",
+    "description": "Neighbourhood listings for Leicestershire UK"
+  },
+  {
+    "link": "https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.json?accessType=DOWNLOAD",
+    "description": "Chicago historical crime data since 2001"
+  },
+  {
+    "link": "https://api.fda.gov/food/enforcement.json",
+    "description": "FDA food enforcement (recalls) data"
+  },
+  {
+    "link": "https://world.openfoodfacts.org/api/v0/product/5060292302201.json",
+    "description": "Open Food Facts product data"
+  },
+  {
+    "link": "https://api.github.com/meta",
+    "description": "GitHub meta information"
+  },
+  {
+    "link": "http://pokeapi.co/api/v2/ability/1",
+    "description": "Pok\u00e9mon ability data by number (replace 1)"
+  },
+  {
+    "link": "https://api.github.com/emojis",
+    "description": "GitHub emoji list"
+  },
+  {
+    "link": "https://api.exchangerate-api.com/v4/latest/USD",
+    "description": "Latest USD exchange rates"
+  },
+  {
+    "link": "https://api.exchangerate-api.com/v4/latest/GBP",
+    "description": "Latest GBP exchange rates"
+  },
+  {
+    "link": "https://api.github.com/gists",
+    "description": "Recent public GitHub gists"
+  },
+  {
+    "link": "https://api.github.com/events",
+    "description": "Public GitHub event stream"
+  },
+  {
+    "link": "http://pokeapi.co/api/v2/type/1/",
+    "description": "Pok\u00e9mon type data by number (replace 1)"
+  },
+  {
+    "link": "https://www.justice.gov/api/v1/blog_entries.json?pagesize=2",
+    "description": "Latest DOJ blog entries"
+  },
+  {
+    "link": "https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v0001/?format=json&appid=0",
+    "description": "Steam current player numbers"
+  },
+  {
+    "link": "https://data.parliament.scot/api/governmentroles",
+    "description": "Scottish government roles"
+  },
+  {
+    "link": "https://data.parliament.scot/api/departments",
+    "description": "Scottish Parliament departments"
+  },
+  {
+    "link": "https://www.govtrack.us/api/v2/role?current=true&role_type=senator",
+    "description": "Current US Senators"
+  },
+  {
+    "link": "https://collections.museumvictoria.com.au/api/search",
+    "description": "Museums Victoria collections API"
+  },
+  {
+    "link": "https://www.justice.gov/api/v1/press_releases.json?pagesize=2",
+    "description": "Recent DOJ press releases"
+  },
+  {
+    "link": "https://www.govtrack.us/api/v2/role?current=true&role_type=representative&limit=438",
+    "description": "Current US Representatives"
+  },
+  {
+    "link": "http://api.nobelprize.org/v1/country.json",
+    "description": "Nobel Prize by country data"
+  },
+  {
+    "link": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson",
+    "description": "Recent earthquake data (USGS)"
+  },
+  {
+    "link": "https://api.opensource.org/licenses/permissive",
+    "description": "Permissive licenses"
+  },
+  {
+    "link": "http://api.nobelprize.org/v1/prize.json",
+    "description": "Nobel Prize awards data"
+  },
+  {
+    "link": "https://data.parliament.scot/api/members",
+    "description": "Members of Scottish Parliament"
+  },
+  {
+    "link": "https://data.parliament.scot/api/events",
+    "description": "Scottish Parliament events"
+  },
+  {
+    "link": "http://api.open-notify.org/astros.json",
+    "description": "People currently in space"
+  },
+  {
+    "link": "https://api.opensource.org/licenses/osi-approved",
+    "description": "OSI approved licenses"
+  },
+  {
+    "link": "https://api.opensource.org/licenses/",
+    "description": "All open source licenses"
+  },
+  {
+    "link": "https://data.ny.gov/api/views/5xaw-6ayf/rows.json?accessType=DOWNLOAD",
+    "description": "New York State Farmers' Markets"
+  },
+  {
+    "link": "https://raw.githubusercontent.com/prust/wikipedia-movie-data/master/movies.json",
+    "description": "American movies dataset scraped from Wikipedia"
+  },
+  {
+    "link": "https://www.fema.gov/api/open/v1/FemaWebDisasterDeclarations",
+    "description": "FEMA Disaster Declarations"
+  },
+  {
+    "link": "https://api.opensource.org/licenses/copyleft",
+    "description": "Copyleft licenses list"
+  },
+  {
+    "link": "http://api.nobelprize.org/v1/laureate.json",
+    "description": "Nobel laureate information"
+  },
+  {
     "link": "https://raw.githubusercontent.com/allisonhorst/palmerpenguins/master/inst/extdata/penguins.csv",
     "description": "Measurements of 344 penguins (3 species) from Palmer Archipelago, Antarctica including bill length, bill depth, flipper length, body mass, and sex"
   },
