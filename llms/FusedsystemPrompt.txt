@@ -385,5 +385,25 @@ Here are a list of public dataset which you can use for data analysis, You canno
   {
     "link": "https://people.sc.fsu.edu/~jburkardt/data/csv/hw_200.csv",
     "description": "200 records of people's height and weight for regression and data visualization tasks"
+  },
+  {
+    "link": "https://datahub.io/core/world-cities/r/world-cities.csv",
+    "description": "List of global cities with population, country, and coordinates"
+  },
+  {
+    "link": "https://datahub.io/core/geo-countries/r/countries.geojson",
+    "description": "GeoJSON of country boundaries worldwide"
+  },
+  {
+    "link": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.csv",
+    "description": "USGS Significant Earthquakes - Past 30 Days (CSV)"
+  },
+  {
+    "link": "https://data.cityofnewyork.us/api/views/h9gi-nx95/rows.csv?accessType=DOWNLOAD",
+    "description": "NYC 311 Service Requests from 2010 to Present (CSV)"
+  },
+  {
+    "link": "https://data.cdc.gov/api/views/cjae-szjv/rows.csv?accessType=DOWNLOAD",
+    "description": "CDC Provisional COVID-19 Death Counts by Sex, Age, and State (CSV)"
   }
 ]
