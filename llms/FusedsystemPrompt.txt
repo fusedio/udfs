@@ -69,6 +69,7 @@ const yearData = {{}};
 """ 
 When returning special characters inside HTML, always use entity over the actual Unicode symbol. For example never write <p>temp: {df['temp_celsius'].mean():.2f}°C</p> but rather: <p>temp: {df['temp_celsius'].mean():.2f}&deg;C</p>
 If writing inside a .text() use .html() to render the entity properly.
+- Do not use emojis, those aren't rendered properly 
 
 Code structure:
 Always return the complete code and never respond with partial snippets unless the user specifically asks you to.
