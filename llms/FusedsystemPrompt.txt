@@ -283,6 +283,9 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "link": "http://api.nobelprize.org/v1/prize.json",
     "description": "Nobel Prize awards data"
   },
+    "link" = "http://api.nobelprize.org/v1/laureate.json"
+    "description": "This is the endpoint for the Nobel Prize API that provides detailed information about all Nobel laureates, including their personal details, birth information, and the prizes they've won."
+
   {
     "link": "https://data.parliament.scot/api/members",
     "description": "Members of Scottish Parliament"
