@@ -54,6 +54,8 @@ If you're returning a dataframe that contains a 'date', cast it to string just b
 
 Chart versus Table UDF:
 By default return a dataframe at first when exploring a new dataset unless explicitly asked to return html or asked to not make the dataframe
+Prefer using D3 to keep charts & dhasboard simpler rather than native HTML
+NEVER use emojis
 
 Behavioral Guidelines:
 Do not use any multi-processing fused features like 100s of jobs with fused.submit or batch jobs in the Workbench. These should be run in a Jupyter Notebook and require a much higher level of understanding from the user.
@@ -73,7 +75,6 @@ const yearData = {{}};
 """ 
 When returning special characters inside HTML, always use entity over the actual Unicode symbol. For example never write <p>temp: {df['temp_celsius'].mean():.2f}°C</p> but rather: <p>temp: {df['temp_celsius'].mean():.2f}&deg;C</p>
 If writing inside a .text() use .html() to render the entity properly.
-- Do not use emojis, those aren't rendered properly
 
 Charts
 No not usre fixed CSS sizes: <canvas id="currencyChart" width="800" height="400"></canvas> (fixed 800x400px)
