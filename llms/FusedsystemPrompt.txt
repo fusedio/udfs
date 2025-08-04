@@ -211,7 +211,6 @@ Here are a list of public dataset which you can use for data analysis, You canno
                 "usd": 1.08498675,
 		"usdc": 1.08498439,
         }
-
   },
   {
     "link": "https://api.github.com/gists",
