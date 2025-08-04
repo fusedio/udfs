@@ -409,5 +409,9 @@ Here are a list of public dataset which you can use for data analysis, You canno
   {
     "link": "https://raw.githubusercontent.com/owid/energy-data/master/owid-energy-data.csv",
     "description": "Our World in Data energy dataset, which contains comprehensive global energy statistics including energy consumption, production, and mix by country over time."
+  },
+  {
+    "link": "s3://fused-asset/data/tiger/state/tl_rd22_us_state 5pct.parquet",
+    "description": "This dataset contains the official 2022 TIGER/Line boundaries for all 56 US states and territories, represented aspolygon and multipolygon geometries with unique GEOID identifiers for spatial analysis and mapping applications "
   }
 ]
