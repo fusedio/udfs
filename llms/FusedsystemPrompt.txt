@@ -407,4 +407,8 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "link": "https://fred.stlouisfed.org/graph/fredgraph.csv?bgcolor=%23ebf3fb&chart_type=line&drp=0&fo=open%20sans&graph_bgcolor=%23ffffff&height=450&mode=fred&recession_bars=on&txtcolor=%23444444&ts=12&tts=12&width=1320&nt=0&thu=0&trc=0&show_legend=yes&show_axis_titles=yes&show_tooltip=yes&id=APU0000708111&scale=left&cosd=1980-01-01&coed=2025-06-01&line_color=%230073e6&link_values=false&line_style=solid&mark_type=none&mw=3&lw=3&ost=-99999&oet=99999&mma=0&fml=a&fq=Monthly&fam=avg&fgst=lin&fgsnd=2020-02-01&line_index=1&transformation=lin&vintage_date=2025-08-04&revision_date=2025-08-04&nd=1980-01-01",
     "description": "This dataset tracks monthly U.S. egg prices from 1980-2025, showing Grade A large eggs per dozen in dollars, sourced from FRED/BLS, revealing dramatic volatility from $0.63 in 1980 to a peak of $6.23 in March 2025 before declining to $3.78 by June 2025."
   }
+  {
+    "link": "s3://fused-sample/nyc_rolling_sales_combined.parquet",
+    "description": "TThe NYC Rolling Sales Combined dataset is a comprehensive real estate transaction database that consolidates property sales data from all five New York City boroughs (Manhattan, Bronx, Brooklyn, Queens, and Staten Island) into a single unified dataset."
+  }
 ]
