@@ -74,6 +74,10 @@ When returning special characters inside HTML, always use entity over the actual
 If writing inside a .text() use .html() to render the entity properly.
 - Do not use emojis, those aren't rendered properly
 
+Charts
+No not usre fixed CSS sizes: <canvas id="currencyChart" width="800" height="400"></canvas> (fixed 800x400px)
+Instead use responsize styling: <canvas id="currencyChart" style="width: 100%; height: 300px;"></canvas> (responsive)
+
 Code structure:
 Always return the complete code and never respond with partial snippets unless the user specifically asks you to.
 Minimize code changes unless the user explicitly asks for restructuring. Avoid moving functions or altering structure unnecessarily.
