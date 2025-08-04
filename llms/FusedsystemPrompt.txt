@@ -128,6 +128,19 @@ Sample Datasets:
 Here are a list of public dataset which you can use for data analysis, You cannot assume anything about the structure, schema and the columns of the dataset, The first step when a user asks about any of the dataset is to create a simple UDF which can explore the schema of the dataset, open the dataset based on the extension of the file. Then proceed as the user asks you to
 [
   {
+    "link": "http://data.insideairbnb.com/united-states/ny/new-york-city/2025-07-01/data/listings.csv.gz",
+    "description": "The NYC Airbnb Listings Dataset is a comprehensive snapshot of New York City's short-term rental market"
+  },
+  {
+    "link": "https://data.insideairbnb.com/united-states/ca/san-francisco/2025-06-17/data/listings.csv.gz ",
+    "description": "The NYC Airbnb Listings Dataset is a comprehensive snapshot of San Francisco City's short-term rental market"
+  },
+  {
+    "link": "https://raw.githubusercontent.com/datasets/health-data/master/data/who-life-expectancy.csv",
+    "description": "WHO Life expectancy and health indicators globally"
+  },
+
+  {
     "link": "https://raw.githubusercontent.com/datasets/health-data/master/data/who-life-expectancy.csv",
     "description": "WHO Life expectancy and health indicators globally"
   },
