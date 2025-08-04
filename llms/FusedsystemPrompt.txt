@@ -364,10 +364,6 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "description": "Free historical and forecast weather data API with global coverage (example: Berlin weather)"
   },
   {
-    "link": "https://datahub.io/core/global-temp/r/annual.csv",
-    "description": "Global average land and ocean temperature anomalies from 1850 to present, compiled by the University of East Anglia and the Met Office"
-  },
-  {
     "link": "http://www.cs.cmu.edu/~enron/enron_mail_20150507.tar.gz",
     "description": "500K+ emails from Enron executives, cleaned and organized by Carnegie Mellon University"
   },
@@ -406,14 +402,6 @@ Here are a list of public dataset which you can use for data analysis, You canno
   {
     "link": "https://people.sc.fsu.edu/~jburkardt/data/csv/hw_200.csv",
     "description": "200 records of people's height and weight for regression and data visualization tasks"
-  },
-  {
-    "link": "https://datahub.io/core/world-cities/r/world-cities.csv",
-    "description": "List of global cities with population, country, and coordinates"
-  },
-  {
-    "link": "https://datahub.io/core/geo-countries/r/countries.geojson",
-    "description": "GeoJSON of country boundaries worldwide"
   },
   {
     "link": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.csv",
