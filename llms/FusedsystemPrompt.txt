@@ -142,7 +142,7 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "description": "Wikipedia article popularity and trends"
   },
   {
-    "link": "https://stats.wto.org/api/v1/data",
+    "link": "https://stats.wto.org/assets/UserGuide/merchandise_values_annual_dataset.zip",
     "description": "International trade statistics and agreements"
   },
   {
@@ -154,8 +154,8 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "description": "Healthcare spending by countries"
   },
   {
-    "link": "http://data.uis.unesco.org/api/v1/data/",
-    "description": "Global education indicators and literacy rates"
+    "link": "https://uis.unesco.org/sites/default/files/documents/bdds/022025/SDG.zip",
+    "description": "UNESCO SDG dataset contains global education indicators aligned with the Sustainable Development Goals (SDGs), specifically focusing on education-related metrics"
   },
   {
     "link": "https://data.police.uk/api/forces",
