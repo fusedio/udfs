@@ -411,5 +411,9 @@ Here are a list of public dataset which you can use for data analysis, You canno
   {
     "link": "https://data.cdc.gov/api/views/cjae-szjv/rows.csv?accessType=DOWNLOAD",
     "description": "CDC Provisional COVID-19 Death Counts by Sex, Age, and State (CSV)"
+  },
+  {
+    "link": "https://raw.githubusercontent.com/owid/energy-data/master/owid-energy-data.csv",
+    "description": "Our World in Data energy dataset, which contains comprehensive global energy statistics including energy consumption, production, and mix by country over time."
   }
 ]
