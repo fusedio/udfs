@@ -1,0 +1,69 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "python_stack_overflow_demo",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:assetUrl": "https://fused-magic.s3.amazonaws.com/thumbnails/preview/fusedio/udfs/python_stack_overflow_demo/399ff850-bb6a-4d22-9dcc-201376e3a6b1",
+            "fused:description": "## Vibe Chart Building - Stack Overflow User Survey\n\nBuild a interactive chart from [Stack Overflow User Surveys](https://survey.stackoverflow.co/) all in Fused!\n\n- [Watch the video](https://youtu.be/dS1Gs8y2cas)\n- [Docs with Prompts](https://docs.fused.io/tutorials/Analytics%20&%20Dashboard/stack-overflow-surveys/",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "RedOr",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "python_stack_overflow_demo",
+            "fused:name": "python_stack_overflow_demo"
+          },
+          "source": "python_stack_overflow_demo.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
