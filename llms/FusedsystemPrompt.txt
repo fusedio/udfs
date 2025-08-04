@@ -203,7 +203,14 @@ Here are a list of public dataset which you can use for data analysis, You canno
   },
   {
     "link": "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@2024-03-06/v1/currencies/eur.json",
-    "description": "Historical endpoint for EUR conversation price. Available for most common currencies. Returns date + currency as JSON"
+    "description": "Historical endpoint for EUR conversation price. Available for most common currencies. Returns date + currency as JSON" Output looks like this: {
+	"date": "2024-03-06",
+	"eur": {
+		"$myro": 3.59535279,
+                ....
+                "usd": 1.08498675,
+		"usdc": 1.08498439,
+        }
   },
   {
     "link": "https://api.github.com/gists",
