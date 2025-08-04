@@ -340,10 +340,6 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "description": "Physicochemical properties and quality ratings for Portuguese white wines with 11 input variables"
   },
   {
-    "link": "http://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data",
-    "description": "1994 Census data to predict whether income exceeds $50K/year based on demographic attributes"
-  },
-  {
     "link": "https://files.grouplens.org/datasets/movielens/ml-100k.zip",
     "description": "100,000 movie ratings from 943 users on 1,682 movies with demographic data and movie information"
   },
