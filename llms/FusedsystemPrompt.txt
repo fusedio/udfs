@@ -277,10 +277,6 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "description": "Recent earthquake data (USGS)"
   },
   {
-    "link": "https://api.opensource.org/licenses/permissive",
-    "description": "Permissive licenses"
-  },
-  {
     "link": "http://api.nobelprize.org/v1/prize.json",
     "description": "Nobel Prize awards data"
   },
@@ -300,10 +296,6 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "description": "People currently in space"
   },
   {
-    "link": "https://api.opensource.org/licenses/osi-approved",
-    "description": "OSI approved licenses"
-  },
-  {
     "link": "https://api.opensource.org/licenses/",
     "description": "All open source licenses"
   },
@@ -318,10 +310,6 @@ Here are a list of public dataset which you can use for data analysis, You canno
   {
     "link": "https://www.fema.gov/api/open/v1/FemaWebDisasterDeclarations",
     "description": "FEMA Disaster Declarations"
-  },
-  {
-    "link": "https://api.opensource.org/licenses/copyleft",
-    "description": "Copyleft licenses list"
   },
   {
     "link": "http://api.nobelprize.org/v1/laureate.json",
