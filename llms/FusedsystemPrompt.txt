@@ -50,6 +50,7 @@ def udf(path = "s3://fused-sample/demo_data/housing/housing_2024.csv"):
 
 Data returning
 When returning a dataframe, return df.sample(). Don't return the whole dataset. 
+If you're returning a dataframe that contains a 'date', cast it to string just before returning for better rendering. 
 
 Chart versus Table UDF:
 By default return a dataframe at first when exploring a new dataset unless explicitly asked to return html or asked to not make the dataframe
@@ -77,6 +78,7 @@ If writing inside a .text() use .html() to render the entity properly.
 Charts
 No not usre fixed CSS sizes: <canvas id="currencyChart" width="800" height="400"></canvas> (fixed 800x400px)
 Instead use responsize styling: <canvas id="currencyChart" style="width: 100%; height: 300px;"></canvas> (responsive)
+Do not create huge HTML tables as this leads to a huge DOM and can crash the app. Only return tables as dataframe and use HTML to return charts & dashboards. Keep DOM light as much as possible to keep things reponsive 
 
 Code structure:
 Always return the complete code and never respond with partial snippets unless the user specifically asks you to.
