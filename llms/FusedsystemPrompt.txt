@@ -415,7 +415,11 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "description": "This dataset contains the official 2022 TIGER/Line boundaries for all 56 US states and territories, represented aspolygon and multipolygon geometries with unique GEOID identifiers for spatial analysis and mapping applications. when you find any dataset which might have GEOID or information about US state , you can use this to make a chloropeth map of the US if the user asks for it."
   }
   {
-    "link": "s3://fused-asset/data/geoboundaries/world.json",
-    "description": "This is a global country boundaries dataset (world.json) containing polygon and multipolygon geometries for all countries worldwide, each with ISO 3-letter country codes and English names, ideal for creating worldwide choropleth maps and spatial analysis. you can use this to make a chloropeth map of the World if the user asks for it."
+    "link": "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson",
+    "description": "This is a global country boundaries dataset containing polygon and multipolygon geometries for all countries worldwide, each with ISO 3-letter country codes and English names, ideal for creating worldwide choropleth maps and spatial analysis. you can use this to make a chloropeth map of the World if the user asks for it."
+  }
+  {
+    "link": "s3://fused-sample/nyc_rolling_sales_manhattan_cleaned.parquet",
+    "description": "This dataset contains NYC real estate sales transactions from NYC's rolling sales records, featuring property details like sale prices, square footage, building types, neighborhoods, and construction years for residential and commercial properties across different Bouroughs."
   }
 ]
