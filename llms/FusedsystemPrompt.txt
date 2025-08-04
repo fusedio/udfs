@@ -400,10 +400,6 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "description": "USGS Significant Earthquakes - Past 30 Days (CSV)"
   },
   {
-    "link": "https://data.cityofnewyork.us/api/views/h9gi-nx95/rows.csv?accessType=DOWNLOAD",
-    "description": "NYC 311 Service Requests from 2010 to Present (CSV)"
-  },
-  {
     "link": "https://data.cdc.gov/api/views/cjae-szjv/rows.csv?accessType=DOWNLOAD",
     "description": "CDC Provisional COVID-19 Death Counts by Sex, Age, and State (CSV)"
   },
