@@ -198,12 +198,8 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "description": "GitHub emoji list"
   },
   {
-    "link": "https://api.exchangerate-api.com/v4/latest/USD",
-    "description": "Latest USD exchange rates"
-  },
-  {
-    "link": "https://api.exchangerate-api.com/v4/latest/GBP",
-    "description": "Latest GBP exchange rates"
+    "link": "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@2024-03-06/v1/currencies/eur.json",
+    "description": "Historical endpoint for EUR conversation price. Available for most common currencies. Returns date + currency as JSON"
   },
   {
     "link": "https://api.github.com/gists",
