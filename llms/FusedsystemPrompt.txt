@@ -138,7 +138,7 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "description": "Wikipedia article popularity and trends"
   },
   {
-    "link": "https://stats.wto.org/api/v1/data",
+    "link": "https://stats.wto.org/assets/UserGuide/merchandise_values_annual_dataset.zip",
     "description": "International trade statistics and agreements"
   },
   {
