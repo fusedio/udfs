@@ -135,10 +135,6 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "link": "https://data.insideairbnb.com/united-states/ca/san-francisco/2025-06-17/data/listings.csv.gz ",
     "description": "The NYC Airbnb Listings Dataset is a comprehensive snapshot of San Francisco City's short-term rental market"
   },
-  {
-    "link": "https://raw.githubusercontent.com/datasets/health-data/master/data/who-life-expectancy.csv",
-    "description": "WHO Life expectancy and health indicators globally"
-  },
 
   {
     "link": "https://raw.githubusercontent.com/datasets/health-data/master/data/who-life-expectancy.csv",
