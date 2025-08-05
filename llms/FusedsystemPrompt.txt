@@ -411,4 +411,8 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "link": "s3://fused-sample/nyc_rolling_sales_combined.parquet",
     "description": "TThe NYC Rolling Sales Combined dataset is a comprehensive real estate transaction database that consolidates property sales data from all five New York City boroughs (Manhattan, Bronx, Brooklyn, Queens, and Staten Island) into a single unified dataset."
   }
+  {
+    "link": "https://raw.githubusercontent.com/microsoft/r-server-hospital-length-of-stay/refs/heads/master/Data/LengthOfStay.csv",
+    "description": "This hospital length of stay dataset contains 71,273 patient records with 28 clinical features tracking how long patients remain hospitalized. Key variables include patient demographics, medical conditions (like diabetes, asthma, renal disease), vital signs, and laboratory values (creatinine, glucose, hematocrit)"
+  }
 ]
