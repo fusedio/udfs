@@ -9,7 +9,7 @@ def udf(
     """"""
     import numpy as np
     
-    common = fused.load("https://github.com/fusedio/udfs/tree/364f5dd/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
     tile = common.get_tiles(bounds, clip=True)
 
     input_tiff_path = f"s3://fused-asset/data/cdls/{year}_30m_cdls.tif"
