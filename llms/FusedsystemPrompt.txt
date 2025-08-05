@@ -413,6 +413,6 @@ Here are a list of public dataset which you can use for data analysis, You canno
   }
   {
     "link": "https://raw.githubusercontent.com/microsoft/r-server-hospital-length-of-stay/refs/heads/master/Data/LengthOfStay.csv",
-    "description": "This hospital length of stay dataset contains 71,273 patient records with 28 clinical features tracking how long patients remain hospitalized. Key variables include patient demographics, medical conditions (like diabetes, asthma, renal disease), vital signs, and laboratory values (creatinine, glucose, hematocrit)"
+    "description": "TThe hospital length of stay dataset contains 100,000 patient records with 25 columns including patient demographics (gender, eid), visit details (vdate, discharged, facid across 5 hospitals), emergency room visits (rcount), medical conditions as binary flags (dialysis, asthma, pneumonia, depression, etc.), lab results (hematocrit, glucose, creatinine, bmi, pulse, respiration), and the target variable lengthofstay ranging from 1-10+ days."
   }
 ]
