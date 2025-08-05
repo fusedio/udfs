@@ -3,7 +3,7 @@
 def udf(agg_factor=3, min_count=5):
     import duckdb
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/364f5dd/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
     con = common.duckdb_connect()
 
     print("duckdb version:", duckdb.__version__)
