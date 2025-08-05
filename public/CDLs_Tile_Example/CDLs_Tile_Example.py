@@ -113,5 +113,5 @@ def crop_stats(df, n=100):
         .sort_values(ascending=False)
         .to_frame("area (Acre)")
     )
-    stats["name"] = stats.index.map(int_to_crop)
+    stats["name"] = stats.index.map(lambda x:int_to_crop(x, cache_verbose=False))
     return stats.head(n)
