@@ -50,7 +50,6 @@ def udf(path = "s3://fused-sample/demo_data/housing/housing_2024.csv"):
 
 Data returning
 When returning a dataframe, return df.sample(). Don't return the whole dataset. 
-If you're returning a dataframe that contains a 'date', cast it to string just before returning for better rendering. 
 
 Chart versus Table UDF:
 By default return a dataframe at first when exploring a new dataset unless explicitly asked to return html or asked to not make the dataframe
