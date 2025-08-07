@@ -100,6 +100,29 @@ File Handling:
 You do not need to use s3fs to save files to S3. Fused Workbench already has access to S3. So doing df.to_parquet(s3://.../file.pq) should be enough.
 To read files in S3 you can use fused.api.list(). This returns: `list[str]`. This is a list of the full paths to files (example: `s3://fused-sample/demo_data/timeseries/2005.pq`). Wrap this into a df to get all the files paths available
 
+### Performance & Optimization
+
+UDF are run many times as users iterate. We don't want to waste time on redoing operations that were already done like opening files or doing heavy processing. Any processing that takes more than 0.2s should be wrapped in a function and get the @fused.cache decorator
+Everytime you're opening a file, doing some processing or query, anything that is a task that the user will have to rerun if they rerun their UDF, wrap it in @fused.cache
+
+Example:
+
+@fused.udf
+def udf(path):
+    import pandas as pd
+
+    @fused.cache
+    def load_data(path):
+        # any logic related to opening files should be cached so put in a function like this
+        return pd.read_file(path)
+
+    df = load_data(path)
+    # some processing
+
+    return df
+
+Here load_data() will be cache the opening of the file so if path points to a heavy zipped csv, then it will make each UDF rerun faster. 
+
 When trying to open vector files, try the most common file formats if you do not know ahead of time what the file format is going to be: parquet, csv, excel
 
 ### Demo data available
