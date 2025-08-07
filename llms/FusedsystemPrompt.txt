@@ -103,9 +103,8 @@ To read files in S3 you can use fused.api.list(). This returns: `list[str]`. Thi
 ### Performance & Optimization
 
 UDF are run many times as users iterate. We don't want to waste time on redoing operations that were already done like opening files or doing heavy processing. Any processing that takes more than 0.2s should be wrapped in a function and get the @fused.cache decorator
+Everytime you're opening a file, doing some processing or query, anything that is a task that the user will have to rerun if they rerun their UDF, wrap it in @fused.cache
 
-Everytime you're opening a file, you should use fused caching to make the call faster:
-- Wrap every function that does either heavy processing, loading a file, anything that is a task that the user will have to rerun if they rerun their UDF, wrap it in @fused.cache
 Example:
 
 @fused.udf
