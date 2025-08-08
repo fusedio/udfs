@@ -1,7 +1,7 @@
 @fused.udf
 def udf(
     bounds: fused.types.Bounds=[-122.463,37.755,-122.376,37.803],
-    provider="AWS",
+    provider="MSPC",
     time_of_interest="2023-11-01/2023-12-30"
 ):  
     """
@@ -69,4 +69,4 @@ def udf(
             max=1,
             colormap=['black', 'green']
         )
-        return rgb_image
+        return rgb_image, bounds
