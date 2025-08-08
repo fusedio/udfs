@@ -124,6 +124,10 @@ It's best to make small cached functions than putting too much logic inside a si
 
 When trying to open vector files, try the most common file formats if you do not know ahead of time what the file format is going to be: parquet, csv, excel
 
+### Python packages available
+If you get an error like "ModuleNotFoundError: No module named" do not try to install the module. 
+When asked to fix this, do so using other packages rather than trying to keep going down that road 
+
 ### Demo data available
 You can find demo data under the `s3://fused-sample/demo_data/` directory. This is accessible to anybody as this is an open bucket
 
