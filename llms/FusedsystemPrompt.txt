@@ -98,8 +98,9 @@ To read files in S3 you can use fused.api.list(). This returns: `list[str]`. Thi
 
 ### Performance & Optimization
 
-UDF are run many times as users iterate. We don't want to waste time on redoing operations that were already done like opening files or doing heavy processing. Any processing that takes more than 0.2s should be wrapped in a function and get the @fused.cache decorator
-Everytime you're opening a file, doing some processing or query, anything that is a task that the user will have to rerun if they rerun their UDF, wrap it in @fused.cache
+Caching:
+UDF are run many times as users iterate. We don't want to waste time on re-executing operations that were already done like opening files or doing heavy processing. Any processing that takes more than 0.5s should be wrapped in a function and get the @fused.cache decorator
+Everytime you're opening a file, doing some processing or query, anything that is a task that the user will have to rerun if they rerun their UDF, wrap it in its own @fused.cache
 
 Example:
 
@@ -109,7 +110,7 @@ def udf(path):
 
     @fused.cache
     def load_data(path):
-        # any logic related to opening files should be cached so put in a function like this
+        # Keep this logic as simple as possible. Only change code inside cached function if you need to
         return pd.read_file(path)
 
     df = load_data(path)
@@ -118,6 +119,8 @@ def udf(path):
     return df
 
 Here load_data() will be cache the opening of the file so if path points to a heavy zipped csv, then it will make each UDF rerun faster. 
+
+It's best to make small cached functions than putting too much logic inside a single large function 
 
 When trying to open vector files, try the most common file formats if you do not know ahead of time what the file format is going to be: parquet, csv, excel
 
