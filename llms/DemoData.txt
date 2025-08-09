@@ -1,0 +1,322 @@
+### Demo data available
+You can find demo data under the s3://fused-sample/demo_data/ directory. This is accessible to anybody as this is an open bucket
+
+To make a timeseries: s3://fused-sample/demo_data/timeseries/
+List all available files with fused.api.list("s3://fused-sample/demo_data/timeseries/")
+
+Available files:
+                                        file_path
+0  s3://fused-sample/demo_data/timeseries/2005.pq
+1  s3://fused-sample/demo_data/timeseries/2006.pq
+...
+18  s3://fused-sample/demo_data/timeseries/2023.pq
+19  s3://fused-sample/demo_data/timeseries/2024.pq
+
+Format of one of tiles: "2005.pq". Opening and showing df.head().T returns:
+|2,005|2,005|2,005|2,005|2,005|year|
+|1|2|3|4|5|week|
+|277.643|277.591|277.026|277.367|277.039|avg_temperature|
+
+year: year of measurement
+week: week within the year
+avg_temperature: avg temperature over that week, in degree Kelvin
+
+Sample Datasets:
+Here are a list of public dataset which you can use for data analysis, You cannot assume anything about the structure, schema and the columns of the dataset, The first step when a user asks about any of the dataset is to create a simple UDF which can explore the schema of the dataset, open the dataset based on the extension of the file. Then proceed as the user asks you to
+[
+  {
+    "link": "http://data.insideairbnb.com/united-states/ny/new-york-city/2025-07-01/data/listings.csv.gz",
+    "description": "The NYC Airbnb Listings Dataset is a comprehensive snapshot of New York City's short-term rental market"
+  },
+  {
+    "link": "https://data.insideairbnb.com/united-states/ca/san-francisco/2025-06-17/data/listings.csv.gz ",
+    "description": "The San Francisco Airbnb Listings Dataset is a comprehensive snapshot of San Francisco City's short-term rental market"
+  },
+
+  {
+    "link": "https://raw.githubusercontent.com/datasets/health-data/master/data/who-life-expectancy.csv",
+    "description": "WHO Life expectancy and health indicators globally"
+  },
+  {
+    "link": "https://population.un.org/dataportalapi/api/v1/topics/FP/indicators",
+    "description": "Global population statistics and projections"
+  },
+  {
+    "link": "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv",
+    "description": "Global COVID-19 cases and deaths time series"
+  },
+  {
+    "link": "https://wikimedia.org/api/rest_v1/metrics/pageviews/aggregate/all-projects/all-access/all-agents/daily/20230101/20231231",
+    "description": "Wikipedia article popularity and trends"
+  },
+  {
+    "link": "https://stats.wto.org/assets/UserGuide/merchandise_values_annual_dataset.zip",
+    "description": "International trade statistics and agreements"
+  },
+  {
+    "link": "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd",
+    "description": "Real-time cryptocurrency prices and market cap"
+  },
+  {
+    "link": "https://apps.who.int/nha/database/api/countries",
+    "description": "Healthcare spending by countries"
+  },
+  {
+    "link": "https://uis.unesco.org/sites/default/files/documents/bdds/022025/SDG.zip",
+    "description": "UNESCO SDG dataset contains global education indicators aligned with the Sustainable Development Goals (SDGs), specifically focusing on education-related metrics"
+  },
+  {
+    "link": "https://data.police.uk/api/forces",
+    "description": "List of all UK police forces"
+  },
+  {
+    "link": "https://data.police.uk/api/crimes-street-dates",
+    "description": "List of street crime dates UK"
+  },
+  {
+    "link": "http://pokeapi.co/api/v2/pokemon/1/",
+    "description": "Pok\u00e9mon data by number (replace 1)"
+  },
+  {
+    "link": "https://raw.githubusercontent.com/Biuni/PokemonGO-Pokedex/master/pokedx.json",
+    "description": "Complete Pok\u00e9dex JSON"
+  },
+  {
+    "link": "https://data.police.uk/api/leicestershire/neighbourhoods",
+    "description": "Neighbourhood listings for Leicestershire UK"
+  },
+  {
+    "link": "https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.json?accessType=DOWNLOAD",
+    "description": "Chicago historical crime data since 2001"
+  },
+  {
+    "link": "https://api.fda.gov/food/enforcement.json",
+    "description": "FDA food enforcement (recalls) data"
+  },
+  {
+    "link": "https://world.openfoodfacts.org/api/v0/product/5060292302201.json",
+    "description": "Open Food Facts product data"
+  },
+  {
+    "link": "https://api.github.com/meta",
+    "description": "GitHub meta information"
+  },
+  {
+    "link": "http://pokeapi.co/api/v2/ability/1",
+    "description": "Pok\u00e9mon ability data by number (replace 1)"
+  },
+  {
+    "link": "https://api.github.com/emojis",
+    "description": "GitHub emoji list"
+  },
+  {
+    "link": "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@2024-03-06/v1/currencies/eur.json",
+    "description": "Historical endpoint for EUR conversation price. Available for most common currencies. Returns date + currency as JSON" Output looks like this: {
+	"date": "2024-03-06",
+	"eur": {
+		"$myro": 3.59535279,
+                ....
+                "usd": 1.08498675,
+		"usdc": 1.08498439,
+        }
+  },
+  {
+    "link": "https://api.github.com/gists",
+    "description": "Recent public GitHub gists"
+  },
+  {
+    "link": "https://api.github.com/events",
+    "description": "Public GitHub event stream"
+  },
+  {
+    "link": "http://pokeapi.co/api/v2/type/1/",
+    "description": "Pok\u00e9mon type data by number (replace 1)"
+  },
+  {
+    "link": "https://www.justice.gov/api/v1/blog_entries.json?pagesize=2",
+    "description": "Latest DOJ blog entries"
+  },
+  {
+    "link": "https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v0001/?format=json&appid=0",
+    "description": "Steam current player numbers"
+  },
+  {
+    "link": "https://data.parliament.scot/api/governmentroles",
+    "description": "Scottish government roles"
+  },
+  {
+    "link": "https://data.parliament.scot/api/departments",
+    "description": "Scottish Parliament departments"
+  },
+  {
+    "link": "https://www.govtrack.us/api/v2/role?current=true&role_type=senator",
+    "description": "Current US Senators"
+  },
+  {
+    "link": "https://collections.museumvictoria.com.au/api/search",
+    "description": "Museums Victoria collections API"
+  },
+  {
+    "link": "https://www.justice.gov/api/v1/press_releases.json?pagesize=2",
+    "description": "Recent DOJ press releases"
+  },
+  {
+    "link": "https://www.govtrack.us/api/v2/role?current=true&role_type=representative&limit=438",
+    "description": "Current US Representatives"
+  },
+  {
+    "link": "http://api.nobelprize.org/v1/country.json",
+    "description": "Nobel Prize by country data"
+  },
+  {
+    "link": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson",
+    "description": "Recent earthquake data (USGS)"
+  },
+  {
+    "link": "http://api.nobelprize.org/v1/prize.json",
+    "description": "Nobel Prize awards data"
+  },
+    "link" = "http://api.nobelprize.org/v1/laureate.json"
+    "description": "This is the endpoint for the Nobel Prize API that provides detailed information about all Nobel laureates, including their personal details, birth information, and the prizes they've won."
+
+  {
+    "link": "https://data.parliament.scot/api/members",
+    "description": "Members of Scottish Parliament"
+  },
+  {
+    "link": "https://data.parliament.scot/api/events",
+    "description": "Scottish Parliament events"
+  },
+  {
+    "link": "http://api.open-notify.org/astros.json",
+    "description": "People currently in space"
+  },
+  {
+    "link": "https://api.opensource.org/licenses/",
+    "description": "All open source licenses"
+  },
+  {
+    "link": "https://data.ny.gov/api/views/5xaw-6ayf/rows.json?accessType=DOWNLOAD",
+    "description": "New York State Farmers' Markets"
+  },
+  {
+    "link": "https://raw.githubusercontent.com/prust/wikipedia-movie-data/master/movies.json",
+    "description": "American movies dataset scraped from Wikipedia"
+  },
+  {
+    "link": "https://www.fema.gov/api/open/v1/FemaWebDisasterDeclarations",
+    "description": "FEMA Disaster Declarations"
+  },
+  {
+    "link": "http://api.nobelprize.org/v1/laureate.json",
+    "description": "Nobel laureate information"
+  },
+  {
+    "link": "https://raw.githubusercontent.com/allisonhorst/palmerpenguins/master/inst/extdata/penguins.csv",
+    "description": "Measurements of 344 penguins (3 species) from Palmer Archipelago, Antarctica including bill length, bill depth, flipper length, body mass, and sex"
+  },
+  {
+    "link": "http://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data",
+    "description": "Classic ML dataset with 150 iris flower measurements across 3 species (setosa, versicolor, virginica)"
+  },
+  {
+    "link": "http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv",
+    "description": "Physicochemical properties and quality ratings for Portuguese red wines with 11 input variables"
+  },
+  {
+    "link": "http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv",
+    "description": "Physicochemical properties and quality ratings for Portuguese white wines with 11 input variables"
+  },
+  {
+    "link": "https://files.grouplens.org/datasets/movielens/ml-100k.zip",
+    "description": "100,000 movie ratings from 943 users on 1,682 movies with demographic data and movie information"
+  },
+  {
+    "link": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_month.csv",
+    "description": "Real-time earthquake data with magnitude >2.5 from past 30 days including location, depth, time"
+  },
+  {
+    "link": "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv",
+    "description": "The New York Times US county-level COVID-19 data, with daily cases and deaths across all US counties"
+  },
+  {
+    "link": "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m",
+    "description": "Free historical and forecast weather data API with global coverage (example: Berlin weather)"
+  },
+  {
+    "link": "http://www.cs.cmu.edu/~enron/enron_mail_20150507.tar.gz",
+    "description": "500K+ emails from Enron executives, cleaned and organized by Carnegie Mellon University"
+  },
+  {
+    "link": "https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv",
+    "description": "Passenger data from RMS Titanic with survival information and passenger demographics"
+  },
+  {
+    "link": "https://github.com/myleott/mnist_png/raw/master/mnist_png.tar.gz",
+    "description": "PNG images of MNIST handwritten digit dataset - 60K train and 10K test images as PNG files"
+  },
+  {
+    "link": "http://storage.googleapis.com/books/ngrams/books/googlebooks-eng-all-1gram-20120701-a.gz",
+    "description": "Word frequency data from Google Books corpus, sample file for words starting with 'a'"
+  },
+  {
+    "link": "https://info.stackoverflowsolutions.com/rs/719-EMH-566/images/stack-overflow-developer-survey-2024.zip",
+    "description": "Annual survey data from 65K+ developers worldwide covering technologies, salaries, demographics"
+  },
+  {
+    "link": "https://gml.noaa.gov/aftp/data/radiation/surfrad/Bondville_IL/2024/bon24001.dat",
+    "description": "Surface radiation budget network data from Bondville, IL station (sample day)"
+  },
+  {
+    "link": "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson",
+    "description": "Geographic boundaries of all world countries in GeoJSON format for mapping applications"
+  },
+  {
+    "link": "https://vincentarelbundock.github.io/Rdatasets/csv/MASS/Boston.csv",
+    "description": "Housing prices with 13 features from 1970s Boston area for price prediction"
+  },
+  {
+    "link": "https://archive.ics.uci.edu/ml/machine-learning-databases/00320/student.zip",
+    "description": "UCI Student Performance Dataset: Student grades, demographic and social features for Portuguese schools (Math and Portuguese language classes)"
+  },
+  {
+    "link": "https://people.sc.fsu.edu/~jburkardt/data/csv/hw_200.csv",
+    "description": "200 records of people's height and weight for regression and data visualization tasks"
+  },
+  {
+    "link": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.csv",
+    "description": "USGS Significant Earthquakes - Past 30 Days (CSV)"
+  },
+  {
+    "link": "https://data.cdc.gov/api/views/cjae-szjv/rows.csv?accessType=DOWNLOAD",
+    "description": "CDC Provisional COVID-19 Death Counts by Sex, Age, and State (CSV)"
+  },
+  {
+    "link": "https://raw.githubusercontent.com/owid/energy-data/master/owid-energy-data.csv",
+    "description": "Our World in Data energy dataset, which contains comprehensive global energy statistics including energy consumption, production, and mix by country over time."
+  },
+  {
+    "link": "s3://fused-asset/data/tiger/state/tl_rd22_us_state 5pct.parquet",
+    "description": "This dataset contains the official 2022 TIGER/Line boundaries for all 56 US states and territories, represented aspolygon and multipolygon geometries with unique GEOID identifiers for spatial analysis and mapping applications. when you find any dataset which might have GEOID or information about US state , you can use this to make a chloropeth map of the US if the user asks for it."
+  }
+  {
+    "link": "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson",
+    "description": "This is a global country boundaries dataset containing polygon and multipolygon geometries for all countries worldwide, each with ISO 3-letter country codes and English names, ideal for creating worldwide choropleth maps and spatial analysis. you can use this to make a chloropeth map of the World if the user asks for it."
+  }
+  {
+    "link": "s3://fused-sample/nyc_rolling_sales_manhattan_cleaned.parquet",
+    "description": "This dataset contains NYC real estate sales transactions from NYC's rolling sales records, featuring property details like sale prices, square footage, building types, neighborhoods, and construction years for residential and commercial properties across different Bouroughs."
+  }
+  {
+    "link": "https://fred.stlouisfed.org/graph/fredgraph.csv?bgcolor=%23ebf3fb&chart_type=line&drp=0&fo=open%20sans&graph_bgcolor=%23ffffff&height=450&mode=fred&recession_bars=on&txtcolor=%23444444&ts=12&tts=12&width=1320&nt=0&thu=0&trc=0&show_legend=yes&show_axis_titles=yes&show_tooltip=yes&id=APU0000708111&scale=left&cosd=1980-01-01&coed=2025-06-01&line_color=%230073e6&link_values=false&line_style=solid&mark_type=none&mw=3&lw=3&ost=-99999&oet=99999&mma=0&fml=a&fq=Monthly&fam=avg&fgst=lin&fgsnd=2020-02-01&line_index=1&transformation=lin&vintage_date=2025-08-04&revision_date=2025-08-04&nd=1980-01-01",
+    "description": "This dataset tracks monthly U.S. egg prices from 1980-2025, showing Grade A large eggs per dozen in dollars, sourced from FRED/BLS, revealing dramatic volatility from $0.63 in 1980 to a peak of $6.23 in March 2025 before declining to $3.78 by June 2025."
+  }
+  {
+    "link": "s3://fused-sample/nyc_rolling_sales_combined.parquet",
+    "description": "TThe NYC Rolling Sales Combined dataset is a comprehensive real estate transaction database that consolidates property sales data from all five New York City boroughs (Manhattan, Bronx, Brooklyn, Queens, and Staten Island) into a single unified dataset."
+  }
+  {
+    "link": "https://raw.githubusercontent.com/microsoft/r-server-hospital-length-of-stay/refs/heads/master/Data/LengthOfStay.csv",
+    "description": "TThe hospital length of stay dataset contains 100,000 patient records with 25 columns including patient demographics (gender, eid), visit details (vdate, discharged, facid across 5 hospitals), emergency room visits (rcount), medical conditions as binary flags (dialysis, asthma, pneumonia, depression, etc.), lab results (hematocrit, glucose, creatinine, bmi, pulse, respiration), and the target variable lengthofstay ranging from 1-10+ days."
+  }
+]
