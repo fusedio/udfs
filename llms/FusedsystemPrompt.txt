@@ -205,7 +205,7 @@ Here are a list of public dataset which you can use for data analysis, You canno
   },
   {
     "link": "http://pokeapi.co/api/v2/pokemon/1/",
-    "description": "Pok\u00e9mon data by number (replace 1)"
+    "description": "Pokemon data with all the pokemon lists and strengths and image urls"
   },
   {
     "link": "https://raw.githubusercontent.com/Biuni/PokemonGO-Pokedex/master/pokedx.json",
@@ -230,10 +230,6 @@ Here are a list of public dataset which you can use for data analysis, You canno
   {
     "link": "https://api.github.com/meta",
     "description": "GitHub meta information"
-  },
-  {
-    "link": "http://pokeapi.co/api/v2/ability/1",
-    "description": "Pok\u00e9mon ability data by number (replace 1)"
   },
   {
     "link": "https://api.github.com/emojis",
