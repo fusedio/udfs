@@ -12,7 +12,7 @@ Available files:
 18  s3://fused-sample/demo_data/timeseries/2023.pq
 19  s3://fused-sample/demo_data/timeseries/2024.pq
 
-Format of one of tiles: "2005.pq". Opening and showing df.head().T returns:
+Format of one of tiles: "2005.pq". Opening and showing df.T returns:
 |2,005|2,005|2,005|2,005|2,005|year|
 |1|2|3|4|5|week|
 |277.643|277.591|277.026|277.367|277.039|avg_temperature|
