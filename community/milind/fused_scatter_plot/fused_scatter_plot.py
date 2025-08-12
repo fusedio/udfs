@@ -3,7 +3,7 @@ import pandas as pd
 
 @fused.udf
 def udf():
-    common = fused.load("https://github.com/fusedio/udfs/tree/36f4e97/public/common/").utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
     
     @fused.cache
     def load_penguins():
