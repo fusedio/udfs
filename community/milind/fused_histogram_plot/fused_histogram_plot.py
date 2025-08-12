@@ -1,9 +1,8 @@
-import fused
-import pandas as pd
-import numpy as np
-
 @fused.udf
 def udf():
+    
+    import pandas as pd
+    import numpy as np
     common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
     
     @fused.cache
