@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "ACS_Pie_Chart",
+          "name": "Pie_Chart_Template",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -54,10 +54,10 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "ACS_Pie_Chart",
-            "fused:name": "ACS_Pie_Chart"
+            "fused:slug": "Pie_Chart_Template",
+            "fused:name": "Pie_Chart_Template"
           },
-          "source": "ACS_Pie_Chart.py",
+          "source": "Pie_Chart_Template.py",
           "headers": []
         }
       }
