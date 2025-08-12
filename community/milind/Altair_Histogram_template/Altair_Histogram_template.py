@@ -1,8 +1,8 @@
 @fused.udf
 def udf():
     # Load the common helper for returning HTML
-    common = fused.load("https://github.com/fusedio/udfs/tree/fbf5682/public/common/")
-
+    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
+    
     import pandas as pd
     import altair as alt
 

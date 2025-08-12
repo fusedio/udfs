@@ -12,12 +12,6 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:tags": [
-              {
-                "id": "fused-charts",
-                "label": "fused-charts"
-              }
-            ],
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -61,7 +55,14 @@
             },
             "fused:udfType": "auto",
             "fused:slug": "fused_scatter_plot",
-            "fused:name": "fused_scatter_plot"
+            "fused:name": "fused_scatter_plot",
+            "fused:tags": [
+              {
+                "id": "fused-charts",
+                "label": "fused-charts"
+              }
+            ],
+            "fused:description": "Exported from Fused UDF Workbench\n\n"
           },
           "source": "fused_scatter_plot.py",
           "headers": []

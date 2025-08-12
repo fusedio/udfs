@@ -12,13 +12,6 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:tags": [
-              {
-                "id": "charts",
-                "label": "charts",
-                "isCreatable": true
-              }
-            ],
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -62,7 +55,14 @@
             },
             "fused:udfType": "auto",
             "fused:slug": "Altair_Histogram_template",
-            "fused:name": "Altair_Histogram_template"
+            "fused:name": "Altair_Histogram_template",
+            "fused:tags": [
+              {
+                "id": "charts",
+                "label": "charts"
+              }
+            ],
+            "fused:description": "Exported from Fused UDF Workbench\n\n"
           },
           "source": "Altair_Histogram_template.py",
           "headers": []
