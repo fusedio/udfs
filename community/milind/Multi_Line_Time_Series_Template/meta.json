@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "Time_Series_Template",
+          "name": "Multi_Line_Time_Series_Template",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -44,7 +44,7 @@
                     10
                   ],
                   "steps": 20,
-                  "colors": "RedOr",
+                  "colors": "BluGrn",
                   "nullColor": [
                     184,
                     184,
@@ -60,10 +60,10 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "Time_Series_Template",
-            "fused:name": "Time_Series_Template"
+            "fused:slug": "Multi_Line_Time_Series_Template",
+            "fused:name": "Multi_Line_Time_Series_Template"
           },
-          "source": "Time_Series_Template.py",
+          "source": "Multi_Line_Time_Series_Template.py",
           "headers": []
         }
       }
