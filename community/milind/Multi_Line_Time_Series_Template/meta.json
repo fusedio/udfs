@@ -12,12 +12,6 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:tags": [
-              {
-                "id": "charts",
-                "label": "charts"
-              }
-            ],
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -61,7 +55,14 @@
             },
             "fused:udfType": "auto",
             "fused:slug": "Multi_Line_Time_Series_Template",
-            "fused:name": "Multi_Line_Time_Series_Template"
+            "fused:name": "Multi_Line_Time_Series_Template",
+            "fused:tags": [
+              {
+                "id": "charts",
+                "label": "charts"
+              }
+            ],
+            "fused:description": "Exported from Fused UDF Workbench\n\n"
           },
           "source": "Multi_Line_Time_Series_Template.py",
           "headers": []
