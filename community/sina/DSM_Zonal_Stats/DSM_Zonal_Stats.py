@@ -8,6 +8,8 @@ def udf(
 
     zoom = common.estimate_zoom(bounds)
 
+    #hello world
+
     if zoom >= min_zoom:
         gdf = common.table_to_tile(bounds, table, min_zoom)
         arr = dsm_jaxa.dsm_to_tile(bounds, z_levels=[4, 6, 9, 11], verbose=False)
