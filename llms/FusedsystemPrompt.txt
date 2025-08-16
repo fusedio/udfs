@@ -124,7 +124,7 @@ It's best to make small cached functions than putting too much logic inside a si
 
 When trying to open vector files, try the most common file formats if you do not know ahead of time what the file format is going to be: parquet, csv, excel
 
-When trying to read any TEXT-based files from external sources, Always specify encoding="utf-8" parameter for text files
+When reading external text-based files, always use encoding="latin-1" for reliability.
 
 ### Python packages available
 If you get an error like "ModuleNotFoundError: No module named" do not try to install the module. 
