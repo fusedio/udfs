@@ -28,11 +28,12 @@ def udf():
 
     df = load_data()
     
-    # Print column data types for exploration
-    print("=== Column data types ===")
-    print(df.dtypes)
-    print("\n=== First 5 rows ===")
-    print(df.head())
+    # Print body mass range for debugging
+    print("=== Body mass range ===")
+    print(f"Min: {df['body_mass_g'].min():.0f}g")
+    print(f"Max: {df['body_mass_g'].max():.0f}g") 
+    print(f"Mean: {df['body_mass_g'].mean():.0f}g")
+    print(f"Std: {df['body_mass_g'].std():.0f}g")
 
     # ALTAIR CONFIGURATION
     config = {
@@ -69,7 +70,7 @@ def udf():
     brush = alt.selection_interval(encodings=['x', 'y'])
     click = alt.selection_point(encodings=['color'])
 
-    # Top panel: Scatter plot of bill dimensions
+    # Top panel: Scatter plot of bill dimensions with more dramatic size scaling
     points = alt.Chart(df).mark_point().encode(
         alt.X('bill_length_mm:Q')
             .title('Bill Length (mm)')
@@ -77,9 +78,14 @@ def udf():
         alt.Y('bill_depth_mm:Q')
             .title('Bill Depth (mm)')
             .scale(domain=[12, 25]),
-        alt.Size('body_mass_g:Q').scale(range=[50, 400]),
+        # More dramatic size range and specify the domain for better scaling
+        alt.Size('body_mass_g:Q')
+            .scale(range=[20, 300], domain=[2500, 6500])
+            .title('Body Mass (g)'),
         alt.Color('species:N', scale=color_scale),
-        opacity=alt.when(brush).then(alt.value(1)).otherwise(alt.value(0.3))
+        opacity=alt.when(brush).then(alt.value(1)).otherwise(alt.value(0.3)),
+        # Add tooltip to see the actual values
+        tooltip=['species:N', 'bill_length_mm:Q', 'bill_depth_mm:Q', 'body_mass_g:Q']
     ).properties(
         width=550,
         height=350
