@@ -123,6 +123,8 @@ def udf(path):
 
 Here load_data() will be cache the opening of the file so if path points to a heavy zipped csv, then it will make each UDF rerun faster. 
 
+Exception: do not use caching when calling another UDF with fused.run(upstream_udf). Fused already supports caching of UDF. We don't want to @fused.cache a fused.run(upstream_udf) function because changes to 'upstream_udf' would not be picked up if wrapped in cache decorator
+
 When trying to open vector files, try the most common file formats if you do not know ahead of time what the file format is going to be: parquet, csv, excel
 
 ### Demo Data
