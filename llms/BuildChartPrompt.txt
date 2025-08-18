@@ -23,62 +23,17 @@ def udf(path = "s3://fused-sample/demo_data/housing/housing_2024.csv"):
     common = fused.load("https://github.com/fusedio/udfs/tree/fbf5682/public/common/")
     import pandas as pd
     import altair as alt
-    from jinja2 import Template
 
-    @fused.cache
-    def load_data(file_path):
-        # Load with encoding handling for external sources
-        df = pd.read_csv(file_path, encoding='utf-8-sig')
-        # Clean column names - strip whitespace & handle special characters
-        df.columns = [col.strip().replace(' ', '_').replace('(', '').replace(')', '') for col in df.columns]
-        return df
-
-    housing = load_data(path)
-
-    # Inspect schema (useful for debugging)
-    print("=== Column data types ===")
-    print(housing.dtypes)
-    print("\n=== Sample data ===")
-    print(housing.head())
-
-    # Data processing
+    housing = pd.read_csv(path)
     housing['price_per_area'] = round(housing['price'] / housing['area'], 2)
 
-    # Create Altair chart
-    chart = alt.Chart(housing).mark_point().encode(
-        x='price:Q',
-        y='price_per_area:Q'
-    ).properties(
-        width='container',
-        height='container'
-    )
+    chart_html = alt.Chart(housing).mark_point().encode(
+        x='price',
+        y='price_per_area'
+    ).to_html()
 
-    chart_html = chart.to_html()
+    return common.html_to_obj(chart_html)
 
-    # Responsive HTML wrapper – CSS uses normal single braces
-    html_template = Template("""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-            body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-            .chart-container { width: 100%; height: 600px; }
-            .chart-container .vega-embed { width: 100% !important; height: 100% !important; }
-        </style>
-    </head>
-    <body>
-        <div class="chart-container">
-            {{ chart_html | safe }}
-        </div>
-    </body>
-    </html>
-    """)
-
-    rendered_html = html_template.render(chart_html=chart_html)
-
-    return common.html_to_obj(rendered_html)
 
 Chart Types:
 
