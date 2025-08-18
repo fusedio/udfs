@@ -12,12 +12,6 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:tags": [
-              {
-                "id": "charts",
-                "label": "charts"
-              }
-            ],
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -61,7 +55,14 @@
             },
             "fused:udfType": "auto",
             "fused:slug": "US_County_Chloropeth_Template",
-            "fused:name": "US_County_Chloropeth_Template"
+            "fused:name": "US_County_Chloropeth_Template",
+            "fused:tags": [
+              {
+                "id": "charts",
+                "label": "charts"
+              }
+            ],
+            "fused:description": "Exported from Fused UDF Workbench\n\n"
           },
           "source": "US_County_Chloropeth_Template.py",
           "headers": []
