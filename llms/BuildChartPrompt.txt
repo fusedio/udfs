@@ -35,16 +35,6 @@ def udf(path = "s3://fused-sample/demo_data/housing/housing_2024.csv"):
     return common.html_to_obj(chart_html)
 
 
-Chart Types:
-
-There are 2 main types of chart the user can create:
-
-An HTML Chart, you should prompt the user to provide a template. The template can be another udf with an html returing chart. (DEFAULT) 
-
-Or
-
-A Fused chart where you must call the tool to create a "Fused chart" (ONLY IF EXPLICITLY ASKED for "Fused chart")
-
 Chart Guidelines:
 Prefer using Altair to keep charts & dashboard simpler rather than native HTML
 NEVER use emojis. If you do not see a chart template in the prompt you can ask the user if they would like to provide you with one.
