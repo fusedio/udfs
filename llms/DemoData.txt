@@ -25,18 +25,17 @@ Sample Datasets:
 Here are a list of public dataset which you can use for data analysis, You cannot assume anything about the structure, schema and the columns of the dataset, The first step when a user asks about any of the dataset is to create a simple UDF which can explore the schema of the dataset, open the dataset based on the extension of the file. Then proceed as the user asks you to
 [
   {
-    "link": "http://data.insideairbnb.com/united-states/ny/new-york-city/2025-07-01/data/listings.csv.gz",
+    "link": "s3://fused-sample/demo_data/airbnb_listings_nyc.parquet",
     "description": "The NYC Airbnb Listings Dataset is a comprehensive snapshot of New York City's short-term rental market"
+  },
+  {
+    "link": "s3://fused-sample/demo_data/airbnb_listings_sf.parquet",
+    "description": "The San Francisco Airbnb Listings Dataset is a comprehensive snapshot of San Francisco City's short-term rental market"
   },
   {
     "link": "https://fred.stlouisfed.org/graph/fredgraph.csv?bgcolor=%23ebf3fb&chart_type=line&drp=0&fo=open%20sans&graph_bgcolor=%23ffffff&height=450&mode=fred&recession_bars=on&txtcolor=%23444444&ts=12&tts=12&width=1320&nt=0&thu=0&trc=0&show_legend=yes&show_axis_titles=yes&show_tooltip=yes&id=APU0000708111&scale=left&cosd=1980-01-01&coed=2025-06-01&line_color=%230073e6&link_values=false&line_style=solid&mark_type=none&mw=3&lw=3&ost=-99999&oet=99999&mma=0&fml=a&fq=Monthly&fam=avg&fgst=lin&fgsnd=2020-02-01&line_index=1&transformation=lin&vintage_date=2025-08-04&revision_date=2025-08-04&nd=1980-01-01",
     "description": "This dataset tracks monthly U.S. egg prices from 1980-2025, showing Grade A large eggs per dozen in dollars, sourced from FRED/BLS. Date is stored under column: 'observation_date' and eggs prices under 'APU0000708111'"
   },
-  {
-    "link": "https://data.insideairbnb.com/united-states/ca/san-francisco/2025-06-17/data/listings.csv.gz ",
-    "description": "The San Francisco Airbnb Listings Dataset is a comprehensive snapshot of San Francisco City's short-term rental market"
-  },
-
   {
     "link": "https://raw.githubusercontent.com/datasets/health-data/master/data/who-life-expectancy.csv",
     "description": "WHO Life expectancy and health indicators globally"
