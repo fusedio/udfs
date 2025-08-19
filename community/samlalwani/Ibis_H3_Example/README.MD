@@ -2,7 +2,7 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Duckdb_H3_Example.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `Ibis` `H3-vector` `Aggregation`
+Tags: `ibis` `h3-vector` `aggregation`
 
 <!--fused:readme-->
 ## Overview
