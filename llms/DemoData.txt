@@ -37,80 +37,80 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "description": "This dataset tracks monthly U.S. egg prices from 1980-2025, showing Grade A large eggs per dozen in dollars, sourced from FRED/BLS. Date is stored under column: 'observation_date' and eggs prices under 'APU0000708111'"
   },
   {
-    "link": "https://raw.githubusercontent.com/datasets/health-data/master/data/who-life-expectancy.csv",
-    "description": "WHO Life expectancy and health indicators globally"
+    "link": "https://github.com/OpportunityInsights/EconomicTracker/blob/main/data/Affinity%20-%20National%20-%20Monthly.csv",
+    "description": "Economic Tracker for US Overall "
   },
   {
-    "link": "https://population.un.org/dataportalapi/api/v1/topics/FP/indicators",
-    "description": "Global population statistics and projections"
+    "link": "https://fred.stlouisfed.org/graph/fredgraph.csv?bgcolor=%23ebf3fb&chart_type=line&drp=0&fo=open sans&graph_bgcolor=%23ffffff&height=450&mode=fred&recession_bars=on&txtcolor=%23444444&ts=12&tts=12&width=1320&nt=0&thu=0&trc=0&show_legend=yes&show_axis_titles=yes&show_tooltip=yes&id=MORTGAGE30US&scale=left&cosd=1971-04-02&coed=2025-08-14&line_color=%230073e6&link_values=false&line_style=solid&mark_type=none&mw=3&lw=3&ost=-99999&oet=99999&mma=0&fml=a&fq=Weekly%2C Ending Thursday&fam=avg&fgst=lin&fgsnd=2020-02-01&line_index=1&transformation=lin&vintage_date=2025-08-15&revision_date=2025-08-15&nd=1971-04-02",
+    "description": "Mortgage Rate distribution of US Houses"
   },
   {
     "link": "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv",
     "description": "Global COVID-19 cases and deaths time series"
   },
   {
-    "link": "https://wikimedia.org/api/rest_v1/metrics/pageviews/aggregate/all-projects/all-access/all-agents/daily/20230101/20231231",
-    "description": "Wikipedia article popularity and trends"
+    "link": "https://ers.usda.gov/sites/default/files/_laserfiche/DataFiles/48747/Education2023.csv?v=33176",
+    "description": "US Poverty Data: Rural_Urban"
   },
   {
     "link": "https://stats.wto.org/assets/UserGuide/merchandise_values_annual_dataset.zip",
     "description": "International trade statistics and agreements"
   },
   {
-    "link": "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd",
-    "description": "Real-time cryptocurrency prices and market cap"
+    "link": "https://ers.usda.gov/sites/default/files/_laserfiche/DataFiles/47913/CornCostReturn.csv?v=58538",
+    "description": "USDA CORN VS RICE cost and return"
   },
   {
-    "link": "https://apps.who.int/nha/database/api/countries",
-    "description": "Healthcare spending by countries"
+    "link": "https://raw.githubusercontent.com/allisonhorst/palmerpenguins/master/inst/extdata/penguins.csv",
+    "description": "Penguin Species Data were collected and made available by Dr. Kristen Gorman and the Palmer Station, Antarctica LTER, a member of the Long Term Ecological Research Network"
   },
   {
-    "link": "https://uis.unesco.org/sites/default/files/documents/bdds/022025/SDG.zip",
-    "description": "UNESCO SDG dataset contains global education indicators aligned with the Sustainable Development Goals (SDGs), specifically focusing on education-related metrics"
+    "link": "https://www.dropbox.com/scl/fi/is2yaa5gz1of32xo1xwvd/squirrel-data.csv?rlkey=sao5wj2tqd98nzs6rsi5k7ot6&e=3&dl=0",
+    "description": "Squirrel Census Dataset of New York Central Park"
   },
   {
     "link": "https://data.police.uk/api/forces",
     "description": "List of all UK police forces"
   },
   {
-    "link": "https://data.police.uk/api/crimes-street-dates",
-    "description": "List of street crime dates UK"
+    "link": "https://raw.githubusercontent.com/OpportunityInsights/EconomicTracker/refs/heads/main/data/Google%20Mobility%20-%20City%20-%20Daily.csv",
+    "description": "Google Covid Mobility: People Movement Dataset"
   },
   {
-    "link": "http://pokeapi.co/api/v2/pokemon/1/",
-    "description": "Pok\u00e9mon data by number (replace 1)"
+    "link": "https://github.com/xgabora/Club-Football-Match-Data-2000-2025/blob/main/data/Matches.csv",
+    "description": "Open football ELO Ratings"
   },
   {
-    "link": "https://raw.githubusercontent.com/Biuni/PokemonGO-Pokedex/master/pokedx.json",
-    "description": "Complete Pok\u00e9dex JSON"
+    "link": "https://raw.githubusercontent.com/owid/energy-data/master/owid-energy-data.csv",
+    "description": "Energy Generation for world"
   },
   {
-    "link": "https://data.police.uk/api/leicestershire/neighbourhoods",
-    "description": "Neighbourhood listings for Leicestershire UK"
+    "link": "https://www.fema.gov/api/open/v1/FemaWebDisasterDeclarations",
+    "description": "FEMA Disasters - Count Per state"
   },
   {
-    "link": "https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.json?accessType=DOWNLOAD",
-    "description": "Chicago historical crime data since 2001"
+    "link": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson",
+    "description": "Earthquake Hourly Data"
   },
   {
-    "link": "https://api.fda.gov/food/enforcement.json",
-    "description": "FDA food enforcement (recalls) data"
+    "link": "https://www.govtrack.us/api/v2/role?current=true&role_type=senator",
+    "description": "US Senators Dataset State wise"
   },
   {
     "link": "https://world.openfoodfacts.org/api/v0/product/5060292302201.json",
     "description": "Open Food Facts product data"
   },
   {
-    "link": "https://api.github.com/meta",
-    "description": "GitHub meta information"
+    "link": "https://population.un.org/dataportalapi/api/v1/topics/FP/indicators",
+    "description": "UN Family Planning Indicators"
   },
   {
-    "link": "http://pokeapi.co/api/v2/ability/1",
-    "description": "Pok\u00e9mon ability data by number (replace 1)"
+    "link": "https://whc.unesco.org/en/list/xlsx/?2024",
+    "description": "The World Heritage List includes 1248 properties forming part of the cultural and natural heritage which the World Heritage Committee considers as having outstanding universal value."
   },
   {
-    "link": "https://api.github.com/emojis",
-    "description": "GitHub emoji list"
+    "link": "https://carbonmajors.org/evoke/391/get_cm_file?type=Basic&file=emissions_medium_granularity.csv",
+    "description": "Carbon Majors Total Emissions by Commodity Chart"
   },
   {
     "link": "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@2024-03-06/v1/currencies/eur.json",
@@ -124,103 +124,20 @@ Here are a list of public dataset which you can use for data analysis, You canno
         }
   },
   {
-    "link": "https://api.github.com/gists",
-    "description": "Recent public GitHub gists"
+    "link": "https://github.com/rfordatascience/tidytuesday/blob/main/data/2024/2024-06-04/cheeses.csv",
+    "description": "Different Types of Cheese"
   },
   {
-    "link": "https://api.github.com/events",
-    "description": "Public GitHub event stream"
+    "link": "https://github.com/rfordatascience/tidytuesday/blob/main/data/2025/2025-01-28/water_insecurity_2023.csv",
+    "description": "Water insecurity can be influenced by number of social vulnerability indicators—from demographic characteristics to living conditions and socioeconomic status —that vary spatially across the U.S."
   },
   {
-    "link": "http://pokeapi.co/api/v2/type/1/",
-    "description": "Pok\u00e9mon type data by number (replace 1)"
-  },
-  {
-    "link": "https://www.justice.gov/api/v1/blog_entries.json?pagesize=2",
-    "description": "Latest DOJ blog entries"
-  },
-  {
-    "link": "https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v0001/?format=json&appid=0",
-    "description": "Steam current player numbers"
-  },
-  {
-    "link": "https://data.parliament.scot/api/governmentroles",
-    "description": "Scottish government roles"
-  },
-  {
-    "link": "https://data.parliament.scot/api/departments",
-    "description": "Scottish Parliament departments"
-  },
-  {
-    "link": "https://www.govtrack.us/api/v2/role?current=true&role_type=senator",
-    "description": "Current US Senators"
-  },
-  {
-    "link": "https://collections.museumvictoria.com.au/api/search",
-    "description": "Museums Victoria collections API"
-  },
-  {
-    "link": "https://www.justice.gov/api/v1/press_releases.json?pagesize=2",
-    "description": "Recent DOJ press releases"
-  },
-  {
-    "link": "https://www.govtrack.us/api/v2/role?current=true&role_type=representative&limit=438",
-    "description": "Current US Representatives"
+    "link": "https://github.com/rfordatascience/tidytuesday/blob/main/data/2025/2025-01-21/exped_tidy.csv",
+    "description": "The Himalayan Database is a comprehensive archive documenting mountaineering expeditions in the Nepal Himalaya."
   },
   {
     "link": "http://api.nobelprize.org/v1/country.json",
     "description": "Nobel Prize by country data"
-  },
-  {
-    "link": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson",
-    "description": "Recent earthquake data (USGS)"
-  },
-  {
-    "link": "http://api.nobelprize.org/v1/prize.json",
-    "description": "Nobel Prize awards data"
-  },
-    "link" = "http://api.nobelprize.org/v1/laureate.json"
-    "description": "This is the endpoint for the Nobel Prize API that provides detailed information about all Nobel laureates, including their personal details, birth information, and the prizes they've won."
-
-  {
-    "link": "https://data.parliament.scot/api/members",
-    "description": "Members of Scottish Parliament"
-  },
-  {
-    "link": "https://data.parliament.scot/api/events",
-    "description": "Scottish Parliament events"
-  },
-  {
-    "link": "http://api.open-notify.org/astros.json",
-    "description": "People currently in space"
-  },
-  {
-    "link": "https://api.opensource.org/licenses/",
-    "description": "All open source licenses"
-  },
-  {
-    "link": "https://data.ny.gov/api/views/5xaw-6ayf/rows.json?accessType=DOWNLOAD",
-    "description": "New York State Farmers' Markets"
-  },
-  {
-    "link": "https://raw.githubusercontent.com/prust/wikipedia-movie-data/master/movies.json",
-    "description": "American movies dataset scraped from Wikipedia"
-  },
-  {
-    "link": "https://www.fema.gov/api/open/v1/FemaWebDisasterDeclarations",
-    "description": "FEMA Disaster Declarations"
-  },
-  {
-    "link": "http://api.nobelprize.org/v1/laureate.json",
-    "description": "Nobel laureate information"
-  },
-  {
-    "link": "https://raw.githubusercontent.com/allisonhorst/palmerpenguins/master/inst/extdata/penguins.csv",
-    "description": "Measurements of 344 penguins (3 species) from Palmer Archipelago, Antarctica including bill length, bill depth, flipper length, body mass, and sex"
-  },
-  {
-    "link": "http://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data",
-    "description": "Classic ML dataset with 150 iris flower measurements across 3 species (setosa, versicolor, virginica)"
   },
   {
     "link": "http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv",
@@ -231,14 +148,6 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "description": "Physicochemical properties and quality ratings for Portuguese white wines with 11 input variables"
   },
   {
-    "link": "https://files.grouplens.org/datasets/movielens/ml-100k.zip",
-    "description": "100,000 movie ratings from 943 users on 1,682 movies with demographic data and movie information"
-  },
-  {
-    "link": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_month.csv",
-    "description": "Real-time earthquake data with magnitude >2.5 from past 30 days including location, depth, time"
-  },
-  {
     "link": "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv",
     "description": "The New York Times US county-level COVID-19 data, with daily cases and deaths across all US counties"
   },
@@ -247,56 +156,20 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "description": "Free historical and forecast weather data API with global coverage (example: Berlin weather)"
   },
   {
-    "link": "http://www.cs.cmu.edu/~enron/enron_mail_20150507.tar.gz",
-    "description": "500K+ emails from Enron executives, cleaned and organized by Carnegie Mellon University"
-  },
-  {
     "link": "https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv",
     "description": "Passenger data from RMS Titanic with survival information and passenger demographics"
-  },
-  {
-    "link": "https://github.com/myleott/mnist_png/raw/master/mnist_png.tar.gz",
-    "description": "PNG images of MNIST handwritten digit dataset - 60K train and 10K test images as PNG files"
-  },
-  {
-    "link": "http://storage.googleapis.com/books/ngrams/books/googlebooks-eng-all-1gram-20120701-a.gz",
-    "description": "Word frequency data from Google Books corpus, sample file for words starting with 'a'"
   },
   {
     "link": "https://info.stackoverflowsolutions.com/rs/719-EMH-566/images/stack-overflow-developer-survey-2024.zip",
     "description": "Annual survey data from 65K+ developers worldwide covering technologies, salaries, demographics"
   },
   {
-    "link": "https://gml.noaa.gov/aftp/data/radiation/surfrad/Bondville_IL/2024/bon24001.dat",
-    "description": "Surface radiation budget network data from Bondville, IL station (sample day)"
-  },
-  {
     "link": "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson",
     "description": "Geographic boundaries of all world countries in GeoJSON format for mapping applications"
   },
   {
-    "link": "https://vincentarelbundock.github.io/Rdatasets/csv/MASS/Boston.csv",
-    "description": "Housing prices with 13 features from 1970s Boston area for price prediction"
-  },
-  {
-    "link": "https://archive.ics.uci.edu/ml/machine-learning-databases/00320/student.zip",
-    "description": "UCI Student Performance Dataset: Student grades, demographic and social features for Portuguese schools (Math and Portuguese language classes)"
-  },
-  {
-    "link": "https://people.sc.fsu.edu/~jburkardt/data/csv/hw_200.csv",
-    "description": "200 records of people's height and weight for regression and data visualization tasks"
-  },
-  {
-    "link": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.csv",
-    "description": "USGS Significant Earthquakes - Past 30 Days (CSV)"
-  },
-  {
     "link": "https://data.cdc.gov/api/views/cjae-szjv/rows.csv?accessType=DOWNLOAD",
     "description": "CDC Provisional COVID-19 Death Counts by Sex, Age, and State (CSV)"
-  },
-  {
-    "link": "https://raw.githubusercontent.com/owid/energy-data/master/owid-energy-data.csv",
-    "description": "Our World in Data energy dataset, which contains comprehensive global energy statistics including energy consumption, production, and mix by country over time."
   },
   {
     "link": "s3://fused-asset/data/tiger/state/tl_rd22_us_state 5pct.parquet",
