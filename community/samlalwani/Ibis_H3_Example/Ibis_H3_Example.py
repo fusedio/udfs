@@ -13,11 +13,8 @@ def udf(bbox=None, resolution: int = 9, min_count: int = 10):
     # DuckDB is only used to download extension
     con = duckdb.connect()
     con.sql("INSTALL h3 FROM community;")
-
-    # We use the duckdb extension h3
-    con_ibis = ibis.duckdb.connect(
-        temp_directory="/tmp", allow_unsigned_extensions=True, extensions=["h3"]
-    )
+ ̰   # We use the duckdb extension h3
+    con_ibis = ibis.duckdb.connect(temp_directory="/tmp", allow_unsigned_extensions=True, extensions=["h3"])
 
     @fused.cache
     def read_data(url, resolution, min_count):
@@ -53,9 +50,7 @@ def udf(bbox=None, resolution: int = 9, min_count: int = 10):
             .sql(sql_str_boundary)
             .to_pandas()
         )
-        gdf = gpd.GeoDataFrame(
-            gdf, geometry=gpd.GeoSeries.from_wkt(gdf.geometry), crs="epsg:4326"
-        )
+        gdf = gpd.GeoDataFrame(gdf, geometry=gpd.GeoSeries.from_wkt(gdf.geometry), crs="epsg:4326")
 
         return gdf
 
