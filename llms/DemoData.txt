@@ -308,8 +308,8 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "description": "This dataset contains NYC real estate sales transactions from NYC's rolling sales records, featuring property details like sale prices, square footage, building types, neighborhoods, and construction years for residential and commercial properties across different Bouroughs."
   },
   {
-    "link": "https://fred.stlouisfed.org/graph/fredgraph.csv?bgcolor=%23ebf3fb&chart_type=line&drp=0&fo=open%20sans&graph_bgcolor=%23ffffff&height=450&mode=fred&recession_bars=on&txtcolor=%23444444&ts=12&tts=12&width=1320&nt=0&thu=0&trc=0&show_legend=yes&show_axis_titles=yes&show_tooltip=yes&id=APU0000708111&scale=left&cosd=1980-01-01&coed=2025-06-01&line_color=%230073e6&link_values=false&line_style=solid&mark_type=none&mw=3&lw=3&ost=-99999&oet=99999&mma=0&fml=a&fq=Monthly&fam=avg&fgst=lin&fgsnd=2020-02-01&line_index=1&transformation=lin&vintage_date=2025-08-04&revision_date=2025-08-04&nd=1980-01-01",
-    "description": "This dataset tracks monthly U.S. egg prices from 1980-2025, showing Grade A large eggs per dozen in dollars, sourced from FRED/BLS. Date is stored under column: 'observation_date' and eggs prices under 'APU0000708111'"
+    "link": "s3://fused-sample/demo_data/FRED_egg_prices.csv",
+    "description": "CSV of Monthly U.S. egg prices from 1980-2025, showing Grade A large eggs per dozen in dollars, sourced from FRED/BLS."
   },
   {
     "link": "s3://fused-sample/nyc_rolling_sales_combined.parquet",
