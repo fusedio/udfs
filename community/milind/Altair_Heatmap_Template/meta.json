@@ -55,7 +55,8 @@
             },
             "fused:udfType": "auto",
             "fused:slug": "Altair_Heatmap_Template",
-            "fused:name": "Altair_Heatmap_Template"
+            "fused:name": "Altair_Heatmap_Template",
+            "fused:description": "Exported from Fused UDF Workbench\n\n"
           },
           "source": "Altair_Heatmap_Template.py",
           "headers": []
