@@ -13,6 +13,8 @@ def udf(
     import pystac_client
     from pystac.extensions.eo import EOExtension as eo
 
+    
+
     # Load pinned versions of utility functions.
     common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
     zoom = common.estimate_zoom(bounds)
