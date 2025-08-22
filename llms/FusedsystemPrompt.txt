@@ -111,6 +111,9 @@ def udf(path):
     @fused.cache
     def load_data(path):
         # Keep this logic as simple as possible. Only change code inside cached function if you need to
+	    # Convert object columns to strings to prevent Arrow serialization errors for mixed data types
+	    obj_cols = df.select_dtypes(include="object").columns
+	    df[obj_cols] = df[obj_cols].astype(str)
         return pd.read_file(path)
 
     df = load_data(path)
