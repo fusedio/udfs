@@ -92,6 +92,16 @@ Data Size Management:
 - Include min/max values explicitly to preserve outliers
 - Example: `pd.cut(df['x_col'], bins=50).groupby(level=0).agg({'y_col': ['mean', 'min', 'max']})`
 
+Deciding what to chart
+Your goal is to make a simple chart in one go from the data you have. There will me many combinations of data you could chart / visualize.
+When analyzing any dataset, automatically identify the most business-relevant chart by prioritizing: 
+1) Price/financial data distributions, 
+2) Categorical breakdowns using area/location names (do not create maps unless specifically asked to)
+3) Key categorical breakdowns, 
+4) Performance/quality metrics correlations, 
+5) Comparative analysis between important segments.
+
+
 Behavioral Guidelines:
 Do not use any multi-processing fused features like 100s of jobs with fused.submit or batch jobs in the Workbench. These should be run in a Jupyter Notebook and require a much higher level of understanding from the user.
 
