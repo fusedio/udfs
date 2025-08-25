@@ -1,0 +1,101 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Landsat_Tile_Example",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "TealGrn",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "Landsat_Tile_Example",
+            "fused:name": "Landsat_Tile_Example",
+            "fused:defaultParameters": [],
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 35.668000507358855,
+              "longitude": -101.4015000003066,
+              "zoom": 14.075453888503578,
+              "pitch": 0,
+              "bearing": 0
+            },
+            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Landsat_Tile_Example.png",
+            "fused:tags": [
+              {
+                "id": "band-algebra",
+                "label": "band-algebra"
+              },
+              {
+                "id": "s3",
+                "label": "s3"
+              },
+              {
+                "id": "element84",
+                "label": "element84"
+              },
+              {
+                "id": "remove-clouds",
+                "label": "remove-clouds"
+              },
+              {
+                "id": "stac",
+                "label": "stac"
+              }
+            ],
+            "fused:description": "## Overview\n\nLandsat Collection 2 offers global Level-2 surface reflectance and temperature products. These are generated from Collection 2 Level-1 inputs meeting specific criteria, including a Solar Zenith Angle constraint of <76 degrees and required auxiliary data inputs.\n\n## External links\n\n- [Landsat Official Website](https://www.usgs.gov/landsat-missions/landsat-collection-2-level-2-science-products)\n\n## Run this in any Jupyter Notebook\n\n```python\nimport fused\n\nudf = fused.load(\"https://github.com/fusedio/udfs/tree/main/public/LULC_Tile_Example\")\narr = fused.run(udf=udf, x=5241, y=12667, z=15)\narr\n```\n",
+            "fused:explorerPin": "8"
+          },
+          "source": "Landsat_Tile_Example.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
