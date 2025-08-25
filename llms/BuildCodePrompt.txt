@@ -102,6 +102,7 @@ You do not need to use s3fs to save files to S3. Fused Workbench already has acc
 To read files in S3 you can use fused.api.list(). This returns: "list[str]". This is a list of the full paths to files (example: "s3://fused-sample/demo_data/timeseries/2005.pq"). Wrap this into a df to get all the files paths available
 
 URL Reading & Web Content:
+You cannot open or read URLs directly but you SHOULD TRY TO OPEN URLS WITH PYTHON TOOLS
 You have access to Python runtime so you can use requests, urllib and other tools to read URLs. Always wrap URL fetching in @fused.cache for performance.
 
 NEVER just return raw HTML - always extract meaningful content!
