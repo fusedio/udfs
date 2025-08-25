@@ -82,68 +82,6 @@ def udf(path="s3://fused-sample/demo_data/housing/housing_2024.csv"):
 
     # Return the rendered HTML as a Fused object
     return common.html_to_obj(chart_html)@fused.udf
-def udf(path="s3://fused-sample/demo_data/housing/housing_2024.csv"):
-    # Load the common helper library (html_to_obj)
-    common = fused.load("https://github.com/fusedio/udfs/tree/fbf5682/public/common/")
-
-    import pandas as pd
-    import altair as alt
-
-    # ------------------------------------------------------------------
-    # Cached data loading – runs only when the file changes
-    # ------------------------------------------------------------------
-    @fused.cache
-    def load_data(p):
-        return pd.read_csv(p)
-
-    df = load_data(path)
-    print(df.shape)
-
-    # ------------------------------------------------------------------
-    # Prepare the data that will be visualised
-    # ------------------------------------------------------------------
-    chart_df = df[["price", "area"]].dropna()
-
-    # If the dataset is large, aggregate it to keep the chart responsive
-    if len(chart_df) > 2000:
-        # Bin by area and compute summary statistics for price
-        chart_df = (
-            chart_df.groupby(pd.cut(chart_df["area"], bins=50))
-            .agg({"price": ["mean", "min", "max"]})
-            .reset_index()
-        )
-        # Flatten the multi‑index column names
-        chart_df.columns = ["area_bin", "price_mean", "price_min", "price_max"]
-
-        # Use the mean price for a simple bar chart
-        chart = (
-            alt.Chart(chart_df)
-            .mark_bar()
-            .encode(
-                x=alt.X("area_bin:N", title="Area (binned)"),
-                y=alt.Y("price_mean:Q", title="Mean price"),
-                tooltip=["price_mean", "price_min", "price_max"]
-            )
-            .properties(width="container", height=500)
-        )
-    else:
-        # Scatter plot for the full dataset
-        chart = (
-            alt.Chart(chart_df)
-            .mark_point()
-            .encode(
-                x=alt.X("area:Q", title="Area"),
-                y=alt.Y("price:Q", title="Price"),
-                tooltip=["area", "price"]
-            )
-            .properties(width="container", height=500)
-        )
-
-    # Convert the Altair chart to an HTML string
-    chart_html = chart.to_html()
-
-    # Return the rendered HTML as a Fused object
-    return common.html_to_obj(chart_html)
 
 Chart Guidelines:
 ALWAYS use Altair for all charts. Altair provides excellent interactivity, performance, and integration with Fused UDFs.
