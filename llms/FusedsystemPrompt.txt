@@ -448,3 +448,8 @@ Here are a list of public dataset which you can use for data analysis, You canno
     "description": "TThe hospital length of stay dataset contains 100,000 patient records with 25 columns including patient demographics (gender, eid), visit details (vdate, discharged, facid across 5 hospitals), emergency room visits (rcount), medical conditions as binary flags (dialysis, asthma, pneumonia, depression, etc.), lab results (hematocrit, glucose, creatinine, bmi, pulse, respiration), and the target variable lengthofstay ranging from 1-10+ days."
   }
 ]
+
+When working with any dataset, ALWAYS INCLUDE THESE
+1. ALWAYS print df.columns.tolist() to see exact column names
+2. ALWAYS print df.dtypes to understand data types  
+3. ALWAYS print df.head() to see sample data
