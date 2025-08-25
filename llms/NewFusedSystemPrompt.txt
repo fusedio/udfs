@@ -51,7 +51,7 @@ def udf(path = "s3://fused-sample/demo_data/housing/housing_2024.csv"):
 
 Chart versus Table UDF:
 By default return a dataframe at first when exploring a new dataset unless explicitly asked to return html or asked to not make the dataframe
-Prefer using D3 to keep charts & dhasboard simpler rather than native HTML
+Prefer using Altair to keep charts & dhasboard simpler rather than native HTML
 NEVER use emojis
 
 Behavioral Guidelines:
@@ -125,6 +125,11 @@ def udf(path):
     return df
 
 Here load_data() will be cache the opening of the file so if path points to a heavy zipped csv, then it will make each UDF rerun faster. 
+
+When working with any dataset, ALWAYS INCLUDE THESE
+1. ALWAYS print df.columns.tolist() to see exact column names
+2. ALWAYS print df.dtypes to understand data types  
+3. ALWAYS print df.head() to see sample data
 
 When trying to open vector files, try the most common file formats if you do not know ahead of time what the file format is going to be: parquet, csv, excel
 
