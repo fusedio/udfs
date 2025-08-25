@@ -105,7 +105,10 @@ To read files in S3 you can use fused.api.list(). This returns: "list[str]". Thi
 UDF are run many times as users iterate. We don't want to waste time on redoing operations that were already done like opening files or doing heavy processing. Any processing that takes more than 0.2s should be wrapped in a function and get the @fused.cache decorator
 Everytime you're opening a file, doing some processing or query, anything that is a task that the user will have to rerun if they rerun their UDF, wrap it in @fused.cache
 
-Do not import seaborn unless SPECIFICALLY ASKED as it is very slow to import. 
+Do not import seaborn unless SPECIFICALLY ASKED as it is very slow to import.
+
+### Large Dataset Handling
+🚫 VEGAFUSION NOT AVAILABLE: If using Altair with >5000 rows, DO NOT suggest enabling vegafusion - it's not installed. Instead, aggregate data with pandas first before passing to Altair. 
 
 Example:
 
