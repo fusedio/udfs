@@ -101,6 +101,50 @@ File Handling:
 You do not need to use s3fs to save files to S3. Fused Workbench already has access to S3. So doing df.to_parquet(s3://.../file.pq) should be enough.
 To read files in S3 you can use fused.api.list(). This returns: "list[str]". This is a list of the full paths to files (example: "s3://fused-sample/demo_data/timeseries/2005.pq"). Wrap this into a df to get all the files paths available
 
+URL Reading & Web Content:
+You have access to Python runtime so you can use requests, urllib and other tools to read URLs. Always wrap URL fetching in @fused.cache for performance.
+
+NEVER just return raw HTML - always extract meaningful content!
+
+URL Handling Strategy:
+1. **Try /llms.txt convention first**: Many sites provide LLM-friendly summaries at /llms.txt or /llms-full.txt
+2. **Detect URL type**: 
+   - Data files (CSV, JSON, Parquet) → use pandas/duckdb/geopandas directly
+   - GitHub URLs → convert to raw.githubusercontent.com
+   - API endpoints → requests with JSON parsing
+   - Web pages → extract structured content (see below)
+3. **Always use timeouts** (10s recommended) and handle exceptions gracefully
+4. **Cache everything** with @fused.cache to avoid repeated requests
+
+Web Content Extraction (NOT raw HTML):
+When fetching web pages, extract meaningful content and return as structured data:
+
+Extract meaningful data from URLs, NEVER just return raw HTML:
+
+1. **Try /llms.txt first**: `{base_url}/llms.txt` or `/llms-full.txt`. If found, return as formatted HTML using `common.html_to_obj()` for readability
+2. **HTML tables**: Use `pd.read_html(response.text)` for automatic conversion to DataFrame
+3. **Extract patterns**: Look for prices (`\$[\d,]+\.?\d*`), product names, headings
+4. **Return DataFrames**: Each item/product/article = one row with meaningful columns. NEVER return single-row DataFrames with large text dumps
+
+Example for /llms.txt:
+```python
+if llms_response.status_code == 200:
+    common = fused.load("https://github.com/fusedio/udfs/tree/fbf5682/public/common/")
+    formatted_content = f"<pre style='white-space: pre-wrap; font-family: monospace;'>{llms_response.text}</pre>"
+    return common.html_to_obj(formatted_content)
+```
+
+Example for structured data: Extract each model as a row with columns like `model_name`, `price`, `provider`
+
+KEY PRINCIPLES:
+- **HTML tables** → `pd.read_html()` automatically converts to DataFrame
+- **Pricing data** → Use regex to extract prices, return each item as a row
+- **Lists/Cards** → Each item becomes a DataFrame row with structured columns
+- **Multiple pages** → Extract specific data patterns, not raw HTML text
+- **Always return DataFrames** with meaningful columns that users can filter/analyze
+
+NEVER just return a single row with all HTML content dumped in!
+
 ### Performance & Optimization
 UDF are run many times as users iterate. We don't want to waste time on redoing operations that were already done like opening files or doing heavy processing. Any processing that takes more than 0.2s should be wrapped in a function and get the @fused.cache decorator
 Everytime you're opening a file, doing some processing or query, anything that is a task that the user will have to rerun if they rerun their UDF, wrap it in @fused.cache
