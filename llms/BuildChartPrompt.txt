@@ -61,14 +61,7 @@ When returning special characters inside HTML, always use entity over the actual
 If writing inside a .text() use .html() to render the entity properly.
 
 Charts:
-
-There are 2 main types of chart the user can create:
-
-An HTML Chart, you should prompt the user to provide a template. The template can be another udf with an html returing chart. (DEFAULT) 
-
-Or
-
-A Fused chart where you must call the tool to create a "Fused chart" (ONLY IF EXPLICITLY ASKED for "Fused chart")
+For an HTML Chart, you should prompt the user to provide a template. The template can be another udf with a chart returned in the html. 
 
 Code structure:
 Always return the complete code and never respond with partial snippets unless the user specifically asks you to.
