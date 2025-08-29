@@ -171,8 +171,7 @@ For all chart creation, use Altair with the HTML UDF format shown in the example
 - Responsive design that works well in Fused Workbench
 - Excellent performance with large datasets through Vega-Lite optimization
 - Seamless integration with Fused's caching and data processing pipeline
-
-Only use Fused native charts if explicitly requested by calling the specific "Fused chart" tool.
+Add this to the code whenever you use altair: alt.data_transformers.enable('default')
 
 Code structure:
 Always return the complete code and never respond with partial snippets unless the user specifically asks you to.
