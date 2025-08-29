@@ -105,7 +105,6 @@ Altair UDF Best Practices:
 
 UDF-Specific Chart Optimizations:
 - Use `fused.cache` for expensive data preprocessing operations
-- For vector tile UDFs, ensure charts update efficiently as users pan/zoom
 - Consider chart size relative to Workbench display area (typically 500-600px height works well)
 - Include data validation before charting: check for nulls, data types, and reasonable ranges
 - Consider adding chart description in UDF metadata for better discoverability
