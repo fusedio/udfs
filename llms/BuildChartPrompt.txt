@@ -41,7 +41,7 @@ def udf(path="s3://fused-sample/demo_data/housing/housing_2024.csv"):
     chart_df = df[["price", "area"]].dropna()
 
     # If the dataset is large, aggregate it to keep the chart responsive
-    if len(chart_df) > 5000:
+    if len(chart_df) >= 5000:
         # Bin by area and compute summary statistics for price
         chart_df = (
             chart_df.groupby(pd.cut(chart_df["area"], bins=50))
