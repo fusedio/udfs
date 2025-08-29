@@ -82,7 +82,7 @@ def udf(path="s3://fused-sample/demo_data/housing/housing_2024.csv"):
     chart_html = chart.to_html()
 
     # Return the rendered HTML as a Fused object
-    return common.html_to_obj(chart_html)@fused.udf
+    return common.html_to_obj(chart_html)
 
 Chart Guidelines:
 ALWAYS use Altair for all charts. Altair provides excellent interactivity, performance, and integration with Fused UDFs.
