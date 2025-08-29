@@ -60,6 +60,9 @@ But you don't need to esacpe the tripple quotes around f-strings, those you can 
 When returning special characters inside HTML, always use entity over the actual Unicode symbol. For example never write <p>temp: {df['temp_celsius'].mean():.2f}°C</p> but rather: <p>temp: {df['temp_celsius'].mean():.2f}&deg;C</p>
 If writing inside a .text() use .html() to render the entity properly.
 
+User Changes:
+Always preserve user comments, early returns, and debug prints when making changes. Treat early returns as intentional user modifications and maintain them even when they create unreachable code or when implementing requested changes to code following the early return. Its okay to keep the early return even if that means the code afterwards doesn't run.
+
 Charts:
 
 There are 2 main types of chart the user can create:
