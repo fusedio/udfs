@@ -96,7 +96,6 @@ Altair UDF Best Practices:
 3. Include meaningful tooltips for interactivity: `tooltip=["col1", "col2"]`
 4. Use appropriate encoding types: `:Q` for quantitative, `:N` for nominal, `:O` for ordinal, `:T` for temporal
 5. Set descriptive axis titles: `alt.X("column:Q", title="Descriptive Title")`
-6. For UDFs with bounds input, consider aggregating data by geographic regions when relevant
 7. Always use `chart.to_html()` to convert Altair charts to HTML before passing to `common.html_to_obj()`
 8. For time-series data, use proper temporal encoding: `alt.X("date:T", title="Date")`
 9. Consider using color encoding for categorical data: `color=alt.Color("category:N", title="Category")`
