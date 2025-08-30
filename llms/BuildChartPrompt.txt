@@ -55,7 +55,7 @@ def udf(path="s3://fused-sample/demo_data/housing/housing_2024.csv"):
         chart_df.columns = ["area_bin", "price_mean", "price_min", "price_max"]
         
         # Convert Interval objects to numeric for Altair compatibility
-        chart_df["area_bin_numeric"] = pd.to_numeric(chart_df["area_bin"].astype(str).str.extract(r'\(([^,]+)')[0])
+        chart_df["area_bin_numeric"] = chart_df["area_bin"].apply(lambda x: x.left)
         
         # Drop the original Interval column to prevent JSON serialization issues
         chart_df = chart_df.drop(columns=["area_bin"])
@@ -167,7 +167,7 @@ df = df.groupby(pd.cut(df["column"], bins=50)).agg(...).reset_index()
 df.columns = ["interval_col", "other_cols..."]
 
 # Convert Interval to numeric for Altair compatibility
-df["interval_numeric"] = pd.to_numeric(df["interval_col"].astype(str).str.extract(r'\(([^,]+)')[0])
+df["interval_numeric"] = df["interval_col"].apply(lambda x: x.left)
 
 # Drop the original Interval column to prevent JSON serialization issues
 df = df.drop(columns=["interval_col"])
