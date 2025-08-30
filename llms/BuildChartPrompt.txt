@@ -53,15 +53,21 @@ def udf(path="s3://fused-sample/demo_data/housing/housing_2024.csv"):
         )
         # Flatten the multi‑index column names
         chart_df.columns = ["area_bin", "price_mean", "price_min", "price_max"]
+        
+        # Convert Interval objects to numeric for Altair compatibility
+        chart_df["area_bin_numeric"] = chart_df["area_bin"].apply(lambda x: x.left)
+        
+        # Drop the original Interval column to prevent JSON serialization issues
+        chart_df = chart_df.drop(columns=["area_bin"])
 
         # Use the mean price for a simple bar chart
         chart = (
             alt.Chart(chart_df)
             .mark_bar()
             .encode(
-                x=alt.X("area_bin:N", title="Area (binned)"),
+                x=alt.X("area_bin_numeric:Q", title="Area (binned)"),
                 y=alt.Y("price_mean:Q", title="Mean price"),
-                tooltip=["price_mean", "price_min", "price_max"]
+                tooltip=["area_bin_numeric", "price_mean", "price_min", "price_max"]
             )
             .properties(width="container", height=500)
         )
@@ -99,6 +105,7 @@ Altair UDF Best Practices:
 3. Include meaningful tooltips for interactivity: `tooltip=["col1", "col2"]`
 4. Use appropriate encoding types: `:Q` for quantitative, `:N` for nominal, `:O` for ordinal, `:T` for temporal
 5. Set descriptive axis titles: `alt.X("column:Q", title="Descriptive Title")`
+6. **Handle Interval objects**: When using `pd.cut()` or `pd.qcut()`, convert intervals to numeric with `pd.to_numeric()` and drop original interval columns before passing to Altair
 7. Always use `chart.to_html()` to convert Altair charts to HTML before passing to `common.html_to_obj()`
 8. For time-series data, use proper temporal encoding: `alt.X("date:T", title="Date")`
 9. Consider using color encoding for categorical data: `color=alt.Color("category:N", title="Category")`
@@ -146,6 +153,27 @@ if len(df) >= 5000:
     print(f"Reduced to {len(df)} rows")
     
 chart = alt.Chart(df)  # Now safe to pass to Altair
+```
+
+### Handling Pandas Interval Objects - CRITICAL:
+When using `pd.cut()` or `pd.qcut()` for binning, the resulting Interval objects cannot be JSON serialized by Altair. ALWAYS follow this pattern:
+
+1. **Convert to numeric**: Use `pd.to_numeric()` to extract numeric values from intervals
+2. **Drop interval columns**: Remove original Interval columns before passing to Altair
+
+```python
+# After binning with pd.cut()
+df = df.groupby(pd.cut(df["column"], bins=50)).agg(...).reset_index()
+df.columns = ["interval_col", "other_cols..."]
+
+# Convert Interval to numeric for Altair compatibility
+df["interval_numeric"] = df["interval_col"].apply(lambda x: x.left)
+
+# Drop the original Interval column to prevent JSON serialization issues
+df = df.drop(columns=["interval_col"])
+
+# Now safe to pass to Altair
+chart = alt.Chart(df).mark_bar().encode(x="interval_numeric:Q", ...)
 ```
 
 Deciding what to chart
