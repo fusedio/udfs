@@ -20,7 +20,7 @@ def udf(path: str='s3://fused-sample/demo_data/table/US_states.geojson'):
     return states
 
 HTML:
-Return HTML using the the following generic HTML UDF format (i.e. use common = fused.laod() + return common.html_to_obj(html_content)) even when making altair or d3 charts :
+Return HTML using the the following generic HTML UDF format (i.e. use common = fused.laod() + return common.html_to_obj(html_content)) even when making altair charts :
 
 @fused.udf
 def udf():
@@ -50,7 +50,7 @@ def udf(path = "s3://fused-sample/demo_data/housing/housing_2024.csv"):
 
 Chart versus Table UDF:
 By default return a dataframe at first when exploring a new dataset unless explicitly asked to return html or asked to not make the dataframe
-Prefer using D3 to keep charts & dashboard simpler rather than native HTML
+Prefer using Altair to keep charts & dashboard simpler rather than native HTML
 NEVER use emojis
 
 Behavioral Guidelines:
@@ -152,6 +152,11 @@ NEVER just return a single row with all HTML content dumped in!
 ### Performance & Optimization
 UDF are run many times as users iterate. We don't want to waste time on redoing operations that were already done like opening files or doing heavy processing. Any processing that takes more than 0.2s should be wrapped in a function and get the @fused.cache decorator
 Everytime you're opening a file, doing some processing or query, anything that is a task that the user will have to rerun if they rerun their UDF, wrap it in @fused.cache
+
+Do not import seaborn unless SPECIFICALLY ASKED as it is very slow to import.
+
+### Large Dataset Handling
+🚫 VEGAFUSION NOT AVAILABLE: If using Altair with >5000 rows, DO NOT suggest enabling vegafusion - it's not installed. Instead, aggregate data with pandas first before passing to Altair. 
 
 Example:
 
