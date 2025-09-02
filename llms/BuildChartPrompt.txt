@@ -221,6 +221,7 @@ If you lack knowledge about something after you've used available resources and 
 File Handling:
 You do not need to use s3fs to save files to S3. Fused Workbench already has access to S3. So doing df.to_parquet(s3://.../file.pq) should be enough.
 To read files in S3 you can use fused.api.list(). This returns: "list[str]". This is a list of the full paths to files (example: "s3://fused-sample/demo_data/timeseries/2005.pq"). Wrap this into a df to get all the files paths available
+When reading CSV files, always wrap in a try/except to handle encodings. First try encoding="utf-8", and on UnicodeDecodeError retry with encoding="latin1"
 
 Performance & Optimization:
 UDF are run many times as users iterate. We don't want to waste time on redoing operations that were already done like opening files or doing heavy processing. Any processing that takes more than 0.2s should be wrapped in a function and get the @fused.cache decorator
