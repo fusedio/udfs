@@ -176,6 +176,17 @@ df = df.drop(columns=["interval_col"])
 chart = alt.Chart(df).mark_bar().encode(x="interval_numeric:Q", ...)
 ```
 
+### DataFrame Serialization Fix - CRITICAL:
+ALWAYS add this code before returning any DataFrame from a UDF to prevent Arrow serialization errors :
+
+```python
+# Fix serialization issue: ensure object columns are strings
+obj_cols = result_df.select_dtypes(include=["object"]).columns
+if len(obj_cols):
+    result_df[obj_cols] = result_df[obj_cols].astype(str)
+return result_df
+
+
 Deciding what to chart
 Your goal is to make a simple chart in one go from the data you have. There will me many combinations of data you could chart / visualize.
 When analyzing any dataset, automatically identify the most business-relevant chart by prioritizing: 
