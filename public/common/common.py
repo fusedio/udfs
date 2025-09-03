@@ -40,6 +40,34 @@ def mutex(filename, wait=1, verbose=False):
         os.unlink(filename)
 
 
+def new_file_tracker(path='s3://fused-asset/data/', exclude_hidden_files=True, status_filename='_status'):
+    import pandas as pd
+    path=path.strip('/')
+
+    # Load the previous snapshot; if it doesn't exist or is malformed, treat as empty
+    try: 
+        old_files = pd.read_parquet(f"{path}/{status_filename}").iloc[0]["files"]
+    except Exception:
+        old_files = []
+    
+    # Retrieve the current list of files from the S3 prefix, excluding hidden files starting with '_'
+    current_files = fused.api.list(f"{path}/")
+    if exclude_hidden_files:
+        current_files = [f for f in current_files if not f.split('/')[-1].startswith('_')]
+    # Create a new snapshot DataFrame
+    df_new = pd.DataFrame({"files": [current_files]})
+
+    # Determine if the file list has changed (compare content, not just length)
+    new_files =  set(current_files) - set(old_files)
+    # print(new_files) 
+    if new_files: 
+        print("Files changed – updating status")
+        df_new.to_parquet(f"{path}/{status_filename}")
+    else: 
+        print("Do nothing – files have not changed")    
+    return new_files
+
+
 def jam_lock(lock_second=1, verbose=False):
     import time    
     current_second = int(time.time()) // (lock_second)
