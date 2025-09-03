@@ -19,6 +19,17 @@ def udf(path: str='s3://fused-sample/demo_data/table/US_states.geojson'):
     states = gpd.read_file(path)
     return states
 
+Excel Sheet (default to the first sheet)
+@fused.udf
+def udf(path: str = "s3://fused-sample/demo_data/housing_2024.xlsx"):
+    import pandas as pd
+    xls = pd.ExcelFile(path, engine="openpyxl")
+    print("Available sheets", xls.sheet_names)
+    df = pd.read_excel(xls, sheet_name=0)
+    print(df.head())
+    return df
+
+
 HTML:
 Return HTML using the the following generic HTML UDF format (i.e. use common = fused.laod() + return common.html_to_obj(html_content)) even when making altair charts :
 
