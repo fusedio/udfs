@@ -26,7 +26,6 @@ def udf(path: str = "s3://fused-sample/demo_data/housing_2024.xlsx"):
     xls = pd.ExcelFile(path, engine="openpyxl")
     print("Available sheets", xls.sheet_names)
     df = pd.read_excel(xls, sheet_name=0)
-    print(df.head())
     return df
 
 
