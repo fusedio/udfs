@@ -425,7 +425,7 @@ def simplify_gdf(gdf, pct=1, args='-o force -clean'):
 
 def html_to_obj(html_str):
     from fastapi import Response
-    return Response(html_str.encode('utf-8'), media_type="text/html")
+    return Response(html_str.encode('utf-8'), media_type="text/html; charset=utf-8")
 
 def pydeck_to_obj(map, as_string=False):    
         html_str = map.to_html(as_string=True)
@@ -454,7 +454,7 @@ def html_params(html_template, params={}, **kw):
 
 def url_redirect(url):
     from fastapi import Response
-    return Response(f'<meta http-equiv="refresh" content="0; url={url}">'.encode('utf-8'), media_type="text/html")
+    return Response(f'<meta http-equiv="refresh" content="0; url={url}">'.encode('utf-8'), media_type="text/html; charset=utf-8")
     
 @fused.cache
 def read_shapefile(url):
