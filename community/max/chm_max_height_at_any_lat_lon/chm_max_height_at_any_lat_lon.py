@@ -1,7 +1,7 @@
 @fused.udf
 def udf(
-    lat: float = 45.5230,  # Default to San Francisco
-    lon: float = -122.6787,
+    lat: float = 49.2426,  # Default to San Francisco
+    lon: float = -123.1119,
 ):
     """Calculate max tree height within 100m buffer of given lat/lon using proper geospatial buffering"""
     import numpy as np
@@ -39,7 +39,6 @@ def udf(
     
     arr = common.read_tiff(tile, path_of_chm, output_shape=(chip_len, chip_len))
 
-    # Uncomment here to see image in map directly
     # return arr * 100, bounds
     
     max_height = float(arr.max())

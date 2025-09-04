@@ -55,7 +55,8 @@
             },
             "fused:udfType": "auto",
             "fused:slug": "chm_max_height_at_any_lat_lon",
-            "fused:name": "chm_max_height_at_any_lat_lon"
+            "fused:name": "chm_max_height_at_any_lat_lon",
+            "fused:description": "Exported from Fused UDF Workbench\n\n"
           },
           "source": "chm_max_height_at_any_lat_lon.py",
           "headers": []
