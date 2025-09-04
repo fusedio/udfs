@@ -19,13 +19,13 @@ def udf(path: str='s3://fused-sample/demo_data/table/US_states.geojson'):
     states = gpd.read_file(path)
     return states
 
-Excel Sheet (default to the first sheet)
+Excel Sheet (default to the first sheet, and set header to None)
 @fused.udf
 def udf(path: str = "s3://fused-sample/demo_data/housing_2024.xlsx"):
     import pandas as pd
     xls = pd.ExcelFile(path, engine="openpyxl")
     print("Available sheets", xls.sheet_names)
-    df = pd.read_excel(xls, sheet_name=0)
+    df = pd.read_excel(xls, sheet_name=0, header=None) 
     return df
 
 
