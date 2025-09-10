@@ -44,9 +44,7 @@
               "zoom": 10.55946991076274,
               "pitch": 0,
               "bearing": 0
-            },
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Census_ACS_5yr.png",
-            "fused:description": "## Overview\n\nThis UDF shows how to retrieve the American Community Survey (ACS) dataset provided by the U.S. Census Bureau. It contains demographic, social, economic, and housing characteristics aggregated over a 5-year period. This dataset provides detailed information about various population attributes at different geographic levels, such as states, counties, and census tracts.\n\n## External links\n\n- [ACS official Website](https://www.census.gov/programs-surveys/acs/)\n"
+            }
           },
           "source": "Census_ACS_5yr.py",
           "headers": []
