@@ -128,3 +128,66 @@ def search_title(title):
     print(f'Chosen: {List[0]}\nfrom: {List[:20]}')
     return List[0][0]
 
+@fused.cache
+def acs_variable_lookup(path: str = "https://www2.census.gov/programs-surveys/acs/summary_file/2022/table-based-SF/documentation/ACS20221YR_Table_Shells.txt"):
+    import pandas as pd
+
+    # Load ACS table shells
+    df = pd.read_csv(
+        path,
+        sep="|",
+        dtype=str,
+        skiprows=1,
+        names=["table_id", "line", "indent", "unique_id", "label", "title", "universe", "vartype"],
+    )
+
+    # Keep only numeric indents
+    df = df[df["indent"].str.isdigit()]
+
+    # Build hierarchy for indents 0 and 1
+    hierarchy = (
+        df[df["indent"].isin(["0", "1"])]
+        .set_index(["table_id", "indent"])["label"]
+        .str.replace(":", "", regex=False)
+        .str.lower()
+        .str.replace(" ", "_", regex=False)
+        .to_dict()
+    )
+
+    # Build indent-zero label mapping
+    indent_zero_map = df[df["indent"] == "0"].set_index("table_id")["label"].str.replace(":", "", regex=False).to_dict()
+
+    # Generate variable names
+    def make_name(r):
+        label = r.label.replace(":", "").lower().replace(" ", "_")
+        if r.indent == "0":
+            return label
+        if r.indent == "1":
+            return label
+
+        # deeper levels
+        parts = []
+        for lvl in range(1, int(r.indent) + 1):
+            part = hierarchy.get((r.table_id, str(lvl)))
+            if part:
+                parts.append(part)
+        if parts:
+            return "_".join(parts) + f"_{label}"
+        return r.unique_id
+
+    df["variable_name"] = df.apply(make_name, axis=1)
+
+    # Append indent-zero label to universe
+    indent_zero_label = df["table_id"].map(indent_zero_map)
+    df["universe"] = df["universe"] + " - " + indent_zero_label
+    df = df[df.unique_id.notnull()]
+    return df[["unique_id", "variable_name", "universe"]]
+
+@fused.cache
+def ids_to_names(ids:list=['B05006_019','B05006_018']):
+    # import pandas as pd
+    # df_meta = pd.read_csv('s3://fused-asset/data/acs/summary_file/2022/table-based-SF/documentation/ACS20225YR_Table_Shells.txt', delimiter='|')[["Unique ID","Label"]]
+    df_meta = acs_variable_lookup()[['unique_id', 'variable_name']]
+    id_list = list(ids)
+    label_map = dict(df_meta.values)
+    return [label_map.get(uid, uid) for uid in id_list]
