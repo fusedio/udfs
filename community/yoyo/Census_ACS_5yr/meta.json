@@ -1,0 +1,56 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Census_ACS_5yr",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 4,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "lineWidthMinPixels": 2,
+                "getFillColor": "@@=[properties.metric, properties.metric/4, properties.metric]",
+                "getLineColor": "@@=[properties.metric, properties.metric/4, properties.metric]"
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "Census_ACS_5yr",
+            "fused:name": "Census_ACS_5yr",
+            "fused:defaultViewState": {
+              "enable": false,
+              "latitude": 40.74769873265366,
+              "longitude": -73.99558893726497,
+              "zoom": 10.55946991076274,
+              "pitch": 0,
+              "bearing": 0
+            }
+          },
+          "source": "Census_ACS_5yr.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
