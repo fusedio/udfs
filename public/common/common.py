@@ -2505,21 +2505,21 @@ def tiff_to_xyz(input_tiff, output_xyz, xoff, x_block_size, yoff, y_block_size):
     # assert r[1] == b""   # cehck if there is an error (r[1] != b"")
     return r
 
+
 def xy_transform(df, src_crs="EPSG:5070", dst_crs="EPSG:4326", 
                          cols_src_xy=['x','y'], cols_dst_xy=['lng', 'lat']):
-    from pyproj import Proj, transform
+    import pyproj
 
-    # Define the source (original CRS) and target (EPSG:4326) CRSs
-    source_proj = Proj(init=src_crs)  # Replace with original CRS
-    target_proj = Proj(init=dst_crs)  # EPSG:4326 for WGS84
+    transformer = pyproj.Transformer.from_crs(src_crs, dst_crs, always_xy=True)
 
-    # Transform the X, Y coordinates to EPSG:4326 (WGS84)
+    # Transform the X, Y coordinates to destination CRS
     x_coords = df[cols_src_xy[0]].values
     y_coords = df[cols_src_xy[1]].values
-    lon, lat = transform(source_proj, target_proj, x_coords, y_coords)
+    lon, lat = transformer.transform(x_coords, y_coords)
     df[cols_dst_xy[0]] = lon
     df[cols_dst_xy[1]] = lat
     return df
+
 
 def bbox_to_xy_slice(bounds, shape, transform):
     import rasterio
