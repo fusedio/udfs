@@ -1,7 +1,7 @@
 @fused.udf
 def udf(
     pdf_url: str = "https://www2.census.gov/library/publications/2024/demo/p60-284.pdf",
-    raw_table_idx: int = 3,          # index of the *raw* table to return (default first)
+    raw_table_idx: int = 0,          # index of the *raw* table to return (default first)
 ):
     """
     Downloads a PDF (unless it already resides on the Fused system or S3), sends it to
@@ -80,17 +80,24 @@ def udf(
     # ------------------------------------------------------------------
     @fused.cache
     def call_datalab(pdf_url: str, path: str, api_key: str) -> dict:
-        """Upload the PDF to Datalab and return the JSON response (cached)."""
+        """
+        Upload the PDF to Datalab and return the JSON response (cached).
+        Non‑file parameters are sent via the `data` payload, not `files`.
+        """
         with open(path, "rb") as f:
+            # Only the actual file goes in `files`
             files = {
-                "file": (pdf_url, f, "application/pdf"),
-                "use_llm": (None, False),
-                "force_ocr": (None, False),
-                "paginate": (None, False),
-                "output_format": (None, "json"),
+                "file": (os.path.basename(path), f, "application/pdf")
+            }
+            # All other parameters go in `data` (as strings)
+            data = {
+                "use_llm": "true",
+                "force_ocr": "false",
+                "paginate": "false",
+                "output_format": "json",
             }
             headers = {"X-Api-Key": api_key}
-            resp = requests.post(api_url, files=files, headers=headers, timeout=30)
+            resp = requests.post(api_url, files=files, data=data, headers=headers, timeout=30)
             resp.raise_for_status()
             return resp.json()
 
