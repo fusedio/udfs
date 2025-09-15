@@ -17,7 +17,7 @@ def udf():
     print(f"Original working URL: {original_working_url}")
     print(f"Current URL in code: {current_url}")
     print("URL difference: The current URL is missing '/run/file' at the end and has a different UDF ID")
-
+    
     html_content = f"""
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: linear-gradient(135deg, #E5FF44 0%, #f0ff66 100%); padding: 30px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
@@ -40,8 +40,12 @@ def udf():
                 <button id="extractBtn" style="width: 100%; padding: 16px 24px; background: linear-gradient(135deg, #E5FF44 0%, #f0ff66 100%); color: #333333; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 2px 10px rgba(229, 255, 68, 0.3);">
                     📄 Download CSV
                 </button>
+                <!-- New Fork Button -->
+                <button id="forkBtn" style="width: 100%; padding: 14px 24px; margin-top: 12px; background: #E5FF44; color: #333333; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 600;">
+                    fork this code in Workbench
+                </button>
             </div>
-
+    
             <details style="margin-bottom: 15px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden;">
                 <summary style="cursor: pointer; padding: 20px; background: #f8f9fa; font-weight: 600; color: #333333; font-size: 15px; border-bottom: 1px solid #e9ecef; transition: background 0.2s ease;">
                     ⚡ How it was built
@@ -61,7 +65,7 @@ def udf():
                     </div>
                 </div>
             </details>
-
+    
             <div style="background: linear-gradient(135deg, #333333 0%, #4a4a4a 100%); padding: 25px; border-radius: 12px; text-align: center; box-shadow: 0 4px 20px rgba(51,51,51,0.2);">
                 <p style="margin: 0; color: white; font-size: 15px; line-height: 1.5;">
                     Built by <strong style="color: #E5FF44;">Fused</strong> - the platform for serverless Python computing<br>
@@ -69,7 +73,7 @@ def udf():
                 </p>
             </div>
         </div>
-
+    
         <style>
             #pdfUrl:focus, #tableIdx:focus {{
                 outline: none;
@@ -83,6 +87,9 @@ def udf():
             #extractBtn:active {{
                 transform: translateY(0);
             }}
+            #forkBtn:hover {{
+                opacity: 0.9;
+            }}
             details[open] summary {{
                 background: #E5FF44 !important;
                 color: #333333 !important;
@@ -94,7 +101,7 @@ def udf():
                 text-decoration: underline !important;
             }}
         </style>
-
+    
         <script>
         document.getElementById("extractBtn").onclick = function() {{
             const pdfUrl = document.getElementById("pdfUrl").value.trim();
@@ -125,6 +132,11 @@ def udf():
             window.open(fullUrl, '_blank');
         }};
 
+        // Fork button logic
+        document.getElementById("forkBtn").onclick = function() {{
+            window.open('https://www.fused.io/workbench/udf/catalog/pdf_to_csv-efae23c5-65b3-49b9-b488-25b675aad7d8', '_blank');
+        }};
+
         // Allow Enter key to trigger extraction
         document.getElementById("pdfUrl").addEventListener("keypress", function(event) {{
             if (event.key === "Enter") {{
@@ -139,5 +151,5 @@ def udf():
         }});
         </script>
     """
-
+    
     return common.html_to_obj(html_content)
