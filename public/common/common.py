@@ -914,6 +914,43 @@ def table_to_tile(
             return df
 
 
+def get_dataset_from_table(url: str, bounds:fused.types.Bounds):
+    """
+    Construct a pyarrow.dataset.Dataset from a table path and spatial bounds.
+
+    Specifically for Parquet datasets ingested through Fused (having a _sample
+    file with chunk metadata).
+
+    The pyarrow Dataset object can then be consumed using `dataset.to_table()`,
+    providing optional `columns` selection and row `filter`.
+    See https://arrow.apache.org/docs/python/dataset.html#filtering-data
+
+    """
+    import shapely
+    import pyarrow.dataset as ds
+    from pyarrow.fs import FileSystem
+
+    bbox = shapely.box(*bounds)
+
+    # get metadata and filter chunks by bounds
+    df_meta = fused.get_chunks_metadata(path)
+    df_meta = df_meta[df_meta.geometry.intersects(bbox)]
+
+    # create pyarrow dataset from filtered metadata
+    fs, path = FileSystem.from_uri(url)
+    parquet_format = ds.ParquetFileFormat()
+    fragments = [
+        parquet_format.make_fragment(
+            path.rstrip("/") + f"/{file_id}.parquet", filesystem=fs, row_groups=chunks
+        )
+        for file_id, chunks in df_meta.groupby("file_id")["chunk_id"].agg(list).items()
+    ]
+    schema = fragments[0].physical_schema
+
+    dataset = ds.FileSystemDataset(fragments, schema, parquet_format, filesystem=fs)
+    return dataset
+
+
 def rasterize_geometry(
     geom, shape, affine, all_touched=False
 ):
