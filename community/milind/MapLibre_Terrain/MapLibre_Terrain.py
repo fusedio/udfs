@@ -1,6 +1,3 @@
-import fused
-from jinja2 import Template
-
 @fused.udf(cache_max_age=0)
 def udf(
     # Camera (defaults from your example; Innsbruck area)
@@ -23,6 +20,8 @@ def udf(
     max_zoom: int = 18,
     max_pitch: int = 85,
 ):
+    from jinja2 import Template
+
     """
     MapLibre GL JS 3D terrain UDF.
     - OSM raster basemap
