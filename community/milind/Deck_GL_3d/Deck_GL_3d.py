@@ -1,6 +1,3 @@
-import fused
-from jinja2 import Template
-
 @fused.udf(cache_max_age=0)
 def udf(
     token: str = "UDF_DSM_Zonal_Stats",
@@ -16,6 +13,8 @@ def udf(
     maxzoom: int = 15,
     elevation_scale: float = 1.0,   # stats -> height multiplier
 ):
+    from jinja2 import Template
+
     """
     Minimal Deck.gl 3D vector map (no raster). Requires server to serve MVT:
       {host}/.../{token}/run/tiles/{z}/{x}/{y}?dtype_out_vector=mvt

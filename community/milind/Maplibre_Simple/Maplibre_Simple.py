@@ -1,6 +1,3 @@
-import fused
-from jinja2 import Template
-
 @fused.udf(cache_max_age=0)
 def udf(
     # Fused vector tiles (MVT)
@@ -21,6 +18,8 @@ def udf(
     fill_color: str = "#35AF6D",
     fill_opacity: float = 0.35,
 ):
+    from jinja2 import Template
+
     """
     Minimal MapLibre map (no UI) that loads Fused XYZ vector tiles (MVT) from `token`.
 
