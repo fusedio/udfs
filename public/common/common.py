@@ -2785,22 +2785,24 @@ def clip_arr(arr, bounds_aoi, bounds_total=(-180, -90, 180, 90)):
 
 def visualize(
     data,
-    mask = None,
-    min = 0,
-    max = 1,
-    opacity = 1,
-    colormap = None,
+    mask=None,
+    min=0,
+    max=1,
+    opacity=1,
+    colormap=None,
+    colorbins=None,   # NEW: allow discrete colorbins
 ):
     """Convert objects into visualization tiles."""
     import numpy as np
     import xarray as xr
     import palettable
-    from matplotlib.colors import LinearSegmentedColormap
-    from matplotlib.colors import Normalize   
+    import matplotlib.colors as mcolors
+    from matplotlib.colors import LinearSegmentedColormap, Normalize, BoundaryNorm
     
     if data is None:
         return
     
+    # Handle colormap input
     if colormap is None:
         # Set a default colormap
         colormap = palettable.colorbrewer.sequential.Greys_9_r
@@ -2808,12 +2810,15 @@ def visualize(
     elif isinstance(colormap, palettable.palette.Palette):
         cm = colormap.mpl_colormap
     elif isinstance(colormap, (list, tuple)):
-        cm = LinearSegmentedColormap.from_list('custom', colormap)
+        cm = LinearSegmentedColormap.from_list("custom", colormap)
+    elif isinstance(colormap, mcolors.Colormap):
+        cm = colormap
     else:
-        print('visualize: no type match for colormap')
+        print("visualize: no type match for colormap")
+        return
 
+    # Handle data as xarray or numpy
     if isinstance(data, xr.DataArray):
-        # Convert from an Xarray DataArray to a Numpy ND Array
         data = data.values
 
     if isinstance(data, np.ndarray):
@@ -2825,26 +2830,33 @@ def visualize(
             else:
                 # Combine the two masks.
                 mask = mask * boolean_mask
-        
-        norm_data = Normalize(vmin=min, vmax=max, clip=False)(data)
-        mapped_colors = cm(norm_data)
-        if isinstance(mask, (float, np.ndarray)):
-            mapped_colors[:,:,3] = mask * opacity
+
+        # Use BoundaryNorm if colorbins are given
+        if colorbins is not None:
+            norm = BoundaryNorm(colorbins, cm.N, extend="max")
         else:
-            mapped_colors[:,:,3] = opacity
-        
+            norm = Normalize(vmin=min, vmax=max, clip=False)
+
+        norm_data = norm(data)
+        mapped_colors = cm(norm_data)
+
+        # Apply opacity
+        if isinstance(mask, (float, np.ndarray)):
+            mapped_colors[:, :, 3] = mask * opacity
+        else:
+            mapped_colors[:, :, 3] = opacity
+
         # Convert to unsigned 8-bit ints for visualization.
         vis_dtype = np.uint8
         max_color_value = np.iinfo(vis_dtype).max
         norm_data255 = (mapped_colors * max_color_value).astype(vis_dtype)
-        
+
         # Reshape array to 4 x nRow x nCol.
-        shaped = norm_data255.transpose(2,0,1)
-    
+        shaped = norm_data255.transpose(2, 0, 1)
+
         return shaped
     else:
-        print('visualize: data instance type not recognized')
-
+        print("visualize: data instance type not recognized")
     
 class AsyncRunner:
     '''
