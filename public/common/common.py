@@ -4,6 +4,7 @@ def udf(bounds: fused.types.Bounds = [-122.4194, 37.7749, -122.4094, 37.7849]):
     import fused
     
     gdf = to_gdf(bounds)
+    
     return gdf
 
 
