@@ -5,13 +5,15 @@ def udf():
     original Streamlit app.  The HTML embeds the FAQ data, logo and avatar
     images (base64) and uses pure JavaScript for interactivity (category
     filtering, fuzzy matching, suggestions, download of chat history, etc.).
-    Added: PDF upload button + drag‑and‑drop area.
+    Added: first-three FAQ questions shown as permanent suggestions above the
+    input field and proper fallback-suggestion handling when no exact match is
+    found.
     """
     import pandas as pd
     import requests
     import base64
     from io import BytesIO
-    from difflib import SequenceMatcher, get_close_matches
+    # difflib helpers are not needed in the Python side; all matching will be done in JS
 
     # ------------------------------------------------------------------
     # Helper: fetch remote files and cache them
@@ -68,27 +70,34 @@ def udf():
 <title>MSU Research Security Assistant</title>
 <style>
     body {{ font-family: Arial, sans-serif; background:#fafafa; margin:0; padding:0; }}
-    .container {{ max-width: 900px; margin: auto; padding:20px; }}
+    .container {{ max-width: 900px; margin:auto; padding:20px; }}
     .header {{ text-align:left; }}
     .header img {{ max-width:100%; height:auto; }}
     .header h2 {{ margin:10px 0 5px; }}
     .header h5 {{ margin:0 0 15px; color:#555; font-weight:normal; }}
-    .chat-box {{ border:1px solid #ddd; border-radius:8px; background:#fff; padding:15px; max-height:500px; overflow-y:auto; }}
+    .chat-box {{ border:1px solid #ddd; border-radius:8px; background:#fff;
+                padding:15px; max-height:500px; overflow-y:auto; }}
     .msg-user {{ text-align:right; margin:10px 0; }}
-    .msg-user .bubble {{ display:inline-block; background:#e6f7ff; padding:10px 15px; border-radius:12px; max-width:70%; }}
+    .msg-user .bubble {{ display:inline-block; background:#e6f7ff; padding:10px 15px;
+                       border-radius:12px; max-width:70%; }}
     .msg-assist {{ text-align:left; margin:10px 0; }}
-    .msg-assist .bubble {{ display:inline-block; background:#f6f6f6; padding:10px 15px; border-radius:12px; max-width:75%; }}
+    .msg-assist .bubble {{ display:inline-block; background:#f6f6f6; padding:10px 15px;
+                          border-radius:12px; max-width:75%; }}
     .msg-assist .bubble img {{ vertical-align:middle; border-radius:8px; margin-right:8px; }}
     .input-area {{ margin-top:15px; display:flex; gap:10px; flex-wrap:wrap; }}
     .input-area input {{ flex:1; padding:8px; font-size:1rem; }}
     .input-area button {{ padding:8px 16px; font-size:1rem; cursor:pointer; }}
-    .file-drop {{ border:2px dashed #bbb; border-radius:8px; padding:20px; text-align:center; color:#777; margin-top:10px; }}
+    .file-drop {{ border:2px dashed #bbb; border-radius:8px; padding:20px;
+                 text-align:center; color:#777; margin-top:10px; }}
     .file-drop.dragover {{ border-color:#666; background:#f0f0f0; }}
     .suggestions {{ margin-top:5px; }}
-    .suggestion-btn {{ display:inline-block; margin:3px 5px 0 0; background:#eee; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; }}
+    .suggestion-btn {{ display:inline-block; margin:3px 5px 0 0;
+                      background:#eee; border:none; padding:5px 10px;
+                      border-radius:5px; cursor:pointer; }}
     .download-link {{ margin-top:15px; display:block; }}
     .footer {{ margin-top:30px; font-size:0.9rem; color:#777; text-align:center; }}
     .disclaimer {{ font-size:0.8rem; color:#555; margin-top:10px; }}
+    .example-questions {{ margin-bottom:10px; }}
 </style>
 </head>
 <body>
@@ -109,6 +118,9 @@ def udf():
 </div>
 
 <div class="chat-box" id="chatBox"></div>
+
+<!-- Permanent top-three FAQ suggestions -->
+<div class="example-questions" id="exampleBox"></div>
 
 <div class="input-area">
     <input type="text" id="questionInput" placeholder="💬 Start typing your question..." />
@@ -148,12 +160,13 @@ def udf():
         return div.innerHTML;
     }}
 
+    // Longest-common-subsequence similarity (same as before)
     function similarity(a, b) {{
         function lcs(x, y) {{
             const dp = Array(x.length+1).fill().map(()=>Array(y.length+1).fill(0));
-            for(let i=1;i<=x.length;i++) {{
-                for(let j=1;j<=y.length;j++) {{
-                    if(x[i-1]===y[j-1]) dp[i][j]=dp[i-1][j-1]+1;
+            for (let i=1;i<=x.length;i++) {{
+                for (let j=1;j<=y.length;j++) {{
+                    if (x[i-1]===y[j-1]) dp[i][j]=dp[i-1][j-1]+1;
                     else dp[i][j]=Math.max(dp[i-1][j],dp[i][j-1]);
                 }}
             }}
@@ -162,6 +175,17 @@ def udf():
         const longest = Math.max(a.length, b.length);
         if (longest===0) return 1;
         return lcs(a.toLowerCase(), b.toLowerCase())/longest;
+    }}
+
+    // ----------------------------------------------
+    // getCloseMatches – mimics difflib.get_close_matches
+    // ----------------------------------------------
+    function getCloseMatches(word, possibilities, n, cutoff) {{
+        const scored = possibilities.map(p => {{
+            return {{text: p, score: similarity(word, p)}};
+        }}).filter(item => item.score >= cutoff);
+        scored.sort((a, b) => b.score - a.score);
+        return scored.slice(0, n).map(item => item.text);
     }}
 
     // ------------------------------------------------------------------
@@ -182,6 +206,7 @@ def udf():
     const uploadBtn = document.getElementById('uploadBtn');
     const pdfUpload = document.getElementById('pdfUpload');
     const dropZone = document.getElementById('dropZone');
+    const exampleBox = document.getElementById('exampleBox');
 
     // ------------------------------------------------------------------
     // Render functions
@@ -216,7 +241,7 @@ def udf():
             downloadLink.style.display = 'none';
             return;
         }}
-        const txt = chatHistory.map(m=> (m.role==='user'?'You':'Assistant') + ': ' + m.content).join('\\n\\n');
+        const txt = chatHistory.map(m => (m.role==='user'?'You':'Assistant') + ': ' + m.content).join('\\n\\n');
         const b64 = btoa(unescape(encodeURIComponent(txt)));
         downloadLink.href = `data:text/plain;base64,${{b64}}`;
         downloadLink.download = 'chat_history.txt';
@@ -241,17 +266,21 @@ def udf():
         }});
     }}
 
-    // ------------------------------------------------------------------
-    // Core logic
-    // ------------------------------------------------------------------
-    function filterFAQByCategory(cat) {{
-        if (cat === 'All Categories') return faqData;
-        return faqData.filter(row => row.Category === cat);
-    }}
-
-    function getTopExamples() {{
-        const filtered = filterFAQByCategory(currentCategory);
-        return filtered.slice(0,3).map(r=> r.Question);
+    // Render the permanent top-three example questions (above the input)
+    function renderExampleQuestions() {{
+        exampleBox.innerHTML = '';
+        const filtered = currentCategory === 'All Categories' ? faqData : faqData.filter(r => r.Category === currentCategory);
+        const examples = filtered.slice(0,3).map(r => r.Question);
+        examples.forEach(q => {{
+            const btn = document.createElement('button');
+            btn.className = 'suggestion-btn';
+            btn.textContent = q;
+            btn.onclick = () => {{
+                questionInput.value = q;
+                suggestionBox.innerHTML = '';
+            }};
+            exampleBox.appendChild(btn);
+        }});
     }}
 
     function addUserMessage(text) {{
@@ -264,19 +293,57 @@ def udf():
         renderChat();
     }}
 
+    // ------------------------------------------------------------------
+    // Helper to fetch an answer row by question text
+    // ------------------------------------------------------------------
+    function getRowByQuestion(q) {{
+        return faqData.find(r => r.Question === q);
+    }}
+
+    // ------------------------------------------------------------------
+    // Render the global “choose a question” buttons (from close matches)
+    // ------------------------------------------------------------------
+    function renderGlobalSuggestionButtons(matches) {{
+        suggestionBox.innerHTML = '';
+        const label = document.createElement('div');
+        label.innerHTML = '<b>Choose a question:</b>';
+        suggestionBox.appendChild(label);
+        matches.forEach(q => {{
+            const btn = document.createElement('button');
+            btn.className = 'suggestion-btn';
+            btn.textContent = q;
+            btn.onclick = () => {{
+                // Show the selected answer as if the user typed it
+                addUserMessage(q);
+                const row = getRowByQuestion(q);
+                if (row) {{
+                    const resp = `<b>Answer:</b> ${{escapeHTML(row.Answer)}}<br><i>(Note: This question belongs to the '${{escapeHTML(row.Category)}}' category.)</i>`;
+                    addAssistantMessage(resp);
+                }}
+                suggestionBox.innerHTML = '';
+            }};
+            suggestionBox.appendChild(btn);
+        }});
+    }}
+
+    // ------------------------------------------------------------------
+    // Core processing of a user question
+    // ------------------------------------------------------------------
     function processQuestion(rawQ) {{
-        const filteredFAQ = filterFAQByCategory(currentCategory);
-        const allQuestions = filteredFAQ.map(r=> r.Question);
-        const exact = filteredFAQ.find(r=> r.Question.toLowerCase()===rawQ.toLowerCase());
+        const filtered = currentCategory === 'All Categories' ? faqData : faqData.filter(r => r.Category === currentCategory);
+        const allQuestions = filtered.map(r => r.Question);
+
+        // ----- Exact match -----
+        const exact = filtered.find(r => r.Question.toLowerCase() === rawQ.toLowerCase());
         if (exact) {{
             const resp = `<b>Answer:</b> ${{escapeHTML(exact.Answer)}}<br><i>(Note: This question belongs to the '${{escapeHTML(exact.Category)}}' category.)</i>`;
             addAssistantMessage(resp);
             return;
         }}
 
-        // fuzzy match (ratio >= 0.85)
+        // ----- Fuzzy match (>=0.85) -----
         let best = null, bestScore = 0;
-        filteredFAQ.forEach(r=> {{
+        filtered.forEach(r => {{
             const score = similarity(rawQ, r.Question);
             if (score > bestScore) {{
                 bestScore = score;
@@ -289,34 +356,35 @@ def udf():
             return;
         }}
 
-        // suggestions based on substring
-        const suggestions = allQuestions.filter(q=> q.toLowerCase().includes(rawQ.toLowerCase())).slice(0,5);
-        if (suggestions.length>0) {{
-            showSuggestions(suggestions);
+        // ----- Substring suggestions (live while typing) -----
+        const subMatches = allQuestions.filter(q => q.toLowerCase().includes(rawQ.toLowerCase())).slice(0,5);
+        if (subMatches.length > 0) {{
+            showSuggestions(subMatches);
             const note = `I couldn't find an exact match. Here are some similar questions:`;
             addAssistantMessage(note);
             return;
         }}
 
-        // fallback to global close matches (using difflib style)
-        const globalAll = faqData.map(r=> r.Question);
+        // ----- Global close-match fallback (difflib style) -----
+        const globalAll = faqData.map(r => r.Question);
         const close = getCloseMatches(rawQ, globalAll, 3, 0.4);
-        if (close.length>0) {{
-            const guessedCat = faqData.find(r=> r.Question===close[0]).Category;
+        if (close.length > 0) {{
+            const guessedCat = faqData.find(r => r.Question === close[0]).Category;
             let txt = `I couldn't find an exact match, but your question seems related to <b>${{escapeHTML(guessedCat)}}</b>.<br><br>Here are some similar questions:<br>`;
-            close.forEach((q,i)=>{{ txt += `${{i+1}}. ${{escapeHTML(q)}}<br>`; }});
-            txt += `<br>Select one above to see its answer.<br><br><a href="mailto:research.compliance@morgan.edu">research.compliance@morgan.edu</a>`;
+            close.forEach((q,i) => {{ txt += `${{i+1}}. ${{escapeHTML(q)}}<br>`; }});
+            txt += `<br>Select one below to see its answer.<br><br><a href="mailto:research.compliance@morgan.edu">research.compliance@morgan.edu</a>`;
             addAssistantMessage(txt);
-            window.__globalSuggestions = close;
+            // render clickable buttons for the close matches
+            renderGlobalSuggestionButtons(close);
             return;
         }}
 
-        // ultimate fallback
+        // ----- Ultimate fallback -----
         addAssistantMessage(`I couldn't find a close match. Please try rephrasing.<br><br><a href="mailto:research.compliance@morgan.edu">research.compliance@morgan.edu</a>`);
     }}
 
     // ------------------------------------------------------------------
-    // PDF handling
+    // PDF handling (unchanged)
     // ------------------------------------------------------------------
     function handlePDFFile(file) {{
         if (!file) return;
@@ -324,50 +392,38 @@ def udf():
             alert('Please upload a PDF file.');
             return;
         }}
-        // Simple feedback – you could extend to upload to S3 or parse contents
         addUserMessage(`Uploaded PDF: ${{escapeHTML(file.name)}}`);
-        // Example: read as base64 (optional)
         const reader = new FileReader();
         reader.onload = function(e) {{
             const base64 = e.target.result.split(',')[1];
             console.log('PDF base64 (first 100 chars):', base64.slice(0,100));
-            // You could store this in a variable for later use if needed
+            // Extend as needed
         }};
         reader.readAsDataURL(file);
     }}
 
-    // Button click → hidden file input
     uploadBtn.onclick = () => pdfUpload.click();
 
-    // File input change
     pdfUpload.onchange = (e) => {{
         const file = e.target.files[0];
         handlePDFFile(file);
-        // Reset the input so same file can be selected again if desired
         e.target.value = "";
     }};
 
-    // Drag & drop events
     dropZone.addEventListener('dragover', (e) => {{
-        e.preventDefault();
-        e.stopPropagation();
-        dropZone.classList.add('dragover');
+        e.preventDefault(); e.stopPropagation(); dropZone.classList.add('dragover');
     }});
     dropZone.addEventListener('dragleave', (e) => {{
-        e.preventDefault();
-        e.stopPropagation();
-        dropZone.classList.remove('dragover');
+        e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('dragover');
     }});
     dropZone.addEventListener('drop', (e) => {{
-        e.preventDefault();
-        e.stopPropagation();
-        dropZone.classList.remove('dragover');
+        e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('dragover');
         const file = e.dataTransfer.files[0];
         handlePDFFile(file);
     }});
 
     // ------------------------------------------------------------------
-    // Event listeners
+    // UI event listeners
     // ------------------------------------------------------------------
     submitBtn.onclick = () => {{
         const q = questionInput.value.trim();
@@ -381,8 +437,8 @@ def udf():
     questionInput.oninput = () => {{
         const q = questionInput.value.trim();
         if (q) {{
-            const filteredFAQ = filterFAQByCategory(currentCategory);
-            const matches = filteredFAQ.map(r=> r.Question).filter(t=> t.toLowerCase().includes(q.toLowerCase())).slice(0,5);
+            const filtered = currentCategory === 'All Categories' ? faqData : faqData.filter(r => r.Category === currentCategory);
+            const matches = filtered.map(r => r.Question).filter(t => t.toLowerCase().includes(q.toLowerCase())).slice(0,5);
             showSuggestions(matches);
         }} else {{
             suggestionBox.innerHTML = '';
@@ -391,21 +447,21 @@ def udf():
 
     categorySelect.onchange = () => {{
         currentCategory = categorySelect.value;
-        // reset chat when category changes
         chatHistory = [];
         renderChat();
         questionInput.value = '';
         suggestionBox.innerHTML = '';
+        renderExampleQuestions();   // update top-three example questions
     }};
 
     // ------------------------------------------------------------------
     // Initial render
     // ------------------------------------------------------------------
     renderChat();
+    renderExampleQuestions();
 </script>
 </body>
 </html>
 """
-    # Debug: print a short part of the generated HTML schema
     print("HTML length:", len(html_content))
     return html_content
