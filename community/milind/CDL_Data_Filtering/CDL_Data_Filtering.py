@@ -1,90 +1,53 @@
-common = fused.load("https://github.com/fusedio/udfs/tree/c576dc9/public/common/")
-
 @fused.udf
-def udf(bounds: fused.types.Bounds = [-138.80276917029278,-10.699680369962277,-54.08965045331159,65.89861176695153], buffer_multiple: float = 1, hex_res: int = 4):
-    crop_type=''
-    
-    import pandas as pd
-    path = "s3://fused-users/fused/asset/CDL_h12k1p1/year=2024/"
+def udf(
+    h3_res: int = 5,            # desired output H3 resolution
+    crop_value_list: list = [], # optional CDL values to keep; [] = keep all
+    min_ratio: float = 0.0,     # drop rows with pct <= 100*min_ratio
+    year: int = 2024,
+):
+    """
+    Minimal CDL loader (Source Coop, S3 path).
+    Returns: hex (H3 int), data (CDL value), area (m²), pct (0–100 int).
+    """
+    # DuckDB helper
+    common = fused.load("https://github.com/fusedio/udfs/tree/6b98ee5/public/common/")
+    con = common.duckdb_connect()
 
-    df = read_hexfile_bounds(bounds=bounds, url=f"{path}overview/hex{hex_res}.parquet", clip=1)
-    CDL = fused.load("UDF_CDLs_Tile_Example")
-    df = df[df["data"].isin(CDL.crop_type_list(crop_type))]
-    import h3.api.basic_int as h3
-    df['lat'] = df.hex.map(lambda x:h3.cell_to_latlng(x)[0])
-    df['lng'] = df.hex.map(lambda x:h3.cell_to_latlng(x)[1])
-    
-    print(CDL.crop_stats(df))
+    # Choose backing parquet (only hex7 or hex8 are published)
+    s3_resolution = 7 if h3_res <= 7 else 8
+    if h3_res > 8:
+        print("h3_res > 8 not supported; using hex8 dataset and no further parenting.")
+        s3_resolution = 8
+    path = f's3://us-west-2.opendata.source.coop/fused/hex/release_2025_04_beta/cdl/hex{s3_resolution}_{year}.parquet'
 
-    crop_stats = CDL.crop_stats(df)
-    name_mapping = crop_stats['name'].to_dict()
-    
-    con = fused.utils.common.duckdb_connect()
+    # Parent to requested resolution if needed
+    qr_hex = "hex" if s3_resolution == h3_res else f"h3_cell_to_parent(hex, {h3_res})"
 
-    df = con.sql(
-        """
-        INSTALL spatial;
-        LOAD spatial;
-        
-        SELECT 
-            data,
-            lat, 
-            lng,
-            area, 
-            area / (h3_cell_area(hex,'m^2')/100) as pct,
-        FROM df
-        WHERE data != 0
-        """
-    ).df()
+    @fused.cache
+    def get_hex_data(qr_hex: str, path: str):
+        return con.sql(f'''
+            SELECT
+              {qr_hex} AS hex,
+              value     AS data,
+              SUM(area)::DOUBLE AS area,
+              (100 * SUM(area) / SUM(SUM(area)) OVER (PARTITION BY {qr_hex}))::DOUBLE AS pct
+            FROM read_parquet("{path}")
+            WHERE value != 0
+            GROUP BY 1, 2
+        ''').df()
 
-    df['name'] = df['data'].map(name_mapping)
-    
+    df = get_hex_data(qr_hex, path)
 
-    sample_cols = ['data', 'name', 'lat', 'lng', 'area', 'pct']
-    available_cols = [col for col in sample_cols if col in df.columns]
-    print(df[available_cols].head(3))
-    
-    df = df.sort_values('pct', ascending=False)
-    df = df.sort_values('data').set_index('data')
-    df['pct']=df['pct'].astype(int)
-    import h3.api.basic_int as h3
-    df['hex']=df.apply(lambda r: h3.latlng_to_cell(r[0],r[1],hex_res),1)
-    del df['lat']
-    del df['lng']
-    del df['name']
-    print(df)
-    return df 
+    # Optional crop filter
+    if crop_value_list:
+        crop_values = [int(x) for x in crop_value_list]
+        df = df[df["data"].isin(crop_values)]
 
+    # Min ratio filter
+    if min_ratio > 0:
+        df = df[df["pct"] > 100 * min_ratio]
 
-def read_hexfile_bounds(bounds:list  = [-84.62623688728367,38.24817244542944,-84.59976376273033,38.27050399126871]
-                        , url: str = "/Users/sinakashuk/Desktop/_hex6", clip=True):
-    common = fused.load("https://github.com/fusedio/udfs/tree/beb4259/public/common/").utils
-    from io import BytesIO
-    import geopandas as gpd
-    import pandas as pd
-    import pyarrow.parquet as pq
-    import base64
-    import shapely
-    with pq.ParquetFile(url) as file:
-        # do not use pq.read_metadata as it may segfault in versions >= 12 (tested on 15.0.1)
-        file_metadata = file.metadata
-        metadata = file_metadata.metadata
-    metadata_bytes = metadata[b"fused:_metadata"]
-    metadata_bytes = base64.decodebytes(metadata_bytes)
-    metadata_bio = BytesIO(metadata_bytes)
-    df = pd.read_parquet(metadata_bio)
-    geoms = shapely.box(
-        df["bbox_minx"], df["bbox_miny"], df["bbox_maxx"], df["bbox_maxy"]
-    )
-    df_meta = gpd.GeoDataFrame(df, geometry=geoms, crs="EPSG:4326")
-    
-    bbox = common.to_gdf(bounds)
-    df_meta = df_meta.sjoin(bbox)
-    chunk_ids = df_meta.chunk_id.values
-    print(chunk_ids)
-    import pyarrow.parquet as pq   
-    table=pq.ParquetFile(url)
-    df = table.read_row_groups(chunk_ids).to_pandas()#, columns=columns).to_pandas()   
-    if clip:
-        return common.filter_hex_bounds(df, bounds)
-    return df
+    # Final types & cols
+    df["hex"] = df["hex"].astype("int64")
+    df["pct"] = df["pct"].round().clip(0, 100).astype("int64")
+    return df[["hex", "data", "area", "pct"]].reset_index(drop=True)
