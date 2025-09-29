@@ -1,18 +1,26 @@
 common = fused.load("https://github.com/fusedio/udfs/tree/6b98ee5/public/common/")
-@fused.udf
+
+@fused.udf(cache_max_age = 0)
 def udf(
     data_url: str = "s3://fused-sample/demo_data/airbnb_listings_nyc.parquet",
-    initial_sql: str = "SELECT * FROM df LIMIT 100;"
+    initial_sql: str = """\
+    SELECT 
+      room_type,
+      ROUND(AVG(price_in_dollar), 2) AS avg_price,
+      COUNT(*) AS listings
+    FROM df
+    WHERE price_in_dollar IS NOT NULL AND room_type IS NOT NULL
+    GROUP BY room_type
+    ORDER BY avg_price DESC;"""
 ):
     """
-    DuckDB-WASM SQL viewer:
-    - Signs S3 once so browser can fetch it
-    - Loads parquet as view `df`
+    DuckDB-WASM SQL viewer :
+    - Loads parquet from a public/accessible URL as view `df`
     - Auto-runs query as you type (small debounce)
-    - 'Run' button stays disabled until data is ready and becomes optional
+    - Run button disabled until data is ready
     """
-    signed_url = fused.api.sign_url(data_url)
 
+    signed_url = fused.api.sign_url(data_url)
     html = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -28,7 +36,7 @@ def udf(
 </head>
 <body>
   <h3>DuckDB SQL Viewer</h3>
-  <div>Dataset: <code>{data_url}</code></div>
+  <div>Dataset: <code>{signed_url}</code></div>
 
   <textarea id="queryInput">{initial_sql}</textarea><br/>
   <button id="runBtn" disabled>Run</button>
@@ -37,7 +45,7 @@ def udf(
   <div id="results"></div>
 
   <script type="module">
-    const SIGNED_URL = {signed_url!r};
+    const signed_url = {signed_url!r};
     let conn = null;
     let typingTimer = 0;
     const DEBOUNCE_MS = 250;
@@ -75,7 +83,7 @@ def udf(
         conn = await db.connect();
 
         // Fetch parquet and register
-        const resp = await fetch(SIGNED_URL);
+        const resp = await fetch(signed_url);
         if (!resp.ok) throw new Error("HTTP " + resp.status + " " + resp.statusText);
         const buf = new Uint8Array(await resp.arrayBuffer());
         await db.registerFileBuffer('data.parquet', buf);

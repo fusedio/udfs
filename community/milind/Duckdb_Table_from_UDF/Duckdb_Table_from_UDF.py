@@ -2,15 +2,24 @@ common = fused.load("https://github.com/fusedio/udfs/tree/6b98ee5/public/common/
 
 @fused.udf
 def udf(
-    data_url: str = "https://staging.fused.io/server/v1/realtime-shared/UDF_Simple_CDL_Data_from_source_coop/run/file?dtype_out_raster=png&dtype_out_vector=parquet",
-    initial_sql: str = "SELECT * FROM df LIMIT 100;"
+    data_url: str = "https://www.fused.io/server/v1/realtime-shared/fsh_861uTBbGY84P5OYcUMeYG/run/file?dtype_out_raster=png&dtype_out_vector=parquet",
+    initial_sql: str = """\
+    SELECT 
+      room_type,
+      ROUND(AVG(price_in_dollar), 2) AS avg_price,
+      COUNT(*) AS listings
+    FROM df
+    WHERE price_in_dollar IS NOT NULL AND room_type IS NOT NULL
+    GROUP BY room_type
+    ORDER BY avg_price DESC;"""
 ):
     """
-    DuckDB-WASM SQL viewer (no signed URL):
+    DuckDB-WASM SQL viewer :
     - Loads parquet from a public/accessible URL as view `df`
     - Auto-runs query as you type (small debounce)
     - Run button disabled until data is ready
     """
+    
     html = f"""<!DOCTYPE html>
 <html>
 <head>
