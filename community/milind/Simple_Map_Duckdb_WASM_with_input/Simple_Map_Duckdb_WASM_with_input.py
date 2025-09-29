@@ -7,7 +7,7 @@ def udf(
     center_lng: float = -73.9857,
     center_lat: float = 40.7484,
     zoom: int = 9,
-    color_field: str = "price_per_person"  
+    initial_sql: str = "SELECT * FROM df LIMIT 100;"
 ):
     import json
 
@@ -15,26 +15,36 @@ def udf(
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Generic Points Map (DuckDB-WASM + Mapbox)</title>
+  <title>Points Map (DuckDB-WASM + Mapbox)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet" />
   <style>
     html, body, #map {{ margin:0; padding:0; height:100%; }}
     .note {{ position:absolute; top:8px; left:8px; font:12px monospace; background:#fff; color:#000; padding:6px 8px; border:1px solid #ccc; border-radius:4px; }}
+    .panel {{ position:absolute; top:8px; right:8px; width:420px; display:flex; flex-direction:column; gap:6px; }}
+    textarea {{ width:100%; height:120px; font-family: monospace; padding:6px; border:1px solid #ccc; border-radius:4px; }}
+    button {{ width:80px; padding:6px; font-family: monospace; }}
+    .status {{ font:12px monospace; color:#333; }}
     .legend {{ position:absolute; bottom:12px; left:12px; background:#fff; border:1px solid #ccc; border-radius:4px; padding:6px 8px; font:12px monospace; }}
     .legend-bar {{ width:200px; height:8px; background: linear-gradient(90deg, #2ecc71, #f1c40f, #e74c3c); margin:6px 0; }}
     .legend-row {{ display:flex; justify-content:space-between; }}
-    .pill {{ position:absolute; top:8px; right:8px; background:#fff; border:1px solid #ccc; border-radius:14px; padding:6px 10px; font:12px monospace; }}
   </style>
 </head>
 <body>
   <div id="map"></div>
   <div class="note" id="note">Initializing…</div>
-  <div class="pill" id="pill"></div>
+
+  <div class="panel">
+    <textarea id="queryInput" placeholder="SELECT * FROM df LIMIT 100;">{initial_sql}</textarea>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button id="runBtn" disabled>Run</button>
+      <span class="status" id="status">Loading DuckDB and dataset…</span>
+    </div>
+  </div>
 
   <div class="legend" id="legend" style="display:none;">
-    <div id="legLabel">color</div>
+    <div>price per person</div>
     <div class="legend-bar"></div>
     <div class="legend-row"><span id="legMin">low</span><span id="legMid">mid</span><span id="legMax">high</span></div>
   </div>
@@ -42,10 +52,11 @@ def udf(
   <script type="module">
     const MAPBOX_TOKEN = {json.dumps(mapbox_token)};
     const DATA_URL     = {json.dumps(data_url)};
-    const COLOR_FIELD  = {json.dumps(color_field)}; // param from Python
 
     let map, duckdb, conn;
     let didInitialFit = false;
+    let typingTimer = 0;
+    const DEBOUNCE_MS = 250;
 
     // --- Map setup ---
     mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -59,19 +70,21 @@ def udf(
     map.on('load', onLoad);
 
     function setNote(t) {{ const n=document.getElementById('note'); if (n) n.textContent=t; }}
-    function setPill(t) {{ const p=document.getElementById('pill'); if (p) p.textContent=t; }}
+    function setStatus(t) {{ const s=document.getElementById('status'); if (s) s.textContent=t; }}
 
     async function onLoad() {{
-      // Source + layer (colors driven by _color_norm written to properties)
       map.addSource('pts', {{ type:'geojson', data: emptyFC() }});
       map.addLayer({{
         id:'points',
         type:'circle',
         source:'pts',
         paint: {{
+          // color by normalized price_per_person (_pp_norm: 0=cheap ➜ 1=expensive)
           'circle-color': [
-            'interpolate', ['linear'], ['coalesce', ['get','_color_norm'], 0.5],
-            0, '#2ecc71', 0.5, '#f1c40f', 1, '#e74c3c'
+            'interpolate', ['linear'], ['coalesce', ['get','_pp_norm'], 0.5],
+            0, '#2ecc71',   /* green  (cheaper per person) */
+            0.5, '#f1c40f', /* yellow */
+            1, '#e74c3c'    /* red    (expensive per person) */
           ],
           'circle-radius': 3,
           'circle-opacity': 0.85,
@@ -86,11 +99,11 @@ def udf(
       map.on('mousemove','points', (e) => {{
         const f = e.features?.[0]; if(!f) return;
         const p = f.properties || {{}};
-        const val = p._color_val !== undefined ? Number(p._color_val) : null;
-        const label = (p._color_label || COLOR_FIELD);
+        const pricePP = p._pp !== undefined ? Number(p._pp).toFixed(2) : 'n/a';
         const html = `
-          <div><b>${{label}}:</b> ${{val !== null && Number.isFinite(val) ? val.toFixed(2) : 'n/a'}}</div>
-        `;
+          <div><b>price_per_person:</b> $${{pricePP}}</div>
+          ` + Object.keys(p).slice(0,8).filter(k => !['_pp','_pp_norm'].includes(k))
+               .map(k => `<div><b>${{k}}:</b> ${{p[k]}}</div>`).join('');
         popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
       }});
 
@@ -101,13 +114,26 @@ def udf(
         const buf = await fetchParquet(DATA_URL);
         setNote('Loading data…');
         await loadParquet(buf);
-        setNote('Reading rows…');
-        await plotAllPoints();
-        setNote('Done');
+        setNote('Data ready');
+        document.getElementById('runBtn').disabled = false;
+
+        // Auto-run initial SQL
+        await runQuery();
       }} catch (e) {{
         console.error(e);
         setNote('Error: ' + (e?.message || e));
       }}
+
+      // Wire up textarea & button
+      const q = document.getElementById('queryInput');
+      q.addEventListener('input', () => {{
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(runQuery, DEBOUNCE_MS);
+      }});
+      document.getElementById('runBtn').addEventListener('click', runQuery);
+      document.addEventListener('keydown', (e) => {{
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') runQuery();
+      }});
     }}
 
     const emptyFC = () => ({{ type:'FeatureCollection', features:[] }});
@@ -131,15 +157,22 @@ def udf(
       await conn.query("CREATE OR REPLACE VIEW df AS SELECT * FROM read_parquet('data.parquet')");
     }}
 
-    // Helpers
+    // ---- JSON-safe coercion for properties (fixes BigInt serialization) ----
     function safeVal(v) {{
       if (typeof v === 'bigint') {{
         const n = Number(v);
         return Number.isSafeInteger(n) ? n : v.toString();
       }}
+      if (v && typeof v === 'object') {{
+        if (Array.isArray(v)) return v.map(safeVal);
+        const out = {{}};
+        for (const [k,val] of Object.entries(v)) out[k] = safeVal(val);
+        return out;
+      }}
       return v;
     }}
 
+    // Detect latitude/longitude column names from an Arrow result schema
     function detectLatLon(fields) {{
       const names = fields.map(f => f.name.toLowerCase());
       const latCandidates = ['lat','latitude','y'];
@@ -150,108 +183,122 @@ def udf(
       return {{ lat, lon }};
     }}
 
+    // Convert an Arrow table to GeoJSON
     function arrowToGeoJSON(result, latKey, lonKey) {{
       const rows = result.toArray();
       const feats = [];
       for (const row of rows) {{
-        const lat = Number(safeVal(row[latKey]));
-        const lon = Number(safeVal(row[lonKey]));
+        const rawLat = safeVal(row[latKey]);
+        const rawLon = safeVal(row[lonKey]);
+        const lat = Number(rawLat);
+        const lon = Number(rawLon);
         if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
 
-        // keep a few handy props
-        const p = {{
-          price_in_dollar: safeVal(row["price_in_dollar"]),
-          accommodates: safeVal(row["accommodates"]),
-          review_scores_rating: safeVal(row["review_scores_rating"])
-        }};
-        // also forward candidate color field if it exists as raw column
-        if (row.hasOwnProperty(COLOR_FIELD)) p[COLOR_FIELD] = safeVal(row[COLOR_FIELD]);
-
+        const props = {{}};
+        let count = 0;
+        for (const k of Object.keys(row)) {{
+          if (k === latKey || k === lonKey) continue;
+          props[k] = safeVal(row[k]);
+          if (++count >= 20) break;
+        }}
         feats.push({{
           type:'Feature',
           geometry: {{ type:'Point', coordinates:[lon, lat] }},
-          properties: p
+          properties: props
         }});
       }}
       return {{ type:'FeatureCollection', features: feats }};
     }}
 
-    // derive color value (generic); supports special "price_per_person"
-    function computeColorValue(props) {{
-      if (COLOR_FIELD === "price_per_person") {{
-        const price = Number(props.price_in_dollar);
-        const acc = Number(props.accommodates);
-        if (Number.isFinite(price) && Number.isFinite(acc) && acc > 0) return price / acc;
-        return null;
-      }}
-      const raw = props[COLOR_FIELD];
-      const num = Number(raw);
-      return Number.isFinite(num) ? num : null;
-    }}
-
-    function normalizeAndAnnotate(fc) {{
+    // ---------- Enrichment & normalization for price_per_person ----------
+    function addPricePerPersonAndNormalize(fc) {{
       if (!fc.features.length) return fc;
 
+      // compute price_per_person (_pp) if we can; reuse if already present
       const vals = [];
       for (const f of fc.features) {{
-        const v = computeColorValue(f.properties || (f.properties={{}}));
-        if (v !== null) {{
-          f.properties._color_val = v;  // raw value for tooltip
-          vals.push(v);
+        const p = f.properties || (f.properties = {{}});
+
+        let pp = p.price_per_person;
+        if (pp === undefined) {{
+          const price = Number(p.price_in_dollar);
+          const acc = Number(p.accommodates);
+          if (Number.isFinite(price) && Number.isFinite(acc) && acc > 0) {{
+            pp = price / acc;
+            p.price_per_person = pp; // expose original too
+          }}
+        }}
+        if (Number.isFinite(pp)) {{
+          p._pp = pp;            // raw value for tooltip
+          vals.push(pp);
         }}
       }}
-      if (!vals.length) {{
+
+      // robust 5th–95th percentile normalization
+      if (vals.length) {{
+        vals.sort((a,b)=>a-b);
+        const q = (arr, t) => {{
+          const i = (arr.length - 1) * t;
+          const lo = Math.floor(i), hi = Math.ceil(i);
+          if (lo === hi) return arr[lo];
+          return arr[lo] * (hi - i) + arr[hi] * (i - lo);
+        }};
+        const p5  = q(vals, 0.05);
+        const p95 = q(vals, 0.95);
+        const span = Math.max(1e-9, p95 - p5);
+
+        // annotate each feature with 0..1 normalized value
+        for (const f of fc.features) {{
+          const v = f.properties?._pp;
+          if (Number.isFinite(v)) {{
+            let t = (v - p5) / span;
+            if (t < 0) t = 0; else if (t > 1) t = 1;
+            f.properties._pp_norm = t;
+          }}
+        }}
+
+        // update legend
+        document.getElementById('legend').style.display = 'block';
+        document.getElementById('legMin').textContent = '$' + p5.toFixed(0);
+        document.getElementById('legMid').textContent = '$' + ((p5+p95)/2).toFixed(0);
+        document.getElementById('legMax').textContent = '$' + p95.toFixed(0);
+      }} else {{
         document.getElementById('legend').style.display = 'none';
-        setPill(`color: ${{COLOR_FIELD}} (no numeric data)`);
-        return fc;
       }}
-
-      // robust 5–95% clip
-      vals.sort((a,b)=>a-b);
-      const q = (arr, t) => {{
-        const i = (arr.length - 1) * t;
-        const lo = Math.floor(i), hi = Math.ceil(i);
-        if (lo === hi) return arr[lo];
-        return arr[lo] * (hi - i) + arr[hi] * (i - lo);
-      }};
-      const p5 = q(vals, 0.05), p95 = q(vals, 0.95);
-      const span = Math.max(1e-9, p95 - p5);
-
-      for (const f of fc.features) {{
-        const v = f.properties?._color_val;
-        if (Number.isFinite(v)) {{
-          let t = (v - p5) / span;
-          if (t < 0) t = 0; else if (t > 1) t = 1;
-          f.properties._color_norm = t;
-          f.properties._color_label = COLOR_FIELD;
-        }}
-      }}
-
-      // legend + pill
-      document.getElementById('legend').style.display = 'block';
-      document.getElementById('legLabel').textContent = COLOR_FIELD;
-      document.getElementById('legMin').textContent = String(p5.toFixed(0));
-      document.getElementById('legMid').textContent = String(((p5+p95)/2).toFixed(0));
-      document.getElementById('legMax').textContent = String(p95.toFixed(0));
-      setPill(`color: ${{COLOR_FIELD}}`);
 
       return fc;
     }}
 
-    async function plotAllPoints() {{
-      const res = await conn.query("SELECT * FROM df");
-      const fields = res.schema.fields;
-      const {{ lat, lon }} = detectLatLon(fields);
-      if (!lat || !lon) throw new Error("No latitude/longitude columns found");
+    async function runQuery() {{
+      if (!conn) return;
+      const sql = document.getElementById('queryInput').value.trim();
+      if (!sql) return;
+      try {{
+        setStatus('Running…');
+        const res = await conn.query(sql);
 
-      let gj = arrowToGeoJSON(res, lat, lon);
-      gj = normalizeAndAnnotate(gj);
+        const fields = res.schema.fields;
+        const {{ lat, lon }} = detectLatLon(fields);
+        if (!lat || !lon) {{
+          setStatus('No lat/lon columns found in result');
+          map.getSource('pts').setData(emptyFC());
+          document.getElementById('legend').style.display = 'none';
+          return;
+        }}
 
-      map.getSource('pts').setData(gj);
+        let gj = arrowToGeoJSON(res, lat, lon);
+        gj = addPricePerPersonAndNormalize(gj); // enrich + normalize
 
-      if (!didInitialFit && gj.features.length) {{
-        fitToOnce(gj);
-        didInitialFit = true;
+        map.getSource('pts').setData(gj);
+
+        if (!didInitialFit && gj.features.length) {{
+          fitToOnce(gj);
+          didInitialFit = true;
+        }}
+        setStatus('Done');
+      }} catch (e) {{
+        console.error(e);
+        setStatus('Error: ' + (e?.message || e));
       }}
     }}
 
