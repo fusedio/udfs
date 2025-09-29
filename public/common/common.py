@@ -933,7 +933,7 @@ def get_dataset_from_table(url: str, bounds:fused.types.Bounds):
     bbox = shapely.box(*bounds)
 
     # get metadata and filter chunks by bounds
-    df_meta = fused.get_chunks_metadata(path)
+    df_meta = fused.get_chunks_metadata(url)
     df_meta = df_meta[df_meta.geometry.intersects(bbox)]
 
     # create pyarrow dataset from filtered metadata
