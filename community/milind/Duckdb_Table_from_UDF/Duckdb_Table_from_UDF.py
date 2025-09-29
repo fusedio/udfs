@@ -2,7 +2,7 @@ common = fused.load("https://github.com/fusedio/udfs/tree/6b98ee5/public/common/
 
 @fused.udf
 def udf(
-    data_url: str = "https://www.fused.io/server/v1/realtime-shared/fsh_861uTBbGY84P5OYcUMeYG/run/file?dtype_out_raster=png&dtype_out_vector=parquet",
+    data_url: str = "https://www.fused.io/server/v1/realtime-shared/UDF_airbnb_listings_nyc_parquet/run/file?dtype_out_raster=png&dtype_out_vector=parquet",
     initial_sql: str = """\
     SELECT 
       room_type,
