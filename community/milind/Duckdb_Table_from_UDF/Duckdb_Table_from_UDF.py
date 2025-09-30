@@ -3,7 +3,7 @@ common = fused.load("https://github.com/fusedio/udfs/tree/6b98ee5/public/common/
 @fused.udf(cache_max_age = 0)
 def udf(
     data_url: str = "https://www.fused.io/server/v1/realtime-shared/UDF_Airbnb_listings_nyc_parquet/run/file?dtype_out_raster=png&dtype_out_vector=parquet",
-    initial_sql: str = "SELECT * FROM df"
+    initial_sql: str = "SELECT * FROM df LIMIT 3"
 ):
     """
     DuckDB-WASM SQL viewer with VIRTUALIZED table:
