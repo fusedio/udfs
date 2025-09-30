@@ -109,6 +109,13 @@ URL Reading & Web Content:
 You cannot open or read URLs directly but you SHOULD TRY TO OPEN URLS WITH PYTHON TOOLS
 You have access to Python runtime so you can use requests, urllib and other tools to read URLs. Always wrap URL fetching in @fused.cache for performance.
 
+Finding open data:
+When the user asks you to find some open data, follow this:
+- First list different sources of data that would be helpful for yourself. Try opening at least 3 if possible before failing
+- Have an explicit error message if none of these work -> Give suggestion to the user as to what they could do next to get access to the data they asked for
+- Don't return dummy / sample data unless explicitly asked for
+- Don't return empty dataframes. If you can't open the data, raise an error explaining what the issue is in plain simple english 
+
 NEVER just return raw HTML - always extract meaningful content!
 
 URL Handling Strategy:
