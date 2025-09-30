@@ -26,19 +26,14 @@ def udf(
     .legend {{ position:absolute; bottom:92px; left:12px; background:#fff; border:1px solid #ccc; border-radius:4px; padding:6px 8px; font:12px monospace; z-index:2; }}
     .legend-bar {{ width:200px; height:8px; background: linear-gradient(90deg, #2ecc71, #f1c40f, #e74c3c); margin:6px 0; }}
     .legend-row {{ display:flex; justify-content:space-between; }}
-    /* --- Bottom input bar --- */
     .bottombar {{
       position:fixed; left:0; right:0; bottom:0; z-index:3;
       background: rgba(255,255,255,0.96); border-top:1px solid #ccc;
-      display:flex; gap:8px; align-items:center; padding:8px;
+      padding:8px;
       box-shadow: 0 -4px 12px rgba(0,0,0,0.06);
       font-family: monospace;
     }}
-    .bottombar textarea {{ flex:1; height:80px; resize:vertical; padding:6px; border:1px solid #bbb; border-radius:4px; }}
-    .bottombar .controls {{ display:flex; flex-direction:column; gap:6px; min-width:160px; }}
-    .bottombar button {{ padding:8px 12px; border:1px solid #999; background:#fff; border-radius:4px; cursor:pointer; }}
-    .bottombar .status {{ font:12px monospace; color:#333; }}
-    /* give a little bottom-safe area for touch screens */
+    .bottombar textarea {{ width:100%; height:80px; resize:vertical; padding:6px; border:1px solid #bbb; border-radius:4px; }}
     @media (max-width: 640px) {{
       .legend {{ bottom: 140px; }}
     }}
@@ -54,13 +49,9 @@ def udf(
     <div class="legend-row"><span id="legMin">low</span><span id="legMid">mid</span><span id="legMax">high</span></div>
   </div>
 
-  <!-- Bottom SQL bar -->
+  <!-- Bottom SQL bar (input only) -->
   <div class="bottombar">
     <textarea id="queryInput" placeholder="SELECT * FROM df LIMIT 100;">{initial_sql}</textarea>
-    <div class="controls">
-      <button id="runBtn" disabled>Run (⌘/Ctrl + Enter)</button>
-      <span class="status" id="status">Loading DuckDB and dataset…</span>
-    </div>
   </div>
 
   <script type="module">
@@ -72,7 +63,6 @@ def udf(
     let typingTimer = 0;
     const DEBOUNCE_MS = 250;
 
-    // --- Map setup ---
     mapboxgl.accessToken = MAPBOX_TOKEN;
     map = new mapboxgl.Map({{
       container: 'map',
@@ -84,7 +74,6 @@ def udf(
     map.on('load', onLoad);
 
     function setNote(t) {{ const n=document.getElementById('note'); if (n) n.textContent=t; }}
-    function setStatus(t) {{ const s=document.getElementById('status'); if (s) s.textContent=t; }}
 
     async function onLoad() {{
       map.addSource('pts', {{ type:'geojson', data: emptyFC() }});
@@ -113,10 +102,9 @@ def udf(
         const f = e.features?.[0]; if(!f) return;
         const p = f.properties || {{}};
         const pricePP = p._pp !== undefined ? Number(p._pp).toFixed(2) : 'n/a';
-        const html = `
-          <div><b>price_per_person:</b> $${{pricePP}}</div>
-          ` + Object.keys(p).slice(0,8).filter(k => !['_pp','_pp_norm'].includes(k))
-               .map(k => `<div><b>${{k}}:</b> ${{p[k]}}</div>`).join('');
+        const html = `<div><b>price_per_person:</b> $${{pricePP}}</div>` +
+                     Object.keys(p).slice(0,8).filter(k => !['_pp','_pp_norm'].includes(k))
+                       .map(k => `<div><b>${{k}}:</b> ${{p[k]}}</div>`).join('');
         popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
       }});
 
@@ -128,24 +116,15 @@ def udf(
         setNote('Loading data…');
         await loadParquet(buf);
         setNote('Data ready');
-        document.getElementById('runBtn').disabled = false;
-
-        // Auto-run initial SQL
         await runQuery();
       }} catch (e) {{
         console.error(e);
         setNote('Error: ' + (e?.message || e));
       }}
 
-      // Wire up textarea & button in bottom bar
-      const q = document.getElementById('queryInput');
-      q.addEventListener('input', () => {{
+      document.getElementById('queryInput').addEventListener('input', () => {{
         clearTimeout(typingTimer);
         typingTimer = setTimeout(runQuery, DEBOUNCE_MS);
-      }});
-      document.getElementById('runBtn').addEventListener('click', runQuery);
-      document.addEventListener('keydown', (e) => {{
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') runQuery();
       }});
     }}
 
@@ -170,7 +149,6 @@ def udf(
       await conn.query("CREATE OR REPLACE VIEW df AS SELECT * FROM read_parquet('data.parquet')");
     }}
 
-    // ---- JSON-safe coercion for properties (fixes BigInt serialization) ----
     function safeVal(v) {{
       if (typeof v === 'bigint') {{
         const n = Number(v);
@@ -199,10 +177,8 @@ def udf(
       const rows = result.toArray();
       const feats = [];
       for (const row of rows) {{
-        const rawLat = safeVal(row[latKey]);
-        const rawLon = safeVal(row[lonKey]);
-        const lat = Number(rawLat);
-        const lon = Number(rawLon);
+        const lat = Number(safeVal(row[latKey]));
+        const lon = Number(safeVal(row[lonKey]));
         if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
 
         const props = {{}};
@@ -223,7 +199,6 @@ def udf(
 
     function addPricePerPersonAndNormalize(fc) {{
       if (!fc.features.length) return fc;
-
       const vals = [];
       for (const f of fc.features) {{
         const p = f.properties || (f.properties = {{}});
@@ -242,7 +217,6 @@ def udf(
           vals.push(pp);
         }}
       }}
-
       if (vals.length) {{
         vals.sort((a,b)=>a-b);
         const q = (arr, t) => {{
@@ -271,7 +245,6 @@ def udf(
       }} else {{
         document.getElementById('legend').style.display = 'none';
       }}
-
       return fc;
     }}
 
@@ -280,42 +253,35 @@ def udf(
       const sql = document.getElementById('queryInput').value.trim();
       if (!sql) return;
       try {{
-        setStatus('Running…');
         const res = await conn.query(sql);
-
         const fields = res.schema.fields;
         const {{ lat, lon }} = detectLatLon(fields);
         if (!lat || !lon) {{
-          setStatus('No lat/lon columns found in result');
           map.getSource('pts').setData(emptyFC());
           document.getElementById('legend').style.display = 'none';
           return;
         }}
-
         let gj = arrowToGeoJSON(res, lat, lon);
         gj = addPricePerPersonAndNormalize(gj);
-
         map.getSource('pts').setData(gj);
-
         if (!didInitialFit && gj.features.length) {{
           fitToOnce(gj);
           didInitialFit = true;
         }}
-        setStatus('Done');
       }} catch (e) {{
         console.error(e);
-        setStatus('Error: ' + (e?.message || e));
+        setNote('Error: ' + (e?.message || e));
       }}
     }}
 
     function fitToOnce(gj) {{
       if (!gj.features.length) return;
-      let minX=  Infinity, minY=  Infinity, maxX= -Infinity, maxY= -Infinity;
+      let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
       for (const f of gj.features) {{
         const [x,y] = f.geometry.coordinates;
         if (x<minX)minX=x; if (y<minY)minY=y; if (x>maxX)maxX=x; if (y>maxY)maxY=y;
       }}
-      map.fitBounds([[minX,minY],[maxX,maxY]], {{ padding: 20, duration: 0 }});
+      map.fitBounds([[minX,minY],[maxX,maxY]], {{ padding:20, duration:0 }});
     }}
   </script>
 </body>
