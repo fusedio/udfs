@@ -1,6 +1,5 @@
 @fused.udf
 def udf(path: str='s3://fused-sample/demo_data/airbnb_listings_nyc.parquet'):
-    import geopandas as gpd
     import pandas as pd
     import numpy as np
 
