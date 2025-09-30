@@ -21,32 +21,46 @@ def udf(
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet" />
   <style>
     html, body, #map {{ margin:0; padding:0; height:100%; }}
-    .note {{ position:absolute; top:8px; left:8px; font:12px monospace; background:#fff; color:#000; padding:6px 8px; border:1px solid #ccc; border-radius:4px; }}
-    .panel {{ position:absolute; top:8px; right:8px; width:420px; display:flex; flex-direction:column; gap:6px; }}
-    textarea {{ width:100%; height:120px; font-family: monospace; padding:6px; border:1px solid #ccc; border-radius:4px; }}
-    button {{ width:80px; padding:6px; font-family: monospace; }}
-    .status {{ font:12px monospace; color:#333; }}
-    .legend {{ position:absolute; bottom:12px; left:12px; background:#fff; border:1px solid #ccc; border-radius:4px; padding:6px 8px; font:12px monospace; }}
+    #map {{ position:fixed; inset:0; }}
+    .note {{ position:absolute; top:8px; left:8px; font:12px monospace; background:#fff; color:#000; padding:6px 8px; border:1px solid #ccc; border-radius:4px; z-index:2; }}
+    .legend {{ position:absolute; bottom:92px; left:12px; background:#fff; border:1px solid #ccc; border-radius:4px; padding:6px 8px; font:12px monospace; z-index:2; }}
     .legend-bar {{ width:200px; height:8px; background: linear-gradient(90deg, #2ecc71, #f1c40f, #e74c3c); margin:6px 0; }}
     .legend-row {{ display:flex; justify-content:space-between; }}
+    /* --- Bottom input bar --- */
+    .bottombar {{
+      position:fixed; left:0; right:0; bottom:0; z-index:3;
+      background: rgba(255,255,255,0.96); border-top:1px solid #ccc;
+      display:flex; gap:8px; align-items:center; padding:8px;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.06);
+      font-family: monospace;
+    }}
+    .bottombar textarea {{ flex:1; height:80px; resize:vertical; padding:6px; border:1px solid #bbb; border-radius:4px; }}
+    .bottombar .controls {{ display:flex; flex-direction:column; gap:6px; min-width:160px; }}
+    .bottombar button {{ padding:8px 12px; border:1px solid #999; background:#fff; border-radius:4px; cursor:pointer; }}
+    .bottombar .status {{ font:12px monospace; color:#333; }}
+    /* give a little bottom-safe area for touch screens */
+    @media (max-width: 640px) {{
+      .legend {{ bottom: 140px; }}
+    }}
   </style>
 </head>
 <body>
   <div id="map"></div>
   <div class="note" id="note">Initializing…</div>
 
-  <div class="panel">
-    <textarea id="queryInput" placeholder="SELECT * FROM df LIMIT 100;">{initial_sql}</textarea>
-    <div style="display:flex; align-items:center; gap:8px;">
-      <button id="runBtn" disabled>Run</button>
-      <span class="status" id="status">Loading DuckDB and dataset…</span>
-    </div>
-  </div>
-
   <div class="legend" id="legend" style="display:none;">
     <div>price per person</div>
     <div class="legend-bar"></div>
     <div class="legend-row"><span id="legMin">low</span><span id="legMid">mid</span><span id="legMax">high</span></div>
+  </div>
+
+  <!-- Bottom SQL bar -->
+  <div class="bottombar">
+    <textarea id="queryInput" placeholder="SELECT * FROM df LIMIT 100;">{initial_sql}</textarea>
+    <div class="controls">
+      <button id="runBtn" disabled>Run (⌘/Ctrl + Enter)</button>
+      <span class="status" id="status">Loading DuckDB and dataset…</span>
+    </div>
   </div>
 
   <script type="module">
@@ -79,12 +93,11 @@ def udf(
         type:'circle',
         source:'pts',
         paint: {{
-          // color by normalized price_per_person (_pp_norm: 0=cheap ➜ 1=expensive)
           'circle-color': [
             'interpolate', ['linear'], ['coalesce', ['get','_pp_norm'], 0.5],
-            0, '#2ecc71',   /* green  (cheaper per person) */
-            0.5, '#f1c40f', /* yellow */
-            1, '#e74c3c'    /* red    (expensive per person) */
+            0, '#2ecc71',
+            0.5, '#f1c40f',
+            1, '#e74c3c'
           ],
           'circle-radius': 3,
           'circle-opacity': 0.85,
@@ -124,7 +137,7 @@ def udf(
         setNote('Error: ' + (e?.message || e));
       }}
 
-      // Wire up textarea & button
+      // Wire up textarea & button in bottom bar
       const q = document.getElementById('queryInput');
       q.addEventListener('input', () => {{
         clearTimeout(typingTimer);
@@ -172,7 +185,6 @@ def udf(
       return v;
     }}
 
-    // Detect latitude/longitude column names from an Arrow result schema
     function detectLatLon(fields) {{
       const names = fields.map(f => f.name.toLowerCase());
       const latCandidates = ['lat','latitude','y'];
@@ -183,7 +195,6 @@ def udf(
       return {{ lat, lon }};
     }}
 
-    // Convert an Arrow table to GeoJSON
     function arrowToGeoJSON(result, latKey, lonKey) {{
       const rows = result.toArray();
       const feats = [];
@@ -210,11 +221,9 @@ def udf(
       return {{ type:'FeatureCollection', features: feats }};
     }}
 
-    // ---------- Enrichment & normalization for price_per_person ----------
     function addPricePerPersonAndNormalize(fc) {{
       if (!fc.features.length) return fc;
 
-      // compute price_per_person (_pp) if we can; reuse if already present
       const vals = [];
       for (const f of fc.features) {{
         const p = f.properties || (f.properties = {{}});
@@ -225,16 +234,15 @@ def udf(
           const acc = Number(p.accommodates);
           if (Number.isFinite(price) && Number.isFinite(acc) && acc > 0) {{
             pp = price / acc;
-            p.price_per_person = pp; // expose original too
+            p.price_per_person = pp;
           }}
         }}
         if (Number.isFinite(pp)) {{
-          p._pp = pp;            // raw value for tooltip
+          p._pp = pp;
           vals.push(pp);
         }}
       }}
 
-      // robust 5th–95th percentile normalization
       if (vals.length) {{
         vals.sort((a,b)=>a-b);
         const q = (arr, t) => {{
@@ -247,7 +255,6 @@ def udf(
         const p95 = q(vals, 0.95);
         const span = Math.max(1e-9, p95 - p5);
 
-        // annotate each feature with 0..1 normalized value
         for (const f of fc.features) {{
           const v = f.properties?._pp;
           if (Number.isFinite(v)) {{
@@ -257,7 +264,6 @@ def udf(
           }}
         }}
 
-        // update legend
         document.getElementById('legend').style.display = 'block';
         document.getElementById('legMin').textContent = '$' + p5.toFixed(0);
         document.getElementById('legMid').textContent = '$' + ((p5+p95)/2).toFixed(0);
@@ -287,7 +293,7 @@ def udf(
         }}
 
         let gj = arrowToGeoJSON(res, lat, lon);
-        gj = addPricePerPersonAndNormalize(gj); // enrich + normalize
+        gj = addPricePerPersonAndNormalize(gj);
 
         map.getSource('pts').setData(gj);
 
