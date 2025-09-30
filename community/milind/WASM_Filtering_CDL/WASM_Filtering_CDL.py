@@ -1,6 +1,6 @@
 common = fused.load("https://github.com/fusedio/udfs/tree/abf9c87/public/common/")
 
-@fused.udf(cache_max_age=0)
+@fused.udf()
 def udf(
     data_url: str = "https://www.fused.io/server/v1/realtime-shared/UDF_CDL_Data_Filtering/run/file?dtype_out_raster=png&dtype_out_vector=parquet&hex_res=5",
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
