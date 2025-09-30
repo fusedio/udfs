@@ -2,16 +2,16 @@ common = fused.load("https://github.com/fusedio/udfs/tree/abf9c87/public/common/
 
 @fused.udf
 def udf(
-    data_url: str = "https://www.fused.io/server/v1/realtime-shared/UDF_CDL_Data_Filtering/run/file?dtype_out_raster=png&dtype_out_vector=parquet&hex_res=5",
+    data_url: str = "https://staging.fused.io/server/v1/realtime-shared/fsh_2ogfbAa1ORr5VKMkwv7Er9/run/file?dtype_out_raster=png&dtype_out_vector=parquet&hex_res=5",
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     center_lng: float = -96.0,
     center_lat: float = 39.0,
     zoom: int = 4,
     auto_fetch: bool = True,
-    initial_filter: str = "data = 2"
+    initial_filter: str = "data = 1"
 ):
     import json 
-    
+     
     html = f"""<!DOCTYPE html>
 <html>
 <head>
