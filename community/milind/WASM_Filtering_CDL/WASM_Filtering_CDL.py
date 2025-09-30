@@ -59,6 +59,23 @@ def udf(
     .mapboxgl-popup {{ max-width: 320px; font:13px -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif; }}
     .mapboxgl-popup-content {{ background:#0f0f0f; color:#eee; border:1px solid #333; }}
     .mapboxgl-popup-tip {{ border-top-color:#0f0f0f !important; }}
+
+    /* —— Bottom-right brand/footer —— */
+    .brand {{
+      position:absolute; right:8px; bottom:26px;
+      background:rgba(0,0,0,.45);
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:10px 14px;  
+      font:14px/1.2 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;
+      color:#bbb;
+    }}
+    .brand a {{
+      color:var(--lime); text-decoration:none;
+    }}
+    .brand a:hover {{
+      text-decoration:underline;
+    }}
   </style>
 </head>
 <body>
@@ -72,6 +89,13 @@ def udf(
     <span><span class="k">Area</span><b id="stArea">–</b><span class="u">million m²</span></span>
     <span class="sep">•</span>
     <span><span class="k">Avg</span><b id="stPct">–</b><span class="u">%</span></span>
+  </div>
+
+  <!-- Bottom-right footer -->
+  <div class="brand">
+    built with <a href="https://fused.io" target="_blank" rel="noopener noreferrer">fused.io</a>
+    &nbsp;•&nbsp;
+    <a href="https://docs.fused.io/tutorials/Analytics%20&%20Dashboard/realtime-data-processing-with-duckdb-wasm" target="_blank" rel="noopener noreferrer">Tutorial</a>
   </div>
 
   <div class="filter">
