@@ -3,14 +3,14 @@ common = fused.load("https://github.com/fusedio/udfs/tree/6b98ee5/public/common/
 @fused.udf(cache_max_age = 0)
 def udf(
     data_url: str = "s3://fused-sample/demo_data/airbnb_listings_nyc.parquet",
-    initial_sql: str = """ SELECT * from df """
-
+    initial_sql: str = "SELECT * FROM df"
 ):
     """
     DuckDB-WASM SQL viewer with VIRTUALIZED table:
     - Loads parquet as view `df`
-    - Auto-runs query as you type
+    - Auto-runs query as you type (debounced)
     - Table renders only visible rows for performance
+    - Displays the original S3 URL (not the signed one) in the UI
     """
     signed_url = fused.api.sign_url(data_url)
 
@@ -36,7 +36,8 @@ def udf(
 </head>
 <body>
   <h3>DuckDB SQL Viewer</h3>
-  <div>Dataset: <code>{signed_url}</code></div>
+  <!-- Show the raw S3 path -->
+  <div>Dataset: <code>{data_url}</code></div>
 
   <textarea id="queryInput">{initial_sql}</textarea><br/>
   <button id="runBtn" disabled>Run</button>
@@ -57,6 +58,7 @@ def udf(
   </div>
 
   <script type="module">
+    // Use the signed URL internally for fetching
     const signed_url = {signed_url!r};
     let conn = null;
     let typingTimer = 0;
@@ -166,7 +168,7 @@ def udf(
         await db.instantiate(bundle.mainModule);
         conn = await db.connect();
 
-        // Fetch parquet and register
+        // Fetch parquet and register (signed URL only used here)
         const resp = await fetch(signed_url);
         if (!resp.ok) throw new Error("HTTP " + resp.status + " " + resp.statusText);
         const buf = new Uint8Array(await resp.arrayBuffer());
@@ -185,7 +187,12 @@ def udf(
 
     async function runQuery() {{
       if (!conn) return;
-      const sql = document.getElementById('queryInput').value || "";
+      let sql = document.getElementById('queryInput').value || "";
+
+      // --- sanitize input to avoid parser errors ---
+      sql = sql.trim().replace(/;+$/g, '').trim();
+      if (!sql) return;
+
       try {{
         setStatus("Running…");
         const res = await conn.query(sql);
