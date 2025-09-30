@@ -30,7 +30,7 @@ def udf(
     html, body, #map {{ margin:0; padding:0; height:100%; background:#111; }}
     .note {{ position:absolute; top:8px; left:8px; font:12px/1.2 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif; color:#bbb; background:rgba(0,0,0,.4); padding:6px 8px; border-radius:6px; }}
 
-    /* —— 1.5× BIGGER STATS BOX —— */
+    /* —— Stats Box —— */
     .stats {{
       position:absolute; bottom:32px; left:8px;
       display:flex; align-items:center; gap:14px; flex-wrap:wrap;
@@ -43,7 +43,7 @@ def udf(
     .stats .sep {{ color:#555; }}
     .stats .u {{ color:var(--lime); margin-left:6px; }}
 
-    /* —— 1.5× BIGGER SEARCH BAR —— */
+    /* —— Search Bar —— */
     .filter {{
       position:absolute; top:8px; right:8px; display:flex; gap:8px; align-items:center;
       background:rgba(0,0,0,.4); padding:8px 10px; border-radius:10px;
@@ -51,10 +51,14 @@ def udf(
     .filter input {{
       width:510px; padding:12px 16px; border:1px solid var(--border); background:var(--bg); color:#fff;
       border-radius:10px; font:21px -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;
-      transition: box-shadow .12s ease, border-color .12s ease;
+      transition: box-shadow .12s ease, border-color .12s ease, opacity .2s ease;
     }}
     .filter input::placeholder {{ color: rgba(232,255,89,0.7); }}
     .filter input:focus {{ outline:none; border-color:var(--lime); box-shadow: 0 0 12px 2px rgba(232,255,89,0.14); }}
+    .filter input:disabled {{
+      opacity:0.5;
+      cursor:not-allowed;
+    }}
 
     .mapboxgl-popup {{ max-width: 320px; font:13px -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif; }}
     .mapboxgl-popup-content {{ background:#0f0f0f; color:#eee; border:1px solid #333; }}
@@ -82,7 +86,7 @@ def udf(
   <div id="map"></div>
   <div class="note" id="note">Loading…</div>
 
-  <!-- Stats pill: Area in million m² -->
+  <!-- Stats pill -->
   <div class="stats" id="stats">
     <span><span class="k">Count</span><b id="stCount">–</b></span>
     <span class="sep">•</span>
@@ -98,8 +102,9 @@ def udf(
     <a href="https://docs.fused.io/tutorials/Analytics%20&%20Dashboard/realtime-data-processing-with-duckdb-wasm" target="_blank" rel="noopener noreferrer">Tutorial</a>
   </div>
 
+  <!-- Search bar -->
   <div class="filter">
-    <input id="filterInput" placeholder="SQL WHERE… e.g. data = 111" />
+    <input id="filterInput" placeholder="SQL WHERE… e.g. data = 111" disabled />
   </div>
 
   <script type="module">
@@ -138,7 +143,7 @@ def udf(
         if (!e.features?.length) return;
         const p = e.features[0].properties || {{}};
         const pct  = isFinite(+p.pct)  ? (+p.pct).toFixed(2)   : p.pct;
-        const area = isFinite(+p.area) ? (+p.area).toFixed(2) : p.area; // m² in tooltip
+        const area = isFinite(+p.area) ? (+p.area).toFixed(2) : p.area;
         popup.setLngLat(e.lngLat).setHTML(
           '<div><b>data:</b> ' + p.data + '</div>' +
           '<div><b>pct:</b> ' + pct + ' <span style="color:#E8FF59">%</span></div>' +
@@ -152,7 +157,7 @@ def udf(
       input.addEventListener('input', applyFilterFromInput);
       input.addEventListener('keypress', (e) => {{ if (e.key === 'Enter') applyFilterFromInput(); }});
 
-      if (!AUTO_FETCH) {{ setNote('Map ready (AUTO_FETCH=false)'); return; }}
+      if (!AUTO_FETCH) {{ setNote('Map ready (AUTO_FETCH=false)'); input.disabled = false; return; }}
 
       try {{
         setNote('Initializing DuckDB…'); await initDuckDB();
@@ -164,6 +169,9 @@ def udf(
         fitToOnce(gj);
         await updateStats();
         clearNote();
+
+        // ✅ enable filter box after first load
+        input.disabled = false;
       }} catch (e) {{ setNote('Error: ' + (e?.message||e)); console.error(e); }}
     }}
 
@@ -253,7 +261,6 @@ def udf(
       }}
     }}
 
-    // —— Stats: convert total area m² → million m² for display
     async function updateStats() {{
       try {{
         const q = await conn.query(`
@@ -261,7 +268,6 @@ def udf(
           FROM spatial_data
         `);
         const r = q.toArray()?.[0] || {{ cnt:0, total_area_m2:0, avg_pct:0 }};
-
         const million_m2 = (+r.total_area_m2 || 0) / 1_000_000;
 
         const fmtMil = (v) => {{
