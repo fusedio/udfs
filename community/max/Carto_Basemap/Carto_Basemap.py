@@ -4,7 +4,7 @@ from jinja2 import Template
 @fused.udf(cache_max_age=0)
 def udf(
     # Fused tiles (points)
-    token: str = "fsh_4AJbt3sTaH4HLUIwPPchgu",
+    token: str = "UDF_Airports_visualizer", # using community udf. Use fsh_*** style token for private UDF otherwise
     host: str = "https://www.fused.io",
     source_layer: str = "udf",
 
