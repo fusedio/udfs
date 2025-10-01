@@ -9,5 +9,5 @@ def udf(path: str):
         df = df.to_crs("EPSG:4326")
     except:
         df = pd.read_parquet(path)
-    print(df)
+    print(df.T) # transpose the dataframe to make data schema more visible to AI 
     return df
