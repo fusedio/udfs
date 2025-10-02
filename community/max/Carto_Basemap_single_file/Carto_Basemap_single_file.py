@@ -4,7 +4,7 @@ import json
 import pandas as pd
 import geopandas as gpd
 
-@fused.udf(cache_max_age=0)
+@fused.udf()
 def udf(
     # View – these defaults will be overwritten by the computed center below
     center_lng: float = 0.0,
@@ -35,10 +35,10 @@ def udf(
         ]
 
     # ----------------------------------------------------------------------
-    # 1️⃣ Load data via @airbnb_listing token (single parquet read)
+    # 1️⃣ Load data via @blue_moth token (single parquet read)
     # ----------------------------------------------------------------------
-    # The shared token for the @airbnb_listing UDF
-    data = fused.run("fsh_2W2nFDuy4C2YqEXz5SCx3c")
+    # Replace this with shared token of the UDF you want to pull data from
+    data = fused.run("UDF_Airbnb_Point_Location_Dataset")
 
     # The @blue_moth UDF may return a GeoDataFrame or a plain DataFrame.
     # Ensure we end up with a GeoDataFrame named `gdf`.
@@ -66,7 +66,7 @@ def udf(
     print(gdf.T)  # Debug: view schema / sample rows
 
     # ----------------------------------------------------------------------
-    # 2️⃣ Compute map centre from data bounds
+    # 2️⃣ Compute map centre and bounds from data
     # ----------------------------------------------------------------------
     minx, miny, maxx, maxy = gdf.total_bounds  # (lon_min, lat_min, lon_max, lat_max)
     center_lng = (minx + maxx) / 2.0
@@ -76,11 +76,12 @@ def udf(
     # 3️⃣ Convert GeoDataFrame to GeoJSON for MapLibre
     # ----------------------------------------------------------------------
     geojson_str = gdf.to_json()
-    geojson = json.loads(geojson_str)  # ensure a proper Python dict for Jinja2 tojson filter
+    geojson = json.loads(geojson_str)  # ensure proper dict for Jinja2
 
     # ----------------------------------------------------------------------
-    # 4️⃣ Render the HTML/JS map
+    # 4️⃣ Render the HTML/JS map (with layer name toggle & fit-bounds button)
     # ----------------------------------------------------------------------
+    layer_name = "Airbnb Listings SF"
     html = Template(r"""
 <!DOCTYPE html>
 <html lang="en">
@@ -90,10 +91,20 @@ def udf(
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.7.3/dist/maplibre-gl.css"/>
   <script src="https://unpkg.com/maplibre-gl@5.7.3/dist/maplibre-gl.js"></script>
-  <style>html,body,#map{height:100%;margin:0;background:#000}</style>
+  <style>
+    html,body,#map{height:100%;margin:0;background:#000}
+    #controls{position:absolute;top:10px;left:10px;z-index:1;background:rgba(255,255,255,0.9);padding:5px;border-radius:4px;}
+    #controls button{margin:2px;}
+    #controls label{margin-left:4px;font-weight:normal;}
+  </style>
 </head>
 <body>
   <div id="map"></div>
+  <div id="controls">
+    <input type="checkbox" id="layerToggle" checked>
+    <label for="layerToggle">{{ layer_name }}</label>
+    <button id="fitBtn">Fit Data</button>
+  </div>
   <script>
     const DARK_TILES   = {{ dark_tiles | tojson }};
     const ATTRIB       = {{ basemap_attribution | tojson }};
@@ -104,6 +115,8 @@ def udf(
     const RMIN         = {{ circle_radius_min }};
     const RMAX         = {{ circle_radius_max }};
     const OPAC         = {{ circle_opacity }};
+    const DATA_BOUNDS  = [[{{ minx }}, {{ miny }}], [{{ maxx }}, {{ maxy }}]];
+    const GEOJSON      = {{ geojson | tojson }};
 
     // Inline dark raster basemap style
     const DARK_STYLE = {
@@ -135,7 +148,7 @@ def udf(
       // Add GeoJSON source with the points from the parquet file
       map.addSource('points', {
         type: 'geojson',
-        data: {{ geojson | tojson }}
+        data: GEOJSON
       });
 
       // Render points as circles
@@ -166,6 +179,19 @@ def udf(
 
       map.on('mouseenter', 'points-circles', () => map.getCanvas().style.cursor = 'pointer');
       map.on('mouseleave', 'points-circles', () => map.getCanvas().style.cursor = '');
+
+      // ---------- UI Controls ----------
+      const layerToggle = document.getElementById('layerToggle');
+      const fitBtn = document.getElementById('fitBtn');
+
+      layerToggle.addEventListener('change', () => {
+        const visibility = layerToggle.checked ? 'visible' : 'none';
+        map.setLayoutProperty('points-circles', 'visibility', visibility);
+      });
+
+      fitBtn.addEventListener('click', () => {
+        map.fitBounds(DATA_BOUNDS, {padding: 30});
+      });
     });
   </script>
 </body>
@@ -181,7 +207,12 @@ def udf(
         circle_radius_min=circle_radius_min,
         circle_radius_max=circle_radius_max,
         circle_opacity=circle_opacity,
-        geojson=geojson
+        minx=minx,
+        miny=miny,
+        maxx=maxx,
+        maxy=maxy,
+        geojson=geojson,
+        layer_name=layer_name
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/351515e/public/common/")
