@@ -1,0 +1,76 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Silam_Global_Dust_Zarr",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true,
+                "opacity": 0.7
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "PurpOr",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "Silam_Global_Dust_Zarr",
+            "fused:name": "Silam_Global_Dust_Zarr",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 30.28911781919531,
+              "longitude": 14.641288409584284,
+              "zoom": 1.5749928501762989,
+              "pitch": 0,
+              "bearing": 0
+            }
+          },
+          "source": "Silam_Global_Dust_Zarr.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
