@@ -34,14 +34,17 @@ DEFAULT_CONFIG = r"""{
   }
 }"""
 
+
 @fused.udf(cache_max_age=0)
 def udf(
     tile_url_template: str = "https://www.fused.io/server/v1/realtime-shared/UDF_Ookla_Download_Speeds/run/tiles/{z}/{x}/{y}?dtype_out_vector=json",
     config_json: str = DEFAULT_CONFIG,
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
-    center_lng: float = -98.5,
-    center_lat: float = 39.5,
-    zoom: float = 3
+    # Center the map on California (approximate geographic center)
+    center_lng: float = -119.4179,
+    center_lat: float = 36.7783,
+    # Adjust zoom to show the state clearly
+    zoom: float = 5
 ):
     from jinja2 import Template
     
@@ -115,10 +118,18 @@ def udf(
     }
 
     function processColorContinuous(cfg) {
-      // accept 2-element domain or full array
+      // Expand 2-element domain into steps array (matching client behavior)
+      let domain = cfg.domain;
+      if (domain && domain.length === 2) {
+        const [min, max] = domain;
+        const steps = cfg.steps ?? 20;
+        const stepSize = (max - min) / (steps - 1);
+        domain = Array.from({ length: steps }, (_, i) => min + stepSize * i);
+      }
+      
       return {
         attr: cfg.attr,
-        domain: cfg.domain,
+        domain: domain,
         colors: cfg.colors || 'TealGrn',
         nullColor: cfg.nullColor || [184,184,184]
       };
@@ -194,7 +205,8 @@ def udf(
       const {x,y,z} = index;
       const url = TPL.replace('{z}', z).replace('{x}', x).replace('{y}', y);
       try {
-        const res = await fetch(url, { cache:'no-cache', signal });
+        // Use default cache (not 'no-cache') to enable browser caching of tiles
+        const res = await fetch(url, { signal });
         if (!res.ok) throw new Error(String(res.status));
         let text = await res.text();
         text = text.replace(/"(hex|h3|index)"\s*:\s*(\d+)/gi, (_m, k, d) => `"${k}":"${d}"`);
@@ -217,6 +229,9 @@ def udf(
     const tileCfg = CONFIG.tileLayer || {};
     const hexCfg  = parseHexLayerConfig(CONFIG.hexLayer || {});
 
+    // Extract the attribute name from color config for hover display
+    const colorAttr = CONFIG.hexLayer?.getFillColor?.attr || 'metric';
+
     const overlay = new MapboxOverlay({
       interleaved: false,
       layers: [
@@ -227,6 +242,11 @@ def udf(
           minZoom:   tileCfg.minZoom   ?? 0,
           maxZoom:   tileCfg.maxZoom   ?? 19,
           pickable:  tileCfg.pickable  ?? true,
+          // Performance optimizations inspired by Fused client
+          maxRequests: 6,  // Limit concurrent tile requests (prevents overwhelming the server)
+          maxCacheSize: 100,  // Cache up to 100 tiles in memory
+          maxCacheByteSize: 128 * 1024 * 1024,  // 128MB tile cache
+          refinementStrategy: 'best-available',  // Keep old tiles visible while loading new ones
           getTileData,
           renderSubLayers: (props) => {
             const data = props.data || [];
@@ -265,16 +285,18 @@ def udf(
     });
     map.addControl(overlay);
 
-    // HUD hover
+    // HUD hover - now reads the correct attribute from config
     map.on('mousemove', (e)=>{
       const info = overlay.pickObject({x:e.point.x, y:e.point.y, radius:4});
       if(info?.object){
         map.getCanvas().style.cursor='pointer';
         const p = info.object;
-        const val = p.metric;
-        setNote(`hex ${p.hex}${val!=null?` • ${Number(val).toFixed(2)}`:''}`);
+        const val = p[colorAttr] ?? p.metric;
+        setNote(`hex ${p.hex}${val!=null?` • ${colorAttr}: ${Number(val).toFixed(2)}`:''}`);
       } else {
         map.getCanvas().style.cursor='';
+        const lastZ = map.getZoom().toFixed(1);
+        setNote(`zoom: ${lastZ}`);
       }
     });
   </script>
