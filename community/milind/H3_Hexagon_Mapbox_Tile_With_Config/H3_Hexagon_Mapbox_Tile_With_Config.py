@@ -205,7 +205,6 @@ def udf(
       const {x,y,z} = index;
       const url = TPL.replace('{z}', z).replace('{x}', x).replace('{y}', y);
       try {
-        // Use default cache (not 'no-cache') to enable browser caching of tiles
         const res = await fetch(url, { signal });
         if (!res.ok) throw new Error(String(res.status));
         let text = await res.text();
@@ -242,11 +241,7 @@ def udf(
           minZoom:   tileCfg.minZoom   ?? 0,
           maxZoom:   tileCfg.maxZoom   ?? 19,
           pickable:  tileCfg.pickable  ?? true,
-          // Performance optimizations inspired by Fused client
-          maxRequests: 6,  // Limit concurrent tile requests (prevents overwhelming the server)
-          maxCacheSize: 100,  // Cache up to 100 tiles in memory
-          maxCacheByteSize: 128 * 1024 * 1024,  // 128MB tile cache
-          refinementStrategy: 'best-available',  // Keep old tiles visible while loading new ones
+          maxRequests: 6,  // Throttle concurrent requests (matches client exactly)
           getTileData,
           renderSubLayers: (props) => {
             const data = props.data || [];
