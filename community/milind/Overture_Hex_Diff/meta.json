@@ -1,0 +1,126 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Overture_Hex_Diff",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "hexLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "extruded": false,
+                "opacity": 1,
+                "coverage": 0.9,
+                "lineWidthMinPixels": 1,
+                "getHexagon": "@@=properties.hex",
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "ndiff",
+                  "domain": [
+                    500,
+                    0
+                  ],
+                  "steps": 20,
+                  "colors": "SunsetDark",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  184,
+                  184,
+                  184
+                ],
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "value",
+                  "present": "@@=properties.value",
+                  "absent": 1
+                },
+                "elevationScale": 10
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "Overture_Hex_Diff",
+            "fused:name": "Overture_Hex_Diff",
+            "fused:gitHistory": [
+              {
+                "fused:vizConfig": {
+                  "tileLayer": {
+                    "@@type": "TileLayer",
+                    "minZoom": 0,
+                    "maxZoom": 19,
+                    "tileSize": 256
+                  },
+                  "hexLayer": {
+                    "@@type": "H3HexagonLayer",
+                    "stroked": true,
+                    "filled": false,
+                    "pickable": true,
+                    "extruded": false,
+                    "opacity": 1,
+                    "coverage": 0.9,
+                    "lineWidthMinPixels": 1,
+                    "getHexagon": "@@=properties.hex",
+                    "getLineColor": {
+                      "@@function": "colorContinuous",
+                      "attr": "ndiff",
+                      "domain": [
+                        500,
+                        0
+                      ],
+                      "steps": 20,
+                      "colors": "SunsetDark",
+                      "nullColor": [
+                        184,
+                        184,
+                        184
+                      ]
+                    },
+                    "getFillColor": [
+                      184,
+                      184,
+                      184
+                    ],
+                    "getElevation": {
+                      "@@function": "hasProp",
+                      "property": "value",
+                      "present": "@@=properties.value",
+                      "absent": 1
+                    },
+                    "elevationScale": 10
+                  }
+                },
+                "fused:udfType": "vector_single",
+                "fused:slug": "Overture_Diff",
+                "fused:name": "Overture_Diff",
+                "fused:id": null
+              }
+            ]
+          },
+          "source": "Overture_Hex_Diff.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
