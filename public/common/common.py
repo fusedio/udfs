@@ -289,36 +289,57 @@ def bounds_to_hex(bounds=[-180, -90, 180, 90], res=3, hex_col="hex"):
 
 def gdf_to_hex(gdf, res=11, add_latlng_cols=['lat','lng']):
     import pandas as pd
-    con = duckdb_connect()
+    con = common.duckdb_connect()
+    # Ensure geometry is exploded before conversion
     gdf = gdf.explode(index_parts=False)
-    df_wkt = gdf.to_wkt()
+
+    # ---- **MINIMAL CHANGE** ----
+    # Create a copy where the geometry column is explicitly converted to WKT strings.
+    df_wkt = gdf.copy()
+    df_wkt['geometry'] = df_wkt.geometry.apply(lambda x: x.wkt if x is not None else None)
+    # ---------------------------
+
     if add_latlng_cols:
         df_wkt[add_latlng_cols[0]] = gdf.centroid.y
         df_wkt[add_latlng_cols[1]] = gdf.centroid.x
-    df_wkt['fused_index']=range(len(df_wkt))
+    df_wkt['fused_index'] = range(len(df_wkt))
+
+    # First pass: polygon-to-cell conversion (experimental)
     df_hex1 = con.sql(f'''
-        with t as(
-            SELECT 
-                * exclude(geometry), 
-                h3_polygon_wkt_to_cells_experimental(geometry, 'center', {res}) AS hex 
-            FROM df_wkt)
-        SELECT 
-            * exclude(hex), 
-            unnest(hex) AS hex, 
-            len(hex) AS cell_count 
+        WITH t AS (
+            SELECT
+                * EXCLUDE (geometry),
+                h3_polygon_wkt_to_cells_experimental(geometry, 'center', {res}) AS hex
+            FROM df_wkt
+        )
+        SELECT
+            * EXCLUDE (hex),
+            UNNEST(hex) AS hex,
+            LEN(hex) AS cell_count
         FROM t
-        '''
-    ).df()
-    
+        ''').df()
+
+    # Identify rows that did not produce cells in the first pass
     df_wkt2 = df_wkt[~df_wkt.fused_index.isin(df_hex1.fused_index.unique())]
-    df_hex2 = con.sql(f'''
-            SELECT * exclude(geometry), 
-            h3_latlng_to_cell(ST_Y(ST_Centroid(ST_GeomFromText(geometry))), ST_X(ST_Centroid(ST_GeomFromText(geometry))), {res}) AS hex,
-            1 AS cell_count
-            from df_wkt2
-            '''
-        ).df()
-    df_hex=pd.concat([df_hex1,df_hex2])
+
+    # Second pass: fallback using centroid lat/lng (only if there are remaining rows)
+    if len(df_wkt2) > 0:
+        df_hex2 = con.sql(f'''
+            SELECT
+                * EXCLUDE (geometry),
+                h3_latlng_to_cell(
+                    ST_Y(ST_Centroid(ST_GeomFromText(CAST(geometry AS VARCHAR)))),
+                    ST_X(ST_Centroid(ST_GeomFromText(CAST(geometry AS VARCHAR)))),
+                    {res}
+                ) AS hex,
+                1 AS cell_count
+            FROM df_wkt2
+            ''').df()
+        df_hex = pd.concat([df_hex1, df_hex2])
+    else:
+        df_hex = df_hex1
+
+    # Restore original ordering
     df_hex = df_hex.sort_values('fused_index').drop('fused_index', axis=1).reset_index(drop=True)
     return df_hex
 
