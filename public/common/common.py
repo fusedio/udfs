@@ -289,7 +289,7 @@ def bounds_to_hex(bounds=[-180, -90, 180, 90], res=3, hex_col="hex"):
 
 def gdf_to_hex(gdf, res=11, add_latlng_cols=['lat','lng']):
     import pandas as pd
-    con = common.duckdb_connect()
+    con = duckdb_connect()
     # Ensure geometry is exploded before conversion
     gdf = gdf.explode(index_parts=False)
 
