@@ -473,6 +473,34 @@ def simplify_gdf(gdf, pct=1, args='-o force -clean'):
     return gpd.read_file(file_path.replace(".json","2.json"))
 
 def html_to_obj(html_str):
+
+    disable_pinch_script = """
+    <script>
+        // Prevent Ctrl/Cmd + wheel zoom
+        document.addEventListener('wheel', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }, { passive: false });
+        // Prevent pinch-to-zoom (multi-touch)
+        document.addEventListener('touchstart', function(e) {
+            if (e.touches && e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        document.addEventListener('touchmove', function(e) {
+            if (e.touches && e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    </script>
+    """
+    if "</html>" in html_str:
+        html_str = html_str.replace("</html>",disable_pinch_script+"</html>")
+    else:
+        html_str = html_str+disable_pinch_script
+    print(html_str)
     from fastapi import Response
     return Response(html_str.encode('utf-8'), media_type="text/html; charset=utf-8")
 
