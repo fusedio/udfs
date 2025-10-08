@@ -500,7 +500,6 @@ def html_to_obj(html_str):
         html_str = html_str.replace("</html>",disable_pinch_script+"</html>")
     else:
         html_str = html_str+disable_pinch_script
-    print(html_str)
     from fastapi import Response
     return Response(html_str.encode('utf-8'), media_type="text/html; charset=utf-8")
 
