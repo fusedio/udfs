@@ -1,0 +1,135 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Overture_Maps_Example_copy",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:defaultParameters": [
+              {
+                "parameter": "release",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "2024-08-20-0",
+                  "2024-09-18-0",
+                  "2024-10-23-0",
+                  "2024-11-13-0",
+                  "2024-12-18-0",
+                  "2025-01-22-0",
+                  "2025-03-19-1",
+                  "2025-04-23-0",
+                  "2025-05-21-0",
+                  "2025-06-25-0"
+                ]
+              },
+              {
+                "parameter": "theme",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "buildings",
+                  "base",
+                  "places",
+                  "transportation",
+                  "addresses",
+                  "divisions"
+                ]
+              },
+              {
+                "parameter": "overture_type",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "land_use",
+                  "water",
+                  "place",
+                  "connector",
+                  "segment",
+                  "building",
+                  "address",
+                  "infrastructure",
+                  "land",
+                  "division",
+                  "division_area",
+                  "division_boundary",
+                  "land_cover",
+                  "bathymetry"
+                ]
+              },
+              {
+                "parameter": "use_columns",
+                "value": [],
+                "type": "array",
+                "suggestedValues": [
+                  "geometry",
+                  "id",
+                  "names",
+                  "sources",
+                  "update_time",
+                  "categories"
+                ]
+              }
+            ],
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer"
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    200,
+                    250,
+                    0
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "Overture_Maps_Example_copy",
+            "fused:name": "Overture_Maps_Example_copy",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 51.50786698991621,
+              "longitude": -0.10589130924052784,
+              "zoom": 13.935948485009598,
+              "pitch": 0,
+              "bearing": 0
+            }
+          },
+          "source": "Overture_Maps_Example_copy.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
