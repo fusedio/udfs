@@ -287,6 +287,24 @@ def bounds_to_hex(bounds=[-180, -90, 180, 90], res=3, hex_col="hex"):
     df = con.sql(qr).df()
     return df
 
+@fused.cache
+def estimate_h3_res(geom=[-180, -90, 180, 90], n_cells=1000):
+    """Calculate H3 resolution based on area and desired number of cells."""
+    import pandas as pd
+    import math
+    geom = to_gdf(geom).to_crs('4326').dissolve()
+    utm_zones = pd.concat([to_gdf([-180 + i*6, 0, -180 + (i+1)*6, 90]) for i in range(60)] +
+                           [to_gdf([-180 + i*6, -90, -180 + (i+1)*6, 0]) for i in range(60)], ignore_index=True)
+    utm_zones = utm_zones.sjoin(geom)
+    area=0
+    for idx, row in utm_zones.iterrows():
+        clipped = geom.clip(row.geometry)
+        if len(clipped) > 0:
+            area += abs(add_utm_area(clipped)['utm_area_sqm'].values[0])
+    assert area > 0, "Area must be greater than 0"
+    res=int(math.ceil(15 - (math.log(area / n_cells) / math.log(7))))
+    return min(15, max(res,1))
+
 def gdf_to_hex(gdf, res=11, add_latlng_cols=['lat','lng']):
     import pandas as pd
     con = duckdb_connect()
