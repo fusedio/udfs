@@ -549,31 +549,51 @@ def url_redirect(url):
     from fastapi import Response
     return Response(f'<meta http-equiv="refresh" content="0; url={url}">'.encode('utf-8'), media_type="text/html; charset=utf-8")
 
-style_template=' style="position:fixed; top:0; left:0; right:0; bottom:0; margin:auto; height:100%; width:100%;object-fit:contain;"'
+def url_to_bytes(url):
+    import urllib.request
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+    with urllib.request.urlopen(req) as response:
+        return response.read()
 
-def url_to_html(url):
-    return f'<iframe src="{url}" {style_template}></iframe>'
+style_template=' style="position:fixed; top:0; left:0; right:0; bottom:0; margin:auto; height:{height}; width:{width};object-fit:contain;"'
 
-def bytes_to_html(bytes, format='gif'):
+def url_to_html(url, format='iframe', width='100%', height='100%'):
+    style=style_template.format(width=width, height=height)
+    if format == 'iframe':
+        return f'<iframe src="{url}" {style}></iframe>'
+    elif format == 'image':
+        return f'<img src="{url}" {style}>'
+    elif format == 'video':
+        return f'<video src="{url}" {style} controls></video>'
+    elif format == 'audio':
+        return f'<audio src="{url}" {style} controls></audio>'
+    else:
+        raise ValueError(f"Unsupported format '{format}'. Supported formats are: iframe, image, video, audio")
+
+def bytes_to_html(bytes, format='gif', width='100%', height='100%'):
+    style=style_template.format(width=width, height=height)
     import base64
     b64 = base64.b64encode(bytes).decode('utf-8')
     if format == 'gif':
-        return f'<img src="data:image/gif;base64,{b64}" {style_template} ></img>'
+        return f'<img src="data:image/gif;base64,{b64}" {style} ></img>'
     elif format == 'png':
-        return f'<img src="data:image/png;base64,{b64}" {style_template} ></img>'
+        return f'<img src="data:image/png;base64,{b64}" {style} ></img>'
     elif format in ('jpg', 'jpeg'):
-        return f'<img src="data:image/jpeg;base64,{b64}" {style_template} ></img>'
+        return f'<img src="data:image/jpeg;base64,{b64}" {style} ></img>'
     elif format == 'bmp':
-        return f'<img src="data:image/bmp;base64,{b64}" {style_template} ></img>'
+        return f'<img src="data:image/bmp;base64,{b64}" {style} ></img>'
     elif format == 'webp':
-        return f'<img src="data:image/webp;base64,{b64}" {style_template} ></img>'
+        return f'<img src="data:image/webp;base64,{b64}" {style} ></img>'
+    elif format == 'pdf':
+        return f'<embed src="data:application/pdf;base64,{b64}" {style}></embed>'
     elif format == 'mp4':
-        return f'<video src="data:video/mp4;base64,{b64}" {style_template} controls></video>'
-        # return f'<video {html_template.format(type="video/mp4", b64=b64)} controls></video>'
+        return f'<video src="data:video/mp4;base64,{b64}" {style} controls></video>'
+    elif format == 'mp3':
+        return f'<audio src="data:audio/mpeg;base64,{b64}" {style} controls></audio>'
     else:
-        raise ValueError(f"Unsupported format '{format}'. Supported formats are: gif, png, jpg, jpeg, mp4.")
+        raise ValueError(f"Unsupported format '{format}'. Supported formats are: gif, png, jpg, jpeg, mp4, mp3, pdf.")
 
-def arr_to_byte(arr, format='png'):
+def arr_to_bytes(arr, format='png'):
     """Convert a single image array to bytes for common image formats (png, jpg, etc.)."""
     import io
     import imageio
@@ -590,10 +610,10 @@ def arr_to_byte(arr, format='png'):
     
 def arr_to_html(arr, format='png'):
     """Convert an array to an HTML representation."""
-    img_bytes = arr_to_byte(arr, format=format)
+    img_bytes = arr_to_bytes(arr, format=format)
     return bytes_to_html(img_bytes, format=format)
 
-def frames_to_byte(frames, format, fps):
+def frames_to_bytes(frames, format, fps):
     """Convert a sequence of frames to bytes for video/gif formats."""
     import io
     import imageio
@@ -617,7 +637,7 @@ def frames_to_byte(frames, format, fps):
 
 def frames_to_html(arr, format='mp4', fps=50):
     """Convert a sequence of frames to an HTML representation."""
-    img_bytes = frames_to_byte(arr, format=format, fps=fps)
+    img_bytes = frames_to_bytes(arr, format=format, fps=fps)
     return bytes_to_html(img_bytes, format=format)
     
 @fused.cache
