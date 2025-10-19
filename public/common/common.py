@@ -549,9 +549,6 @@ def url_redirect(url):
     from fastapi import Response
     return Response(f'<meta http-equiv="refresh" content="0; url={url}">'.encode('utf-8'), media_type="text/html; charset=utf-8")
 
-    return f'<iframe src="https://fused.io" {style_template.format(height="100%",width="100%")}></iframe>'
-
-
 style_template=' style="position:fixed; top:0; left:0; right:0; bottom:0; margin:auto; height:100%; width:100%;object-fit:contain;"'
 
 def url_to_html(url):
