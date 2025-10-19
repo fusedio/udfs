@@ -545,10 +545,80 @@ def html_params(html_template, params={}, **kw):
     template = Template(html_template)
     return template.render(params, **kw)
 
-
 def url_redirect(url):
     from fastapi import Response
     return Response(f'<meta http-equiv="refresh" content="0; url={url}">'.encode('utf-8'), media_type="text/html; charset=utf-8")
+
+style_template=' style="position:fixed; top:0; left:0; right:0; bottom:0; margin:auto; height:100%; width:100%;object-fit:contain;"'
+
+def url_to_html(url):
+    return f'<iframe src="{url}" {style_template}></iframe>'
+
+def bytes_to_html(bytes, format='gif'):
+    import base64
+    b64 = base64.b64encode(bytes).decode('utf-8')
+    if format == 'gif':
+        return f'<img src="data:image/gif;base64,{b64}" {style_template} ></img>'
+    elif format == 'png':
+        return f'<img src="data:image/png;base64,{b64}" {style_template} ></img>'
+    elif format in ('jpg', 'jpeg'):
+        return f'<img src="data:image/jpeg;base64,{b64}" {style_template} ></img>'
+    elif format == 'bmp':
+        return f'<img src="data:image/bmp;base64,{b64}" {style_template} ></img>'
+    elif format == 'webp':
+        return f'<img src="data:image/webp;base64,{b64}" {style_template} ></img>'
+    elif format == 'mp4':
+        return f'<video src="data:video/mp4;base64,{b64}" {style_template} controls></video>'
+        # return f'<video {html_template.format(type="video/mp4", b64=b64)} controls></video>'
+    else:
+        raise ValueError(f"Unsupported format '{format}'. Supported formats are: gif, png, jpg, jpeg, mp4.")
+
+def arr_to_byte(arr, format='png'):
+    """Convert a single image array to bytes for common image formats (png, jpg, etc.)."""
+    import io
+    import imageio
+    arr = arr.squeeze()
+    if arr.ndim == 3 and arr.shape[0] in (1, 3, 4):
+        arr = arr.transpose(1, 2, 0)
+    with io.BytesIO() as buffer:
+        try:
+            imageio.imwrite(buffer, arr, format=format)
+        except Exception as e:
+            raise ValueError(f"Failed to write image to bytes with format '{format}': {e}")
+        buffer.seek(0)
+        return buffer.read()
+    
+def arr_to_html(arr, format='png'):
+    """Convert an array to an HTML representation."""
+    img_bytes = arr_to_byte(arr, format=format)
+    return bytes_to_html(img_bytes, format=format)
+
+def frames_to_byte(frames, format, fps):
+    """Convert a sequence of frames to bytes for video/gif formats."""
+    import io
+    import imageio
+    with io.BytesIO() as buffer:
+        # Ensure frames are in (num, height, width, channels) order for imageio
+        if len(frames.shape) == 4:
+            frames = frames.transpose(0, 2, 3, 1)
+        # Clamp fps to the maximum supported by imageio (50)
+        if fps > 50:
+            print(f"Warning: Requested fps ({fps}) exceeds maximum of 50; using 50 instead.")
+            fps_to_use = 50
+        else:
+            fps_to_use = fps
+        try:
+            imageio.mimsave(buffer, frames, format=format, fps=fps_to_use, loop=0)
+        except Exception:
+            # Fallback without loop parameter
+            imageio.mimsave(buffer, frames, format=format, fps=fps_to_use)
+        buffer.seek(0)
+        return buffer.read()
+
+def frames_to_html(arr, format='mp4', fps=50):
+    """Convert a sequence of frames to an HTML representation."""
+    img_bytes = frames_to_byte(arr, format=format, fps=fps)
+    return bytes_to_html(img_bytes, format=format)
     
 @fused.cache
 def read_shapefile(url):
