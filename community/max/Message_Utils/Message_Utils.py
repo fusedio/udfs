@@ -309,7 +309,10 @@ def single_variable_udf_output(
     channel: str = 'channel_1',
     variable: str = None,
 ):
-
+    """
+    Returns an embeded UDF that reruns on receiving a message from 'channel'
+    Can pass a single variable to the Fused that's being called
+    """
     html = f"""<!doctype html>
 <meta charset="utf-8">
 <title>URL Loader</title>
