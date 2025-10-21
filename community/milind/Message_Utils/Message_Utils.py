@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {{
   const draw = new MapboxDraw({{
     displayControlsDefault: false,
     controls: {{ polygon: true, point: true, line_string: true, trash: true }},
-    defaultMode: 'draw_polygon'
+    defaultMode: 'simple_select'
   }});
   map.addControl(draw, 'bottom-left');
 
