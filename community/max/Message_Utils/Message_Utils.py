@@ -304,4 +304,114 @@ document.addEventListener('DOMContentLoaded', () => {{
 </script>
 """
 
+def single_variable_udf_output(
+    base_url_to_fused_html: str = None,
+    channel: str = 'channel_1',
+    variable: str = None,
+):
 
+    html = f"""<!doctype html>
+<meta charset="utf-8">
+<title>URL Loader</title>
+<style>
+  body {{ margin:0; background:#0b0b0b }}
+  #bar {{
+    position:sticky; top:0; z-index:2; padding:8px 12px; background:#111827; border-bottom:1px solid #1f2937;
+    font:13px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  }}
+  #url {{
+    display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }}
+  #url a {{ color:#86efac; text-decoration:none }}
+  #file {{
+    margin-top:2px; font-size:11px; opacity:.75; color:#cbd5e1;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    display:flex; align-items:center; gap:6px;
+  }}
+  #spinner {{
+    display:none; width:12px; height:12px;
+    border:2px solid #374151;
+    border-top-color:#86efac;
+    border-radius:50%;
+    animation:spin 0.6s linear infinite;
+  }}
+  #spinner.show {{ display:block }}
+  @keyframes spin {{
+    to {{ transform:rotate(360deg) }}
+  }}
+  #viewer {{ border:none; width:100%; height: calc(100vh - 44px); display:block }}
+</style>
+
+<div id="bar">
+  <div id="url"><a id="urlLink" href="javascript:void(0)" target="_blank" rel="noreferrer">(waiting…)</a></div>
+  <div id="file">
+    <div id="spinner"></div>
+    <span id="fileName"></span>
+  </div>
+</div>
+<iframe id="viewer"></iframe>
+
+<script src="https://cdn.jsdelivr.net/gh/milind-soni/fused-channel@c348139/channel.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {{
+  const urlEl   = document.getElementById('urlLink');
+  const fileEl  = document.getElementById('fileName');
+  const spinner = document.getElementById('spinner');
+  const iframe  = document.getElementById('viewer');
+  const param   = {variable!r};
+  const base    = {base_url_to_fused_html!r};
+
+  function buildUrl(val) {{
+    try {{
+      const u = new URL(base);
+      u.searchParams.set(param, val);
+      return u.toString();
+    }} catch (_e) {{
+      const sep = base.includes('?') ? '&' : '?';
+      return base + sep + encodeURIComponent(param) + '=' + encodeURIComponent(val);
+    }}
+  }}
+
+  function basename(p) {{
+    if (!p) return '';
+    const q = String(p).split('#')[0].split('?')[0];
+    const s = q.replace(/\\/+$/, '');
+    const parts = s.split('/');
+    return parts[parts.length - 1] || s;
+  }}
+
+  function showSpinner() {{
+    spinner.classList.add('show');
+  }}
+
+  function hideSpinner() {{
+    spinner.classList.remove('show');
+  }}
+
+  iframe.addEventListener('load', hideSpinner);
+  iframe.addEventListener('error', hideSpinner);
+
+  function apply(val) {{
+    const finalUrl = buildUrl(val || '');
+    urlEl.textContent = finalUrl;
+    urlEl.href = finalUrl;
+
+    const name = basename(val || '');
+    fileEl.textContent = name ? name : '';
+
+    if (val) {{
+      showSpinner();
+      iframe.src = finalUrl;
+    }}
+    console.log('[loader] URL →', finalUrl, 'file →', name);
+  }}
+
+  enableMsgListener({channel!r}, (msg) => {{
+    const value = msg?.payload?.value ?? msg?.path ?? "";
+    if (!value) return;
+    apply(String(value));
+  }});
+}});
+</script>
+"""
+    return common.html_to_obj(html)
