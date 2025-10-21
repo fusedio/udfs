@@ -418,3 +418,79 @@ document.addEventListener('DOMContentLoaded', () => {{
 </script>
 """
     return common.html_to_obj(html)
+
+
+
+
+def two_variable_udf_output(
+    channel: str = "channel_points",
+    variable_lat: str = "lat",
+    variable_lng: str = "lon",
+    base_url_to_fused_html: str = None,
+):
+
+    html = f"""<!doctype html>
+<meta charset="utf-8">
+<title>URL Loader</title>
+<style>
+  body {{ margin:0; background:#0b0b0b }}
+  #bar {{
+    position:sticky; top:0; z-index:2; padding:8px 12px; background:#111827; border-bottom:1px solid #1f2937;
+    font:13px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  }}
+  #url {{
+    display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }}
+  #url a {{ color:#86efac; text-decoration:none }}
+  #file {{
+    margin-top:2px; font-size:11px; opacity:.75; color:#cbd5e1;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }}
+  #viewer {{ border:none; width:100%; height: calc(100vh - 44px); display:block }}
+</style>
+
+<div id="bar">
+  <div id="url"><a id="urlLink" href="javascript:void(0)" target="_blank" rel="noreferrer">(waiting…)</a></div>
+  <div id="file"></div>
+</div>
+<iframe id="viewer"></iframe>
+
+<script src="https://cdn.jsdelivr.net/gh/milind-soni/fused-channel@c348139/channel.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {{
+  const urlEl   = document.getElementById('urlLink');
+  const fileEl  = document.getElementById('file');
+  const iframe  = document.getElementById('viewer');
+  const param_1   = {variable_lat!r};
+  const param_2   = {variable_lng!r};
+  const base    = {base_url_to_fused_html!r};
+
+  function buildUrl(lat, lng) {{
+    try {{
+      const u = new URL(base);
+      u.searchParams.set(param_1, lat);
+      u.searchParams.set(param_2, lng);
+      return u.toString();
+    }} catch (_e) {{
+      const sep = base.includes('?') ? '&' : '?';
+      return base + sep + encodeURIComponent(param_1) + '=' + encodeURIComponent(lat) + 
+             '&' + encodeURIComponent(param_2) + '=' + encodeURIComponent(lng);
+    }}
+  }}
+
+  enableMsgListener({channel!r}, (msg) => {{
+    if (msg.payload && msg.payload.lat !== undefined && msg.payload.lng !== undefined) {{
+      const lat = msg.payload.lat;
+      const lng = msg.payload.lng;
+      const finalUrl = buildUrl(lat, lng);
+      urlEl.textContent = finalUrl;
+      urlEl.href = finalUrl;
+      fileEl.textContent = `lat: ${{lat}}, lng: ${{lng}}`;
+      iframe.src = finalUrl;
+      console.log('[loader] URL →', finalUrl, 'lat:', lat, 'lng:', lng);
+    }}
+  }});
+}});
+</script>
+"""
+    return common.html_to_obj(html)
