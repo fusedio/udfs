@@ -67,14 +67,13 @@ def dropdown(
     html = f"""<!doctype html>
 <meta charset="utf-8">
 <style>
-body {{
-  background: #121212;
-  color: #eeeeee;
-  margin: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+body {{ 
+    background: #121212;
+    color: #eeeeee;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
 }}
 .card {{
   background: #1e1e1e;
@@ -305,4 +304,300 @@ document.addEventListener('DOMContentLoaded', () => {{
 </script>
 """
 
+def single_variable_udf_output(
+    base_url_to_fused_html: str = None,
+    channel: str = 'channel_1',
+    variable: str = None,
+):
+    """
+    Returns an embeded UDF that reruns on receiving a message from 'channel'
+    Can pass a single variable to the Fused that's being called
+    """
+    html = f"""<!doctype html>
+<meta charset="utf-8">
+<title>URL Loader</title>
+<style>
+  body {{ margin:0; background:#0b0b0b }}
+  #bar {{
+    position:sticky; top:0; z-index:2; padding:8px 12px; background:#111827; border-bottom:1px solid #1f2937;
+    font:13px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  }}
+  #url {{
+    display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }}
+  #url a {{ color:#86efac; text-decoration:none }}
+  #file {{
+    margin-top:2px; font-size:11px; opacity:.75; color:#cbd5e1;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    display:flex; align-items:center; gap:6px;
+  }}
+  #spinner {{
+    display:none; width:12px; height:12px;
+    border:2px solid #374151;
+    border-top-color:#86efac;
+    border-radius:50%;
+    animation:spin 0.6s linear infinite;
+  }}
+  #spinner.show {{ display:block }}
+  @keyframes spin {{
+    to {{ transform:rotate(360deg) }}
+  }}
+  #viewer {{ border:none; width:100%; height: calc(100vh - 44px); display:block }}
+</style>
 
+<div id="bar">
+  <div id="url"><a id="urlLink" href="javascript:void(0)" target="_blank" rel="noreferrer">(waiting…)</a></div>
+  <div id="file">
+    <div id="spinner"></div>
+    <span id="fileName"></span>
+  </div>
+</div>
+<iframe id="viewer"></iframe>
+
+<script src="https://cdn.jsdelivr.net/gh/milind-soni/fused-channel@c348139/channel.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {{
+  const urlEl   = document.getElementById('urlLink');
+  const fileEl  = document.getElementById('fileName');
+  const spinner = document.getElementById('spinner');
+  const iframe  = document.getElementById('viewer');
+  const param   = {variable!r};
+  const base    = {base_url_to_fused_html!r};
+
+  function buildUrl(val) {{
+    try {{
+      const u = new URL(base);
+      u.searchParams.set(param, val);
+      return u.toString();
+    }} catch (_e) {{
+      const sep = base.includes('?') ? '&' : '?';
+      return base + sep + encodeURIComponent(param) + '=' + encodeURIComponent(val);
+    }}
+  }}
+
+  function basename(p) {{
+    if (!p) return '';
+    const q = String(p).split('#')[0].split('?')[0];
+    const s = q.replace(/\\/+$/, '');
+    const parts = s.split('/');
+    return parts[parts.length - 1] || s;
+  }}
+
+  function showSpinner() {{
+    spinner.classList.add('show');
+  }}
+
+  function hideSpinner() {{
+    spinner.classList.remove('show');
+  }}
+
+  iframe.addEventListener('load', hideSpinner);
+  iframe.addEventListener('error', hideSpinner);
+
+  function apply(val) {{
+    const finalUrl = buildUrl(val || '');
+    urlEl.textContent = finalUrl;
+    urlEl.href = finalUrl;
+
+    const name = basename(val || '');
+    fileEl.textContent = name ? name : '';
+
+    if (val) {{
+      showSpinner();
+      iframe.src = finalUrl;
+    }}
+    console.log('[loader] URL →', finalUrl, 'file →', name);
+  }}
+
+  enableMsgListener({channel!r}, (msg) => {{
+    const value = msg?.payload?.value ?? msg?.path ?? "";
+    if (!value) return;
+    apply(String(value));
+  }});
+}});
+</script>
+"""
+    return common.html_to_obj(html)
+
+
+
+
+def two_variable_udf_output(
+    channel: str = "channel_points",
+    variable_lat: str = "lat",
+    variable_lng: str = "lon",
+    base_url_to_fused_html: str = None,
+):
+
+    html = f"""<!doctype html>
+<meta charset="utf-8">
+<title>URL Loader</title>
+<style>
+  body {{ margin:0; background:#0b0b0b }}
+  #bar {{
+    position:sticky; top:0; z-index:2; padding:8px 12px; background:#111827; border-bottom:1px solid #1f2937;
+    font:13px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  }}
+  #url {{
+    display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }}
+  #url a {{ color:#86efac; text-decoration:none }}
+  #file {{
+    margin-top:2px; font-size:11px; opacity:.75; color:#cbd5e1;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }}
+  #viewer {{ border:none; width:100%; height: calc(100vh - 44px); display:block }}
+</style>
+
+<div id="bar">
+  <div id="url"><a id="urlLink" href="javascript:void(0)" target="_blank" rel="noreferrer">(waiting…)</a></div>
+  <div id="file"></div>
+</div>
+<iframe id="viewer"></iframe>
+
+<script src="https://cdn.jsdelivr.net/gh/milind-soni/fused-channel@c348139/channel.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {{
+  const urlEl   = document.getElementById('urlLink');
+  const fileEl  = document.getElementById('file');
+  const iframe  = document.getElementById('viewer');
+  const param_1   = {variable_lat!r};
+  const param_2   = {variable_lng!r};
+  const base    = {base_url_to_fused_html!r};
+
+  function buildUrl(lat, lng) {{
+    try {{
+      const u = new URL(base);
+      u.searchParams.set(param_1, lat);
+      u.searchParams.set(param_2, lng);
+      return u.toString();
+    }} catch (_e) {{
+      const sep = base.includes('?') ? '&' : '?';
+      return base + sep + encodeURIComponent(param_1) + '=' + encodeURIComponent(lat) + 
+             '&' + encodeURIComponent(param_2) + '=' + encodeURIComponent(lng);
+    }}
+  }}
+
+  enableMsgListener({channel!r}, (msg) => {{
+    if (msg.payload && msg.payload.lat !== undefined && msg.payload.lng !== undefined) {{
+      const lat = msg.payload.lat;
+      const lng = msg.payload.lng;
+      const finalUrl = buildUrl(lat, lng);
+      urlEl.textContent = finalUrl;
+      urlEl.href = finalUrl;
+      fileEl.textContent = `lat: ${{lat}}, lng: ${{lng}}`;
+      iframe.src = finalUrl;
+      console.log('[loader] URL →', finalUrl, 'lat:', lat, 'lng:', lng);
+    }}
+  }});
+}});
+</script>
+"""
+    return common.html_to_obj(html)
+
+
+def iframe_receiver_html(
+    channel: str,
+    base_url: str,
+    mapping: dict | None = None,
+    show_url: bool = True,
+    height: str = "100vh",
+) -> str:
+    """
+    Reusable helper to render a 'receiver' iframe that listens for fused-channel messages
+    and loads a constructed URL.
+
+    Args:
+        channel: Broadcast channel name (e.g. 'channel_1')
+        base_url: Base URL to load, e.g. a fused UDF run endpoint
+        mapping: Dict mapping incoming vars to query params, e.g. {'lat':'center_lat'}
+        show_url: Whether to display constructed URL text above the iframe
+        height: CSS height for iframe (default 100vh)
+    """
+    import json
+    mapping = mapping or {}
+    show_bar = "block" if show_url else "none"
+
+    return f"""<!doctype html>
+<meta charset="utf-8">
+<title>Receiver</title>
+<style>
+  body {{ margin:0; font:14px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; background:#fff; color:#111 }}
+  #bar {{ display:{show_bar}; padding:10px 12px; border-bottom:1px solid #eee; background:#fafafa }}
+  #chan {{ color:#475569 }}
+  #url a {{ color:inherit; text-decoration:none }}
+  iframe {{ width:100%; height:{height}; border:0; display:block }}
+  #loading {{
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+    background:rgba(255,255,255,0.9); padding:10px 20px; border-radius:6px;
+    border:1px solid #ddd; font-weight:500; font-size:14px; color:#333;
+    display:none; z-index:10;
+  }}
+</style>
+
+<div id="bar">
+  <div>Channel: <code id="chan"></code></div>
+  <div>Constructed URL: <span id="url">(waiting…)</span></div>
+</div>
+<div id="loading">Loading…</div>
+<iframe id="viewer"></iframe>
+
+<script src="https://cdn.jsdelivr.net/gh/milind-soni/fused-channel@main/channel.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {{
+  const CHANNEL = {json.dumps(channel)};
+  const BASE = {json.dumps(base_url)};
+  const MAP  = {json.dumps(mapping)};
+  const chanEl = document.getElementById('chan');
+  const urlEl  = document.getElementById('url');
+  const frame  = document.getElementById('viewer');
+  const loading = document.getElementById('loading');
+  chanEl.textContent = CHANNEL;
+
+  const isScalar = v => (['string','number','boolean'].includes(typeof v));
+
+  function pickVars(msg) {{
+    if (!msg || !msg.payload) return {{}};
+    if (msg.payload.vars && typeof msg.payload.vars === 'object') return msg.payload.vars;
+    return msg.payload;
+  }}
+
+  function filterAndRename(obj) {{
+    const out = {{}};
+    for (const [srcKey, dstKey] of Object.entries(MAP)) {{
+      if (obj[srcKey] != null) out[dstKey] = obj[srcKey];
+    }}
+    return out;
+  }}
+
+  function buildUrl(params) {{
+    const u = new URL(BASE);
+    for (const [k,v] of Object.entries(params || {{}})) {{
+      if (isScalar(v)) u.searchParams.set(k, v);
+    }}
+    return u.toString();
+  }}
+
+  function render(url) {{
+    const a = document.createElement('a');
+    a.href = url; a.target = '_blank'; a.rel = 'noreferrer';
+    a.textContent = url;
+    urlEl.replaceChildren(a);
+    loading.style.display = 'block';
+    frame.src = url;
+  }}
+
+  frame.addEventListener('load', () => {{
+    loading.style.display = 'none';
+  }});
+
+  enableMsgListener(CHANNEL, (msg) => {{
+    const raw = pickVars(msg);
+    const mapped = filterAndRename(raw);
+    if (Object.keys(mapped).length === 0) return;
+    const url = buildUrl(mapped);
+    render(url);
+  }});
+}});
+</script>
+"""
