@@ -3,32 +3,51 @@ common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/
 
 @fused.udf
 def udf(channel: str = "channel_40", sender_id: str = "my_udf"):
-    html = slider(channel=channel, sender_id=sender_id)
+    html = button_html(channel=channel, sender_id=sender_id)
     return html
 
 
 # BUTTON ----------------------------------------------------------------------
-def button_html(channel="channel_1", sender_id="button_1"):
+def button_html(channel="channel_1", sender_id="button_1", buttons=None):
+    if buttons is None:
+        buttons = [{"label": "Click me", "value": "clicked"}]
+    BUTTONS_JS = json.dumps(buttons, ensure_ascii=False)
     return f"""<!doctype html>
 <meta charset="utf-8">
-<button id="btn" style="font-size:1.2rem;padding:0.6rem 1rem;margin:2rem;">Click me</button>
+<style>
+body {{
+  background:#121212;color:#eee;margin:0;padding:2rem;
+  font-family:system-ui,-apple-system,sans-serif;
+}}
+button {{
+  font-size:1rem;padding:0.5rem 1rem;margin:0.25rem;
+  background:#2a2a2a;color:#fff;border:2px solid #444;border-radius:6px;cursor:pointer;
+}}
+button:hover {{ background:#333; }}
+</style>
+<div id="container"></div>
 <script>
 document.addEventListener('DOMContentLoaded', () => {{
   const CHANNEL = {json.dumps(channel)};
   const SENDER  = {json.dumps(sender_id)};
-  const btn = document.getElementById('btn');
-  btn.addEventListener('click', () => {{
-    window.parent.postMessage({{
-      type: 'button',
-      payload: {{ value: 'clicked' }},
-      origin: SENDER,
-      channel: CHANNEL,
-      ts: Date.now()
-    }}, '*');
-  }});
+  const BUTTONS = {BUTTONS_JS};
+  const cont = document.getElementById('container');
+  for (const b of BUTTONS) {{
+    const btn = document.createElement('button');
+    btn.textContent = b.label ?? b.value;
+    btn.addEventListener('click', () => {{
+      window.parent.postMessage({{
+        type: 'button',
+        payload: {{ key: b.label ?? b.value, value: b.value }},
+        origin: SENDER, channel: CHANNEL, ts: Date.now()
+      }}, '*');
+    }});
+    cont.appendChild(btn);
+  }}
 }});
 </script>
 """
+
 
 
 # DROPDOWN --------------------------------------------------------------------
