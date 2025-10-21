@@ -3,12 +3,8 @@ common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/
 
 @fused.udf
 def udf(channel: str = "channel_1", sender_id: str = "my_udf"):
-    # html = dropdown(channel, sender_id)
     L = fused.api.list('s3://fused-sample/')
-    html = map_draw_html(
-        channel="channel_1",
-        sender_id="draw_1"
-    )
+    html = dropdown(channel="channel_1",options = L, sender_id="draw_1")
     return html
 
 def map_html(
@@ -23,11 +19,9 @@ def map_html(
     return f"""<!doctype html>
 <meta charset="utf-8">
 <div id="map" style="position:fixed;inset:0;"></div>
-
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/milind-soni/fused-channel@4f1bd37/channel.js"></script>
-
+<script src="https://cdn.jsdelivr.net/gh/milind-soni/fused-channel@main/channel.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {{
   mapboxgl.accessToken = {json.dumps(mapbox_token)};
@@ -39,18 +33,16 @@ document.addEventListener('DOMContentLoaded', () => {{
     dragRotate: false,
     pitchWithRotate: false
   }});
-
   enableBoundsMessaging(map, {json.dumps(channel)}, {json.dumps(sender_id)});
 }});
 </script>
 """
 
-
 def button_html(channel: str = "channel_1", sender_id: str = "button_1") -> str:
     return f"""<!doctype html>
 <meta charset="utf-8">
 <button id="btn" style="font-size:1.2rem;padding:0.6rem 1rem;margin:2rem;">Click me</button>
-<script src="https://cdn.jsdelivr.net/gh/milind-soni/fused-channel@4f1bd37/channel.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/milind-soni/fused-channel@main/channel.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {{
   const btn = document.getElementById('btn');
@@ -59,110 +51,122 @@ document.addEventListener('DOMContentLoaded', () => {{
 </script>
 """
 
-
 def dropdown(
     options: list,
     channel: str = "channel_1",
     sender_id: str = "dropdown_1",
-    default_value: str = None,
+    default_value: str | None = None,
     label: str = "Select an option:",
-    return_html: bool = False
-) -> str:
-    def truncate_path(path, max_len=35):
-        if len(path) <= max_len:
-            return path
-        return path[:15] + '...' + path[-(max_len-13):]
-    
-    if options and isinstance(options[0], dict):
-        option_tags = "\n".join([
-            f'<option value="{opt["value"]}" data-type="{opt["value"].split(".")[-1]}" {"selected" if default_value == opt["value"] else ""}>{truncate_path(opt["label"])}</option>'
-            for opt in options
-        ])
-    else:
-        option_tags = "\n".join([
-            f'<option value="{opt}" data-type="{opt.split(".")[-1]}" {"selected" if default_value == opt else ""}>{truncate_path(opt)}</option>'
-            for opt in options
-        ])
+    placeholder: str = "— select —",
+    return_html: bool = False,
+):
+    import json
+    OPTIONS_JS = json.dumps(options, ensure_ascii=False)
+    DEFAULT_JS = json.dumps(default_value, ensure_ascii=False)
 
     html = f"""<!doctype html>
 <meta charset="utf-8">
 <style>
-body {{ 
-    background: #121212;
-    color: #eeeeee;
-    margin: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+body {{
+  background: #121212;
+  color: #eeeeee;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
 }}
 .card {{
-    background: #1e1e1e;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-    font-family: system-ui, -apple-system, sans-serif;
-    color: inherit;
+  background: #1e1e1e;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  font-family: system-ui, -apple-system, sans-serif;
+  color: inherit;
+  min-width: 280px;
 }}
-select {{ 
-    font-size: 1rem; 
-    padding: 0.5rem; 
-    min-width: 200px; 
-    border: 2px solid #444;
-    border-radius: 4px;
-    background: #2a2a2a;
-    color: #ffffff;
+label {{
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
 }}
-.toggle {{
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}}
-.toggle label {{
-    cursor: pointer;
+select {{
+  font-size: 1rem;
+  padding: 0.5rem;
+  min-width: 100%;
+  border: 2px solid #444;
+  border-radius: 4px;
+  background: #2a2a2a;
+  color: #ffffff;
 }}
 </style>
+
 <div class="card">
-  <div class="toggle">
-    <label><input type="radio" name="fileType" value="csv" checked> CSV</label>
-    <label><input type="radio" name="fileType" value="parquet"> Parquet</label>
-  </div>
-  <label for="dropdown" style="display:block;margin-bottom:0.5rem;font-weight:500;">{label}</label>
-  <select id="dropdown">
-    {option_tags}
-  </select>
+  <label for="dropdown">{label}</label>
+  <select id="dropdown"></select>
 </div>
-<script src="https://cdn.jsdelivr.net/gh/milind-soni/fused-channel@4f1bd37/channel.js"></script>
+
+<script src="https://cdn.jsdelivr.net/gh/milind-soni/fused-channel@main/channel.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {{
-  const dropdown = document.getElementById('dropdown');
-  const allOptions = Array.from(dropdown.options);
-  const radios = document.querySelectorAll('input[name="fileType"]');
-  
-  function filterOptions(type) {{
-    dropdown.innerHTML = '';
-    allOptions.forEach(opt => {{
-      if (opt.dataset.type === type) {{
-        dropdown.appendChild(opt.cloneNode(true));
+(function() {{
+  const RAW_OPTIONS = {OPTIONS_JS};
+  const DEFAULT_VALUE = {DEFAULT_JS};
+  const CHANNEL = {json.dumps(channel)};
+  const SENDER  = {json.dumps(sender_id)};
+  const PLACEHOLDER = {json.dumps(placeholder)};
+
+  function normalize(options) {{
+    if (!Array.isArray(options)) return [];
+    return options.map((item, i) => {{
+      if (['string','number','boolean'].includes(typeof item)) {{
+        const s = String(item);
+        return {{ value: s, label: s }};
       }}
+      if (Array.isArray(item)) {{
+        const v = item[0];
+        const l = item[1] ?? v;
+        return {{ value: String(v), label: String(l) }};
+      }}
+      if (item && typeof item === 'object') {{
+        const val = item.value ?? item.id ?? item.key ?? item.name ?? item.path ?? item.url ?? ('opt_' + i);
+        const lbl = item.label ?? item.name ?? item.title ?? item.text ?? val;
+        return {{ value: String(val), label: String(lbl) }};
+      }}
+      const s = String(item);
+      return {{ value: s, label: s }};
     }});
   }}
-  
-  radios.forEach(radio => {{
-    radio.addEventListener('change', (e) => {{
-      filterOptions(e.target.value);
-    }});
-  }});
-  
-  filterOptions('csv');
-  enableDropdownMessaging(dropdown, {json.dumps(channel)}, {json.dumps(sender_id)});
-}});
+
+  function renderDropdown() {{
+    const opts = normalize(RAW_OPTIONS);
+    const sel = document.getElementById('dropdown');
+    sel.innerHTML = '';
+    const ph = document.createElement('option');
+    ph.textContent = PLACEHOLDER;
+    ph.disabled = true;
+    ph.selected = true;
+    sel.appendChild(ph);
+    for (const o of opts) {{
+      const opt = document.createElement('option');
+      opt.value = o.value;
+      opt.textContent = o.label;
+      sel.appendChild(opt);
+    }}
+    if (DEFAULT_VALUE) {{
+      const found = Array.from(sel.options).find(o => o.value === String(DEFAULT_VALUE));
+      if (found) {{
+        found.selected = true;
+        ph.selected = false;
+      }}
+    }}
+    enableDropdownMessaging(sel, CHANNEL, SENDER);
+  }}
+
+  document.addEventListener('DOMContentLoaded', renderDropdown);
+}})();
 </script>
 """
-    if return_html:
-        return html
-    else:
-        return common.html_to_obj(html)
+    return html if return_html else common.html_to_obj(html)
 
 
 def map_draw_html(
@@ -173,7 +177,7 @@ def map_draw_html(
     center_lat: float = 40.7,
     zoom: float = 12.0,
     style_url: str = "mapbox://styles/mapbox/dark-v10",
-    include_bounds: bool = True
+    include_bounds: bool = True,
 ) -> str:
     return f"""<!doctype html>
 <meta charset="utf-8">
@@ -181,24 +185,23 @@ def map_draw_html(
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.js"></script>
 <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.5.0/mapbox-gl-draw.css">
 <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.5.0/mapbox-gl-draw.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/milind-soni/fused-channel@4f1bd37/channel.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/milind-soni/fused-channel@main/channel.js"></script>
 
 <style>
-  html, body, #map {{ margin: 0; height: 100% }}
-  #map {{ position: fixed; inset: 0 }}
+  html, body, #map {{ margin:0; height:100% }}
+  #map {{ position:fixed; inset:0 }}
   #send {{
-    position: fixed; right: 10px; bottom: 10px; z-index: 10;
-    padding: 10px 14px; background: #ffffff; border: 1px solid #999; border-radius: 6px;
-    font: 14px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; cursor: pointer;
+    position:fixed; right:10px; bottom:10px; z-index:10;
+    padding:10px 14px; background:#fff; border:1px solid #999; border-radius:6px;
+    font:14px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; cursor:pointer;
   }}
 </style>
 
 <div id="map"></div>
-<button id="send">Send</button>
+<button id="send" disabled>Send</button>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {{
-  // Map
   mapboxgl.accessToken = {json.dumps(mapbox_token)};
   const map = new mapboxgl.Map({{
     container: 'map',
@@ -209,69 +212,97 @@ document.addEventListener('DOMContentLoaded', () => {{
     pitchWithRotate: false
   }});
 
-  // Draw
   const draw = new MapboxDraw({{
     displayControlsDefault: false,
-    controls: {{ polygon: true, point: true, line_string: true, trash: true }},
+    controls: {{ polygon:true, point:true, line_string:true, trash:true }},
     defaultMode: 'simple_select'
   }});
   map.addControl(draw, 'bottom-left');
 
-  // Make the built-in trash button clear ALL shapes
+  const CHANNEL = {json.dumps(channel)};
+  const SENDER  = {json.dumps(sender_id)};
+  const INCLUDE_BOUNDS = {str(include_bounds).lower()};
+
+  const sendBtn = document.getElementById('send');
+
+  // In-memory state only (no auto-send)
+  let lastPoint = null;      // {{lat, lng}} or null
+  let lastFC = null;         // GeoJSON FeatureCollection or null
+
+  function enableSendIfData() {{
+    const hasData = !!(lastFC && lastFC.features && lastFC.features.length);
+    sendBtn.disabled = !hasData;
+  }}
+
+  function latestPointFrom(fc) {{
+    const feats = fc?.features || [];
+    const pts = feats.filter(f => f.geometry?.type === 'Point' && Array.isArray(f.geometry.coordinates));
+    if (!pts.length) return null;
+    const [lng, lat] = pts[pts.length - 1].geometry.coordinates;
+    return {{ lat: Number(lat), lng: Number(lng) }};
+  }}
+
+  function updateStateFromDraw() {{
+    const fc = draw.getAll();
+    lastFC = (fc && Array.isArray(fc.features)) ? fc : null;
+    lastPoint = lastFC ? latestPointFrom(lastFC) : null;
+    enableSendIfData();
+  }}
+
   function hookTrashToClearAll() {{
     const btn = document.querySelector('.mapbox-gl-draw_trash');
     if (!btn) return;
-    // Remove Mapbox Draw's default handler, if any
     btn.replaceWith(btn.cloneNode(true));
     const fresh = document.querySelector('.mapbox-gl-draw_trash');
     fresh.addEventListener('click', (e) => {{
-      e.preventDefault();
-      e.stopPropagation();
-      try {{
-        draw.deleteAll();
-      }} catch (err) {{
-        console.error('deleteAll failed', err);
-      }}
+      e.preventDefault(); e.stopPropagation();
+      try {{ draw.deleteAll(); }} catch (_) {{}}
+      lastPoint = null;
+      lastFC = null;
+      enableSendIfData();
     }});
   }}
-
-  // Hook once controls are in the DOM
   map.on('load', hookTrashToClearAll);
 
-  // Optional: Delete key = clear all
-  window.addEventListener('keydown', (e) => {{
-    if (e.key === 'Delete') {{
-      e.preventDefault();
-      try {{ draw.deleteAll(); }} catch (err) {{}}
-    }}
+  // Draw events ONLY update state; they DO NOT publish
+  ['draw.create','draw.update','draw.combine','draw.uncombine','draw.delete'].forEach(ev => {{
+    map.on(ev, updateStateFromDraw);
   }});
 
-  // Channel
-  const ch = ('fusedChannel' in window) ? fusedChannel({json.dumps(channel)}) : null;
+  function collectVarsForSend() {{
+    // Recompute just before sending to be safe
+    updateStateFromDraw();
+    if (!lastFC || !lastFC.features || !lastFC.features.length) return null;
 
-  // Compose payload lazily (at click time)
-  function makePayload() {{
-    const fc = draw.getAll();
-    const payload = {{ geojson: fc }};
-    {"const b = map.getBounds(); payload.bounds = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]; payload.zoom = map.getZoom();" if include_bounds else ""}
-    return payload;
+    const vars = {{}};
+    if (lastPoint) {{
+      vars.lat = lastPoint.lat;
+      vars.lng = lastPoint.lng;
+    }}
+
+    try {{ vars.geojson = JSON.stringify(lastFC); }} catch (_) {{}}
+
+    if (INCLUDE_BOUNDS && map && map.getBounds) {{
+      const b = map.getBounds();
+      vars.bounds = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].join(',');
+      vars.zoom = map.getZoom();
+    }}
+
+    return vars;
   }}
 
-  // Send button
-  document.getElementById('send').addEventListener('click', () => {{
-    const payload = makePayload();
-    if (!payload.geojson || !payload.geojson.features || payload.geojson.features.length === 0) {{
-      alert('Please Draw something first');
+  sendBtn.addEventListener('click', (e) => {{
+    e.preventDefault();
+    const vars = collectVarsForSend();
+    if (!vars) {{
+      console.log('Nothing to send; draw a point/shape first.');
       return;
     }}
-    try {{
-      if (ch) ch.publish('shape', payload, {json.dumps(sender_id)});
-      console.log('SENT →', {{ type: 'shape', payload, origin: {json.dumps(sender_id)} }});
-    }} catch (e) {{
-      console.error('broadcast error', e);
-      alert('Could not send message (see console).');
-    }}
+    publishVars(CHANNEL, SENDER, vars); // type:'vars' with payload=vars (per channel.js)
+    console.log('SENT vars →', vars);
   }});
 }});
 </script>
 """
+
+
