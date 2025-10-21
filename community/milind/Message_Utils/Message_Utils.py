@@ -175,12 +175,6 @@ def map_draw_html(
     style_url: str = "mapbox://styles/mapbox/dark-v10",
     include_bounds: bool = True
 ) -> str:
-    """
-    Publishes messages on `channel` with:
-      type: 'shape'
-      payload: { geojson: <FeatureCollection>, bounds?: [w,s,e,n], zoom?: number }
-    Uses your channel.js's enableMessaging for consistent behavior.
-    """
     return f"""<!doctype html>
 <meta charset="utf-8">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.css" rel="stylesheet">
@@ -192,12 +186,19 @@ def map_draw_html(
 <style>
   html, body, #map {{ margin: 0; height: 100% }}
   #map {{ position: fixed; inset: 0 }}
+  #send {{
+    position: fixed; right: 10px; bottom: 10px; z-index: 10;
+    padding: 10px 14px; background: #ffffff; border: 1px solid #999; border-radius: 6px;
+    font: 14px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; cursor: pointer;
+  }}
 </style>
 
 <div id="map"></div>
+<button id="send">Send</button>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {{
+  // Map
   mapboxgl.accessToken = {json.dumps(mapbox_token)};
   const map = new mapboxgl.Map({{
     container: 'map',
@@ -208,6 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {{
     pitchWithRotate: false
   }});
 
+  // Draw
   const draw = new MapboxDraw({{
     displayControlsDefault: false,
     controls: {{ polygon: true, point: true, line_string: true, trash: true }},
@@ -215,45 +217,60 @@ document.addEventListener('DOMContentLoaded', () => {{
   }});
   map.addControl(draw, 'bottom-left');
 
-  // Debounced handler via rAF to avoid spam on rapid edits
-  let ticking = false;
-  const debounced = (fn) => {{
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(() => {{ ticking = false; fn(); }});
-  }};
+  // Make the built-in trash button clear ALL shapes
+  function hookTrashToClearAll() {{
+    const btn = document.querySelector('.mapbox-gl-draw_trash');
+    if (!btn) return;
+    // Remove Mapbox Draw's default handler, if any
+    btn.replaceWith(btn.cloneNode(true));
+    const fresh = document.querySelector('.mapbox-gl-draw_trash');
+    fresh.addEventListener('click', (e) => {{
+      e.preventDefault();
+      e.stopPropagation();
+      try {{
+        draw.deleteAll();
+      }} catch (err) {{
+        console.error('deleteAll failed', err);
+      }}
+    }});
+  }}
 
-  // We wire through your enableMessaging helper so all senders behave consistently
-  const getPayload = () => {{
-    const payload = {{ geojson: draw.getAll() }};
+  // Hook once controls are in the DOM
+  map.on('load', hookTrashToClearAll);
+
+  // Optional: Delete key = clear all
+  window.addEventListener('keydown', (e) => {{
+    if (e.key === 'Delete') {{
+      e.preventDefault();
+      try {{ draw.deleteAll(); }} catch (err) {{}}
+    }}
+  }});
+
+  // Channel
+  const ch = ('fusedChannel' in window) ? fusedChannel({json.dumps(channel)}) : null;
+
+  // Compose payload lazily (at click time)
+  function makePayload() {{
+    const fc = draw.getAll();
+    const payload = {{ geojson: fc }};
     {"const b = map.getBounds(); payload.bounds = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]; payload.zoom = map.getZoom();" if include_bounds else ""}
     return payload;
-  }};
+  }}
 
-  const on  = (m, h) => {{
-    const start = () => {{
-      // initial emit so receivers can react even before any drawing
-      h();
-      // hook into mapbox-draw events (they are emitted on the map)
-      ['draw.create','draw.update','draw.delete','draw.combine','draw.uncombine'].forEach(ev => {{
-        m.on(ev, () => debounced(h));
-      }});
-    }};
-    (m.loaded && m.loaded()) ? start() : m.once('load', start);
-  }};
-  const off = (m, h) => {{
-    ['draw.create','draw.update','draw.delete','draw.combine','draw.uncombine'].forEach(ev => m.off(ev, h));
-  }};
-
-  // This will publish {{ type: 'shape', payload: getPayload() }} on the channel
-  enableMessaging({{
-    source: map,
-    channel: {json.dumps(channel)},
-    sender: {json.dumps(sender_id)},
-    type: 'shape',
-    on,
-    off,
-    getPayload
+  // Send button
+  document.getElementById('send').addEventListener('click', () => {{
+    const payload = makePayload();
+    if (!payload.geojson || !payload.geojson.features || payload.geojson.features.length === 0) {{
+      alert('Please Draw something first');
+      return;
+    }}
+    try {{
+      if (ch) ch.publish('shape', payload, {json.dumps(sender_id)});
+      console.log('SENT →', {{ type: 'shape', payload, origin: {json.dumps(sender_id)} }});
+    }} catch (e) {{
+      console.error('broadcast error', e);
+      alert('Could not send message (see console).');
+    }}
   }});
 }});
 </script>
