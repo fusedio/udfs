@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {{
 
 # SLIDER ----------------------------------------------------------------------
 def slider(
-    label: str,
+    label: str = None,
     min_value=None,
     max_value=None,
     value=None,
@@ -265,60 +265,159 @@ def slider(
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
+  :root {{
+    --primary: #e8ff59;
+    --primary-hover: #f0ff7a;
+    --bg: #121212;
+    --track-bg: #2a2a2a;
+    --text: #eee;
+    --text-muted: #999;
+    --border: #3a3a3a;
+  }}
   html, body {{
     height:100%; margin:0; padding:0;
-    background:#121212; color:#eee;
+    background:var(--bg); color:var(--text);
     font-family:system-ui,-apple-system,sans-serif;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:.75rem;
   }}
-  .row {{ width:min(92vw, 520px); display:flex; gap:.65rem; align-items:center; }}
-  .label {{ font-weight:600; font-size:clamp(14px, 1.6vmin, 18px); opacity:.95; }}
-  .value {{ min-width:78px; text-align:right; color:#ddd; font-variant-numeric:tabular-nums; }}
-
-  .slider-wrap {{ position:relative; display:flex; align-items:center; width:100%; height:28px; }}
+  .label {{ 
+    width:min(92vw, 520px);
+    font-weight:500; 
+    font-size:14px; 
+    margin-bottom:.5rem;
+  }}
+  .slider-container {{
+    width:min(92vw, 520px);
+    display:flex; 
+    gap:.5rem; 
+    align-items:center;
+  }}
+  .slider-wrap {{ 
+    position:relative; 
+    display:flex; 
+    align-items:center; 
+    flex:1;
+    height:20px;
+  }}
   .track {{
-    position:absolute; left:0; right:0; height:4px; border-radius:999px;
-    background:#2a2a2a; border:1px solid #3a3a3a;
+    position:absolute; 
+    left:0; right:0; 
+    height:8px; 
+    border-radius:999px;
+    background:var(--track-bg);
   }}
   .fill {{
-    position:absolute; height:4px; border-radius:999px;
-    background:#e8ff59;
+    position:absolute; 
+    height:8px; 
+    border-radius:999px;
+    background:var(--primary);
+  }}
+  .value {{ 
+    min-width:48px; 
+    text-align:left; 
+    color:var(--text-muted); 
+    font-size:12px;
+    font-variant-numeric:tabular-nums;
   }}
   input[type=range] {{
     appearance:none; -webkit-appearance:none;
-    position:relative; width:100%; height:28px; margin:0; background:transparent; outline:none;
+    position:relative; 
+    width:100%; 
+    height:20px; 
+    margin:0; 
+    background:transparent; 
+    outline:none;
+    cursor:pointer;
   }}
   input[type=range]::-webkit-slider-thumb {{
-    -webkit-appearance:none; appearance:none;
-    width:16px; height:16px; border-radius:50%;
-    background:#e8ff59; border:none; cursor:pointer;
-    margin-top:-6px;
+    -webkit-appearance:none; 
+    appearance:none;
+    width:16px; 
+    height:16px; 
+    border-radius:50%;
+    background:#fff; 
+    border:1px solid var(--primary);
+    box-shadow:1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+    cursor:pointer;
+    transition:background-color 200ms;
+  }}
+  input[type=range]::-webkit-slider-thumb:hover {{
+    background:var(--primary-hover);
   }}
   input[type=range]::-moz-range-thumb {{
-    width:16px; height:16px; border-radius:50%;
-    background:#e8ff59; border:none; cursor:pointer;
+    width:16px; 
+    height:16px; 
+    border-radius:50%;
+    background:#fff; 
+    border:1px solid var(--primary);
+    box-shadow:1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+    cursor:pointer;
+    transition:background-color 200ms;
+  }}
+  input[type=range]::-moz-range-thumb:hover {{
+    background:var(--primary-hover);
+  }}
+  .tooltip {{
+    position:absolute;
+    bottom:100%;
+    left:50%;
+    transform:translateX(-50%);
+    background:#fff;
+    color:#000;
+    padding:4px 10px;
+    border-radius:6px;
+    font-size:13px;
+    white-space:nowrap;
+    opacity:0;
+    visibility:hidden;
+    transition:opacity 150ms, visibility 150ms;
+    margin-bottom:8px;
+    pointer-events:none;
+    box-shadow:0 2px 8px rgba(0,0,0,0.15);
+  }}
+  .thumb-container {{
+    position:absolute;
+    width:16px;
+    height:20px;
+    pointer-events:none;
+  }}
+  .thumb-container.show-tooltip .tooltip {{
+    opacity:1;
+    visibility:visible;
   }}
 </style>
 
-<div class="row">
-  <div class="label">{label}</div>
+<div class="label">{label}</div>
+
+<!-- Single -->
+<div id="single" class="slider-container" style="display:none">
+  <div class="slider-wrap">
+    <div class="track"></div>
+    <div class="fill" id="fill"></div>
+    <div class="thumb-container" id="thumb-container">
+      <div class="tooltip" id="tooltip"></div>
+    </div>
+    <input id="rng" type="range" />
+  </div>
   <div class="value" id="valtxt"></div>
 </div>
 
-<!-- Single -->
-<div id="single" class="slider-wrap" style="display:none">
-  <div class="track"></div>
-  <div class="fill" id="fill"></div>
-  <input id="rng" type="range" />
-</div>
-
 <!-- Range -->
-<div id="range" class="slider-wrap" style="display:none">
-  <div class="track"></div>
-  <div class="fill" id="fillr"></div>
-  <input id="rng0" type="range" />
-  <input id="rng1" type="range" />
+<div id="range" class="slider-container" style="display:none">
+  <div class="slider-wrap">
+    <div class="track"></div>
+    <div class="fill" id="fillr"></div>
+    <div class="thumb-container" id="thumb-container0">
+      <div class="tooltip" id="tooltip0"></div>
+    </div>
+    <div class="thumb-container" id="thumb-container1">
+      <div class="tooltip" id="tooltip1"></div>
+    </div>
+    <input id="rng0" type="range" />
+    <input id="rng1" type="range" />
+  </div>
+  <div class="value" id="valtxt"></div>
 </div>
 
 <script>
@@ -351,18 +450,30 @@ document.addEventListener('DOMContentLoaded', () => {{
     }}, '*');
   }}
 
-  function setFillSingle(input, fillEl){{
+  function setFillSingle(input, fillEl, thumbContainer){{
     const p = (input.value - input.min) / (input.max - input.min);
     fillEl.style.left = "0";
     fillEl.style.width = (Math.max(0, Math.min(1, p)) * 100).toFixed(4) + "%";
+    if(thumbContainer){{
+      thumbContainer.style.left = (p * 100).toFixed(4) + "%";
+      thumbContainer.style.transform = "translateX(-50%)";
+    }}
   }}
-  function setFillRange(i0, i1, fillEl){{
+  function setFillRange(i0, i1, fillEl, tc0, tc1){{
     const p0 = (i0.value - i0.min) / (i0.max - i0.min);
     const p1 = (i1.value - i1.min) / (i1.max - i1.min);
     const left = Math.min(p0, p1);
     const right = Math.max(p0, p1);
     fillEl.style.left = (left * 100).toFixed(4) + "%";
     fillEl.style.width = ((right - left) * 100).toFixed(4) + "%";
+    if(tc0){{
+      tc0.style.left = (p0 * 100).toFixed(4) + "%";
+      tc0.style.transform = "translateX(-50%)";
+    }}
+    if(tc1){{
+      tc1.style.left = (p1 * 100).toFixed(4) + "%";
+      tc1.style.transform = "translateX(-50%)";
+    }}
   }}
 
   function debounced(fn, ms){{
@@ -374,17 +485,26 @@ document.addEventListener('DOMContentLoaded', () => {{
     const wrap=document.getElementById('single');
     const fill=document.getElementById('fill');
     const rng=document.getElementById('rng');
-    wrap.style.display='';
+    const thumbContainer=document.getElementById('thumb-container');
+    const tooltip=document.getElementById('tooltip');
+    wrap.style.display='flex';
     rng.min=MIN; rng.max=MAX; rng.step=STEP; rng.value=INIT;
-    valtxt.textContent=fmt(INIT); setFillSingle(rng,fill);
+    valtxt.textContent=fmt(INIT); 
+    tooltip.textContent=fmt(INIT);
+    setFillSingle(rng,fill,thumbContainer);
     const sendNow=()=>post(Number(rng.value));
     const sendDeb=debounced(sendNow,DEBOUNCE);
 
     rng.addEventListener('input',()=>{{
       valtxt.textContent=fmt(rng.value);
-      setFillSingle(rng,fill);
+      tooltip.textContent=fmt(rng.value);
+      setFillSingle(rng,fill,thumbContainer);
       if(SEND==="continuous")sendDeb();
     }});
+    rng.addEventListener('mouseenter',()=>thumbContainer.classList.add('show-tooltip'));
+    rng.addEventListener('mouseleave',()=>thumbContainer.classList.remove('show-tooltip'));
+    rng.addEventListener('focus',()=>thumbContainer.classList.add('show-tooltip'));
+    rng.addEventListener('blur',()=>thumbContainer.classList.remove('show-tooltip'));
     if(SEND==="end"){{
       rng.addEventListener('mouseup',sendNow);
       rng.addEventListener('touchend',sendNow);
@@ -395,16 +515,33 @@ document.addEventListener('DOMContentLoaded', () => {{
     const fill=document.getElementById('fillr');
     const r0=document.getElementById('rng0');
     const r1=document.getElementById('rng1');
-    wrap.style.display='';
+    const tc0=document.getElementById('thumb-container0');
+    const tc1=document.getElementById('thumb-container1');
+    const tt0=document.getElementById('tooltip0');
+    const tt1=document.getElementById('tooltip1');
+    wrap.style.display='flex';
     r0.min=MIN;r0.max=MAX;r0.step=STEP;
     r1.min=MIN;r1.max=MAX;r1.step=STEP;
     r0.value=INIT[0];r1.value=INIT[1];
     const sendNow=()=>post([Number(r0.value),Number(r1.value)]);
     const sendDeb=debounced(sendNow,DEBOUNCE);
     function clamp(){{if(Number(r0.value)>Number(r1.value))r0.value=r1.value;}}
-    function show(){{valtxt.textContent=fmt(r0.value)+" – "+fmt(r1.value);setFillRange(r0,r1,fill);}}
+    function show(){{
+      valtxt.textContent=fmt(r0.value)+" – "+fmt(r1.value);
+      tt0.textContent=fmt(r0.value);
+      tt1.textContent=fmt(r1.value);
+      setFillRange(r0,r1,fill,tc0,tc1);
+    }}
     r0.addEventListener('input',()=>{{clamp();show();if(SEND==="continuous")sendDeb();}});
     r1.addEventListener('input',()=>{{clamp();show();if(SEND==="continuous")sendDeb();}});
+    r0.addEventListener('mouseenter',()=>tc0.classList.add('show-tooltip'));
+    r0.addEventListener('mouseleave',()=>tc0.classList.remove('show-tooltip'));
+    r0.addEventListener('focus',()=>tc0.classList.add('show-tooltip'));
+    r0.addEventListener('blur',()=>tc0.classList.remove('show-tooltip'));
+    r1.addEventListener('mouseenter',()=>tc1.classList.add('show-tooltip'));
+    r1.addEventListener('mouseleave',()=>tc1.classList.remove('show-tooltip'));
+    r1.addEventListener('focus',()=>tc1.classList.add('show-tooltip'));
+    r1.addEventListener('blur',()=>tc1.classList.remove('show-tooltip'));
     if(SEND==="end"){{r0.addEventListener('mouseup',sendNow);r1.addEventListener('mouseup',sendNow);
                      r0.addEventListener('touchend',sendNow);r1.addEventListener('touchend',sendNow);}}
     show(); if(AUTO)queueMicrotask(sendNow);
@@ -556,7 +693,7 @@ def text_input(
 <style>
   html, body {{
     height:100%; margin:0; padding:0;
-    background:#0e1117; color:#fafafa;
+    background:#000; color:#fafafa;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:.75rem;
