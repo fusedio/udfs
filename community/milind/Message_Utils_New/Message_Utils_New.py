@@ -19,6 +19,7 @@ def button(
     disabled: bool = False,
     type: str = "primary",  # "primary" | "secondary"
     use_container_width: bool = False,
+    size: str = "medium",  # "small" | "medium" | "large"
     # Internal params
     channel: str | None = None,
     sender_id: str | None = None,
@@ -42,44 +43,87 @@ def button(
     LABEL_JS = json.dumps(str(label))
 
     is_primary = type == "primary"
+    
+    # Size configurations
+    size_configs = {
+        "small": {"padding": "0.35rem 0.7rem", "font_size": "13px", "height": "28px"},
+        "medium": {"padding": "0.5rem 1rem", "font_size": "14px", "height": "36px"},
+        "large": {"padding": "0.65rem 1.25rem", "font_size": "15px", "height": "44px"},
+    }
+    size_config = size_configs.get(size, size_configs["medium"])
 
     html = f"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
+  :root {{
+    --primary: #e8ff59;
+    --primary-hover: #f0ff7a;
+    --bg: #000;
+    --text: #fafafa;
+    --secondary-bg: #2a2a2a;
+    --secondary-hover: #3a3a3a;
+    --border: #333;
+  }}
+  * {{
+    box-sizing: border-box;
+  }}
   html, body {{
-    height:100%; margin:0; padding:0;
-    background:#000; color:#fafafa;
+    height:100%; 
+    width:100%;
+    margin:0; 
+    padding:0;
+    background:var(--bg); 
+    color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-    display:flex; align-items:center; justify-content:center;
-    padding:1rem;
+    display:flex; 
+    align-items:center; 
+    justify-content:center;
+    padding:clamp(0.5rem, 2vw, 1rem);
   }}
   .container {{
-    {"width:100%; max-width:500px;" if use_container_width else ""}
+    width:100%;
+    max-width:{("100%" if use_container_width else "min(500px, 100%)")};
+    display:flex;
+    justify-content:center;
   }}
   button {{
-    padding:0.45rem 0.9rem;
-    border:1px solid {"transparent" if is_primary else "#333"};
-    border-radius:0.3rem;
-    background:{"#e8ff59" if is_primary else "#2a2a2a"};
-    color:{"#000" if is_primary else "#fafafa"};
-    font-size:0.9rem;
+    width:{"100%" if use_container_width else "auto"};
+    min-width:{"auto" if use_container_width else "max(80px, fit-content)"};
+    padding:{size_config["padding"]};
+    height:{size_config["height"]};
+    border:1px solid {"transparent" if is_primary else "var(--border)"};
+    border-radius:6px;
+    background:{"var(--primary)" if is_primary else "var(--secondary-bg)"};
+    color:{"#000" if is_primary else "var(--text)"};
+    font-size:{size_config["font_size"]};
     font-weight:500;
     cursor:pointer;
-    transition:all 0.18s ease;
-    {"width:100%;" if use_container_width else ""}
+    transition:all 150ms ease;
+    box-shadow:1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
     {"opacity:0.6; cursor:not-allowed;" if disabled else ""}
   }}
   button:hover:not(:disabled) {{
-    background:{"#f0ff7a" if is_primary else "#3a3a3a"};
+    background:{"var(--primary-hover)" if is_primary else "var(--secondary-hover)"};
     border-color:{"transparent" if is_primary else "#444"};
+    box-shadow:2px 2px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
   }}
   button:active:not(:disabled) {{
     transform:translateY(1px);
+    box-shadow:1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
   }}
   button:focus {{
     outline:none;
-    box-shadow:0 0 0 0.15rem {"rgba(232,255,89,0.4)" if is_primary else "rgba(250,250,250,0.1)"};
+    box-shadow:0 0 0 2px {"rgba(232,255,89,0.4)" if is_primary else "rgba(250,250,250,0.15)"}, 1px 1px 0px 0px rgba(0,0,0,0.3);
+  }}
+  @media (max-width: 480px) {{
+    button {{
+      font-size:max(12px, {size_config["font_size"]});
+      padding:clamp(0.35rem, 1.5vw, {size_config["padding"].split()[0]}) clamp(0.7rem, 3vw, {size_config["padding"].split()[1]});
+    }}
   }}
 </style>
 <div class="container">
@@ -136,33 +180,70 @@ def selectbox(
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
+  :root {{
+    --bg: #121212;
+    --text: #eee;
+    --text-muted: #999;
+    --border: #333;
+    --input-bg: #1b1b1b;
+    --input-hover: #2a2a2a;
+    --primary: #e8ff59;
+  }}
   html, body {{
     height:100%; margin:0; padding:0;
-    background:#121212; color:#eee;
+    background:var(--bg); color:var(--text);
     font-family:system-ui,-apple-system,sans-serif;
     display:flex; flex-direction:column;
     align-items:center; justify-content:center;
+    gap:.5rem;
+  }}
+  .container {{
+    width:min(92vw, 520px);
   }}
   label {{
     display:block;
     font-weight:500;
-    font-size:clamp(14px, 1.6vmin, 18px);
+    font-size:14px;
     margin-bottom:.5rem;
+    color:var(--text);
   }}
   select {{
-    width:80%; max-width:400px;
-    font-size:clamp(14px, 1.6vmin, 18px);
-    padding:.5rem;
-    border:2px solid #444;
+    width:100%;
+    font-size:14px;
+    padding:.5rem .75rem;
+    border:1px solid var(--border);
     border-radius:6px;
-    background:#2a2a2a;
-    color:#fff;
+    background:var(--input-bg);
+    color:var(--text);
     outline:none;
+    cursor:pointer;
+    transition:all 150ms ease;
+    box-shadow:1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+  }}
+  select:hover {{
+    background:var(--input-hover);
+    border-color:#444;
+    box-shadow:2px 2px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+  }}
+  select:focus {{
+    border-color:var(--primary);
+    background:var(--input-hover);
+    box-shadow:0 0 0 1px var(--primary), 2px 2px 0px 0px rgba(0,0,0,0.3);
+  }}
+  select option {{
+    background:var(--input-bg);
+    color:var(--text);
+    padding:.5rem;
+  }}
+  select option:disabled {{
+    color:var(--text-muted);
   }}
 </style>
 
-<label for="sb">{label}</label>
-<select id="sb"></select>
+<div class="container">
+  <label for="sb">{label}</label>
+  <select id="sb"></select>
+</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {{
@@ -212,6 +293,10 @@ document.addEventListener('DOMContentLoaded', () => {{
 </script>
 """
     return html if return_html else common.html_to_obj(html)
+
+
+
+
 
 
 
