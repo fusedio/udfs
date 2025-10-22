@@ -58,26 +58,19 @@ def dropdown(
     default_value: str | None = None,
     label: str = "Select an option:",
     placeholder: str = "— select —",
+    auto_send_on_load: bool = True,
     return_html: bool = False,
 ):
+    import json
     OPTIONS_JS = json.dumps(options, ensure_ascii=False)
     DEFAULT_JS = json.dumps(default_value, ensure_ascii=False)
     html = f"""<!doctype html>
 <meta charset="utf-8">
 <style>
-body {{
-  background:#121212;color:#eee;margin:0;width:100%;height:100%;overflow:hidden;
-}}
-.card {{
-  background:#1e1e1e;padding:2rem;border-radius:8px;
-  box-shadow:0 4px 12px rgba(0,0,0,.6);font-family:system-ui,-apple-system,sans-serif;
-  min-width:280px;
-}}
+body {{ background:#121212;color:#eee;margin:0;width:100%;height:100%;overflow:hidden; }}
+.card {{ background:#1e1e1e;padding:2rem;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.6);font-family:system-ui,-apple-system,sans-serif;min-width:280px; }}
 label{{display:block;margin-bottom:.5rem;font-weight:500;}}
-select{{
-  font-size:1rem;padding:.5rem;width:100%;
-  border:2px solid #444;border-radius:4px;background:#2a2a2a;color:#fff;
-}}
+select{{ font-size:1rem;padding:.5rem;width:100%;border:2px solid #444;border-radius:4px;background:#2a2a2a;color:#fff; }}
 </style>
 <div class="card">
   <label for="dropdown">{label}</label>
@@ -90,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {{
   const CHANNEL = {json.dumps(channel)};
   const SENDER = {json.dumps(sender_id)};
   const PLACE = {json.dumps(placeholder)};
+  const AUTO = {str(auto_send_on_load).lower()};
   const sel = document.getElementById('dropdown');
 
   function normalize(arr){{
@@ -108,7 +102,18 @@ document.addEventListener('DOMContentLoaded', () => {{
   const ph=document.createElement('option');
   ph.textContent=PLACE;ph.disabled=true;ph.selected=true;sel.appendChild(ph);
   for(const o of opts){{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.label;sel.appendChild(opt);}}
-  if(DEF){{const f=Array.from(sel.options).find(o=>o.value===String(DEF));if(f){{f.selected=true;ph.selected=false;}}}}
+
+  let initialValue = null;
+  if (DEF) {{
+    const f=Array.from(sel.options).find(o=>o.value===String(DEF));
+    if(f){{ f.selected=true; ph.selected=false; initialValue = f.value; }}
+  }} else if (opts.length) {{
+    // Select first option visually only if we will auto-send
+    if (AUTO) {{
+      sel.selectedIndex = 1; // 0 is placeholder
+      initialValue = sel.value;
+    }}
+  }}
 
   sel.addEventListener('change',e=>{{
     window.parent.postMessage({{
@@ -117,6 +122,14 @@ document.addEventListener('DOMContentLoaded', () => {{
       origin:SENDER,channel:CHANNEL,ts:Date.now()
     }},'*');
   }});
+
+  if (AUTO && initialValue !== null) {{
+    window.parent.postMessage({{
+      type:'dropdown',
+      payload:{{value: initialValue}},
+      origin:SENDER,channel:CHANNEL,ts:Date.now()
+    }},'*');
+  }}
 }});
 </script>
 """
