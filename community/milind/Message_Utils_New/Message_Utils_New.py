@@ -1,134 +1,212 @@
 import json
 common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/")
 
-@fused.udf
-def udf(channel: str = "channel_40", sender_id: str = "my_udf"):
-    html = button_html(channel=channel, sender_id=sender_id)
+  
+@fused.udf(cache_max_age=0)
+def udf(channel: str = "channel_40"):
+
+    html = button("Click me", channel=channel)
     return html
 
 
 # BUTTON ----------------------------------------------------------------------
-def button_html(channel="channel_1", sender_id="button_1", buttons=None):
-    if buttons is None:
-        buttons = [{"label": "Click me", "value": "clicked"}]
-    BUTTONS_JS = json.dumps(buttons, ensure_ascii=False)
-    return f"""<!doctype html>
+def button(
+    label: str,
+    *,
+    key: str | None = None,
+    help: str | None = None,
+    on_click=None,
+    disabled: bool = False,
+    type: str = "primary",  # "primary" | "secondary"
+    use_container_width: bool = False,
+    # Internal params
+    channel: str | None = None,
+    sender_id: str | None = None,
+    return_html: bool = False,
+):
+    """
+    Streamlit-style button with neon accent.
+    - Primary: #e8ff59 (bright yellow-green)
+    - Secondary: dark gray minimal style
+    """
+    import json
+
+    if key is None:
+        key = f"button_{label.replace(' ', '_').lower()}"
+    if channel is None:
+        channel = f"channel_{key}"
+    if sender_id is None:
+        sender_id = key
+
+    VALUE_JS = json.dumps(str(label))
+    LABEL_JS = json.dumps(str(label))
+
+    is_primary = type == "primary"
+
+    html = f"""<!doctype html>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-body {{
-  background:#121212;color:#eee;margin:0;padding:2rem;
-  font-family:system-ui,-apple-system,sans-serif;
-}}
-button {{
-  font-size:1rem;padding:0.5rem 1rem;margin:0.25rem;
-  background:#2a2a2a;color:#fff;border:2px solid #444;border-radius:6px;cursor:pointer;
-}}
-button:hover {{ background:#333; }}
+  html, body {{
+    height:100%; margin:0; padding:0;
+    background:#000; color:#fafafa;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    display:flex; align-items:center; justify-content:center;
+    padding:1rem;
+  }}
+  .container {{
+    {"width:100%; max-width:500px;" if use_container_width else ""}
+  }}
+  button {{
+    padding:0.45rem 0.9rem;
+    border:1px solid {"transparent" if is_primary else "#333"};
+    border-radius:0.3rem;
+    background:{"#e8ff59" if is_primary else "#2a2a2a"};
+    color:{"#000" if is_primary else "#fafafa"};
+    font-size:0.9rem;
+    font-weight:500;
+    cursor:pointer;
+    transition:all 0.18s ease;
+    {"width:100%;" if use_container_width else ""}
+    {"opacity:0.6; cursor:not-allowed;" if disabled else ""}
+  }}
+  button:hover:not(:disabled) {{
+    background:{"#f0ff7a" if is_primary else "#3a3a3a"};
+    border-color:{"transparent" if is_primary else "#444"};
+  }}
+  button:active:not(:disabled) {{
+    transform:translateY(1px);
+  }}
+  button:focus {{
+    outline:none;
+    box-shadow:0 0 0 0.15rem {"rgba(232,255,89,0.4)" if is_primary else "rgba(250,250,250,0.1)"};
+  }}
 </style>
-<div id="container"></div>
+<div class="container">
+  <button id="btn" {"disabled" if disabled else ""}></button>
+</div>
 <script>
 document.addEventListener('DOMContentLoaded', () => {{
   const CHANNEL = {json.dumps(channel)};
   const SENDER  = {json.dumps(sender_id)};
-  const BUTTONS = {BUTTONS_JS};
-  const cont = document.getElementById('container');
-  for (const b of BUTTONS) {{
-    const btn = document.createElement('button');
-    btn.textContent = b.label ?? b.value;
-    btn.addEventListener('click', () => {{
-      window.parent.postMessage({{
-        type: 'button',
-        payload: {{ key: b.label ?? b.value, value: b.value }},
-        origin: SENDER, channel: CHANNEL, ts: Date.now()
-      }}, '*');
-    }});
-    cont.appendChild(btn);
-  }}
+  const LABEL   = {LABEL_JS};
+  const VALUE   = {VALUE_JS};
+  const btn = document.getElementById('btn');
+  btn.textContent = LABEL;
+  
+  btn.addEventListener('click', () => {{
+    if (btn.disabled) return;
+    window.parent.postMessage({{
+      type: 'button',
+      payload: {{ value: VALUE, label: LABEL }},
+      origin: SENDER, channel: CHANNEL, ts: Date.now()
+    }}, '*');
+  }});
 }});
 </script>
 """
+    return html if return_html else common.html_to_obj(html)
 
-
-
-# DROPDOWN --------------------------------------------------------------------
-def dropdown(
-    options: list,
+# SELECTBOX --------------------------------------------------------------------
+def selectbox(
+    label: str,
+    options,
+    *,
+    index: int | None = 0,
+    format_func=None,
+    placeholder: str | None = None,
     channel: str = "channel_1",
-    sender_id: str = "dropdown_1",
-    default_value: str | None = None,
-    label: str = "Select an option:",
-    placeholder: str = "— select —",
+    sender_id: str = "selectbox_1",
     auto_send_on_load: bool = True,
     return_html: bool = False,
 ):
     import json
-    OPTIONS_JS = json.dumps(options, ensure_ascii=False)
-    DEFAULT_JS = json.dumps(default_value, ensure_ascii=False)
+
+    if not isinstance(options, (list, tuple)):
+        options = list(options)
+    values = list(options)
+    labels = [str(format_func(v)) if callable(format_func) else str(v) for v in values]
+
+    opts = [{"value": str(values[i]), "label": labels[i]} for i in range(len(values))]
+    OPTIONS_JS = json.dumps(opts, ensure_ascii=False)
+    INDEX_JS = "null" if index is None else json.dumps(int(index))
+    PLACE_JS = json.dumps(placeholder or "Select an option…")
+
     html = f"""<!doctype html>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-body {{ background:#121212;color:#eee;margin:0;width:100%;height:100%;overflow:hidden; }}
-.card {{ background:#1e1e1e;padding:2rem;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.6);font-family:system-ui,-apple-system,sans-serif;min-width:280px; }}
-label{{display:block;margin-bottom:.5rem;font-weight:500;}}
-select{{ font-size:1rem;padding:.5rem;width:100%;border:2px solid #444;border-radius:4px;background:#2a2a2a;color:#fff; }}
+  html, body {{
+    height:100%; margin:0; padding:0;
+    background:#121212; color:#eee;
+    font-family:system-ui,-apple-system,sans-serif;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+  }}
+  label {{
+    display:block;
+    font-weight:500;
+    font-size:clamp(14px, 1.6vmin, 18px);
+    margin-bottom:.5rem;
+  }}
+  select {{
+    width:80%; max-width:400px;
+    font-size:clamp(14px, 1.6vmin, 18px);
+    padding:.5rem;
+    border:2px solid #444;
+    border-radius:6px;
+    background:#2a2a2a;
+    color:#fff;
+    outline:none;
+  }}
 </style>
-<div class="card">
-  <label for="dropdown">{label}</label>
-  <select id="dropdown"></select>
-</div>
+
+<label for="sb">{label}</label>
+<select id="sb"></select>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {{
-  const RAW = {OPTIONS_JS};
-  const DEF = {DEFAULT_JS};
+  const OPTIONS = {OPTIONS_JS};
+  const INDEX   = {INDEX_JS};
+  const PLACE   = {PLACE_JS};
   const CHANNEL = {json.dumps(channel)};
-  const SENDER = {json.dumps(sender_id)};
-  const PLACE = {json.dumps(placeholder)};
-  const AUTO = {str(auto_send_on_load).lower()};
-  const sel = document.getElementById('dropdown');
+  const SENDER  = {json.dumps(sender_id)};
+  const AUTO    = {str(auto_send_on_load).lower()};
+  const sel     = document.getElementById('sb');
 
-  function normalize(arr){{
-    if(!Array.isArray(arr)) return [];
-    return arr.map((x,i)=>{{
-      if(['string','number','boolean'].includes(typeof x)){{const s=String(x);return{{value:s,label:s}};}}
-      if(Array.isArray(x)){{const v=x[0],l=x[1]??v;return{{value:String(v),label:String(l)}};}}
-      if(x&&typeof x==='object'){{const v=x.value??x.id??x.key??x.name??x.path??x.url??('opt_'+i);
-        const l=x.label??x.name??x.title??x.text??v;return{{value:String(v),label:String(l)}};}}
-      const s=String(x);return{{value:s,label:s}};
-    }});
+  sel.innerHTML = '';
+  const ph = document.createElement('option');
+  ph.textContent = PLACE;
+  ph.disabled = true;
+  ph.selected = (INDEX === null);
+  sel.appendChild(ph);
+
+  for (const o of OPTIONS) {{
+    const opt = document.createElement('option');
+    opt.value = o.value;
+    opt.textContent = o.label;
+    sel.appendChild(opt);
   }}
-
-  const opts=normalize(RAW);
-  sel.innerHTML='';
-  const ph=document.createElement('option');
-  ph.textContent=PLACE;ph.disabled=true;ph.selected=true;sel.appendChild(ph);
-  for(const o of opts){{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.label;sel.appendChild(opt);}}
 
   let initialValue = null;
-  if (DEF) {{
-    const f=Array.from(sel.options).find(o=>o.value===String(DEF));
-    if(f){{ f.selected=true; ph.selected=false; initialValue = f.value; }}
-  }} else if (opts.length) {{
-    // Select first option visually only if we will auto-send
-    if (AUTO) {{
-      sel.selectedIndex = 1; // 0 is placeholder
-      initialValue = sel.value;
-    }}
+  if (INDEX !== null) {{
+    const targetIndex = Math.max(0, Math.min(OPTIONS.length - 1, Number(INDEX)));
+    sel.selectedIndex = targetIndex + 1; // +1 for placeholder
+    initialValue = OPTIONS[targetIndex]?.value ?? null;
   }}
 
-  sel.addEventListener('change',e=>{{
+  function post(val) {{
     window.parent.postMessage({{
-      type:'dropdown',
-      payload:{{value:e.target.value}},
-      origin:SENDER,channel:CHANNEL,ts:Date.now()
-    }},'*');
-  }});
+      type:'selectbox',
+      payload:{{ value: val }},
+      origin:SENDER, channel:CHANNEL, ts:Date.now()
+    }}, '*');
+  }}
+
+  sel.addEventListener('change', e => post(e.target.value));
 
   if (AUTO && initialValue !== null) {{
-    window.parent.postMessage({{
-      type:'dropdown',
-      payload:{{value: initialValue}},
-      origin:SENDER,channel:CHANNEL,ts:Date.now()
-    }},'*');
+    queueMicrotask(() => post(initialValue));
   }}
 }});
 </script>
@@ -136,66 +214,201 @@ document.addEventListener('DOMContentLoaded', () => {{
     return html if return_html else common.html_to_obj(html)
 
 
+
+
 # SLIDER ----------------------------------------------------------------------
 def slider(
+    label: str,
+    min_value=None,
+    max_value=None,
+    value=None,
+    step=None,
+    format: str | None = None,
+    *,
     channel: str = "channel_1",
     sender_id: str = "slider_1",
-    label: str = "Select a value:",
-    min_value: float = 0,
-    max_value: float = 100,
-    default_value: float | None = None,
     auto_send_on_load: bool = True,
     return_html: bool = False,
+    send: str = "end",           # "end" | "continuous"
+    debounce_ms: int = 64,
 ):
-    if default_value is None:
-        default_value = (min_value + max_value) / 2
+    import json
+
+    is_range = isinstance(value, (list, tuple)) and len(value) == 2
+
+    if min_value is None or max_value is None:
+        if is_range:
+            if min_value is None: min_value = value[0]
+            if max_value is None: max_value = value[1]
+        else:
+            if min_value is None: min_value = 0
+            if max_value is None: max_value = 100
+
+    if value is None:
+        value = (min_value, max_value) if is_range else min_value
+
+    if step is None:
+        nums = [min_value, max_value] + (list(value) if is_range else [value])
+        step = 1 if all(isinstance(x, int) for x in nums) else 0.01
+
+    fmt = format or "{val}"
+
+    VAL_JS  = json.dumps(list(value) if is_range else value)
+    MIN_JS  = json.dumps(min_value)
+    MAX_JS  = json.dumps(max_value)
+    STEP_JS = json.dumps(step)
+    FMT_JS  = json.dumps(fmt)
+    SEND_JS = json.dumps(send)
+    DB_JS   = json.dumps(max(0, int(debounce_ms)))
+
     html = f"""<!doctype html>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-body {{
-  background:#121212;color:#eee;margin:0;height:100vh;display:flex;align-items:center;justify-content:center;
-  font:14px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-}}
-.card {{ background:#1e1e1e;padding:1.5rem 2rem;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.6);width:320px; }}
-label{{display:block;margin-bottom:.5rem;font-weight:500;}}
-input[type=range]{{ width:100%;height:6px;background:#2a2a2a;border:2px solid #444;border-radius:4px;outline:none; }}
-input[type=range]::-webkit-slider-thumb{{ -webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#eee;border:2px solid #444;cursor:pointer; }}
-.val{{margin-top:.75rem;font-size:1rem;text-align:center;color:#ccc;}}
+  html, body {{
+    height:100%; margin:0; padding:0;
+    background:#121212; color:#eee;
+    font-family:system-ui,-apple-system,sans-serif;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:.75rem;
+  }}
+  .row {{ width:min(92vw, 520px); display:flex; gap:.65rem; align-items:center; }}
+  .label {{ font-weight:600; font-size:clamp(14px, 1.6vmin, 18px); opacity:.95; }}
+  .value {{ min-width:78px; text-align:right; color:#ddd; font-variant-numeric:tabular-nums; }}
+
+  .slider-wrap {{ position:relative; display:flex; align-items:center; width:100%; height:28px; }}
+  .track {{
+    position:absolute; left:0; right:0; height:4px; border-radius:999px;
+    background:#2a2a2a; border:1px solid #3a3a3a;
+  }}
+  .fill {{
+    position:absolute; height:4px; border-radius:999px;
+    background:#e8ff59;
+  }}
+  input[type=range] {{
+    appearance:none; -webkit-appearance:none;
+    position:relative; width:100%; height:28px; margin:0; background:transparent; outline:none;
+  }}
+  input[type=range]::-webkit-slider-thumb {{
+    -webkit-appearance:none; appearance:none;
+    width:16px; height:16px; border-radius:50%;
+    background:#e8ff59; border:none; cursor:pointer;
+    margin-top:-6px;
+  }}
+  input[type=range]::-moz-range-thumb {{
+    width:16px; height:16px; border-radius:50%;
+    background:#e8ff59; border:none; cursor:pointer;
+  }}
 </style>
-<div class="card">
-  <label for="rng">{label}</label>
-  <input id="rng" type="range" min="{min_value}" max="{max_value}" step="1" value="{default_value}">
-  <div id="val" class="val">{default_value}</div>
+
+<div class="row">
+  <div class="label">{label}</div>
+  <div class="value" id="valtxt"></div>
 </div>
+
+<!-- Single -->
+<div id="single" class="slider-wrap" style="display:none">
+  <div class="track"></div>
+  <div class="fill" id="fill"></div>
+  <input id="rng" type="range" />
+</div>
+
+<!-- Range -->
+<div id="range" class="slider-wrap" style="display:none">
+  <div class="track"></div>
+  <div class="fill" id="fillr"></div>
+  <input id="rng0" type="range" />
+  <input id="rng1" type="range" />
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {{
   const CHANNEL = {json.dumps(channel)};
   const SENDER  = {json.dumps(sender_id)};
+  const MIN = {MIN_JS};
+  const MAX = {MAX_JS};
+  const STEP = {STEP_JS};
+  const INIT = {VAL_JS};
+  const FMT  = {FMT_JS};
   const AUTO = {str(auto_send_on_load).lower()};
-  const rng = document.getElementById('rng');
-  const val = document.getElementById('val');
-  let v = Number(rng.value);
+  const SEND = {SEND_JS};
+  const DEBOUNCE = {DB_JS};
+  const isRange = Array.isArray(INIT);
+  const valtxt = document.getElementById('valtxt');
 
-  function post(valToSend) {{
+  function fmt(v){{
+    if (FMT.includes("{{val}}")) return FMT.replace("{{val}}", String(v));
+    const m = FMT.match(/^%0?\\.(\\d+)f$/);
+    if (m) return Number(v).toFixed(Number(m[1]));
+    return String(v);
+  }}
+
+  function post(val){{
     window.parent.postMessage({{
       type:'slider',
-      payload:{{value: valToSend}},
-      origin:SENDER,channel:CHANNEL,ts:Date.now()
-    }},'*');
+      payload:{{ value: val }},
+      origin:SENDER, channel:CHANNEL, ts:Date.now()
+    }}, '*');
   }}
 
-  if (AUTO) {{
-    post(v);
+  function setFillSingle(input, fillEl){{
+    const p = (input.value - input.min) / (input.max - input.min);
+    fillEl.style.left = "0";
+    fillEl.style.width = (Math.max(0, Math.min(1, p)) * 100).toFixed(4) + "%";
+  }}
+  function setFillRange(i0, i1, fillEl){{
+    const p0 = (i0.value - i0.min) / (i0.max - i0.min);
+    const p1 = (i1.value - i1.min) / (i1.max - i1.min);
+    const left = Math.min(p0, p1);
+    const right = Math.max(p0, p1);
+    fillEl.style.left = (left * 100).toFixed(4) + "%";
+    fillEl.style.width = ((right - left) * 100).toFixed(4) + "%";
   }}
 
-  rng.addEventListener('input', () => {{
-    v = Number(rng.value);
-    val.textContent = v;
-  }});
+  function debounced(fn, ms){{
+    let t=null, lastArgs=null;
+    return (...a)=>{{lastArgs=a;clearTimeout(t);t=setTimeout(()=>fn(...lastArgs),ms);}};
+  }}
 
-  const send = () => post(v);
-  rng.addEventListener('mouseup', send);
-  rng.addEventListener('touchend', send);
+  if (!isRange){{
+    const wrap=document.getElementById('single');
+    const fill=document.getElementById('fill');
+    const rng=document.getElementById('rng');
+    wrap.style.display='';
+    rng.min=MIN; rng.max=MAX; rng.step=STEP; rng.value=INIT;
+    valtxt.textContent=fmt(INIT); setFillSingle(rng,fill);
+    const sendNow=()=>post(Number(rng.value));
+    const sendDeb=debounced(sendNow,DEBOUNCE);
+
+    rng.addEventListener('input',()=>{{
+      valtxt.textContent=fmt(rng.value);
+      setFillSingle(rng,fill);
+      if(SEND==="continuous")sendDeb();
+    }});
+    if(SEND==="end"){{
+      rng.addEventListener('mouseup',sendNow);
+      rng.addEventListener('touchend',sendNow);
+    }}
+    if(AUTO)queueMicrotask(sendNow);
+  }} else {{
+    const wrap=document.getElementById('range');
+    const fill=document.getElementById('fillr');
+    const r0=document.getElementById('rng0');
+    const r1=document.getElementById('rng1');
+    wrap.style.display='';
+    r0.min=MIN;r0.max=MAX;r0.step=STEP;
+    r1.min=MIN;r1.max=MAX;r1.step=STEP;
+    r0.value=INIT[0];r1.value=INIT[1];
+    const sendNow=()=>post([Number(r0.value),Number(r1.value)]);
+    const sendDeb=debounced(sendNow,DEBOUNCE);
+    function clamp(){{if(Number(r0.value)>Number(r1.value))r0.value=r1.value;}}
+    function show(){{valtxt.textContent=fmt(r0.value)+" – "+fmt(r1.value);setFillRange(r0,r1,fill);}}
+    r0.addEventListener('input',()=>{{clamp();show();if(SEND==="continuous")sendDeb();}});
+    r1.addEventListener('input',()=>{{clamp();show();if(SEND==="continuous")sendDeb();}});
+    if(SEND==="end"){{r0.addEventListener('mouseup',sendNow);r1.addEventListener('mouseup',sendNow);
+                     r0.addEventListener('touchend',sendNow);r1.addEventListener('touchend',sendNow);}}
+    show(); if(AUTO)queueMicrotask(sendNow);
+  }}
 }});
 </script>
 """
@@ -326,37 +539,84 @@ document.addEventListener('DOMContentLoaded', () => {{
 # Text Input ----------------------------------------------------------------------
 
 def text_input(
-    channel: str = "channel_text",
-    sender_id: str = "text_input_1",
+    label: str,
+    *,
     placeholder: str = "Type something...",
     button_label: str = "Send",
+    disabled: bool = False,
+    channel: str = "channel_text",
+    sender_id: str = "text_input_1",
     return_html: bool = False,
 ):
     import json
+
     html = f"""<!doctype html>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  html,body {{
-    margin:0; padding:0; height:100%;
-    background:#121212; color:#eee;
-    font:15px system-ui,-apple-system,sans-serif;
-    display:flex; align-items:center; justify-content:center;
+  html, body {{
+    height:100%; margin:0; padding:0;
+    background:#0e1117; color:#fafafa;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:.75rem;
   }}
-  #box {{ display:flex; gap:.5rem; }}
-  input {{
-    padding:.5rem; border:1px solid #555; border-radius:4px;
-    background:#1e1e1e; color:#fff; width:240px;
+  label {{
+    width:min(92vw, 520px);
+    font-weight:500;
+    font-size:clamp(14px, 1.6vmin, 18px);
+  }}
+  .row {{
+    width:min(92vw, 520px);
+    display:flex; gap:.5rem; align-items:center;
+  }}
+  input[type="text"] {{
+    flex:1;
+    box-sizing:border-box;
+    padding:0.5rem 0.75rem;
+    background:#1b1b1b;
+    color:#fafafa;
+    border:1px solid #333;
+    border-radius:0.3rem;
+    font-size:0.95rem;
+    outline:none;
+    {"opacity:.6; cursor:not-allowed;" if disabled else ""}
+  }}
+  input[type="text"]:hover:not(:disabled) {{
+    border-color:#444;
+  }}
+  input[type="text"]:focus {{
+    border-color:#555;
+    background:#1f1f1f;
+  }}
+  ::placeholder {{
+    color:#777;
+    opacity:1;
   }}
   button {{
-    padding:.5rem 1rem; background:#333; border:1px solid #555;
-    border-radius:4px; color:#fff; cursor:pointer;
+    padding:0.5rem 1rem;
+    background:#2a2a2a;
+    border:1px solid #444;
+    border-radius:0.3rem;
+    color:#fafafa;
+    font-size:0.9rem;
+    cursor:pointer;
+    transition:background .15s, border-color .15s;
+    {"opacity:.6; cursor:not-allowed;" if disabled else ""}
   }}
-  button:hover {{ background:#444; }}
+  button:hover:not(:disabled) {{
+    background:#333;
+    border-color:#555;
+  }}
+  button:active:not(:disabled) {{
+    background:#3a3a3a;
+  }}
 </style>
 
-<div id="box">
-  <input id="txt" placeholder="{placeholder}">
-  <button id="send">{button_label}</button>
+<label for="txt">{label}</label>
+<div class="row">
+  <input id="txt" type="text" placeholder="{placeholder}" {("disabled" if disabled else "")}/>
+  <button id="send" {("disabled" if disabled else "")}>{button_label}</button>
 </div>
 
 <script>
@@ -367,16 +627,22 @@ document.addEventListener('DOMContentLoaded', () => {{
   const btn   = document.getElementById('send');
 
   btn.addEventListener('click', () => {{
+    if (btn.disabled) return;
     const value = input.value.trim();
     if (!value) return;
     window.parent.postMessage({{
-      type: 'vars',
-      payload: {{ vars: {{ [CHANNEL]: value }} }},
+      type: 'text_input',
+      payload: {{ value }},
       origin: SENDER, channel: CHANNEL, ts: Date.now()
     }}, '*');
+  }});
+
+  input.addEventListener('keydown', (e) => {{
+    if (e.key === 'Enter' && !btn.disabled) {{
+      btn.click();
+    }}
   }});
 }});
 </script>
 """
     return html if return_html else common.html_to_obj(html)
-
