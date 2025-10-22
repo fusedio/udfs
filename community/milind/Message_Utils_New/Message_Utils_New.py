@@ -1,11 +1,9 @@
 import json
 common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/")
 
-  
 @fused.udf(cache_max_age=0)
-def udf(channel: str = "channel_40"):
-
-    html = button("Click me", channel=channel)
+def udf(parameter: str = "channel_40"):
+    html = button("Click me", parameter=parameter)
     return html
 
 
@@ -21,7 +19,7 @@ def button(
     use_container_width: bool = False,
     size: str = "medium",  # "small" | "medium" | "large"
     # Internal params
-    channel: str | None = None,
+    parameter: str | None = None,
     sender_id: str | None = None,
     return_html: bool = False,
 ):
@@ -34,8 +32,8 @@ def button(
 
     if key is None:
         key = f"button_{label.replace(' ', '_').lower()}"
-    if channel is None:
-        channel = f"channel_{key}"
+    if parameter is None:
+        parameter = f"channel_{key}"
     if sender_id is None:
         sender_id = key
 
@@ -131,7 +129,7 @@ def button(
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', () => {{
-  const CHANNEL = {json.dumps(channel)};
+  const PARAMETER = {json.dumps(parameter)};
   const SENDER  = {json.dumps(sender_id)};
   const LABEL   = {LABEL_JS};
   const VALUE   = {VALUE_JS};
@@ -143,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {{
     window.parent.postMessage({{
       type: 'button',
       payload: {{ value: VALUE, label: LABEL }},
-      origin: SENDER, channel: CHANNEL, ts: Date.now()
+      origin: SENDER, parameter: PARAMETER, ts: Date.now()
     }}, '*');
   }});
 }});
@@ -159,7 +157,7 @@ def selectbox(
     index: int | None = 0,
     format_func=None,
     placeholder: str | None = None,
-    channel: str = "channel_1",
+    parameter: str = "channel_1",
     sender_id: str = "selectbox_1",
     auto_send_on_load: bool = True,
     return_html: bool = False,
@@ -250,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {{
   const OPTIONS = {OPTIONS_JS};
   const INDEX   = {INDEX_JS};
   const PLACE   = {PLACE_JS};
-  const CHANNEL = {json.dumps(channel)};
+  const PARAMETER = {json.dumps(parameter)};
   const SENDER  = {json.dumps(sender_id)};
   const AUTO    = {str(auto_send_on_load).lower()};
   const sel     = document.getElementById('sb');
@@ -280,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {{
     window.parent.postMessage({{
       type:'selectbox',
       payload:{{ value: val }},
-      origin:SENDER, channel:CHANNEL, ts:Date.now()
+      origin:SENDER, parameter:PARAMETER, ts:Date.now()
     }}, '*');
   }}
 
@@ -295,12 +293,6 @@ document.addEventListener('DOMContentLoaded', () => {{
     return html if return_html else common.html_to_obj(html)
 
 
-
-
-
-
-
-
 # SLIDER ----------------------------------------------------------------------
 def slider(
     label: str = None,
@@ -310,7 +302,7 @@ def slider(
     step=None,
     format: str | None = None,
     *,
-    channel: str = "channel_1",
+    parameter: str = "channel_1",
     sender_id: str = "slider_1",
     auto_send_on_load: bool = True,
     return_html: bool = False,
@@ -507,7 +499,7 @@ def slider(
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {{
-  const CHANNEL = {json.dumps(channel)};
+  const PARAMETER = {json.dumps(parameter)};
   const SENDER  = {json.dumps(sender_id)};
   const MIN = {MIN_JS};
   const MAX = {MAX_JS};
@@ -531,7 +523,7 @@ document.addEventListener('DOMContentLoaded', () => {{
     window.parent.postMessage({{
       type:'slider',
       payload:{{ value: val }},
-      origin:SENDER, channel:CHANNEL, ts:Date.now()
+      origin:SENDER, parameter:PARAMETER, ts:Date.now()
     }}, '*');
   }}
 
@@ -617,7 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {{
       tt1.textContent=fmt(r1.value);
       setFillRange(r0,r1,fill,tc0,tc1);
     }}
-    r0.addEventListener('input',()=>{{clamp();show();if(SEND==="continuous")sendDeb();}});
+    r0.addEventListener('input',()=>{{clamp();show();if(SEND==="continuous")sendDeb();}}); 
     r1.addEventListener('input',()=>{{clamp();show();if(SEND==="continuous")sendDeb();}});
     r0.addEventListener('mouseenter',()=>tc0.classList.add('show-tooltip'));
     r0.addEventListener('mouseleave',()=>tc0.classList.remove('show-tooltip'));
@@ -638,7 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {{
 
 
 def map_draw_html(
-    channel: str = "channel_1",
+    parameter: str = "channel_1",
     sender_id: str = "draw_1",
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     center_lng: float = -74.0,
@@ -671,7 +663,7 @@ def map_draw_html(
 <script>
 document.addEventListener('DOMContentLoaded', () => {{
   mapboxgl.accessToken = {json.dumps(mapbox_token)};
-  const CHANNEL = {json.dumps(channel)};
+  const PARAMETER = {json.dumps(parameter)};
   const SENDER  = {json.dumps(sender_id)};
   const INCLUDE_BOUNDS = {str(include_bounds).lower()};
 
@@ -749,7 +741,7 @@ document.addEventListener('DOMContentLoaded', () => {{
       type: 'vars',
       payload: {{ vars }},
       origin: SENDER,
-      channel: CHANNEL,
+      parameter: PARAMETER,
       ts: Date.now()
     }}, '*');
   }});
@@ -759,14 +751,13 @@ document.addEventListener('DOMContentLoaded', () => {{
     return html if return_html else common.html_to_obj(html)
 
 # Text Input ----------------------------------------------------------------------
-
 def text_input(
     label: str,
     *,
     placeholder: str = "Type something...",
     button_label: str = "Send",
     disabled: bool = False,
-    channel: str = "channel_text",
+    parameter: str = "channel_text",
     sender_id: str = "text_input_1",
     return_html: bool = False,
 ):
@@ -843,7 +834,7 @@ def text_input(
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {{
-  const CHANNEL = {json.dumps(channel)};
+  const PARAMETER = {json.dumps(parameter)};
   const SENDER  = {json.dumps(sender_id)};
   const input = document.getElementById('txt');
   const btn   = document.getElementById('send');
@@ -855,7 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {{
     window.parent.postMessage({{
       type: 'text_input',
       payload: {{ value }},
-      origin: SENDER, channel: CHANNEL, ts: Date.now()
+      origin: SENDER, parameter: PARAMETER, ts: Date.now()
     }}, '*');
   }});
 
