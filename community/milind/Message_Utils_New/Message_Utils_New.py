@@ -131,6 +131,7 @@ def slider(
     min_value: float = 0,
     max_value: float = 100,
     default_value: float | None = None,
+    auto_send_on_load: bool = True,
     return_html: bool = False,
 ):
     if default_value is None:
@@ -139,23 +140,13 @@ def slider(
 <meta charset="utf-8">
 <style>
 body {{
-  background:#121212;color:#eee;margin:0;height:100vh;
-  display:flex;align-items:center;justify-content:center;
+  background:#121212;color:#eee;margin:0;height:100vh;display:flex;align-items:center;justify-content:center;
   font:14px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
 }}
-.card {{
-  background:#1e1e1e;padding:1.5rem 2rem;border-radius:8px;
-  box-shadow:0 4px 12px rgba(0,0,0,.6);width:320px;
-}}
+.card {{ background:#1e1e1e;padding:1.5rem 2rem;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.6);width:320px; }}
 label{{display:block;margin-bottom:.5rem;font-weight:500;}}
-input[type=range]{{
-  width:100%;height:6px;background:#2a2a2a;border:2px solid #444;
-  border-radius:4px;outline:none;
-}}
-input[type=range]::-webkit-slider-thumb{{
-  -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
-  background:#eee;border:2px solid #444;cursor:pointer;
-}}
+input[type=range]{{ width:100%;height:6px;background:#2a2a2a;border:2px solid #444;border-radius:4px;outline:none; }}
+input[type=range]::-webkit-slider-thumb{{ -webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#eee;border:2px solid #444;cursor:pointer; }}
 .val{{margin-top:.75rem;font-size:1rem;text-align:center;color:#ccc;}}
 </style>
 <div class="card">
@@ -167,20 +158,29 @@ input[type=range]::-webkit-slider-thumb{{
 document.addEventListener('DOMContentLoaded', () => {{
   const CHANNEL = {json.dumps(channel)};
   const SENDER  = {json.dumps(sender_id)};
+  const AUTO = {str(auto_send_on_load).lower()};
   const rng = document.getElementById('rng');
   const val = document.getElementById('val');
   let v = Number(rng.value);
+
+  function post(valToSend) {{
+    window.parent.postMessage({{
+      type:'slider',
+      payload:{{value: valToSend}},
+      origin:SENDER,channel:CHANNEL,ts:Date.now()
+    }},'*');
+  }}
+
+  if (AUTO) {{
+    post(v);
+  }}
+
   rng.addEventListener('input', () => {{
     v = Number(rng.value);
     val.textContent = v;
   }});
-  const send = () => {{
-    window.parent.postMessage({{
-      type:'slider',
-      payload:{{value:v}},
-      origin:SENDER,channel:CHANNEL,ts:Date.now()
-    }},'*');
-  }};
+
+  const send = () => post(v);
   rng.addEventListener('mouseup', send);
   rng.addEventListener('touchend', send);
 }});
