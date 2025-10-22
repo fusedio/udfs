@@ -322,3 +322,61 @@ document.addEventListener('DOMContentLoaded', () => {{
 </script>
 """
     return html if return_html else common.html_to_obj(html)
+
+# Text Input ----------------------------------------------------------------------
+
+def text_input(
+    channel: str = "channel_text",
+    sender_id: str = "text_input_1",
+    placeholder: str = "Type something...",
+    button_label: str = "Send",
+    return_html: bool = False,
+):
+    import json
+    html = f"""<!doctype html>
+<meta charset="utf-8">
+<style>
+  html,body {{
+    margin:0; padding:0; height:100%;
+    background:#121212; color:#eee;
+    font:15px system-ui,-apple-system,sans-serif;
+    display:flex; align-items:center; justify-content:center;
+  }}
+  #box {{ display:flex; gap:.5rem; }}
+  input {{
+    padding:.5rem; border:1px solid #555; border-radius:4px;
+    background:#1e1e1e; color:#fff; width:240px;
+  }}
+  button {{
+    padding:.5rem 1rem; background:#333; border:1px solid #555;
+    border-radius:4px; color:#fff; cursor:pointer;
+  }}
+  button:hover {{ background:#444; }}
+</style>
+
+<div id="box">
+  <input id="txt" placeholder="{placeholder}">
+  <button id="send">{button_label}</button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {{
+  const CHANNEL = {json.dumps(channel)};
+  const SENDER  = {json.dumps(sender_id)};
+  const input = document.getElementById('txt');
+  const btn   = document.getElementById('send');
+
+  btn.addEventListener('click', () => {{
+    const value = input.value.trim();
+    if (!value) return;
+    window.parent.postMessage({{
+      type: 'vars',
+      payload: {{ vars: {{ [CHANNEL]: value }} }},
+      origin: SENDER, channel: CHANNEL, ts: Date.now()
+    }}, '*');
+  }});
+}});
+</script>
+"""
+    return html if return_html else common.html_to_obj(html)
+
