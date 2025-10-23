@@ -2,10 +2,11 @@ import json
 common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/")
 
 @fused.udf(cache_max_age=0)
-def udf(parameter: str = "channel_40"):
-    html = button("Click me", parameter=parameter)
+def udf(parameter: str = "yay"):
+    # html = button("Click me", parameter=parameter)
+    html = slider("Slider", parameter=parameter)
     return html
-
+ 
 
 # BUTTON ----------------------------------------------------------------------
 def button(
@@ -77,19 +78,21 @@ def button(
     display:flex; 
     align-items:center; 
     justify-content:center;
-    padding:clamp(0.5rem, 2vw, 1rem);
+    padding:clamp(0rem, 0vw, 0rem);
   }}
   .container {{
     width:100%;
+    height:100%;
     max-width:{("100%" if use_container_width else "min(500px, 100%)")};
     display:flex;
-    justify-content:center;
+    object-fit:contain;
   }}
   button {{
     width:{"100%" if use_container_width else "auto"};
     min-width:{"auto" if use_container_width else "max(80px, fit-content)"};
-    padding:{size_config["padding"]};
-    height:{size_config["height"]};
+    width:100%;
+    padding:0#{size_config["padding"]};
+    # height:{size_config["height"]};
     border:1px solid {"transparent" if is_primary else "var(--border)"};
     border-radius:6px;
     background:{"var(--primary)" if is_primary else "var(--secondary-bg)"};
@@ -328,6 +331,17 @@ def slider(
         nums = [min_value, max_value] + (list(value) if is_range else [value])
         step = 1 if all(isinstance(x, int) for x in nums) else 0.01
 
+    # Validation
+    if min_value >= max_value:
+        raise ValueError(f"min_value ({min_value}) must be less than max_value ({max_value})")
+    
+    if is_range:
+        if not (min_value <= value[0] <= max_value and min_value <= value[1] <= max_value):
+            raise ValueError(f"value {value} must be within range [{min_value}, {max_value}]")
+    else:
+        if not (min_value <= value <= max_value):
+            raise ValueError(f"value {value} must be within range [{min_value}, {max_value}]")
+
     fmt = format or "{val}"
 
     VAL_JS  = json.dumps(list(value) if is_range else value)
@@ -352,120 +366,133 @@ def slider(
     --border: #3a3a3a;
   }}
   html, body {{
-    height:100%; margin:0; padding:0;
-    background:var(--bg); color:var(--text);
-    font-family:system-ui,-apple-system,sans-serif;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:.75rem;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
   }}
   .label {{ 
-    width:min(92vw, 520px);
-    font-weight:500; 
-    font-size:14px; 
-    margin-bottom:.5rem;
+    width: 90vw;
+    color: #ddd;
+    font-size: min(25vh, 25px);
+    margin-bottom: min(10vh, 10px);
   }}
   .slider-container {{
-    width:min(92vw, 520px);
-    display:flex; 
-    gap:.5rem; 
-    align-items:center;
+    width: 90vw;
+    display: flex;
+    align-items: center;
+    gap: clamp(8px, 2vw, 16px);
   }}
   .slider-wrap {{ 
-    position:relative; 
-    display:flex; 
-    align-items:center; 
-    flex:1;
-    height:20px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    height: min(25vh, 25px);
   }}
   .track {{
-    position:absolute; 
-    left:0; right:0; 
-    height:8px; 
-    border-radius:999px;
-    background:var(--track-bg);
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: min(15vh, 15px);
+    border-radius: min(15vh, 15px);
+    background: var(--track-bg);
   }}
   .fill {{
-    position:absolute; 
-    height:8px; 
-    border-radius:999px;
-    background:var(--primary);
+    position: absolute;
+    height: min(15vh, 15px);
+    border-radius: min(15vh, 15px);
+    background: var(--primary);
   }}
   .value {{ 
-    min-width:48px; 
-    text-align:left; 
-    color:var(--text-muted); 
-    font-size:12px;
-    font-variant-numeric:tabular-nums;
+    min-width: min(15vh, 15px);
+    text-align: left;
+    color: var(--text-muted);
+    font-size: min(15vh, 15px);
+    font-variant-numeric: tabular-nums;
   }}
   input[type=range] {{
-    appearance:none; -webkit-appearance:none;
-    position:relative; 
-    width:100%; 
-    height:20px; 
-    margin:0; 
-    background:transparent; 
-    outline:none;
-    cursor:pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    position: relative;
+    width: 100%;
+    height: min(15vh, 15px);
+    margin: 0;
+    background: transparent;
+    outline: none;
+    cursor: pointer;
+  }}
+  input[type=range]:focus-visible {{
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 4px;
   }}
   input[type=range]::-webkit-slider-thumb {{
-    -webkit-appearance:none; 
-    appearance:none;
-    width:16px; 
-    height:16px; 
-    border-radius:50%;
-    background:#fff; 
-    border:1px solid var(--primary);
-    box-shadow:1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
-    cursor:pointer;
-    transition:background-color 200ms;
+    -webkit-appearance: none;
+    appearance: none;
+    width: clamp(16px, 4vh, 20px);
+    height: clamp(16px, 4vh, 20px);
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--primary);
+    box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+    cursor: pointer;
+    transition: background-color 200ms;
   }}
   input[type=range]::-webkit-slider-thumb:hover {{
-    background:var(--primary-hover);
+    background: var(--primary-hover);
   }}
   input[type=range]::-moz-range-thumb {{
-    width:16px; 
-    height:16px; 
-    border-radius:50%;
-    background:#fff; 
-    border:1px solid var(--primary);
-    box-shadow:1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
-    cursor:pointer;
-    transition:background-color 200ms;
+    width: clamp(16px, 4vh, 20px);
+    height: clamp(16px, 4vh, 20px);
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--primary);
+    box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+    cursor: pointer;
+    transition: background-color 200ms;
   }}
   input[type=range]::-moz-range-thumb:hover {{
-    background:var(--primary-hover);
+    background: var(--primary-hover);
   }}
   .tooltip {{
-    position:absolute;
-    bottom:100%;
-    left:50%;
-    transform:translateX(-50%);
-    background:#fff;
-    color:#000;
-    padding:4px 10px;
-    border-radius:6px;
-    font-size:13px;
-    white-space:nowrap;
-    opacity:0;
-    visibility:hidden;
-    transition:opacity 150ms, visibility 150ms;
-    margin-bottom:8px;
-    pointer-events:none;
-    box-shadow:0 2px 8px rgba(0,0,0,0.15);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: clamp(11px, 2.5vw, 13px);
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 150ms, visibility 150ms;
+    margin-bottom: 8px;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   }}
   .thumb-container {{
-    position:absolute;
-    width:16px;
-    height:20px;
-    pointer-events:none;
+    position: absolute;
+    width: clamp(16px, 4vh, 20px);
+    height: clamp(16px, 4vh, 20px);
+    pointer-events: none;
   }}
   .thumb-container.show-tooltip .tooltip {{
-    opacity:1;
-    visibility:visible;
+    opacity: 1;
+    visibility: visible;
   }}
 </style>
 
-<div class="label">{label}</div>
+<div class="label" role="label">{label}</div>
 
 <!-- Single -->
 <div id="single" class="slider-container" style="display:none">
@@ -473,11 +500,11 @@ def slider(
     <div class="track"></div>
     <div class="fill" id="fill"></div>
     <div class="thumb-container" id="thumb-container">
-      <div class="tooltip" id="tooltip"></div>
+      <div class="tooltip" id="tooltip" role="tooltip"></div>
     </div>
-    <input id="rng" type="range" />
+    <input id="rng" type="range" aria-label="{label or 'Slider'}" />
   </div>
-  <div class="value" id="valtxt"></div>
+  <div class="value" id="valtxt" aria-live="polite"></div>
 </div>
 
 <!-- Range -->
@@ -486,15 +513,15 @@ def slider(
     <div class="track"></div>
     <div class="fill" id="fillr"></div>
     <div class="thumb-container" id="thumb-container0">
-      <div class="tooltip" id="tooltip0"></div>
+      <div class="tooltip" id="tooltip0" role="tooltip"></div>
     </div>
     <div class="thumb-container" id="thumb-container1">
-      <div class="tooltip" id="tooltip1"></div>
+      <div class="tooltip" id="tooltip1" role="tooltip"></div>
     </div>
-    <input id="rng0" type="range" />
-    <input id="rng1" type="range" />
+    <input id="rng0" type="range" aria-label="{label or 'Range start'}" />
+    <input id="rng1" type="range" aria-label="{label or 'Range end'}" />
   </div>
-  <div class="value" id="valtxt"></div>
+  <div class="value" id="valtxt" aria-live="polite"></div>
 </div>
 
 <script>
@@ -573,9 +600,11 @@ document.addEventListener('DOMContentLoaded', () => {{
     const sendDeb=debounced(sendNow,DEBOUNCE);
 
     rng.addEventListener('input',()=>{{
-      valtxt.textContent=fmt(rng.value);
-      tooltip.textContent=fmt(rng.value);
-      setFillSingle(rng,fill,thumbContainer);
+      requestAnimationFrame(()=>{{
+        valtxt.textContent=fmt(rng.value);
+        tooltip.textContent=fmt(rng.value);
+        setFillSingle(rng,fill,thumbContainer);
+      }});
       if(SEND==="continuous")sendDeb();
     }});
     rng.addEventListener('mouseenter',()=>thumbContainer.classList.add('show-tooltip'));
@@ -585,6 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {{
     if(SEND==="end"){{
       rng.addEventListener('mouseup',sendNow);
       rng.addEventListener('touchend',sendNow);
+      rng.addEventListener('change',sendNow);
     }}
     if(AUTO)queueMicrotask(sendNow);
   }} else {{
@@ -602,15 +632,18 @@ document.addEventListener('DOMContentLoaded', () => {{
     r0.value=INIT[0];r1.value=INIT[1];
     const sendNow=()=>post([Number(r0.value),Number(r1.value)]);
     const sendDeb=debounced(sendNow,DEBOUNCE);
-    function clamp(){{if(Number(r0.value)>Number(r1.value))r0.value=r1.value;}}
+    function sync(){{
+      const v0=Number(r0.value), v1=Number(r1.value);
+      if(v0>v1){{const tmp=r0.value;r0.value=r1.value;r1.value=tmp;}}
+    }}
     function show(){{
       valtxt.textContent=fmt(r0.value)+" – "+fmt(r1.value);
       tt0.textContent=fmt(r0.value);
       tt1.textContent=fmt(r1.value);
       setFillRange(r0,r1,fill,tc0,tc1);
     }}
-    r0.addEventListener('input',()=>{{clamp();show();if(SEND==="continuous")sendDeb();}}); 
-    r1.addEventListener('input',()=>{{clamp();show();if(SEND==="continuous")sendDeb();}});
+    r0.addEventListener('input',()=>{{requestAnimationFrame(()=>{{sync();show();}});if(SEND==="continuous")sendDeb();}}); 
+    r1.addEventListener('input',()=>{{requestAnimationFrame(()=>{{sync();show();}});if(SEND==="continuous")sendDeb();}});
     r0.addEventListener('mouseenter',()=>tc0.classList.add('show-tooltip'));
     r0.addEventListener('mouseleave',()=>tc0.classList.remove('show-tooltip'));
     r0.addEventListener('focus',()=>tc0.classList.add('show-tooltip'));
@@ -619,8 +652,11 @@ document.addEventListener('DOMContentLoaded', () => {{
     r1.addEventListener('mouseleave',()=>tc1.classList.remove('show-tooltip'));
     r1.addEventListener('focus',()=>tc1.classList.add('show-tooltip'));
     r1.addEventListener('blur',()=>tc1.classList.remove('show-tooltip'));
-    if(SEND==="end"){{r0.addEventListener('mouseup',sendNow);r1.addEventListener('mouseup',sendNow);
-                     r0.addEventListener('touchend',sendNow);r1.addEventListener('touchend',sendNow);}}
+    if(SEND==="end"){{
+      r0.addEventListener('mouseup',sendNow);r1.addEventListener('mouseup',sendNow);
+      r0.addEventListener('touchend',sendNow);r1.addEventListener('touchend',sendNow);
+      r0.addEventListener('change',sendNow);r1.addEventListener('change',sendNow);
+    }}
     show(); if(AUTO)queueMicrotask(sendNow);
   }}
 }});
@@ -628,7 +664,7 @@ document.addEventListener('DOMContentLoaded', () => {{
 """
     return html if return_html else common.html_to_obj(html)
 
-
+    
 def map_draw_html(
     parameter: str = "channel_1",
     sender_id: str = "draw_1",
