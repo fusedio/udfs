@@ -206,43 +206,37 @@ def selectbox(
     --input-bg: #1b1b1b;
     --input-hover: #2a2a2a;
     --primary: #e8ff59;
+    --primary-dim: rgba(232, 255, 89, 0.1);
   }}
   * {{
     box-sizing: border-box;
   }}
   html, body {{
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: system-ui, -apple-system, sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-  }}
-  .container {{
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: min(10vh, 10px);
+    height:100vh; margin:0; padding:0;
+    background:var(--bg); color:var(--text);
+    font-family:system-ui,-apple-system,sans-serif;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:0rem;
   }}
   label {{
-    display: block;
-    font-weight: 500;
-    font-size: min(25vh, 25px);
-    color: var(--text);
-    width: 90vw;
-    text-align: left;
-    
+    width:90vw;
+    color:#ddd;
+    font-size:min(25vh, 25px); 
+    margin-bottom:min(10vh, 10px);
+    text-align:left;
+  }}
+  label:empty {{
+    display: none;
+  }}
+  .container {{
+    width:90vw;
+    display:flex;
+    flex-direction:column;
+    gap:0;
   }}
   .select-wrapper {{
     position: relative;
-    width: calc(100vw - 4px);
-    margin: 0 2px 2px 2px;
+    width: 100%;
   }}
   .select-wrapper::after {{
     content: '';
@@ -254,8 +248,9 @@ def selectbox(
     height: 0;
     border-left: min(5vh, 5px) solid transparent;
     border-right: min(5vh, 5px) solid transparent;
-    border-top: min(5vh, 5px) solid var(--text);
+    border-top: min(5vh, 5px) solid var(--text-muted);
     pointer-events: none;
+    transition: border-top-color 150ms ease;
   }}
   select {{
     width: 100%;
@@ -267,25 +262,31 @@ def selectbox(
     color: var(--text);
     outline: none;
     cursor: pointer;
-    transition: background 150ms ease, border-color 150ms ease;
+    transition: all 150ms ease;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
+    box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
   }}
   select:hover {{
     background: var(--input-hover);
     border-color: #444;
+    box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
   }}
   .select-wrapper:hover::after {{
-    border-top-color: var(--primary); /* correct hover selector */
+    border-top-color: var(--primary);
   }}
   select:focus {{
     border-color: var(--primary);
     background: var(--input-hover);
+    box-shadow: 0 0 0 2px var(--primary-dim), 1px 1px 0px 0px rgba(0,0,0,0.3);
   }}
   select:focus-visible {{
     outline: 2px solid var(--primary);
     outline-offset: -2px;
+  }}
+  .select-wrapper:has(select:focus)::after {{
+    border-top-color: var(--primary);
   }}
   select option {{
     background: var(--input-bg);
@@ -294,10 +295,14 @@ def selectbox(
   }}
   select option:disabled {{
     color: var(--text-muted);
+    font-style: italic;
+  }}
+  select option:checked {{
+    background: var(--primary-dim);
   }}
 </style>
+<label for="sb" id="lbl">{label}</label>
 <div class="container">
-  <label for="sb" id="lbl">{label}</label>
   <div class="select-wrapper">
     <select id="sb" aria-labelledby="lbl" aria-label="{label or 'Select box'}"></select>
   </div>
@@ -357,8 +362,8 @@ document.addEventListener('DOMContentLoaded', () => {{
 </script>
 """
     return html if return_html else common.html_to_obj(html)
-    
-    
+
+
 # SLIDER ----------------------------------------------------------------------
 def slider(
     label: str = None,
@@ -394,17 +399,6 @@ def slider(
         nums = [min_value, max_value] + (list(value) if is_range else [value])
         step = 1 if all(isinstance(x, int) for x in nums) else 0.01
 
-    # Validation
-    if min_value >= max_value:
-        raise ValueError(f"min_value ({min_value}) must be less than max_value ({max_value})")
-    
-    if is_range:
-        if not (min_value <= value[0] <= max_value and min_value <= value[1] <= max_value):
-            raise ValueError(f"value {value} must be within range [{min_value}, {max_value}]")
-    else:
-        if not (min_value <= value <= max_value):
-            raise ValueError(f"value {value} must be within range [{min_value}, {max_value}]")
-
     fmt = format or "{val}"
 
     VAL_JS  = json.dumps(list(value) if is_range else value)
@@ -429,133 +423,120 @@ def slider(
     --border: #3a3a3a;
   }}
   html, body {{
-    height: 100vh;
-    margin: 0;
-    padding: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: system-ui, -apple-system, sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
+    height:100vh; margin:0; padding:0;
+    background:var(--bg); color:var(--text);
+    font-family:system-ui,-apple-system,sans-serif;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:0rem;
   }}
   .label {{ 
-    width: 90vw;
-    color: #ddd;
-    font-size: min(25vh, 25px);
-    margin-bottom: min(10vh, 10px);
+    width:90vw; ;
+    color:#ddd ;
+    font-size:min(25vh, 25px); 
+    margin-bottom:min(10vh, 10px);
   }}
   .slider-container {{
-    width: 90vw;
-    display: flex;
-    align-items: center;
-    gap: clamp(8px, 2vw, 16px);
+    width:90vw;
+    display:flex; 
+    align-items:center;
+    gap:min(5vh, 8px);
   }}
   .slider-wrap {{ 
-    position: relative;
-    display: flex;
-    align-items: center;
-    flex: 1;
-    height: min(25vh, 25px);
+    position:relative; 
+    display:flex; 
+    align-items:center; 
+    flex:1;
+    height:min(25vh, 25px);
   }}
   .track {{
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: min(15vh, 15px);
-    border-radius: min(15vh, 15px);
-    background: var(--track-bg);
+    position:absolute; 
+    left:0; right:0; 
+    height:min(15vh, 15px); 
+    border-radius:min(15vh, 15px);
+    background:var(--track-bg);
   }}
   .fill {{
-    position: absolute;
-    height: min(15vh, 15px);
-    border-radius: min(15vh, 15px);
-    background: var(--primary);
+    position:absolute; 
+    height:min(15vh, 15px); 
+    border-radius:min(15vh, 15px);
+    background:var(--primary);
   }}
   .value {{ 
-    min-width: min(15vh, 15px);
-    text-align: left;
-    color: var(--text-muted);
-    font-size: min(15vh, 15px);
-    font-variant-numeric: tabular-nums;
+    min-width:min(22vh, 22px); 
+    text-align:left; 
+    color:var(--text-muted); 
+    font-size:min(22vh, 22px);
+    font-variant-numeric:tabular-nums;
   }}
   input[type=range] {{
-    appearance: none;
-    -webkit-appearance: none;
-    position: relative;
-    width: 100%;
-    height: min(15vh, 15px);
-    margin: 0;
-    background: transparent;
-    outline: none;
-    cursor: pointer;
-  }}
-  input[type=range]:focus-visible {{
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
-    border-radius: 4px;
+    appearance:none; -webkit-appearance:none;
+    position:relative; 
+    width:100%; 
+    height:min(15vh, 15px); 
+    margin:0; 
+    background:transparent; 
+    outline:none;
+    cursor:pointer;
   }}
   input[type=range]::-webkit-slider-thumb {{
-    -webkit-appearance: none;
-    appearance: none;
-    width: clamp(16px, 4vh, 20px);
-    height: clamp(16px, 4vh, 20px);
-    border-radius: 50%;
-    background: #fff;
-    border: 2px solid var(--primary);
-    box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
-    cursor: pointer;
-    transition: background-color 200ms;
+    -webkit-appearance:none; 
+    appearance:none;
+    width:min(15vh, 15px); 
+    height:min(15vh, 15px); 
+    border-radius:50%;
+    background:#fff; 
+    border:1px solid var(--primary);
+    box-shadow:1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+    cursor:pointer;
+    transition:background-color 200ms;
   }}
   input[type=range]::-webkit-slider-thumb:hover {{
-    background: var(--primary-hover);
+    background:var(--primary-hover);
   }}
   input[type=range]::-moz-range-thumb {{
-    width: clamp(16px, 4vh, 20px);
-    height: clamp(16px, 4vh, 20px);
-    border-radius: 50%;
-    background: #fff;
-    border: 2px solid var(--primary);
-    box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
-    cursor: pointer;
-    transition: background-color 200ms;
+    width:min(15vh, 15px); 
+    height:min(15vh, 15px); 
+    border-radius:50%;
+    background:#fff; 
+    border:1px solid var(--primary);
+    box-shadow:1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+    cursor:pointer;
+    transition:background-color 200ms;
   }}
   input[type=range]::-moz-range-thumb:hover {{
-    background: var(--primary-hover);
+    background:var(--primary-hover);
   }}
   .tooltip {{
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #333;
-    color: #fff;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: clamp(11px, 2.5vw, 13px);
-    white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 150ms, visibility 150ms;
-    margin-bottom: 8px;
-    pointer-events: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    position:absolute;
+    bottom:100%;
+    left:50%;
+    transform:translateX(-50%);
+    background:#aaa;
+    color:#000;
+    padding:5vh 5vh;
+    border-radius:5vh;
+    font-size:min(15vh, 15px);
+    white-space:nowrap;
+    opacity:0;
+    visibility:hidden;
+    transition:opacity 150ms, visibility 150ms;
+    margin-bottom:min(10vh, 10px);
+    pointer-events:none;
+    box-shadow:0 2px 8px rgba(0,0,0,0.15);
   }}
   .thumb-container {{
-    position: absolute;
-    width: clamp(16px, 4vh, 20px);
-    height: clamp(16px, 4vh, 20px);
-    pointer-events: none;
+    position:absolute;
+    width:7.5vh;
+    height:20px;
+    pointer-events:none;
   }}
   .thumb-container.show-tooltip .tooltip {{
-    opacity: 1;
-    visibility: visible;
+    opacity:1;
+    visibility:visible;
   }}
 </style>
 
-<div class="label" role="label">{label}</div>
+<div class="label">{label}</div>
 
 <!-- Single -->
 <div id="single" class="slider-container" style="display:none">
@@ -563,11 +544,11 @@ def slider(
     <div class="track"></div>
     <div class="fill" id="fill"></div>
     <div class="thumb-container" id="thumb-container">
-      <div class="tooltip" id="tooltip" role="tooltip"></div>
+      <div class="tooltip" id="tooltip"></div>
     </div>
-    <input id="rng" type="range" aria-label="{label or 'Slider'}" />
+    <input id="rng" type="range" />
   </div>
-  <div class="value" id="valtxt" aria-live="polite"></div>
+  <div class="value" id="valtxt"></div>
 </div>
 
 <!-- Range -->
@@ -576,15 +557,15 @@ def slider(
     <div class="track"></div>
     <div class="fill" id="fillr"></div>
     <div class="thumb-container" id="thumb-container0">
-      <div class="tooltip" id="tooltip0" role="tooltip"></div>
+      <div class="tooltip" id="tooltip0"></div>
     </div>
     <div class="thumb-container" id="thumb-container1">
-      <div class="tooltip" id="tooltip1" role="tooltip"></div>
+      <div class="tooltip" id="tooltip1"></div>
     </div>
-    <input id="rng0" type="range" aria-label="{label or 'Range start'}" />
-    <input id="rng1" type="range" aria-label="{label or 'Range end'}" />
+    <input id="rng0" type="range" />
+    <input id="rng1" type="range" />
   </div>
-  <div class="value" id="valtxt" aria-live="polite"></div>
+  <div class="value" id="valtxt"></div>
 </div>
 
 <script>
@@ -663,11 +644,9 @@ document.addEventListener('DOMContentLoaded', () => {{
     const sendDeb=debounced(sendNow,DEBOUNCE);
 
     rng.addEventListener('input',()=>{{
-      requestAnimationFrame(()=>{{
-        valtxt.textContent=fmt(rng.value);
-        tooltip.textContent=fmt(rng.value);
-        setFillSingle(rng,fill,thumbContainer);
-      }});
+      valtxt.textContent=fmt(rng.value);
+      tooltip.textContent=fmt(rng.value);
+      setFillSingle(rng,fill,thumbContainer);
       if(SEND==="continuous")sendDeb();
     }});
     rng.addEventListener('mouseenter',()=>thumbContainer.classList.add('show-tooltip'));
@@ -677,7 +656,6 @@ document.addEventListener('DOMContentLoaded', () => {{
     if(SEND==="end"){{
       rng.addEventListener('mouseup',sendNow);
       rng.addEventListener('touchend',sendNow);
-      rng.addEventListener('change',sendNow);
     }}
     if(AUTO)queueMicrotask(sendNow);
   }} else {{
@@ -695,18 +673,15 @@ document.addEventListener('DOMContentLoaded', () => {{
     r0.value=INIT[0];r1.value=INIT[1];
     const sendNow=()=>post([Number(r0.value),Number(r1.value)]);
     const sendDeb=debounced(sendNow,DEBOUNCE);
-    function sync(){{
-      const v0=Number(r0.value), v1=Number(r1.value);
-      if(v0>v1){{const tmp=r0.value;r0.value=r1.value;r1.value=tmp;}}
-    }}
+    function clamp(){{if(Number(r0.value)>Number(r1.value))r0.value=r1.value;}}
     function show(){{
       valtxt.textContent=fmt(r0.value)+" – "+fmt(r1.value);
       tt0.textContent=fmt(r0.value);
       tt1.textContent=fmt(r1.value);
       setFillRange(r0,r1,fill,tc0,tc1);
     }}
-    r0.addEventListener('input',()=>{{requestAnimationFrame(()=>{{sync();show();}});if(SEND==="continuous")sendDeb();}}); 
-    r1.addEventListener('input',()=>{{requestAnimationFrame(()=>{{sync();show();}});if(SEND==="continuous")sendDeb();}});
+    r0.addEventListener('input',()=>{{clamp();show();if(SEND==="continuous")sendDeb();}}); 
+    r1.addEventListener('input',()=>{{clamp();show();if(SEND==="continuous")sendDeb();}});
     r0.addEventListener('mouseenter',()=>tc0.classList.add('show-tooltip'));
     r0.addEventListener('mouseleave',()=>tc0.classList.remove('show-tooltip'));
     r0.addEventListener('focus',()=>tc0.classList.add('show-tooltip'));
@@ -715,11 +690,8 @@ document.addEventListener('DOMContentLoaded', () => {{
     r1.addEventListener('mouseleave',()=>tc1.classList.remove('show-tooltip'));
     r1.addEventListener('focus',()=>tc1.classList.add('show-tooltip'));
     r1.addEventListener('blur',()=>tc1.classList.remove('show-tooltip'));
-    if(SEND==="end"){{
-      r0.addEventListener('mouseup',sendNow);r1.addEventListener('mouseup',sendNow);
-      r0.addEventListener('touchend',sendNow);r1.addEventListener('touchend',sendNow);
-      r0.addEventListener('change',sendNow);r1.addEventListener('change',sendNow);
-    }}
+    if(SEND==="end"){{r0.addEventListener('mouseup',sendNow);r1.addEventListener('mouseup',sendNow);
+                     r0.addEventListener('touchend',sendNow);r1.addEventListener('touchend',sendNow);}}
     show(); if(AUTO)queueMicrotask(sendNow);
   }}
 }});
