@@ -5,7 +5,7 @@ common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/
 def udf(parameter: str = "yay"):
     # html = button("Click me", parameter=parameter)
     L = ['a','b','c','d']
-    html = sql_input("Slider", parameter=parameter)
+    html = sql_input("SQL Input", parameter=parameter)
     return html
  
 
@@ -1162,7 +1162,7 @@ def sql_input(
   }}
   .editor-wrapper:focus-within {{
     border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(232, 255, 89, 0.1), 1px 1px 0px 0px rgba(0,0,0,0.3);
+    box-shadow: inset 0 0 0 2px rgba(232, 255, 89, 0.65), 0 0 0 2px rgba(232, 255, 89, 0.15), 1px 1px 0px 0px rgba(0,0,0,0.3);
   }}
   .CodeMirror {{
     height: {height};
