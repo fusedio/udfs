@@ -450,7 +450,8 @@ def slider(
   }}
   .track {{
     position:absolute; 
-    left:0; right:0; 
+    left:calc(min(15vh, 15px) / 2);
+    right:calc(min(15vh, 15px) / 2); 
     height:min(15vh, 15px); 
     border-radius:min(15vh, 15px);
     background:var(--track-bg);
@@ -599,27 +600,32 @@ document.addEventListener('DOMContentLoaded', () => {{
   }}
 
   function setFillSingle(input, fillEl, thumbContainer){{
-    const p = (input.value - input.min) / (input.max - input.min);
-    fillEl.style.left = "0";
-    fillEl.style.width = (Math.max(0, Math.min(1, p)) * 100).toFixed(4) + "%";
+    const p = Math.max(0, Math.min(1, (input.value - input.min) / (input.max - input.min)));
+    const thumbSize = Math.min(window.innerHeight * 0.15, 15);
+    const trackStart = thumbSize / 2;
+    const trackWidth = input.parentElement.offsetWidth - thumbSize;
+    fillEl.style.left = trackStart + "px";
+    fillEl.style.right = "auto";
+    fillEl.style.width = (p * trackWidth) + "px";
     if(thumbContainer){{
-      thumbContainer.style.left = (p * 100).toFixed(4) + "%";
+      thumbContainer.style.left = (p * 100) + "%";
       thumbContainer.style.transform = "translateX(-50%)";
     }}
   }}
   function setFillRange(i0, i1, fillEl, tc0, tc1){{
-    const p0 = (i0.value - i0.min) / (i0.max - i0.min);
-    const p1 = (i1.value - i1.min) / (i1.max - i1.min);
+    const p0 = Math.max(0, Math.min(1, (i0.value - i0.min) / (i0.max - i0.min)));
+    const p1 = Math.max(0, Math.min(1, (i1.value - i1.min) / (i1.max - i1.min)));
     const left = Math.min(p0, p1);
     const right = Math.max(p0, p1);
-    fillEl.style.left = (left * 100).toFixed(4) + "%";
-    fillEl.style.width = ((right - left) * 100).toFixed(4) + "%";
+    fillEl.style.left = (left * 100) + "%";
+    fillEl.style.right = "auto";
+    fillEl.style.width = ((right - left) * 100) + "%";
     if(tc0){{
-      tc0.style.left = (p0 * 100).toFixed(4) + "%";
+      tc0.style.left = (p0 * 100) + "%";
       tc0.style.transform = "translateX(-50%)";
     }}
     if(tc1){{
-      tc1.style.left = (p1 * 100).toFixed(4) + "%";
+      tc1.style.left = (p1 * 100) + "%";
       tc1.style.transform = "translateX(-50%)";
     }}
   }}
@@ -642,11 +648,16 @@ document.addEventListener('DOMContentLoaded', () => {{
     setFillSingle(rng,fill,thumbContainer);
     const sendNow=()=>post(Number(rng.value));
     const sendDeb=debounced(sendNow,DEBOUNCE);
+    let rafId=null;
 
     rng.addEventListener('input',()=>{{
-      valtxt.textContent=fmt(rng.value);
-      tooltip.textContent=fmt(rng.value);
-      setFillSingle(rng,fill,thumbContainer);
+      if(rafId)cancelAnimationFrame(rafId);
+      rafId=requestAnimationFrame(()=>{{
+        valtxt.textContent=fmt(rng.value);
+        tooltip.textContent=fmt(rng.value);
+        setFillSingle(rng,fill,thumbContainer);
+        rafId=null;
+      }});
       if(SEND==="continuous")sendDeb();
     }});
     rng.addEventListener('mouseenter',()=>thumbContainer.classList.add('show-tooltip'));
@@ -673,6 +684,7 @@ document.addEventListener('DOMContentLoaded', () => {{
     r0.value=INIT[0];r1.value=INIT[1];
     const sendNow=()=>post([Number(r0.value),Number(r1.value)]);
     const sendDeb=debounced(sendNow,DEBOUNCE);
+    let rafId=null;
     function clamp(){{if(Number(r0.value)>Number(r1.value))r0.value=r1.value;}}
     function show(){{
       valtxt.textContent=fmt(r0.value)+" – "+fmt(r1.value);
@@ -680,8 +692,8 @@ document.addEventListener('DOMContentLoaded', () => {{
       tt1.textContent=fmt(r1.value);
       setFillRange(r0,r1,fill,tc0,tc1);
     }}
-    r0.addEventListener('input',()=>{{clamp();show();if(SEND==="continuous")sendDeb();}}); 
-    r1.addEventListener('input',()=>{{clamp();show();if(SEND==="continuous")sendDeb();}});
+    r0.addEventListener('input',()=>{{if(rafId)cancelAnimationFrame(rafId);rafId=requestAnimationFrame(()=>{{clamp();show();rafId=null;}});if(SEND==="continuous")sendDeb();}}); 
+    r1.addEventListener('input',()=>{{if(rafId)cancelAnimationFrame(rafId);rafId=requestAnimationFrame(()=>{{clamp();show();rafId=null;}});if(SEND==="continuous")sendDeb();}});
     r0.addEventListener('mouseenter',()=>tc0.classList.add('show-tooltip'));
     r0.addEventListener('mouseleave',()=>tc0.classList.remove('show-tooltip'));
     r0.addEventListener('focus',()=>tc0.classList.add('show-tooltip'));
