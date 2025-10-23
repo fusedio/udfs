@@ -294,7 +294,7 @@ def selectbox(
     background: var(--input-bg);
     color: var(--text);
     padding: 12px;
-    font-size: max(16px, min(15vh, 15px));
+    font-size: max(16px);
   }}
   select option:disabled {{
     color: var(--text-muted);
