@@ -4,7 +4,7 @@ common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/
 @fused.udf(cache_max_age=0)
 def udf(parameter: str = "yay"):
     # html = button("Click me", parameter=parameter)
-    L = ['a','b','c','d']
+    L = ['aasdasd','basdads','casdasd','dasdasd']
     html = selectbox("SQL Input", parameter=parameter, options= L)
     return html
  
@@ -293,8 +293,8 @@ def selectbox(
   select option {{
     background: var(--input-bg);
     color: var(--text);
-    padding: 8px;
-    font-size: max(14px, min(15vh, 15px));
+    padding: 12px;
+    font-size: max(16px, min(15vh, 15px));
   }}
   select option:disabled {{
     color: var(--text-muted);
