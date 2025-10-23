@@ -5,7 +5,7 @@ common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/
 def udf(parameter: str = "yay"):
     # html = button("Click me", parameter=parameter)
     L = ['a','b','c','d']
-    html = sql_input("SQL Input", parameter=parameter)
+    html = selectbox("SQL Input", parameter=parameter, options= L)
     return html
  
 
