@@ -238,28 +238,22 @@ def selectbox(
     position: relative;
     width: 100%;
   }}
-  .select-wrapper::after {{
-    content: '';
-    position: absolute;
-    right: min(10vh, 10px);
-    top: 50%;
-    transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    border-left: min(5vh, 5px) solid transparent;
-    border-right: min(5vh, 5px) solid transparent;
-    border-top: min(5vh, 5px) solid var(--text-muted);
-    pointer-events: none;
-    transition: border-top-color 150ms ease;
-  }}
+
+  /* Option A: chevron drawn as background on <select>, using the SAME sizes */
   select {{
     width: 100%;
-    min-height: 30px;
     font-size: min(15vh, 15px);
     padding: min(7.5vh, 7.5px) min(15vh, 15px) min(7.5vh, 7.5px) min(10vh, 10px);
     border: 1px solid var(--border);
     border-radius: min(7.5vh, 7.5px);
-    background: var(--input-bg);
+    background:
+      /* right arrow tip */
+      linear-gradient(45deg, transparent 50%, var(--text-muted) 50%)
+        right calc(min(10vh, 10px) + min(5vh, 5px)/2) center / min(5vh, 5px) min(5vh, 5px) no-repeat,
+      /* left arrow tip */
+      linear-gradient(-45deg, transparent 50%, var(--text-muted) 50%)
+        right min(10vh, 10px) center / min(5vh, 5px) min(5vh, 5px) no-repeat,
+      var(--input-bg);
     color: var(--text);
     outline: none;
     cursor: pointer;
@@ -270,25 +264,32 @@ def selectbox(
     box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
   }}
   select:hover {{
-    background: var(--input-hover);
+    background:
+      linear-gradient(45deg, transparent 50%, var(--primary) 50%)
+        right calc(min(10vh, 10px) + min(5vh, 5px)/2) center / min(5vh, 5px) min(5vh, 5px) no-repeat,
+      linear-gradient(-45deg, transparent 50%, var(--primary) 50%)
+        right min(10vh, 10px) center / min(5vh, 5px) min(5vh, 5px) no-repeat,
+      var(--input-hover);
     border-color: #444;
     box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
   }}
-  .select-wrapper:hover::after {{
-    border-top-color: var(--primary);
-  }}
   select:focus {{
     border-color: var(--primary);
-    background: var(--input-hover);
+    background:
+      linear-gradient(45deg, transparent 50%, var(--primary) 50%)
+        right calc(min(10vh, 10px) + min(5vh, 5px)/2) center / min(5vh, 5px) min(5vh, 5px) no-repeat,
+      linear-gradient(-45deg, transparent 50%, var(--primary) 50%)
+        right min(10vh, 10px) center / min(5vh, 5px) min(5vh, 5px) no-repeat,
+      var(--input-hover);
     box-shadow: 0 0 0 2px var(--primary-dim), 1px 1px 0px 0px rgba(0,0,0,0.3);
   }}
   select:focus-visible {{
     outline: 2px solid var(--primary);
     outline-offset: -2px;
   }}
-  .select-wrapper:has(select:focus)::after {{
-    border-top-color: var(--primary);
-  }}
+
+  /* Pseudo-element removed; colors now change on hover/focus via backgrounds */
+
   select option {{
     background: var(--input-bg);
     color: var(--text);
@@ -364,6 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {{
 </script>
 """
     return html if return_html else common.html_to_obj(html)
+
 
 
 # SLIDER ----------------------------------------------------------------------
