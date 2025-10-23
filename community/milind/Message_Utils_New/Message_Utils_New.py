@@ -254,6 +254,7 @@ def selectbox(
   }}
   select {{
     width: 100%;
+    min-height: 30px;
     font-size: min(15vh, 15px);
     padding: min(7.5vh, 7.5px) min(15vh, 15px) min(7.5vh, 7.5px) min(10vh, 10px);
     border: 1px solid var(--border);
@@ -291,7 +292,8 @@ def selectbox(
   select option {{
     background: var(--input-bg);
     color: var(--text);
-    padding: 0.5rem;
+    padding: 8px;
+    font-size: max(14px, min(15vh, 15px));
   }}
   select option:disabled {{
     color: var(--text-muted);
