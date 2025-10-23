@@ -5,7 +5,7 @@ common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/
 def udf(parameter: str = "yay"):
     # html = button("Click me", parameter=parameter)
     L = ['a','b','c','d']
-    html = selectbox("Slider", parameter=parameter, options = L)
+    html = sql_input("Slider", parameter=parameter)
     return html
  
 
@@ -1108,6 +1108,7 @@ def sql_input(
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
 <style>
@@ -1233,7 +1234,7 @@ document.addEventListener('DOMContentLoaded', () => {{
   // Initialize CodeMirror
   const editor = CodeMirror.fromTextArea(textarea, {{
     mode: 'text/x-sql',
-    theme: 'dracula',
+    theme: 'material-darker',
     lineNumbers: true,
     lineWrapping: true,
     indentUnit: 2,
