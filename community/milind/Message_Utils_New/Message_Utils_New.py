@@ -1080,3 +1080,196 @@ document.addEventListener('DOMContentLoaded', () => {{
 </script>
 """
     return html if return_html else common.html_to_obj(html)
+
+
+def sql_input(
+    label: str = "SQL Query",
+    *,
+    value: str = "",
+    placeholder: str = "SELECT * FROM table...",
+    button_label: str = "Run Query",
+    height: str = "200px",
+    parameter: str = "channel_sql",
+    sender_id: str = "sql_input_1",
+    disabled: bool = False,
+    return_html: bool = False,
+):
+    import json
+    
+    VALUE_JS = json.dumps(value)
+    PLACEHOLDER_JS = json.dumps(placeholder)
+    
+    html = f"""<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+<style>
+  :root {{
+    --primary: #e8ff59;
+    --primary-hover: #f0ff7a;
+    --bg: #121212;
+    --text: #eee;
+    --text-muted: #999;
+    --border: #333;
+    --input-bg: #1b1b1b;
+    --button-bg: #2a2a2a;
+    --button-hover: #3a3a3a;
+  }}
+  * {{
+    box-sizing: border-box;
+  }}
+  html, body {{
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+  }}
+  label {{
+    width: 90vw;
+    color: #ddd;
+    font-size: min(25vh, 25px);
+    margin-bottom: min(10vh, 10px);
+    text-align: left;
+  }}
+  .container {{
+    width: 90vw;
+    display: flex;
+    flex-direction: column;
+    gap: min(10vh, 10px);
+  }}
+  .editor-wrapper {{
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: min(7.5vh, 7.5px);
+    overflow: hidden;
+    box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+    transition: all 150ms ease;
+  }}
+  .editor-wrapper:focus-within {{
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(232, 255, 89, 0.1), 1px 1px 0px 0px rgba(0,0,0,0.3);
+  }}
+  .CodeMirror {{
+    height: {height};
+    font-size: min(15vh, 15px);
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    background: var(--input-bg);
+    color: var(--text);
+  }}
+  .CodeMirror-cursor {{
+    border-left: 2px solid var(--primary);
+  }}
+  .CodeMirror-selected {{
+    background: rgba(232, 255, 89, 0.2);
+  }}
+  .CodeMirror-gutters {{
+    background: var(--input-bg);
+    border-right: 1px solid var(--border);
+  }}
+  .CodeMirror-linenumber {{
+    color: var(--text-muted);
+  }}
+  button {{
+    width: 100%;
+    padding: min(7.5vh, 10px) min(10vh, 16px);
+    border: 1px solid var(--border);
+    border-radius: min(7.5vh, 7.5px);
+    background: var(--button-bg);
+    color: var(--text);
+    font-size: min(15vh, 15px);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 150ms ease;
+    box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+    {"opacity: 0.6; cursor: not-allowed;" if disabled else ""}
+  }}
+  button:hover:not(:disabled) {{
+    background: var(--button-hover);
+    border-color: #444;
+    box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+  }}
+  button:active:not(:disabled) {{
+    transform: translateY(1px);
+    box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+  }}
+  button:focus {{
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(232, 255, 89, 0.1), 1px 1px 0px 0px rgba(0,0,0,0.3);
+  }}
+</style>
+
+<label for="sql-editor">{label}</label>
+<div class="container">
+  <div class="editor-wrapper">
+    <textarea id="sql-editor"></textarea>
+  </div>
+  <button id="run-btn" {("disabled" if disabled else "")}>{button_label}</button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {{
+  const PARAMETER = {json.dumps(parameter)};
+  const SENDER = {json.dumps(sender_id)};
+  const VALUE = {VALUE_JS};
+  const PLACEHOLDER = {PLACEHOLDER_JS};
+  
+  const textarea = document.getElementById('sql-editor');
+  const btn = document.getElementById('run-btn');
+  
+  // Initialize CodeMirror
+  const editor = CodeMirror.fromTextArea(textarea, {{
+    mode: 'text/x-sql',
+    theme: 'dracula',
+    lineNumbers: true,
+    lineWrapping: true,
+    indentUnit: 2,
+    tabSize: 2,
+    indentWithTabs: false,
+    autofocus: true,
+    placeholder: PLACEHOLDER,
+    extraKeys: {{
+      'Ctrl-Enter': () => btn.click(),
+      'Cmd-Enter': () => btn.click(),
+    }}
+  }});
+  
+  // Set initial value
+  if (VALUE) {{
+    editor.setValue(VALUE);
+  }}
+  
+  function post() {{
+    const query = editor.getValue().trim();
+    if (!query) return;
+    
+    window.parent.postMessage({{
+      type: 'sql_input',
+      payload: {{ value: query }},
+      origin: SENDER,
+      parameter: PARAMETER,
+      ts: Date.now()
+    }}, '*');
+  }}
+  
+  btn.addEventListener('click', () => {{
+    if (!btn.disabled) {{
+      post();
+    }}
+  }});
+  
+  // Refresh CodeMirror after a short delay to ensure proper rendering
+  setTimeout(() => editor.refresh(), 100);
+}});
+</script>
+"""
+    return html if return_html else common.html_to_obj(html)
