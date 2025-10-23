@@ -1,0 +1,79 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "html_accident_h3_tile",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "html_accident_h3_tile",
+            "fused:slug": "html_accident_h3_tile",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "hexLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "extruded": false,
+                "opacity": 1,
+                "coverage": 0.9,
+                "lineWidthMinPixels": 1,
+                "getHexagon": "@@=properties.hex",
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "RedOr",
+                  "nullColor": [
+                    124,
+                    154,
+                    194
+                  ]
+                },
+                "getFillColor": [
+                  124,
+                  154,
+                  194
+                ],
+                "getLineWidth": 0,
+                "radiusScale": 0
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 36.85525154170482,
+              "longitude": 140.23512361589152,
+              "zoom": 4.881114809197119,
+              "pitch": 0,
+              "bearing": 0
+            }
+          },
+          "source": "html_accident_h3_tile.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
