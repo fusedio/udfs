@@ -930,3 +930,141 @@ document.addEventListener('DOMContentLoaded', () => {{
 </script>
 """
     return html if return_html else common.html_to_obj(html)
+
+
+def date_input(
+    label: str,
+    *,
+    value: str | None = None,  # ISO format "YYYY-MM-DD" or None
+    min_date: str | None = None,
+    max_date: str | None = None,
+    parameter: str = "channel_date",
+    sender_id: str = "date_input_1",
+    auto_send_on_load: bool = True,
+    return_html: bool = False,
+):
+    import json
+    from datetime import datetime, timedelta
+    
+    # Default to today if no value provided
+    if value is None:
+        value = datetime.now().strftime("%Y-%m-%d")
+    
+    # Default min/max to +/- 10 years if not provided
+    if min_date is None:
+        min_date = (datetime.now() - timedelta(days=3650)).strftime("%Y-%m-%d")
+    if max_date is None:
+        max_date = (datetime.now() + timedelta(days=3650)).strftime("%Y-%m-%d")
+    
+    VALUE_JS = json.dumps(value)
+    MIN_JS = json.dumps(min_date)
+    MAX_JS = json.dumps(max_date)
+    
+    html = f"""<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {{
+    --primary: #e8ff59;
+    --primary-hover: #f0ff7a;
+    --bg: #121212;
+    --text: #eee;
+    --text-muted: #999;
+    --border: #333;
+    --input-bg: #1b1b1b;
+    --input-hover: #2a2a2a;
+    --primary-dim: rgba(232, 255, 89, 0.1);
+  }}
+  * {{
+    box-sizing: border-box;
+  }}
+  html, body {{
+    height:100vh; margin:0; padding:0;
+    background:var(--bg); color:var(--text);
+    font-family:system-ui,-apple-system,sans-serif;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:0rem;
+  }}
+  label {{
+    width:90vw;
+    color:#ddd;
+    font-size:min(25vh, 25px); 
+    margin-bottom:min(10vh, 10px);
+    text-align:left;
+  }}
+  .container {{
+    width:90vw;
+    display:flex;
+    flex-direction:column;
+    gap:0;
+  }}
+  input[type="date"] {{
+    width:100%;
+    font-size:min(15vh, 15px);
+    padding:min(7.5vh, 7.5px) min(10vh, 10px);
+    border:1px solid var(--border);
+    border-radius:min(7.5vh, 7.5px);
+    background:var(--input-bg);
+    color:var(--text);
+    outline:none;
+    cursor:pointer;
+    transition:all 150ms ease;
+    box-shadow:1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+    color-scheme: dark;
+  }}
+  input[type="date"]:hover {{
+    background:var(--input-hover);
+    border-color:#444;
+    box-shadow:2px 2px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+  }}
+  input[type="date"]:focus {{
+    border-color:var(--primary);
+    background:var(--input-hover);
+    box-shadow:0 0 0 2px var(--primary-dim), 1px 1px 0px 0px rgba(0,0,0,0.3);
+  }}
+  input[type="date"]::-webkit-calendar-picker-indicator {{
+    filter: invert(1);
+    cursor: pointer;
+  }}
+</style>
+
+<label for="dt">{label}</label>
+<div class="container">
+  <input id="dt" type="date" />
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {{
+  const PARAMETER = {json.dumps(parameter)};
+  const SENDER  = {json.dumps(sender_id)};
+  const VALUE   = {VALUE_JS};
+  const MIN     = {MIN_JS};
+  const MAX     = {MAX_JS};
+  const AUTO    = {str(auto_send_on_load).lower()};
+  
+  const input = document.getElementById('dt');
+  input.value = VALUE;
+  input.min = MIN;
+  input.max = MAX;
+  
+  function post(val) {{
+    window.parent.postMessage({{
+      type: 'date_input',
+      payload: {{ value: val }},
+      origin: SENDER,
+      parameter: PARAMETER,
+      ts: Date.now()
+    }}, '*');
+  }}
+  
+  input.addEventListener('change', (e) => {{
+    post(e.target.value);
+  }});
+  
+  if (AUTO) {{
+    queueMicrotask(() => post(VALUE));
+  }}
+}});
+</script>
+"""
+    return html if return_html else common.html_to_obj(html)
