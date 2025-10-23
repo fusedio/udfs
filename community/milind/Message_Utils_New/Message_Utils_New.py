@@ -4,6 +4,7 @@ common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/
 @fused.udf(cache_max_age=0)
 def udf(parameter: str = "yay"):
     # html = button("Click me", parameter=parameter)
+    L = ['a','b','c','d']
     html = slider("Slider", parameter=parameter)
     return html
  
@@ -166,17 +167,33 @@ def selectbox(
     return_html: bool = False,
 ):
     import json
-
+    
     if not isinstance(options, (list, tuple)):
         options = list(options)
+    
+    if not options:
+        raise ValueError("options cannot be empty")
+    
     values = list(options)
-    labels = [str(format_func(v)) if callable(format_func) else str(v) for v in values]
-
+    
+    # Safe format_func with error handling
+    labels = []
+    for v in values:
+        try:
+            labels.append(str(format_func(v)) if callable(format_func) else str(v))
+        except Exception as e:
+            raise ValueError(f"format_func failed for value {v}: {e}")
+    
     opts = [{"value": str(values[i]), "label": labels[i]} for i in range(len(values))]
+    
+    # Validation
+    if index is not None and not (0 <= index < len(options)):
+        raise ValueError(f"index {index} must be within range [0, {len(options)-1}]")
+    
     OPTIONS_JS = json.dumps(opts, ensure_ascii=False)
     INDEX_JS = "null" if index is None else json.dumps(int(index))
     PLACE_JS = json.dumps(placeholder or "Select an option…")
-
+    
     html = f"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -190,62 +207,101 @@ def selectbox(
     --input-hover: #2a2a2a;
     --primary: #e8ff59;
   }}
+  * {{
+    box-sizing: border-box;
+  }}
   html, body {{
-    height:100%; margin:0; padding:0;
-    background:var(--bg); color:var(--text);
-    font-family:system-ui,-apple-system,sans-serif;
-    display:flex; flex-direction:column;
-    align-items:center; justify-content:center;
-    gap:.5rem;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
   }}
   .container {{
-    width:min(92vw, 520px);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: min(10vh, 10px);
   }}
   label {{
-    display:block;
-    font-weight:500;
-    font-size:14px;
-    margin-bottom:.5rem;
-    color:var(--text);
+    display: block;
+    font-weight: 500;
+    font-size: min(25vh, 25px);
+    color: var(--text);
+    width: 90vw;
+    text-align: left;
+    
+  }}
+  .select-wrapper {{
+    position: relative;
+    width: calc(100vw - 4px);
+    margin: 0 2px 2px 2px;
+  }}
+  .select-wrapper::after {{
+    content: '';
+    position: absolute;
+    right: min(10vh, 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: min(5vh, 5px) solid transparent;
+    border-right: min(5vh, 5px) solid transparent;
+    border-top: min(5vh, 5px) solid var(--text);
+    pointer-events: none;
   }}
   select {{
-    width:100%;
-    font-size:14px;
-    padding:.5rem .75rem;
-    border:1px solid var(--border);
-    border-radius:6px;
-    background:var(--input-bg);
-    color:var(--text);
-    outline:none;
-    cursor:pointer;
-    transition:all 150ms ease;
-    box-shadow:1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+    width: 100%;
+    font-size: min(15vh, 15px);
+    padding: min(7.5vh, 7.5px) min(15vh, 15px) min(7.5vh, 7.5px) min(10vh, 10px);
+    border: 1px solid var(--border);
+    border-radius: min(7.5vh, 7.5px);
+    background: var(--input-bg);
+    color: var(--text);
+    outline: none;
+    cursor: pointer;
+    transition: background 150ms ease, border-color 150ms ease;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
   }}
   select:hover {{
-    background:var(--input-hover);
-    border-color:#444;
-    box-shadow:2px 2px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+    background: var(--input-hover);
+    border-color: #444;
+  }}
+  .select-wrapper:hover::after {{
+    border-top-color: var(--primary); /* correct hover selector */
   }}
   select:focus {{
-    border-color:var(--primary);
-    background:var(--input-hover);
-    box-shadow:0 0 0 1px var(--primary), 2px 2px 0px 0px rgba(0,0,0,0.3);
+    border-color: var(--primary);
+    background: var(--input-hover);
+  }}
+  select:focus-visible {{
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
   }}
   select option {{
-    background:var(--input-bg);
-    color:var(--text);
-    padding:.5rem;
+    background: var(--input-bg);
+    color: var(--text);
+    padding: 0.5rem;
   }}
   select option:disabled {{
-    color:var(--text-muted);
+    color: var(--text-muted);
   }}
 </style>
-
 <div class="container">
-  <label for="sb">{label}</label>
-  <select id="sb"></select>
+  <label for="sb" id="lbl">{label}</label>
+  <div class="select-wrapper">
+    <select id="sb" aria-labelledby="lbl" aria-label="{label or 'Select box'}"></select>
+  </div>
 </div>
-
 <script>
 document.addEventListener('DOMContentLoaded', () => {{
   const OPTIONS = {OPTIONS_JS};
@@ -255,38 +311,45 @@ document.addEventListener('DOMContentLoaded', () => {{
   const SENDER  = {json.dumps(sender_id)};
   const AUTO    = {str(auto_send_on_load).lower()};
   const sel     = document.getElementById('sb');
-
+  
   sel.innerHTML = '';
+  
   const ph = document.createElement('option');
   ph.textContent = PLACE;
   ph.disabled = true;
   ph.selected = (INDEX === null);
+  ph.value = '';
   sel.appendChild(ph);
-
+  
   for (const o of OPTIONS) {{
     const opt = document.createElement('option');
     opt.value = o.value;
     opt.textContent = o.label;
     sel.appendChild(opt);
   }}
-
+  
   let initialValue = null;
   if (INDEX !== null) {{
     const targetIndex = Math.max(0, Math.min(OPTIONS.length - 1, Number(INDEX)));
-    sel.selectedIndex = targetIndex + 1; // +1 for placeholder
+    sel.selectedIndex = targetIndex + 1;
     initialValue = OPTIONS[targetIndex]?.value ?? null;
   }}
-
+  
   function post(val) {{
+    if (val === '') return;
     window.parent.postMessage({{
-      type:'selectbox',
-      payload:{{ value: val }},
-      origin:SENDER, parameter:PARAMETER, ts:Date.now()
+      type: 'selectbox',
+      payload: {{ value: val }},
+      origin: SENDER,
+      parameter: PARAMETER,
+      ts: Date.now()
     }}, '*');
   }}
-
-  sel.addEventListener('change', e => post(e.target.value));
-
+  
+  sel.addEventListener('change', e => {{
+    requestAnimationFrame(() => post(e.target.value));
+  }});
+  
   if (AUTO && initialValue !== null) {{
     queueMicrotask(() => post(initialValue));
   }}
@@ -294,8 +357,8 @@ document.addEventListener('DOMContentLoaded', () => {{
 </script>
 """
     return html if return_html else common.html_to_obj(html)
-
-
+    
+    
 # SLIDER ----------------------------------------------------------------------
 def slider(
     label: str = None,
