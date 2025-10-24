@@ -5,7 +5,7 @@ common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/
 def udf(parameter: str = "yay"):
     # html = button("Click me", parameter=parameter)
     L = ['aasdasd','basdads','casdasd','dasdasd']
-    html = selectbox("SQL Input", parameter=parameter, options= L)
+    html = sql_input("", parameter=parameter)
     return html
  
 
@@ -1092,29 +1092,30 @@ def sql_input(
     value: str = "",
     placeholder: str = "SELECT * FROM table...",
     button_label: str = "Run Query",
-    height: str = "200px",
+    height: str = "min(40vh, 300px)",
     parameter: str = "channel_sql",
     sender_id: str = "sql_input_1",
     disabled: bool = False,
     return_html: bool = False,
 ):
     import json
-    
+
     VALUE_JS = json.dumps(value)
     PLACEHOLDER_JS = json.dumps(placeholder)
-    
+
     html = f"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+
 <style>
   :root {{
     --primary: #e8ff59;
-    --primary-hover: #f0ff7a;
     --bg: #121212;
     --text: #eee;
     --text-muted: #999;
@@ -1157,20 +1158,32 @@ def sql_input(
     border: 1px solid var(--border);
     border-radius: min(7.5vh, 7.5px);
     overflow: hidden;
-    box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+    box-shadow:
+      1px 1px 0px 0px rgba(0,0,0,0.3),
+      0px 0px 2px 0px rgba(0,0,0,0.2);
     transition: all 150ms ease;
   }}
   .editor-wrapper:focus-within {{
     border-color: var(--primary);
-    box-shadow: inset 0 0 0 2px rgba(232, 255, 89, 0.65), 0 0 0 2px rgba(232, 255, 89, 0.15), 1px 1px 0px 0px rgba(0,0,0,0.3);
+    box-shadow:
+      inset 0 0 0 2px rgba(232,255,89,0.65),
+      0 0 0 2px rgba(232,255,89,0.15),
+      1px 1px 0px 0px rgba(0,0,0,0.3);
   }}
+
   .CodeMirror {{
     height: {height};
     font-size: min(15vh, 15px);
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-family: "Consolas","Monaco","Courier New",monospace;
     background: var(--input-bg);
     color: var(--text);
   }}
+  .CodeMirror.cm-has-placeholder-init .CodeMirror-lines {{
+    /* muted look before user types for placeholder mode */
+    color: var(--text-muted);
+    font-style: italic;
+  }}
+
   .CodeMirror-cursor {{
     border-left: 2px solid var(--primary);
   }}
@@ -1184,6 +1197,7 @@ def sql_input(
   .CodeMirror-linenumber {{
     color: var(--text-muted);
   }}
+
   button {{
     width: 100%;
     padding: min(7.5vh, 10px) min(10vh, 16px);
@@ -1195,43 +1209,53 @@ def sql_input(
     font-weight: 500;
     cursor: pointer;
     transition: all 150ms ease;
-    box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+    box-shadow:
+      1px 1px 0px 0px rgba(0,0,0,0.3),
+      0px 0px 2px 0px rgba(0,0,0,0.2);
     {"opacity: 0.6; cursor: not-allowed;" if disabled else ""}
   }}
   button:hover:not(:disabled) {{
     background: var(--button-hover);
     border-color: #444;
-    box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+    box-shadow:
+      2px 2px 0px 0px rgba(0,0,0,0.3),
+      0px 0px 2px 0px rgba(0,0,0,0.2);
   }}
   button:active:not(:disabled) {{
     transform: translateY(1px);
-    box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+    box-shadow:
+      1px 1px 0px 0px rgba(0,0,0,0.3),
+      0px 0px 2px 0px rgba(0,0,0,0.2);
   }}
   button:focus {{
     outline: none;
-    box-shadow: 0 0 0 2px rgba(232, 255, 89, 0.1), 1px 1px 0px 0px rgba(0,0,0,0.3);
+    box-shadow:
+      0 0 0 2px rgba(232,255,89,0.1),
+      1px 1px 0px 0px rgba(0,0,0,0.3);
   }}
 </style>
 
 <label for="sql-editor">{label}</label>
 <div class="container">
   <div class="editor-wrapper">
-    <textarea id="sql-editor"></textarea>
+    <!-- Note: textarea placeholder attr is now only cosmetic before CM mounts.
+         After mount we control text ourselves. -->
+    <textarea id="sql-editor" placeholder="{placeholder}"></textarea>
   </div>
   <button id="run-btn" {("disabled" if disabled else "")}>{button_label}</button>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {{
-  const PARAMETER = {json.dumps(parameter)};
-  const SENDER = {json.dumps(sender_id)};
-  const VALUE = {VALUE_JS};
+  const PARAMETER   = {json.dumps(parameter)};
+  const SENDER      = {json.dumps(sender_id)};
+  const VALUE       = {VALUE_JS};
   const PLACEHOLDER = {PLACEHOLDER_JS};
-  
+
   const textarea = document.getElementById('sql-editor');
   const btn = document.getElementById('run-btn');
-  
-  // Initialize CodeMirror
+
+  // init CodeMirror
   const editor = CodeMirror.fromTextArea(textarea, {{
     mode: 'text/x-sql',
     theme: 'material-darker',
@@ -1241,22 +1265,36 @@ document.addEventListener('DOMContentLoaded', () => {{
     tabSize: 2,
     indentWithTabs: false,
     autofocus: true,
-    placeholder: PLACEHOLDER,
     extraKeys: {{
       'Ctrl-Enter': () => btn.click(),
       'Cmd-Enter': () => btn.click(),
     }}
   }});
-  
-  // Set initial value
-  if (VALUE) {{
+
+  // If user passed a real value, use it.
+  // Else, inject the placeholder text AS REAL CONTENT.
+  if (VALUE && VALUE.trim() !== "") {{
     editor.setValue(VALUE);
+  }} else {{
+    editor.setValue(PLACEHOLDER);
+    editor.getWrapperElement().classList.add('cm-has-placeholder-init');
   }}
-  
+
+  // As soon as they type something different, remove "placeholder style"
+  editor.on('change', () => {{
+    const wrap = editor.getWrapperElement();
+    if (wrap.classList.contains('cm-has-placeholder-init')) {{
+      // If user modified text away from the exact placeholder OR added newlines, etc.,
+      // drop the muted styling forever.
+      if (editor.getValue() !== PLACEHOLDER) {{
+        wrap.classList.remove('cm-has-placeholder-init');
+      }}
+    }}
+  }});
+
   function post() {{
     const query = editor.getValue().trim();
     if (!query) return;
-    
     window.parent.postMessage({{
       type: 'sql_input',
       payload: {{ value: query }},
@@ -1265,15 +1303,19 @@ document.addEventListener('DOMContentLoaded', () => {{
       ts: Date.now()
     }}, '*');
   }}
-  
+
   btn.addEventListener('click', () => {{
     if (!btn.disabled) {{
       post();
     }}
   }});
-  
-  // Refresh CodeMirror after a short delay to ensure proper rendering
-  setTimeout(() => editor.refresh(), 100);
+
+  // Refresh on initial layout + on resize so vh height stays sane
+  const refresh = () => editor.refresh();
+  const ro = new ResizeObserver(refresh);
+  ro.observe(document.body);
+
+  setTimeout(refresh, 100);
 }});
 </script>
 """
