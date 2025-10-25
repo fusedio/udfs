@@ -5,13 +5,10 @@ def udf(
     parameter: str = "form",
     data_url: str = "https://udf.ai/fsh_3FY8CeL0kaeIyu7f8X013F/run?dtype_out_raster=png&dtype_out_vector=parquet",
     columns: str = "BOROUGH,NEIGHBORHOOD,BLOCK",
-    # data_url: str = "https://udf.ai/fsh_4TNmU0UqT2qj2dqPxyVvY0/run?dtype_out_raster=png&dtype_out_vector=parquet",
-    # columns: str = "property_type, room_type, bedrooms",
 ):
-
     import json
 
-    # Parse and normalize column list
+    # Parse and normalize column lis
     col_list = [c.strip() for c in columns.split(",") if c.strip()]
     while len(col_list) < 3:
         col_list.append(f"COLUMN_{len(col_list)+1}")
@@ -216,9 +213,6 @@ def udf(
   const COL1 = {COL1_JS};
   const COL2 = {COL2_JS};
 
-  // ------------------------------------------------------------------------
-  // helpers
-  // ------------------------------------------------------------------------
   const $ = (id) => document.getElementById(id);
 
   function setStatus(msg) {{
@@ -264,7 +258,6 @@ def udf(
       setStatus("Initializing DuckDB…");
 
       const duckdb = await import('https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.1-dev132.0/+esm');
-
       const bundle = await duckdb.selectBundle(duckdb.getJsDelivrBundles());
 
       const workerCode = await (await fetch(bundle.mainWorker)).text();
@@ -301,8 +294,18 @@ def udf(
   }}
 
   // ------------------------------------------------------------------------
-  // hierarchical dropdown logic
+  // hierarchical dropdown logic with auto-select
   // ------------------------------------------------------------------------
+
+  // After we fill a dropdown, try to auto-select the first real option
+  // (index 1, because index 0 is the placeholder we create).
+  function autoSelectFirstAndGetValue(selectEl) {{
+    if (selectEl.options.length > 1) {{
+      selectEl.selectedIndex = 1;
+      return selectEl.options[1].value;
+    }}
+    return "";
+  }}
 
   // level 0 -> DISTINCT COL0
   async function loadLevel0() {{
@@ -320,23 +323,30 @@ def udf(
 
     appendOptions(el0, vals);
 
-    // reset level1 + level2
+    // reset downstream
     clearSelect($("lvl1_sel"), "Select " + COL1 + "…");
     clearSelect($("lvl2_sel"), "Select " + COL2 + "…");
+
+    // auto-pick first option for lvl0
+    const v0 = autoSelectFirstAndGetValue(el0);
+    if (v0) {{
+      $("submit_btn").disabled = false;
+      await loadLevel1(); // cascade
+    }}
   }}
 
   // level 1 -> DISTINCT COL1 WHERE COL0 = selected0
   async function loadLevel1() {{
-    const v0 = $("lvl0_sel").value;
     const el1 = $("lvl1_sel");
     const el2 = $("lvl2_sel");
 
     clearSelect(el1, "Select " + COL1 + "…");
     clearSelect(el2, "Select " + COL2 + "…");
 
-    if (!v0) return;
+    const v0_cur = $("lvl0_sel").value;
+    if (!v0_cur) return;
 
-    const lit0 = "'" + v0.replace(/'/g, "''") + "'";
+    const lit0 = "'" + v0_cur.replace(/'/g, "''") + "'";
 
     const q = [
       "SELECT DISTINCT " + COL1 + " AS v",
@@ -349,20 +359,27 @@ def udf(
     const vals = res.toArray().map(row => row.v);
 
     appendOptions(el1, vals);
+
+    // auto-pick first option for lvl1
+    const v1 = autoSelectFirstAndGetValue(el1);
+    if (v1) {{
+        $("submit_btn").disabled = false;
+        await loadLevel2(); // cascade
+    }}
   }}
 
   // level 2 -> DISTINCT COL2 WHERE COL0 = selected0 AND COL1 = selected1
   async function loadLevel2() {{
-    const v0 = $("lvl0_sel").value;
-    const v1 = $("lvl1_sel").value;
     const el2 = $("lvl2_sel");
-
     clearSelect(el2, "Select " + COL2 + "…");
 
-    if (!v0 || !v1) return;
+    const v0_cur = $("lvl0_sel").value;
+    const v1_cur = $("lvl1_sel").value;
 
-    const lit0 = "'" + v0.replace(/'/g, "''") + "'";
-    const lit1 = "'" + v1.replace(/'/g, "''") + "'";
+    if (!v0_cur || !v1_cur) return;
+
+    const lit0 = "'" + v0_cur.replace(/'/g, "''") + "'";
+    const lit1 = "'" + v1_cur.replace(/'/g, "''") + "'";
 
     const q = [
       "SELECT DISTINCT " + COL2 + " AS v",
@@ -376,6 +393,12 @@ def udf(
     const vals = res.toArray().map(row => row.v);
 
     appendOptions(el2, vals);
+
+    // auto-pick first option for lvl2
+    const v2 = autoSelectFirstAndGetValue(el2);
+    if (v2) {{
+      $("submit_btn").disabled = false;
+    }}
   }}
 
   // ------------------------------------------------------------------------
@@ -386,7 +409,6 @@ def udf(
     const v1 = $("lvl1_sel").value || "";
     const v2 = $("lvl2_sel").value || "";
 
-    // payload keys should be the actual column names
     const payload = {{
       [COL0]: v0,
       [COL1]: v1,
@@ -408,7 +430,6 @@ def udf(
   try {{
     hideError();
 
-    // label the dropdowns using your provided column names
     $("label_lvl0").textContent = COL0;
     $("label_lvl1").textContent = COL1;
     $("label_lvl2").textContent = COL2;
@@ -416,15 +437,16 @@ def udf(
     await initDuckDB();
     await loadLevel0();
 
-    // reactivity
+    // user changes lvl0 manually -> reload lvl1 and cascade
     $("lvl0_sel").addEventListener("change", async () => {{
-      await loadLevel1();
       $("submit_btn").disabled = false;
+      await loadLevel1();
     }});
 
+    // user changes lvl1 manually -> reload lvl2 and cascade
     $("lvl1_sel").addEventListener("change", async () => {{
-      await loadLevel2();
       $("submit_btn").disabled = false;
+      await loadLevel2();
     }});
 
     $("lvl2_sel").addEventListener("change", () => {{
