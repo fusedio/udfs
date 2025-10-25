@@ -62,7 +62,7 @@ def udf(
 
   .field-label {{
     color:#ddd;
-    font-size:min(25vh, 25px);
+    font-size:min(17vh, 17px);
     line-height:1.2;
     word-break:break-word;
   }}
