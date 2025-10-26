@@ -138,6 +138,44 @@ def udf(
       cursor: not-allowed;
     }
 
+    /* Loading spinner */
+    #loaderOverlay {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 4px solid rgba(232, 255, 89, 0.15);
+      border-top-color: var(--primary);
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    #formContent {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    #formContent.loaded {
+      display: flex;
+    }
+
+    #loaderOverlay.hidden {
+      display: none;
+    }
+
     /* flatpickr dark tweaks */
     .flatpickr-calendar {
       background: var(--input-bg) !important;
@@ -223,38 +261,49 @@ def udf(
   </style>
 </head>
 <body>
-  <div class="form-wrapper" id="form">
-    {% for f in fields %}
-      {% if f.type == "categorical" %}
-        <div class="form-field">
-          <label for="field_{{ loop.index0 }}">{{ f.col }}</label>
-          <select
-            id="field_{{ loop.index0 }}"
-            data-kind="categorical"
-            data-col="{{ f.col }}"
-          >
-            <option disabled selected value="">Select {{ f.col }}…</option>
-          </select>
-        </div>
-      {% elif f.type == "date_range" %}
-        <div class="form-field">
-          <label for="field_{{ loop.index0 }}">Date Range</label>
-          <input
-            id="field_{{ loop.index0 }}"
-            class="date-input"
-            data-kind="date_range"
-            data-start="{{ f.start_col }}"
-            data-end="{{ f.end_col }}"
-            placeholder="Select date range…"
-            readonly
-          />
-        </div>
-      {% endif %}
-    {% endfor %}
+  <div class="form-wrapper" id="formRoot">
+    
+    <!-- Loading overlay -->
+    <div id="loaderOverlay">
+      <div class="spinner"></div>
+      <div>Loading…</div>
+    </div>
 
-    <button id="submit_btn" class="submit-btn" disabled>
-      Submit
-    </button>
+    <!-- Form content (hidden until loaded) -->
+    <div id="formContent">
+      {% for f in fields %}
+        {% if f.type == "categorical" %}
+          <div class="form-field">
+            <label for="field_{{ loop.index0 }}">{{ f.col }}</label>
+            <select
+              id="field_{{ loop.index0 }}"
+              data-kind="categorical"
+              data-col="{{ f.col }}"
+            >
+              <option disabled selected value="">Select {{ f.col }}…</option>
+            </select>
+          </div>
+        {% elif f.type == "date_range" %}
+          <div class="form-field">
+            <label for="field_{{ loop.index0 }}">Date Range</label>
+            <input
+              id="field_{{ loop.index0 }}"
+              class="date-input"
+              data-kind="date_range"
+              data-start="{{ f.start_col }}"
+              data-end="{{ f.end_col }}"
+              placeholder="Select date range…"
+              readonly
+            />
+          </div>
+        {% endif %}
+      {% endfor %}
+
+      <button id="submit_btn" class="submit-btn" disabled>
+        Submit
+      </button>
+    </div>
+
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -266,6 +315,14 @@ def udf(
       const FIELDS    = {{ FIELDS_JS | safe }};
 
       const $ = (id) => document.getElementById(id);
+
+      // Helper to show form and hide loader
+      function showForm() {
+        const loader = $("loaderOverlay");
+        const form = $("formContent");
+        if (loader) loader.classList.add("hidden");
+        if (form) form.classList.add("loaded");
+      }
 
       // keep per-index flatpickr handles here
       const rangePickers = {}; // { [index]: flatpickrInstance }
@@ -461,6 +518,9 @@ def udf(
       // ---------------- wire up cascading ----------------
       // initial fill
       await cascadeFrom(0);
+
+      // Show form after initial load
+      showForm();
 
       // when a categorical changes, repopulate everything after it
       FIELDS.forEach((f, idx) => {
