@@ -587,7 +587,7 @@ def bytes_to_html(bytes, format='gif', width='100%', height='100%'):
     elif format == 'pdf':
         return f'<embed src="data:application/pdf;base64,{b64}" {style}></embed>'
     elif format == 'mp4':
-        return f'<video src="data:video/mp4;base64,{b64}" {style} controls></video>'
+        return f'<video src="data:video/mp4;base64,{b64}" {style} muted autoplay loop controls allowfullscreen></video>'
     elif format == 'mp3':
         return f'<audio src="data:audio/mpeg;base64,{b64}" {style} controls></audio>'
     else:
