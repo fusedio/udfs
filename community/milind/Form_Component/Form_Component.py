@@ -1,456 +1,476 @@
 common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/")
 
+
 @fused.udf(cache_max_age=0)
 def udf(
     parameter: str = "form",
-    data_url: str = "https://udf.ai/fsh_3FY8CeL0kaeIyu7f8X013F/run?dtype_out_raster=png&dtype_out_vector=parquet",
-    columns: str = "BOROUGH,NEIGHBORHOOD,BLOCK, YEAR_BUILT",
+    data_url: str = "https://unstable.udf.ai/fsh_aotlErnaYWdIlKcGg6huq/run?dtype_out_raster=png&dtype_out_vector=parquet",
+    columns: str = '["mission","product_name","prefix","@date::start_date,end_date"]'
 ):
+    """
+    Creates a hierarchical form with cascading dropdowns and date range pickers.
+    """
     import json
+    import jinja2
 
-    # turn "A,B,C" -> ["A","B","C"], drop empties/whitespace
-    col_list = [c.strip() for c in columns.split(",") if c.strip()]
+    # Parse columns input (accepts both list and JSON string)
+    if isinstance(columns, str):
+        raw_cols = json.loads(columns)
+    else:
+        raw_cols = columns
 
+    # Process field specifications
+    field_specs = []
+    for item in raw_cols:
+        if isinstance(item, str) and item.startswith("@date::"):
+            # Date range field: @date::start_col,end_col
+            _, rest = item.split("::", 1)
+            start_col, end_col = [p.strip() for p in rest.split(",")]
+            field_specs.append({
+                "type": "date_range",
+                "start_col": start_col,
+                "end_col": end_col
+            })
+        else:
+            # Categorical field
+            field_specs.append({
+                "type": "categorical",
+                "col": item.strip()
+            })
+
+    # Prepare data for JavaScript
     PARAM_JS = json.dumps(parameter)
     DATA_URL_JS = json.dumps(data_url)
-    COLS_JS = json.dumps(col_list)
+    FIELDS_JS = json.dumps(field_specs)
 
-    html = """<!doctype html>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-  :root {{
-    --bg: #121212;
-    --text: #eee;
-    --text-muted: #999;
-    --border: #333;
-    --input-bg: #1b1b1b;
-    --input-hover: #2a2a2a;
-    --primary: #e8ff59;
-    --primary-dim: rgba(232, 255, 89, 0.1);
-  }}
-  * {{
-    box-sizing: border-box;
-  }}
-  html, body {{
-    height:100vh; margin:0; padding:0;
-    background:var(--bg); color:var(--text);
-    font-family:system-ui,-apple-system,sans-serif;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:min(4vh,24px);
-  }}
+    # HTML Template
+    template_src = r"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <style>
+    /* ==================== Variables ==================== */
+    :root {
+      --bg: #121212;
+      --text: #eeeeee;
+      --border: #333333;
+      --input-bg: #1b1b1b;
+      --input-hover: #2a2a2a;
+      --primary: #e8ff59;
+      --primary-dark: #d4eb45;
+    }
 
-  .form-wrapper {{
-    width:90vw;
-    max-width:480px;
-    display:flex;
-    flex-direction:column;
-    gap:min(4vh,24px);
-  }}
+    /* ==================== Base Styles ==================== */
+    * {
+      box-sizing: border-box;
+    }
 
-  .dynamic-fields {{
-    display:flex;
-    flex-direction:column;
-    gap:min(4vh,24px);
-  }}
+    body {
+      margin: 0;
+      padding: 20px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
+                   "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
 
-  .field-block {{
-    display:flex;
-    flex-direction:column;
-    gap:min(2vh,12px);
-  }}
+    /* ==================== Form Layout ==================== */
+    .form-wrapper {
+      width: 90vw;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
 
-  .field-label {{
-    color:#ddd;
-    font-size:min(17vh,17px);
-    line-height:1.2;
-    word-break:break-word;
-  }}
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
 
-  .select-wrapper {{
-    position: relative;
-    width: 100%;
-  }}
-  .select-wrapper::after {{
-    content: '';
-    position: absolute;
-    right: min(10vh,10px);
-    top: 50%;
-    transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    border-left: min(5vh,5px) solid transparent;
-    border-right: min(5vh,5px) solid transparent;
-    border-top: min(5vh,5px) solid var(--text-muted);
-    pointer-events: none;
-    transition: border-top-color 150ms ease;
-  }}
+    label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      text-transform: capitalize;
+    }
 
-  select {{
-    width: 100%;
-    font-size: min(15vh,15px);
-    padding: min(7.5vh,7.5px) min(15vh,15px) min(7.5vh,7.5px) min(10vh,10px);
-    border: 1px solid var(--border);
-    border-radius: min(7.5vh,7.5px);
-    background: var(--input-bg);
-    color: var(--text);
-    outline: none;
-    cursor: pointer;
-    transition: all 150ms ease;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    box-shadow:
-      1px 1px 0px 0px rgba(0,0,0,0.3),
-      0px 0px 2px 0px rgba(0,0,0,0.2);
-  }}
-  select:hover {{
-    background: var(--input-hover);
-    border-color: #444;
-    box-shadow:
-      2px 2px 0px 0px rgba(0,0,0,0.3),
-      0px 0px 2px 0px rgba(0,0,0,0.2);
-  }}
-  .select-wrapper:hover::after {{
-    border-top-color: var(--primary);
-  }}
-  select:focus {{
-    border-color: var(--primary);
-    background: var(--input-hover);
-    box-shadow:
-      0 0 0 2px var(--primary-dim),
-      1px 1px 0px 0px rgba(0,0,0,0.3);
-  }}
-  select:focus-visible {{
-    outline: 2px solid var(--primary);
-    outline-offset: -2px;
-  }}
-  .select-wrapper:has(select:focus)::after {{
-    border-top-color: var(--primary);
-  }}
-  select option {{
-    background: var(--input-bg);
-    color: var(--text);
-    padding: 0.5rem;
-  }}
-  select option:disabled {{
-    color: var(--text-muted);
-    font-style: italic;
-  }}
-  select option:checked {{
-    background: var(--primary-dim);
-  }}
+    /* ==================== Input Styles ==================== */
+    select,
+    input {
+      width: 100%;
+      font-size: 15px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--input-bg);
+      color: var(--text);
+      transition: all 0.2s ease;
+      outline: none;
+    }
 
-  .submit-btn {{
-    width:100%;
-    font-size:min(18vh,18px);
-    line-height:1.2;
-    font-weight:600;
-    padding:min(10vh,10px) min(15vh,15px);
-    color:#000;
-    background:var(--primary);
-    border:0;
-    border-radius:min(7.5vh,7.5px);
-    cursor:pointer;
-    box-shadow:
-      0 4px 20px rgba(232,255,89,0.4),
-      0 0 30px rgba(232,255,89,0.2) inset;
-    text-align:center;
-  }}
-  .submit-btn:active {{
-    transform:scale(0.99);
-  }}
+    select:hover,
+    input:hover {
+      background: var(--input-hover);
+      border-color: #444444;
+    }
 
-  #status {{
-    font-size:min(15vh,15px);
-    line-height:1.4;
-    color:var(--text-muted);
-    text-align:center;
-  }}
+    select:focus,
+    input:focus {
+      border-color: var(--primary);
+    }
 
-  #errorBox {{
-    font-size:min(13vh,13px);
-    line-height:1.4;
-    color:#ff6b6b;
-    text-align:center;
-    white-space:pre-wrap;
-  }}
-</style>
+    /* ==================== Submit Button ==================== */
+    .submit-btn {
+      background: var(--primary);
+      color: #000000;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 24px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: 10px;
+    }
 
-<div class="form-wrapper">
+    .submit-btn:hover:not(:disabled) {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
 
-  <div id="status">Loading…</div>
-  <div id="errorBox" style="display:none;"></div>
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
-  <!-- dynamic dropdown container -->
-  <div id="dynamicFields" class="dynamic-fields"></div>
+    /* ==================== Flatpickr Minimal Theme ==================== */
+    /* ==================== Flatpickr Dark Neon Theme ==================== */
+    .flatpickr-calendar {
+      background: var(--input-bg) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 8px !important;
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.8) !important;
+      color: var(--text) !important;
+    }
 
-  <button id="submit_btn" class="submit-btn" disabled>Submit</button>
-</div>
+    .flatpickr-months {
+      background: var(--input-bg) !important;
+      border-bottom: 1px solid var(--border) !important;
+    }
 
-<script type="module">
-(async () => {{
+    .flatpickr-current-month {
+      color: var(--text) !important;
+      font-size: 13px !important;
+      font-weight: 500 !important;
+    }
 
-  // --------------------------------------------------
-  // injected config from python
-  // --------------------------------------------------
-  const PARAMETER = {PARAM_JS};
-  const DATA_URL  = {DATA_URL_JS};
-  const COLS      = {COLS_JS}; // e.g. ["BOROUGH","NEIGHBORHOOD","BLOCK"]
+    .flatpickr-current-month input.cur-year {
+      color: var(--text) !important;
+    }
 
-  // --------------------------------------------------
-  // DOM helpers / state
-  // --------------------------------------------------
-  const $ = (id) => document.getElementById(id);
+    .flatpickr-weekdays {
+      background: var(--input-bg) !important;
+    }
 
-  function setStatus(msg) {{
-    $("status").textContent = msg;
-  }}
+    .flatpickr-weekday {
+      color: #888 !important;
+      font-size: 11px !important;
+      font-weight: 400 !important;
+    }
 
-  function showError(msg) {{
-    const box = $("errorBox");
-    box.textContent = msg;
-    box.style.display = "block";
-  }}
+    /* Day cell base */
+    .flatpickr-day {
+      background: transparent !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      color: var(--text) !important;
+      font-weight: 500;
+    }
 
-  function hideError() {{
-    $("errorBox").style.display = "none";
-  }}
+    /* Disabled / out-of-month days */
+    .flatpickr-day.prevMonthDay,
+    .flatpickr-day.nextMonthDay,
+    .flatpickr-day.disabled,
+    .flatpickr-day.notAllowed {
+      color: #444 !important;
+      background: transparent !important;
+      cursor: default !important;
+    }
 
-  // build one dropdown block for column `colName` at level `idx`
-  function createFieldBlock(colName, idx) {{
-    const wrapper = document.createElement("div");
-    wrapper.className = "field-block";
-    wrapper.innerHTML = `
-      <div class="field-label">${{colName}}</div>
-      <div class="select-wrapper">
-        <select id="select_${{idx}}" aria-label="${{colName}}"></select>
-      </div>
-    `;
-    return wrapper;
-  }}
+    /* Hover */
+    .flatpickr-day.hover,
+    .flatpickr-day:hover {
+      background: var(--input-hover) !important;
+      color: var(--text) !important;
+      border-radius: 6px !important;
+    }
 
-  // clear <select> + placeholder
-  function clearSelect(el, placeholderText) {{
-    el.innerHTML = "";
-    const ph = document.createElement("option");
-    ph.textContent = placeholderText || "Select…";
-    ph.disabled = true;
-    ph.selected = true;
-    ph.value = "";
-    el.appendChild(ph);
-  }}
+    /* Range highlight BETWEEN start and end  */
+    .flatpickr-day.inRange {
+      background: color-mix(in srgb, var(--primary) 20%, transparent) !important;
+      color: var(--text) !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
 
-  // add options
-  function appendOptions(el, values) {{
-    for (const v of values) {{
-      const opt = document.createElement("option");
-      opt.value = (v === null || v === undefined) ? "" : String(v);
-      opt.textContent = (v === null || v === undefined) ? "(null)" : String(v);
-      el.appendChild(opt);
-    }}
-  }}
+    /* Start / end of range bubble */
+    .flatpickr-day.startRange,
+    .flatpickr-day.endRange,
+    .flatpickr-day.selected {
+      background: var(--primary) !important;
+      color: #000 !important;
+      border-radius: 6px !important;
+      position: relative;
+      z-index: 2;
+    }
 
-  // auto-pick first non-placeholder option (index 1)
-  // returns that value or ""
-  function autoSelectFirstAndGetValue(selectEl) {{
-    if (selectEl.options.length > 1) {{
-      selectEl.selectedIndex = 1;
-      return selectEl.options[1].value;
-    }}
-    return "";
-  }}
+    /* Smooth pill edges connecting startRange → inRange → endRange */
+    .flatpickr-day.startRange + .flatpickr-day.inRange {
+      box-shadow:
+        -4px 0 0 0 color-mix(in srgb, var(--primary) 20%, transparent) !important;
+    }
 
-  // --------------------------------------------------
-  // DuckDB WASM init/load
-  // --------------------------------------------------
-  let conn = null;
+    /* Today ring */
+    .flatpickr-day.today:not(.selected):not(.startRange):not(.endRange) {
+      border: 1px solid var(--primary) !important;
+      color: var(--primary) !important;
+      background: transparent !important;
+      border-radius: 6px !important;
+      box-shadow: 0 0 8px rgba(232,255,89,0.4);
+    }
 
-  async function initDuckDB() {{
-    try {{
-      setStatus("Initializing DuckDB…");
+    /* Nav arrows */
+    .flatpickr-months .flatpickr-prev-month,
+    .flatpickr-months .flatpickr-next-month {
+      fill: var(--text) !important;
+      stroke: none !important;
+      opacity: 0.8;
+    }
 
+    .flatpickr-months .flatpickr-prev-month:hover,
+    .flatpickr-months .flatpickr-next-month:hover {
+      fill: var(--primary) !important;
+      opacity: 1;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="form-wrapper" id="form">
+    {% for f in fields %}
+      {% if f.type == "categorical" %}
+        <div class="form-field">
+          <label for="field_{{loop.index0}}">{{ f.col }}</label>
+          <select 
+            id="field_{{loop.index0}}" 
+            data-kind="categorical" 
+            data-col="{{ f.col }}">
+            <option disabled selected value="">Select {{ f.col }}…</option>
+          </select>
+        </div>
+      {% elif f.type == "date_range" %}
+        <div class="form-field">
+          <label for="field_{{loop.index0}}">Date Range</label>
+          <input 
+            id="field_{{loop.index0}}" 
+            class="date-input" 
+            data-kind="date_range"
+            data-start="{{ f.start_col }}" 
+            data-end="{{ f.end_col }}" 
+            placeholder="Select date range…" 
+            readonly />
+        </div>
+      {% endif %}
+    {% endfor %}
+    
+    <button id="submit_btn" class="submit-btn" disabled>Submit</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script type="module">
+    (async () => {
+      // ==================== Configuration ====================
+      const PARAMETER = {{ PARAM_JS|safe }};
+      const DATA_URL = {{ DATA_URL_JS|safe }};
+      const FIELDS = {{ FIELDS_JS|safe }};
+
+      const $ = (id) => document.getElementById(id);
+
+      // ==================== DuckDB Setup ====================
+      let conn;
       const duckdb = await import("https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.1-dev132.0/+esm");
       const bundle = await duckdb.selectBundle(duckdb.getJsDelivrBundles());
-
-      const workerCode = await (await fetch(bundle.mainWorker)).text();
-      const worker = new Worker(
-        URL.createObjectURL(
-          new Blob([workerCode], {{ type:"application/javascript" }})
-        )
+      
+      const workerBlob = new Blob(
+        [await (await fetch(bundle.mainWorker)).text()],
+        { type: "application/javascript" }
       );
-
+      const worker = new Worker(URL.createObjectURL(workerBlob));
+      
       const db = new duckdb.AsyncDuckDB(new duckdb.ConsoleLogger(), worker);
       await db.instantiate(bundle.mainModule);
       conn = await db.connect();
 
-      setStatus("Downloading data…");
-      const resp = await fetch(DATA_URL);
-      const buf = await resp.arrayBuffer();
-      const bytes = new Uint8Array(buf);
+      // Load data
+      const buffer = new Uint8Array(await (await fetch(DATA_URL)).arrayBuffer());
+      await db.registerFileBuffer("data.parquet", buffer);
+      await conn.query("CREATE OR REPLACE TABLE df AS SELECT * FROM read_parquet('data.parquet');");
 
-      await db.registerFileBuffer("data.parquet", bytes);
+      // ==================== Helper Functions ====================
+      async function getDistinctValues(column, whereClause) {
+        const query = [
+          "SELECT DISTINCT",
+          column,
+          "AS v FROM df",
+          whereClause,
+          "ORDER BY 1"
+        ].filter(Boolean).join(" ");
+        
+        const result = await conn.query(query);
+        return result.toArray().map(row => row.v);
+      }
 
-      setStatus("Loading table…");
-      await conn.query(`
-        CREATE OR REPLACE TABLE df AS
-        SELECT * FROM read_parquet('data.parquet');
-      `);
+      function buildWhereClause(upToIndex) {
+        const conditions = [];
+        
+        for (let i = 0; i < upToIndex; i++) {
+          const field = FIELDS[i];
+          if (field.type !== "categorical") continue;
+          
+          const element = $(`field_${i}`);
+          if (element && element.value) {
+            const escapedValue = element.value.replace(/'/g, "''");
+            conditions.push(`${field.col}='${escapedValue}'`);
+          }
+        }
+        
+        return conditions.length ? "WHERE " + conditions.join(" AND ") : "";
+      }
 
-      setStatus("Ready");
-    }} catch (err) {{
-      console.error(err);
-      setStatus("Init error");
-      showError(err && err.message ? err.message : String(err));
-      throw err;
-    }}
-  }}
+      // ==================== Field Population ====================
+      async function populateCategoricalField(index) {
+        const element = $(`field_${index}`);
+        const field = FIELDS[index];
+        
+        element.innerHTML = `<option disabled selected value="">Select ${field.col}…</option>`;
+        
+        const values = await getDistinctValues(field.col, buildWhereClause(index));
+        
+        for (const value of values) {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = value;
+          element.appendChild(option);
+        }
+        
+        if (values.length > 0) {
+          element.selectedIndex = 1;
+          $("submit_btn").disabled = false;
+        }
+      }
 
-  // --------------------------------------------------
-  // Query helpers (hierarchy)
-  // --------------------------------------------------
+      async function populateDateRangeField(index) {
+        const field = FIELDS[index];
+        const element = $(`field_${index}`);
+        
+        const query = `
+          SELECT 
+            MIN(${field.start_col}) AS min_date,
+            MAX(${field.end_col}) AS max_date 
+          FROM df ${buildWhereClause(index)}
+        `;
+        
+        const result = await conn.query(query);
+        const row = result.toArray()[0] || {};
+        const minDate = row.min_date?.slice(0, 10);
+        const maxDate = row.max_date?.slice(0, 10);
+        
+        flatpickr(element, {
+          mode: "range",
+          dateFormat: "Y-m-d",
+          minDate: minDate,
+          maxDate: maxDate,
+          defaultDate: [minDate, maxDate],
+          onChange: () => {
+            $("submit_btn").disabled = false;
+          }
+        });
+      }
 
-  // builds WHERE clause for level `lvl`
-  // includes equality constraints from all previous levels
-  function buildWhereForLevel(lvl) {{
-    const clauses = [];
-    for (let i = 0; i < lvl; i++) {{
-      const prevSelEl = document.getElementById(`select_${{i}}`);
-      const prevVal = prevSelEl ? (prevSelEl.value || "") : "";
-      if (!prevVal) {{
-        // no selection at an earlier level -> skip that filter
-        continue;
-      }}
-      const colName = COLS[i];
-      const lit = "'" + prevVal.replace(/'/g, "''") + "'";
-      clauses.push(colName + " = " + lit);
-    }}
-    if (!clauses.length) {{
-      return "";
-    }}
-    return "WHERE " + clauses.join(" AND ");
-  }}
+      async function cascadePopulateFields(startIndex) {
+        for (let i = startIndex; i < FIELDS.length; i++) {
+          if (FIELDS[i].type === "categorical") {
+            await populateCategoricalField(i);
+          } else {
+            await populateDateRangeField(i);
+          }
+        }
+      }
 
-  // run DISTINCT query for col at `lvl`, then populate its <select>
-  async function loadLevel(lvl) {{
-    const colName = COLS[lvl];
-    const selEl   = document.getElementById(`select_${{lvl}}`);
+      // ==================== Event Listeners ====================
+      await cascadePopulateFields(0);
 
-    clearSelect(selEl, "Select " + colName + "…");
+      FIELDS.forEach((field, index) => {
+        if (field.type === "categorical") {
+          $(`field_${index}`).addEventListener("change", () => {
+            cascadePopulateFields(index + 1);
+          });
+        }
+      });
 
-    const whereClause = buildWhereForLevel(lvl);
+      $("submit_btn").addEventListener("click", () => {
+        const payload = {};
+        
+        FIELDS.forEach((field, index) => {
+          if (field.type === "categorical") {
+            payload[field.col] = $(`field_${index}`).value;
+          } else {
+            const pickerInstance = flatpickr.instances.find(
+              inst => inst._input.id === `field_${index}`
+            );
+            const [startDate, endDate] = pickerInstance.selectedDates || [];
+            
+            if (startDate) {
+              payload[field.start_col] = startDate.toISOString().slice(0, 10);
+            }
+            if (endDate) {
+              payload[field.end_col] = endDate.toISOString().slice(0, 10);
+            }
+          }
+        });
+        
+        window.parent.postMessage(
+          {
+            type: "hierarchical_form_submit",
+            payload: payload,
+            origin: "hierarchical_form",
+            parameter: PARAMETER,
+            ts: Date.now()
+          },
+          "*"
+        );
+      });
+    })();
+  </script>
+</body>
+</html>
+"""
 
-    const q = [
-      "SELECT DISTINCT " + colName + " AS v",
-      "FROM df",
-      whereClause,
-      "ORDER BY 1"
-    ].filter(Boolean).join("\\n");
-
-    const res = await conn.query(q);
-    const vals = res.toArray().map(row => row.v);
-
-    appendOptions(selEl, vals);
-
-    const chosen = autoSelectFirstAndGetValue(selEl);
-
-    // cascade to next level if we chose something and next level exists
-    if (chosen && lvl + 1 < COLS.length) {{
-      $("submit_btn").disabled = false;
-      await loadLevel(lvl + 1);
-    }} else if (chosen) {{
-      $("submit_btn").disabled = false;
-    }}
-  }}
-
-  // on manual change of select at `lvl`:
-  // 1. enable submit
-  // 2. wipe deeper selects
-  // 3. repopulate next level
-  async function onLevelChange(lvl) {{
-    $("submit_btn").disabled = false;
-
-    // wipe deeper selects
-    for (let deeper = lvl + 1; deeper < COLS.length; deeper++) {{
-      const deeperEl = document.getElementById(`select_${{deeper}}`);
-      if (!deeperEl) continue;
-      clearSelect(deeperEl, "Select " + COLS[deeper] + "…");
-    }}
-
-    // cascade repop from next level
-    if (lvl + 1 < COLS.length) {{
-      await loadLevel(lvl + 1);
-    }}
-  }}
-
-  // --------------------------------------------------
-  // submit
-  // --------------------------------------------------
-  function postSelection() {{
-    // build payload = {{ colName: selectedValue, ... }}
-    const payload = {{}};
-    for (let i = 0; i < COLS.length; i++) {{
-      const c = COLS[i];
-      const selEl = document.getElementById(`select_${{i}}`);
-      const val = selEl ? (selEl.value || "") : "";
-      payload[c] = val;
-    }}
-
-    window.parent.postMessage({{
-      type: "hierarchical_form_submit",
-      payload,
-      origin: "hierarchical_form",
-      parameter: PARAMETER,
-      ts: Date.now()
-    }}, "*");
-  }}
-
-  // --------------------------------------------------
-  // boot
-  // --------------------------------------------------
-  try {{
-    hideError();
-
-    // 1. Build the dropdown DOMs
-    const fieldsRoot = $("dynamicFields");
-    fieldsRoot.innerHTML = "";
-    COLS.forEach((colName, idx) => {{
-      const block = createFieldBlock(colName, idx);
-      fieldsRoot.appendChild(block);
-    }});
-
-    // 2. Init DuckDB + df
-    await initDuckDB();
-
-    // 3. Initial cascade: load first level (will auto-select and recurse)
-    if (COLS.length > 0) {{
-      await loadLevel(0);
-    }}
-
-    // 4. Attach change listeners
-    COLS.forEach((_, idx) => {{
-      const selEl = document.getElementById(`select_${{idx}}`);
-      selEl.addEventListener("change", async () => {{
-        await onLevelChange(idx);
-      }});
-    }});
-
-    // 5. Submit listener
-    $("submit_btn").addEventListener("click", () => {{
-      postSelection();
-    }});
-
-  }} catch (err) {{
-    console.error(err);
-    showError(err && err.message ? err.message : String(err));
-  }}
-
-}})();
-</script>
-""".format(
+    # Render template
+    html = jinja2.Template(template_src).render(
+        fields=field_specs,
         PARAM_JS=PARAM_JS,
         DATA_URL_JS=DATA_URL_JS,
-        COLS_JS=COLS_JS,
+        FIELDS_JS=FIELDS_JS
     )
-
+    
     return common.html_to_obj(html)
