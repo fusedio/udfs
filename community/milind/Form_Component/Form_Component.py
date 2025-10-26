@@ -4,26 +4,17 @@ common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/
 def udf(
     parameter: str = "form",
     data_url: str = "https://unstable.udf.ai/fsh_aotlErnaYWdIlKcGg6huq/run?dtype_out_raster=png&dtype_out_vector=parquet",
-    columns = [
-        "mission",
-        "product_name",
-        "prefix",
-        "@date::start_date,end_date",
-    ],
+    columns: str = '["mission","product_name","prefix","@date::start_date,end_date"]'
 ):
     import ast
     import json
     import jinja2
 
-    if isinstance(columns, str):
-        columns_list = ast.literal_eval(columns)
-    else:
-        columns_list = list(columns)
+    raw_cols = json.loads(columns)
 
     field_specs = []
-    for token in columns_list:
-        if isinstance(token, str) and token.startswith("@date::"):
-            # parse the @date:: syntax
+    for token in raw_cols:
+        if token.startswith("@date::"):
             _, rest = token.split("::", 1)
             start_col, end_col = [p.strip() for p in rest.split(",")]
             field_specs.append({
@@ -36,6 +27,7 @@ def udf(
                 "type": "categorical",
                 "col": token.strip(),
             })
+
 
     # Prepare data for JavaScript
     PARAM_JS = json.dumps(parameter)
