@@ -3,25 +3,26 @@ common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/
 @fused.udf(cache_max_age=0)
 def udf(
     config: str = """{
-        "parameter_name": "form",
+        "parameter_name": null,
         "filter": [
-            {
-                "column": ["start_date", "end_date"],
-                "type": "daterange"
-            },
+
             {
                 "column": "mission",
-                "type": "selectbox"
+                "type": "selectbox",
+                "default": "goes15",
+                "parameter_name": "mis"
             },
             {
                 "column": "product_name",
-                "type": "selectbox"
+                "type": "selectbox",
+                "default": "ABI",
+                "parameter_name": "prod"
             },
             {
-                "column": "prefix",
-                "type": "selectbox"
+                "column": ["start_date", "end_date"],
+                "type": "daterange",
+                "parameter_name": ["start", "end"]
             }
-
         ],
         "data_url": "https://unstable.udf.ai/fsh_aotlErnaYWdIlKcGg6huq/run?dtype_out_raster=png&dtype_out_vector=parquet"
     }"""
@@ -31,52 +32,74 @@ def udf(
 
     cfg = json.loads(config)
 
-    # pull top-level config
-    parameter_name = cfg.get("parameter_name", "form")
+    # Modes:
+    # - global mode if cfg["parameter_name"] is truthy
+    # - per-field mode otherwise
+    global_param_name = cfg.get("parameter_name")
     data_url = cfg.get("data_url")
 
-    # map cfg["filter"] -> field_specs used by template/JS
-    field_specs = []
+    normalized_fields = []
     for f in cfg.get("filter", []):
         f_type = f.get("type")
+        raw_param = f.get("parameter_name")  # string or [string, string] or None
+
         if f_type == "selectbox":
             col = f.get("column")
-            field_specs.append({
-                "type": "select",
+            default_val = f.get("default")
+
+            # normalize channels: always be a list
+            channels = []
+            if isinstance(raw_param, str) and raw_param:
+                channels = [raw_param]
+
+            # aliasBase = what we use in global snapshot keys
+            alias_base = channels[0] if channels else col
+
+            normalized_fields.append({
+                "kind": "select",
                 "col": col,
-                "alias": col,  # output key
-                "default": f.get("default"),  # may be None
+                "defaultValue": default_val,
+                "channels": channels,           # ex: ["mis"]
+                "aliasBase": alias_base,        # ex: "mis"
             })
+
         elif f_type == "daterange":
             cols = f.get("column", [])
             if isinstance(cols, list) and len(cols) == 2:
                 start_col, end_col = cols
             else:
                 start_col, end_col = "start_date", "end_date"
-            field_specs.append({
-                "type": "date_filtered",
-                "start": start_col,
-                "end": end_col,
-                "alias": start_col,          # output key base
-                "default": f.get("default"), # seed date if inside range
+
+            # normalize channels:
+            # - ["start", "end"]  => channels = ["start","end"]
+            # - "date"            => channels = ["date"]
+            # - None              => []
+            if isinstance(raw_param, list) and len(raw_param) == 2:
+                channels = [raw_param[0], raw_param[1]]
+                alias_base = raw_param[0] or start_col
+            elif isinstance(raw_param, str) and raw_param:
+                channels = [raw_param]
+                alias_base = raw_param
+            else:
+                channels = []
+                alias_base = start_col
+
+            normalized_fields.append({
+                "kind": "date",
+                "startCol": start_col,
+                "endCol": end_col,
+                "defaultValue": f.get("default"),
+                "channels": channels,      # ex: ["start","end"] or ["date"]
+                "aliasBase": alias_base,   # ex: "start" (used for global alias_start/_end)
             })
+
         else:
-            # ignore unknown types for now
+            # unsupported control types get skipped
             pass
 
-    # normalize alias defaults just in case
-    for f in field_specs:
-        t = f.get("type")
-        if t == "select":
-            f.setdefault("alias", f.get("col", "value"))
-        elif t == "date":
-            f.setdefault("alias", "date")
-        elif t == "date_filtered":
-            f.setdefault("alias", f.get("start", "date"))
-
-    PARAMETER_NAME_JS = json.dumps(parameter_name)
+    GLOBAL_PARAM_NAME_JS = json.dumps(global_param_name)
     DATA_URL_JS = json.dumps(data_url)
-    FIELDS_JS = json.dumps(field_specs)
+    FIELDS_JS = json.dumps(normalized_fields)
 
     template_src = r"""<!doctype html>
 <html lang="en">
@@ -277,48 +300,35 @@ def udf(
 
     <div id="formContent">
       {% for f in fields %}
-        {% if f.type == "select" %}
+        {% if f.kind == "date" %}
+          <div class="form-field">
+            <label for="field_{{ loop.index0 }}">{{ f.startCol }} / {{ f.endCol }}</label>
+            <input
+              id="field_{{ loop.index0 }}"
+              class="date-input"
+              data-kind="date"
+              data-start-col="{{ f.startCol }}"
+              data-end-col="{{ f.endCol }}"
+              data-channels="{{ f.channels | join(',') }}"
+              data-alias-base="{{ f.aliasBase }}"
+              data-default-value="{{ f.defaultValue | default('', true) }}"
+              placeholder="Select date range…"
+              readonly
+            />
+          </div>
+        {% elif f.kind == "select" %}
           <div class="form-field">
             <label for="field_{{ loop.index0 }}">{{ f.col }}</label>
             <select
               id="field_{{ loop.index0 }}"
-              data-type="select"
+              data-kind="select"
               data-col="{{ f.col }}"
-              data-alias="{{ f.alias }}"
-              data-default="{{ f.default | default('', true) }}"
+              data-channels="{{ f.channels | join(',') }}"
+              data-alias-base="{{ f.aliasBase }}"
+              data-default-value="{{ f.defaultValue | default('', true) }}"
             >
               <option disabled selected value="">Select {{ f.col }}…</option>
             </select>
-          </div>
-
-        {% elif f.type == "date" %}
-          <div class="form-field">
-            <label for="field_{{ loop.index0 }}">{{ f.alias }}</label>
-            <input
-              id="field_{{ loop.index0 }}"
-              class="date-input"
-              data-type="date"
-              data-alias="{{ f.alias }}"
-              data-default="{{ f.default | default('', true) }}"
-              placeholder="Select date range…"
-              readonly
-            />
-          </div>
-
-        {% elif f.type == "date_filtered" %}
-          <div class="form-field">
-            <label for="field_{{ loop.index0 }}">{{ f.alias }}</label>
-            <input
-              id="field_{{ loop.index0 }}"
-              class="date-input"
-              data-type="date_filtered"
-              data-start-col="{{ f.start }}"
-              data-end-col="{{ f.end }}"
-              data-alias="{{ f.alias }}"
-              data-default="{{ f.default | default('', true) }}"
-              placeholder="Select date range…"
-              readonly
-            />
           </div>
         {% endif %}
       {% endfor %}
@@ -330,18 +340,21 @@ def udf(
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script type="module">
     (async () => {
-      const PARAMETER_NAME = {{ PARAMETER_NAME_JS | safe }};
+      const GLOBAL_PARAM_NAME = {{ GLOBAL_PARAM_NAME_JS | safe }};
       const DATA_URL  = {{ DATA_URL_JS | safe }};
       const FIELDS    = {{ FIELDS_JS | safe }};
 
       const $ = (id) => document.getElementById(id);
 
-      // hold flatpickr instances for each field index
+      // flatpickr instances by index for date fields
       const pickers = {};
-      // store chosen ranges for date_filtered fields so we can include them in WHERE
-      // shape: { [idx]: { start:"YYYY-MM-DD", end:"YYYY-MM-DD" } }
-      const dateFilterState = {};
+      // keep selected date ranges in memory:
+      // dateRanges[idx] = { start: "YYYY-MM-DD", end: "YYYY-MM-DD" }
+      const dateRanges = {};
 
+      //
+      // small utils
+      //
       function showForm() {
         $("loaderOverlay").classList.add("hidden");
         $("formContent").classList.add("loaded");
@@ -355,7 +368,15 @@ def udf(
         return `${y}-${m}-${da}`;
       }
 
-      // --- DuckDB init ---
+      function parseChannels(str) {
+        // data-channels is "a,b" or "".
+        if (!str) return [];
+        return str.split(",").filter(Boolean);
+      }
+
+      //
+      // duckdb init
+      //
       let conn;
       const duckdb = await import(
         "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.1-dev132.0/+esm"
@@ -380,42 +401,33 @@ def udf(
         SELECT * FROM read_parquet('data.parquet');
       `);
 
-      // --- WHERE builder (includes date_filtered ranges)
+      //
+      // whereClause builder using current UI state up to index
+      //
       function buildWhere(upToIdx) {
         const clauses = [];
 
         for (let i = 0; i < upToIdx; i++) {
           const spec = FIELDS[i];
+          const el = $("field_" + i);
+          if (!el) continue;
 
-          if (spec.type === "select") {
-            const el = $("field_" + i);
-            if (!el) continue;
+          if (spec.kind === "select") {
             const val = el.value;
-            if (!val) continue;
-            const safe = val.replace(/'/g, "''");
-            clauses.push(`${spec.col}='${safe}'`);
-          }
-
-          if (spec.type === "date_filtered") {
-            const rng = dateFilterState[i];
-            if (!rng) continue;
-
-            const startCol = spec.start;
-            const endCol   = spec.end;
-            const startVal = rng.start;
-            const endVal   = rng.end;
-
-            if (startVal && endVal) {
-              const safeStart = startVal.replace(/'/g, "''");
-              const safeEnd   = endVal.replace(/'/g, "''");
-              // overlap
+            if (val) {
+              const safe = val.replace(/'/g, "''");
+              clauses.push(`${spec.col}='${safe}'`);
+            }
+          } else if (spec.kind === "date") {
+            const rng = dateRanges[i];
+            if (rng && rng.start && rng.end) {
+              const safeStart = rng.start.replace(/'/g, "''");
+              const safeEnd   = rng.end.replace(/'/g, "''");
               clauses.push(
-                `(${endCol} >= '${safeStart}' AND ${startCol} <= '${safeEnd}')`
+                `(${spec.endCol} >= '${safeStart}' AND ${spec.startCol} <= '${safeEnd}')`
               );
             }
           }
-
-          // plain "date" does not contribute to WHERE
         }
 
         return clauses.length ? "WHERE " + clauses.join(" AND ") : "";
@@ -450,25 +462,25 @@ def udf(
         return { lo, hi };
       }
 
-      // populate a single field, respecting defaults
-      async function populateField(idx) {
+      //
+      // hydrate a single field[i] based on everything above it
+      //
+      async function hydrateField(idx) {
         const spec = FIELDS[idx];
         const el = $("field_" + idx);
         if (!el) return;
 
-        if (spec.type === "select") {
-          // load distinct values given all filters ABOVE this field
+        if (spec.kind === "select") {
           const vals = await loadDistinct(spec.col, buildWhere(idx));
 
-          // reset dropdown
+          // rebuild dropdown
           el.innerHTML = "";
-          const ph = document.createElement("option");
-          ph.disabled = true;
-          ph.value = "";
-          ph.textContent = "Select " + spec.col + "…";
-          el.appendChild(ph);
+          const placeholder = document.createElement("option");
+          placeholder.disabled = true;
+          placeholder.value = "";
+          placeholder.textContent = "Select " + spec.col + "…";
+          el.appendChild(placeholder);
 
-          // append options
           vals.forEach(v => {
             const opt = document.createElement("option");
             opt.value = v ?? "";
@@ -476,59 +488,29 @@ def udf(
             el.appendChild(opt);
           });
 
-          // choose default if possible
+          // choose default or first option
           let chosenIndex = 0;
           if (vals.length > 0) {
-            if (spec.default && vals.includes(spec.default)) {
-              // find the index (vals index +1 because of placeholder)
-              const matchIdx = vals.indexOf(spec.default);
-              chosenIndex = matchIdx + 1;
+            if (spec.defaultValue && vals.includes(spec.defaultValue)) {
+              chosenIndex = vals.indexOf(spec.defaultValue) + 1; // +1 for placeholder
             } else {
-              chosenIndex = 1; // first actual option
+              chosenIndex = 1;
             }
           }
-
           el.selectedIndex = chosenIndex;
+
           $("submit_btn").disabled = (chosenIndex === 0);
 
-          // No explicit cascade() here because cascade() already calls populateField in order
-
-        } else if (spec.type === "date") {
-          // plain free date range (not in WHERE)
-          if (!pickers[idx]) {
-            pickers[idx] = flatpickr(el, {
-              mode: "range",
-              dateFormat: "Y-m-d",
-              onChange: () => {
-                $("submit_btn").disabled = false;
-                // doesn't affect WHERE, so no cascade
-              }
-            });
-          }
-
-          // if there's a default, try to set it as [default, default]
-          if (spec.default && pickers[idx]) {
-            const d = spec.default;
-            pickers[idx].setDate([d, d], true);
-            $("submit_btn").disabled = false;
-          }
-
-        } else if (spec.type === "date_filtered") {
-          // determine allowed range given current filters
-          const { lo, hi } = await loadMinMax(spec.start, spec.end, buildWhere(idx));
-
+        } else if (spec.kind === "date") {
+          const { lo, hi } = await loadMinMax(spec.startCol, spec.endCol, buildWhere(idx));
           const minDate = lo || undefined;
           const maxDate = hi || undefined;
 
-          // figure out what initial range to show
-          // priority:
-          //   1. spec.default if inside [minDate,maxDate] -> [default, default]
-          //   2. [lo, hi] if present
-          //   3. [lo] if only lo
+          // infer default range
           let initialRange;
-          if (spec.default && minDate && maxDate) {
-            if (spec.default >= minDate && spec.default <= maxDate) {
-              initialRange = [spec.default, spec.default];
+          if (spec.defaultValue && minDate && maxDate) {
+            if (spec.defaultValue >= minDate && spec.defaultValue <= maxDate) {
+              initialRange = [spec.defaultValue, spec.defaultValue];
             }
           }
           if (!initialRange) {
@@ -539,123 +521,186 @@ def udf(
             }
           }
 
+          // create or update flatpickr
           if (pickers[idx]) {
             const inst = pickers[idx];
             inst.set("minDate", minDate);
             inst.set("maxDate", maxDate);
-
             if (initialRange) {
               inst.setDate(initialRange, true);
             } else {
               inst.clear();
             }
 
-            // sync dateFilterState
             if (initialRange && initialRange.length) {
               const startISO = initialRange[0];
-              const endISO   = initialRange[1] || initialRange[0] || "";
-              dateFilterState[idx] = { start: startISO, end: endISO };
+              const endISO = initialRange[1] || initialRange[0] || "";
+              dateRanges[idx] = { start: startISO, end: endISO };
             }
 
             $("submit_btn").disabled = false;
+
           } else {
             pickers[idx] = flatpickr(el, {
               mode: "range",
               dateFormat: "Y-m-d",
-              minDate: minDate,
-              maxDate: maxDate,
+              minDate,
+              maxDate,
               defaultDate: initialRange,
-              onChange: (selectedDates) => {
+              onChange: async (selectedDates) => {
                 $("submit_btn").disabled = false;
 
-                // update dateFilterState from user selection
                 const start = selectedDates[0] ? iso(selectedDates[0]) : "";
                 const end   = selectedDates[1]
                   ? iso(selectedDates[1])
                   : (selectedDates[0] ? iso(selectedDates[0]) : "");
-                dateFilterState[idx] = { start, end };
 
-                // when user changes, later fields depend on this now
-                cascade(idx + 1);
+                dateRanges[idx] = { start, end };
+
+                // update downstream fields since filter context changed
+                await hydrateDownstream(idx + 1);
               }
             });
 
-            // seed state from initialRange for WHERE usage
             if (initialRange && initialRange.length) {
               const startISO = initialRange[0];
-              const endISO   = initialRange[1] || initialRange[0] || "";
-              dateFilterState[idx] = { start: startISO, end: endISO };
+              const endISO = initialRange[1] || initialRange[0] || "";
+              dateRanges[idx] = { start: startISO, end: endISO };
             }
 
-            if (minDate || maxDate) {
-              $("submit_btn").disabled = false;
-            }
+            $("submit_btn").disabled = false;
           }
         }
       }
 
-      // populate fields in order, so downstream sees upstream defaults
-      async function cascade(fromIdx) {
+      //
+      // hydrate all fields from some index to the end
+      //
+      async function hydrateDownstream(fromIdx) {
         for (let i = fromIdx; i < FIELDS.length; i++) {
-          await populateField(i);
+          await hydrateField(i);
         }
       }
 
-      // initial population of all fields
-      await cascade(0);
+      // initial hydration of all fields
+      await hydrateDownstream(0);
       showForm();
 
-      // attach listeners for interactive updates
+      //
+      // quiet change listeners
+      //
       FIELDS.forEach((spec, i) => {
-        if (spec.type === "select") {
+        if (spec.kind === "select") {
           const el = $("field_" + i);
-          if (el) {
-            el.addEventListener("change", async () => {
-              $("submit_btn").disabled = false;
-              await cascade(i + 1);
-            });
-          }
+          if (!el) return;
+          el.addEventListener("change", async () => {
+            $("submit_btn").disabled = false;
+            await hydrateDownstream(i + 1);
+          });
         }
-        // date_filtered already cascades in its onChange
-        // plain date does not affect WHERE so no cascade
+        // date fields already handled in flatpickr.onChange
       });
 
-      // submit handler
-      $("submit_btn").addEventListener("click", () => {
-        const out = {};
+      //
+      // Build a "snapshot" of current values for submit
+      //
+      function makeSnapshot() {
+        // globalMerged: used in GLOBAL mode
+        const globalMerged = {};
+
+        // perFieldMessages: array of { channel, payload }
+        // (we expand multi-channel date into two entries)
+        const messages = [];
 
         FIELDS.forEach((spec, i) => {
-          const alias = spec.alias;
           const el = $("field_" + i);
 
-          if (spec.type === "select") {
-            out[alias] = el ? (el.value || "") : "";
+          if (spec.kind === "select") {
+            const val = el ? (el.value || "") : "";
 
-          } else if (spec.type === "date") {
+            // global: aliasBase: val
+            globalMerged[spec.aliasBase] = val;
+
+            // per-field: each channel gets scalar val
+            spec.channels.forEach(ch => {
+              messages.push({
+                channel: ch,
+                payload: val
+              });
+            });
+
+          } else if (spec.kind === "date") {
             const inst = pickers[i];
             const sel = inst ? inst.selectedDates : [];
-            const start = sel[0] || null;
-            const end   = sel[1] || sel[0] || null;
-            out[alias + "_start"] = start ? iso(start) : "";
-            out[alias + "_end"]   = end   ? iso(end)   : "";
+            const start = sel[0] ? iso(sel[0]) : "";
+            const end   = sel[1]
+              ? iso(sel[1])
+              : (sel[0] ? iso(sel[0]) : "");
 
-          } else if (spec.type === "date_filtered") {
-            const inst = pickers[i];
-            const sel = inst ? inst.selectedDates : [];
-            const start = sel[0] || null;
-            const end   = sel[1] || sel[0] || null;
-            out[alias + "_start"] = start ? iso(start) : "";
-            out[alias + "_end"]   = end   ? iso(end)   : "";
+            // global: aliasBase_start / aliasBase_end
+            globalMerged[spec.aliasBase + "_start"] = start;
+            globalMerged[spec.aliasBase + "_end"]   = end;
+
+            if (spec.channels.length === 2) {
+              // two independent channels, send scalars
+              const chStart = spec.channels[0];
+              const chEnd   = spec.channels[1];
+              if (chStart) {
+                messages.push({
+                  channel: chStart,
+                  payload: start
+                });
+              }
+              if (chEnd) {
+                messages.push({
+                  channel: chEnd,
+                  payload: end
+                });
+              }
+            } else if (spec.channels.length === 1) {
+              // single channel, send object {start,end}
+              const ch = spec.channels[0];
+              messages.push({
+                channel: ch,
+                payload: { start, end }
+              });
+            } else {
+              // no channels -> nothing to send in per-field mode
+            }
           }
         });
 
-        window.parent.postMessage({
-          type: "hierarchical_form_submit",
-          payload: out,
-          origin: "hierarchical_form",
-          parameter: PARAMETER_NAME,
-          ts: Date.now()
-        }, "*");
+        return { globalMerged, messages };
+      }
+
+      //
+      // submit handler
+      //
+      $("submit_btn").addEventListener("click", () => {
+        const { globalMerged, messages } = makeSnapshot();
+
+        if (GLOBAL_PARAM_NAME) {
+          // global mode: one merged payload to GLOBAL_PARAM_NAME
+          window.parent.postMessage({
+            type: "hierarchical_form_submit",
+            payload: globalMerged,
+            origin: "hierarchical_form",
+            parameter: GLOBAL_PARAM_NAME,
+            ts: Date.now()
+          }, "*");
+        } else {
+          // per-field mode: N messages, one per channel
+          messages.forEach(({ channel, payload }) => {
+            if (!channel) return;
+            window.parent.postMessage({
+              type: "hierarchical_form_submit",
+              payload,
+              origin: "hierarchical_form",
+              parameter: channel,
+              ts: Date.now()
+            }, "*");
+          });
+        }
       });
     })();
   </script>
@@ -664,8 +709,8 @@ def udf(
 """
 
     rendered_html = jinja2.Template(template_src).render(
-        fields=field_specs,
-        PARAMETER_NAME_JS=PARAMETER_NAME_JS,
+        fields=normalized_fields,
+        GLOBAL_PARAM_NAME_JS=GLOBAL_PARAM_NAME_JS,
         DATA_URL_JS=DATA_URL_JS,
         FIELDS_JS=FIELDS_JS,
     )
