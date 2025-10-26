@@ -2,14 +2,13 @@ common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/
 
 @fused.udf(cache_max_age=0)
 def udf(
-    config: str = """{
-        "parameter_name": null,
+    config: dict | str = {
+        "parameter_name": "form",
         "filter": [
-
             {
                 "column": "mission",
                 "type": "selectbox",
-                "default": "goes15",
+                "default": "goes16",
                 "parameter_name": "mis"
             },
             {
@@ -21,46 +20,56 @@ def udf(
             {
                 "column": ["start_date", "end_date"],
                 "type": "daterange",
-                "parameter_name": ["start", "end"]
+                "parameter_name": ["start_meow", "end"]
             }
         ],
         "data_url": "https://unstable.udf.ai/fsh_aotlErnaYWdIlKcGg6huq/run?dtype_out_raster=png&dtype_out_vector=parquet"
-    }"""
+    }
 ):
     import json
     import jinja2
 
-    cfg = json.loads(config)
+    #
+    # 1. normalize config (accept dict or JSON string)
+    #
+    if isinstance(config, str):
+        cfg = json.loads(config)
+    else:
+        cfg = config
 
-    # Modes:
-    # - global mode if cfg["parameter_name"] is truthy
-    # - per-field mode otherwise
     global_param_name = cfg.get("parameter_name")
     data_url = cfg.get("data_url")
 
+    #
+    # 2. normalize fields into a uniform shape for the frontend
+    #    Each normalized field looks like:
+    #    - kind: "select" | "date"
+    #    - channels: [] or ["mis"] or ["start","end"] etc.
+    #    - aliasBase: string we use for global snapshot keys fallback
+    #
     normalized_fields = []
     for f in cfg.get("filter", []):
         f_type = f.get("type")
-        raw_param = f.get("parameter_name")  # string or [string, string] or None
+        raw_param = f.get("parameter_name")  # string, [string,string], or None
 
         if f_type == "selectbox":
             col = f.get("column")
             default_val = f.get("default")
 
-            # normalize channels: always be a list
-            channels = []
+            # channels is always a list after normalization
             if isinstance(raw_param, str) and raw_param:
-                channels = [raw_param]
+                channels = [raw_param]          # e.g. ["mis"]
+            else:
+                channels = []
 
-            # aliasBase = what we use in global snapshot keys
             alias_base = channels[0] if channels else col
 
             normalized_fields.append({
                 "kind": "select",
                 "col": col,
                 "defaultValue": default_val,
-                "channels": channels,           # ex: ["mis"]
-                "aliasBase": alias_base,        # ex: "mis"
+                "channels": channels,        # ["mis"] or []
+                "aliasBase": alias_base,     # "mis" or "mission"
             })
 
         elif f_type == "daterange":
@@ -71,9 +80,9 @@ def udf(
                 start_col, end_col = "start_date", "end_date"
 
             # normalize channels:
-            # - ["start", "end"]  => channels = ["start","end"]
-            # - "date"            => channels = ["date"]
-            # - None              => []
+            #   ["start","end"]        -> channels = ["start","end"], aliasBase="start"
+            #   "date"                 -> channels = ["date"],        aliasBase="date"
+            #   None                   -> channels = [],             aliasBase=start_col
             if isinstance(raw_param, list) and len(raw_param) == 2:
                 channels = [raw_param[0], raw_param[1]]
                 alias_base = raw_param[0] or start_col
@@ -89,18 +98,21 @@ def udf(
                 "startCol": start_col,
                 "endCol": end_col,
                 "defaultValue": f.get("default"),
-                "channels": channels,      # ex: ["start","end"] or ["date"]
-                "aliasBase": alias_base,   # ex: "start" (used for global alias_start/_end)
+                "channels": channels,      # ["start","end"], ["date"], or []
+                "aliasBase": alias_base,   # "start" / "date" / "start_date"
             })
 
         else:
-            # unsupported control types get skipped
+            # unrecognized field type, skip
             pass
 
     GLOBAL_PARAM_NAME_JS = json.dumps(global_param_name)
     DATA_URL_JS = json.dumps(data_url)
     FIELDS_JS = json.dumps(normalized_fields)
 
+    #
+    # 3. HTML/JS template
+    #
     template_src = r"""<!doctype html>
 <html lang="en">
 <head>
@@ -300,7 +312,21 @@ def udf(
 
     <div id="formContent">
       {% for f in fields %}
-        {% if f.kind == "date" %}
+        {% if f.kind == "select" %}
+          <div class="form-field">
+            <label for="field_{{ loop.index0 }}">{{ f.col }}</label>
+            <select
+              id="field_{{ loop.index0 }}"
+              data-kind="select"
+              data-col="{{ f.col }}"
+              data-channels="{{ f.channels | join(',') }}"
+              data-alias-base="{{ f.aliasBase }}"
+              data-default-value="{{ f.defaultValue | default('', true) }}"
+            >
+              <option disabled selected value="">Select {{ f.col }}…</option>
+            </select>
+          </div>
+        {% elif f.kind == "date" %}
           <div class="form-field">
             <label for="field_{{ loop.index0 }}">{{ f.startCol }} / {{ f.endCol }}</label>
             <input
@@ -315,20 +341,6 @@ def udf(
               placeholder="Select date range…"
               readonly
             />
-          </div>
-        {% elif f.kind == "select" %}
-          <div class="form-field">
-            <label for="field_{{ loop.index0 }}">{{ f.col }}</label>
-            <select
-              id="field_{{ loop.index0 }}"
-              data-kind="select"
-              data-col="{{ f.col }}"
-              data-channels="{{ f.channels | join(',') }}"
-              data-alias-base="{{ f.aliasBase }}"
-              data-default-value="{{ f.defaultValue | default('', true) }}"
-            >
-              <option disabled selected value="">Select {{ f.col }}…</option>
-            </select>
           </div>
         {% endif %}
       {% endfor %}
@@ -346,15 +358,10 @@ def udf(
 
       const $ = (id) => document.getElementById(id);
 
-      // flatpickr instances by index for date fields
-      const pickers = {};
-      // keep selected date ranges in memory:
-      // dateRanges[idx] = { start: "YYYY-MM-DD", end: "YYYY-MM-DD" }
-      const dateRanges = {};
+      // local state
+      const pickers = {};     // flatpickr instances for date fields
+      const dateRanges = {};  // { idx: { start, end } } to support WHERE
 
-      //
-      // small utils
-      //
       function showForm() {
         $("loaderOverlay").classList.add("hidden");
         $("formContent").classList.add("loaded");
@@ -368,16 +375,9 @@ def udf(
         return `${y}-${m}-${da}`;
       }
 
-      function parseChannels(str) {
-        // data-channels is "a,b" or "".
-        if (!str) return [];
-        return str.split(",").filter(Boolean);
-      }
-
       //
-      // duckdb init
+      // DuckDB init
       //
-      let conn;
       const duckdb = await import(
         "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.1-dev132.0/+esm"
       );
@@ -390,7 +390,7 @@ def udf(
       );
       const db = new duckdb.AsyncDuckDB(new duckdb.ConsoleLogger(), worker);
       await db.instantiate(bundle.mainModule);
-      conn = await db.connect();
+      const conn = await db.connect();
 
       const resp = await fetch(DATA_URL);
       const buf = new Uint8Array(await resp.arrayBuffer());
@@ -402,7 +402,7 @@ def udf(
       `);
 
       //
-      // whereClause builder using current UI state up to index
+      // WHERE builder respecting all filters up to index i
       //
       function buildWhere(upToIdx) {
         const clauses = [];
@@ -413,9 +413,9 @@ def udf(
           if (!el) continue;
 
           if (spec.kind === "select") {
-            const val = el.value;
-            if (val) {
-              const safe = val.replace(/'/g, "''");
+            const v = el.value;
+            if (v) {
+              const safe = v.replace(/'/g, "''");
               clauses.push(`${spec.col}='${safe}'`);
             }
           } else if (spec.kind === "date") {
@@ -463,7 +463,7 @@ def udf(
       }
 
       //
-      // hydrate a single field[i] based on everything above it
+      // hydrate one field by index
       //
       async function hydrateField(idx) {
         const spec = FIELDS[idx];
@@ -475,11 +475,11 @@ def udf(
 
           // rebuild dropdown
           el.innerHTML = "";
-          const placeholder = document.createElement("option");
-          placeholder.disabled = true;
-          placeholder.value = "";
-          placeholder.textContent = "Select " + spec.col + "…";
-          el.appendChild(placeholder);
+          const ph = document.createElement("option");
+          ph.disabled = true;
+          ph.value = "";
+          ph.textContent = "Select " + spec.col + "…";
+          el.appendChild(ph);
 
           vals.forEach(v => {
             const opt = document.createElement("option");
@@ -488,7 +488,7 @@ def udf(
             el.appendChild(opt);
           });
 
-          // choose default or first option
+          // pick default or first
           let chosenIndex = 0;
           if (vals.length > 0) {
             if (spec.defaultValue && vals.includes(spec.defaultValue)) {
@@ -503,10 +503,11 @@ def udf(
 
         } else if (spec.kind === "date") {
           const { lo, hi } = await loadMinMax(spec.startCol, spec.endCol, buildWhere(idx));
+
           const minDate = lo || undefined;
           const maxDate = hi || undefined;
 
-          // infer default range
+          // infer initial range
           let initialRange;
           if (spec.defaultValue && minDate && maxDate) {
             if (spec.defaultValue >= minDate && spec.defaultValue <= maxDate) {
@@ -521,11 +522,11 @@ def udf(
             }
           }
 
-          // create or update flatpickr
           if (pickers[idx]) {
             const inst = pickers[idx];
             inst.set("minDate", minDate);
             inst.set("maxDate", maxDate);
+
             if (initialRange) {
               inst.setDate(initialRange, true);
             } else {
@@ -534,7 +535,7 @@ def udf(
 
             if (initialRange && initialRange.length) {
               const startISO = initialRange[0];
-              const endISO = initialRange[1] || initialRange[0] || "";
+              const endISO   = initialRange[1] || initialRange[0] || "";
               dateRanges[idx] = { start: startISO, end: endISO };
             }
 
@@ -557,14 +558,14 @@ def udf(
 
                 dateRanges[idx] = { start, end };
 
-                // update downstream fields since filter context changed
+                // cascade downstream because WHERE changed
                 await hydrateDownstream(idx + 1);
               }
             });
 
             if (initialRange && initialRange.length) {
               const startISO = initialRange[0];
-              const endISO = initialRange[1] || initialRange[0] || "";
+              const endISO   = initialRange[1] || initialRange[0] || "";
               dateRanges[idx] = { start: startISO, end: endISO };
             }
 
@@ -574,7 +575,7 @@ def udf(
       }
 
       //
-      // hydrate all fields from some index to the end
+      // hydrate every field from a starting index
       //
       async function hydrateDownstream(fromIdx) {
         for (let i = fromIdx; i < FIELDS.length; i++) {
@@ -582,13 +583,11 @@ def udf(
         }
       }
 
-      // initial hydration of all fields
+      // initial hydration
       await hydrateDownstream(0);
       showForm();
 
-      //
       // quiet change listeners
-      //
       FIELDS.forEach((spec, i) => {
         if (spec.kind === "select") {
           const el = $("field_" + i);
@@ -598,19 +597,15 @@ def udf(
             await hydrateDownstream(i + 1);
           });
         }
-        // date fields already handled in flatpickr.onChange
+        // date fields handled by flatpickr.onChange
       });
 
       //
-      // Build a "snapshot" of current values for submit
+      // create the payload(s) for submit
       //
       function makeSnapshot() {
-        // globalMerged: used in GLOBAL mode
         const globalMerged = {};
-
-        // perFieldMessages: array of { channel, payload }
-        // (we expand multi-channel date into two entries)
-        const messages = [];
+        const messages = []; // { channel, payload }
 
         FIELDS.forEach((spec, i) => {
           const el = $("field_" + i);
@@ -618,10 +613,11 @@ def udf(
           if (spec.kind === "select") {
             const val = el ? (el.value || "") : "";
 
-            // global: aliasBase: val
+            // --- global mode snapshot ---
+            // For selects, always aliasBase -> value
             globalMerged[spec.aliasBase] = val;
 
-            // per-field: each channel gets scalar val
+            // --- per-field mode snapshot ---
             spec.channels.forEach(ch => {
               messages.push({
                 channel: ch,
@@ -637,36 +633,46 @@ def udf(
               ? iso(sel[1])
               : (sel[0] ? iso(sel[0]) : "");
 
-            // global: aliasBase_start / aliasBase_end
-            globalMerged[spec.aliasBase + "_start"] = start;
-            globalMerged[spec.aliasBase + "_end"]   = end;
-
+            // --- global mode snapshot ---
             if (spec.channels.length === 2) {
-              // two independent channels, send scalars
-              const chStart = spec.channels[0];
-              const chEnd   = spec.channels[1];
+              // You gave ["start","end"]: use them directly as keys in global payload.
+              const [chStart, chEnd] = spec.channels;
               if (chStart) {
-                messages.push({
-                  channel: chStart,
-                  payload: start
-                });
+                globalMerged[chStart] = start;
               }
               if (chEnd) {
-                messages.push({
-                  channel: chEnd,
-                  payload: end
-                });
+                globalMerged[chEnd] = end;
               }
             } else if (spec.channels.length === 1) {
-              // single channel, send object {start,end}
+              // You gave ["date"]: use "date_start"/"date_end"
+              const only = spec.channels[0];
+              globalMerged[only + "_start"] = start;
+              globalMerged[only + "_end"]   = end;
+            } else {
+              // No channels: fall back to aliasBase_start / aliasBase_end
+              globalMerged[spec.aliasBase + "_start"] = start;
+              globalMerged[spec.aliasBase + "_end"]   = end;
+            }
+
+            // --- per-field mode snapshot ---
+            if (spec.channels.length === 2) {
+              // split channels -> send each as scalar
+              const [chStart, chEnd] = spec.channels;
+              if (chStart) {
+                messages.push({ channel: chStart, payload: start });
+              }
+              if (chEnd) {
+                messages.push({ channel: chEnd, payload: end });
+              }
+            } else if (spec.channels.length === 1) {
+              // single channel -> send {start,end}
               const ch = spec.channels[0];
               messages.push({
                 channel: ch,
                 payload: { start, end }
               });
-            } else {
-              // no channels -> nothing to send in per-field mode
             }
+            // if length === 0, nothing per-field for this date field
           }
         });
 
@@ -674,13 +680,13 @@ def udf(
       }
 
       //
-      // submit handler
+      // submit click: emit either one global message or N field messages
       //
       $("submit_btn").addEventListener("click", () => {
         const { globalMerged, messages } = makeSnapshot();
 
         if (GLOBAL_PARAM_NAME) {
-          // global mode: one merged payload to GLOBAL_PARAM_NAME
+          // global mode: single combined message
           window.parent.postMessage({
             type: "hierarchical_form_submit",
             payload: globalMerged,
@@ -689,7 +695,7 @@ def udf(
             ts: Date.now()
           }, "*");
         } else {
-          // per-field mode: N messages, one per channel
+          // per-field mode: emit 1 message per channel
           messages.forEach(({ channel, payload }) => {
             if (!channel) return;
             window.parent.postMessage({
