@@ -9,11 +9,13 @@ def udf(
     import json
     import jinja2
 
+    # Parse columns spec -> [{type, ...}]
     raw_cols = json.loads(columns)
 
     field_specs = []
     for token in raw_cols:
         if token.startswith("@date::"):
+            # Ranged date that depends on DB min/max per filter chain
             _, rest = token.split("::", 1)
             start_col, end_col = [p.strip() for p in rest.split(",")]
             field_specs.append({
@@ -21,7 +23,16 @@ def udf(
                 "start_col": start_col,
                 "end_col": end_col,
             })
+        elif token.startswith("@date"):
+            # Simple independent date range picker, no DB filtering
+            # token can be "@date" or "@date columnname"
+            col_name = token.replace("@date", "").strip() or "date"
+            field_specs.append({
+                "type": "date_simple",
+                "col": col_name,
+            })
         else:
+            # Regular categorical dropdown sourced from DuckDB distinct()
             field_specs.append({
                 "type": "categorical",
                 "col": token.strip(),
@@ -262,7 +273,6 @@ def udf(
 </head>
 <body>
   <div class="form-wrapper" id="formRoot">
-    
     <!-- Loading overlay -->
     <div id="loaderOverlay">
       <div class="spinner"></div>
@@ -283,6 +293,7 @@ def udf(
               <option disabled selected value="">Select {{ f.col }}…</option>
             </select>
           </div>
+
         {% elif f.type == "date_range" %}
           <div class="form-field">
             <label for="field_{{ loop.index0 }}">Date Range</label>
@@ -296,6 +307,19 @@ def udf(
               readonly
             />
           </div>
+
+        {% elif f.type == "date_simple" %}
+          <div class="form-field">
+            <label for="field_{{ loop.index0 }}">{{ f.col }}</label>
+            <input
+              id="field_{{ loop.index0 }}"
+              class="date-input"
+              data-kind="date_simple"
+              data-col="{{ f.col }}"
+              placeholder="Select date…"
+              readonly
+            />
+          </div>
         {% endif %}
       {% endfor %}
 
@@ -303,7 +327,6 @@ def udf(
         Submit
       </button>
     </div>
-
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -316,16 +339,26 @@ def udf(
 
       const $ = (id) => document.getElementById(id);
 
-      // Helper to show form and hide loader
+      // keep per-index flatpickr handles here
+      const rangePickers  = {}; // { [index]: flatpickrInstance for date_range }
+      const simplePickers = {}; // { [index]: flatpickrInstance for date_simple }
+
+      // helper: show form and hide loader once data is ready
       function showForm() {
         const loader = $("loaderOverlay");
-        const form = $("formContent");
+        const form   = $("formContent");
         if (loader) loader.classList.add("hidden");
         if (form) form.classList.add("loaded");
       }
 
-      // keep per-index flatpickr handles here
-      const rangePickers = {}; // { [index]: flatpickrInstance }
+      // helper: convert Date -> "YYYY-MM-DD" using local time parts
+      function iso(d) {
+        if (!d) return "";
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const da = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${da}`;
+      }
 
       // ---------------- duckdb init ----------------
       let conn;
@@ -405,7 +438,7 @@ def udf(
         const el = $("field_" + idx);
         if (!el) return;
 
-        // reset
+        // Reset dropdown
         el.innerHTML = "";
         const ph = document.createElement("option");
         ph.disabled = true;
@@ -414,6 +447,7 @@ def udf(
         ph.textContent = `Select ${f.col}…`;
         el.appendChild(ph);
 
+        // Fetch distinct values with all filters above this idx applied
         const whereClause = buildWhereClause(idx);
         let values = [];
         try {
@@ -429,8 +463,9 @@ def udf(
           el.appendChild(opt);
         }
 
+        // autoselect first real option and enable submit
         if (values.length > 0) {
-          el.selectedIndex = 1; // auto-pick first real option
+          el.selectedIndex = 1;
           $("submit_btn").disabled = false;
         }
       }
@@ -447,28 +482,29 @@ def udf(
           whereClause
         );
 
-        // If we already created a picker for this field, update it.
+        // If we already created a picker for this field, update it and try
+        // to preserve the user's previously chosen dates if still valid.
         const existing = rangePickers[idx];
-
         if (existing) {
-          // preserve user's chosen dates if still valid
           const prevDates = existing.selectedDates.slice();
+
           existing.set("minDate", minDate || undefined);
           existing.set("maxDate", maxDate || undefined);
 
-          // now try to keep previous selection if it's in range
           function inRange(d) {
             if (!d) return false;
-            const iso = d.toISOString().slice(0,10);
-            if (minDate && iso < minDate) return false;
-            if (maxDate && iso > maxDate) return false;
+            // compare in local date terms instead of UTC to avoid TZ drift
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, "0");
+            const da = String(d.getDate()).padStart(2, "0");
+            const localIso = `${y}-${m}-${da}`;
+
+            if (minDate && localIso < minDate) return false;
+            if (maxDate && localIso > maxDate) return false;
             return true;
           }
 
-          if (
-            prevDates.length &&
-            prevDates.every(inRange)
-          ) {
+          if (prevDates.length && prevDates.every(inRange)) {
             existing.setDate(prevDates, true);
           } else if (minDate && maxDate) {
             existing.setDate([minDate, maxDate], true);
@@ -504,6 +540,24 @@ def udf(
         }
       }
 
+      async function populateSimpleDateField(idx) {
+        const el = $("field_" + idx);
+        if (!el) return;
+
+        // simplePickers[idx] is only created once
+        if (!simplePickers[idx]) {
+          const fp = flatpickr(el, {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            onChange: () => {
+              $("submit_btn").disabled = false;
+            }
+          });
+          simplePickers[idx] = fp;
+          $("submit_btn").disabled = false;
+        }
+      }
+
       async function cascadeFrom(startIdx) {
         for (let i = startIdx; i < FIELDS.length; i++) {
           const f = FIELDS[i];
@@ -511,6 +565,8 @@ def udf(
             await populateCategoricalField(i);
           } else if (f.type === "date_range") {
             await populateDateRangeField(i);
+          } else if (f.type === "date_simple") {
+            await populateSimpleDateField(i);
           }
         }
       }
@@ -519,7 +575,7 @@ def udf(
       // initial fill
       await cascadeFrom(0);
 
-      // Show form after initial load
+      // show form after first successful cascade
       showForm();
 
       // when a categorical changes, repopulate everything after it
@@ -551,20 +607,25 @@ def udf(
               const start = sel[0] || null;
               const end   = sel[1] || sel[0] || null;
 
-            function iso(d) {
-              if (!d) return "";
-              const y = d.getFullYear();
-              const m = String(d.getMonth() + 1).padStart(2, "0");
-              const da = String(d.getDate()).padStart(2, "0");
-              return `${y}-${m}-${da}`;
-            }
-
-
               out[f.start_col] = iso(start);
               out[f.end_col]   = iso(end);
             } else {
               out[f.start_col] = "";
               out[f.end_col]   = "";
+            }
+
+          } else if (f.type === "date_simple") {
+            const inst = simplePickers[idx];
+            if (inst) {
+              const sel = inst.selectedDates || [];
+              const start = sel[0] || null;
+              const end   = sel[1] || sel[0] || null;
+
+              out[f.col + "_start"] = iso(start);
+              out[f.col + "_end"]   = iso(end);
+            } else {
+              out[f.col + "_start"] = "";
+              out[f.col + "_end"]   = "";
             }
           }
         });
