@@ -2,34 +2,79 @@ common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/
 
 @fused.udf(cache_max_age=0)
 def udf(
-    parameter: str = None,
-    data_url: str = "https://unstable.udf.ai/fsh_aotlErnaYWdIlKcGg6huq/run?dtype_out_raster=png&dtype_out_vector=parquet",
-    fields: str = """[
-        {"type":"select","col":"mission"},
-        {"type":"select","col":"product_name"},
-        {"type":"date_filtered","start":"start_date","end":"end_date","alias":"acquisition"}
-    ]"""
-):
+    config: str = """{
+        "parameter_name": "form",
+        "filter": [
+            {
+                "column": ["start_date", "end_date"],
+                "type": "daterange"
+            },
+            {
+                "column": "mission",
+                "type": "selectbox"
+            },
+            {
+                "column": "product_name",
+                "type": "selectbox"
+            },
+            {
+                "column": "prefix",
+                "type": "selectbox"
+            }
 
+        ],
+        "data_url": "https://unstable.udf.ai/fsh_aotlErnaYWdIlKcGg6huq/run?dtype_out_raster=png&dtype_out_vector=parquet"
+    }"""
+):
     import json
     import jinja2
 
-    field_specs = json.loads(fields)
+    cfg = json.loads(config)
 
-    # normalize alias defaults
+    # pull top-level config
+    parameter_name = cfg.get("parameter_name", "form")
+    data_url = cfg.get("data_url")
+
+    # map cfg["filter"] -> field_specs used by template/JS
+    field_specs = []
+    for f in cfg.get("filter", []):
+        f_type = f.get("type")
+        if f_type == "selectbox":
+            col = f.get("column")
+            field_specs.append({
+                "type": "select",
+                "col": col,
+                "alias": col,  # output key
+                "default": f.get("default"),  # may be None
+            })
+        elif f_type == "daterange":
+            cols = f.get("column", [])
+            if isinstance(cols, list) and len(cols) == 2:
+                start_col, end_col = cols
+            else:
+                start_col, end_col = "start_date", "end_date"
+            field_specs.append({
+                "type": "date_filtered",
+                "start": start_col,
+                "end": end_col,
+                "alias": start_col,          # output key base
+                "default": f.get("default"), # seed date if inside range
+            })
+        else:
+            # ignore unknown types for now
+            pass
+
+    # normalize alias defaults just in case
     for f in field_specs:
         t = f.get("type")
         if t == "select":
-            # fallback alias for dropdowns
             f.setdefault("alias", f.get("col", "value"))
         elif t == "date":
-            # fallback alias for free date range
             f.setdefault("alias", "date")
         elif t == "date_filtered":
-            # fallback alias for filtered date range
             f.setdefault("alias", f.get("start", "date"))
 
-    PARAM_JS = json.dumps(parameter)
+    PARAMETER_NAME_JS = json.dumps(parameter_name)
     DATA_URL_JS = json.dumps(data_url)
     FIELDS_JS = json.dumps(field_specs)
 
@@ -240,6 +285,7 @@ def udf(
               data-type="select"
               data-col="{{ f.col }}"
               data-alias="{{ f.alias }}"
+              data-default="{{ f.default | default('', true) }}"
             >
               <option disabled selected value="">Select {{ f.col }}…</option>
             </select>
@@ -253,6 +299,7 @@ def udf(
               class="date-input"
               data-type="date"
               data-alias="{{ f.alias }}"
+              data-default="{{ f.default | default('', true) }}"
               placeholder="Select date range…"
               readonly
             />
@@ -268,6 +315,7 @@ def udf(
               data-start-col="{{ f.start }}"
               data-end-col="{{ f.end }}"
               data-alias="{{ f.alias }}"
+              data-default="{{ f.default | default('', true) }}"
               placeholder="Select date range…"
               readonly
             />
@@ -282,7 +330,7 @@ def udf(
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script type="module">
     (async () => {
-      const PARAMETER = {{ PARAM_JS | safe }};
+      const PARAMETER_NAME = {{ PARAMETER_NAME_JS | safe }};
       const DATA_URL  = {{ DATA_URL_JS | safe }};
       const FIELDS    = {{ FIELDS_JS | safe }};
 
@@ -332,7 +380,7 @@ def udf(
         SELECT * FROM read_parquet('data.parquet');
       `);
 
-      // --- WHERE builder (now includes date_filtered ranges) ---
+      // --- WHERE builder (includes date_filtered ranges)
       function buildWhere(upToIdx) {
         const clauses = [];
 
@@ -360,14 +408,14 @@ def udf(
             if (startVal && endVal) {
               const safeStart = startVal.replace(/'/g, "''");
               const safeEnd   = endVal.replace(/'/g, "''");
-              // overlap condition: row [startCol,endCol] intersects chosen [startVal,endVal]
+              // overlap
               clauses.push(
                 `(${endCol} >= '${safeStart}' AND ${startCol} <= '${safeEnd}')`
               );
             }
           }
 
-          // plain "date" fields do not contribute to WHERE
+          // plain "date" does not contribute to WHERE
         }
 
         return clauses.length ? "WHERE " + clauses.join(" AND ") : "";
@@ -402,12 +450,16 @@ def udf(
         return { lo, hi };
       }
 
+      // populate a single field, respecting defaults
       async function populateField(idx) {
         const spec = FIELDS[idx];
         const el = $("field_" + idx);
         if (!el) return;
 
         if (spec.type === "select") {
+          // load distinct values given all filters ABOVE this field
+          const vals = await loadDistinct(spec.col, buildWhere(idx));
+
           // reset dropdown
           el.innerHTML = "";
           const ph = document.createElement("option");
@@ -416,9 +468,7 @@ def udf(
           ph.textContent = "Select " + spec.col + "…";
           el.appendChild(ph);
 
-          // load values given all filters ABOVE this field
-          const vals = await loadDistinct(spec.col, buildWhere(idx));
-
+          // append options
           vals.forEach(v => {
             const opt = document.createElement("option");
             opt.value = v ?? "";
@@ -426,41 +476,70 @@ def udf(
             el.appendChild(opt);
           });
 
-          // auto choose first value if present
+          // choose default if possible
+          let chosenIndex = 0;
           if (vals.length > 0) {
-            el.selectedIndex = 1;
-            $("submit_btn").disabled = false;
-          } else {
-            el.selectedIndex = 0;
+            if (spec.default && vals.includes(spec.default)) {
+              // find the index (vals index +1 because of placeholder)
+              const matchIdx = vals.indexOf(spec.default);
+              chosenIndex = matchIdx + 1;
+            } else {
+              chosenIndex = 1; // first actual option
+            }
           }
 
+          el.selectedIndex = chosenIndex;
+          $("submit_btn").disabled = (chosenIndex === 0);
+
+          // No explicit cascade() here because cascade() already calls populateField in order
+
         } else if (spec.type === "date") {
-          // plain date range (not in WHERE)
+          // plain free date range (not in WHERE)
           if (!pickers[idx]) {
             pickers[idx] = flatpickr(el, {
               mode: "range",
               dateFormat: "Y-m-d",
               onChange: () => {
                 $("submit_btn").disabled = false;
-                // NOTE: plain "date" doesn't cascade filters
+                // doesn't affect WHERE, so no cascade
               }
             });
+          }
+
+          // if there's a default, try to set it as [default, default]
+          if (spec.default && pickers[idx]) {
+            const d = spec.default;
+            pickers[idx].setDate([d, d], true);
             $("submit_btn").disabled = false;
           }
 
         } else if (spec.type === "date_filtered") {
-          // min/max under current filters
+          // determine allowed range given current filters
           const { lo, hi } = await loadMinMax(spec.start, spec.end, buildWhere(idx));
 
           const minDate = lo || undefined;
           const maxDate = hi || undefined;
-          const initialRange =
-            lo && hi ? [lo, hi] :
-            lo       ? [lo]    :
-                       undefined;
+
+          // figure out what initial range to show
+          // priority:
+          //   1. spec.default if inside [minDate,maxDate] -> [default, default]
+          //   2. [lo, hi] if present
+          //   3. [lo] if only lo
+          let initialRange;
+          if (spec.default && minDate && maxDate) {
+            if (spec.default >= minDate && spec.default <= maxDate) {
+              initialRange = [spec.default, spec.default];
+            }
+          }
+          if (!initialRange) {
+            if (lo && hi) {
+              initialRange = [lo, hi];
+            } else if (lo) {
+              initialRange = [lo];
+            }
+          }
 
           if (pickers[idx]) {
-            // update existing instance
             const inst = pickers[idx];
             inst.set("minDate", minDate);
             inst.set("maxDate", maxDate);
@@ -480,7 +559,6 @@ def udf(
 
             $("submit_btn").disabled = false;
           } else {
-            // first-time init
             pickers[idx] = flatpickr(el, {
               mode: "range",
               dateFormat: "Y-m-d",
@@ -497,12 +575,12 @@ def udf(
                   : (selectedDates[0] ? iso(selectedDates[0]) : "");
                 dateFilterState[idx] = { start, end };
 
-                // cascade downstream because date_filtered participates in WHERE
+                // when user changes, later fields depend on this now
                 cascade(idx + 1);
               }
             });
 
-            // seed dateFilterState from initialRange if available
+            // seed state from initialRange for WHERE usage
             if (initialRange && initialRange.length) {
               const startISO = initialRange[0];
               const endISO   = initialRange[1] || initialRange[0] || "";
@@ -516,6 +594,7 @@ def udf(
         }
       }
 
+      // populate fields in order, so downstream sees upstream defaults
       async function cascade(fromIdx) {
         for (let i = fromIdx; i < FIELDS.length; i++) {
           await populateField(i);
@@ -526,7 +605,7 @@ def udf(
       await cascade(0);
       showForm();
 
-      // any change to a "select" should update later fields
+      // attach listeners for interactive updates
       FIELDS.forEach((spec, i) => {
         if (spec.type === "select") {
           const el = $("field_" + i);
@@ -537,8 +616,8 @@ def udf(
             });
           }
         }
-        // we don't attach listeners for "date_filtered" here
-        // because we already cascade in its flatpickr onChange
+        // date_filtered already cascades in its onChange
+        // plain date does not affect WHERE so no cascade
       });
 
       // submit handler
@@ -574,19 +653,19 @@ def udf(
           type: "hierarchical_form_submit",
           payload: out,
           origin: "hierarchical_form",
-          parameter: PARAMETER,
+          parameter: PARAMETER_NAME,
           ts: Date.now()
         }, "*");
       });
     })();
   </script>
 </body>
-</html> 
+</html>
 """
 
     rendered_html = jinja2.Template(template_src).render(
         fields=field_specs,
-        PARAM_JS=PARAM_JS,
+        PARAMETER_NAME_JS=PARAMETER_NAME_JS,
         DATA_URL_JS=DATA_URL_JS,
         FIELDS_JS=FIELDS_JS,
     )
