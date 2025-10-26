@@ -1,41 +1,40 @@
 common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/")
 
-
 @fused.udf(cache_max_age=0)
 def udf(
     parameter: str = "form",
     data_url: str = "https://unstable.udf.ai/fsh_aotlErnaYWdIlKcGg6huq/run?dtype_out_raster=png&dtype_out_vector=parquet",
-    columns: str = '["mission","product_name","prefix","@date::start_date,end_date"]'
+    columns = [
+        "mission",
+        "product_name",
+        "prefix",
+        "@date::start_date,end_date",
+    ],
 ):
-    """
-    Creates a hierarchical form with cascading dropdowns and date range pickers.
-    """
+    import ast
     import json
     import jinja2
 
-    # Parse columns input (accepts both list and JSON string)
     if isinstance(columns, str):
-        raw_cols = json.loads(columns)
+        columns_list = ast.literal_eval(columns)
     else:
-        raw_cols = columns
+        columns_list = list(columns)
 
-    # Process field specifications
     field_specs = []
-    for item in raw_cols:
-        if isinstance(item, str) and item.startswith("@date::"):
-            # Date range field: @date::start_col,end_col
-            _, rest = item.split("::", 1)
+    for token in columns_list:
+        if isinstance(token, str) and token.startswith("@date::"):
+            # parse the @date:: syntax
+            _, rest = token.split("::", 1)
             start_col, end_col = [p.strip() for p in rest.split(",")]
             field_specs.append({
                 "type": "date_range",
                 "start_col": start_col,
-                "end_col": end_col
+                "end_col": end_col,
             })
         else:
-            # Categorical field
             field_specs.append({
                 "type": "categorical",
-                "col": item.strip()
+                "col": token.strip(),
             })
 
     # Prepare data for JavaScript
