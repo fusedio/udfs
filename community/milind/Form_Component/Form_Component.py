@@ -166,8 +166,8 @@ def udf(
       flex-direction: column;
       gap: 20px;
 
-      /* keep last field visible above footer */
-      padding-bottom: 88px;
+      /* so last control isn't covered by sticky submit */
+      padding-bottom: 96px;
     }
 
     .form-field {
@@ -207,53 +207,86 @@ def udf(
       border-color: var(--primary);
     }
 
-    /* sticky footer that acts like one giant button */
-    .submit-bar {
+    /* sticky footer container */
+    .submit-bar-wrapper {
       position: fixed;
       left: 0;
       right: 0;
       bottom: 0;
 
-      background: var(--primary);
-      color: #000;
-      border: none;
-      outline: none;
+      /* transparent background so you can see page behind edges */
+      background: linear-gradient(
+        to top,
+        rgba(18,18,18,0.9) 0%,
+        rgba(18,18,18,0.6) 60%,
+        rgba(18,18,18,0) 100%
+      );
+
+      padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+      display: flex;
+      justify-content: center;
+      pointer-events: none; /* we'll re-enable on the button */
+      z-index: 9999;
+    }
+
+    /* the actual button */
+    .submit-btn {
+      width: 100%;
+      max-width: 480px;
 
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 8px;
 
-      height: 64px;
-      font-size: 18px;
-      font-weight: 650;
-      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
       line-height: 1;
-      cursor: pointer;
-      user-select: none;
+      font-family: inherit;
 
-      /* subtle divider line to separate from content above */
-      box-shadow: 0 -1px 0 rgba(232,255,89,0.4), 0 -8px 24px rgba(0,0,0,0.8);
-      z-index: 9999;
+      background: var(--primary);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 16px;
+
+      cursor: pointer;
+      transition: all 0.15s ease;
+
+      box-shadow:
+        0 12px 32px rgba(232,255,89,0.2),
+        0 2px 4px rgba(0,0,0,0.8);
+
+      pointer-events: auto; /* re-enable click on the button itself */
     }
 
-    /* when disabled, dim whole bar */
-    .submit-bar.disabled {
+    .submit-btn:hover:not(:disabled) {
+      background: var(--primary-dark);
+      box-shadow:
+        0 16px 40px rgba(232,255,89,0.28),
+        0 3px 6px rgba(0,0,0,0.8);
+      transform: translateY(-1px);
+    }
+
+    .submit-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+      transform: none;
+      box-shadow:
+        0 6px 16px rgba(0,0,0,0.6),
+        0 1px 2px rgba(0,0,0,0.8);
     }
 
-    /* hide the native button look, let the bar carry visuals */
-    .submit-btn {
-      appearance: none;
-      background: transparent;
-      border: 0;
-      padding: 0;
-      margin: 0;
-
-      color: inherit;
-      font: inherit;
-      line-height: inherit;
-      cursor: inherit;
+    /* map container */
+    .bounds-map {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .bounds-map .mapboxgl-canvas-container,
+    .bounds-map .mapboxgl-canvas {
+      width: 100% !important;
     }
 
     /* loader */
@@ -284,19 +317,7 @@ def udf(
     #formContent.loaded { display: flex; }
     #loaderOverlay.hidden { display: none; }
 
-    /* map container */
-    .bounds-map {
-      width: 100%;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      overflow: hidden;
-    }
-    .bounds-map .mapboxgl-canvas-container,
-    .bounds-map .mapboxgl-canvas {
-      width: 100% !important;
-    }
-
-    /* flatpickr dark */
+    /* flatpickr dark theme tweaks */
     .flatpickr-calendar {
       background: var(--input-bg) !important;
       border: 1px solid var(--border) !important;
@@ -354,6 +375,8 @@ def udf(
       border-radius: 6px !important;
       box-shadow: 0 0 8px rgba(232,255,89,0.4);
     }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -415,8 +438,8 @@ def udf(
     </div>
   </div>
 
-  <!-- full-width sticky footer "button" -->
-  <div id="submit_bar" class="submit-bar disabled">
+  <!-- sticky footer with inset button -->
+  <div class="submit-bar-wrapper">
     <button id="submit_btn" class="submit-btn" disabled>Submit</button>
   </div>
 
@@ -473,7 +496,7 @@ def udf(
         SELECT * FROM read_parquet('data.parquet');
       `);
 
-      // build WHERE
+      // WHERE builder (bounds doesn't filter)
       function buildWhere(upToIdx) {
         const clauses = [];
 
@@ -497,9 +520,8 @@ def udf(
                 `(${spec.endCol} >= '${safeStart}' AND ${spec.startCol} <= '${safeEnd}')`
               );
             }
-          } else if (spec.kind === "bounds") {
-            // no-op
           }
+          // bounds skipped
         }
 
         return clauses.length ? "WHERE " + clauses.join(" AND ") : "";
@@ -534,7 +556,7 @@ def udf(
         return { lo, hi };
       }
 
-      // init / update bounds map (first time only)
+      // map init (first time only)
       function initOrUpdateBoundsField(idx, spec) {
         const el = $("field_" + idx);
         if (!el) return;
@@ -546,13 +568,13 @@ def udf(
         try {
           if (defAttr) defB = JSON.parse(defAttr);
         } catch (e) {
-          /* ignore */
+          /* ignore parse issue */
         }
         if (!Array.isArray(defB) || defB.length !== 4) {
           defB = [-180, -90, 180, 90];
         }
 
-        // already has map? don't reset camera.
+        // don't reset if already created
         if (mapInstances[idx]) {
           return;
         }
@@ -587,140 +609,138 @@ def udf(
         mapInstances[idx] = m;
       }
 
-      // enable submit visually + semantically
+      // enable submit button
       function enableSubmit() {
         const btn = $("submit_btn");
-        const bar = $("submit_bar");
         if (btn.disabled) {
           btn.disabled = false;
         }
-        bar.classList.remove("disabled");
       }
 
-      // hydrate one field
+      // hydrate a field
       async function hydrateField(idx) {
         const spec = FIELDS[idx];
         const el = $("field_" + idx);
         if (!el) return;
 
         if (spec.kind === "select") {
-          const vals = await loadDistinct(spec.col, buildWhere(idx));
+            const vals = await loadDistinct(spec.col, buildWhere(idx));
 
-          el.innerHTML = "";
-          const ph = document.createElement("option");
-          ph.disabled = true;
-          ph.value = "";
-          ph.textContent = "Select " + spec.col + "…";
-          el.appendChild(ph);
+            el.innerHTML = "";
+            const ph = document.createElement("option");
+            ph.disabled = true;
+            ph.value = "";
+            ph.textContent = "Select " + spec.col + "…";
+            el.appendChild(ph);
 
-          vals.forEach(v => {
-            const opt = document.createElement("option");
-            opt.value = v ?? "";
-            opt.textContent = v ?? "(null)";
-            el.appendChild(opt);
-          });
-
-          let chosenIndex = 0;
-          if (vals.length > 0) {
-            if (spec.defaultValue && vals.includes(spec.defaultValue)) {
-              chosenIndex = vals.indexOf(spec.defaultValue) + 1;
-            } else {
-              chosenIndex = 1;
-            }
-          }
-          el.selectedIndex = chosenIndex;
-
-          if (chosenIndex !== 0) {
-            enableSubmit();
-          }
-
-        } else if (spec.kind === "date") {
-          const { lo, hi } = await loadMinMax(spec.startCol, spec.endCol, buildWhere(idx));
-
-          const minDate = lo || undefined;
-          const maxDate = hi || undefined;
-
-          let initialRange;
-          if (spec.defaultValue && minDate && maxDate) {
-            if (spec.defaultValue >= minDate && spec.defaultValue <= maxDate) {
-              initialRange = [spec.defaultValue, spec.defaultValue];
-            }
-          }
-          if (!initialRange) {
-            if (lo && hi) {
-              initialRange = [lo, hi];
-            } else if (lo) {
-              initialRange = [lo];
-            }
-          }
-
-          if (pickers[idx]) {
-            const inst = pickers[idx];
-            inst.set("minDate", minDate);
-            inst.set("maxDate", maxDate);
-
-            if (initialRange) {
-              inst.setDate(initialRange, true);
-            } else {
-              inst.clear();
-            }
-
-            if (initialRange && initialRange.length) {
-              const startISO = initialRange[0];
-              const endISO   = initialRange[1] || initialRange[0] || "";
-              dateRanges[idx] = { start: startISO, end: endISO };
-            }
-
-            enableSubmit();
-
-          } else {
-            pickers[idx] = flatpickr(el, {
-              mode: "range",
-              dateFormat: "Y-m-d",
-              minDate,
-              maxDate,
-              defaultDate: initialRange,
-              onChange: async (selectedDates) => {
-                enableSubmit();
-
-                const start = selectedDates[0] ? iso(selectedDates[0]) : "";
-                const end   = selectedDates[1]
-                  ? iso(selectedDates[1])
-                  : (selectedDates[0] ? iso(selectedDates[0]) : "");
-
-                dateRanges[idx] = { start, end };
-
-                await hydrateDownstream(idx + 1);
-              }
+            vals.forEach(v => {
+              const opt = document.createElement("option");
+              opt.value = v ?? "";
+              opt.textContent = v ?? "(null)";
+              el.appendChild(opt);
             });
 
-            if (initialRange && initialRange.length) {
-              const startISO = initialRange[0];
-              const endISO   = initialRange[1] || initialRange[0] || "";
-              dateRanges[idx] = { start: startISO, end: endISO };
+            let chosenIndex = 0;
+            if (vals.length > 0) {
+              if (spec.defaultValue && vals.includes(spec.defaultValue)) {
+                chosenIndex = vals.indexOf(spec.defaultValue) + 1;
+              } else {
+                chosenIndex = 1;
+              }
+            }
+            el.selectedIndex = chosenIndex;
+
+            if (chosenIndex !== 0) {
+              enableSubmit();
             }
 
-            enableSubmit();
-          }
+        } else if (spec.kind === "date") {
+            const { lo, hi } = await loadMinMax(spec.startCol, spec.endCol, buildWhere(idx));
+
+            const minDate = lo || undefined;
+            const maxDate = hi || undefined;
+
+            let initialRange;
+            if (spec.defaultValue && minDate && maxDate) {
+              if (spec.defaultValue >= minDate && spec.defaultValue <= maxDate) {
+                initialRange = [spec.defaultValue, spec.defaultValue];
+              }
+            }
+            if (!initialRange) {
+              if (lo && hi) {
+                initialRange = [lo, hi];
+              } else if (lo) {
+                initialRange = [lo];
+              }
+            }
+
+            if (pickers[idx]) {
+              const inst = pickers[idx];
+              inst.set("minDate", minDate);
+              inst.set("maxDate", maxDate);
+
+              if (initialRange) {
+                inst.setDate(initialRange, true);
+              } else {
+                inst.clear();
+              }
+
+              if (initialRange && initialRange.length) {
+                const startISO = initialRange[0];
+                const endISO   = initialRange[1] || initialRange[0] || "";
+                dateRanges[idx] = { start: startISO, end: endISO };
+              }
+
+              enableSubmit();
+
+            } else {
+              pickers[idx] = flatpickr(el, {
+                mode: "range",
+                dateFormat: "Y-m-d",
+                minDate,
+                maxDate,
+                defaultDate: initialRange,
+                onChange: async (selectedDates) => {
+                  enableSubmit();
+
+                  const start = selectedDates[0] ? iso(selectedDates[0]) : "";
+                  const end   = selectedDates[1]
+                    ? iso(selectedDates[1])
+                    : (selectedDates[0] ? iso(selectedDates[0]) : "");
+
+                  dateRanges[idx] = { start, end };
+
+                  await hydrateDownstream(idx + 1);
+                }
+              });
+
+              if (initialRange && initialRange.length) {
+                const startISO = initialRange[0];
+                const endISO   = initialRange[1] || initialRange[0] || "";
+                dateRanges[idx] = { start: startISO, end: endISO };
+              }
+
+              enableSubmit();
+            }
 
         } else if (spec.kind === "bounds") {
-          initOrUpdateBoundsField(idx, spec);
-          enableSubmit();
+            initOrUpdateBoundsField(idx, spec);
+            enableSubmit();
         }
       }
 
-      // hydrate downstream fields
+      // hydrate downstream
       async function hydrateDownstream(fromIdx) {
         for (let i = fromIdx; i < FIELDS.length; i++) {
           await hydrateField(i);
         }
       }
 
-      // initial hydration
+      // initial load
       await hydrateDownstream(0);
       showForm();
 
-      // listeners for re-hydration
+      // listeners
       FIELDS.forEach((spec, i) => {
         if (spec.kind === "select") {
           const el = $("field_" + i);
@@ -730,8 +750,8 @@ def udf(
             await hydrateDownstream(i + 1);
           });
         }
-        // date: handled inside flatpickr onChange
-        // bounds: we just read on submit
+        // date: handled by flatpickr onChange
+        // bounds: we read bounds on submit
       });
 
       // snapshot
@@ -797,7 +817,7 @@ def udf(
                   b.getNorth()
                 ].map(v => Number(v.toFixed(6)));
               } catch (_e) {
-                // fallback to default
+                // fallback
               }
             }
 
@@ -812,9 +832,10 @@ def udf(
         return { globalMerged, messages };
       }
 
-      // submit click
+      // submit
       $("submit_btn").addEventListener("click", () => {
-        if ($("submit_btn").disabled) return; // won't fire if still disabled
+        const btn = $("submit_btn");
+        if (btn.disabled) return;
 
         const { globalMerged, messages } = makeSnapshot();
 
