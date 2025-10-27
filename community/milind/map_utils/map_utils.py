@@ -1,8 +1,3 @@
-import json
-import geopandas as gpd
-import pandas as pd
-import pydeck as pdk
-
 
 
 @fused.udf(cache_max_age=0)
@@ -32,6 +27,12 @@ def udf(
 
 
 def pydeck_point(gdf, config):
+    import json
+    import geopandas as gpd
+    import pandas as pd
+    import pydeck as pdk
+
+
     if isinstance(config, str):
         config = json.loads(config)
     if config is None:
