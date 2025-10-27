@@ -11,6 +11,23 @@ DEFAULT_CONFIG = {
     "bearing": 0
 }
 
+DEFAULT_H3_CONFIG = {
+    "hex_field": "hex",
+    "fill_color": "[0, 144, 255, 180]",
+    "pickable": True,
+    "stroked": True,
+    "filled": True,
+    "extruded": False,
+    "line_color": [255, 255, 255],
+    "line_width_min_pixels": 2,
+    "center_lat": 37.7749295,
+    "center_lon": -122.4194155,
+    "zoom": 14,
+    "bearing": 0,
+    "pitch": 30,
+    "tooltip": "{__hex__}"
+}
+
 @fused.udf(cache_max_age=0)
 def udf(
     gdf = {
@@ -91,6 +108,67 @@ def pydeck_point(gdf, config):
         initial_view_state=view_state,
         map_style=basemap,
         tooltip={"text": tooltip_template},
+    )
+
+    return deck.to_html(as_string=True)
+
+
+@fused.udf(cache_max_age=0)
+def pydeck_hex(df=None, config: dict | str | None = None):
+    import pandas as pd
+    import pydeck as pdk
+    import h3
+    import json
+
+    if config is None or config == "":
+        config = DEFAULT_H3_CONFIG
+    elif isinstance(config, str):
+        config = json.loads(config)
+
+    if df is None:
+        H3_HEX_DATA = "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/sf.h3cells.json"
+        df = pd.read_json(H3_HEX_DATA)
+
+    hex_field = config.get("hex_field", DEFAULT_H3_CONFIG["hex_field"])
+    if hex_field not in df.columns:
+        raise ValueError(f"DataFrame must have a '{hex_field}' column")
+
+    df = df.copy()
+    df["__hex__"] = df[hex_field]
+
+    if not pd.api.types.is_string_dtype(df["__hex__"]):
+        df["__hex__"] = df["__hex__"].apply(
+            lambda h: h3.int_to_str(int(h)) if pd.notna(h) else None
+        )
+
+    layer = pdk.Layer(
+        "H3HexagonLayer",
+        df,
+        pickable=config.get("pickable", DEFAULT_H3_CONFIG["pickable"]),
+        stroked=config.get("stroked", DEFAULT_H3_CONFIG["stroked"]),
+        filled=config.get("filled", DEFAULT_H3_CONFIG["filled"]),
+        extruded=config.get("extruded", DEFAULT_H3_CONFIG["extruded"]),
+        get_hexagon="__hex__",
+        get_fill_color=config.get("fill_color", DEFAULT_H3_CONFIG["fill_color"]),
+        get_line_color=config.get("line_color", DEFAULT_H3_CONFIG["line_color"]),
+        line_width_min_pixels=config.get(
+            "line_width_min_pixels",
+            DEFAULT_H3_CONFIG["line_width_min_pixels"]
+        ),
+    )
+
+    view_state = pdk.ViewState(
+        latitude=config.get("center_lat", DEFAULT_H3_CONFIG["center_lat"]),
+        longitude=config.get("center_lon", DEFAULT_H3_CONFIG["center_lon"]),
+        zoom=config.get("zoom", DEFAULT_H3_CONFIG["zoom"]),
+        bearing=config.get("bearing", DEFAULT_H3_CONFIG["bearing"]),
+        pitch=config.get("pitch", DEFAULT_H3_CONFIG["pitch"]),
+    )
+
+    deck = pdk.Deck(
+        layers=[layer],
+        initial_view_state=view_state,
+        tooltip={"text": config.get("tooltip", DEFAULT_H3_CONFIG["tooltip"])},
     )
 
     return deck.to_html(as_string=True)
