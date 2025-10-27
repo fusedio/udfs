@@ -1,13 +1,4 @@
-
-
-@fused.udf(cache_max_age=0)
-def udf(
-    gdf = {
-        "type": "Feature",
-        "properties": {"name": "world"},
-        "geometry": {"type": "Point", "coordinates": [-73.94391387988864, 40.8944276435547]}
-    },
-    config: dict = {
+DEFAULT_CONFIG = {
     "color": [0, 144, 255, 200],
     "radius": 50,
     "opacity": 1.0,
@@ -20,10 +11,19 @@ def udf(
     "bearing": 0
 }
 
+@fused.udf(cache_max_age=0)
+def udf(
+    gdf = {
+        "type": "Feature",
+        "properties": {"name": "world"},
+        "geometry": {
+            "type": "Point",
+            "coordinates": [-73.94391387988864, 40.8944276435547]
+        }
+    },
+    config: dict | str | None = None
 ):
-    html = pydeck_point(gdf, config)
-    return html
-
+    return pydeck_point(gdf, config)
 
 
 def pydeck_point(gdf, config):
@@ -32,11 +32,11 @@ def pydeck_point(gdf, config):
     import pandas as pd
     import pydeck as pdk
 
-
-    if isinstance(config, str):
+    if config is None or config == "":
+        config = DEFAULT_CONFIG
+    elif isinstance(config, str):
         config = json.loads(config)
-    if config is None:
-        config = {}
+
     if isinstance(gdf, dict):
         gdf = gpd.GeoDataFrame.from_features([gdf])
 
@@ -44,18 +44,29 @@ def pydeck_point(gdf, config):
     df["longitude"] = gdf.geometry.x
     df["latitude"] = gdf.geometry.y
 
-    color = config.get("color", [0, 144, 255, 200])
-    radius = config.get("radius", 50)
-    opacity = config.get("opacity", 1.0)
-    pickable = config.get("pickable", True)
-    tooltip_template = config.get("tooltip", "{name}")
-    basemap = config.get("basemap", "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json")
+    color = config.get("color", DEFAULT_CONFIG["color"])
+    radius = config.get("radius", DEFAULT_CONFIG["radius"])
+    opacity = config.get("opacity", DEFAULT_CONFIG["opacity"])
+    pickable = config.get("pickable", DEFAULT_CONFIG["pickable"])
+    # Use a dark-themed basemap for better contrast in dark mode
+    basemap = config.get(
+        "basemap",
+        "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+    )
 
     center_lat = config.get("center_lat", float(df["latitude"].mean()))
     center_lon = config.get("center_lon", float(df["longitude"].mean()))
-    zoom = config.get("zoom", 10)
-    pitch = config.get("pitch", 0)
-    bearing = config.get("bearing", 0)
+    zoom = config.get("zoom", DEFAULT_CONFIG["zoom"])
+    pitch = config.get("pitch", DEFAULT_CONFIG["pitch"])
+    bearing = config.get("bearing", DEFAULT_CONFIG["bearing"])
+
+    tooltip_template = config.get("tooltip", None)
+    if not tooltip_template:
+        cols = [c for c in df.columns if c not in ["longitude", "latitude"]]
+        if len(cols) == 0:
+            tooltip_template = "lon: {longitude}\nlat: {latitude}"
+        else:
+            tooltip_template = "\n".join([f"{c}: {{{c}}}" for c in cols])
 
     layer = pdk.Layer(
         "ScatterplotLayer",
@@ -83,5 +94,3 @@ def pydeck_point(gdf, config):
     )
 
     return deck.to_html(as_string=True)
-
-
