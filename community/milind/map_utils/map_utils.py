@@ -38,12 +38,10 @@ DEFAULT_POLYGON_CONFIG = {
     "center_lat": 49.254,
     "center_lon": -123.13,
     "zoom": 11,
-
     "pitch": 0,
     "bearing": 0,
-    "tooltip": "{coordinates}"
+    "tooltip": "Polygon {id}"
 }
-
 
 @fused.udf(cache_max_age=0)
 def udf(
@@ -195,7 +193,9 @@ def pydeck_hex(df=None, config: dict | str | None = None):
 def pydeck_polygon(df=None, config: dict | str | None = None):
     import json
     import pandas as pd
+    import geopandas as gpd
     import pydeck as pdk
+    from shapely.geometry import shape, mapping
 
     if config is None or config == "":
         config = DEFAULT_POLYGON_CONFIG
@@ -205,13 +205,20 @@ def pydeck_polygon(df=None, config: dict | str | None = None):
     if df is None:
         DATA_URL = "https://raw.githubusercontent.com/visgl/deck.gl-data/master/examples/geojson/vancouver-blocks.json"
         raw = pd.read_json(DATA_URL)
-        df = pd.DataFrame()
-        df["coordinates"] = raw["features"].apply(lambda row: row["geometry"]["coordinates"])
+        geometries = raw["features"].apply(lambda row: shape(row["geometry"]))
+        df = gpd.GeoDataFrame({"geometry": geometries})
+        df["id"] = df.index.astype(int)
+
+    if "geometry" not in df.columns:
+        raise ValueError("GeoDataFrame must include a 'geometry' column")
+
+    df = df.copy()
+    df["__polygon__"] = df["geometry"].apply(lambda geom: mapping(geom)["coordinates"])
 
     layer = pdk.Layer(
         "PolygonLayer",
         df,
-        get_polygon="coordinates",
+        get_polygon="__polygon__",
         get_fill_color=config.get("fill_color", DEFAULT_POLYGON_CONFIG["fill_color"]),
         get_line_color=config.get("line_color", DEFAULT_POLYGON_CONFIG["line_color"]),
         line_width_min_pixels=config.get(
