@@ -20,11 +20,18 @@ def udf(
             {
                 "column": ["start_date", "end_date"],
                 "type": "daterange",
-                "parameter_name": ["start_meow", "end"]
-            }
+                "parameter_name": ["start_yo", "end"]
+            },
+            {
+                "type": "bounds",
+                "parameter_name": "bounds",          # REQUIRED
+                "default": [-125, 24, -66, 49],       # [west, south, east, north]
+                "height": 240                         # optional, px
+            },
         ],
         "data_url": "https://unstable.udf.ai/fsh_aotlErnaYWdIlKcGg6huq/run?dtype_out_raster=png&dtype_out_vector=parquet"
-    }
+    },
+    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
 ):
     import json
     import jinja2
@@ -42,10 +49,11 @@ def udf(
 
     #
     # 2. normalize fields into a uniform shape for the frontend
-    #    Each normalized field looks like:
-    #    - kind: "select" | "date"
-    #    - channels: [] or ["mis"] or ["start","end"] etc.
-    #    - aliasBase: string we use for global snapshot keys fallback
+    #    Each normalized field becomes:
+    #    - kind: "select" | "date" | "bounds"
+    #    - (select)  col, defaultValue, channels[], aliasBase
+    #    - (date)    startCol, endCol, defaultValue, channels[], aliasBase
+    #    - (bounds)  channels[], aliasBase, defaultBounds[], mapHeightPx
     #
     normalized_fields = []
     for f in cfg.get("filter", []):
@@ -56,9 +64,8 @@ def udf(
             col = f.get("column")
             default_val = f.get("default")
 
-            # channels is always a list after normalization
             if isinstance(raw_param, str) and raw_param:
-                channels = [raw_param]          # e.g. ["mis"]
+                channels = [raw_param]
             else:
                 channels = []
 
@@ -68,8 +75,8 @@ def udf(
                 "kind": "select",
                 "col": col,
                 "defaultValue": default_val,
-                "channels": channels,        # ["mis"] or []
-                "aliasBase": alias_base,     # "mis" or "mission"
+                "channels": channels,
+                "aliasBase": alias_base,
             })
 
         elif f_type == "daterange":
@@ -79,10 +86,6 @@ def udf(
             else:
                 start_col, end_col = "start_date", "end_date"
 
-            # normalize channels:
-            #   ["start","end"]        -> channels = ["start","end"], aliasBase="start"
-            #   "date"                 -> channels = ["date"],        aliasBase="date"
-            #   None                   -> channels = [],             aliasBase=start_col
             if isinstance(raw_param, list) and len(raw_param) == 2:
                 channels = [raw_param[0], raw_param[1]]
                 alias_base = raw_param[0] or start_col
@@ -98,17 +101,41 @@ def udf(
                 "startCol": start_col,
                 "endCol": end_col,
                 "defaultValue": f.get("default"),
-                "channels": channels,      # ["start","end"], ["date"], or []
-                "aliasBase": alias_base,   # "start" / "date" / "start_date"
+                "channels": channels,
+                "aliasBase": alias_base,
+            })
+
+        elif f_type == "bounds":
+            # required key: parameter_name (string)
+            # optional keys:
+            #   default: [w,s,e,n]
+            #   height: px height of map container
+            if isinstance(raw_param, str) and raw_param:
+                channels = [raw_param]
+                alias_base = raw_param
+            else:
+                channels = []
+                alias_base = "bounds"
+
+            default_bounds = f.get("default", [-180, -90, 180, 90])
+            map_height_px = f.get("height", 240)
+
+            normalized_fields.append({
+                "kind": "bounds",
+                "channels": channels,                # e.g. ["bounds"]
+                "aliasBase": alias_base,             # e.g. "bounds"
+                "defaultBounds": default_bounds,     # [w,s,e,n]
+                "mapHeightPx": map_height_px,        # 240 etc.
             })
 
         else:
-            # unrecognized field type, skip
+            # ignore unknown field types
             pass
 
     GLOBAL_PARAM_NAME_JS = json.dumps(global_param_name)
     DATA_URL_JS = json.dumps(data_url)
     FIELDS_JS = json.dumps(normalized_fields)
+    MAPBOX_TOKEN_JS = json.dumps(mapbox_token)
 
     #
     # 3. HTML/JS template
@@ -119,15 +146,16 @@ def udf(
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"/>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
 
-  <style>
+<style>
     :root {
-      --bg: #121212;
+    --bg: #121212;
       --text: #eeeeee;
       --border: #333333;
-      --input-bg: #1b1b1b;
-      --input-hover: #2a2a2a;
-      --primary: #e8ff59;
+    --input-bg: #1b1b1b;
+    --input-hover: #2a2a2a;
+    --primary: #e8ff59;
       --primary-dark: #d4eb45;
     }
 
@@ -170,26 +198,26 @@ def udf(
 
     select,
     input {
-      width: 100%;
+    width: 100%;
       font-size: 15px;
       padding: 10px 12px;
       border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--input-bg);
-      color: var(--text);
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--text);
       transition: all 0.2s ease;
-      outline: none;
+    outline: none;
     }
 
     select:hover,
     input:hover {
-      background: var(--input-hover);
+    background: var(--input-hover);
       border-color: #444444;
     }
 
     select:focus,
     input:focus {
-      border-color: var(--primary);
+    border-color: var(--primary);
     }
 
     .submit-btn {
@@ -230,7 +258,7 @@ def udf(
       height: 28px;
       border-radius: 50%;
       border: 4px solid rgba(232,255,89,0.15);
-      border-top-color: var(--primary);
+    border-top-color: var(--primary);
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -242,6 +270,18 @@ def udf(
     }
     #formContent.loaded { display: flex; }
     #loaderOverlay.hidden { display: none; }
+
+    /* map container style for bounds picker */
+    .bounds-map {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .bounds-map .mapboxgl-canvas-container,
+    .bounds-map .mapboxgl-canvas {
+      width: 100% !important;
+    }
 
     /* flatpickr minimal dark */
     .flatpickr-calendar {
@@ -301,10 +341,10 @@ def udf(
       border-radius: 6px !important;
       box-shadow: 0 0 8px rgba(232,255,89,0.4);
     }
-  </style>
+</style>
 </head>
 <body>
-  <div class="form-wrapper">
+<div class="form-wrapper">
     <div id="loaderOverlay">
       <div class="spinner"></div>
       <div>Loading…</div>
@@ -325,7 +365,8 @@ def udf(
             >
               <option disabled selected value="">Select {{ f.col }}…</option>
             </select>
-          </div>
+  </div>
+
         {% elif f.kind == "date" %}
           <div class="form-field">
             <label for="field_{{ loop.index0 }}">{{ f.startCol }} / {{ f.endCol }}</label>
@@ -341,6 +382,20 @@ def udf(
               placeholder="Select date range…"
               readonly
             />
+  </div>
+
+        {% elif f.kind == "bounds" %}
+          <div class="form-field">
+            <label>Bounds</label>
+            <div
+              id="field_{{ loop.index0 }}"
+              class="bounds-map"
+              style="height: {{ f.mapHeightPx }}px"
+              data-kind="bounds"
+              data-channels="{{ f.channels | join(',') }}"
+              data-alias-base="{{ f.aliasBase }}"
+              data-default-bounds='{{ f.defaultBounds | tojson }}'
+            ></div>
           </div>
         {% endif %}
       {% endfor %}
@@ -350,17 +405,20 @@ def udf(
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script type="module">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+<script type="module">
     (async () => {
       const GLOBAL_PARAM_NAME = {{ GLOBAL_PARAM_NAME_JS | safe }};
       const DATA_URL  = {{ DATA_URL_JS | safe }};
       const FIELDS    = {{ FIELDS_JS | safe }};
+      const MAPBOX_TOKEN = {{ MAPBOX_TOKEN_JS | safe }};
 
-      const $ = (id) => document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
 
       // local state
-      const pickers = {};     // flatpickr instances for date fields
-      const dateRanges = {};  // { idx: { start, end } } to support WHERE
+      const pickers = {};        // { idx: flatpickrInstance }
+      const dateRanges = {};     // { idx: { start, end } }
+      const mapInstances = {};   // { idx: mapboxgl.Map } - created once per bounds field
 
       function showForm() {
         $("loaderOverlay").classList.add("hidden");
@@ -369,8 +427,8 @@ def udf(
 
       function iso(d) {
         if (!d) return "";
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const y  = d.getFullYear();
+        const m  = String(d.getMonth() + 1).padStart(2, "0");
         const da = String(d.getDate()).padStart(2, "0");
         return `${y}-${m}-${da}`;
       }
@@ -402,7 +460,8 @@ def udf(
       `);
 
       //
-      // WHERE builder respecting all filters up to index i
+      // Build WHERE using all filters up to index i
+      // (bounds does not constrain WHERE)
       //
       function buildWhere(upToIdx) {
         const clauses = [];
@@ -427,6 +486,8 @@ def udf(
                 `(${spec.endCol} >= '${safeStart}' AND ${spec.startCol} <= '${safeEnd}')`
               );
             }
+          } else if (spec.kind === "bounds") {
+            // no-op for parquet filtering
           }
         }
 
@@ -434,32 +495,91 @@ def udf(
       }
 
       async function loadDistinct(colName, whereClause) {
-        const q = [
+    const q = [
           "SELECT DISTINCT",
           colName,
           "AS v FROM df",
           whereClause,
-          "ORDER BY 1"
+      "ORDER BY 1"
         ].filter(Boolean).join(" ");
-        const res = await conn.query(q);
+    const res = await conn.query(q);
         return res.toArray().map(r => r.v);
       }
 
       async function loadMinMax(startCol, endCol, whereClause) {
-        const q = [
+    const q = [
           "SELECT",
           "  MIN(" + startCol + ") AS mn,",
           "  MAX(" + endCol   + ") AS mx",
-          "FROM df",
+      "FROM df",
           whereClause
         ].filter(Boolean).join(" ");
-        const res = await conn.query(q);
+    const res = await conn.query(q);
         const row = res.toArray()[0] || {};
         let lo = row.mn ? String(row.mn).slice(0,10) : "";
         let hi = row.mx ? String(row.mx).slice(0,10) : "";
         if (lo && !hi) hi = lo;
         if (!lo && hi) lo = hi;
         return { lo, hi };
+      }
+
+      //
+      // init / update bounds map (no parquet hydration, just viewport)
+      //
+      function initOrUpdateBoundsField(idx, spec) {
+        const el = $("field_" + idx);
+        if (!el) return;
+
+        mapboxgl.accessToken = MAPBOX_TOKEN;
+
+        // get default bounds [w,s,e,n] from DOM or spec
+        const defAttr = el.getAttribute("data-default-bounds");
+        let defB = spec.defaultBounds;
+        try {
+            if (defAttr) defB = JSON.parse(defAttr);
+        } catch (e) {
+            /* fallback to spec.defaultBounds */
+        }
+        if (!Array.isArray(defB) || defB.length !== 4) {
+            defB = [-180, -90, 180, 90];
+        }
+
+        // if already created, skip (maps are only initialized once)
+        if (mapInstances[idx]) {
+          return;
+        }
+
+        // helper to apply array bounds
+        function fitToBounds(m, arr) {
+          m.fitBounds([[arr[0], arr[1]], [arr[2], arr[3]]], {
+            padding: 20,
+            duration: 0
+          });
+        }
+
+        // create map
+        const m = new mapboxgl.Map({
+          container: el.id,
+          style: "mapbox://styles/mapbox/dark-v11",
+          attributionControl: false,
+          projection: "mercator",
+          dragRotate: false,
+          pitchWithRotate: false,
+          touchZoomRotate: false,
+          touchPitch: false,
+          renderWorldCopies: false,
+          maxPitch: 0
+        });
+
+        m.on("load", () => {
+          // resize after layout so canvas fills container
+          setTimeout(() => {
+            m.resize();
+            fitToBounds(m, defB);
+          }, 100);
+        });
+
+        mapInstances[idx] = m;
       }
 
       //
@@ -488,7 +608,7 @@ def udf(
             el.appendChild(opt);
           });
 
-          // pick default or first
+          // choose default or first value
           let chosenIndex = 0;
           if (vals.length > 0) {
             if (spec.defaultValue && vals.includes(spec.defaultValue)) {
@@ -569,13 +689,18 @@ def udf(
               dateRanges[idx] = { start: startISO, end: endISO };
             }
 
-            $("submit_btn").disabled = false;
+      $("submit_btn").disabled = false;
           }
+
+        } else if (spec.kind === "bounds") {
+          // set up the map with initial bounds
+          initOrUpdateBoundsField(idx, spec);
+      $("submit_btn").disabled = false;
         }
       }
 
       //
-      // hydrate every field from a starting index
+      // hydrate downstream fields starting at index
       //
       async function hydrateDownstream(fromIdx) {
         for (let i = fromIdx; i < FIELDS.length; i++) {
@@ -587,21 +712,22 @@ def udf(
       await hydrateDownstream(0);
       showForm();
 
-      // quiet change listeners
+      // listeners for re-hydration / enabling submit
       FIELDS.forEach((spec, i) => {
         if (spec.kind === "select") {
           const el = $("field_" + i);
           if (!el) return;
           el.addEventListener("change", async () => {
-            $("submit_btn").disabled = false;
+      $("submit_btn").disabled = false;
             await hydrateDownstream(i + 1);
           });
         }
-        // date fields handled by flatpickr.onChange
+        // date: handled by flatpickr onChange
+        // bounds: we don't listen to move events, we just read on submit
       });
 
       //
-      // create the payload(s) for submit
+      // Collect final payload(s)
       //
       function makeSnapshot() {
         const globalMerged = {};
@@ -613,16 +739,12 @@ def udf(
           if (spec.kind === "select") {
             const val = el ? (el.value || "") : "";
 
-            // --- global mode snapshot ---
-            // For selects, always aliasBase -> value
+            // global snapshot
             globalMerged[spec.aliasBase] = val;
 
-            // --- per-field mode snapshot ---
+            // per-field messages
             spec.channels.forEach(ch => {
-              messages.push({
-                channel: ch,
-                payload: val
-              });
+              messages.push({ channel: ch, payload: val });
             });
 
           } else if (spec.kind === "date") {
@@ -633,46 +755,58 @@ def udf(
               ? iso(sel[1])
               : (sel[0] ? iso(sel[0]) : "");
 
-            // --- global mode snapshot ---
+            // global snapshot
             if (spec.channels.length === 2) {
-              // You gave ["start","end"]: use them directly as keys in global payload.
               const [chStart, chEnd] = spec.channels;
-              if (chStart) {
-                globalMerged[chStart] = start;
-              }
-              if (chEnd) {
-                globalMerged[chEnd] = end;
-              }
+              if (chStart) globalMerged[chStart] = start;
+              if (chEnd)   globalMerged[chEnd]   = end;
             } else if (spec.channels.length === 1) {
-              // You gave ["date"]: use "date_start"/"date_end"
               const only = spec.channels[0];
               globalMerged[only + "_start"] = start;
               globalMerged[only + "_end"]   = end;
             } else {
-              // No channels: fall back to aliasBase_start / aliasBase_end
               globalMerged[spec.aliasBase + "_start"] = start;
               globalMerged[spec.aliasBase + "_end"]   = end;
             }
 
-            // --- per-field mode snapshot ---
+            // per-field messages
             if (spec.channels.length === 2) {
-              // split channels -> send each as scalar
               const [chStart, chEnd] = spec.channels;
-              if (chStart) {
-                messages.push({ channel: chStart, payload: start });
-              }
-              if (chEnd) {
-                messages.push({ channel: chEnd, payload: end });
-              }
+              if (chStart) messages.push({ channel: chStart, payload: start });
+              if (chEnd)   messages.push({ channel: chEnd,   payload: end });
             } else if (spec.channels.length === 1) {
-              // single channel -> send {start,end}
               const ch = spec.channels[0];
               messages.push({
                 channel: ch,
                 payload: { start, end }
               });
             }
-            // if length === 0, nothing per-field for this date field
+
+          } else if (spec.kind === "bounds") {
+            // read map viewport right now
+            const m = mapInstances[i];
+            let arr = spec.defaultBounds || [-180, -90, 180, 90];
+            if (m && m.getBounds) {
+              try {
+                const b = m.getBounds();
+                arr = [
+                  b.getWest(),
+                  b.getSouth(),
+                  b.getEast(),
+                  b.getNorth()
+                ].map(v => Number(v.toFixed(6)));
+              } catch (_e) {
+                // fallback to default
+              }
+            }
+
+            // global snapshot: bounds under aliasBase (e.g. "bounds")
+            globalMerged[spec.aliasBase] = arr;
+
+            // per-field messages
+            spec.channels.forEach(ch => {
+              messages.push({ channel: ch, payload: arr });
+            });
           }
         });
 
@@ -680,13 +814,13 @@ def udf(
       }
 
       //
-      // submit click: emit either one global message or N field messages
+      // Submit -> postMessage
       //
       $("submit_btn").addEventListener("click", () => {
         const { globalMerged, messages } = makeSnapshot();
 
         if (GLOBAL_PARAM_NAME) {
-          // global mode: single combined message
+          // single merged payload
           window.parent.postMessage({
             type: "hierarchical_form_submit",
             payload: globalMerged,
@@ -695,7 +829,7 @@ def udf(
             ts: Date.now()
           }, "*");
         } else {
-          // per-field mode: emit 1 message per channel
+          // per-field messages
           messages.forEach(({ channel, payload }) => {
             if (!channel) return;
             window.parent.postMessage({
@@ -709,7 +843,7 @@ def udf(
         }
       });
     })();
-  </script>
+</script>
 </body>
 </html>
 """
@@ -719,6 +853,7 @@ def udf(
         GLOBAL_PARAM_NAME_JS=GLOBAL_PARAM_NAME_JS,
         DATA_URL_JS=DATA_URL_JS,
         FIELDS_JS=FIELDS_JS,
+        MAPBOX_TOKEN_JS=MAPBOX_TOKEN_JS,
     )
 
     return common.html_to_obj(rendered_html)
