@@ -28,6 +28,23 @@ DEFAULT_H3_CONFIG = {
     "tooltip": "{__hex__}"
 }
 
+DEFAULT_POLYGON_CONFIG = {
+    "fill_color": [0, 144, 255, 120],
+    "line_color": [255, 255, 255],
+    "line_width_min_pixels": 1,
+    "pickable": True,
+    "stroked": True,
+    "filled": True,
+    "center_lat": 49.254,
+    "center_lon": -123.13,
+    "zoom": 11,
+
+    "pitch": 0,
+    "bearing": 0,
+    "tooltip": "{coordinates}"
+}
+
+
 @fused.udf(cache_max_age=0)
 def udf(
     gdf = {
@@ -169,6 +186,55 @@ def pydeck_hex(df=None, config: dict | str | None = None):
         layers=[layer],
         initial_view_state=view_state,
         tooltip={"text": config.get("tooltip", DEFAULT_H3_CONFIG["tooltip"])},
+    )
+
+    return deck.to_html(as_string=True)
+
+
+@fused.udf(cache_max_age=0)
+def pydeck_polygon(df=None, config: dict | str | None = None):
+    import json
+    import pandas as pd
+    import pydeck as pdk
+
+    if config is None or config == "":
+        config = DEFAULT_POLYGON_CONFIG
+    elif isinstance(config, str):
+        config = json.loads(config)
+
+    if df is None:
+        DATA_URL = "https://raw.githubusercontent.com/visgl/deck.gl-data/master/examples/geojson/vancouver-blocks.json"
+        raw = pd.read_json(DATA_URL)
+        df = pd.DataFrame()
+        df["coordinates"] = raw["features"].apply(lambda row: row["geometry"]["coordinates"])
+
+    layer = pdk.Layer(
+        "PolygonLayer",
+        df,
+        get_polygon="coordinates",
+        get_fill_color=config.get("fill_color", DEFAULT_POLYGON_CONFIG["fill_color"]),
+        get_line_color=config.get("line_color", DEFAULT_POLYGON_CONFIG["line_color"]),
+        line_width_min_pixels=config.get(
+            "line_width_min_pixels",
+            DEFAULT_POLYGON_CONFIG["line_width_min_pixels"]
+        ),
+        stroked=config.get("stroked", DEFAULT_POLYGON_CONFIG["stroked"]),
+        filled=config.get("filled", DEFAULT_POLYGON_CONFIG["filled"]),
+        pickable=config.get("pickable", DEFAULT_POLYGON_CONFIG["pickable"]),
+    )
+
+    view_state = pdk.ViewState(
+        latitude=config.get("center_lat", DEFAULT_POLYGON_CONFIG["center_lat"]),
+        longitude=config.get("center_lon", DEFAULT_POLYGON_CONFIG["center_lon"]),
+        zoom=config.get("zoom", DEFAULT_POLYGON_CONFIG["zoom"]),
+        pitch=config.get("pitch", DEFAULT_POLYGON_CONFIG["pitch"]),
+        bearing=config.get("bearing", DEFAULT_POLYGON_CONFIG["bearing"]),
+    )
+
+    deck = pdk.Deck(
+        layers=[layer],
+        initial_view_state=view_state,
+        tooltip={"text": config.get("tooltip", DEFAULT_POLYGON_CONFIG["tooltip"])},
     )
 
     return deck.to_html(as_string=True)
