@@ -77,7 +77,7 @@ def _compute_center_from_points(df):
 
 
 def _compute_center_from_polygons(df):
-    if "geometry" not in df.columns or len(df) == 0:
+    if len(df) == 0:
         return None, None
     centroid = df["geometry"].unary_union.centroid
     return float(centroid.y), float(centroid.x)
@@ -240,7 +240,7 @@ def pydeck_hex(df=None, config: dict | str | None = None):
     return deck.to_html(as_string=True)
 
 
-def pydeck_polygon(df=None, config=None):
+def pydeck_polygon(df, config=None):
     if config is None or config == "":
         cfg = DEFAULT_POLYGON_CONFIG.copy()
     elif isinstance(config, str):
@@ -250,22 +250,14 @@ def pydeck_polygon(df=None, config=None):
         cfg = DEFAULT_POLYGON_CONFIG.copy()
         cfg.update(config)
 
-    if df is None:
-        DATA_URL = "https://raw.githubusercontent.com/visgl/deck.gl-data/master/examples/geojson/vancouver-blocks.json"
-        raw = pd.read_json(DATA_URL)
-        geometries = raw["features"].apply(lambda row: shape(row["geometry"]))
-        df = gpd.GeoDataFrame({"geometry": geometries})
-        df["id"] = df.index.astype(int)
-
-    if "geometry" not in df.columns:
-        raise ValueError("GeoDataFrame must include a 'geometry' column")
+    if "geometry" not in df.columns or len(df) == 0:
+        raise ValueError("GeoDataFrame must include a non-empty 'geometry' column")
 
     auto_lat, auto_lon = _compute_center_from_polygons(df)
     center_lat = cfg.get("center_lat", auto_lat)
     center_lon = cfg.get("center_lon", auto_lon)
-
     if center_lat is None or center_lon is None:
-        raise ValueError("No valid coordinates to center map (no polygons in df)")
+        center_lat, center_lon = 0.0, 0.0
 
     df = df.copy()
     df["__polygon__"] = df["geometry"].apply(lambda geom: mapping(geom)["coordinates"])
@@ -273,22 +265,15 @@ def pydeck_polygon(df=None, config=None):
     tooltip_template = cfg.get("tooltip", DEFAULT_POLYGON_CONFIG["tooltip"])
     if not tooltip_template:
         cols = [c for c in df.columns if c not in ["geometry", "__polygon__"]]
-        if len(cols) == 0:
-            tooltip_template = "polygon"
-        else:
-            tooltip_template = "\n".join([f"{c}: {{{c}}}" for c in cols])
-
-    fill_accessor = cfg.get("get_fill_color", DEFAULT_POLYGON_CONFIG["get_fill_color"])
-    line_accessor = cfg.get("get_line_color", DEFAULT_POLYGON_CONFIG["get_line_color"])
-    line_width_px = cfg.get("line_width_min_pixels", DEFAULT_POLYGON_CONFIG["line_width_min_pixels"])
+        tooltip_template = "\n".join([f"{c}: {{{c}}}" for c in cols]) if cols else "polygon"
 
     layer = pdk.Layer(
         "PolygonLayer",
         df,
         get_polygon="__polygon__",
-        get_fill_color=fill_accessor,
-        get_line_color=line_accessor,
-        line_width_min_pixels=line_width_px,
+        get_fill_color=cfg.get("get_fill_color", DEFAULT_POLYGON_CONFIG["get_fill_color"]),
+        get_line_color=cfg.get("get_line_color", DEFAULT_POLYGON_CONFIG["get_line_color"]),
+        line_width_min_pixels=cfg.get("line_width_min_pixels", DEFAULT_POLYGON_CONFIG["line_width_min_pixels"]),
         stroked=cfg.get("stroked", DEFAULT_POLYGON_CONFIG["stroked"]),
         filled=cfg.get("filled", DEFAULT_POLYGON_CONFIG["filled"]),
         pickable=cfg.get("pickable", DEFAULT_POLYGON_CONFIG["pickable"]),
