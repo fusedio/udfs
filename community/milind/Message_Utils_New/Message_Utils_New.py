@@ -1,1322 +1,870 @@
-import json
 common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/")
 
 @fused.udf(cache_max_age=0)
-def udf(parameter: str = "yay"):
-    # html = button("Click me", parameter=parameter)
-    L = ['aasdasd','basdads','casdasd','dasdasd']
-    html = sql_input("", parameter=parameter)
-    return html
- 
-
-# BUTTON ----------------------------------------------------------------------
-def button(
-    label: str,
-    *,
-    key: str | None = None,
-    help: str | None = None,
-    on_click=None,
-    disabled: bool = False,
-    type: str = "primary",  # "primary" | "secondary"
-    use_container_width: bool = False,
-    size: str = "medium",  # "small" | "medium" | "large"
-    # Internal params
-    parameter: str | None = None,
-    sender_id: str | None = None,
-    return_html: bool = False,
-):
-    """
-    Streamlit-style button with neon accent.
-    - Primary: #e8ff59 (bright yellow-green)
-    - Secondary: dark gray minimal style
-    """
-    import json
-
-    if key is None:
-        key = f"button_{label.replace(' ', '_').lower()}"
-    if parameter is None:
-        parameter = f"channel_{key}"
-    if sender_id is None:
-        sender_id = key
-
-    VALUE_JS = json.dumps(str(label))
-    LABEL_JS = json.dumps(str(label))
-
-    is_primary = type == "primary"
-    
-    # Size configurations
-    size_configs = {
-        "small": {"padding": "0.35rem 0.7rem", "font_size": "13px", "height": "28px"},
-        "medium": {"padding": "0.5rem 1rem", "font_size": "14px", "height": "36px"},
-        "large": {"padding": "0.65rem 1.25rem", "font_size": "15px", "height": "44px"},
-    }
-    size_config = size_configs.get(size, size_configs["medium"])
-
-    html = f"""<!doctype html>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-  :root {{
-    --primary: #e8ff59;
-    --primary-hover: #f0ff7a;
-    --bg: #000;
-    --text: #fafafa;
-    --secondary-bg: #2a2a2a;
-    --secondary-hover: #3a3a3a;
-    --border: #333;
-  }}
-  * {{
-    box-sizing: border-box;
-  }}
-  html, body {{
-    height:100%; 
-    width:100%;
-    margin:0; 
-    padding:0;
-    background:var(--bg); 
-    color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-    display:flex; 
-    align-items:center; 
-    justify-content:center;
-    padding:clamp(0rem, 0vw, 0rem);
-  }}
-  .container {{
-    width:100%;
-    height:100%;
-    max-width:{("100%" if use_container_width else "min(500px, 100%)")};
-    display:flex;
-    object-fit:contain;
-  }}
-  button {{
-    width:{"100%" if use_container_width else "auto"};
-    min-width:{"auto" if use_container_width else "max(80px, fit-content)"};
-    width:100%;
-    padding:0#{size_config["padding"]};
-    # height:{size_config["height"]};
-    border:1px solid {"transparent" if is_primary else "var(--border)"};
-    border-radius:6px;
-    background:{"var(--primary)" if is_primary else "var(--secondary-bg)"};
-    color:{"#000" if is_primary else "var(--text)"};
-    font-size:{size_config["font_size"]};
-    font-weight:500;
-    cursor:pointer;
-    transition:all 150ms ease;
-    box-shadow:1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    {"opacity:0.6; cursor:not-allowed;" if disabled else ""}
-  }}
-  button:hover:not(:disabled) {{
-    background:{"var(--primary-hover)" if is_primary else "var(--secondary-hover)"};
-    border-color:{"transparent" if is_primary else "#444"};
-    box-shadow:2px 2px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
-  }}
-  button:active:not(:disabled) {{
-    transform:translateY(1px);
-    box-shadow:1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
-  }}
-  button:focus {{
-    outline:none;
-    box-shadow:0 0 0 2px {"rgba(232,255,89,0.4)" if is_primary else "rgba(250,250,250,0.15)"}, 1px 1px 0px 0px rgba(0,0,0,0.3);
-  }}
-  @media (max-width: 480px) {{
-    button {{
-      font-size:max(12px, {size_config["font_size"]});
-      padding:clamp(0.35rem, 1.5vw, {size_config["padding"].split()[0]}) clamp(0.7rem, 3vw, {size_config["padding"].split()[1]});
-    }}
-  }}
-</style>
-<div class="container">
-  <button id="btn" {"disabled" if disabled else ""}></button>
-</div>
-<script>
-document.addEventListener('DOMContentLoaded', () => {{
-  const PARAMETER = {json.dumps(parameter)};
-  const SENDER  = {json.dumps(sender_id)};
-  const LABEL   = {LABEL_JS};
-  const VALUE   = {VALUE_JS};
-  const btn = document.getElementById('btn');
-  btn.textContent = LABEL;
-  
-  btn.addEventListener('click', () => {{
-    if (btn.disabled) return;
-    window.parent.postMessage({{
-      type: 'button',
-      payload: {{ value: VALUE, label: LABEL }},
-      origin: SENDER, parameter: PARAMETER, ts: Date.now()
-    }}, '*');
-  }});
-}});
-</script>
-"""
-    return html if return_html else common.html_to_obj(html)
-
-# SELECTBOX --------------------------------------------------------------------
-def selectbox(
-    label: str,
-    options,
-    *,
-    index: int | None = 0,
-    format_func=None,
-    placeholder: str | None = None,
-    parameter: str = "channel_1",
-    sender_id: str = "selectbox_1",
-    auto_send_on_load: bool = True,
-    return_html: bool = False,
-):
-    import json
-    
-    if not isinstance(options, (list, tuple)):
-        options = list(options)
-    
-    if not options:
-        raise ValueError("options cannot be empty")
-    
-    values = list(options)
-    
-    # Safe format_func with error handling
-    labels = []
-    for v in values:
-        try:
-            labels.append(str(format_func(v)) if callable(format_func) else str(v))
-        except Exception as e:
-            raise ValueError(f"format_func failed for value {v}: {e}")
-    
-    opts = [{"value": str(values[i]), "label": labels[i]} for i in range(len(values))]
-    
-    # Validation
-    if index is not None and not (0 <= index < len(options)):
-        raise ValueError(f"index {index} must be within range [0, {len(options)-1}]")
-    
-    OPTIONS_JS = json.dumps(opts, ensure_ascii=False)
-    INDEX_JS = "null" if index is None else json.dumps(int(index))
-    PLACE_JS = json.dumps(placeholder or "Select an option…")
-    
-    html = f"""<!doctype html>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-  :root {{
-    --bg: #121212;
-    --text: #eee;
-    --text-muted: #999;
-    --border: #333;
-    --input-bg: #1b1b1b;
-    --input-hover: #2a2a2a;
-    --primary: #e8ff59;
-    --primary-dim: rgba(232, 255, 89, 0.1);
-  }}
-  * {{
-    box-sizing: border-box;
-  }}
-  html, body {{
-    height:100vh; margin:0; padding:0;
-    background:var(--bg); color:var(--text);
-    font-family:system-ui,-apple-system,sans-serif;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:0rem;
-  }}
-  label {{
-    width:90vw;
-    color:#ddd;
-    font-size:min(25vh, 25px); 
-    margin-bottom:min(10vh, 10px);
-    text-align:left;
-  }}
-  label:empty {{
-    display: none;
-  }}
-  .container {{
-    width:90vw;
-    display:flex;
-    flex-direction:column;
-    gap:0;
-  }}
-  .select-wrapper {{
-    position: relative;
-    width: 100%;
-  }}
-
-  /* Option A: chevron drawn as background on <select>, using the SAME sizes */
-  select {{
-    width: 100%;
-    font-size: min(15vh, 15px);
-    padding: min(7.5vh, 7.5px) min(15vh, 15px) min(7.5vh, 7.5px) min(10vh, 10px);
-    border: 1px solid var(--border);
-    border-radius: min(7.5vh, 7.5px);
-    background:
-      /* right arrow tip */
-      linear-gradient(45deg, transparent 50%, var(--text-muted) 50%)
-        right calc(min(10vh, 10px) + min(5vh, 5px)/2) center / min(5vh, 5px) min(5vh, 5px) no-repeat,
-      /* left arrow tip */
-      linear-gradient(-45deg, transparent 50%, var(--text-muted) 50%)
-        right min(10vh, 10px) center / min(5vh, 5px) min(5vh, 5px) no-repeat,
-      var(--input-bg);
-    color: var(--text);
-    outline: none;
-    cursor: pointer;
-    transition: all 150ms ease;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
-  }}
-  select:hover {{
-    background:
-      linear-gradient(45deg, transparent 50%, var(--primary) 50%)
-        right calc(min(10vh, 10px) + min(5vh, 5px)/2) center / min(5vh, 5px) min(5vh, 5px) no-repeat,
-      linear-gradient(-45deg, transparent 50%, var(--primary) 50%)
-        right min(10vh, 10px) center / min(5vh, 5px) min(5vh, 5px) no-repeat,
-      var(--input-hover);
-    border-color: #444;
-    box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
-  }}
-  select:focus {{
-    border-color: var(--primary);
-    background:
-      linear-gradient(45deg, transparent 50%, var(--primary) 50%)
-        right calc(min(10vh, 10px) + min(5vh, 5px)/2) center / min(5vh, 5px) min(5vh, 5px) no-repeat,
-      linear-gradient(-45deg, transparent 50%, var(--primary) 50%)
-        right min(10vh, 10px) center / min(5vh, 5px) min(5vh, 5px) no-repeat,
-      var(--input-hover);
-    box-shadow: 0 0 0 2px var(--primary-dim), 1px 1px 0px 0px rgba(0,0,0,0.3);
-  }}
-  select:focus-visible {{
-    outline: 2px solid var(--primary);
-    outline-offset: -2px;
-  }}
-
-  /* Pseudo-element removed; colors now change on hover/focus via backgrounds */
-
-  select option {{
-    background: var(--input-bg);
-    color: var(--text);
-    padding: 12px;
-    font-size: max(16px);
-  }}
-  select option:disabled {{
-    color: var(--text-muted);
-    font-style: italic;
-  }}
-  select option:checked {{
-    background: var(--primary-dim);
-  }}
-</style>
-<label for="sb" id="lbl">{label}</label>
-<div class="container">
-  <div class="select-wrapper">
-    <select id="sb" aria-labelledby="lbl" aria-label="{label or 'Select box'}"></select>
-  </div>
-</div>
-<script>
-document.addEventListener('DOMContentLoaded', () => {{
-  const OPTIONS = {OPTIONS_JS};
-  const INDEX   = {INDEX_JS};
-  const PLACE   = {PLACE_JS};
-  const PARAMETER = {json.dumps(parameter)};
-  const SENDER  = {json.dumps(sender_id)};
-  const AUTO    = {str(auto_send_on_load).lower()};
-  const sel     = document.getElementById('sb');
-  
-  sel.innerHTML = '';
-  
-  const ph = document.createElement('option');
-  ph.textContent = PLACE;
-  ph.disabled = true;
-  ph.selected = (INDEX === null);
-  ph.value = '';
-  sel.appendChild(ph);
-  
-  for (const o of OPTIONS) {{
-    const opt = document.createElement('option');
-    opt.value = o.value;
-    opt.textContent = o.label;
-    sel.appendChild(opt);
-  }}
-  
-  let initialValue = null;
-  if (INDEX !== null) {{
-    const targetIndex = Math.max(0, Math.min(OPTIONS.length - 1, Number(INDEX)));
-    sel.selectedIndex = targetIndex + 1;
-    initialValue = OPTIONS[targetIndex]?.value ?? null;
-  }}
-  
-  function post(val) {{
-    if (val === '') return;
-    window.parent.postMessage({{
-      type: 'selectbox',
-      payload: {{ value: val }},
-      origin: SENDER,
-      parameter: PARAMETER,
-      ts: Date.now()
-    }}, '*');
-  }}
-  
-  sel.addEventListener('change', e => {{
-    requestAnimationFrame(() => post(e.target.value));
-  }});
-  
-  if (AUTO && initialValue !== null) {{
-    queueMicrotask(() => post(initialValue));
-  }}
-}});
-</script>
-"""
-    return html if return_html else common.html_to_obj(html)
-
-
-
-# SLIDER ----------------------------------------------------------------------
-def slider(
-    label: str = None,
-    min_value=None,
-    max_value=None,
-    value=None,
-    step=None,
-    format: str | None = None,
-    *,
-    parameter: str = "channel_1",
-    sender_id: str = "slider_1",
-    auto_send_on_load: bool = True,
-    return_html: bool = False,
-    send: str = "end",           # "end" | "continuous"
-    debounce_ms: int = 64,
-):
-    import json
-
-    is_range = isinstance(value, (list, tuple)) and len(value) == 2
-
-    if min_value is None or max_value is None:
-        if is_range:
-            if min_value is None: min_value = value[0]
-            if max_value is None: max_value = value[1]
-        else:
-            if min_value is None: min_value = 0
-            if max_value is None: max_value = 100
-
-    if value is None:
-        value = (min_value, max_value) if is_range else min_value
-
-    if step is None:
-        nums = [min_value, max_value] + (list(value) if is_range else [value])
-        step = 1 if all(isinstance(x, int) for x in nums) else 0.01
-
-    fmt = format or "{val}"
-
-    VAL_JS  = json.dumps(list(value) if is_range else value)
-    MIN_JS  = json.dumps(min_value)
-    MAX_JS  = json.dumps(max_value)
-    STEP_JS = json.dumps(step)
-    FMT_JS  = json.dumps(fmt)
-    SEND_JS = json.dumps(send)
-    DB_JS   = json.dumps(max(0, int(debounce_ms)))
-
-    html = f"""<!doctype html>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-  :root {{
-    --primary: #e8ff59;
-    --primary-hover: #f0ff7a;
-    --bg: #121212;
-    --track-bg: #2a2a2a;
-    --text: #eee;
-    --text-muted: #999;
-    --border: #3a3a3a;
-  }}
-  html, body {{
-    height:100vh; margin:0; padding:0;
-    background:var(--bg); color:var(--text);
-    font-family:system-ui,-apple-system,sans-serif;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:0rem;
-  }}
-  .label {{ 
-    width:90vw; ;
-    color:#ddd ;
-    font-size:min(25vh, 25px); 
-    margin-bottom:min(10vh, 10px);
-  }}
-  .slider-container {{
-    width:90vw;
-    display:flex; 
-    align-items:center;
-    gap:min(5vh, 8px);
-  }}
-  .slider-wrap {{ 
-    position:relative; 
-    display:flex; 
-    align-items:center; 
-    flex:1;
-    height:min(25vh, 25px);
-  }}
-  .track {{
-    position:absolute; 
-    left:calc(min(15vh, 15px) / 2);
-    right:calc(min(15vh, 15px) / 2); 
-    height:min(15vh, 15px); 
-    border-radius:min(15vh, 15px);
-    background:var(--track-bg);
-  }}
-  .fill {{
-    position:absolute; 
-    height:min(15vh, 15px); 
-    border-radius:min(15vh, 15px);
-    background:var(--primary);
-  }}
-  .value {{ 
-    min-width:min(22vh, 22px); 
-    text-align:left; 
-    color:var(--text-muted); 
-    font-size:min(22vh, 22px);
-    font-variant-numeric:tabular-nums;
-  }}
-  input[type=range] {{
-    appearance:none; -webkit-appearance:none;
-    position:relative; 
-    width:100%; 
-    height:min(15vh, 15px); 
-    margin:0; 
-    background:transparent; 
-    outline:none;
-    cursor:pointer;
-  }}
-  input[type=range]::-webkit-slider-thumb {{
-    -webkit-appearance:none; 
-    appearance:none;
-    width:min(15vh, 15px); 
-    height:min(15vh, 15px); 
-    border-radius:50%;
-    background:#fff; 
-    border:1px solid var(--primary);
-    box-shadow:1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
-    cursor:pointer;
-    transition:background-color 200ms;
-  }}
-  input[type=range]::-webkit-slider-thumb:hover {{
-    background:var(--primary-hover);
-  }}
-  input[type=range]::-moz-range-thumb {{
-    width:min(15vh, 15px); 
-    height:min(15vh, 15px); 
-    border-radius:50%;
-    background:#fff; 
-    border:1px solid var(--primary);
-    box-shadow:1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
-    cursor:pointer;
-    transition:background-color 200ms;
-  }}
-  input[type=range]::-moz-range-thumb:hover {{
-    background:var(--primary-hover);
-  }}
-  .tooltip {{
-    position:absolute;
-    bottom:100%;
-    left:50%;
-    transform:translateX(-50%);
-    background:#aaa;
-    color:#000;
-    padding:5vh 5vh;
-    border-radius:5vh;
-    font-size:min(15vh, 15px);
-    white-space:nowrap;
-    opacity:0;
-    visibility:hidden;
-    transition:opacity 150ms, visibility 150ms;
-    margin-bottom:min(10vh, 10px);
-    pointer-events:none;
-    box-shadow:0 2px 8px rgba(0,0,0,0.15);
-  }}
-  .thumb-container {{
-    position:absolute;
-    width:7.5vh;
-    height:20px;
-    pointer-events:none;
-  }}
-  .thumb-container.show-tooltip .tooltip {{
-    opacity:1;
-    visibility:visible;
-  }}
-</style>
-
-<div class="label">{label}</div>
-
-<!-- Single -->
-<div id="single" class="slider-container" style="display:none">
-  <div class="slider-wrap">
-    <div class="track"></div>
-    <div class="fill" id="fill"></div>
-    <div class="thumb-container" id="thumb-container">
-      <div class="tooltip" id="tooltip"></div>
-    </div>
-    <input id="rng" type="range" />
-  </div>
-  <div class="value" id="valtxt"></div>
-</div>
-
-<!-- Range -->
-<div id="range" class="slider-container" style="display:none">
-  <div class="slider-wrap">
-    <div class="track"></div>
-    <div class="fill" id="fillr"></div>
-    <div class="thumb-container" id="thumb-container0">
-      <div class="tooltip" id="tooltip0"></div>
-    </div>
-    <div class="thumb-container" id="thumb-container1">
-      <div class="tooltip" id="tooltip1"></div>
-    </div>
-    <input id="rng0" type="range" />
-    <input id="rng1" type="range" />
-  </div>
-  <div class="value" id="valtxt"></div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {{
-  const PARAMETER = {json.dumps(parameter)};
-  const SENDER  = {json.dumps(sender_id)};
-  const MIN = {MIN_JS};
-  const MAX = {MAX_JS};
-  const STEP = {STEP_JS};
-  const INIT = {VAL_JS};
-  const FMT  = {FMT_JS};
-  const AUTO = {str(auto_send_on_load).lower()};
-  const SEND = {SEND_JS};
-  const DEBOUNCE = {DB_JS};
-  const isRange = Array.isArray(INIT);
-  const valtxt = document.getElementById('valtxt');
-
-  function fmt(v){{
-    if (FMT.includes("{{val}}")) return FMT.replace("{{val}}", String(v));
-    const m = FMT.match(/^%0?\\.(\\d+)f$/);
-    if (m) return Number(v).toFixed(Number(m[1]));
-    return String(v);
-  }}
-
-  function post(val){{
-    window.parent.postMessage({{
-      type:'slider',
-      payload:{{ value: val }},
-      origin:SENDER, parameter:PARAMETER, ts:Date.now()
-    }}, '*');
-  }}
-
-  function setFillSingle(input, fillEl, thumbContainer){{
-    const p = Math.max(0, Math.min(1, (input.value - input.min) / (input.max - input.min)));
-    const thumbSize = Math.min(window.innerHeight * 0.15, 15);
-    const trackStart = thumbSize / 2;
-    const trackWidth = input.parentElement.offsetWidth - thumbSize;
-    fillEl.style.left = trackStart + "px";
-    fillEl.style.right = "auto";
-    fillEl.style.width = (p * trackWidth) + "px";
-    if(thumbContainer){{
-      thumbContainer.style.left = (p * 100) + "%";
-      thumbContainer.style.transform = "translateX(-50%)";
-    }}
-  }}
-  function setFillRange(i0, i1, fillEl, tc0, tc1){{
-    const p0 = Math.max(0, Math.min(1, (i0.value - i0.min) / (i0.max - i0.min)));
-    const p1 = Math.max(0, Math.min(1, (i1.value - i1.min) / (i1.max - i1.min)));
-    const left = Math.min(p0, p1);
-    const right = Math.max(p0, p1);
-    fillEl.style.left = (left * 100) + "%";
-    fillEl.style.right = "auto";
-    fillEl.style.width = ((right - left) * 100) + "%";
-    if(tc0){{
-      tc0.style.left = (p0 * 100) + "%";
-      tc0.style.transform = "translateX(-50%)";
-    }}
-    if(tc1){{
-      tc1.style.left = (p1 * 100) + "%";
-      tc1.style.transform = "translateX(-50%)";
-    }}
-  }}
-
-  function debounced(fn, ms){{
-    let t=null, lastArgs=null;
-    return (...a)=>{{lastArgs=a;clearTimeout(t);t=setTimeout(()=>fn(...lastArgs),ms);}};
-  }}
-
-  if (!isRange){{
-    const wrap=document.getElementById('single');
-    const fill=document.getElementById('fill');
-    const rng=document.getElementById('rng');
-    const thumbContainer=document.getElementById('thumb-container');
-    const tooltip=document.getElementById('tooltip');
-    wrap.style.display='flex';
-    rng.min=MIN; rng.max=MAX; rng.step=STEP; rng.value=INIT;
-    valtxt.textContent=fmt(INIT); 
-    tooltip.textContent=fmt(INIT);
-    setFillSingle(rng,fill,thumbContainer);
-    const sendNow=()=>post(Number(rng.value));
-    const sendDeb=debounced(sendNow,DEBOUNCE);
-    let rafId=null;
-
-    rng.addEventListener('input',()=>{{
-      if(rafId)cancelAnimationFrame(rafId);
-      rafId=requestAnimationFrame(()=>{{
-        valtxt.textContent=fmt(rng.value);
-        tooltip.textContent=fmt(rng.value);
-        setFillSingle(rng,fill,thumbContainer);
-        rafId=null;
-      }});
-      if(SEND==="continuous")sendDeb();
-    }});
-    rng.addEventListener('mouseenter',()=>thumbContainer.classList.add('show-tooltip'));
-    rng.addEventListener('mouseleave',()=>thumbContainer.classList.remove('show-tooltip'));
-    rng.addEventListener('focus',()=>thumbContainer.classList.add('show-tooltip'));
-    rng.addEventListener('blur',()=>thumbContainer.classList.remove('show-tooltip'));
-    if(SEND==="end"){{
-      rng.addEventListener('mouseup',sendNow);
-      rng.addEventListener('touchend',sendNow);
-    }}
-    if(AUTO)queueMicrotask(sendNow);
-  }} else {{
-    const wrap=document.getElementById('range');
-    const fill=document.getElementById('fillr');
-    const r0=document.getElementById('rng0');
-    const r1=document.getElementById('rng1');
-    const tc0=document.getElementById('thumb-container0');
-    const tc1=document.getElementById('thumb-container1');
-    const tt0=document.getElementById('tooltip0');
-    const tt1=document.getElementById('tooltip1');
-    wrap.style.display='flex';
-    r0.min=MIN;r0.max=MAX;r0.step=STEP;
-    r1.min=MIN;r1.max=MAX;r1.step=STEP;
-    r0.value=INIT[0];r1.value=INIT[1];
-    const sendNow=()=>post([Number(r0.value),Number(r1.value)]);
-    const sendDeb=debounced(sendNow,DEBOUNCE);
-    let rafId=null;
-    function clamp(){{if(Number(r0.value)>Number(r1.value))r0.value=r1.value;}}
-    function show(){{
-      valtxt.textContent=fmt(r0.value)+" – "+fmt(r1.value);
-      tt0.textContent=fmt(r0.value);
-      tt1.textContent=fmt(r1.value);
-      setFillRange(r0,r1,fill,tc0,tc1);
-    }}
-    r0.addEventListener('input',()=>{{if(rafId)cancelAnimationFrame(rafId);rafId=requestAnimationFrame(()=>{{clamp();show();rafId=null;}});if(SEND==="continuous")sendDeb();}}); 
-    r1.addEventListener('input',()=>{{if(rafId)cancelAnimationFrame(rafId);rafId=requestAnimationFrame(()=>{{clamp();show();rafId=null;}});if(SEND==="continuous")sendDeb();}});
-    r0.addEventListener('mouseenter',()=>tc0.classList.add('show-tooltip'));
-    r0.addEventListener('mouseleave',()=>tc0.classList.remove('show-tooltip'));
-    r0.addEventListener('focus',()=>tc0.classList.add('show-tooltip'));
-    r0.addEventListener('blur',()=>tc0.classList.remove('show-tooltip'));
-    r1.addEventListener('mouseenter',()=>tc1.classList.add('show-tooltip'));
-    r1.addEventListener('mouseleave',()=>tc1.classList.remove('show-tooltip'));
-    r1.addEventListener('focus',()=>tc1.classList.add('show-tooltip'));
-    r1.addEventListener('blur',()=>tc1.classList.remove('show-tooltip'));
-    if(SEND==="end"){{r0.addEventListener('mouseup',sendNow);r1.addEventListener('mouseup',sendNow);
-                     r0.addEventListener('touchend',sendNow);r1.addEventListener('touchend',sendNow);}}
-    show(); if(AUTO)queueMicrotask(sendNow);
-  }}
-}});
-</script>
-"""
-    return html if return_html else common.html_to_obj(html)
-
-    
-def map_draw_html(
-    parameter: str = "channel_1",
-    sender_id: str = "draw_1",
+def udf(
+    config: dict | str = {
+        "parameter_name": "form",
+        "filter": [
+            {
+                "column": "mission",
+                "type": "selectbox",
+                "default": "goes16",
+                "parameter_name": "mis"
+            },
+            {
+                "column": "product_name",
+                "type": "selectbox",
+                "default": "ABI",
+                "parameter_name": "prod"
+            },
+            {
+                "column": ["start_date", "end_date"],
+                "type": "daterange",
+                "parameter_name": ["start_meow", "end"]
+            },
+            {
+                "type": "bounds",
+                "parameter_name": "bounds",
+                "default": [-125, 24, -66, 49],
+                "height": 240
+            },
+            {
+                "type": "text_input",
+                "default": "Sample text",
+                "parameter_name": "text"
+            },
+        ],
+        "data_url": "https://unstable.udf.ai/fsh_aotlErnaYWdIlKcGg6huq/run?dtype_out_raster=png&dtype_out_vector=parquet"
+    },
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
-    center_lng: float = -74.0,
-    center_lat: float = 40.7,
-    zoom: float = 12.0,
-    style_url: str = "mapbox://styles/mapbox/dark-v10",
-    include_bounds: bool = True,
-    return_html: bool = False,
-):
-    html = f"""<!doctype html>
-<meta charset="utf-8">
-<link href="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.css" rel="stylesheet">
-<script src="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.js"></script>
-<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.5.0/mapbox-gl-draw.css">
-<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.5.0/mapbox-gl-draw.js"></script>
-
-<style>
-  html, body, #map {{ margin:0; height:100% }}
-  #map {{ position:fixed; inset:0 }}
-  #send {{
-    position:fixed; right:10px; bottom:10px; z-index:10;
-    padding:10px 14px; background:#fff; border:1px solid #999; border-radius:6px;
-    font:14px/1.2 system-ui,-apple-system, Segoe UI, Roboto, Helvetica, Arial; cursor:pointer;
-  }}
-</style>
-
-<div id="map"></div>
-<button id="send" disabled>Send</button>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {{
-  mapboxgl.accessToken = {json.dumps(mapbox_token)};
-  const PARAMETER = {json.dumps(parameter)};
-  const SENDER  = {json.dumps(sender_id)};
-  const INCLUDE_BOUNDS = {str(include_bounds).lower()};
-
-  const map = new mapboxgl.Map({{
-    container: 'map',
-    style: {json.dumps(style_url)},
-    center: [{center_lng}, {center_lat}],
-    zoom: {zoom},
-    dragRotate: false,
-    pitchWithRotate: false
-  }});
-
-  const draw = new MapboxDraw({{
-    displayControlsDefault: false,
-    controls: {{ polygon:true, point:true, line_string:true, trash:true }},
-    defaultMode: 'simple_select'
-  }});
-  map.addControl(draw, 'bottom-left');
-
-  const sendBtn = document.getElementById('send');
-  let lastFC = null;
-  let lastPoint = null;
-
-  function latestPointFrom(fc) {{
-    const feats = fc?.features || [];
-    const pts = feats.filter(f => f.geometry?.type === 'Point' && Array.isArray(f.geometry.coordinates));
-    if (!pts.length) return null;
-    const [lng, lat] = pts[pts.length - 1].geometry.coordinates;
-    return {{ lat: Number(lat), lng: Number(lng) }};
-  }}
-
-  function refreshState() {{
-    const fc = draw.getAll();
-    lastFC = (fc && Array.isArray(fc.features)) ? fc : null;
-    lastPoint = lastFC ? latestPointFrom(lastFC) : null;
-    sendBtn.disabled = !(lastFC && lastFC.features && lastFC.features.length);
-  }}
-
-  function hookTrashToClearAll() {{
-    const btn = document.querySelector('.mapbox-gl-draw_trash');
-    if (!btn) return;
-    btn.replaceWith(btn.cloneNode(true));
-    const fresh = document.querySelector('.mapbox-gl-draw_trash');
-    fresh.addEventListener('click', (e) => {{
-      e.preventDefault(); e.stopPropagation();
-      try {{ draw.deleteAll(); }} catch (_){{
-      }}
-      lastFC = null; lastPoint = null; sendBtn.disabled = true;
-    }});
-  }}
-  map.on('load', hookTrashToClearAll);
-
-  ['draw.create','draw.update','draw.combine','draw.uncombine','draw.delete']
-    .forEach(ev => map.on(ev, refreshState));
-
-  function collectVars() {{
-    refreshState();
-    if (!lastFC || !lastFC.features || !lastFC.features.length) return null;
-    const vars = {{}};
-    if (lastPoint) {{ vars.lat = lastPoint.lat; vars.lng = lastPoint.lng; }}
-    try {{ vars.geojson = JSON.stringify(lastFC); }} catch (_){{
-    }}
-    if (INCLUDE_BOUNDS && map && map.getBounds) {{
-      const b = map.getBounds();
-      vars.bounds = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].join(',');
-      vars.zoom = map.getZoom();
-    }}
-    return vars;
-  }}
-
-  sendBtn.addEventListener('click', () => {{
-    const vars = collectVars();
-    if (!vars) return;
-    window.parent.postMessage({{
-      type: 'vars',
-      payload: {{ vars }},
-      origin: SENDER,
-      parameter: PARAMETER,
-      ts: Date.now()
-    }}, '*');
-  }});
-}});
-</script>
-"""
-    return html if return_html else common.html_to_obj(html)
-
-# Text Input ----------------------------------------------------------------------
-def text_input(
-    label: str,
-    *,
-    placeholder: str = "Type something...",
-    button_label: str = "Send",
-    disabled: bool = False,
-    parameter: str = "channel_text",
-    sender_id: str = "text_input_1",
-    return_html: bool = False,
 ):
     import json
+    import jinja2
 
-    html = f"""<!doctype html>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-  html, body {{
-    height:100%; margin:0; padding:0;
-    background:#000; color:#fafafa;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:.75rem;
-  }}
-  label {{
-    width:min(92vw, 520px);
-    font-weight:500;
-    font-size:clamp(14px, 1.6vmin, 18px);
-  }}
-  .row {{
-    width:min(92vw, 520px);
-    display:flex; gap:.5rem; align-items:center;
-  }}
-  input[type="text"] {{
-    flex:1;
-    box-sizing:border-box;
-    padding:0.5rem 0.75rem;
-    background:#1b1b1b;
-    color:#fafafa;
-    border:1px solid #333;
-    border-radius:0.3rem;
-    font-size:0.95rem;
-    outline:none;
-    {"opacity:.6; cursor:not-allowed;" if disabled else ""}
-  }}
-  input[type="text"]:hover:not(:disabled) {{
-    border-color:#444;
-  }}
-  input[type="text"]:focus {{
-    border-color:#555;
-    background:#1f1f1f;
-  }}
-  ::placeholder {{
-    color:#777;
-    opacity:1;
-  }}
-  button {{
-    padding:0.5rem 1rem;
-    background:#2a2a2a;
-    border:1px solid #444;
-    border-radius:0.3rem;
-    color:#fafafa;
-    font-size:0.9rem;
-    cursor:pointer;
-    transition:background .15s, border-color .15s;
-    {"opacity:.6; cursor:not-allowed;" if disabled else ""}
-  }}
-  button:hover:not(:disabled) {{
-    background:#333;
-    border-color:#555;
-  }}
-  button:active:not(:disabled) {{
-    background:#3a3a3a;
-  }}
-</style>
+    # normalize config
+    if isinstance(config, str):
+        cfg = json.loads(config)
+    else:
+        cfg = config
 
-<label for="txt">{label}</label>
-<div class="row">
-  <input id="txt" type="text" placeholder="{placeholder}" {("disabled" if disabled else "")}/>
-  <button id="send" {("disabled" if disabled else "")}>{button_label}</button>
-</div>
+    global_param_name = cfg.get("parameter_name")
+    data_url = cfg.get("data_url")
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {{
-  const PARAMETER = {json.dumps(parameter)};
-  const SENDER  = {json.dumps(sender_id)};
-  const input = document.getElementById('txt');
-  const btn   = document.getElementById('send');
+    # normalize fields
+    normalized_fields = []
+    for f in cfg.get("filter", []):
+        f_type = f.get("type")
+        raw_param = f.get("parameter_name")
 
-  btn.addEventListener('click', () => {{
-    if (btn.disabled) return;
-    const value = input.value.trim();
-    if (!value) return;
-    window.parent.postMessage({{
-      type: 'text_input',
-      payload: {{ value }},
-      origin: SENDER, parameter: PARAMETER, ts: Date.now()
-    }}, '*');
-  }});
+        if f_type == "selectbox":
+            col = f.get("column")
+            default_val = f.get("default")
 
-  input.addEventListener('keydown', (e) => {{
-    if (e.key === 'Enter' && !btn.disabled) {{
-      btn.click();
-    }}
-  }});
-}});
-</script>
-"""
-    return html if return_html else common.html_to_obj(html)
+            if isinstance(raw_param, str) and raw_param:
+                channels = [raw_param]
+            else:
+                channels = []
 
+            alias_base = channels[0] if channels else col
 
-def date_input(
-    label: str,
-    *,
-    value: str | None = None,  # ISO format "YYYY-MM-DD" or None
-    min_date: str | None = None,
-    max_date: str | None = None,
-    parameter: str = "channel_date",
-    sender_id: str = "date_input_1",
-    auto_send_on_load: bool = True,
-    return_html: bool = False,
-):
-    import json
-    from datetime import datetime, timedelta
-    
-    # Default to today if no value provided
-    if value is None:
-        value = datetime.now().strftime("%Y-%m-%d")
-    
-    # Default min/max to +/- 10 years if not provided
-    if min_date is None:
-        min_date = (datetime.now() - timedelta(days=3650)).strftime("%Y-%m-%d")
-    if max_date is None:
-        max_date = (datetime.now() + timedelta(days=3650)).strftime("%Y-%m-%d")
-    
-    VALUE_JS = json.dumps(value)
-    MIN_JS = json.dumps(min_date)
-    MAX_JS = json.dumps(max_date)
-    
-    html = f"""<!doctype html>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-  :root {{
-    --primary: #e8ff59;
-    --primary-hover: #f0ff7a;
-    --bg: #121212;
-    --text: #eee;
-    --text-muted: #999;
-    --border: #333;
-    --input-bg: #1b1b1b;
-    --input-hover: #2a2a2a;
-    --primary-dim: rgba(232, 255, 89, 0.1);
-  }}
-  * {{
-    box-sizing: border-box;
-  }}
-  html, body {{
-    height:100vh; margin:0; padding:0;
-    background:var(--bg); color:var(--text);
-    font-family:system-ui,-apple-system,sans-serif;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:0rem;
-  }}
-  label {{
-    width:90vw;
-    color:#ddd;
-    font-size:min(25vh, 25px); 
-    margin-bottom:min(10vh, 10px);
-    text-align:left;
-  }}
-  .container {{
-    width:90vw;
-    display:flex;
-    flex-direction:column;
-    gap:0;
-  }}
-  input[type="date"] {{
-    width:100%;
-    font-size:min(15vh, 15px);
-    padding:min(7.5vh, 7.5px) min(10vh, 10px);
-    border:1px solid var(--border);
-    border-radius:min(7.5vh, 7.5px);
-    background:var(--input-bg);
-    color:var(--text);
-    outline:none;
-    cursor:pointer;
-    transition:all 150ms ease;
-    box-shadow:1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
-    color-scheme: dark;
-  }}
-  input[type="date"]:hover {{
-    background:var(--input-hover);
-    border-color:#444;
-    box-shadow:2px 2px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
-  }}
-  input[type="date"]:focus {{
-    border-color:var(--primary);
-    background:var(--input-hover);
-    box-shadow:0 0 0 2px var(--primary-dim), 1px 1px 0px 0px rgba(0,0,0,0.3);
-  }}
-  input[type="date"]::-webkit-calendar-picker-indicator {{
-    filter: invert(1);
-    cursor: pointer;
-  }}
-</style>
+            normalized_fields.append({
+                "kind": "select",
+                "col": col,
+                "defaultValue": default_val,
+                "channels": channels,
+                "aliasBase": alias_base,
+            })
 
-<label for="dt">{label}</label>
-<div class="container">
-  <input id="dt" type="date" />
-</div>
+        elif f_type == "daterange":
+            cols = f.get("column", [])
+            if isinstance(cols, list) and len(cols) == 2:
+                start_col, end_col = cols
+            else:
+                start_col, end_col = "start_date", "end_date"
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {{
-  const PARAMETER = {json.dumps(parameter)};
-  const SENDER  = {json.dumps(sender_id)};
-  const VALUE   = {VALUE_JS};
-  const MIN     = {MIN_JS};
-  const MAX     = {MAX_JS};
-  const AUTO    = {str(auto_send_on_load).lower()};
-  
-  const input = document.getElementById('dt');
-  input.value = VALUE;
-  input.min = MIN;
-  input.max = MAX;
-  
-  function post(val) {{
-    window.parent.postMessage({{
-      type: 'date_input',
-      payload: {{ value: val }},
-      origin: SENDER,
-      parameter: PARAMETER,
-      ts: Date.now()
-    }}, '*');
-  }}
-  
-  input.addEventListener('change', (e) => {{
-    post(e.target.value);
-  }});
-  
-  if (AUTO) {{
-    queueMicrotask(() => post(VALUE));
-  }}
-}});
-</script>
-"""
-    return html if return_html else common.html_to_obj(html)
+            if isinstance(raw_param, list) and len(raw_param) == 2:
+                channels = [raw_param[0], raw_param[1]]
+                alias_base = raw_param[0] or start_col
+            elif isinstance(raw_param, str) and raw_param:
+                channels = [raw_param]
+                alias_base = raw_param
+            else:
+                channels = []
+                alias_base = start_col
 
+            normalized_fields.append({
+                "kind": "date",
+                "startCol": start_col,
+                "endCol": end_col,
+                "defaultValue": f.get("default"),
+                "channels": channels,
+                "aliasBase": alias_base,
+            })
 
-def sql_input(
-    label: str = "SQL Query",
-    *,
-    value: str = "",
-    placeholder: str = "SELECT * FROM table...",
-    button_label: str = "Run Query",
-    height: str = "min(40vh, 300px)",
-    parameter: str = "channel_sql",
-    sender_id: str = "sql_input_1",
-    disabled: bool = False,
-    return_html: bool = False,
-):
-    import json
+        elif f_type == "bounds":
+            if isinstance(raw_param, str) and raw_param:
+                channels = [raw_param]
+                alias_base = raw_param
+            else:
+                channels = []
+                alias_base = "bounds"
 
-    VALUE_JS = json.dumps(value)
-    PLACEHOLDER_JS = json.dumps(placeholder)
+            default_bounds = f.get("default", [-180, -90, 180, 90])
+            map_height_px = f.get("height", 240)
 
-    html = f"""<!doctype html>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+            normalized_fields.append({
+                "kind": "bounds",
+                "channels": channels,
+                "aliasBase": alias_base,
+                "defaultBounds": default_bounds,
+                "mapHeightPx": map_height_px,
+            })
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+        elif f_type == "text_input":
+            if isinstance(raw_param, str) and raw_param:
+                channels = [raw_param]
+                alias_base = raw_param
+            else:
+                channels = []
+                alias_base = "text_input"
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+            default_val = f.get("default", "")
+            placeholder = f.get("placeholder", "")
 
-<style>
-  :root {{
-    --primary: #e8ff59;
-    --bg: #121212;
-    --text: #eee;
-    --text-muted: #999;
-    --border: #333;
-    --input-bg: #1b1b1b;
-    --button-bg: #2a2a2a;
-    --button-hover: #3a3a3a;
-  }}
-  * {{
-    box-sizing: border-box;
-  }}
-  html, body {{
-    height: 100vh;
-    margin: 0;
-    padding: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: system-ui, -apple-system, sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
-  }}
-  label {{
-    width: 90vw;
-    color: #ddd;
-    font-size: min(25vh, 25px);
-    margin-bottom: min(10vh, 10px);
-    text-align: left;
-  }}
-  .container {{
-    width: 90vw;
-    display: flex;
-    flex-direction: column;
-    gap: min(10vh, 10px);
-  }}
-  .editor-wrapper {{
-    width: 100%;
-    border: 1px solid var(--border);
-    border-radius: min(7.5vh, 7.5px);
-    overflow: hidden;
-    box-shadow:
-      1px 1px 0px 0px rgba(0,0,0,0.3),
-      0px 0px 2px 0px rgba(0,0,0,0.2);
-    transition: all 150ms ease;
-  }}
-  .editor-wrapper:focus-within {{
-    border-color: var(--primary);
-    box-shadow:
-      inset 0 0 0 2px rgba(232,255,89,0.65),
-      0 0 0 2px rgba(232,255,89,0.15),
-      1px 1px 0px 0px rgba(0,0,0,0.3);
-  }}
+            normalized_fields.append({
+                "kind": "text_input",
+                "channels": channels,
+                "aliasBase": alias_base,
+                "defaultValue": default_val,
+                "placeholder": placeholder,
+            })
 
-  .CodeMirror {{
-    height: {height};
-    font-size: min(15vh, 15px);
-    font-family: "Consolas","Monaco","Courier New",monospace;
-    background: var(--input-bg);
-    color: var(--text);
-  }}
-  .CodeMirror.cm-has-placeholder-init .CodeMirror-lines {{
-    /* muted look before user types for placeholder mode */
-    color: var(--text-muted);
-    font-style: italic;
-  }}
+        else:
+            pass
 
-  .CodeMirror-cursor {{
-    border-left: 2px solid var(--primary);
-  }}
-  .CodeMirror-selected {{
-    background: rgba(232, 255, 89, 0.2);
-  }}
-  .CodeMirror-gutters {{
-    background: var(--input-bg);
-    border-right: 1px solid var(--border);
-  }}
-  .CodeMirror-linenumber {{
-    color: var(--text-muted);
-  }}
+    GLOBAL_PARAM_NAME_JS = json.dumps(global_param_name)
+    DATA_URL_JS = json.dumps(data_url)
+    FIELDS_JS = json.dumps(normalized_fields)
+    MAPBOX_TOKEN_JS = json.dumps(mapbox_token)
 
-  button {{
-    width: 100%;
-    padding: min(7.5vh, 10px) min(10vh, 16px);
-    border: 1px solid var(--border);
-    border-radius: min(7.5vh, 7.5px);
-    background: var(--button-bg);
-    color: var(--text);
-    font-size: min(15vh, 15px);
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 150ms ease;
-    box-shadow:
-      1px 1px 0px 0px rgba(0,0,0,0.3),
-      0px 0px 2px 0px rgba(0,0,0,0.2);
-    {"opacity: 0.6; cursor: not-allowed;" if disabled else ""}
-  }}
-  button:hover:not(:disabled) {{
-    background: var(--button-hover);
-    border-color: #444;
-    box-shadow:
-      2px 2px 0px 0px rgba(0,0,0,0.3),
-      0px 0px 2px 0px rgba(0,0,0,0.2);
-  }}
-  button:active:not(:disabled) {{
-    transform: translateY(1px);
-    box-shadow:
-      1px 1px 0px 0px rgba(0,0,0,0.3),
-      0px 0px 2px 0px rgba(0,0,0,0.2);
-  }}
-  button:focus {{
-    outline: none;
-    box-shadow:
-      0 0 0 2px rgba(232,255,89,0.1),
-      1px 1px 0px 0px rgba(0,0,0,0.3);
-  }}
-</style>
-
-<label for="sql-editor">{label}</label>
-<div class="container">
-  <div class="editor-wrapper">
-    <!-- Note: textarea placeholder attr is now only cosmetic before CM mounts.
-         After mount we control text ourselves. -->
-    <textarea id="sql-editor" placeholder="{placeholder}"></textarea>
+    # template
+    template_src = r"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"/>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #121212;
+      --text: #eeeeee;
+      --border: #333333;
+      --input-bg: #1b1b1b;
+      --input-hover: #2a2a2a;
+      --primary: #e8ff59;
+      --primary-dark: #d4eb45;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+    }
+    .form-wrapper {
+      width: 90vw;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      /* so last control isn't covered by sticky submit */
+      padding-bottom: 96px;
+    }
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      text-transform: capitalize;
+    }
+    select,
+    input {
+      width: 100%;
+      font-size: 15px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--input-bg);
+      color: var(--text);
+      transition: all 0.2s ease;
+      outline: none;
+    }
+    select:hover,
+    input:hover {
+      background: var(--input-hover);
+      border-color: #444444;
+    }
+    select:focus,
+    input:focus {
+      border-color: var(--primary);
+    }
+    /* sticky footer container */
+    .submit-bar-wrapper {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      /* transparent background so you can see page behind edges */
+      background: linear-gradient(
+        to top,
+        rgba(18,18,18,0.9) 0%,
+        rgba(18,18,18,0.6) 60%,
+        rgba(18,18,18,0) 100%
+      );
+      padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+      display: flex;
+      justify-content: center;
+      pointer-events: none; /* we'll re-enable on the button */
+      z-index: 9999;
+    }
+    /* the actual button */
+    .submit-btn {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1;
+      font-family: inherit;
+      background: var(--primary);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow:
+        0 12px 32px rgba(232,255,89,0.2),
+        0 2px 4px rgba(0,0,0,0.8);
+      pointer-events: auto; /* re-enable click on the button itself */
+    }
+    .submit-btn:hover:not(:disabled) {
+      background: var(--primary-dark);
+      box-shadow:
+        0 16px 40px rgba(232,255,89,0.28),
+        0 3px 6px rgba(0,0,0,0.8);
+      transform: translateY(-1px);
+    }
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow:
+        0 6px 16px rgba(0,0,0,0.6),
+        0 1px 2px rgba(0,0,0,0.8);
+    }
+    /* map container */
+    .bounds-map {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .bounds-map .mapboxgl-canvas-container,
+    .bounds-map .mapboxgl-canvas {
+      width: 100% !important;
+    }
+    /* loader */
+    #loaderOverlay {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      color: #aaa;
+      font-size: 14px;
+      min-height: 200px;
+    }
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 4px solid rgba(232,255,89,0.15);
+      border-top-color: var(--primary);
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #formContent {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+    }
+    #formContent.loaded { display: flex; }
+    #loaderOverlay.hidden { display: none; }
+    .error-message {
+      color: #ff6b6b;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ff6b6b;
+      background: rgba(255,107,107,0.1);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    /* flatpickr dark theme tweaks */
+    .flatpickr-calendar {
+      background: var(--input-bg) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 8px !important;
+      box-shadow: 0 16px 32px rgba(0,0,0,0.8) !important;
+      color: var(--text) !important;
+    }
+    .flatpickr-current-month,
+    .flatpickr-current-month input.cur-year {
+      color: var(--text) !important;
+      font-size: 13px !important;
+      font-weight: 500 !important;
+    }
+    .flatpickr-weekday {
+      color: #888 !important;
+      font-size: 11px !important;
+      font-weight: 400 !important;
+    }
+    .flatpickr-day {
+      background: transparent !important;
+      border: 0 !important;
+      color: var(--text) !important;
+      font-weight: 500;
+    }
+    .flatpickr-day.disabled,
+    .flatpickr-day.notAllowed,
+    .flatpickr-day.prevMonthDay,
+    .flatpickr-day.nextMonthDay {
+      color: #444 !important;
+      background: transparent !important;
+      cursor: default !important;
+    }
+    .flatpickr-day:hover,
+    .flatpickr-day.hover {
+      background: var(--input-hover) !important;
+      color: var(--text) !important;
+      border-radius: 6px !important;
+    }
+    .flatpickr-day.inRange {
+      background: rgba(232,255,89,0.2) !important;
+      color: var(--text) !important;
+      border-radius: 0 !important;
+    }
+    .flatpickr-day.startRange,
+    .flatpickr-day.endRange,
+    .flatpickr-day.selected {
+      background: var(--primary) !important;
+      color: #000 !important;
+      border-radius: 6px !important;
+    }
+    .flatpickr-day.today:not(.selected):not(.startRange):not(.endRange) {
+      border: 1px solid var(--primary) !important;
+      color: var(--primary) !important;
+      background: transparent !important;
+      border-radius: 6px !important;
+      box-shadow: 0 0 8px rgba(232,255,89,0.4);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="form-wrapper">
+    <div id="loaderOverlay">
+      <div class="spinner"></div>
+      <div>Loading…</div>
+    </div>
+    <div id="formContent">
+      {% for f in fields %}
+        {% if f.kind == "select" %}
+          <div class="form-field">
+            <label for="field_{{ loop.index0 }}">{{ f.col }}</label>
+            <select
+              id="field_{{ loop.index0 }}"
+              data-kind="select"
+              data-col="{{ f.col }}"
+              data-channels="{{ f.channels | join(',') }}"
+              data-alias-base="{{ f.aliasBase }}"
+              data-default-value="{{ f.defaultValue | default('', true) }}"
+            >
+              <option disabled selected value="">Select {{ f.col }}…</option>
+            </select>
+          </div>
+        {% elif f.kind == "date" %}
+          <div class="form-field">
+            <label for="field_{{ loop.index0 }}">{{ f.startCol }} / {{ f.endCol }}</label>
+            <input
+              id="field_{{ loop.index0 }}"
+              class="date-input"
+              data-kind="date"
+              data-start-col="{{ f.startCol }}"
+              data-end-col="{{ f.endCol }}"
+              data-channels="{{ f.channels | join(',') }}"
+              data-alias-base="{{ f.aliasBase }}"
+              data-default-value="{{ f.defaultValue | default('', true) }}"
+              placeholder="Select date range…"
+              readonly
+            />
+          </div>
+        {% elif f.kind == "bounds" %}
+          <div class="form-field">
+            <label>Bounds</label>
+            <div
+              id="field_{{ loop.index0 }}"
+              class="bounds-map"
+              style="height: {{ f.mapHeightPx }}px"
+              data-kind="bounds"
+              data-channels="{{ f.channels | join(',') }}"
+              data-alias-base="{{ f.aliasBase }}"
+              data-default-bounds='{{ f.defaultBounds | tojson }}'
+            ></div>
+          </div>
+        {% elif f.kind == "text_input" %}
+          <div class="form-field">
+            <label for="field_{{ loop.index0 }}">{{ f.aliasBase }}</label>
+            <input
+              id="field_{{ loop.index0 }}"
+              type="text"
+              data-kind="text_input"
+              data-channels="{{ f.channels | join(',') }}"
+              data-alias-base="{{ f.aliasBase }}"
+              data-default-value="{{ f.defaultValue | default('', true) }}"
+              placeholder="{{ f.placeholder | default('', true) }}"
+              value="{{ f.defaultValue | default('', true) }}"
+            />
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
   </div>
-  <button id="run-btn" {("disabled" if disabled else "")}>{button_label}</button>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {{
-  const PARAMETER   = {json.dumps(parameter)};
-  const SENDER      = {json.dumps(sender_id)};
-  const VALUE       = {VALUE_JS};
-  const PLACEHOLDER = {PLACEHOLDER_JS};
-
-  const textarea = document.getElementById('sql-editor');
-  const btn = document.getElementById('run-btn');
-
-  // init CodeMirror
-  const editor = CodeMirror.fromTextArea(textarea, {{
-    mode: 'text/x-sql',
-    theme: 'material-darker',
-    lineNumbers: true,
-    lineWrapping: true,
-    indentUnit: 2,
-    tabSize: 2,
-    indentWithTabs: false,
-    autofocus: true,
-    extraKeys: {{
-      'Ctrl-Enter': () => btn.click(),
-      'Cmd-Enter': () => btn.click(),
-    }}
-  }});
-
-  // If user passed a real value, use it.
-  // Else, inject the placeholder text AS REAL CONTENT.
-  if (VALUE && VALUE.trim() !== "") {{
-    editor.setValue(VALUE);
-  }} else {{
-    editor.setValue(PLACEHOLDER);
-    editor.getWrapperElement().classList.add('cm-has-placeholder-init');
-  }}
-
-  // As soon as they type something different, remove "placeholder style"
-  editor.on('change', () => {{
-    const wrap = editor.getWrapperElement();
-    if (wrap.classList.contains('cm-has-placeholder-init')) {{
-      // If user modified text away from the exact placeholder OR added newlines, etc.,
-      // drop the muted styling forever.
-      if (editor.getValue() !== PLACEHOLDER) {{
-        wrap.classList.remove('cm-has-placeholder-init');
-      }}
-    }}
-  }});
-
-  function post() {{
-    const query = editor.getValue().trim();
-    if (!query) return;
-    window.parent.postMessage({{
-      type: 'sql_input',
-      payload: {{ value: query }},
-      origin: SENDER,
-      parameter: PARAMETER,
-      ts: Date.now()
-    }}, '*');
-  }}
-
-  btn.addEventListener('click', () => {{
-    if (!btn.disabled) {{
-      post();
-    }}
-  }});
-
-  // Refresh on initial layout + on resize so vh height stays sane
-  const refresh = () => editor.refresh();
-  const ro = new ResizeObserver(refresh);
-  ro.observe(document.body);
-
-  setTimeout(refresh, 100);
-}});
-</script>
+  <!-- sticky footer with inset button -->
+  <div class="submit-bar-wrapper">
+    <button id="submit_btn" class="submit-btn" disabled>Submit</button>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <script type="module">
+    (async () => {
+      const GLOBAL_PARAM_NAME = {{ GLOBAL_PARAM_NAME_JS | safe }};
+      const DATA_URL  = {{ DATA_URL_JS | safe }};
+      const FIELDS    = {{ FIELDS_JS | safe }};
+      const MAPBOX_TOKEN = {{ MAPBOX_TOKEN_JS | safe }};
+      const $ = (selector) => {
+        if (selector.startsWith('#')) {
+          return document.getElementById(selector.slice(1));
+        }
+        return document.getElementById(selector);
+      };
+      // local state
+      const pickers = {};
+      const dateRanges = {};
+      const mapInstances = {};
+      const textValues = {};
+      function showForm() {
+        $("#loaderOverlay").classList.add("hidden");
+        $("#formContent").classList.add("loaded");
+      }
+      function showError(msg) {
+        const loaderDiv = $("#loaderOverlay");
+        if (loaderDiv) {
+          loaderDiv.innerHTML = `<div class="error-message">${msg}</div>`;
+        }
+      }
+      function iso(d) {
+        if (!d) return "";
+        const y  = d.getFullYear();
+        const m  = String(d.getMonth() + 1).padStart(2, "0");
+        const da = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${da}`;
+      }
+      try {
+        // DuckDB init
+        const duckdb = await import(
+          "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.1-dev132.0/+esm"
+        );
+        const bundle = await duckdb.selectBundle(duckdb.getJsDelivrBundles());
+        const workerCode = await (await fetch(bundle.mainWorker)).text();
+        const worker = new Worker(
+          URL.createObjectURL(
+            new Blob([workerCode], { type:"application/javascript" })
+          )
+        );
+        const db = new duckdb.AsyncDuckDB(new duckdb.ConsoleLogger(), worker);
+        await db.instantiate(bundle.mainModule);
+        const conn = await db.connect();
+        const resp = await fetch(DATA_URL);
+        if (!resp.ok) {
+          throw new Error(`Failed to fetch data: ${resp.status} ${resp.statusText}`);
+        }
+        const buf = new Uint8Array(await resp.arrayBuffer());
+        await db.registerFileBuffer("data.parquet", buf);
+        await conn.query(`
+          CREATE OR REPLACE TABLE df AS
+          SELECT * FROM read_parquet('data.parquet');
+        `);
+        // WHERE builder (bounds doesn't filter)
+        function buildWhere(upToIdx) {
+          const clauses = [];
+          for (let i = 0; i < upToIdx; i++) {
+            const spec = FIELDS[i];
+            const el = $("field_" + i);
+            if (!el) continue;
+            if (spec.kind === "select") {
+              const v = el.value;
+              if (v) {
+                const safe = v.replace(/'/g, "''");
+                clauses.push(`${spec.col}='${safe}'`);
+              }
+            } else if (spec.kind === "date") {
+              const rng = dateRanges[i];
+              if (rng && rng.start && rng.end) {
+                const safeStart = rng.start.replace(/'/g, "''");
+                const safeEnd   = rng.end.replace(/'/g, "''");
+                clauses.push(
+                  `(${spec.endCol} >= '${safeStart}' AND ${spec.startCol} <= '${safeEnd}')`
+                );
+              }
+            }
+          }
+          return clauses.length ? "WHERE " + clauses.join(" AND ") : "";
+        }
+        async function loadDistinct(colName, whereClause) {
+          const q = [
+            "SELECT DISTINCT",
+            colName,
+            "AS v FROM df",
+            whereClause,
+            "ORDER BY 1"
+          ].filter(Boolean).join(" ");
+          const res = await conn.query(q);
+          return res.toArray().map(r => r.v);
+        }
+        async function loadMinMax(startCol, endCol, whereClause) {
+          const q = [
+            "SELECT",
+            "  MIN(" + startCol + ") AS mn,",
+            "  MAX(" + endCol   + ") AS mx",
+            "FROM df",
+            whereClause
+          ].filter(Boolean).join(" ");
+          const res = await conn.query(q);
+          const row = res.toArray()[0] || {};
+          let lo = row.mn ? String(row.mn).slice(0,10) : "";
+          let hi = row.mx ? String(row.mx).slice(0,10) : "";
+          if (lo && !hi) hi = lo;
+          if (!lo && hi) lo = hi;
+          return { lo, hi };
+        }
+        // map init (first time only)
+        function initOrUpdateBoundsField(idx, spec) {
+          const el = $("field_" + idx);
+          if (!el) return;
+          mapboxgl.accessToken = MAPBOX_TOKEN;
+          const defAttr = el.getAttribute("data-default-bounds");
+          let defB = spec.defaultBounds;
+          try {
+            if (defAttr) defB = JSON.parse(defAttr);
+          } catch (e) {
+            /* ignore parse issue */
+          }
+          if (!Array.isArray(defB) || defB.length !== 4) {
+            defB = [-180, -90, 180, 90];
+          }
+          // don't reset if already created
+          if (mapInstances[idx]) {
+            return;
+          }
+          function fitToBounds(m, arr) {
+            m.fitBounds([[arr[0], arr[1]], [arr[2], arr[3]]], {
+              padding: 20,
+              duration: 0
+            });
+          }
+          const m = new mapboxgl.Map({
+            container: el.id,
+            style: "mapbox://styles/mapbox/dark-v11",
+            attributionControl: false,
+            projection: "mercator",
+            dragRotate: false,
+            pitchWithRotate: false,
+            touchZoomRotate: false,
+            touchPitch: false,
+            renderWorldCopies: false,
+            maxPitch: 0
+          });
+          m.on("load", () => {
+            setTimeout(() => {
+              m.resize();
+              fitToBounds(m, defB);
+            }, 100);
+          });
+          mapInstances[idx] = m;
+        }
+        // enable submit button
+        function enableSubmit() {
+          const btn = $("#submit_btn");
+          if (btn && btn.disabled) {
+            btn.disabled = false;
+          }
+        }
+        // hydrate a field
+        async function hydrateField(idx) {
+          const spec = FIELDS[idx];
+          const el = $("field_" + idx);
+          if (!el) return;
+          if (spec.kind === "select") {
+              const vals = await loadDistinct(spec.col, buildWhere(idx));
+              el.innerHTML = "";
+              const ph = document.createElement("option");
+              ph.disabled = true;
+              ph.value = "";
+              ph.textContent = "Select " + spec.col + "…";
+              el.appendChild(ph);
+              vals.forEach(v => {
+                const opt = document.createElement("option");
+                opt.value = v ?? "";
+                opt.textContent = v ?? "(null)";
+                el.appendChild(opt);
+              });
+              let chosenIndex = 0;
+              if (vals.length > 0) {
+                if (spec.defaultValue && vals.includes(spec.defaultValue)) {
+                  chosenIndex = vals.indexOf(spec.defaultValue) + 1;
+                } else {
+                  chosenIndex = 1;
+                }
+              }
+              el.selectedIndex = chosenIndex;
+              if (chosenIndex !== 0) {
+                enableSubmit();
+              }
+          } else if (spec.kind === "date") {
+              const { lo, hi } = await loadMinMax(spec.startCol, spec.endCol, buildWhere(idx));
+              const minDate = lo || undefined;
+              const maxDate = hi || undefined;
+              let initialRange;
+              if (spec.defaultValue && minDate && maxDate) {
+                if (spec.defaultValue >= minDate && spec.defaultValue <= maxDate) {
+                  initialRange = [spec.defaultValue, spec.defaultValue];
+                }
+              }
+              if (!initialRange) {
+                if (lo && hi) {
+                  initialRange = [lo, hi];
+                } else if (lo) {
+                  initialRange = [lo];
+                }
+              }
+              if (pickers[idx]) {
+                const inst = pickers[idx];
+                inst.set("minDate", minDate);
+                inst.set("maxDate", maxDate);
+                if (initialRange) {
+                  inst.setDate(initialRange, true);
+                } else {
+                  inst.clear();
+                }
+                if (initialRange && initialRange.length) {
+                  const startISO = initialRange[0];
+                  const endISO   = initialRange[1] || initialRange[0] || "";
+                  dateRanges[idx] = { start: startISO, end: endISO };
+                }
+                enableSubmit();
+              } else {
+                pickers[idx] = flatpickr(el, {
+                  mode: "range",
+                  dateFormat: "Y-m-d",
+                  minDate,
+                  maxDate,
+                  defaultDate: initialRange,
+                  onChange: async (selectedDates) => {
+                    enableSubmit();
+                    const start = selectedDates[0] ? iso(selectedDates[0]) : "";
+                    const end   = selectedDates[1]
+                      ? iso(selectedDates[1])
+                      : (selectedDates[0] ? iso(selectedDates[0]) : "");
+                    dateRanges[idx] = { start, end };
+                    await hydrateDownstream(idx + 1);
+                  }
+                });
+                if (initialRange && initialRange.length) {
+                  const startISO = initialRange[0];
+                  const endISO   = initialRange[1] || initialRange[0] || "";
+                  dateRanges[idx] = { start: startISO, end: endISO };
+                }
+                enableSubmit();
+              }
+          } else if (spec.kind === "bounds") {
+              initOrUpdateBoundsField(idx, spec);
+              enableSubmit();
+          } else if (spec.kind === "text_input") {
+              if (spec.defaultValue) {
+                textValues[idx] = spec.defaultValue;
+              }
+              enableSubmit();
+          }
+        }
+        // hydrate downstream
+        async function hydrateDownstream(fromIdx) {
+          for (let i = fromIdx; i < FIELDS.length; i++) {
+            await hydrateField(i);
+          }
+        }
+        // initial load
+        await hydrateDownstream(0);
+        showForm();
+        // listeners
+        FIELDS.forEach((spec, i) => {
+          if (spec.kind === "select") {
+            const el = $("field_" + i);
+            if (!el) return;
+            el.addEventListener("change", async () => {
+              enableSubmit();
+              await hydrateDownstream(i + 1);
+            });
+          } else if (spec.kind === "text_input") {
+            const el = $("field_" + i);
+            if (!el) return;
+            el.addEventListener("input", () => {
+              textValues[i] = el.value;
+              enableSubmit();
+            });
+          }
+        });
+        // snapshot
+        function makeSnapshot() {
+          const globalMerged = {};
+          const messages = [];
+          FIELDS.forEach((spec, i) => {
+            const el = $("field_" + i);
+            if (spec.kind === "select") {
+              const val = el ? (el.value || "") : "";
+              globalMerged[spec.aliasBase] = val;
+              spec.channels.forEach(ch => {
+                messages.push({ channel: ch, payload: val });
+              });
+            } else if (spec.kind === "date") {
+              const inst = pickers[i];
+              const sel = inst ? inst.selectedDates : [];
+              const start = sel[0] ? iso(sel[0]) : "";
+              const end   = sel[1]
+                ? iso(sel[1])
+                : (sel[0] ? iso(sel[0]) : "");
+              if (spec.channels.length === 2) {
+                const [chStart, chEnd] = spec.channels;
+                if (chStart) globalMerged[chStart] = start;
+                if (chEnd)   globalMerged[chEnd]   = end;
+              } else if (spec.channels.length === 1) {
+                const only = spec.channels[0];
+                globalMerged[only + "_start"] = start;
+                globalMerged[only + "_end"]   = end;
+              } else {
+                globalMerged[spec.aliasBase + "_start"] = start;
+                globalMerged[spec.aliasBase + "_end"]   = end;
+              }
+              if (spec.channels.length === 2) {
+                const [chStart, chEnd] = spec.channels;
+                if (chStart) messages.push({ channel: chStart, payload: start });
+                if (chEnd)   messages.push({ channel: chEnd,   payload: end });
+              } else if (spec.channels.length === 1) {
+                const ch = spec.channels[0];
+                messages.push({
+                  channel: ch,
+                  payload: { start, end }
+                });
+              }
+            } else if (spec.kind === "bounds") {
+              const m = mapInstances[i];
+              let arr = spec.defaultBounds || [-180, -90, 180, 90];
+              if (m && m.getBounds) {
+                try {
+                  const b = m.getBounds();
+                  arr = [
+                    b.getWest(),
+                    b.getSouth(),
+                    b.getEast(),
+                    b.getNorth()
+                  ].map(v => Number(v.toFixed(6)));
+                } catch (_e) {
+                  /* fallback */
+                }
+              }
+              globalMerged[spec.aliasBase] = arr;
+              spec.channels.forEach(ch => {
+                messages.push({ channel: ch, payload: arr });
+              });
+            } else if (spec.kind === "text_input") {
+              const val = textValues[i] || "";
+              globalMerged[spec.aliasBase] = val;
+              spec.channels.forEach(ch => {
+                messages.push({ channel: ch, payload: val });
+              });
+            }
+          });
+          return { globalMerged, messages };
+        }
+        // submit
+        const submitBtn = $("#submit_btn");
+        if (submitBtn) {
+          submitBtn.addEventListener("click", () => {
+            if (submitBtn.disabled) return;
+            const { globalMerged, messages } = makeSnapshot();
+            if (GLOBAL_PARAM_NAME) {
+              window.parent.postMessage({
+                type: "hierarchical_form_submit",
+                payload: globalMerged,
+                origin: "hierarchical_form",
+                parameter: GLOBAL_PARAM_NAME,
+                ts: Date.now()
+              }, "*");
+            } else {
+              messages.forEach(({ channel, payload }) => {
+                if (!channel) return;
+                window.parent.postMessage({
+                  type: "hierarchical_form_submit",
+                  payload,
+                  origin: "hierarchical_form",
+                  parameter: channel,
+                  ts: Date.now()
+                }, "*");
+              });
+            }
+          });
+        }
+      } catch (err) {
+        showError(`Error: ${err.message}`);
+        console.error(err);
+      }
+    })();
+  </script>
+</body>
+</html>
 """
-    return html if return_html else common.html_to_obj(html)
+
+    rendered_html = jinja2.Template(template_src).render(
+        fields=normalized_fields,
+        GLOBAL_PARAM_NAME_JS=GLOBAL_PARAM_NAME_JS,
+        DATA_URL_JS=DATA_URL_JS,
+        FIELDS_JS=FIELDS_JS,
+        MAPBOX_TOKEN_JS=MAPBOX_TOKEN_JS,
+    )
+
+    return common.html_to_obj(rendered_html)
