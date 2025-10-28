@@ -4,8 +4,8 @@ DEFAULT_CONFIG = {
     "opacity": 1.0,
     "pickable": True,
     "tooltip": "{name}",
-    "center_lat": 40.8944276435547,
-    "center_lon": -73.94391387988864,
+    "center_lat": None,
+    "center_lon": None,
     "zoom": 13,
     "pitch": 0,
     "bearing": 0
@@ -20,8 +20,8 @@ DEFAULT_H3_CONFIG = {
     "extruded": False,
     "line_color": [255, 255, 255],
     "line_width_min_pixels": 2,
-    "center_lat": 37.7749295,
-    "center_lon": -122.4194155,
+    "center_lat": None,
+    "center_lon": None,
     "zoom": 14,
     "bearing": 0,
     "pitch": 30,
@@ -35,8 +35,8 @@ DEFAULT_POLYGON_CONFIG = {
     "pickable": True,
     "stroked": True,
     "filled": True,
-    "center_lat": 49.254,
-    "center_lon": -123.13,
+    "center_lat": None,
+    "center_lon": None,
     "zoom": 11,
     "pitch": 0,
     "bearing": 0,
@@ -56,6 +56,35 @@ def udf(
     config: dict | str | None = None
 ):
     return pydeck_point(gdf, config)
+
+
+def _compute_center_from_points(df):
+    if len(df) == 0:
+        return None, None
+    return float(df["latitude"].mean()), float(df["longitude"].mean())
+
+
+def _compute_center_from_polygons(df):
+    if "geometry" not in df.columns or len(df) == 0:
+        return None, None
+    centroid = df["geometry"].unary_union.centroid
+    return float(centroid.y), float(centroid.x)
+
+
+def _compute_center_from_hex(df):
+    if len(df) == 0:
+        return None, None
+    if "latitude" in df.columns and "longitude" in df.columns:
+        return float(df["latitude"].mean()), float(df["longitude"].mean())
+    if "__hex__" in df.columns:
+        import h3
+        centers = df["__hex__"].dropna().map(lambda h: h3.h3_to_geo(h))
+        if len(centers) == 0:
+            return None, None
+        lats = [lat for lat, lon in centers]
+        lons = [lon for lat, lon in centers]
+        return float(sum(lats) / len(lats)), float(sum(lons) / len(lons))
+    return None, None
 
 
 def pydeck_point(gdf, config):
@@ -80,14 +109,19 @@ def pydeck_point(gdf, config):
     radius = config.get("radius", DEFAULT_CONFIG["radius"])
     opacity = config.get("opacity", DEFAULT_CONFIG["opacity"])
     pickable = config.get("pickable", DEFAULT_CONFIG["pickable"])
-    # Use a dark-themed basemap for better contrast in dark mode
     basemap = config.get(
         "basemap",
         "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
     )
 
-    center_lat = config.get("center_lat", float(df["latitude"].mean()))
-    center_lon = config.get("center_lon", float(df["longitude"].mean()))
+    auto_lat, auto_lon = _compute_center_from_points(df)
+    center_lat = config.get("center_lat", None)
+    center_lon = config.get("center_lon", None)
+    if center_lat is None:
+        center_lat = auto_lat
+    if center_lon is None:
+        center_lon = auto_lon
+
     zoom = config.get("zoom", DEFAULT_CONFIG["zoom"])
     pitch = config.get("pitch", DEFAULT_CONFIG["pitch"])
     bearing = config.get("bearing", DEFAULT_CONFIG["bearing"])
@@ -156,6 +190,14 @@ def pydeck_hex(df=None, config: dict | str | None = None):
             lambda h: h3.int_to_str(int(h)) if pd.notna(h) else None
         )
 
+    auto_lat, auto_lon = _compute_center_from_hex(df)
+    center_lat = config.get("center_lat", None)
+    center_lon = config.get("center_lon", None)
+    if center_lat is None:
+        center_lat = auto_lat
+    if center_lon is None:
+        center_lon = auto_lon
+
     layer = pdk.Layer(
         "H3HexagonLayer",
         df,
@@ -173,8 +215,8 @@ def pydeck_hex(df=None, config: dict | str | None = None):
     )
 
     view_state = pdk.ViewState(
-        latitude=config.get("center_lat", DEFAULT_H3_CONFIG["center_lat"]),
-        longitude=config.get("center_lon", DEFAULT_H3_CONFIG["center_lon"]),
+        latitude=center_lat,
+        longitude=center_lon,
         zoom=config.get("zoom", DEFAULT_H3_CONFIG["zoom"]),
         bearing=config.get("bearing", DEFAULT_H3_CONFIG["bearing"]),
         pitch=config.get("pitch", DEFAULT_H3_CONFIG["pitch"]),
@@ -212,6 +254,14 @@ def pydeck_polygon(df=None, config: dict | str | None = None):
     if "geometry" not in df.columns:
         raise ValueError("GeoDataFrame must include a 'geometry' column")
 
+    auto_lat, auto_lon = _compute_center_from_polygons(df)
+    center_lat = config.get("center_lat", None)
+    center_lon = config.get("center_lon", None)
+    if center_lat is None:
+        center_lat = auto_lat
+    if center_lon is None:
+        center_lon = auto_lon
+
     df = df.copy()
     df["__polygon__"] = df["geometry"].apply(lambda geom: mapping(geom)["coordinates"])
 
@@ -231,8 +281,8 @@ def pydeck_polygon(df=None, config: dict | str | None = None):
     )
 
     view_state = pdk.ViewState(
-        latitude=config.get("center_lat", DEFAULT_POLYGON_CONFIG["center_lat"]),
-        longitude=config.get("center_lon", DEFAULT_POLYGON_CONFIG["center_lon"]),
+        latitude=center_lat,
+        longitude=center_lon,
         zoom=config.get("zoom", DEFAULT_POLYGON_CONFIG["zoom"]),
         pitch=config.get("pitch", DEFAULT_POLYGON_CONFIG["pitch"]),
         bearing=config.get("bearing", DEFAULT_POLYGON_CONFIG["bearing"]),
