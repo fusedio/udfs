@@ -1,15 +1,26 @@
+import json
+import geopandas as gpd
+import pandas as pd
+import pydeck as pdk
+
 DEFAULT_CONFIG = {
-    "color": [0, 144, 255, 200],
-    "radius": 50,
+    # visual
+    "get_fill_color": [0, 144, 255, 200],  # can be array OR JS expr string OR column name
+    "get_radius": 1000,
     "opacity": 1.0,
     "pickable": True,
-    "tooltip": "{name}",
-    "center_lat": None,
-    "center_lon": None,
-    "zoom": 13,
+
+    # map camera
+
+    "zoom": 11,
     "pitch": 0,
-    "bearing": 0
+    "bearing": 0,
+
+    # layer/tooltip
+    "tooltip": None,
+    "basemap": "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
 }
+
 
 DEFAULT_H3_CONFIG = {
     "hex_field": "hex",
@@ -87,16 +98,22 @@ def _compute_center_from_hex(df):
     return None, None
 
 
-def pydeck_point(gdf, config):
-    import json
-    import geopandas as gpd
-    import pandas as pd
-    import pydeck as pdk
+def _compute_center_from_points(df: pd.DataFrame):
+    """Return (lat, lon) from mean of points, or (None, None) if empty."""
+    if len(df) == 0:
+        return None, None
+    return float(df["latitude"].mean()), float(df["longitude"].mean())
 
+
+def pydeck_point(gdf, config=None):
     if config is None or config == "":
-        config = DEFAULT_CONFIG
+        cfg = DEFAULT_CONFIG.copy()
     elif isinstance(config, str):
-        config = json.loads(config)
+        cfg = DEFAULT_CONFIG.copy()
+        cfg.update(json.loads(config))
+    else:
+        cfg = DEFAULT_CONFIG.copy()
+        cfg.update(config)
 
     if isinstance(gdf, dict):
         gdf = gpd.GeoDataFrame.from_features([gdf])
@@ -105,28 +122,15 @@ def pydeck_point(gdf, config):
     df["longitude"] = gdf.geometry.x
     df["latitude"] = gdf.geometry.y
 
-    color = config.get("color", DEFAULT_CONFIG["color"])
-    radius = config.get("radius", DEFAULT_CONFIG["radius"])
-    opacity = config.get("opacity", DEFAULT_CONFIG["opacity"])
-    pickable = config.get("pickable", DEFAULT_CONFIG["pickable"])
-    basemap = config.get(
-        "basemap",
-        "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
-    )
-
     auto_lat, auto_lon = _compute_center_from_points(df)
-    center_lat = config.get("center_lat", None)
-    center_lon = config.get("center_lon", None)
-    if center_lat is None:
-        center_lat = auto_lat
-    if center_lon is None:
-        center_lon = auto_lon
 
-    zoom = config.get("zoom", DEFAULT_CONFIG["zoom"])
-    pitch = config.get("pitch", DEFAULT_CONFIG["pitch"])
-    bearing = config.get("bearing", DEFAULT_CONFIG["bearing"])
+    center_lat = cfg.get("center_lat", auto_lat)
+    center_lon = cfg.get("center_lon", auto_lon)
 
-    tooltip_template = config.get("tooltip", None)
+    if center_lat is None or center_lon is None:
+        raise ValueError("No valid coordinates to center map (no points in gdf)")
+
+    tooltip_template = cfg.get("tooltip")
     if not tooltip_template:
         cols = [c for c in df.columns if c not in ["longitude", "latitude"]]
         if len(cols) == 0:
@@ -134,32 +138,36 @@ def pydeck_point(gdf, config):
         else:
             tooltip_template = "\n".join([f"{c}: {{{c}}}" for c in cols])
 
+    fill_accessor = cfg.get("get_fill_color", DEFAULT_CONFIG["get_fill_color"])
+    radius_accessor = cfg.get("get_radius", DEFAULT_CONFIG["get_radius"])
+
     layer = pdk.Layer(
         "ScatterplotLayer",
         data=df,
         get_position=["longitude", "latitude"],
-        get_fill_color=color,
-        get_radius=radius,
-        opacity=opacity,
-        pickable=pickable,
+        get_fill_color=fill_accessor,
+        get_radius=radius_accessor,
+        opacity=cfg.get("opacity", DEFAULT_CONFIG["opacity"]),
+        pickable=cfg.get("pickable", DEFAULT_CONFIG["pickable"]),
     )
 
     view_state = pdk.ViewState(
         latitude=center_lat,
         longitude=center_lon,
-        zoom=zoom,
-        pitch=pitch,
-        bearing=bearing,
+        zoom=cfg.get("zoom", DEFAULT_CONFIG["zoom"]),
+        pitch=cfg.get("pitch", DEFAULT_CONFIG["pitch"]),
+        bearing=cfg.get("bearing", DEFAULT_CONFIG["bearing"]),
     )
 
     deck = pdk.Deck(
         layers=[layer],
         initial_view_state=view_state,
-        map_style=basemap,
+        map_style=cfg.get("basemap", DEFAULT_CONFIG["basemap"]),
         tooltip={"text": tooltip_template},
     )
 
     return deck.to_html(as_string=True)
+
 
 
 @fused.udf(cache_max_age=0)
