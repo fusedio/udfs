@@ -91,11 +91,11 @@ def _compute_center_from_hex(df):
     return None, None
 
 
-def _compute_center_from_points(df: pd.DataFrame):
-    """Return (lat, lon) from mean of points, or (None, None) if empty."""
+def _compute_center_from_polygons(df):
     if len(df) == 0:
         return None, None
-    return float(df["latitude"].mean()), float(df["longitude"].mean())
+    centroid = df["geometry"].unary_union.centroid
+    return float(centroid.y), float(centroid.x)
 
 
 def pydeck_point(gdf, config=None):
@@ -231,12 +231,6 @@ def pydeck_hex(df=None, config: dict | str | None = None):
 
     return deck.to_html(as_string=True)
 
-
-def _compute_center_from_polygons(df):
-    if len(df) == 0:
-        return None, None
-    centroid = df["geometry"].unary_union.centroid
-    return float(centroid.y), float(centroid.x)
 
 def pydeck_polygon(df, config=None):
     if config is None or config == "":
