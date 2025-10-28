@@ -82,7 +82,7 @@ def _compute_center_from_hex(df):
         return float(df["latitude"].mean()), float(df["longitude"].mean())
     if "__hex__" in df.columns:
         import h3
-        centers = df["__hex__"].dropna().map(lambda h: h3.h3_to_geo(h))
+        centers = df["__hex__"].dropna().map(lambda h: h3.cell_to_latlng(h))
         if len(centers) == 0:
             return None, None
         lats = [lat for lat, lon in centers]
