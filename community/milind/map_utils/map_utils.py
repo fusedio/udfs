@@ -2,6 +2,7 @@ import json
 import geopandas as gpd
 import pandas as pd
 import pydeck as pdk
+from shapely.geometry import mapping
 
 DEFAULT_CONFIG = {
     # visual
@@ -46,8 +47,6 @@ DEFAULT_POLYGON_CONFIG = {
     "pickable": True,
     "stroked": True,
     "filled": True,
-    "center_lat": None,
-    "center_lon": None,
     "zoom": 11,
     "pitch": 0,
     "bearing": 0,
@@ -74,13 +73,6 @@ def _compute_center_from_points(df):
     if len(df) == 0:
         return None, None
     return float(df["latitude"].mean()), float(df["longitude"].mean())
-
-
-def _compute_center_from_polygons(df):
-    if len(df) == 0:
-        return None, None
-    centroid = df["geometry"].unary_union.centroid
-    return float(centroid.y), float(centroid.x)
 
 
 def _compute_center_from_hex(df):
@@ -239,6 +231,12 @@ def pydeck_hex(df=None, config: dict | str | None = None):
 
     return deck.to_html(as_string=True)
 
+
+def _compute_center_from_polygons(df):
+    if len(df) == 0:
+        return None, None
+    centroid = df["geometry"].unary_union.centroid
+    return float(centroid.y), float(centroid.x)
 
 def pydeck_polygon(df, config=None):
     if config is None or config == "":
