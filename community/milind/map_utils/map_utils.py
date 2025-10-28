@@ -40,8 +40,8 @@ DEFAULT_H3_CONFIG = {
 }
 
 DEFAULT_POLYGON_CONFIG = {
-    "fill_color": [0, 144, 255, 120],
-    "line_color": [255, 255, 255],
+    "get_fill_color": [0, 144, 255, 120],
+    "get_line_color": [255, 255, 255],
     "line_width_min_pixels": 1,
     "pickable": True,
     "stroked": True,
@@ -51,7 +51,8 @@ DEFAULT_POLYGON_CONFIG = {
     "zoom": 11,
     "pitch": 0,
     "bearing": 0,
-    "tooltip": "Polygon {id}"
+    "tooltip": "Polygon {id}",
+    "basemap": "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
 }
 
 @fused.udf(cache_max_age=0)
@@ -239,18 +240,15 @@ def pydeck_hex(df=None, config: dict | str | None = None):
     return deck.to_html(as_string=True)
 
 
-@fused.udf(cache_max_age=0)
-def pydeck_polygon(df=None, config: dict | str | None = None):
-    import json
-    import pandas as pd
-    import geopandas as gpd
-    import pydeck as pdk
-    from shapely.geometry import shape, mapping
-
+def pydeck_polygon(df=None, config=None):
     if config is None or config == "":
-        config = DEFAULT_POLYGON_CONFIG
+        cfg = DEFAULT_POLYGON_CONFIG.copy()
     elif isinstance(config, str):
-        config = json.loads(config)
+        cfg = DEFAULT_POLYGON_CONFIG.copy()
+        cfg.update(json.loads(config))
+    else:
+        cfg = DEFAULT_POLYGON_CONFIG.copy()
+        cfg.update(config)
 
     if df is None:
         DATA_URL = "https://raw.githubusercontent.com/visgl/deck.gl-data/master/examples/geojson/vancouver-blocks.json"
@@ -263,43 +261,52 @@ def pydeck_polygon(df=None, config: dict | str | None = None):
         raise ValueError("GeoDataFrame must include a 'geometry' column")
 
     auto_lat, auto_lon = _compute_center_from_polygons(df)
-    center_lat = config.get("center_lat", None)
-    center_lon = config.get("center_lon", None)
-    if center_lat is None:
-        center_lat = auto_lat
-    if center_lon is None:
-        center_lon = auto_lon
+    center_lat = cfg.get("center_lat", auto_lat)
+    center_lon = cfg.get("center_lon", auto_lon)
+
+    if center_lat is None or center_lon is None:
+        raise ValueError("No valid coordinates to center map (no polygons in df)")
 
     df = df.copy()
     df["__polygon__"] = df["geometry"].apply(lambda geom: mapping(geom)["coordinates"])
+
+    tooltip_template = cfg.get("tooltip", DEFAULT_POLYGON_CONFIG["tooltip"])
+    if not tooltip_template:
+        cols = [c for c in df.columns if c not in ["geometry", "__polygon__"]]
+        if len(cols) == 0:
+            tooltip_template = "polygon"
+        else:
+            tooltip_template = "\n".join([f"{c}: {{{c}}}" for c in cols])
+
+    fill_accessor = cfg.get("get_fill_color", DEFAULT_POLYGON_CONFIG["get_fill_color"])
+    line_accessor = cfg.get("get_line_color", DEFAULT_POLYGON_CONFIG["get_line_color"])
+    line_width_px = cfg.get("line_width_min_pixels", DEFAULT_POLYGON_CONFIG["line_width_min_pixels"])
 
     layer = pdk.Layer(
         "PolygonLayer",
         df,
         get_polygon="__polygon__",
-        get_fill_color=config.get("fill_color", DEFAULT_POLYGON_CONFIG["fill_color"]),
-        get_line_color=config.get("line_color", DEFAULT_POLYGON_CONFIG["line_color"]),
-        line_width_min_pixels=config.get(
-            "line_width_min_pixels",
-            DEFAULT_POLYGON_CONFIG["line_width_min_pixels"]
-        ),
-        stroked=config.get("stroked", DEFAULT_POLYGON_CONFIG["stroked"]),
-        filled=config.get("filled", DEFAULT_POLYGON_CONFIG["filled"]),
-        pickable=config.get("pickable", DEFAULT_POLYGON_CONFIG["pickable"]),
+        get_fill_color=fill_accessor,
+        get_line_color=line_accessor,
+        line_width_min_pixels=line_width_px,
+        stroked=cfg.get("stroked", DEFAULT_POLYGON_CONFIG["stroked"]),
+        filled=cfg.get("filled", DEFAULT_POLYGON_CONFIG["filled"]),
+        pickable=cfg.get("pickable", DEFAULT_POLYGON_CONFIG["pickable"]),
     )
 
     view_state = pdk.ViewState(
         latitude=center_lat,
         longitude=center_lon,
-        zoom=config.get("zoom", DEFAULT_POLYGON_CONFIG["zoom"]),
-        pitch=config.get("pitch", DEFAULT_POLYGON_CONFIG["pitch"]),
-        bearing=config.get("bearing", DEFAULT_POLYGON_CONFIG["bearing"]),
+        zoom=cfg.get("zoom", DEFAULT_POLYGON_CONFIG["zoom"]),
+        pitch=cfg.get("pitch", DEFAULT_POLYGON_CONFIG["pitch"]),
+        bearing=cfg.get("bearing", DEFAULT_POLYGON_CONFIG["bearing"]),
     )
 
     deck = pdk.Deck(
         layers=[layer],
         initial_view_state=view_state,
-        tooltip={"text": config.get("tooltip", DEFAULT_POLYGON_CONFIG["tooltip"])},
+        map_style=cfg.get("basemap", DEFAULT_POLYGON_CONFIG["basemap"]),
+        tooltip={"text": tooltip_template},
     )
 
     return deck.to_html(as_string=True)
