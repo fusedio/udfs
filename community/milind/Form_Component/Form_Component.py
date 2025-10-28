@@ -60,6 +60,10 @@ def udf(
             col = f.get("column")
             default_val = f.get("default")
 
+            # Auto-pick column as parameter_name if not specified
+            if raw_param is None:
+                raw_param = col
+
             if isinstance(raw_param, str) and raw_param:
                 channels = [raw_param]
             else:
@@ -81,6 +85,10 @@ def udf(
                 start_col, end_col = cols
             else:
                 start_col, end_col = "start_date", "end_date"
+
+            # Auto-pick column names as parameter_name if not specified
+            if raw_param is None:
+                raw_param = [start_col, end_col]
 
             if isinstance(raw_param, list) and len(raw_param) == 2:
                 channels = [raw_param[0], raw_param[1]]
