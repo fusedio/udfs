@@ -496,30 +496,33 @@ def udf(
         return `${y}-${m}-${da}`;
       }
       try {
-        // DuckDB init
-        const duckdb = await import(
-          "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.1-dev132.0/+esm"
-        );
-        const bundle = await duckdb.selectBundle(duckdb.getJsDelivrBundles());
-        const workerCode = await (await fetch(bundle.mainWorker)).text();
-        const worker = new Worker(
-          URL.createObjectURL(
-            new Blob([workerCode], { type:"application/javascript" })
-          )
-        );
-        const db = new duckdb.AsyncDuckDB(new duckdb.ConsoleLogger(), worker);
-        await db.instantiate(bundle.mainModule);
-        const conn = await db.connect();
-        const resp = await fetch(DATA_URL);
-        if (!resp.ok) {
-          throw new Error(`Failed to fetch data: ${resp.status} ${resp.statusText}`);
+        // DuckDB init (only if DATA_URL is provided)
+        let conn = null;
+        if (DATA_URL) {
+          const duckdb = await import(
+            "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.1-dev132.0/+esm"
+          );
+          const bundle = await duckdb.selectBundle(duckdb.getJsDelivrBundles());
+          const workerCode = await (await fetch(bundle.mainWorker)).text();
+          const worker = new Worker(
+            URL.createObjectURL(
+              new Blob([workerCode], { type:"application/javascript" })
+            )
+          );
+          const db = new duckdb.AsyncDuckDB(new duckdb.ConsoleLogger(), worker);
+          await db.instantiate(bundle.mainModule);
+          conn = await db.connect();
+          const resp = await fetch(DATA_URL);
+          if (!resp.ok) {
+            throw new Error(`Failed to fetch data: ${resp.status} ${resp.statusText}`);
+          }
+          const buf = new Uint8Array(await resp.arrayBuffer());
+          await db.registerFileBuffer("data.parquet", buf);
+          await conn.query(`
+            CREATE OR REPLACE TABLE df AS
+            SELECT * FROM read_parquet('data.parquet');
+          `);
         }
-        const buf = new Uint8Array(await resp.arrayBuffer());
-        await db.registerFileBuffer("data.parquet", buf);
-        await conn.query(`
-          CREATE OR REPLACE TABLE df AS
-          SELECT * FROM read_parquet('data.parquet');
-        `);
         // WHERE builder (bounds doesn't filter)
         function buildWhere(upToIdx) {
           const clauses = [];
@@ -631,6 +634,8 @@ def udf(
           const el = $("field_" + idx);
           if (!el) return;
           if (spec.kind === "select") {
+              // Skip if no data connection
+              if (!conn) return;
               const vals = await loadDistinct(spec.col, buildWhere(idx));
               el.innerHTML = "";
               const ph = document.createElement("option");
@@ -657,6 +662,8 @@ def udf(
                 enableSubmit();
               }
           } else if (spec.kind === "date") {
+              // Skip if no data connection
+              if (!conn) return;
               const { lo, hi } = await loadMinMax(spec.startCol, spec.endCol, buildWhere(idx));
               const minDate = lo || undefined;
               const maxDate = hi || undefined;
