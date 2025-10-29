@@ -113,12 +113,14 @@ def udf(
             alias_base, channels = _alias_and_channels("geo")
             map_height_px = f.get("height", 240)
             geom_col = f.get("column")  # required
+            render_flag = bool(f.get("render", False))
             normalized_fields.append({
                 "kind": "geo",
                 "channels": channels,
                 "aliasBase": alias_base,
                 "mapHeightPx": map_height_px,
                 "geometryCol": geom_col,
+                "render": render_flag,
             })
 
         elif f_type == "bounds":
@@ -514,6 +516,7 @@ def udf(
               data-channels="{{ f.channels | join(',') }}"
               data-alias-base="{{ f.aliasBase }}"
               data-geometry-col="{{ f.geometryCol | default('', true) }}"
+              data-render="{{ 'true' if f.render else 'false' }}"
             ></div>
           </div>
 
@@ -839,7 +842,7 @@ def udf(
         return [minX, minY, maxX, maxY];
       }
 
-      function drawFeatureCollectionOnMap(idx, fc, mapRef) {
+      function drawFeatureCollectionOnMap(idx, fc, mapRef, shouldRender) {
         if (!mapRef) return;
         const sourceId = `geo-src-${idx}`;
         const lineLayerId = `geo-line-${idx}`;
@@ -850,41 +853,47 @@ def udf(
           if (mapRef.getLayer(lineLayerId)) mapRef.removeLayer(lineLayerId);
           if (mapRef.getSource(sourceId))  mapRef.removeSource(sourceId);
 
-          mapRef.addSource(sourceId, {
-            type: "geojson",
-            data: fc
-          });
+          const hasFeatures = fc && fc.features && fc.features.length;
 
-          mapRef.addLayer({
-            id: fillLayerId,
-            type: "fill",
-            source: sourceId,
-            paint: {
-              "fill-color": "#e8ff59",
-              "fill-opacity": 0.15
-            },
-            filter: ["any",
-              ["==", ["geometry-type"], "Polygon"],
-              ["==", ["geometry-type"], "MultiPolygon"]
-            ]
-          });
-
-          mapRef.addLayer({
-            id: lineLayerId,
-            type: "line",
-            source: sourceId,
-            paint: {
-              "line-color": "#e8ff59",
-              "line-width": 2
-            }
-          });
-
-        const bbox = computeBbox(fc);
-          if (bbox) {
-            mapRef.fitBounds([[bbox[0], bbox[1]], [bbox[2], bbox[3]]], {
-              padding: 20,
-              duration: 0
+          if (shouldRender && hasFeatures) {
+            mapRef.addSource(sourceId, {
+              type: "geojson",
+              data: fc
             });
+
+            mapRef.addLayer({
+              id: fillLayerId,
+              type: "fill",
+              source: sourceId,
+              paint: {
+                "fill-color": "#e8ff59",
+                "fill-opacity": 0.15
+              },
+              filter: ["any",
+                ["==", ["geometry-type"], "Polygon"],
+                ["==", ["geometry-type"], "MultiPolygon"]
+              ]
+            });
+
+            mapRef.addLayer({
+              id: lineLayerId,
+              type: "line",
+              source: sourceId,
+              paint: {
+                "line-color": "#e8ff59",
+                "line-width": 2
+              }
+            });
+          }
+
+          if (hasFeatures) {
+            const bbox = computeBbox(fc);
+            if (bbox) {
+              mapRef.fitBounds([[bbox[0], bbox[1]], [bbox[2], bbox[3]]], {
+                padding: 20,
+                duration: 0
+              });
+            }
           }
         }
 
@@ -1030,10 +1039,10 @@ def udf(
           const fc = await loadGeoFeatureCollection(idx, spec, connObj);
           if (fc && fc.features && fc.features.length) {
             geoFeatureCollections[idx] = fc;
-            drawFeatureCollectionOnMap(idx, fc, mapRef);
           } else {
             geoFeatureCollections[idx] = { type:"FeatureCollection", features: [] };
           }
+          drawFeatureCollectionOnMap(idx, geoFeatureCollections[idx], mapRef, !!spec.render);
         };
 
         if (mapInstances[idx]) {
@@ -1364,13 +1373,40 @@ def udf(
               }
 
             } else if (spec.kind === "geo") {
-              // send the current FeatureCollection for this geo block
-              const fc = geoFeatureCollections[i] ||
-                { type: "FeatureCollection", features: [] };
-              globalMerged[spec.aliasBase] = fc;
-              spec.channels.forEach(ch => {
-                messages.push({ channel: ch, payload: fc });
-              });
+              if (spec.render) {
+                const fc = geoFeatureCollections[i] ||
+                  { type: "FeatureCollection", features: [] };
+                globalMerged[spec.aliasBase] = fc;
+                spec.channels.forEach(ch => {
+                  messages.push({ channel: ch, payload: fc });
+                });
+              } else {
+                const m = mapInstances[i];
+                let arr = [-180, -90, 180, 90];
+                if (m && m.getBounds) {
+                  try {
+                    const b = m.getBounds();
+                    arr = [
+                      b.getWest(),
+                      b.getSouth(),
+                      b.getEast(),
+                      b.getNorth()
+                    ].map(v => Number(v.toFixed(6)));
+                  } catch (_e) { /* ignore */ }
+                } else {
+                  const fc = geoFeatureCollections[i];
+                  if (fc && fc.features && fc.features.length) {
+                    const bbox = computeBbox(fc);
+                    if (bbox) {
+                      arr = bbox.map(v => Number(v.toFixed(6)));
+                    }
+                  }
+                }
+                globalMerged[spec.aliasBase] = arr;
+                spec.channels.forEach(ch => {
+                  messages.push({ channel: ch, payload: arr });
+                });
+              }
 
             } else if (spec.kind === "bounds") {
               // send the current viewport bbox
