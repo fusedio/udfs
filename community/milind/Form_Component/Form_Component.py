@@ -922,61 +922,61 @@ def udf(
 
       // ----- DuckDB helpers ------------------------------------------
 
-      function buildWhere(upToIdx) {
-        const clauses = [];
-        for (let i = 0; i < upToIdx; i++) {
-          const spec = FIELDS[i];
-          const el = $("field_" + i);
-          if (!el) continue;
+        function buildWhere(upToIdx) {
+          const clauses = [];
+          for (let i = 0; i < upToIdx; i++) {
+            const spec = FIELDS[i];
+            const el = $("field_" + i);
+            if (!el) continue;
 
-          if (spec.kind === "select") {
-            const v = el.value;
-            if (v) {
-              const safe = v.replace(/'/g, "''");
-              clauses.push(`${spec.col}='${safe}'`);
-            }
-          } else if (spec.kind === "date") {
-            const rng = dateRanges[i];
-            if (rng && rng.start && rng.end) {
-              const safeStart = rng.start.replace(/'/g, "''");
-              const safeEnd   = rng.end.replace(/'/g, "''");
-              clauses.push(
-                `(${spec.endCol} >= '${safeStart}' AND ${spec.startCol} <= '${safeEnd}')`
-              );
+            if (spec.kind === "select") {
+              const v = el.value;
+              if (v) {
+                const safe = v.replace(/'/g, "''");
+                clauses.push(`${spec.col}='${safe}'`);
+              }
+            } else if (spec.kind === "date") {
+              const rng = dateRanges[i];
+              if (rng && rng.start && rng.end) {
+                const safeStart = rng.start.replace(/'/g, "''");
+                const safeEnd   = rng.end.replace(/'/g, "''");
+                clauses.push(
+                  `(${spec.endCol} >= '${safeStart}' AND ${spec.startCol} <= '${safeEnd}')`
+                );
+              }
             }
           }
+          return clauses.length ? "WHERE " + clauses.join(" AND ") : "";
         }
-        return clauses.length ? "WHERE " + clauses.join(" AND ") : "";
-      }
 
       async function loadDistinct(connObj, colName, whereClause) {
-        const q = [
-          "SELECT DISTINCT",
-          colName,
-          "AS v FROM df",
-          whereClause,
-          "ORDER BY 1"
-        ].filter(Boolean).join(" ");
+          const q = [
+            "SELECT DISTINCT",
+            colName,
+            "AS v FROM df",
+            whereClause,
+            "ORDER BY 1"
+          ].filter(Boolean).join(" ");
         const res = await connObj.query(q);
-        return res.toArray().map(r => r.v);
-      }
+          return res.toArray().map(r => r.v);
+        }
 
       async function loadMinMax(connObj, startCol, endCol, whereClause) {
-        const q = [
-          "SELECT",
-          "  MIN(" + startCol + ") AS mn,",
-          "  MAX(" + endCol   + ") AS mx",
-          "FROM df",
-          whereClause
-        ].filter(Boolean).join(" ");
+          const q = [
+            "SELECT",
+            "  MIN(" + startCol + ") AS mn,",
+            "  MAX(" + endCol   + ") AS mx",
+            "FROM df",
+            whereClause
+          ].filter(Boolean).join(" ");
         const res = await connObj.query(q);
-        const row = res.toArray()[0] || {};
-        let lo = row.mn ? String(row.mn).slice(0,10) : "";
-        let hi = row.mx ? String(row.mx).slice(0,10) : "";
-        if (lo && !hi) hi = lo;
-        if (!lo && hi) lo = hi;
-        return { lo, hi };
-      }
+          const row = res.toArray()[0] || {};
+          let lo = row.mn ? String(row.mn).slice(0,10) : "";
+          let hi = row.mx ? String(row.mx).slice(0,10) : "";
+          if (lo && !hi) hi = lo;
+          if (!lo && hi) lo = hi;
+          return { lo, hi };
+        }
 
       // try spatial first (WKB -> WKT), fallback to raw WKB
       async function duckdbGeometryQuery(connObj, geomCol, whereClause) {
@@ -1029,11 +1029,11 @@ def udf(
       }
 
       async function initOrUpdateGeoField(idx, spec, connObj) {
-        const el = $("field_" + idx);
+          const el = $("field_" + idx);
         if (!el) {
           return;
         }
-        mapboxgl.accessToken = MAPBOX_TOKEN;
+          mapboxgl.accessToken = MAPBOX_TOKEN;
 
         const renderGeometry = async (mapRef) => {
           const fc = await loadGeoFeatureCollection(idx, spec, connObj);
@@ -1090,176 +1090,192 @@ def udf(
         mapboxgl.accessToken = MAPBOX_TOKEN;
 
         // parse default bounds
-        const defAttr = el.getAttribute("data-default-bounds");
+          const defAttr = el.getAttribute("data-default-bounds");
         let defB;
-        try {
+          try {
           defB = defAttr ? JSON.parse(defAttr) : spec.defaultBounds;
-        } catch (e) {
+          } catch (e) {
           defB = spec.defaultBounds;
-        }
-        if (!Array.isArray(defB) || defB.length !== 4) {
-          defB = [-180, -90, 180, 90];
-        }
+          }
+          if (!Array.isArray(defB) || defB.length !== 4) {
+            defB = [-180, -90, 180, 90];
+          }
 
         const fitDefault = (mapRef) => {
           fitMapToDefaultBounds(mapRef, defB);
         };
 
-        if (mapInstances[idx]) {
+          if (mapInstances[idx]) {
           fitDefault(mapInstances[idx]);
-          return;
-        }
+            return;
+          }
 
-        const m = new mapboxgl.Map({
-          container: el.id,
-          style: "mapbox://styles/mapbox/dark-v11",
-          attributionControl: false,
-          projection: "mercator",
-          dragRotate: false,
-          pitchWithRotate: false,
-          touchZoomRotate: false,
-          touchPitch: false,
-          renderWorldCopies: false,
-          maxPitch: 0
-        });
-
-        const geocoder = new MapboxGeocoder({
-          accessToken: MAPBOX_TOKEN,
-          mapboxgl: mapboxgl,
-          placeholder: "Search places...",
-          marker: false,
-          collapsed: false
-        });
-        m.addControl(geocoder, 'top-right');
-
-        m.on("load", async () => {
-          setTimeout(async () => {
-            m.resize();
-            fitDefault(m);
-          }, 100);
-        });
-
-        mapInstances[idx] = m;
-      }
-
-      function enableSubmit() {
-        const btn = $("#submit_btn");
-        if (btn && btn.disabled) {
-          btn.disabled = false;
-        }
-      }
-
-      async function hydrateField(idx, connObj) {
-        const spec = FIELDS[idx];
-        const el = $("field_" + idx);
-        if (!el) return;
-
-        if (spec.kind === "select") {
-          if (!connObj) { enableSubmit(); return; }
-          const vals = await loadDistinct(connObj, spec.col, buildWhere(idx));
-          el.innerHTML = "";
-          const ph = document.createElement("option");
-          ph.disabled = true;
-          ph.value = "";
-          ph.textContent = "Select " + spec.col + "…";
-          el.appendChild(ph);
-
-          vals.forEach(v => {
-            const opt = document.createElement("option");
-            opt.value = v ?? "";
-            opt.textContent = v ?? "(null)";
-            el.appendChild(opt);
+          const m = new mapboxgl.Map({
+            container: el.id,
+            style: "mapbox://styles/mapbox/dark-v11",
+            attributionControl: false,
+            projection: "mercator",
+            dragRotate: false,
+            pitchWithRotate: false,
+            touchZoomRotate: false,
+            touchPitch: false,
+            renderWorldCopies: false,
+            maxPitch: 0
           });
 
-          let chosenIndex = 0;
-          if (vals.length > 0) {
-            if (spec.defaultValue && vals.includes(spec.defaultValue)) {
-              chosenIndex = vals.indexOf(spec.defaultValue) + 1;
-            } else {
-              chosenIndex = 1;
-            }
+          const geocoder = new MapboxGeocoder({
+            accessToken: MAPBOX_TOKEN,
+            mapboxgl: mapboxgl,
+            placeholder: "Search places...",
+            marker: false,
+            collapsed: false
+          });
+          m.addControl(geocoder, 'top-right');
+          
+        m.on("load", async () => {
+          setTimeout(async () => {
+              m.resize();
+            fitDefault(m);
+            }, 100);
+          });
+
+          mapInstances[idx] = m;
+        }
+
+        function enableSubmit() {
+          const btn = $("#submit_btn");
+          if (btn && btn.disabled) {
+            btn.disabled = false;
           }
-          el.selectedIndex = chosenIndex;
+        }
+
+      async function hydrateField(idx, connObj) {
+          const spec = FIELDS[idx];
+          const el = $("field_" + idx);
+          if (!el) return;
+
+          if (spec.kind === "select") {
+          if (!connObj) { enableSubmit(); return; }
+          const vals = await loadDistinct(connObj, spec.col, buildWhere(idx));
+              el.innerHTML = "";
+              const ph = document.createElement("option");
+              ph.disabled = true;
+              ph.value = "";
+              ph.textContent = "Select " + spec.col + "…";
+              el.appendChild(ph);
+
+              vals.forEach(v => {
+                const opt = document.createElement("option");
+                opt.value = v ?? "";
+                opt.textContent = v ?? "(null)";
+                el.appendChild(opt);
+              });
+
+              let chosenIndex = 0;
+              if (vals.length > 0) {
+                if (spec.defaultValue && vals.includes(spec.defaultValue)) {
+                  chosenIndex = vals.indexOf(spec.defaultValue) + 1;
+                } else {
+                  chosenIndex = 1;
+                }
+              }
+              el.selectedIndex = chosenIndex;
           if (chosenIndex !== 0) enableSubmit();
 
-        } else if (spec.kind === "date") {
-          if (!connObj) { enableSubmit(); return; }
-          const { lo, hi } = await loadMinMax(connObj, spec.startCol, spec.endCol, buildWhere(idx));
-          const minDate = lo || undefined;
-          const maxDate = hi || undefined;
-          let initialRange;
-          if (spec.defaultValue && minDate && maxDate) {
-            if (spec.defaultValue >= minDate && spec.defaultValue <= maxDate) {
-              initialRange = [spec.defaultValue, spec.defaultValue];
-            }
-          }
-          if (!initialRange) {
-            if (lo && hi) {
-              initialRange = [lo, hi];
-            } else if (lo) {
-              initialRange = [lo];
-            }
-          }
+          } else if (spec.kind === "date") {
+          let minDate;
+          let maxDate;
+              let initialRange;
 
-          if (pickers[idx]) {
-            const inst = pickers[idx];
-            inst.set("minDate", minDate);
-            inst.set("maxDate", maxDate);
-            if (initialRange) {
-              inst.setDate(initialRange, true);
-            } else {
-              inst.clear();
-            }
-            if (initialRange && initialRange.length) {
-              const startISO = initialRange[0];
-              const endISO   = initialRange[1] || initialRange[0] || "";
-              dateRanges[idx] = { start: startISO, end: endISO };
-            }
-            enableSubmit();
-          } else {
-            pickers[idx] = flatpickr(el, {
-              mode: "range",
-              dateFormat: "Y-m-d",
-              minDate,
-              maxDate,
-              defaultDate: initialRange,
-              onChange: async (selectedDates) => {
-                enableSubmit();
-                const start = selectedDates[0] ? iso(selectedDates[0]) : "";
-                const end   = selectedDates[1]
-                  ? iso(selectedDates[1])
-                  : (selectedDates[0] ? iso(selectedDates[0]) : "");
-                dateRanges[idx] = { start, end };
-                await hydrateDownstream(idx + 1, connObj);
+          if (connObj) {
+            const { lo, hi } = await loadMinMax(connObj, spec.startCol, spec.endCol, buildWhere(idx));
+            minDate = lo || undefined;
+            maxDate = hi || undefined;
+
+              if (spec.defaultValue && minDate && maxDate) {
+                if (spec.defaultValue >= minDate && spec.defaultValue <= maxDate) {
+                  initialRange = [spec.defaultValue, spec.defaultValue];
+                }
               }
-            });
-
-            if (initialRange && initialRange.length) {
-              const startISO = initialRange[0];
-              const endISO   = initialRange[1] || initialRange[0] || "";
-              dateRanges[idx] = { start: startISO, end: endISO };
+              if (!initialRange) {
+                if (lo && hi) {
+                  initialRange = [lo, hi];
+                } else if (lo) {
+                  initialRange = [lo];
+                }
+              }
+          } else {
+            const def = spec.defaultValue;
+            if (Array.isArray(def) && def.length) {
+              const start = def[0];
+              const end = def[1] || def[0];
+              if (start) {
+                initialRange = end ? [start, end] : [start];
+              }
+            } else if (typeof def === "string" && def) {
+              initialRange = [def, def];
             }
-            enableSubmit();
           }
+
+              if (pickers[idx]) {
+                const inst = pickers[idx];
+                inst.set("minDate", minDate);
+                inst.set("maxDate", maxDate);
+                if (initialRange) {
+                  inst.setDate(initialRange, true);
+                } else {
+                  inst.clear();
+                }
+                if (initialRange && initialRange.length) {
+                  const startISO = initialRange[0];
+                  const endISO   = initialRange[1] || initialRange[0] || "";
+                  dateRanges[idx] = { start: startISO, end: endISO };
+                }
+                enableSubmit();
+              } else {
+                pickers[idx] = flatpickr(el, {
+                  mode: "range",
+                  dateFormat: "Y-m-d",
+                  minDate,
+                  maxDate,
+                  defaultDate: initialRange,
+                  onChange: async (selectedDates) => {
+                    enableSubmit();
+                    const start = selectedDates[0] ? iso(selectedDates[0]) : "";
+                    const end   = selectedDates[1]
+                      ? iso(selectedDates[1])
+                      : (selectedDates[0] ? iso(selectedDates[0]) : "");
+                    dateRanges[idx] = { start, end };
+                await hydrateDownstream(idx + 1, connObj);
+                  }
+                });
+
+                if (initialRange && initialRange.length) {
+                  const startISO = initialRange[0];
+                  const endISO   = initialRange[1] || initialRange[0] || "";
+                  dateRanges[idx] = { start: startISO, end: endISO };
+                }
+                enableSubmit();
+              }
 
         } else if (spec.kind === "geo") {
           await initOrUpdateGeoField(idx, spec, connObj);
           enableSubmit();
 
-        } else if (spec.kind === "bounds") {
+          } else if (spec.kind === "bounds") {
           await initOrUpdateBoundsField(idx, spec);
-          enableSubmit();
+              enableSubmit();
 
-        } else if (spec.kind === "text_input") {
-          if (spec.defaultValue) {
-            textValues[idx] = spec.defaultValue;
+          } else if (spec.kind === "text_input") {
+              if (spec.defaultValue) {
+                textValues[idx] = spec.defaultValue;
+              }
+              enableSubmit();
           }
-          enableSubmit();
         }
-      }
 
       async function hydrateDownstream(fromIdx, connObj) {
-        for (let i = fromIdx; i < FIELDS.length; i++) {
+          for (let i = fromIdx; i < FIELDS.length; i++) {
           await hydrateField(i, connObj);
         }
       }
