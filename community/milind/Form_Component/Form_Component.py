@@ -6,35 +6,34 @@ def udf(
         "parameter_name": "form",
         "filter": [
             {
-                "column": "mission",
+                "column": "location",
                 "type": "selectbox",
-                "default": "goes16",
-                "parameter_name": "mis"
+                "default": "Midtown Manhattan",
+                "parameter_name": "loc"
+            },
+
+            {
+                # NEW COMPONENT
+                "type": "geo",
+                "parameter_name": "region_geom",
+                "height": 240,
+                "column": "geometry"  # <- geometry column in parquet
             },
             {
-                "column": "product_name",
-                "type": "selectbox",
-                "default": "ABI",
-                "parameter_name": "prod"
-            },
-            {
-                "column": ["start_date", "end_date"],
-                "type": "daterange",
-                "parameter_name": ["start_meow", "end"]
-            },
-            {
+                # keep old bounds, now it's JUST bbox picker
                 "type": "bounds",
-                "parameter_name": "bounds",
+                "parameter_name": "bbox",
                 "default": [-125, 24, -66, 49],
                 "height": 240
             },
             {
                 "type": "text_input",
                 "default": "Sample text",
-                "parameter_name": "text"
+                "parameter_name": "note"
             },
         ],
-        "data_url": "https://unstable.udf.ai/fsh_aotlErnaYWdIlKcGg6huq/run?dtype_out_raster=png&dtype_out_vector=parquet"
+        "data_url": "https://unstable.udf.ai/fsh_9zLQaf2GUqTsmQLvJqVAO/run?dtype_out_raster=png&dtype_out_vector=parquet"
+
     },
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
 ):
@@ -56,20 +55,21 @@ def udf(
         f_type = f.get("type")
         raw_param = f.get("parameter_name")
 
+        # helper: get alias/channels
+        def _alias_and_channels(default_alias):
+            if isinstance(raw_param, str) and raw_param:
+                return raw_param, [raw_param]
+            else:
+                return default_alias, []
+
         if f_type == "selectbox":
             col = f.get("column")
             default_val = f.get("default")
 
-            # Auto-pick column as parameter_name if not specified
             if raw_param is None:
                 raw_param = col
 
-            if isinstance(raw_param, str) and raw_param:
-                channels = [raw_param]
-            else:
-                channels = []
-
-            alias_base = channels[0] if channels else col
+            alias_base, channels = _alias_and_channels(col)
 
             normalized_fields.append({
                 "kind": "select",
@@ -86,7 +86,6 @@ def udf(
             else:
                 start_col, end_col = "start_date", "end_date"
 
-            # Auto-pick column names as parameter_name if not specified
             if raw_param is None:
                 raw_param = [start_col, end_col]
 
@@ -109,13 +108,22 @@ def udf(
                 "aliasBase": alias_base,
             })
 
+        elif f_type == "geo":
+            # new component: renders geometries, submits FeatureCollection
+            alias_base, channels = _alias_and_channels("geo")
+            map_height_px = f.get("height", 240)
+            geom_col = f.get("column")  # required
+            normalized_fields.append({
+                "kind": "geo",
+                "channels": channels,
+                "aliasBase": alias_base,
+                "mapHeightPx": map_height_px,
+                "geometryCol": geom_col,
+            })
+
         elif f_type == "bounds":
-            if isinstance(raw_param, str) and raw_param:
-                channels = [raw_param]
-                alias_base = raw_param
-            else:
-                channels = []
-                alias_base = "bounds"
+            # old bbox picker (no geometry drawing now)
+            alias_base, channels = _alias_and_channels("bounds")
 
             default_bounds = f.get("default", [-180, -90, 180, 90])
             map_height_px = f.get("height", 240)
@@ -129,12 +137,7 @@ def udf(
             })
 
         elif f_type == "text_input":
-            if isinstance(raw_param, str) and raw_param:
-                channels = [raw_param]
-                alias_base = raw_param
-            else:
-                channels = []
-                alias_base = "text_input"
+            alias_base, channels = _alias_and_channels("text_input")
 
             default_val = f.get("default", "")
             placeholder = f.get("placeholder", "")
@@ -148,6 +151,7 @@ def udf(
             })
 
         else:
+            # unknown type, skip
             pass
 
     GLOBAL_PARAM_NAME_JS = json.dumps(global_param_name)
@@ -155,7 +159,6 @@ def udf(
     FIELDS_JS = json.dumps(normalized_fields)
     MAPBOX_TOKEN_JS = json.dumps(mapbox_token)
 
-    # template
     template_src = r"""<!doctype html>
 <html lang="en">
 <head>
@@ -194,7 +197,6 @@ def udf(
       display: flex;
       flex-direction: column;
       gap: 20px;
-      /* so last control isn't covered by sticky submit */
       padding-bottom: 96px;
     }
     .form-field {
@@ -229,13 +231,11 @@ def udf(
     input:focus {
       border-color: var(--primary);
     }
-    /* sticky footer container */
     .submit-bar-wrapper {
       position: fixed;
       left: 0;
       right: 0;
       bottom: 0;
-      /* transparent background so you can see page behind edges */
       background: linear-gradient(
         to top,
         rgba(18,18,18,0.9) 0%,
@@ -245,10 +245,9 @@ def udf(
       padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
       display: flex;
       justify-content: center;
-      pointer-events: none; /* we'll re-enable on the button */
+      pointer-events: none;
       z-index: 9999;
     }
-    /* the actual button */
     .submit-btn {
       width: 100%;
       max-width: 480px;
@@ -270,7 +269,7 @@ def udf(
       box-shadow:
         0 12px 32px rgba(232,255,89,0.2),
         0 2px 4px rgba(0,0,0,0.8);
-      pointer-events: auto; /* re-enable click on the button itself */
+      pointer-events: auto;
     }
     .submit-btn:hover:not(:disabled) {
       background: var(--primary-dark);
@@ -287,18 +286,16 @@ def udf(
         0 6px 16px rgba(0,0,0,0.6),
         0 1px 2px rgba(0,0,0,0.8);
     }
-    /* map container */
-    .bounds-map {
+    .map-container {
       width: 100%;
       border-radius: 8px;
       border: 1px solid var(--border);
       overflow: hidden;
     }
-    .bounds-map .mapboxgl-canvas-container,
-    .bounds-map .mapboxgl-canvas {
+    .map-container .mapboxgl-canvas-container,
+    .map-container .mapboxgl-canvas {
       width: 100% !important;
     }
-    /* loader */
     #loaderOverlay {
       display: flex;
       flex-direction: column;
@@ -334,93 +331,6 @@ def udf(
       font-size: 13px;
       line-height: 1.4;
     }
-    /* flatpickr dark theme tweaks */
-    .flatpickr-calendar {
-      background: var(--input-bg) !important;
-      border: 1px solid var(--border) !important;
-      border-radius: 8px !important;
-      box-shadow: 0 16px 32px rgba(0,0,0,0.8) !important;
-      color: var(--text) !important;
-    }
-    .flatpickr-current-month,
-    .flatpickr-current-month input.cur-year {
-      color: var(--text) !important;
-      font-size: 13px !important;
-      font-weight: 500 !important;
-    }
-    .flatpickr-months .flatpickr-prev-month svg,
-    .flatpickr-months .flatpickr-next-month svg {
-      fill: #fff !important; /* simple: always white */
-      stroke: none !important;
-    }
-    /* Year increment/decrement arrows next to input */
-    .flatpickr-current-month .numInputWrapper span.arrowUp:after {
-      border-bottom-color: #fff !important; /* simple: always white */
-    }
-    .flatpickr-current-month .numInputWrapper span.arrowDown:after {
-      border-top-color: #fff !important; /* simple: always white */
-    }
-    .flatpickr-weekday {
-      color: #888 !important;
-      font-size: 11px !important;
-      font-weight: 400 !important;
-    }
-    .flatpickr-day {
-      background: transparent !important;
-      border: 0 !important;
-      color: var(--text) !important;
-      font-weight: 500;
-      border-radius: 9999px !important; /* make base day cells circular */
-    }
-    .flatpickr-day.disabled,
-    .flatpickr-day.notAllowed,
-    .flatpickr-day.prevMonthDay,
-    .flatpickr-day.nextMonthDay {
-      color: #444 !important;
-      background: transparent !important;
-      cursor: default !important;
-    }
-    .flatpickr-day:hover,
-    .flatpickr-day.hover {
-      background: var(--input-hover) !important;
-      color: var(--text) !important;
-      border-radius: 9999px !important; /* circular hover */
-    }
-    .flatpickr-day.inRange {
-      background: rgba(232,255,89,0.2) !important;
-      color: var(--text) !important;
-      border-radius: 9999px !important;
-    }
-    .flatpickr-day.startRange,
-    .flatpickr-day.endRange,
-    .flatpickr-day.selected {
-      background: var(--primary) !important;
-      color: #000 !important;
-      border-radius: 9999px !important; /* circular highlight */
-    }
-    /* Remove default white borders/outlines from flatpickr day cells */
-    .flatpickr-day.selected,
-    .flatpickr-day.startRange,
-    .flatpickr-day.endRange {
-      border: 0 !important;
-      box-shadow: none !important;
-    }
-    .flatpickr-day.inRange {
-      box-shadow: none !important;
-      border-radius: 9999px !important; /* circular in-range cells */
-    }
-    .flatpickr-day:focus,
-    .flatpickr-day:active {
-      outline: none !important;
-      box-shadow: none !important;
-    }
-    .flatpickr-day.today:not(.selected):not(.startRange):not(.endRange) {
-      border: 1px solid var(--primary) !important;
-      color: var(--primary) !important;
-      background: transparent !important;
-      border-radius: 9999px !important; /* circular today ring */
-      box-shadow: 0 0 8px rgba(232,255,89,0.4);
-    }
     /* Mapbox Geocoder dark theme */
     .mapboxgl-ctrl-geocoder {
       min-width: 180px;
@@ -440,6 +350,8 @@ def udf(
     .mapboxgl-ctrl-geocoder input[type="text"]:focus {
       border-color: #888 !important;
       outline: none !important;
+      background: var(--input-bg) !important;
+      color: var(--text) !important;
     }
     .mapboxgl-ctrl-geocoder input[type="text"]::placeholder {
       color: #888 !important;
@@ -479,8 +391,8 @@ def udf(
       margin-top: 4px !important;
       width: 16px !important;
       height: 16px !important;
+      fill: #bbb !important;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -489,6 +401,7 @@ def udf(
       <div class="spinner"></div>
       <div>Loading…</div>
     </div>
+
     <div id="formContent">
       {% for f in fields %}
         {% if f.kind == "select" %}
@@ -505,6 +418,7 @@ def udf(
               <option disabled selected value="">Select {{ f.col }}…</option>
             </select>
           </div>
+
         {% elif f.kind == "date" %}
           <div class="form-field">
             <label for="field_{{ loop.index0 }}">{{ f.startCol }} / {{ f.endCol }}</label>
@@ -521,12 +435,27 @@ def udf(
               readonly
             />
           </div>
+
+        {% elif f.kind == "geo" %}
+          <div class="form-field">
+            <label>Region Geometry</label>
+            <div
+              id="field_{{ loop.index0 }}"
+              class="map-container"
+              style="height: {{ f.mapHeightPx }}px"
+              data-kind="geo"
+              data-channels="{{ f.channels | join(',') }}"
+              data-alias-base="{{ f.aliasBase }}"
+              data-geometry-col="{{ f.geometryCol | default('', true) }}"
+            ></div>
+          </div>
+
         {% elif f.kind == "bounds" %}
           <div class="form-field">
             <label>Bounds</label>
             <div
               id="field_{{ loop.index0 }}"
-              class="bounds-map"
+              class="map-container"
               style="height: {{ f.mapHeightPx }}px"
               data-kind="bounds"
               data-channels="{{ f.channels | join(',') }}"
@@ -534,6 +463,7 @@ def udf(
               data-default-bounds='{{ f.defaultBounds | tojson }}'
             ></div>
           </div>
+
         {% elif f.kind == "text_input" %}
           <div class="form-field">
             <label for="field_{{ loop.index0 }}">{{ f.aliasBase }}</label>
@@ -552,30 +482,36 @@ def udf(
       {% endfor %}
     </div>
   </div>
-  <!-- sticky footer with inset button -->
+
   <div class="submit-bar-wrapper">
     <button id="submit_btn" class="submit-btn" disabled>Submit</button>
   </div>
+
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
   <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+
   <script type="module">
     (async () => {
       const GLOBAL_PARAM_NAME = {{ GLOBAL_PARAM_NAME_JS | safe }};
       const DATA_URL  = {{ DATA_URL_JS | safe }};
       const FIELDS    = {{ FIELDS_JS | safe }};
       const MAPBOX_TOKEN = {{ MAPBOX_TOKEN_JS | safe }};
+
       const $ = (selector) => {
         if (selector.startsWith('#')) {
           return document.getElementById(selector.slice(1));
         }
         return document.getElementById(selector);
       };
+
       // local state
       const pickers = {};
       const dateRanges = {};
-      const mapInstances = {};
+      const mapInstances = {};     // idx -> mapboxgl.Map
       const textValues = {};
+      const geoFeatureCollections = {}; // idx -> FeatureCollection (for "geo")
+
       function showForm() {
         $("#loaderOverlay").classList.add("hidden");
         $("#formContent").classList.add("loaded");
@@ -593,8 +529,695 @@ def udf(
         const da = String(d.getDate()).padStart(2, "0");
         return `${y}-${m}-${da}`;
       }
+
+      // ----- geometry helpers (WKB/WKT/GeoJSON -> FeatureCollection) -----
+
+      function readFloat64LE(view, offset) { return view.getFloat64(offset, true); }
+      function readUint32LE(view, offset) { return view.getUint32(offset, true); }
+      function readUint8(view, offset)    { return view.getUint8(offset); }
+
+      function wkbToGeoJSONGeom(buf) {
+        if (!(buf instanceof Uint8Array)) return null;
+        const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+
+        const byteOrder = readUint8(view, 0);
+        if (byteOrder !== 1) {
+          console.warn("[wkb] only little-endian supported, got", byteOrder);
+          return null;
+        }
+
+        const geomType = readUint32LE(view, 1);
+
+        function readPoint(off0) {
+          const x = readFloat64LE(view, off0);
+          const y = readFloat64LE(view, off0 + 8);
+          return { coords: [x, y], bytes: 16 };
+        }
+
+        function readLineString(off0) {
+          const numPoints = readUint32LE(view, off0);
+          let off = off0 + 4;
+          const coords = [];
+          for (let i = 0; i < numPoints; i++) {
+            const { coords: xy, bytes } = readPoint(off);
+            coords.push(xy);
+            off += bytes;
+          }
+          return { geom: { type: "LineString", coordinates: coords }, bytes: off - off0 };
+        }
+
+        function readPolygon(off0) {
+          const numRings = readUint32LE(view, off0);
+          let off = off0 + 4;
+          const rings = [];
+          for (let r = 0; r < numRings; r++) {
+            const numPoints = readUint32LE(view, off);
+            off += 4;
+            const ringCoords = [];
+            for (let i = 0; i < numPoints; i++) {
+              const { coords: xy, bytes } = readPoint(off);
+              ringCoords.push(xy);
+              off += bytes;
+            }
+            rings.push(ringCoords);
+          }
+          return { geom: { type: "Polygon", coordinates: rings }, bytes: off - off0 };
+        }
+
+        function readMultiPolygon(off0) {
+          const numPolygons = readUint32LE(view, off0);
+          let off = off0 + 4;
+          const polys = [];
+          for (let p = 0; p < numPolygons; p++) {
+            const byteOrderInner = readUint8(view, off);
+            if (byteOrderInner !== 1) {
+              console.warn("[wkb] inner polygon not little-endian");
+              return null;
+            }
+            const innerType = readUint32LE(view, off + 1);
+            if (innerType !== 3) {
+              console.warn("[wkb] expected Polygon(3) in MultiPolygon, got", innerType);
+              return null;
+            }
+            const parseInnerPolygon = (o0) => {
+              const numRings = readUint32LE(view, o0);
+              let o = o0 + 4;
+              const rings = [];
+              for (let r = 0; r < numRings; r++) {
+                const numPoints = readUint32LE(view, o);
+                o += 4;
+                const ringCoords = [];
+                for (let i = 0; i < numPoints; i++) {
+                  const { coords: xy, bytes } = readPoint(o);
+                  ringCoords.push(xy);
+                  o += bytes;
+                }
+                rings.push(ringCoords);
+              }
+              return { geom: { type: "Polygon", coordinates: rings }, bytes: o - o0 };
+            };
+
+            const { geom: polyGeom, bytes: polyBytes } = parseInnerPolygon(off + 5);
+            polys.push(polyGeom.coordinates);
+            off += 5 + polyBytes;
+          }
+          return { geom: { type: "MultiPolygon", coordinates: polys }, bytes: off - off0 };
+        }
+
+        const bodyOffset = 5;
+        if (geomType === 1) {
+          const { coords } = readPoint(bodyOffset);
+          return { type: "Point", coordinates: coords };
+        }
+        if (geomType === 2) {
+          const { geom } = readLineString(bodyOffset);
+          return geom;
+        }
+        if (geomType === 3) {
+          const { geom } = readPolygon(bodyOffset);
+          return geom;
+        }
+        if (geomType === 6) {
+          const { geom } = readMultiPolygon(bodyOffset);
+          return geom;
+        }
+        console.warn("[wkb] unsupported geomType", geomType);
+        return null;
+      }
+
+      function wktToGeoJSON(wktStr) {
+        if (!wktStr || typeof wktStr !== "string") return null;
+        const typeMatch = wktStr.match(/^\s*(\w+)\s*\(/i);
+        if (!typeMatch) return null;
+        const type = typeMatch[1].toUpperCase();
+
+        function parseCoords(text) {
+          return text.trim().split(/\s*,\s*/).map(pair => {
+            const nums = pair.trim().split(/\s+/).map(Number);
+            return [nums[0], nums[1]];
+          });
+        }
+
+        if (type === "POINT") {
+          const body = wktStr.replace(/^POINT\s*\(/i, "").replace(/\)\s*$/, "");
+          const nums = body.trim().split(/\s+/).map(Number);
+          return { type: "Point", coordinates: [nums[0], nums[1]] };
+        }
+        if (type === "LINESTRING") {
+          const body = wktStr.replace(/^LINESTRING\s*\(/i, "").replace(/\)\s*$/, "");
+          return { type: "LineString", coordinates: parseCoords(body) };
+        }
+        if (type === "POLYGON") {
+          const body = wktStr.replace(/^POLYGON\s*\(/i, "").replace(/\)\s*$/, "");
+          const rings = body.split(/\)\s*,\s*\(/).map(s => s.replace(/^\(/, "").replace(/\)$/, ""));
+          return {
+            type: "Polygon",
+            coordinates: rings.map(r => parseCoords(r))
+          };
+        }
+        if (type === "MULTIPOLYGON") {
+          const body = wktStr.replace(/^MULTIPOLYGON\s*\(/i, "").replace(/\)\s*$/, "");
+          const polys = body.split(/\)\s*,\s*\(\s*\(/).map((polyStr, idx, arr) => {
+            let p = polyStr;
+            if (idx === 0) p = p.replace(/^\s*\(\(/, "");
+            if (idx === arr.length - 1) p = p.replace(/\)\)\s*$/, "");
+            const rings = p.split(/\)\s*,\s*\(/).map(r => r.replace(/^\(/, "").replace(/\)$/, ""));
+            return rings.map(ring => parseCoords(ring));
+          });
+          return {
+            type: "MultiPolygon",
+            coordinates: polys
+          };
+        }
+        return null;
+      }
+
+      function geomValToFeature(geomVal) {
+        if (!geomVal) return null;
+
+        // binary WKB from DuckDB fallback
+        if (geomVal instanceof Uint8Array) {
+          const gjGeom = wkbToGeoJSONGeom(geomVal);
+          if (gjGeom) {
+            return { type: "Feature", geometry: gjGeom, properties: {} };
+          }
+          return null;
+        }
+
+        if (typeof geomVal === "string") {
+          // try GeoJSON first
+          try {
+            const parsed = JSON.parse(geomVal);
+            if (parsed.type === "Feature") return parsed;
+            if (parsed.type === "FeatureCollection") {
+              if (parsed.features && parsed.features.length > 0) {
+                return parsed.features[0];
+              }
+              return null;
+            }
+            if (
+              parsed.type === "Polygon" ||
+              parsed.type === "MultiPolygon" ||
+              parsed.type === "LineString" ||
+              parsed.type === "MultiLineString" ||
+              parsed.type === "Point"
+            ) {
+              return { type: "Feature", geometry: parsed, properties: {} };
+            }
+          } catch (_) {
+            // not JSON, treat as WKT
+          }
+
+          const gjGeom2 = wktToGeoJSON(geomVal);
+          if (gjGeom2) {
+            return { type: "Feature", geometry: gjGeom2, properties: {} };
+          }
+
+          return null;
+        }
+
+        console.warn("[geomValToFeature] unsupported geomVal type", typeof geomVal, geomVal);
+        return null;
+      }
+
+      function featureCollectionFromList(vals) {
+        const feats = [];
+        for (const v of vals) {
+          const f = geomValToFeature(v);
+          if (f) feats.push(f);
+        }
+        return { type: "FeatureCollection", features: feats };
+      }
+
+      function computeBbox(fc) {
+        let minX= Infinity, minY= Infinity, maxX= -Infinity, maxY= -Infinity;
+
+        function visitCoords(coords) {
+          if (!coords) return;
+          if (typeof coords[0] === "number" && typeof coords[1] === "number") {
+            const x = coords[0];
+            const y = coords[1];
+            if (x < minX) minX = x;
+            if (y < minY) minY = y;
+            if (x > maxX) maxX = x;
+            if (y > maxY) maxY = y;
+            return;
+          }
+          for (const c of coords) visitCoords(c);
+        }
+
+        for (const f of fc.features || []) {
+          if (f && f.geometry) {
+            visitCoords(f.geometry.coordinates);
+          }
+        }
+        if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) {
+          return null;
+        }
+        return [minX, minY, maxX, maxY];
+      }
+
+      function drawFeatureCollectionOnMap(idx, fc, mapRef) {
+        if (!mapRef) return;
+        const sourceId = `geo-src-${idx}`;
+        const lineLayerId = `geo-line-${idx}`;
+        const fillLayerId = `geo-fill-${idx}`;
+
+        function applyLayers() {
+          if (mapRef.getLayer(fillLayerId)) mapRef.removeLayer(fillLayerId);
+          if (mapRef.getLayer(lineLayerId)) mapRef.removeLayer(lineLayerId);
+          if (mapRef.getSource(sourceId))  mapRef.removeSource(sourceId);
+
+          mapRef.addSource(sourceId, {
+            type: "geojson",
+            data: fc
+          });
+
+          mapRef.addLayer({
+            id: fillLayerId,
+            type: "fill",
+            source: sourceId,
+            paint: {
+              "fill-color": "#e8ff59",
+              "fill-opacity": 0.15
+            },
+            filter: ["any",
+              ["==", ["geometry-type"], "Polygon"],
+              ["==", ["geometry-type"], "MultiPolygon"]
+            ]
+          });
+
+          mapRef.addLayer({
+            id: lineLayerId,
+            type: "line",
+            source: sourceId,
+            paint: {
+              "line-color": "#e8ff59",
+              "line-width": 2
+            }
+          });
+
+          const bbox = computeBbox(fc);
+          console.log("[geo] bbox used to fit:", bbox);
+          if (bbox) {
+            mapRef.fitBounds([[bbox[0], bbox[1]], [bbox[2], bbox[3]]], {
+              padding: 20,
+              duration: 0
+            });
+          }
+        }
+
+        if (!mapRef.isStyleLoaded()) {
+          console.log("[geo] map style not loaded yet, waiting...");
+          mapRef.once("load", () => {
+            console.log("[geo] map load event fired (late), applying layers");
+            applyLayers();
+          });
+        } else {
+          applyLayers();
+        }
+      }
+
+      function fitMapToDefaultBounds(mapRef, defB) {
+        const apply = () => {
+          mapRef.fitBounds([[defB[0], defB[1]], [defB[2], defB[3]]], {
+            padding: 20,
+            duration: 0
+          });
+        };
+        if (!mapRef.isStyleLoaded()) {
+          mapRef.once("load", apply);
+        } else {
+          apply();
+        }
+      }
+
+      // ----- DuckDB helpers ------------------------------------------
+
+      function buildWhere(upToIdx) {
+        const clauses = [];
+        for (let i = 0; i < upToIdx; i++) {
+          const spec = FIELDS[i];
+          const el = $("field_" + i);
+          if (!el) continue;
+
+          if (spec.kind === "select") {
+            const v = el.value;
+            if (v) {
+              const safe = v.replace(/'/g, "''");
+              clauses.push(`${spec.col}='${safe}'`);
+            }
+          } else if (spec.kind === "date") {
+            const rng = dateRanges[i];
+            if (rng && rng.start && rng.end) {
+              const safeStart = rng.start.replace(/'/g, "''");
+              const safeEnd   = rng.end.replace(/'/g, "''");
+              clauses.push(
+                `(${spec.endCol} >= '${safeStart}' AND ${spec.startCol} <= '${safeEnd}')`
+              );
+            }
+          }
+        }
+        return clauses.length ? "WHERE " + clauses.join(" AND ") : "";
+      }
+
+      async function loadDistinct(connObj, colName, whereClause) {
+        const q = [
+          "SELECT DISTINCT",
+          colName,
+          "AS v FROM df",
+          whereClause,
+          "ORDER BY 1"
+        ].filter(Boolean).join(" ");
+        const res = await connObj.query(q);
+        return res.toArray().map(r => r.v);
+      }
+
+      async function loadMinMax(connObj, startCol, endCol, whereClause) {
+        const q = [
+          "SELECT",
+          "  MIN(" + startCol + ") AS mn,",
+          "  MAX(" + endCol   + ") AS mx",
+          "FROM df",
+          whereClause
+        ].filter(Boolean).join(" ");
+        const res = await connObj.query(q);
+        const row = res.toArray()[0] || {};
+        let lo = row.mn ? String(row.mn).slice(0,10) : "";
+        let hi = row.mx ? String(row.mx).slice(0,10) : "";
+        if (lo && !hi) hi = lo;
+        if (!lo && hi) lo = hi;
+        return { lo, hi };
+      }
+
+      // try spatial first (WKB -> WKT), fallback to raw WKB
+      async function duckdbGeometryQuery(connObj, geomCol, whereClause) {
+        const wktQuery = [
+          "SELECT",
+          "ST_AsText(ST_GeomFromWKB(" + geomCol + ")) AS g",
+          "FROM df",
+          whereClause
+        ].join(" ");
+
+        try {
+          console.log("[geo] trying spatial query:", wktQuery);
+          const res1 = await connObj.query(wktQuery);
+          const rows1 = res1.toArray();
+          if (rows1.length > 0 && rows1[0].g !== undefined) {
+            console.log("[geo] spatial query success, rows:", rows1.length);
+            return rows1.map(r => r.g); // strings (WKT)
+          }
+          console.warn("[geo] spatial query had no g, falling back");
+        } catch (err) {
+          console.warn("[geo] spatial query failed, falling back:", err);
+        }
+
+        const rawQuery = [
+          "SELECT",
+          geomCol,
+          "AS g FROM df",
+          whereClause
+        ].join(" ");
+
+        console.log("[geo] fallback raw query:", rawQuery);
+        const res2 = await connObj.query(rawQuery);
+        const rows2 = res2.toArray();
+        console.log("[geo] raw rows:", rows2.length, rows2.slice(0,3));
+        return rows2.map(r => r.g);
+      }
+
+      async function loadGeoFeatureCollection(idx, spec, connObj) {
+        if (!connObj) {
+          console.warn("[geo] no DuckDB conn, cannot load geometry");
+          return null;
+        }
+        if (!spec.geometryCol) {
+          console.warn("[geo] no geometryCol on spec", spec);
+          return null;
+        }
+
+        const whereClause = buildWhere(idx);
+        const vals = await duckdbGeometryQuery(connObj, spec.geometryCol, whereClause);
+        const clean = vals.filter(v => v !== null && v !== undefined);
+        if (!clean.length) {
+          console.warn("[geo] no geometry values after query");
+          return null;
+        }
+
+        const fc = featureCollectionFromList(clean);
+        console.log("[geo] FeatureCollection features:", fc.features.length, fc);
+        return fc;
+      }
+
+      async function initOrUpdateGeoField(idx, spec, connObj) {
+        const el = $("field_" + idx);
+        if (!el) {
+          console.warn("[geo] no DOM element for field_" + idx);
+          return;
+        }
+        mapboxgl.accessToken = MAPBOX_TOKEN;
+
+        const renderGeometry = async (mapRef) => {
+          console.log("[geo] renderGeometry start; col:", spec.geometryCol);
+          const fc = await loadGeoFeatureCollection(idx, spec, connObj);
+          if (fc && fc.features && fc.features.length) {
+            geoFeatureCollections[idx] = fc;
+            console.log("[geo] drawing", fc.features.length, "features on map");
+            drawFeatureCollectionOnMap(idx, fc, mapRef);
+          } else {
+            geoFeatureCollections[idx] = { type:"FeatureCollection", features: [] };
+            console.warn("[geo] no features to draw");
+          }
+        };
+
+        if (mapInstances[idx]) {
+          console.log("[geo] map already exists for idx", idx, " -> updating geometry");
+          await renderGeometry(mapInstances[idx]);
+          return;
+        }
+
+        console.log("[geo] creating new map for idx", idx);
+        const m = new mapboxgl.Map({
+          container: el.id,
+          style: "mapbox://styles/mapbox/dark-v11",
+          attributionControl: false,
+          projection: "mercator",
+          dragRotate: false,
+          pitchWithRotate: false,
+          touchZoomRotate: false,
+          touchPitch: false,
+          renderWorldCopies: false,
+          maxPitch: 0
+        });
+
+        const geocoder = new MapboxGeocoder({
+          accessToken: MAPBOX_TOKEN,
+          mapboxgl: mapboxgl,
+          placeholder: "Search places...",
+          marker: false,
+          collapsed: false
+        });
+        m.addControl(geocoder, 'top-right');
+
+        m.on("load", async () => {
+          console.log("[geo] map load event fired (first init)");
+          setTimeout(async () => {
+            m.resize();
+            await renderGeometry(m);
+          }, 100);
+        });
+
+        mapInstances[idx] = m;
+      }
+
+      async function initOrUpdateBoundsField(idx, spec) {
+        const el = $("field_" + idx);
+        if (!el) {
+          console.warn("[bounds] no DOM element for field_" + idx);
+          return;
+        }
+        mapboxgl.accessToken = MAPBOX_TOKEN;
+
+        // parse default bounds
+        const defAttr = el.getAttribute("data-default-bounds");
+        let defB;
+        try {
+          defB = defAttr ? JSON.parse(defAttr) : spec.defaultBounds;
+        } catch (e) {
+          defB = spec.defaultBounds;
+        }
+        if (!Array.isArray(defB) || defB.length !== 4) {
+          defB = [-180, -90, 180, 90];
+        }
+
+        const fitDefault = (mapRef) => {
+          fitMapToDefaultBounds(mapRef, defB);
+        };
+
+        if (mapInstances[idx]) {
+          console.log("[bounds] map already exists for idx", idx, " -> fit default again");
+          fitDefault(mapInstances[idx]);
+          return;
+        }
+
+        console.log("[bounds] creating new map for idx", idx);
+        const m = new mapboxgl.Map({
+          container: el.id,
+          style: "mapbox://styles/mapbox/dark-v11",
+          attributionControl: false,
+          projection: "mercator",
+          dragRotate: false,
+          pitchWithRotate: false,
+          touchZoomRotate: false,
+          touchPitch: false,
+          renderWorldCopies: false,
+          maxPitch: 0
+        });
+
+        const geocoder = new MapboxGeocoder({
+          accessToken: MAPBOX_TOKEN,
+          mapboxgl: mapboxgl,
+          placeholder: "Search places...",
+          marker: false,
+          collapsed: false
+        });
+        m.addControl(geocoder, 'top-right');
+
+        m.on("load", async () => {
+          console.log("[bounds] map load event fired (first init)");
+          setTimeout(async () => {
+            m.resize();
+            fitDefault(m);
+          }, 100);
+        });
+
+        mapInstances[idx] = m;
+      }
+
+      function enableSubmit() {
+        const btn = $("#submit_btn");
+        if (btn && btn.disabled) {
+          btn.disabled = false;
+        }
+      }
+
+      async function hydrateField(idx, connObj) {
+        const spec = FIELDS[idx];
+        const el = $("field_" + idx);
+        if (!el) return;
+
+        if (spec.kind === "select") {
+          if (!connObj) { enableSubmit(); return; }
+          const vals = await loadDistinct(connObj, spec.col, buildWhere(idx));
+          el.innerHTML = "";
+          const ph = document.createElement("option");
+          ph.disabled = true;
+          ph.value = "";
+          ph.textContent = "Select " + spec.col + "…";
+          el.appendChild(ph);
+
+          vals.forEach(v => {
+            const opt = document.createElement("option");
+            opt.value = v ?? "";
+            opt.textContent = v ?? "(null)";
+            el.appendChild(opt);
+          });
+
+          let chosenIndex = 0;
+          if (vals.length > 0) {
+            if (spec.defaultValue && vals.includes(spec.defaultValue)) {
+              chosenIndex = vals.indexOf(spec.defaultValue) + 1;
+            } else {
+              chosenIndex = 1;
+            }
+          }
+          el.selectedIndex = chosenIndex;
+          if (chosenIndex !== 0) enableSubmit();
+
+        } else if (spec.kind === "date") {
+          if (!connObj) { enableSubmit(); return; }
+          const { lo, hi } = await loadMinMax(connObj, spec.startCol, spec.endCol, buildWhere(idx));
+          const minDate = lo || undefined;
+          const maxDate = hi || undefined;
+          let initialRange;
+          if (spec.defaultValue && minDate && maxDate) {
+            if (spec.defaultValue >= minDate && spec.defaultValue <= maxDate) {
+              initialRange = [spec.defaultValue, spec.defaultValue];
+            }
+          }
+          if (!initialRange) {
+            if (lo && hi) {
+              initialRange = [lo, hi];
+            } else if (lo) {
+              initialRange = [lo];
+            }
+          }
+
+          if (pickers[idx]) {
+            const inst = pickers[idx];
+            inst.set("minDate", minDate);
+            inst.set("maxDate", maxDate);
+            if (initialRange) {
+              inst.setDate(initialRange, true);
+            } else {
+              inst.clear();
+            }
+            if (initialRange && initialRange.length) {
+              const startISO = initialRange[0];
+              const endISO   = initialRange[1] || initialRange[0] || "";
+              dateRanges[idx] = { start: startISO, end: endISO };
+            }
+            enableSubmit();
+          } else {
+            pickers[idx] = flatpickr(el, {
+              mode: "range",
+              dateFormat: "Y-m-d",
+              minDate,
+              maxDate,
+              defaultDate: initialRange,
+              onChange: async (selectedDates) => {
+                enableSubmit();
+                const start = selectedDates[0] ? iso(selectedDates[0]) : "";
+                const end   = selectedDates[1]
+                  ? iso(selectedDates[1])
+                  : (selectedDates[0] ? iso(selectedDates[0]) : "");
+                dateRanges[idx] = { start, end };
+                await hydrateDownstream(idx + 1, connObj);
+              }
+            });
+
+            if (initialRange && initialRange.length) {
+              const startISO = initialRange[0];
+              const endISO   = initialRange[1] || initialRange[0] || "";
+              dateRanges[idx] = { start: startISO, end: endISO };
+            }
+            enableSubmit();
+          }
+
+        } else if (spec.kind === "geo") {
+          await initOrUpdateGeoField(idx, spec, connObj);
+          enableSubmit();
+
+        } else if (spec.kind === "bounds") {
+          await initOrUpdateBoundsField(idx, spec);
+          enableSubmit();
+
+        } else if (spec.kind === "text_input") {
+          if (spec.defaultValue) {
+            textValues[idx] = spec.defaultValue;
+          }
+          enableSubmit();
+        }
+      }
+
+      async function hydrateDownstream(fromIdx, connObj) {
+        for (let i = fromIdx; i < FIELDS.length; i++) {
+          await hydrateField(i, connObj);
+        }
+      }
+
       try {
-        // DuckDB init (only if DATA_URL is provided)
+        // DuckDB init
         let conn = null;
         if (DATA_URL) {
           const duckdb = await import(
@@ -609,7 +1232,17 @@ def udf(
           );
           const db = new duckdb.AsyncDuckDB(new duckdb.ConsoleLogger(), worker);
           await db.instantiate(bundle.mainModule);
+
+          // try spatial extension if available
+          try {
+            await db.loadExtension("spatial");
+            console.log("[duckdb] spatial extension loaded");
+          } catch (e) {
+            console.warn("[duckdb] could not load spatial extension in WASM:", e);
+          }
+
           conn = await db.connect();
+
           const resp = await fetch(DATA_URL);
           if (!resp.ok) {
             throw new Error(`Failed to fetch data: ${resp.status} ${resp.statusText}`);
@@ -621,239 +1254,19 @@ def udf(
             SELECT * FROM read_parquet('data.parquet');
           `);
         }
-        // WHERE builder (bounds doesn't filter)
-        function buildWhere(upToIdx) {
-          const clauses = [];
-          for (let i = 0; i < upToIdx; i++) {
-            const spec = FIELDS[i];
-            const el = $("field_" + i);
-            if (!el) continue;
-            if (spec.kind === "select") {
-              const v = el.value;
-              if (v) {
-                const safe = v.replace(/'/g, "''");
-                clauses.push(`${spec.col}='${safe}'`);
-              }
-            } else if (spec.kind === "date") {
-              const rng = dateRanges[i];
-              if (rng && rng.start && rng.end) {
-                const safeStart = rng.start.replace(/'/g, "''");
-                const safeEnd   = rng.end.replace(/'/g, "''");
-                clauses.push(
-                  `(${spec.endCol} >= '${safeStart}' AND ${spec.startCol} <= '${safeEnd}')`
-                );
-              }
-            }
-          }
-          return clauses.length ? "WHERE " + clauses.join(" AND ") : "";
-        }
-        async function loadDistinct(colName, whereClause) {
-          const q = [
-            "SELECT DISTINCT",
-            colName,
-            "AS v FROM df",
-            whereClause,
-            "ORDER BY 1"
-          ].filter(Boolean).join(" ");
-          const res = await conn.query(q);
-          return res.toArray().map(r => r.v);
-        }
-        async function loadMinMax(startCol, endCol, whereClause) {
-          const q = [
-            "SELECT",
-            "  MIN(" + startCol + ") AS mn,",
-            "  MAX(" + endCol   + ") AS mx",
-            "FROM df",
-            whereClause
-          ].filter(Boolean).join(" ");
-          const res = await conn.query(q);
-          const row = res.toArray()[0] || {};
-          let lo = row.mn ? String(row.mn).slice(0,10) : "";
-          let hi = row.mx ? String(row.mx).slice(0,10) : "";
-          if (lo && !hi) hi = lo;
-          if (!lo && hi) lo = hi;
-          return { lo, hi };
-        }
-        // map init (first time only)
-        function initOrUpdateBoundsField(idx, spec) {
-          const el = $("field_" + idx);
-          if (!el) return;
-          mapboxgl.accessToken = MAPBOX_TOKEN;
-          const defAttr = el.getAttribute("data-default-bounds");
-          let defB = spec.defaultBounds;
-          try {
-            if (defAttr) defB = JSON.parse(defAttr);
-          } catch (e) {
-            /* ignore parse issue */
-          }
-          if (!Array.isArray(defB) || defB.length !== 4) {
-            defB = [-180, -90, 180, 90];
-          }
-          // don't reset if already created
-          if (mapInstances[idx]) {
-            return;
-          }
-          function fitToBounds(m, arr) {
-            m.fitBounds([[arr[0], arr[1]], [arr[2], arr[3]]], {
-              padding: 20,
-              duration: 0
-            });
-          }
-          const m = new mapboxgl.Map({
-            container: el.id,
-            style: "mapbox://styles/mapbox/dark-v11",
-            attributionControl: false,
-            projection: "mercator",
-            dragRotate: false,
-            pitchWithRotate: false,
-            touchZoomRotate: false,
-            touchPitch: false,
-            renderWorldCopies: false,
-            maxPitch: 0
-          });
-          // Add geocoder control (search bar)
-          const geocoder = new MapboxGeocoder({
-            accessToken: MAPBOX_TOKEN,
-            mapboxgl: mapboxgl,
-            placeholder: "Search places...",
-            marker: false,
-            collapsed: false
-          });
-          m.addControl(geocoder, 'top-right');
-          
-          m.on("load", () => {
-            setTimeout(() => {
-              m.resize();
-              fitToBounds(m, defB);
-            }, 100);
-          });
-          mapInstances[idx] = m;
-        }
-        // enable submit button
-        function enableSubmit() {
-          const btn = $("#submit_btn");
-          if (btn && btn.disabled) {
-            btn.disabled = false;
-          }
-        }
-        // hydrate a field
-        async function hydrateField(idx) {
-          const spec = FIELDS[idx];
-          const el = $("field_" + idx);
-          if (!el) return;
-          if (spec.kind === "select") {
-              // Skip if no data connection
-              if (!conn) return;
-              const vals = await loadDistinct(spec.col, buildWhere(idx));
-              el.innerHTML = "";
-              const ph = document.createElement("option");
-              ph.disabled = true;
-              ph.value = "";
-              ph.textContent = "Select " + spec.col + "…";
-              el.appendChild(ph);
-              vals.forEach(v => {
-                const opt = document.createElement("option");
-                opt.value = v ?? "";
-                opt.textContent = v ?? "(null)";
-                el.appendChild(opt);
-              });
-              let chosenIndex = 0;
-              if (vals.length > 0) {
-                if (spec.defaultValue && vals.includes(spec.defaultValue)) {
-                  chosenIndex = vals.indexOf(spec.defaultValue) + 1;
-                } else {
-                  chosenIndex = 1;
-                }
-              }
-              el.selectedIndex = chosenIndex;
-              if (chosenIndex !== 0) {
-                enableSubmit();
-              }
-          } else if (spec.kind === "date") {
-              // Skip if no data connection
-              if (!conn) return;
-              const { lo, hi } = await loadMinMax(spec.startCol, spec.endCol, buildWhere(idx));
-              const minDate = lo || undefined;
-              const maxDate = hi || undefined;
-              let initialRange;
-              if (spec.defaultValue && minDate && maxDate) {
-                if (spec.defaultValue >= minDate && spec.defaultValue <= maxDate) {
-                  initialRange = [spec.defaultValue, spec.defaultValue];
-                }
-              }
-              if (!initialRange) {
-                if (lo && hi) {
-                  initialRange = [lo, hi];
-                } else if (lo) {
-                  initialRange = [lo];
-                }
-              }
-              if (pickers[idx]) {
-                const inst = pickers[idx];
-                inst.set("minDate", minDate);
-                inst.set("maxDate", maxDate);
-                if (initialRange) {
-                  inst.setDate(initialRange, true);
-                } else {
-                  inst.clear();
-                }
-                if (initialRange && initialRange.length) {
-                  const startISO = initialRange[0];
-                  const endISO   = initialRange[1] || initialRange[0] || "";
-                  dateRanges[idx] = { start: startISO, end: endISO };
-                }
-                enableSubmit();
-              } else {
-                pickers[idx] = flatpickr(el, {
-                  mode: "range",
-                  dateFormat: "Y-m-d",
-                  minDate,
-                  maxDate,
-                  defaultDate: initialRange,
-                  onChange: async (selectedDates) => {
-                    enableSubmit();
-                    const start = selectedDates[0] ? iso(selectedDates[0]) : "";
-                    const end   = selectedDates[1]
-                      ? iso(selectedDates[1])
-                      : (selectedDates[0] ? iso(selectedDates[0]) : "");
-                    dateRanges[idx] = { start, end };
-                    await hydrateDownstream(idx + 1);
-                  }
-                });
-                if (initialRange && initialRange.length) {
-                  const startISO = initialRange[0];
-                  const endISO   = initialRange[1] || initialRange[0] || "";
-                  dateRanges[idx] = { start: startISO, end: endISO };
-                }
-                enableSubmit();
-              }
-          } else if (spec.kind === "bounds") {
-              initOrUpdateBoundsField(idx, spec);
-              enableSubmit();
-          } else if (spec.kind === "text_input") {
-              if (spec.defaultValue) {
-                textValues[idx] = spec.defaultValue;
-              }
-              enableSubmit();
-          }
-        }
-        // hydrate downstream
-        async function hydrateDownstream(fromIdx) {
-          for (let i = fromIdx; i < FIELDS.length; i++) {
-            await hydrateField(i);
-          }
-        }
-        // initial load
-        await hydrateDownstream(0);
+
+        // initial hydration of all fields (in order)
+        await hydrateDownstream(0, conn);
         showForm();
-        // listeners
+
+        // change listeners for cascading updates
         FIELDS.forEach((spec, i) => {
           if (spec.kind === "select") {
             const el = $("field_" + i);
             if (!el) return;
             el.addEventListener("change", async () => {
               enableSubmit();
-              await hydrateDownstream(i + 1);
+              await hydrateDownstream(i + 1, conn);
             });
           } else if (spec.kind === "text_input") {
             const el = $("field_" + i);
@@ -864,18 +1277,21 @@ def udf(
             });
           }
         });
-        // snapshot
+
         function makeSnapshot() {
           const globalMerged = {};
           const messages = [];
+
           FIELDS.forEach((spec, i) => {
             const el = $("field_" + i);
+
             if (spec.kind === "select") {
               const val = el ? (el.value || "") : "";
               globalMerged[spec.aliasBase] = val;
               spec.channels.forEach(ch => {
                 messages.push({ channel: ch, payload: val });
               });
+
             } else if (spec.kind === "date") {
               const inst = pickers[i];
               const sel = inst ? inst.selectedDates : [];
@@ -883,6 +1299,7 @@ def udf(
               const end   = sel[1]
                 ? iso(sel[1])
                 : (sel[0] ? iso(sel[0]) : "");
+
               if (spec.channels.length === 2) {
                 const [chStart, chEnd] = spec.channels;
                 if (chStart) globalMerged[chStart] = start;
@@ -895,6 +1312,7 @@ def udf(
                 globalMerged[spec.aliasBase + "_start"] = start;
                 globalMerged[spec.aliasBase + "_end"]   = end;
               }
+
               if (spec.channels.length === 2) {
                 const [chStart, chEnd] = spec.channels;
                 if (chStart) messages.push({ channel: chStart, payload: start });
@@ -906,7 +1324,18 @@ def udf(
                   payload: { start, end }
                 });
               }
+
+            } else if (spec.kind === "geo") {
+              // send the current FeatureCollection for this geo block
+              const fc = geoFeatureCollections[i] ||
+                { type: "FeatureCollection", features: [] };
+              globalMerged[spec.aliasBase] = fc;
+              spec.channels.forEach(ch => {
+                messages.push({ channel: ch, payload: fc });
+              });
+
             } else if (spec.kind === "bounds") {
+              // send the current viewport bbox
               const m = mapInstances[i];
               let arr = spec.defaultBounds || [-180, -90, 180, 90];
               if (m && m.getBounds) {
@@ -918,14 +1347,13 @@ def udf(
                     b.getEast(),
                     b.getNorth()
                   ].map(v => Number(v.toFixed(6)));
-                } catch (_e) {
-                  /* fallback */
-                }
+                } catch (_e) { /* ignore */ }
               }
               globalMerged[spec.aliasBase] = arr;
               spec.channels.forEach(ch => {
                 messages.push({ channel: ch, payload: arr });
               });
+
             } else if (spec.kind === "text_input") {
               const val = textValues[i] || "";
               globalMerged[spec.aliasBase] = val;
@@ -934,14 +1362,17 @@ def udf(
               });
             }
           });
+
           return { globalMerged, messages };
         }
-        // submit
+
         const submitBtn = $("#submit_btn");
         if (submitBtn) {
           submitBtn.addEventListener("click", () => {
             if (submitBtn.disabled) return;
+
             const { globalMerged, messages } = makeSnapshot();
+
             if (GLOBAL_PARAM_NAME) {
               window.parent.postMessage({
                 type: "hierarchical_form_submit",
@@ -964,6 +1395,7 @@ def udf(
             }
           });
         }
+
       } catch (err) {
         showError(`Error: ${err.message}`);
         console.error(err);
