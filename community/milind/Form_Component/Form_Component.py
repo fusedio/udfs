@@ -409,7 +409,7 @@ def udf(
       height: 32px !important;
     }
     .mapboxgl-ctrl-geocoder input[type="text"]:focus {
-      border-color: var(--primary) !important;
+      border-color: #888 !important;
       outline: none !important;
     }
     .mapboxgl-ctrl-geocoder input[type="text"]::placeholder {
@@ -440,7 +440,7 @@ def udf(
       height: 18px !important;
     }
     .mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--icon-search {
-      fill: var(--primary) !important;
+      fill: #888 !important;
     }
     .mapboxgl-ctrl-geocoder--button {
       background: transparent !important;
