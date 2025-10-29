@@ -348,6 +348,18 @@ def udf(
       font-size: 13px !important;
       font-weight: 500 !important;
     }
+    .flatpickr-months .flatpickr-prev-month svg,
+    .flatpickr-months .flatpickr-next-month svg {
+      fill: #fff !important; /* simple: always white */
+      stroke: none !important;
+    }
+    /* Year increment/decrement arrows next to input */
+    .flatpickr-current-month .numInputWrapper span.arrowUp:after {
+      border-bottom-color: #fff !important; /* simple: always white */
+    }
+    .flatpickr-current-month .numInputWrapper span.arrowDown:after {
+      border-top-color: #fff !important; /* simple: always white */
+    }
     .flatpickr-weekday {
       color: #888 !important;
       font-size: 11px !important;
