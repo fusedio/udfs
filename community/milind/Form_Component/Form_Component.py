@@ -980,21 +980,29 @@ def udf(
 
       // try spatial first (WKB -> WKT), fallback to raw WKB
       async function duckdbGeometryQuery(connObj, geomCol, whereClause) {
-        const wktQuery = [
-          "SELECT",
-          "ST_AsText(ST_GeomFromWKB(" + geomCol + ")) AS g",
-          "FROM df",
-          whereClause
-        ].join(" ");
+        const wktCandidates = [
+          `ST_AsText(${geomCol})`,
+          `ST_AsText(ST_GeomFromWKB(${geomCol}))`,
+          `ST_AsText(ST_GeomFromWKB(CAST(${geomCol} AS BLOB)))`
+        ];
 
-        try {
-          const res1 = await connObj.query(wktQuery);
-          const rows1 = res1.toArray();
-          if (rows1.length > 0 && rows1[0].g !== undefined) {
-            return rows1.map(r => r.g); // strings (WKT)
+        for (const expr of wktCandidates) {
+          const q = [
+            "SELECT",
+            expr + " AS g",
+            "FROM df",
+            whereClause 
+          ].filter(Boolean).join(" ");
+
+          try {
+            const res = await connObj.query(q);
+            const rows = res.toArray();
+            if (rows.length > 0 && rows[0].g !== undefined) {
+              return rows.map(r => r.g);
+            }
+          } catch (_err) {
+            /* try next candidate */
           }
-        } catch (err) {
-          /* ignore; fallback below */
         }
 
         const rawQuery = [
@@ -1305,6 +1313,18 @@ def udf(
           }
 
           conn = await db.connect();
+
+          // Ensure spatial extension is installed/loaded when available
+          try {
+            await conn.query("INSTALL spatial;");
+          } catch (_installErr) {
+            /* ignore install failure */
+          }
+          try {
+            await conn.query("LOAD spatial;");
+          } catch (_loadErr) {
+            /* ignore load failure */
+          }
 
           const resp = await fetch(DATA_URL);
           if (!resp.ok) {
