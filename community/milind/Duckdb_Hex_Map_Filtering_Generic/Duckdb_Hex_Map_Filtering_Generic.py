@@ -29,7 +29,8 @@ def udf(
     center_lng: float = -119.4179,
     center_lat: float = 36.7783,
     zoom: float = 5,
-    tooltip_columns: list = None,
+    tooltip_columns: list = ["metric", "count_mmsi"],
+    default_query: str = "SELECT * FROM data",
 ):
     from jinja2 import Template
 
@@ -221,9 +222,7 @@ def udf(
   <div class="bottombar">
     <div class="labelrow">
       <div class="left">SQL query</div>
-      <div class="right" style="font-size:10px; color:var(--text-muted);">
-        live / debounced
-      </div>
+
     </div>
     <textarea id="queryInput"></textarea>
   </div>
@@ -246,6 +245,7 @@ def udf(
     const START_CENTER    = [{{ center_lng }}, {{ center_lat }}];
     const START_ZOOM      = {{ zoom }};
     const TOOLTIP_COLUMNS = {{ tooltip_columns | tojson }};
+    const DEFAULT_QUERY   = {{ default_query | tojson }};
 
     // deck.gl bits
     const { MapboxOverlay, PolygonLayer } = deck;
@@ -548,7 +548,7 @@ def udf(
 
     // default query is always SELECT * FROM data
     function defaultSQL() {
-      return "SELECT * FROM data";
+      return DEFAULT_QUERY;
     }
 
     async function runQuery() {
@@ -669,6 +669,7 @@ def udf(
         center_lat=center_lat,
         zoom=zoom,
         tooltip_columns=tooltip_columns,
+        default_query=default_query,
     )
 
     return common.html_to_obj(html)
