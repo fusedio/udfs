@@ -543,6 +543,18 @@ def udf(
       await db.instantiate(bundle.mainModule);
       duckConn = await db.connect();
 
+      try {
+        await duckConn.query("INSTALL h3 FROM community");
+      } catch (installErr) {
+        console.warn("INSTALL h3 failed (continuing):", installErr?.message || installErr);
+      }
+
+      try {
+        await duckConn.query("LOAD h3");
+      } catch (loadErr) {
+        console.warn("LOAD h3 failed (continuing):", loadErr?.message || loadErr);
+      }
+
       const r = await fetch(DATA_URL);
       if(!r.ok){ console.error("http", r.status); throw new Error(r.status); }
       const bytes = new Uint8Array(await r.arrayBuffer());
