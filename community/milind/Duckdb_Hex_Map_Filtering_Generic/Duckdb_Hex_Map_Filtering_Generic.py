@@ -581,10 +581,7 @@ def udf(
         const confObj = JSON.parse(txt);
         currentConfObj = confObj;
 
-        // refresh SQL box with default every time config changes
-        $("queryInput").value = defaultSQL();
-
-        // run with new config
+        // run with new config using current query text
         runQuery();
       } catch(err) {
         console.error("Bad config JSON", err);
