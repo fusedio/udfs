@@ -331,6 +331,73 @@ def udf(
       font-size: 13px;
       line-height: 1.4;
     }
+    /* flatpickr dark theme */
+    .flatpickr-calendar {
+      background: var(--input-bg) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 8px !important;
+      box-shadow: 0 16px 32px rgba(0,0,0,0.8) !important;
+      color: var(--text) !important;
+    }
+    .flatpickr-months .flatpickr-prev-month svg,
+    .flatpickr-months .flatpickr-next-month svg {
+      fill: #fff !important;
+      stroke: none !important;
+    }
+    .flatpickr-current-month,
+    .flatpickr-current-month input.cur-year {
+      color: var(--text) !important;
+      font-size: 13px !important;
+      font-weight: 500 !important;
+    }
+    .flatpickr-current-month .numInputWrapper span.arrowUp:after {
+      border-bottom-color: #fff !important;
+    }
+    .flatpickr-current-month .numInputWrapper span.arrowDown:after {
+      border-top-color: #fff !important;
+    }
+    .flatpickr-weekday {
+      color: #888 !important;
+      font-size: 11px !important;
+      font-weight: 400 !important;
+    }
+    .flatpickr-day {
+      background: transparent !important;
+      border: 0 !important;
+      color: var(--text) !important;
+      font-weight: 500;
+      border-radius: 9999px !important;
+      outline: none !important;
+    }
+    .flatpickr-day.disabled,
+    .flatpickr-day.notAllowed,
+    .flatpickr-day.prevMonthDay,
+    .flatpickr-day.nextMonthDay {
+      color: #444 !important;
+      background: transparent !important;
+      cursor: default !important;
+    }
+    .flatpickr-day:hover,
+    .flatpickr-day.hover {
+      background: var(--input-hover) !important;
+      color: var(--text) !important;
+    }
+    .flatpickr-day.inRange {
+      background: rgba(232,255,89,0.2) !important;
+      color: var(--text) !important;
+    }
+    .flatpickr-day.startRange,
+    .flatpickr-day.endRange,
+    .flatpickr-day.selected {
+      background: var(--primary) !important;
+      color: #000 !important;
+    }
+    .flatpickr-day.today:not(.selected):not(.startRange):not(.endRange) {
+      border: 1px solid var(--primary) !important;
+      color: var(--primary) !important;
+      background: transparent !important;
+      box-shadow: 0 0 8px rgba(232,255,89,0.4);
+    }
     /* Mapbox Geocoder dark theme */
     .mapboxgl-ctrl-geocoder {
       min-width: 180px;
@@ -542,7 +609,6 @@ def udf(
 
         const byteOrder = readUint8(view, 0);
         if (byteOrder !== 1) {
-          console.warn("[wkb] only little-endian supported, got", byteOrder);
           return null;
         }
 
@@ -591,12 +657,10 @@ def udf(
           for (let p = 0; p < numPolygons; p++) {
             const byteOrderInner = readUint8(view, off);
             if (byteOrderInner !== 1) {
-              console.warn("[wkb] inner polygon not little-endian");
               return null;
             }
             const innerType = readUint32LE(view, off + 1);
             if (innerType !== 3) {
-              console.warn("[wkb] expected Polygon(3) in MultiPolygon, got", innerType);
               return null;
             }
             const parseInnerPolygon = (o0) => {
@@ -641,7 +705,6 @@ def udf(
           const { geom } = readMultiPolygon(bodyOffset);
           return geom;
         }
-        console.warn("[wkb] unsupported geomType", geomType);
         return null;
       }
 
@@ -736,7 +799,6 @@ def udf(
           return null;
         }
 
-        console.warn("[geomValToFeature] unsupported geomVal type", typeof geomVal, geomVal);
         return null;
       }
 
@@ -817,8 +879,7 @@ def udf(
             }
           });
 
-          const bbox = computeBbox(fc);
-          console.log("[geo] bbox used to fit:", bbox);
+        const bbox = computeBbox(fc);
           if (bbox) {
             mapRef.fitBounds([[bbox[0], bbox[1]], [bbox[2], bbox[3]]], {
               padding: 20,
@@ -828,9 +889,7 @@ def udf(
         }
 
         if (!mapRef.isStyleLoaded()) {
-          console.log("[geo] map style not loaded yet, waiting...");
           mapRef.once("load", () => {
-            console.log("[geo] map load event fired (late), applying layers");
             applyLayers();
           });
         } else {
@@ -920,16 +979,13 @@ def udf(
         ].join(" ");
 
         try {
-          console.log("[geo] trying spatial query:", wktQuery);
           const res1 = await connObj.query(wktQuery);
           const rows1 = res1.toArray();
           if (rows1.length > 0 && rows1[0].g !== undefined) {
-            console.log("[geo] spatial query success, rows:", rows1.length);
             return rows1.map(r => r.g); // strings (WKT)
           }
-          console.warn("[geo] spatial query had no g, falling back");
         } catch (err) {
-          console.warn("[geo] spatial query failed, falling back:", err);
+          /* ignore; fallback below */
         }
 
         const rawQuery = [
@@ -939,20 +995,16 @@ def udf(
           whereClause
         ].join(" ");
 
-        console.log("[geo] fallback raw query:", rawQuery);
         const res2 = await connObj.query(rawQuery);
         const rows2 = res2.toArray();
-        console.log("[geo] raw rows:", rows2.length, rows2.slice(0,3));
         return rows2.map(r => r.g);
       }
 
       async function loadGeoFeatureCollection(idx, spec, connObj) {
         if (!connObj) {
-          console.warn("[geo] no DuckDB conn, cannot load geometry");
           return null;
         }
         if (!spec.geometryCol) {
-          console.warn("[geo] no geometryCol on spec", spec);
           return null;
         }
 
@@ -960,43 +1012,35 @@ def udf(
         const vals = await duckdbGeometryQuery(connObj, spec.geometryCol, whereClause);
         const clean = vals.filter(v => v !== null && v !== undefined);
         if (!clean.length) {
-          console.warn("[geo] no geometry values after query");
           return null;
         }
 
         const fc = featureCollectionFromList(clean);
-        console.log("[geo] FeatureCollection features:", fc.features.length, fc);
         return fc;
       }
 
       async function initOrUpdateGeoField(idx, spec, connObj) {
         const el = $("field_" + idx);
         if (!el) {
-          console.warn("[geo] no DOM element for field_" + idx);
           return;
         }
         mapboxgl.accessToken = MAPBOX_TOKEN;
 
         const renderGeometry = async (mapRef) => {
-          console.log("[geo] renderGeometry start; col:", spec.geometryCol);
           const fc = await loadGeoFeatureCollection(idx, spec, connObj);
           if (fc && fc.features && fc.features.length) {
             geoFeatureCollections[idx] = fc;
-            console.log("[geo] drawing", fc.features.length, "features on map");
             drawFeatureCollectionOnMap(idx, fc, mapRef);
           } else {
             geoFeatureCollections[idx] = { type:"FeatureCollection", features: [] };
-            console.warn("[geo] no features to draw");
           }
         };
 
         if (mapInstances[idx]) {
-          console.log("[geo] map already exists for idx", idx, " -> updating geometry");
           await renderGeometry(mapInstances[idx]);
           return;
         }
 
-        console.log("[geo] creating new map for idx", idx);
         const m = new mapboxgl.Map({
           container: el.id,
           style: "mapbox://styles/mapbox/dark-v11",
@@ -1020,7 +1064,6 @@ def udf(
         m.addControl(geocoder, 'top-right');
 
         m.on("load", async () => {
-          console.log("[geo] map load event fired (first init)");
           setTimeout(async () => {
             m.resize();
             await renderGeometry(m);
@@ -1033,7 +1076,6 @@ def udf(
       async function initOrUpdateBoundsField(idx, spec) {
         const el = $("field_" + idx);
         if (!el) {
-          console.warn("[bounds] no DOM element for field_" + idx);
           return;
         }
         mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -1055,12 +1097,10 @@ def udf(
         };
 
         if (mapInstances[idx]) {
-          console.log("[bounds] map already exists for idx", idx, " -> fit default again");
           fitDefault(mapInstances[idx]);
           return;
         }
 
-        console.log("[bounds] creating new map for idx", idx);
         const m = new mapboxgl.Map({
           container: el.id,
           style: "mapbox://styles/mapbox/dark-v11",
@@ -1084,7 +1124,6 @@ def udf(
         m.addControl(geocoder, 'top-right');
 
         m.on("load", async () => {
-          console.log("[bounds] map load event fired (first init)");
           setTimeout(async () => {
             m.resize();
             fitDefault(m);
@@ -1236,9 +1275,8 @@ def udf(
           // try spatial extension if available
           try {
             await db.loadExtension("spatial");
-            console.log("[duckdb] spatial extension loaded");
           } catch (e) {
-            console.warn("[duckdb] could not load spatial extension in WASM:", e);
+            /* spatial extension unavailable, continue without it */
           }
 
           conn = await db.connect();
