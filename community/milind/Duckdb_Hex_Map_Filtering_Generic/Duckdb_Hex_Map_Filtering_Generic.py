@@ -20,9 +20,9 @@ DEFAULT_CONFIG = r"""{
     }
   } 
 }"""
-
+ 
 @fused.udf(cache_max_age=0)
-def udf(
+def udf( 
     data_url: str = "https://unstable.udf.ai/fsh_ZZQkrtxQSbS2B0Ggm7eoQ/run?dtype_out_raster=png&dtype_out_vector=parquet",
     config_json: str = DEFAULT_CONFIG,
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
@@ -260,7 +260,7 @@ def udf(
 
     let sqlTypingTimer = 0;
     let configTypingTimer = 0;
-    const DEBOUNCE_MS = 250;
+    const DEBOUNCE_MS = 500;
 
     let currentConfObj = null;
     let configOpen = true;
@@ -298,13 +298,20 @@ def udf(
     function processColorContinuous(cfg) {
       let domain = cfg.domain;
       if (domain && domain.length === 2) {
-        let a = Number(domain[0]);
-        let b = Number(domain[1]);
+        const start = Number(domain[0]);
+        const end = Number(domain[1]);
         const steps = cfg.steps ?? 20;
-        const lo = Math.min(a, b);
-        const hi = Math.max(a, b);
-        const stepSize = (hi - lo) / (steps - 1);
-        domain = Array.from({ length: steps }, (_, i) => lo + stepSize * i);
+
+        if (Number.isFinite(start) && Number.isFinite(end)) {
+          if (steps > 1) {
+            const stepSize = (end - start) / (steps - 1);
+            domain = Array.from({ length: steps }, (_, i) => start + stepSize * i);
+          } else {
+            domain = [start];
+          }
+        } else {
+          domain = [domain[0], domain[1]];
+        }
       }
       return {
         attr: cfg.attr,
