@@ -358,6 +358,7 @@ def udf(
       border: 0 !important;
       color: var(--text) !important;
       font-weight: 500;
+      border-radius: 9999px !important; /* make base day cells circular */
     }
     .flatpickr-day.disabled,
     .flatpickr-day.notAllowed,
@@ -371,25 +372,41 @@ def udf(
     .flatpickr-day.hover {
       background: var(--input-hover) !important;
       color: var(--text) !important;
-      border-radius: 6px !important;
+      border-radius: 9999px !important; /* circular hover */
     }
     .flatpickr-day.inRange {
       background: rgba(232,255,89,0.2) !important;
       color: var(--text) !important;
-      border-radius: 0 !important;
+      border-radius: 9999px !important;
     }
     .flatpickr-day.startRange,
     .flatpickr-day.endRange,
     .flatpickr-day.selected {
       background: var(--primary) !important;
       color: #000 !important;
-      border-radius: 6px !important;
+      border-radius: 9999px !important; /* circular highlight */
+    }
+    /* Remove default white borders/outlines from flatpickr day cells */
+    .flatpickr-day.selected,
+    .flatpickr-day.startRange,
+    .flatpickr-day.endRange {
+      border: 0 !important;
+      box-shadow: none !important;
+    }
+    .flatpickr-day.inRange {
+      box-shadow: none !important;
+      border-radius: 9999px !important; /* circular in-range cells */
+    }
+    .flatpickr-day:focus,
+    .flatpickr-day:active {
+      outline: none !important;
+      box-shadow: none !important;
     }
     .flatpickr-day.today:not(.selected):not(.startRange):not(.endRange) {
       border: 1px solid var(--primary) !important;
       color: var(--primary) !important;
       background: transparent !important;
-      border-radius: 6px !important;
+      border-radius: 9999px !important; /* circular today ring */
       box-shadow: 0 0 8px rgba(232,255,89,0.4);
     }
     /* Mapbox Geocoder dark theme */
