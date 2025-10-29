@@ -163,6 +163,7 @@ def udf(
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"/>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css"/>
   <style>
     :root {
       --bg: #121212;
@@ -391,6 +392,65 @@ def udf(
       border-radius: 6px !important;
       box-shadow: 0 0 8px rgba(232,255,89,0.4);
     }
+    /* Mapbox Geocoder dark theme */
+    .mapboxgl-ctrl-geocoder {
+      min-width: 180px;
+      background: var(--input-bg) !important;
+      border-radius: 6px !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.6) !important;
+    }
+    .mapboxgl-ctrl-geocoder input[type="text"] {
+      background: var(--input-bg) !important;
+      color: var(--text) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 6px !important;
+      padding: 6px 10px 6px 30px !important;
+      font-size: 13px !important;
+      height: 32px !important;
+    }
+    .mapboxgl-ctrl-geocoder input[type="text"]:focus {
+      border-color: var(--primary) !important;
+      outline: none !important;
+    }
+    .mapboxgl-ctrl-geocoder input[type="text"]::placeholder {
+      color: #888 !important;
+    }
+    .mapboxgl-ctrl-geocoder .suggestions {
+      background: var(--input-bg) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 8px !important;
+      margin-top: 4px !important;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.8) !important;
+    }
+    .mapboxgl-ctrl-geocoder .suggestions > li > a {
+      color: var(--text) !important;
+      padding: 8px 12px !important;
+      border-bottom: 1px solid var(--border) !important;
+    }
+    .mapboxgl-ctrl-geocoder .suggestions > li > a:hover,
+    .mapboxgl-ctrl-geocoder .suggestions > .active > a {
+      background: var(--input-hover) !important;
+      color: var(--text) !important;
+    }
+    .mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--icon {
+      fill: #888 !important;
+      top: 7px !important;
+      left: 7px !important;
+      width: 18px !important;
+      height: 18px !important;
+    }
+    .mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--icon-search {
+      fill: var(--primary) !important;
+    }
+    .mapboxgl-ctrl-geocoder--button {
+      background: transparent !important;
+      width: 26px !important;
+    }
+    .mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--icon-close {
+      margin-top: 4px !important;
+      width: 16px !important;
+      height: 16px !important;
+    }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
@@ -469,6 +529,7 @@ def udf(
   </div>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
   <script type="module">
     (async () => {
       const GLOBAL_PARAM_NAME = {{ GLOBAL_PARAM_NAME_JS | safe }};
@@ -621,6 +682,16 @@ def udf(
             renderWorldCopies: false,
             maxPitch: 0
           });
+          // Add geocoder control (search bar)
+          const geocoder = new MapboxGeocoder({
+            accessToken: MAPBOX_TOKEN,
+            mapboxgl: mapboxgl,
+            placeholder: "Search places...",
+            marker: false,
+            collapsed: false
+          });
+          m.addControl(geocoder, 'top-right');
+          
           m.on("load", () => {
             setTimeout(() => {
               m.resize();
