@@ -1006,30 +1006,20 @@ def table_to_tile(
     centorid_zoom_offset=0,
     use_columns=["geometry"],
     clip=False,
-    print_xyz=False,
 ):
-    import fused
+    common = fused.load("https://github.com/fusedio/udfs/tree/d74a107/public/common/")
     import geopandas as gpd
     import pandas as pd
     import numpy as np
 
-    version = "0.2.3"
-    tile = get_tiles(bounds)
-    bounds_gdf = to_gdf(bounds)
+    version = "0.2.3" 
+    bbox = common.to_gdf(bounds)
     try:
-        x, y, z = tile[["x", "y", "z"]].iloc[0]
-        if print_xyz:
-            print(x, y, z)
+        z = common.estimate_zoom(bbox)
     except:
         z = min_zoom
     df = fused.get_chunks_metadata(table)
-    if isinstance(tile, (list, tuple, np.ndarray)):
-        tile=to_gdf(tile)
-    elif len(tile) > 1:
-        tile = tile.dissolve().reset_index(drop=True)
-    else:
-        tile = tile.reset_index(drop=True)
-    df = df[df.intersects(tile.geometry[0])]
+    df = df[df.intersects(bbox.geometry[0])]
     if z >= min_zoom:
         List = df[["file_id", "chunk_id"]].values
         if not len(List):
@@ -1050,10 +1040,10 @@ def table_to_tile(
             )
             print("available columns:", list(rows_df.columns))
         try:
-            df = rows_df[rows_df.intersects(tile.geometry[0])]
+            df = rows_df[rows_df.intersects(bbox.geometry[0])]
         except:
             df = rows_df
-        df.crs = tile.crs
+        df.crs = bbox.crs
         if (
             z < min_zoom + centorid_zoom_offset
         ):  # switch to centroid for the last one zoom level before showing metadata
@@ -1068,6 +1058,7 @@ def table_to_tile(
             return df.clip(tile).explode()
         else:
             return df
+
 
 
 def get_dataset_from_table(url: str, bounds:fused.types.Bounds):
