@@ -21,35 +21,42 @@ DEFAULT_CONFIG = r"""{
   } 
 }"""
  
+DEFAULT_STYLE_URL = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+
 @fused.udf(cache_max_age=0)
 def udf( 
     data_url: str = "https://unstable.udf.ai/fsh_ZZQkrtxQSbS2B0Ggm7eoQ/run?dtype_out_raster=png&dtype_out_vector=parquet",
     config_json: str = DEFAULT_CONFIG,
-    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     center_lng: float = -119.4179,
     center_lat: float = 36.7783,
     zoom: float = 5,
     tooltip_columns: list = ["metric", "count_mmsi"],
     default_query: str = "SELECT * FROM data",
+    map_style_url: str = DEFAULT_STYLE_URL,
 ):
     from jinja2 import Template
+
+    style_url = map_style_url or DEFAULT_STYLE_URL
 
     html = Template(r"""
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>H3 Parquet Viewer (browser-driven config + live SQL)</title>
+  <title>H3 Parquet Viewer - MapLibre Edition</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <!-- MapLibre GL JS -->
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 
+  <!-- H3 and Deck.gl -->
   <script src="https://unpkg.com/h3-js@4.1.0/dist/h3-js.umd.js"></script>
   <script src="https://unpkg.com/deck.gl@9.1.3/dist.min.js"></script>
   <script src="https://unpkg.com/@deck.gl/geo-layers@9.1.3/dist.min.js"></script>
   <script src="https://unpkg.com/@deck.gl/carto@9.1.3/dist.min.js"></script>
 
+  <!-- DuckDB WASM -->
   <script src="https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.1-dev132.0/dist/duckdb-wasm.js"></script>
   <script type="module">
     import * as duckdb_wasm from "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.1-dev132.0/+esm";
@@ -222,7 +229,6 @@ def udf(
   <div class="bottombar">
     <div class="labelrow">
       <div class="left">SQL query</div>
-
     </div>
     <textarea id="queryInput"></textarea>
   </div>
@@ -241,7 +247,8 @@ def udf(
   <script type="module">
     // --- UDF PARAMS ---------------------------------------------------------
     const DATA_URL        = {{ data_url | tojson }};
-    const MAPBOX_TOKEN    = {{ mapbox_token | tojson }};
+    const MAP_STYLE_URL   = {{ map_style_url | tojson }};
+    const DEFAULT_STYLE_URL = {{ default_style_url | tojson }};
     const START_CENTER    = [{{ center_lng }}, {{ center_lat }}];
     const START_ZOOM      = {{ zoom }};
     const TOOLTIP_COLUMNS = {{ tooltip_columns | tojson }};
@@ -340,6 +347,23 @@ def udf(
         }
       }
       return out;
+    }
+
+    function resolveStyleUrl(styleUrl) {
+      const trimmed = (styleUrl || '').trim();
+      
+      // Return default if empty
+      if (!trimmed) return DEFAULT_STYLE_URL;
+      
+      // MapLibre supports direct URLs to style.json files
+      // Common free MapLibre style sources:
+      // - https://demotiles.maplibre.org/style.json
+      // - https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json
+      // - https://basemaps.cartocdn.com/gl/positron-gl-style/style.json
+      // - https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json
+      // - Custom styles (may require API key in URL params)
+      
+      return trimmed;
     }
 
     function toH3String(hex) {
@@ -522,10 +546,12 @@ def udf(
     // --- duckdb / map init --------------------------------------------------
 
     async function initMapAndDuckDB(){
-      mapboxgl.accessToken = MAPBOX_TOKEN;
-      map = new mapboxgl.Map({
+      const style = resolveStyleUrl(MAP_STYLE_URL);
+      
+      // Initialize MapLibre GL map
+      map = new maplibregl.Map({
         container:'map',
-        style:'mapbox://styles/mapbox/dark-v10',
+        style,
         center: START_CENTER,
         zoom: START_ZOOM,
         dragRotate:false,
@@ -565,7 +591,6 @@ def udf(
 
     // --- querying + live updates -------------------------------------------
 
-    // default query is always SELECT * FROM data
     function defaultSQL() {
       return DEFAULT_QUERY;
     }
@@ -680,7 +705,8 @@ def udf(
 """).render(
         data_url=data_url,
         config_json=config_json,
-        mapbox_token=mapbox_token,
+        map_style_url=style_url,
+        default_style_url=DEFAULT_STYLE_URL,
         center_lng=center_lng,
         center_lat=center_lat,
         zoom=zoom,
