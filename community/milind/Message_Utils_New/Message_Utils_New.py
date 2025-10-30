@@ -381,7 +381,7 @@ def slider(
     sender_id: str = "slider_1",
     auto_send_on_load: bool = True,
     return_html: bool = False,
-    send: str = "end",           # "end" | "continuous"
+    send: str = "end",  # "end" | "continuous"
     debounce_ms: int = 64,
 ):
     import json
@@ -390,11 +390,15 @@ def slider(
 
     if min_value is None or max_value is None:
         if is_range:
-            if min_value is None: min_value = value[0]
-            if max_value is None: max_value = value[1]
+            if min_value is None:
+                min_value = value[0]
+            if max_value is None:
+                max_value = value[1]
         else:
-            if min_value is None: min_value = 0
-            if max_value is None: max_value = 100
+            if min_value is None:
+                min_value = 0
+            if max_value is None:
+                max_value = 100
 
     if value is None:
         value = (min_value, max_value) if is_range else min_value
@@ -405,142 +409,181 @@ def slider(
 
     fmt = format or "{val}"
 
-    VAL_JS  = json.dumps(list(value) if is_range else value)
-    MIN_JS  = json.dumps(min_value)
-    MAX_JS  = json.dumps(max_value)
+    VAL_JS = json.dumps(list(value) if is_range else value)
+    MIN_JS = json.dumps(min_value)
+    MAX_JS = json.dumps(max_value)
     STEP_JS = json.dumps(step)
-    FMT_JS  = json.dumps(fmt)
+    FMT_JS = json.dumps(fmt)
     SEND_JS = json.dumps(send)
-    DB_JS   = json.dumps(max(0, int(debounce_ms)))
+    DB_JS = json.dumps(max(0, int(debounce_ms)))
 
     html = f"""<!doctype html>
+<html>
+<head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  :root {{
-    --primary: #e8ff59;
-    --primary-hover: #f0ff7a;
-    --bg: #121212;
-    --track-bg: #2a2a2a;
-    --text: #eee;
-    --text-muted: #999;
-    --border: #3a3a3a;
+  * {{ {{ box-sizing: border-box; }} }}
+  body {{
+    margin: 0;
+    padding: 24px 22px;
+    min-height: 100%;
+    background: transparent;
+    color: #f4f4f5;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
   }}
-  html, body {{
-    height:100vh; margin:0; padding:0;
-    background:var(--bg); color:var(--text);
-    font-family:system-ui,-apple-system,sans-serif;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:0rem;
+  .label {{
+    width: 100%;
+    max-width: 480px;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
   }}
-  .label {{ 
-    width:90vw; ;
-    color:#ddd ;
-    font-size:min(25vh, 25px); 
-    margin-bottom:min(10vh, 10px);
-  }}
+  .label:empty {{ {{ display: none; }} }}
   .slider-container {{
-    width:90vw;
-    display:flex; 
-    align-items:center;
-    gap:min(5vh, 8px);
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #000;
   }}
-  .slider-wrap {{ 
-    position:relative; 
-    display:flex; 
-    align-items:center; 
-    flex:1;
-    height:min(25vh, 25px);
+  .slider-wrap {{
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    height: 36px;
   }}
   .track {{
-    position:absolute; 
-    left:calc(min(15vh, 15px) / 2);
-    right:calc(min(15vh, 15px) / 2); 
-    height:min(15vh, 15px); 
-    border-radius:min(15vh, 15px);
-    background:var(--track-bg);
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    right: 12px;
+    height: 18px;
+    transform: translateY(-50%);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    overflow: hidden;
   }}
   .fill {{
-    position:absolute; 
-    height:min(15vh, 15px); 
-    border-radius:min(15vh, 15px);
-    background:var(--primary);
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    height: 18px;
+    transform: translateY(-50%);
+    border-radius: 999px;
+    background: #e8ff59;
+    box-shadow: 0 8px 20px rgba(232, 255, 89, 0.25);
+    width: 0;
   }}
-  .value {{ 
-    min-width:min(22vh, 22px); 
-    text-align:left; 
-    color:var(--text-muted); 
-    font-size:min(22vh, 22px);
-    font-variant-numeric:tabular-nums;
+  .value {{
+    min-width: 76px;
+    text-align: right;
+    color: rgba(255, 255, 255, 0.64);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
   }}
   input[type=range] {{
-    appearance:none; -webkit-appearance:none;
-    position:relative; 
-    width:100%; 
-    height:min(15vh, 15px); 
-    margin:0; 
-    background:transparent; 
-    outline:none;
-    cursor:pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+    margin: 0;
+    height: 36px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    outline: none;
   }}
   input[type=range]::-webkit-slider-thumb {{
-    -webkit-appearance:none; 
-    appearance:none;
-    width:min(15vh, 15px); 
-    height:min(15vh, 15px); 
-    border-radius:50%;
-    background:#fff; 
-    border:1px solid var(--primary);
-    box-shadow:1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
-    cursor:pointer;
-    transition:background-color 200ms;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid rgba(0, 0, 0, 0.4);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    transition: transform 140ms ease, box-shadow 140ms ease;
   }}
   input[type=range]::-webkit-slider-thumb:hover {{
-    background:var(--primary-hover);
+    transform: scale(1.06);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
   }}
   input[type=range]::-moz-range-thumb {{
-    width:min(15vh, 15px); 
-    height:min(15vh, 15px); 
-    border-radius:50%;
-    background:#fff; 
-    border:1px solid var(--primary);
-    box-shadow:1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
-    cursor:pointer;
-    transition:background-color 200ms;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid rgba(0, 0, 0, 0.4);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    transition: transform 140ms ease, box-shadow 140ms ease;
   }}
   input[type=range]::-moz-range-thumb:hover {{
-    background:var(--primary-hover);
-  }}
-  .tooltip {{
-    position:absolute;
-    bottom:100%;
-    left:50%;
-    transform:translateX(-50%);
-    background:#aaa;
-    color:#000;
-    padding:5vh 5vh;
-    border-radius:5vh;
-    font-size:min(15vh, 15px);
-    white-space:nowrap;
-    opacity:0;
-    visibility:hidden;
-    transition:opacity 150ms, visibility 150ms;
-    margin-bottom:min(10vh, 10px);
-    pointer-events:none;
-    box-shadow:0 2px 8px rgba(0,0,0,0.15);
+    transform: scale(1.06);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
   }}
   .thumb-container {{
-    position:absolute;
-    width:7.5vh;
-    height:20px;
-    pointer-events:none;
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    width: 0;
+    height: 0;
   }}
-  .thumb-container.show-tooltip .tooltip {{
-    opacity:1;
-    visibility:visible;
+  .tooltip {{
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) scale(0.94);
+    background: rgba(20, 20, 20, 0.92);
+    color: #f4f4f5;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 140ms ease, transform 140ms ease;
+    box-shadow: 0 12px 22px rgba(15, 23, 42, 0.25);
+  }}
+  .thumb-container.show-tooltip .tooltip {{ {{ opacity: 1; transform: translateX(-50%) scale(1); }} }}
+  @media (max-width: 640px) {{
+    body {{
+      padding: 18px 16px;
+      gap: 12px;
+    }}
+    .slider-container {{
+      padding: 16px;
+      gap: 12px;
+    }}
+    .value {{
+      min-width: 64px;
+      font-size: clamp(12px, 3.4vw, 13px);
+    }}
+    input[type=range]::-webkit-slider-thumb,
+    input[type=range]::-moz-range-thumb {{ {{
+      width: 16px;
+      height: 16px;
+    }} }}
   }}
 </style>
-
+</head>
+<body>
 <div class="label">{label}</div>
 
 <!-- Single -->
@@ -576,142 +619,194 @@ def slider(
 <script>
 document.addEventListener('DOMContentLoaded', () => {{
   const PARAMETER = {json.dumps(parameter)};
-  const SENDER  = {json.dumps(sender_id)};
+  const SENDER = {json.dumps(sender_id)};
   const MIN = {MIN_JS};
   const MAX = {MAX_JS};
   const STEP = {STEP_JS};
   const INIT = {VAL_JS};
-  const FMT  = {FMT_JS};
+  const FMT = {FMT_JS};
   const AUTO = {str(auto_send_on_load).lower()};
   const SEND = {SEND_JS};
   const DEBOUNCE = {DB_JS};
   const isRange = Array.isArray(INIT);
   const valtxt = document.getElementById('valtxt');
 
-  function fmt(v){{
-    if (FMT.includes("{{val}}")) return FMT.replace("{{val}}", String(v));
+  function fmt(v) {{
+    if (FMT.includes("{{{{val}}}}")) return FMT.replace("{{{{val}}}}", String(v));
     const m = FMT.match(/^%0?\\.(\\d+)f$/);
     if (m) return Number(v).toFixed(Number(m[1]));
     return String(v);
   }}
 
-  function post(val){{
+  function post(val) {{
     window.parent.postMessage({{
-      type:'slider',
-      payload:{{ value: val }},
-      origin:SENDER, parameter:PARAMETER, ts:Date.now()
+      type: 'slider',
+      payload: {{ value: val }},
+      origin: SENDER,
+      parameter: PARAMETER,
+      ts: Date.now()
     }}, '*');
   }}
 
-  function setFillSingle(input, fillEl, thumbContainer){{
-    const p = Math.max(0, Math.min(1, (input.value - input.min) / (input.max - input.min)));
-    const thumbSize = Math.min(window.innerHeight * 0.15, 15);
-    const trackStart = thumbSize / 2;
-    const trackWidth = input.parentElement.offsetWidth - thumbSize;
-    fillEl.style.left = trackStart + "px";
-    fillEl.style.right = "auto";
-    fillEl.style.width = (p * trackWidth) + "px";
-    if(thumbContainer){{
-      thumbContainer.style.left = (p * 100) + "%";
-      thumbContainer.style.transform = "translateX(-50%)";
-    }}
-  }}
-  function setFillRange(i0, i1, fillEl, tc0, tc1){{
-    const p0 = Math.max(0, Math.min(1, (i0.value - i0.min) / (i0.max - i0.min)));
-    const p1 = Math.max(0, Math.min(1, (i1.value - i1.min) / (i1.max - i1.min)));
-    const left = Math.min(p0, p1);
-    const right = Math.max(p0, p1);
-    fillEl.style.left = (left * 100) + "%";
-    fillEl.style.right = "auto";
-    fillEl.style.width = ((right - left) * 100) + "%";
-    if(tc0){{
-      tc0.style.left = (p0 * 100) + "%";
-      tc0.style.transform = "translateX(-50%)";
-    }}
-    if(tc1){{
-      tc1.style.left = (p1 * 100) + "%";
-      tc1.style.transform = "translateX(-50%)";
+  function setFillSingle(input, fillEl, thumbContainer, trackEl) {{
+    const min = Number(input.min);
+    const max = Number(input.max);
+    const value = Number(input.value);
+    const percent = Math.max(0, Math.min(1, (value - min) / ((max - min) || 1)));
+    const wrapRect = trackEl.parentElement.getBoundingClientRect();
+    const trackRect = trackEl.getBoundingClientRect();
+    const trackLeft = trackRect.left - wrapRect.left;
+    const trackWidth = trackRect.width;
+    const cursor = trackLeft + percent * trackWidth;
+    fillEl.style.left = trackLeft + 'px';
+    fillEl.style.width = (percent * trackWidth) + 'px';
+    if (thumbContainer) {{
+      thumbContainer.style.left = cursor + 'px';
+      thumbContainer.style.transform = 'translate(-50%, -50%)';
     }}
   }}
 
-  function debounced(fn, ms){{
-    let t=null, lastArgs=null;
-    return (...a)=>{{lastArgs=a;clearTimeout(t);t=setTimeout(()=>fn(...lastArgs),ms);}};
+  function setFillRange(i0, i1, fillEl, tc0, tc1, trackEl) {{
+    const min = Number(i0.min);
+    const max = Number(i0.max);
+    const range = (max - min) || 1;
+    const p0 = Math.max(0, Math.min(1, (Number(i0.value) - min) / range));
+    const p1 = Math.max(0, Math.min(1, (Number(i1.value) - min) / range));
+    const wrapRect = trackEl.parentElement.getBoundingClientRect();
+    const trackRect = trackEl.getBoundingClientRect();
+    const trackLeft = trackRect.left - wrapRect.left;
+    const trackWidth = trackRect.width;
+    const leftP = Math.min(p0, p1);
+    const rightP = Math.max(p0, p1);
+    const start = trackLeft + leftP * trackWidth;
+    const cursor0 = trackLeft + p0 * trackWidth;
+    const cursor1 = trackLeft + p1 * trackWidth;
+    fillEl.style.left = start + 'px';
+    fillEl.style.width = Math.max(0, (rightP - leftP) * trackWidth) + 'px';
+    if (tc0) {{
+      tc0.style.left = cursor0 + 'px';
+      tc0.style.transform = 'translate(-50%, -50%)';
+    }}
+    if (tc1) {{
+      tc1.style.left = cursor1 + 'px';
+      tc1.style.transform = 'translate(-50%, -50%)';
+    }}
   }}
 
-  if (!isRange){{
-    const wrap=document.getElementById('single');
-    const fill=document.getElementById('fill');
-    const rng=document.getElementById('rng');
-    const thumbContainer=document.getElementById('thumb-container');
-    const tooltip=document.getElementById('tooltip');
-    wrap.style.display='flex';
-    rng.min=MIN; rng.max=MAX; rng.step=STEP; rng.value=INIT;
-    valtxt.textContent=fmt(INIT); 
-    tooltip.textContent=fmt(INIT);
-    setFillSingle(rng,fill,thumbContainer);
-    const sendNow=()=>post(Number(rng.value));
-    const sendDeb=debounced(sendNow,DEBOUNCE);
-    let rafId=null;
+  function debounced(fn, ms) {{
+    let t = null, lastArgs = null;
+    return (...a) => {{
+      lastArgs = a;
+      clearTimeout(t);
+      t = setTimeout(() => fn(...lastArgs), ms);
+    }};
+  }}
 
-    rng.addEventListener('input',()=>{{
-      if(rafId)cancelAnimationFrame(rafId);
-      rafId=requestAnimationFrame(()=>{{
-        valtxt.textContent=fmt(rng.value);
-        tooltip.textContent=fmt(rng.value);
-        setFillSingle(rng,fill,thumbContainer);
-        rafId=null;
+  if (!isRange) {{
+    const wrap = document.getElementById('single');
+    const fill = document.getElementById('fill');
+    const rng = document.getElementById('rng');
+    const thumbContainer = document.getElementById('thumb-container');
+    const tooltip = document.getElementById('tooltip');
+    const track = wrap.querySelector('.track');
+    wrap.style.display = 'flex';
+    rng.min = MIN; rng.max = MAX; rng.step = STEP; rng.value = INIT;
+    valtxt.textContent = fmt(INIT);
+    tooltip.textContent = fmt(INIT);
+    const refreshSingleLayout = () => setFillSingle(rng, fill, thumbContainer, track);
+    refreshSingleLayout();
+    requestAnimationFrame(refreshSingleLayout);
+    if (typeof ResizeObserver === 'function') {{
+      const ro = new ResizeObserver(refreshSingleLayout);
+      ro.observe(wrap);
+    }} else {{
+      window.addEventListener('resize', refreshSingleLayout);
+    }}
+    const sendNow = () => post(Number(rng.value));
+    const sendDeb = debounced(sendNow, DEBOUNCE);
+    let rafId = null;
+
+    rng.addEventListener('input', () => {{
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {{
+        valtxt.textContent = fmt(rng.value);
+        tooltip.textContent = fmt(rng.value);
+        setFillSingle(rng, fill, thumbContainer, track);
+        rafId = null;
       }});
-      if(SEND==="continuous")sendDeb();
+      if (SEND === "continuous") sendDeb();
     }});
-    rng.addEventListener('mouseenter',()=>thumbContainer.classList.add('show-tooltip'));
-    rng.addEventListener('mouseleave',()=>thumbContainer.classList.remove('show-tooltip'));
-    rng.addEventListener('focus',()=>thumbContainer.classList.add('show-tooltip'));
-    rng.addEventListener('blur',()=>thumbContainer.classList.remove('show-tooltip'));
-    if(SEND==="end"){{
-      rng.addEventListener('mouseup',sendNow);
-      rng.addEventListener('touchend',sendNow);
+    rng.addEventListener('mouseenter', () => thumbContainer.classList.add('show-tooltip'));
+    rng.addEventListener('mouseleave', () => thumbContainer.classList.remove('show-tooltip'));
+    rng.addEventListener('focus', () => thumbContainer.classList.add('show-tooltip'));
+    rng.addEventListener('blur', () => thumbContainer.classList.remove('show-tooltip'));
+    if (SEND === "end") {{
+      rng.addEventListener('mouseup', sendNow);
+      rng.addEventListener('touchend', sendNow);
     }}
-    if(AUTO)queueMicrotask(sendNow);
+    if (AUTO) queueMicrotask(sendNow);
   }} else {{
-    const wrap=document.getElementById('range');
-    const fill=document.getElementById('fillr');
-    const r0=document.getElementById('rng0');
-    const r1=document.getElementById('rng1');
-    const tc0=document.getElementById('thumb-container0');
-    const tc1=document.getElementById('thumb-container1');
-    const tt0=document.getElementById('tooltip0');
-    const tt1=document.getElementById('tooltip1');
-    wrap.style.display='flex';
-    r0.min=MIN;r0.max=MAX;r0.step=STEP;
-    r1.min=MIN;r1.max=MAX;r1.step=STEP;
-    r0.value=INIT[0];r1.value=INIT[1];
-    const sendNow=()=>post([Number(r0.value),Number(r1.value)]);
-    const sendDeb=debounced(sendNow,DEBOUNCE);
-    let rafId=null;
-    function clamp(){{if(Number(r0.value)>Number(r1.value))r0.value=r1.value;}}
-    function show(){{
-      valtxt.textContent=fmt(r0.value)+" – "+fmt(r1.value);
-      tt0.textContent=fmt(r0.value);
-      tt1.textContent=fmt(r1.value);
-      setFillRange(r0,r1,fill,tc0,tc1);
+    const wrap = document.getElementById('range');
+    const fill = document.getElementById('fillr');
+    const r0 = document.getElementById('rng0');
+    const r1 = document.getElementById('rng1');
+    const tc0 = document.getElementById('thumb-container0');
+    const tc1 = document.getElementById('thumb-container1');
+    const tt0 = document.getElementById('tooltip0');
+    const tt1 = document.getElementById('tooltip1');
+    const track = wrap.querySelector('.track');
+    wrap.style.display = 'flex';
+    r0.min = MIN; r0.max = MAX; r0.step = STEP;
+    r1.min = MIN; r1.max = MAX; r1.step = STEP;
+    r0.value = INIT[0]; r1.value = INIT[1];
+    const sendNow = () => post([Number(r0.value), Number(r1.value)]);
+    const sendDeb = debounced(sendNow, DEBOUNCE);
+    let rafId = null;
+    function clamp() {{ if (Number(r0.value) > Number(r1.value)) r0.value = r1.value; }}
+    function show() {{
+      valtxt.textContent = fmt(r0.value) + " – " + fmt(r1.value);
+      tt0.textContent = fmt(r0.value);
+      tt1.textContent = fmt(r1.value);
+      setFillRange(r0, r1, fill, tc0, tc1, track);
     }}
-    r0.addEventListener('input',()=>{{if(rafId)cancelAnimationFrame(rafId);rafId=requestAnimationFrame(()=>{{clamp();show();rafId=null;}});if(SEND==="continuous")sendDeb();}}); 
-    r1.addEventListener('input',()=>{{if(rafId)cancelAnimationFrame(rafId);rafId=requestAnimationFrame(()=>{{clamp();show();rafId=null;}});if(SEND==="continuous")sendDeb();}});
-    r0.addEventListener('mouseenter',()=>tc0.classList.add('show-tooltip'));
-    r0.addEventListener('mouseleave',()=>tc0.classList.remove('show-tooltip'));
-    r0.addEventListener('focus',()=>tc0.classList.add('show-tooltip'));
-    r0.addEventListener('blur',()=>tc0.classList.remove('show-tooltip'));
-    r1.addEventListener('mouseenter',()=>tc1.classList.add('show-tooltip'));
-    r1.addEventListener('mouseleave',()=>tc1.classList.remove('show-tooltip'));
-    r1.addEventListener('focus',()=>tc1.classList.add('show-tooltip'));
-    r1.addEventListener('blur',()=>tc1.classList.remove('show-tooltip'));
-    if(SEND==="end"){{r0.addEventListener('mouseup',sendNow);r1.addEventListener('mouseup',sendNow);
-                     r0.addEventListener('touchend',sendNow);r1.addEventListener('touchend',sendNow);}}
-    show(); if(AUTO)queueMicrotask(sendNow);
+    r0.addEventListener('input', () => {{
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {{ clamp(); show(); rafId = null; }});
+      if (SEND === "continuous") sendDeb();
+    }});
+    r1.addEventListener('input', () => {{
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {{ clamp(); show(); rafId = null; }});
+      if (SEND === "continuous") sendDeb();
+    }});
+    r0.addEventListener('mouseenter', () => tc0.classList.add('show-tooltip'));
+    r0.addEventListener('mouseleave', () => tc0.classList.remove('show-tooltip'));
+    r0.addEventListener('focus', () => tc0.classList.add('show-tooltip'));
+    r0.addEventListener('blur', () => tc0.classList.remove('show-tooltip'));
+    r1.addEventListener('mouseenter', () => tc1.classList.add('show-tooltip'));
+    r1.addEventListener('mouseleave', () => tc1.classList.remove('show-tooltip'));
+    r1.addEventListener('focus', () => tc1.classList.add('show-tooltip'));
+    r1.addEventListener('blur', () => tc1.classList.remove('show-tooltip'));
+    if (SEND === "end") {{
+      r0.addEventListener('mouseup', sendNow);
+      r1.addEventListener('mouseup', sendNow);
+      r0.addEventListener('touchend', sendNow);
+      r1.addEventListener('touchend', sendNow);
+    }}
+    const refreshRangeLayout = () => show();
+    refreshRangeLayout();
+    requestAnimationFrame(refreshRangeLayout);
+    if (typeof ResizeObserver === 'function') {{
+      const ro = new ResizeObserver(refreshRangeLayout);
+      ro.observe(wrap);
+    }} else {{
+      window.addEventListener('resize', refreshRangeLayout);
+    }}
+    if (AUTO) queueMicrotask(sendNow);
   }}
 }});
 </script>
+</html>
 """
     return html if return_html else common.html_to_obj(html)
 
