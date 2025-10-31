@@ -2562,11 +2562,11 @@ def chunked_tiff_to_points(tiff_path, i=0, x_chunks=2, y_chunks=2):
         y_list = y_list[y_slice]
         X, Y = np.meshgrid(x_list, y_list)
         arr = src.read(window=(y_slice, x_slice)).flatten()
-        if (nodata := src.meta.get("nodata")) is not None:
-            arr = np.where(arr != nodata, arr, np.nan)
         df = pd.DataFrame(X.flatten(), columns=["lng"])
         df["lat"] = Y.flatten()
         df["data"] = arr
+        if (nodata := src.meta.get("nodata")) is not None:
+            df = df[df["data"] != nodata].reset_index(drop=True)
     return df
 
 
