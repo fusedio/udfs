@@ -39,6 +39,7 @@ def mutex(filename, wait=1, verbose=False):
         f.close()
         os.unlink(filename)
 
+
 def url_to_qr(url, title='Scan me 🥹'):
     title_html = f"<h3>{title}</h3>" if title else ""
     html = f"""
@@ -48,8 +49,9 @@ def url_to_qr(url, title='Scan me 🥹'):
         <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
         <style>
             * {{ margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }}
-            body {{ display: flex; justify-content: center; align-items: center; background: rgba(0, 0, 0, 0.5); height: 100vh; }}
-            .container {{ display: flex; flex-direction: column; align-items: center; gap: 2vh; }}
+            body {{ display: flex; justify-content: center; align-items: center; background: transparent; height: 100vh; }}
+            .container {{ display: flex; flex-direction: column; 
+            align-items: center; gap: 2vh; background: rgba(0, 0, 0, 0.3); padding: 2vh; border-radius: 1vh; }}
             h1, h2, h3, p {{ color: #fff; }}
             #qrcode {{ background: white; }}
         </style>
@@ -57,16 +59,16 @@ def url_to_qr(url, title='Scan me 🥹'):
     <body>
         <div class="container">{title_html}<div id="qrcode"></div></div>
         <script>
-            function generateQR() {{
-                const container = document.getElementById('qrcode');
-                const titleElement = document.querySelector('h1, h2, h3, p');
-                let availableHeight = window.innerHeight - (titleElement ? (titleElement.style.fontSize = '10vw', titleElement.offsetHeight) : 0);
-                const maxSize = Math.min(window.innerWidth, availableHeight) * 0.9;
-                container.style.width = container.style.height = maxSize + 'px';
-                container.innerHTML = '';
-                new QRCode(container, {{ text: "{url}", width: maxSize, height: maxSize, correctLevel: QRCode.CorrectLevel.H }});
-            }}
-            generateQR();
+            function generateQR() {{ 
+                const container = document.getElementById('qrcode'); 
+                const titleElement = document.querySelector('h1, h2, h3, p'); 
+                let availableHeight = window.innerHeight - (titleElement ? (titleElement.style.fontSize = '10vw', titleElement.offsetHeight) : 0); 
+                const maxSize = Math.min(window.innerWidth, availableHeight) * 0.9; 
+                container.style.width = container.style.height = maxSize + 'px'; 
+                container.innerHTML = ''; 
+                new QRCode(container, {{ text: "{url}", width: maxSize, height: maxSize, correctLevel: QRCode.CorrectLevel.H }}); 
+            }} 
+            generateQR(); 
             window.addEventListener('resize', generateQR);
         </script>
     </body>
