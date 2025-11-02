@@ -39,6 +39,46 @@ def mutex(filename, wait=1, verbose=False):
         f.close()
         os.unlink(filename)
 
+def url_to_qr(url):
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+        <style>
+            body {{
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                margin: 0;
+                background-color: #f0f0f0;
+            }}
+            #qrcode {{
+                padding: 20px;
+                background-color: white;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }}
+        </style>
+    </head>
+    <body>
+        <div id="qrcode"></div>
+        <script>
+            new QRCode(document.getElementById("qrcode"), {{
+                text: "{url}",
+                width: 500,
+                height: 500,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            }});
+        </script>
+    </body>
+    </html>
+    """
+    return html
+
 
 def new_file_tracker(path='s3://fused-asset/data/', exclude_hidden_files=True, status_filename='_status'):
     import pandas as pd
