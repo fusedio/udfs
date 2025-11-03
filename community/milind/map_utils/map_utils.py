@@ -3,42 +3,41 @@ import geopandas as gpd
 import pandas as pd
 import pydeck as pdk
 from shapely.geometry import mapping
+import folium
+import numpy as np
+import typing  # added for Union typing
 
 DEFAULT_CONFIG = {
     # visual
     "get_fill_color": [0, 144, 255, 200],  # can be array OR JS expr string OR column name
-    "get_radius": 1000,
+    "get_radius": 200,
     "opacity": 1.0,
     "pickable": True,
-
     # map camera
-
     "zoom": 11,
     "pitch": 0,
     "bearing": 0,
-
     # layer/tooltip
     "tooltip": None,
     "basemap": "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
 }
 
-
 DEFAULT_H3_CONFIG = {
-    "hex_field": "hex",
-    "fill_color": "[0, 144, 255, 180]",
-    "pickable": True,
-    "stroked": True,
-    "filled": True,
-    "extruded": False,
-    "line_color": [255, 255, 255],
-    "line_width_min_pixels": 2,
-    "center_lat": None,
-    "center_lon": None,
-    "zoom": 14,
-    "bearing": 0,
-    "pitch": 30,
-    "tooltip": "{__hex__}"
-}
+        "hex_field": "hex",
+        "fill_color": "[0, 144, 255, 180]",
+        "pickable": True,
+        "stroked": True,
+        "filled": True,
+        "extruded": False,
+        "line_color": [255, 255, 255],
+        "line_width_min_pixels": 0.5,
+        "center_lat": None,
+        "center_lon": None,
+        "zoom": 14,
+        "bearing": 0,
+        "pitch": 0,
+        "tooltip": "{__hex__}"
+    }
 
 DEFAULT_POLYGON_CONFIG = {
     "get_fill_color": [0, 144, 255, 120],
@@ -54,6 +53,56 @@ DEFAULT_POLYGON_CONFIG = {
     "basemap": "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
 }
 
+
+
+from jinja2 import Template
+import json
+
+
+DEFAULT_DECK_CONFIG = {
+    "initialViewState": {
+        "zoom": 12
+    },
+    "vectorLayer": {
+        "@@type": "GeoJsonLayer",
+        "pointRadiusMinPixels": 10,
+        "pickable": True,
+        "getFillColor": {
+            "@@function": "colorContinuous",
+            "attr": "house_age",
+            "colors": "TealGrn",
+            "domain": [0, 50],
+            "steps": 7,
+            "nullColor": [200, 200, 200, 180]
+        },
+        "tooltipAttrs": ["house_age", "mrt_distance", "price"]
+    }
+}
+
+DEFAULT_DECK_HEX_CONFIG = {
+    "initialViewState": {
+        "longitude": None,
+        "latitude": None,
+        "zoom": 8,
+        "pitch": 0,
+        "bearing": 0
+  },
+  "hexLayer": {
+    "@@type": "H3HexagonLayer",
+        "filled": True,
+        "pickable": True,
+        "extruded": False,
+    "getHexagon": "@@=properties.hex",
+    "getFillColor": {
+      "@@function": "colorContinuous",
+            "attr": "cnt",
+            "domain": [5000, 0],
+      "steps": 20,
+      "colors": "Magenta"
+    }
+  } 
+}
+
 @fused.udf(cache_max_age=0)
 def udf(
     gdf = {
@@ -64,7 +113,7 @@ def udf(
             "coordinates": [-73.94391387988864, 40.8944276435547]
         }
     },
-    config: dict | str | None = None
+    config: typing.Union[dict, str, None] = None  # changed UnionType to typing.Union
 ):
     return pydeck_point(gdf, config)
 
@@ -99,6 +148,14 @@ def _compute_center_from_polygons(df):
 
 
 def pydeck_point(gdf, config=None):
+    """
+    Pydeck based maps. Use this to render HTML interactive maps from data
+
+    Takes a config dict based on:
+    'config = {
+        "fill_color": '[255, 100 + cnt, 0]' # dynamically sets the colors of the fill based on the `cnt` values col
+    '
+    """
     if config is None or config == "":
         cfg = DEFAULT_CONFIG.copy()
     elif isinstance(config, str):
@@ -162,9 +219,17 @@ def pydeck_point(gdf, config=None):
     return deck.to_html(as_string=True)
 
 
-
 @fused.udf(cache_max_age=0)
-def pydeck_hex(df=None, config: dict | str | None = None):
+def pydeck_hex(df=None, config: typing.Union[dict, str, None] = None):  # changed UnionType
+    """
+    Pydeck based maps. Use this to render HTML interactive maps from data
+
+    Takes a config dict based on:
+    'config = {
+        "hex_field": "hex",
+        "fill_color": '[255, 100 + cnt, 0]' # dynamically sets the colors of the fill based on the `cnt` values col
+    ''
+    """
     import pandas as pd
     import pydeck as pdk
     import h3
@@ -233,6 +298,14 @@ def pydeck_hex(df=None, config: dict | str | None = None):
 
 
 def pydeck_polygon(df, config=None):
+    """
+    Pydeck based maps. Use this to render HTML interactive maps from data
+
+    Takes a config dict based on:
+    'config = {
+        "fill_color": '[255, 100 + cnt, 0]' # dynamically sets the colors of the fill based on the `cnt` values col
+    '
+    """
     if config is None or config == "":
         cfg = DEFAULT_POLYGON_CONFIG.copy()
     elif isinstance(config, str):
@@ -287,3 +360,729 @@ def pydeck_polygon(df, config=None):
     )
 
     return deck.to_html(as_string=True)
+
+
+def folium_raster(data, bounds, opacity=0.7, tiles="CartoDB dark_matter"):
+    """
+    Minimal Folium raster overlay utility.
+    Works with rasterio arrays (H, W) or (bands, H, W).
+    """
+    west, south, east, north = bounds
+
+    # shape handling (no normalization)
+    if data.ndim == 2:
+        rgb = np.stack([data, data, data], axis=-1)
+    elif data.ndim == 3:
+        if data.shape[0] >= 3:
+            rgb = np.transpose(data[:3], (1, 2, 0))
+        elif data.shape[0] == 1:
+            rgb = np.stack([data[0], data[0], data[0]], axis=-1)
+        else:
+            h, w = data.shape[1], data.shape[2]
+            rgb = np.zeros((h, w, 3), dtype=np.uint8)
+            for i in range(data.shape[0]):
+                rgb[:, :, i] = data[i]
+    else:
+        raise ValueError(f"Unsupported raster shape: {data.shape}")
+
+    # clip just to be safe
+    rgb = np.clip(rgb, 0, 255).astype(np.uint8)
+
+    # center map
+    center_lat = (south + north) / 2
+    center_lon = (west + east) / 2
+
+    m = folium.Map(location=[center_lat, center_lon], zoom_start=9, tiles=tiles)
+
+    folium.raster_layers.ImageOverlay(
+        image=rgb,
+        bounds=[[south, west], [north, east]],
+        opacity=opacity,
+    ).add_to(m)
+
+    return m.get_root().render()
+
+
+def deckgl_map(
+    gdf,
+    config: dict = DEFAULT_DECK_CONFIG,
+    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
+):
+    try:
+        geojson_obj = json.loads(gdf.to_json())
+    except Exception:
+        geojson_obj = {"type": "FeatureCollection", "features": []}
+
+    auto_center = (0, 0)
+    if hasattr(gdf, "total_bounds"):
+        try:
+            minx, miny, maxx, maxy = gdf.total_bounds
+            auto_center = ((minx + maxx) / 2, (miny + maxy) / 2)
+        except Exception:
+            pass
+
+    html = Template(r"""
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no"/>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet"/>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
+  <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+  <script src="https://unpkg.com/cartocolor@4.0.2/dist/cartocolor.min.js"></script>
+  <style>
+    html,body{margin:0;height:100%;background:#000}
+    #map{position:absolute;inset:0}
+    .deck-tooltip{font-family:monospace;font-size:11px;background:rgba(0,0,0,.8);color:#fff;padding:6px 8px;border-radius:4px;max-width:240px}
+  </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+const MAPBOX_TOKEN={{mapbox_token|tojson}};
+const GEOJSON={{geojson_obj|tojson}};
+const CONFIG={{config|tojson}};
+const AUTO_CENTER={{auto_center|tojson}};
+
+// Helper to get colors from cartocolor and convert hex to RGB
+function getCartoColors(schemeName, steps) {
+  try {
+    // Try to get the scheme (cartocolor uses lowercase keys)
+    const allSchemes = {...cartocolor.diverging, ...cartocolor.sequential, ...cartocolor.qualitative};
+    const scheme = allSchemes[schemeName] || allSchemes[schemeName.toLowerCase()];
+    
+    if (!scheme) {
+      console.warn(`Color scheme '${schemeName}' not found, using Magenta`);
+      return getCartoColors('Magenta', steps);
+    }
+    
+    // Get colors for the requested steps (or max available)
+    const availableSteps = Object.keys(scheme).map(k => parseInt(k)).filter(n => !isNaN(n)).sort((a,b) => a-b);
+    const bestStep = availableSteps.find(s => s >= steps) || availableSteps[availableSteps.length - 1];
+    const hexColors = scheme[bestStep] || scheme[availableSteps[0]];
+    
+    // Convert hex to RGB arrays
+    const rgbColors = hexColors.map(hex => {
+      const r = parseInt(hex.slice(1,3), 16);
+      const g = parseInt(hex.slice(3,5), 16);
+      const b = parseInt(hex.slice(5,7), 16);
+      return [r, g, b];
+    });
+    
+    // Interpolate if we need more steps
+    return interpColors(rgbColors, steps);
+  } catch (e) {
+    console.error('CartoColor error:', e);
+    // Fallback to Magenta
+    return [[248,203,249,255],[244,171,246,255],[240,134,244,255],[229,80,223,255],[217,13,199,255],[158,1,129,255],[99,1,78,255]].slice(0, steps);
+  }
+}
+
+function interpColors(base,steps){
+  if(steps<=base.length)return base.slice(0,steps);
+  const out=[];
+  for(let i=0;i<steps;i++){
+    const t=i/(steps-1),p=t*(base.length-1),i0=Math.floor(p),i1=Math.min(base.length-1,i0+1),f=p-i0;
+    const c0=base[i0],c1=base[i1];
+    out.push([Math.round(c0[0]+(c1[0]-c0[0])*f),Math.round(c0[1]+(c1[1]-c0[1])*f),Math.round(c0[2]+(c1[2]-c0[2])*f),255]);
+  }
+  return out;
+}
+
+function buildLayers(cfg){
+  const layers=[];
+  for(const key in cfg){
+    const def=cfg[key];
+    if(!def||!def["@@type"]) continue;
+    const L=deck[def["@@type"]]||deck.GeoJsonLayer;
+    const props={...def};
+    delete props["@@type"];
+    if(!props.data) props.data=GEOJSON;
+    for(const k of Object.keys(props)){
+      const v=props[k];
+      if(v&&v["@@function"]==="colorContinuous"){
+        const attr=v.attr,domain=v.domain||[0,1],steps=v.steps||6;
+        const ramp=getCartoColors(v.colors||'Magenta',steps);
+        const nullColor=v.nullColor||[180,180,180,180];
+        props[k]=f=>{
+          const val=Number(f.properties?.[attr]);
+          if(!Number.isFinite(val)) return nullColor;
+          const t=(val-domain[0])/(domain[1]-domain[0]);
+          const tt=Math.max(0,Math.min(1,t));
+          const idx=Math.floor(tt*(ramp.length-1));
+          return ramp[idx]||nullColor;
+        };
+      }
+    }
+    props.pickable=true;
+    layers.push(new L(props));
+  }
+  return layers;
+}
+
+mapboxgl.accessToken=MAPBOX_TOKEN;
+const ivs=CONFIG.initialViewState||{};
+const center=[ivs.longitude||AUTO_CENTER[0],ivs.latitude||AUTO_CENTER[1]];
+const zoom=ivs.zoom||11;
+const map=new mapboxgl.Map({container:"map",style:"mapbox://styles/mapbox/dark-v10",center:center,zoom:zoom});
+const overlay=new deck.MapboxOverlay({layers:[]});
+
+map.on("load",()=>{
+  map.addControl(overlay);
+  const layers=buildLayers(CONFIG);
+  const tooltipAttrs=CONFIG.vectorLayer?.tooltipAttrs||[];
+  overlay.setProps({
+    layers:layers,
+    getTooltip:info=>{
+      if(!info.object) return null;
+      const props=info.object.properties||{};
+      const show=tooltipAttrs.length>0?tooltipAttrs: Object.keys(props);
+      const html=show.map(k=>`${k}: ${props[k]}`).join("<br>");
+      return {html:`<div>${html}</div>`};
+    }
+  });
+});
+</script>
+</body>
+</html>
+""").render(
+        mapbox_token=mapbox_token,
+        geojson_obj=geojson_obj,
+        config=config,
+        auto_center=auto_center,
+    )
+
+    common = fused.load("https://github.com/fusedio/udfs/tree/351515e/public/common/")
+    return common.html_to_obj(html)
+
+
+
+def deckgl_hex(
+    df,
+    config = None,  # Can be dict, JSON string, or None
+    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
+):
+    from jinja2 import Template
+    import pandas as pd
+    import json
+    from copy import deepcopy
+
+    # Handle config: None, JSON string, or dict
+    if config is None or config == "":
+        config = deepcopy(DEFAULT_DECK_HEX_CONFIG)
+    elif isinstance(config, str):
+        config = json.loads(config)
+    else:
+        # Merge with defaults
+        merged = deepcopy(DEFAULT_DECK_HEX_CONFIG)
+        merged.update(config)
+        config = merged
+    
+    # Convert dataframe to list of records
+    if hasattr(df, 'to_dict'):
+        # Handle both pandas and geopandas dataframes
+        data_records = df.to_dict('records')
+        
+        # Convert hex IDs to hex strings to avoid precision loss in JavaScript
+        conversion_count = 0
+        for i, record in enumerate(data_records):
+            hex_val = record.get('hex') or record.get('h3') or record.get('index') or record.get('id')
+            if hex_val is not None:
+                try:
+                    # Convert integer to hex string
+                    if isinstance(hex_val, (int, float)):
+                        hex_int = int(hex_val)
+                        hex_str = format(hex_int, 'x')  # Convert to hex string
+                        record['hex'] = hex_str
+                        conversion_count += 1
+                        # Debug: print first conversion
+                        if i == 0:
+                            print(f"[deckgl_hex] Converted hex: {hex_int} -> {hex_str}")
+                    elif isinstance(hex_val, str) and hex_val.isdigit():
+                        # String that looks like a number
+                        hex_int = int(hex_val)
+                        hex_str = format(hex_int, 'x')
+                        record['hex'] = hex_str
+                        conversion_count += 1
+                    else:
+                        # Already a hex string
+                        record['hex'] = hex_val
+                        if i == 0:
+                            print(f"[deckgl_hex] Hex already string: {hex_val}")
+                except (ValueError, OverflowError) as e:
+                    print(f"Error converting hex: {hex_val}, {e}")
+                    record['hex'] = None
+        
+        if conversion_count > 0:
+            print(f"[deckgl_hex] Converted {conversion_count} hex IDs from int to hex string")
+    else:
+        data_records = []
+    
+    # Auto-calculate center from lat/lng columns if available
+    auto_center = (-119.4179, 36.7783)  # Default to California
+    auto_zoom = 5
+    
+    if len(data_records) > 0:
+        if 'lat' in data_records[0] and 'lng' in data_records[0]:
+            lats = [r['lat'] for r in data_records if 'lat' in r]
+            lngs = [r['lng'] for r in data_records if 'lng' in r]
+            if lats and lngs:
+                auto_center = (sum(lngs)/len(lngs), sum(lats)/len(lats))
+                auto_zoom = 8
+
+    # Get initialViewState from config, use auto-calculated values as fallback
+    initial_view_state = config.get('initialViewState', {})
+    center_lng = initial_view_state.get('longitude')
+    center_lat = initial_view_state.get('latitude')
+    zoom = initial_view_state.get('zoom')
+    pitch = initial_view_state.get('pitch', 0)
+    bearing = initial_view_state.get('bearing', 0)
+    
+    # Use auto values if not specified in config
+    if center_lng is None:
+        center_lng = auto_center[0]
+    if center_lat is None:
+        center_lat = auto_center[1]
+    if zoom is None:
+        zoom = auto_zoom
+
+    # Infer tooltip columns from data
+    tooltip_columns = []
+    if data_records:
+        tooltip_columns = [k for k in data_records[0].keys() if k not in ['hex', 'lat', 'lng']]
+
+    html = Template(r"""
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>H3 Hexagon Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Mapbox GL -->
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+
+  <!-- Load h3-js FIRST, then deck.gl + geo-layers (+ carto for color ramps) -->
+  <script src="https://unpkg.com/h3-js@4.1.0/dist/h3-js.umd.js"></script>
+  <script src="https://unpkg.com/deck.gl@9.1.3/dist.min.js"></script>
+  <script src="https://unpkg.com/@deck.gl/geo-layers@9.1.3/dist.min.js"></script>
+  <script src="https://unpkg.com/@deck.gl/carto@9.1.3/dist.min.js"></script>
+  <script src="https://unpkg.com/cartocolor@4.0.2/dist/cartocolor.min.js"></script>
+
+  <style>
+    html, body, #map { margin: 0; height: 100%; width: 100%; }
+    #tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      display: none;
+      z-index: 6;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="tooltip"></div>
+
+  <script>
+    const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
+    const STYLE_URL = "mapbox://styles/mapbox/dark-v10";
+    const DATA = {{ data_records | tojson }};
+    const CONFIG = {{ config | tojson }};
+    const TOOLTIP_COLUMNS = {{ tooltip_columns | tojson }};
+
+    const { MapboxOverlay } = deck;
+    const H3HexagonLayer = deck.H3HexagonLayer || (deck.GeoLayers && deck.GeoLayers.H3HexagonLayer);
+    const { colorContinuous } = deck.carto;
+
+    const $tooltip = () => document.getElementById('tooltip');
+
+    // ----- H3 ID safety (handles string/number/bigint) -----
+    function toH3String(hex) {
+      try {
+        if (hex == null) return null;
+        if (typeof hex === 'string') {
+          // Remove 0x prefix if present
+          const s = hex.startsWith('0x') ? hex.slice(2) : hex;
+          // If it's already a hex string (contains a-f), just return lowercase
+          if (/[a-f]/i.test(s)) {
+            return s.toLowerCase();
+          }
+          // If all digits, might be decimal string - convert to hex
+          if (/^\d+$/.test(s)) {
+            return BigInt(s).toString(16);
+          }
+          // Otherwise return as-is
+          return s.toLowerCase();
+        }
+        // Fallback for numbers (shouldn't happen with pre-conversion)
+        if (typeof hex === 'number') return BigInt(Math.trunc(hex)).toString(16);
+        if (typeof hex === 'bigint') return hex.toString(16);
+      } catch(e) {
+        console.error('toH3String error:', hex, e);
+      }
+      return null;
+    }
+
+    // Process color continuous config
+    function processColorContinuous(cfg) {
+      let domain = cfg.domain;
+      if (domain && domain.length === 2) {
+        const [min, max] = domain;
+        const steps = cfg.steps ?? 20;
+        const stepSize = (max - min) / (steps - 1);
+        domain = Array.from({ length: steps }, (_, i) => min + stepSize * i);
+      }
+
+      return {
+        attr: cfg.attr,
+        domain: domain,
+        colors: cfg.colors || 'Magenta',
+        nullColor: cfg.nullColor || [184,184,184]
+      };
+    }
+
+    // Parse hex layer config
+    function parseHexLayerConfig(config) {
+      const out = {};
+      for (const [k, v] of Object.entries(config || {})) {
+        if (k === '@@type') continue;
+        if (v && typeof v === 'object' && !Array.isArray(v)) {
+          if (v['@@function'] === 'colorContinuous') {
+            out[k] = colorContinuous(processColorContinuous(v));
+          } else {
+            out[k] = v;
+          }
+        } else if (typeof v === 'string' && v.startsWith('@@=')) {
+          // Handle @@= expressions
+          const code = v.slice(3);
+          out[k] = (obj) => {
+            try {
+              const properties = obj?.properties || obj || {};
+              return eval(code);
+            } catch (e) { 
+              console.error('@@= eval error:', v, e); 
+              return null; 
+            }
+          };
+        } else {
+          out[k] = v;
+        }
+      }
+      return out;
+    }
+
+    // Normalize data - convert hex IDs to H3 strings
+    const normalizedData = DATA.map((d, i) => {
+      const hexRaw = d.hex ?? d.h3 ?? d.index ?? d.id;
+      const hex = toH3String(hexRaw);
+      if (!hex) {
+        if (i < 3) console.warn('Null hex for record:', d);
+      return null;
+    }
+      return { ...d, hex, properties: { ...d, hex } };
+      }).filter(Boolean);
+
+    console.log('Loaded hexagons:', normalizedData.length);
+    if (normalizedData.length > 0) {
+      console.log('Sample hex (raw):', DATA[0].hex);
+      console.log('Sample hex (converted):', normalizedData[0].hex);
+      console.log('Sample record:', normalizedData[0]);
+      // Verify with h3-js
+      if (typeof h3 !== 'undefined' && h3.isValidCell) {
+        console.log('Is valid H3 cell?', h3.isValidCell(normalizedData[0].hex));
+      }
+    }
+
+    // Mapbox init
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+    const map = new mapboxgl.Map({ 
+      container: 'map', 
+      style: STYLE_URL, 
+      center: [{{ center_lng }}, {{ center_lat }}], 
+      zoom: {{ zoom }} 
+    });
+
+    // Build hex layer from config
+    const hexCfg = parseHexLayerConfig(CONFIG.hexLayer || {});
+
+    // Create H3 hexagon layer
+    const hexLayer = new H3HexagonLayer({
+      id: 'h3-hexagon-layer',
+      data: normalizedData,
+      pickable: true,
+      wireframe: false,
+      filled: true,
+      extruded: false,
+      coverage: 0.9,
+      getHexagon: d => d.hex,
+      ...hexCfg
+    });
+
+    const overlay = new MapboxOverlay({
+      interleaved: false,
+      layers: [hexLayer]
+    });
+
+    map.addControl(overlay);
+
+    // Tooltip on hover
+    map.on('mousemove', (e) => { 
+      const info = overlay.pickObject({x: e.point.x, y: e.point.y, radius: 4});
+      if (info?.object) {
+        map.getCanvas().style.cursor = 'pointer';
+        const p = info.object;
+
+        // Build tooltip content
+        const lines = [`hex: ${p.hex.substring(0, 10)}...`];
+          TOOLTIP_COLUMNS.forEach(col => {
+            if (p[col] !== undefined) {
+              const val = p[col];
+              lines.push(`${col}: ${Number(val).toFixed(2)}`);
+            }
+          });
+        
+        const tooltipText = lines.join(' • ');
+        const tt = $tooltip();
+        tt.innerHTML = tooltipText;
+        tt.style.left = `${e.point.x + 10}px`;
+        tt.style.top = `${e.point.y + 10}px`;
+        tt.style.display = 'block';
+      } else {
+        map.getCanvas().style.cursor = '';
+        $tooltip().style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
+""").render(
+        mapbox_token=mapbox_token,
+        data_records=data_records,
+        config=config,
+        tooltip_columns=tooltip_columns,
+        center_lng=center_lng,
+        center_lat=center_lat,
+        zoom=zoom,
+    )
+
+    common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
+    return common.html_to_obj(html)
+
+
+def deckgl_raster(
+    image_data,  # numpy array or image URL string
+    bounds,  # [west, south, east, north]
+    config: dict = None,
+    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
+):
+    """
+    Render a georeferenced raster image using Deck.gl BitmapLayer.
+    
+    Args:
+        image_data: numpy array (H, W, 3 or 4) or image URL string
+        bounds: [west, south, east, north] geographic bounds
+        config: Optional dict with initialViewState and rasterLayer config
+        mapbox_token: Mapbox access token
+    
+    Returns:
+        HTML object for rendering
+    """
+    from jinja2 import Template
+    import json
+    import numpy as np
+    import base64
+    from io import BytesIO
+    from copy import deepcopy
+    
+    # Default config
+    DEFAULT_RASTER_CONFIG = {
+        "initialViewState": {
+            "longitude": None,
+            "latitude": None,
+            "zoom": 10,
+            "pitch": 0,
+            "bearing": 0
+        },
+        "rasterLayer": {
+            "opacity": 1.0,
+            "tintColor": [255, 255, 255]
+        }
+    }
+    
+    if config is None or config == "":
+        config = deepcopy(DEFAULT_RASTER_CONFIG)
+    elif isinstance(config, str):
+        config = json.loads(config)
+    else:
+        # Merge with defaults
+        merged = deepcopy(DEFAULT_RASTER_CONFIG)
+        merged.update(config)
+        config = merged
+    
+    # Convert numpy array to base64 image data URL
+    image_url = None
+    if isinstance(image_data, str):
+        # Already a URL
+        image_url = image_data
+    else:
+        # Convert numpy array to PNG base64
+        try:
+            from PIL import Image
+            
+            # Handle different array formats
+            if image_data.ndim == 3:
+                # Check if it's (C, H, W) format (rasterio/GDAL convention)
+                if image_data.shape[0] in [1, 3, 4] and image_data.shape[0] < image_data.shape[1] and image_data.shape[0] < image_data.shape[2]:
+                    # Transpose from (C, H, W) to (H, W, C)
+                    image_data = np.transpose(image_data, (1, 2, 0))
+                    print(f"[deckgl_raster] Transposed from (C,H,W) to (H,W,C): {image_data.shape}")
+            
+            # Ensure it's uint8
+            if image_data.dtype != np.uint8:
+                # Normalize to 0-255
+                img_min, img_max = image_data.min(), image_data.max()
+                if img_max > img_min:
+                    image_data = ((image_data - img_min) / (img_max - img_min) * 255).astype(np.uint8)
+                else:
+                    image_data = np.zeros_like(image_data, dtype=np.uint8)
+            
+            # Handle different shapes
+            if image_data.ndim == 2:
+                # Grayscale - convert to RGB
+                img = Image.fromarray(image_data, mode='L').convert('RGB')
+            elif image_data.ndim == 3:
+                if image_data.shape[2] == 1:
+                    # Single channel - convert to grayscale then RGB
+                    img = Image.fromarray(image_data[:, :, 0], mode='L').convert('RGB')
+                elif image_data.shape[2] == 3:
+                    img = Image.fromarray(image_data, mode='RGB')
+                elif image_data.shape[2] == 4:
+                    img = Image.fromarray(image_data, mode='RGBA')
+                else:
+                    raise ValueError(f"Unsupported number of channels: {image_data.shape[2]}. Expected 1, 3, or 4. Shape: {image_data.shape}")
+            else:
+                raise ValueError(f"Unsupported image dimensionality: {image_data.ndim}D. Expected 2D or 3D array. Shape: {image_data.shape}")
+            
+            # Convert to base64
+            buffer = BytesIO()
+            img.save(buffer, format='PNG')
+            img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            image_url = f"data:image/png;base64,{img_base64}"
+            
+        except Exception as e:
+            print(f"[deckgl_raster] Error converting image: {e}")
+            raise
+    
+    # Calculate center from bounds
+    west, south, east, north = bounds
+    auto_center_lng = (west + east) / 2
+    auto_center_lat = (south + north) / 2
+    
+    # Get initialViewState from config
+    initial_view_state = config.get('initialViewState', {})
+    center_lng = initial_view_state.get('longitude')
+    center_lat = initial_view_state.get('latitude')
+    zoom = initial_view_state.get('zoom')
+    pitch = initial_view_state.get('pitch', 0)
+    bearing = initial_view_state.get('bearing', 0)
+    
+    # Use auto values if not specified
+    if center_lng is None:
+        center_lng = auto_center_lng
+    if center_lat is None:
+        center_lat = auto_center_lat
+    if zoom is None:
+        zoom = 10
+    
+    # Get raster layer config
+    raster_config = config.get('rasterLayer', {})
+    opacity = raster_config.get('opacity', 1.0)
+    tint_color = raster_config.get('tintColor', [255, 255, 255])
+    
+    html = Template(r"""
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no"/>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet"/>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
+  <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+  <style>
+    html,body{margin:0;height:100%;background:#000}
+    #map{position:absolute;inset:0}
+  </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
+const IMAGE_URL = {{ image_url | tojson }};
+const BOUNDS = {{ bounds | tojson }};
+const OPACITY = {{ opacity | tojson }};
+const TINT_COLOR = {{ tint_color | tojson }};
+
+mapboxgl.accessToken = MAPBOX_TOKEN;
+const map = new mapboxgl.Map({
+  container: 'map',
+  style: 'mapbox://styles/mapbox/dark-v10',
+  center: [{{ center_lng }}, {{ center_lat }}],
+  zoom: {{ zoom }},
+  pitch: {{ pitch }},
+  bearing: {{ bearing }}
+});
+
+const layer = new deck.BitmapLayer({
+  id: 'raster-layer',
+  bounds: BOUNDS,
+  image: IMAGE_URL,
+  opacity: OPACITY,
+  tintColor: TINT_COLOR,
+  pickable: false
+});
+
+const overlay = new deck.MapboxOverlay({
+  interleaved: false,
+  layers: [layer]
+});
+
+map.addControl(overlay);
+
+// Fit map to raster bounds on load
+map.on('load', () => {
+  const [west, south, east, north] = BOUNDS;
+  map.fitBounds(
+    [[west, south], [east, north]],
+    {
+      padding: 20,
+      pitch: {{ pitch }},
+      bearing: {{ bearing }},
+      duration: 1000
+    }
+  );
+});
+</script>
+</body>
+</html>
+""").render(
+        mapbox_token=mapbox_token,
+        image_url=image_url,
+        bounds=bounds,
+        opacity=opacity,
+        tint_color=tint_color,
+        center_lng=center_lng,
+        center_lat=center_lat,
+        zoom=zoom,
+        pitch=pitch,
+        bearing=bearing,
+    )
+
+    common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
+    return common.html_to_obj(html)
