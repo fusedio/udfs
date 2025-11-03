@@ -412,6 +412,13 @@ def deckgl_map(
     Custom DeckGL based HTML Map. Use this to visualize vector data like points & polygons
     Uses a DeckGL compatible config JSON file to edit color palette, starting lat / lon, etc. 
     """
+    if hasattr(gdf, "crs"):
+        try:
+            if gdf.crs and getattr(gdf.crs, "to_epsg", lambda: None)() != 4326:
+                gdf = gdf.to_crs(epsg=4326)
+        except Exception as exc:  # pragma: no cover - best-effort fallback
+            print(f"[deckgl_map] Warning: failed to reproject to EPSG:4326 ({exc})")
+
     try:
         geojson_obj = json.loads(gdf.to_json())
     except Exception:
@@ -452,16 +459,34 @@ const GEOJSON={{geojson_obj|tojson}};
 const CONFIG={{config|tojson}};
 const AUTO_CENTER={{auto_center|tojson}};
 
+function resolveCartoSchemes() {
+  const base = (typeof window !== 'undefined' && window.cartocolor) ? window.cartocolor : {};
+  const lib = base.default && Object.keys(base).length === 1 ? base.default : base;
+  const sequential = lib.sequential || lib?.schemes?.sequential || {};
+  const diverging = lib.diverging || lib?.schemes?.diverging || {};
+  const qualitative = lib.qualitative || lib?.schemes?.qualitative || {};
+  return { ...diverging, ...sequential, ...qualitative };
+}
+
 // Helper to get colors from cartocolor and convert hex to RGB
 function getCartoColors(schemeName, steps) {
   try {
-    // Try to get the scheme (cartocolor uses lowercase keys)
-    const allSchemes = {...cartocolor.diverging, ...cartocolor.sequential, ...cartocolor.qualitative};
+    const allSchemes = resolveCartoSchemes();
+
+    if (!Object.keys(allSchemes).length) {
+      console.warn('CartoColor library unavailable, using fallback palette');
+      return fallbackColors(steps);
+    }
+
     const scheme = allSchemes[schemeName] || allSchemes[schemeName.toLowerCase()];
-    
+
     if (!scheme) {
-      console.warn(`Color scheme '${schemeName}' not found, using Magenta`);
-      return getCartoColors('Magenta', steps);
+      if (schemeName !== 'Magenta') {
+        console.warn(`Color scheme '${schemeName}' not found, falling back to Magenta`);
+        return getCartoColors('Magenta', steps);
+      }
+      console.warn("'Magenta' color scheme not available; using hard-coded fallback palette");
+      return fallbackColors(steps);
     }
     
     // Get colors for the requested steps (or max available)
@@ -481,9 +506,19 @@ function getCartoColors(schemeName, steps) {
     return interpColors(rgbColors, steps);
   } catch (e) {
     console.error('CartoColor error:', e);
-    // Fallback to Magenta
-    return [[248,203,249,255],[244,171,246,255],[240,134,244,255],[229,80,223,255],[217,13,199,255],[158,1,129,255],[99,1,78,255]].slice(0, steps);
+    return fallbackColors(steps);
   }
+}
+
+function fallbackColors(steps) {
+  const magentaRamp = [[248,203,249,255],[244,171,246,255],[240,134,244,255],[229,80,223,255],[217,13,199,255],[158,1,129,255],[99,1,78,255]];
+  if (!Number.isFinite(steps) || steps <= 0) {
+    return magentaRamp;
+  }
+  if (steps <= magentaRamp.length) {
+    return magentaRamp.slice(0, steps);
+  }
+  return interpColors(magentaRamp, steps);
 }
 
 function interpColors(base,steps){
