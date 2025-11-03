@@ -408,6 +408,10 @@ def deckgl_map(
     config: dict = DEFAULT_DECK_CONFIG,
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
 ):
+    """
+    Custom DeckGL based HTML Map. Use this to visualize vector data like points & polygons
+    Uses a DeckGL compatible config JSON file to edit color palette, starting lat / lon, etc. 
+    """
     try:
         geojson_obj = json.loads(gdf.to_json())
     except Exception:
@@ -430,7 +434,10 @@ def deckgl_map(
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet"/>
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
   <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
-  <script src="https://unpkg.com/cartocolor@4.0.2/dist/cartocolor.min.js"></script>
+  <script type="module">
+    import * as cartocolor from 'https://esm.sh/cartocolor@5.0.2';
+    window.cartocolor = cartocolor;
+  </script>
   <style>
     html,body{margin:0;height:100%;background:#000}
     #map{position:absolute;inset:0}
@@ -563,6 +570,10 @@ def deckgl_hex(
     config = None,  # Can be dict, JSON string, or None
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
 ):
+    """
+    Custom DeckGL based HTML Map. Use this to visualize hex data (dataframe containing a hex column)
+    Uses a DeckGL compatible config JSON file to edit color palette, starting lat / lon, etc. 
+    """
     from jinja2 import Template
     import pandas as pd
     import json
@@ -669,7 +680,10 @@ def deckgl_hex(
   <script src="https://unpkg.com/deck.gl@9.1.3/dist.min.js"></script>
   <script src="https://unpkg.com/@deck.gl/geo-layers@9.1.3/dist.min.js"></script>
   <script src="https://unpkg.com/@deck.gl/carto@9.1.3/dist.min.js"></script>
-  <script src="https://unpkg.com/cartocolor@4.0.2/dist/cartocolor.min.js"></script>
+  <script type="module">
+    import * as cartocolor from 'https://esm.sh/cartocolor@5.0.2';
+    window.cartocolor = cartocolor;
+  </script>
 
   <style>
     html, body, #map { margin: 0; height: 100%; width: 100%; }
