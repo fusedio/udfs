@@ -40,8 +40,9 @@ def mutex(filename, wait=1, verbose=False):
         os.unlink(filename)
 
 
-def url_to_qr(url, title='Scan me 🥹'):
+def url_to_qr(url, title='Scan me 🥹', logo_url='https://www.fused.io/favicon.ico'):
     title_html = f"<h3>{title}</h3>" if title else ""
+    logo_html = f'<img src="{logo_url}" class="logo" />' if logo_url else ""
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -53,11 +54,24 @@ def url_to_qr(url, title='Scan me 🥹'):
             .container {{ display: flex; flex-direction: column; 
             align-items: center; gap: 2vh; background: rgba(0, 0, 0, 0.3); padding: 2vh; border-radius: 1vh; }}
             h1, h2, h3, p {{ color: #fff; }}
-            #qrcode {{ background: white; }}
+            #qrcode {{ background: white; position: relative; }}
+            .logo {{ 
+                position: absolute; 
+                top: 50%; 
+                left: 50%; 
+                transform: translate(-50%, -50%);
+                width: 20%;
+                height: 20%;
+                object-fit: contain;
+                background: white;
+                padding: 2%;
+                border-radius: 8%;
+                box-shadow: 0 0 0 2px white;
+            }}
         </style>
     </head>
     <body>
-        <div class="container">{title_html}<div id="qrcode"></div></div>
+        <div class="container">{title_html}<div id="qrcode">{logo_html}</div></div>
         <script>
             function generateQR() {{ 
                 const container = document.getElementById('qrcode'); 
@@ -65,8 +79,13 @@ def url_to_qr(url, title='Scan me 🥹'):
                 let availableHeight = window.innerHeight - (titleElement ? (titleElement.style.fontSize = '10vw', titleElement.offsetHeight) : 0); 
                 const maxSize = Math.min(window.innerWidth, availableHeight) * 0.9; 
                 container.style.width = container.style.height = maxSize + 'px'; 
+                const logo = container.querySelector('.logo');
+                const logoHTML = logo ? logo.outerHTML : '';
                 container.innerHTML = ''; 
                 new QRCode(container, {{ text: "{url}", width: maxSize, height: maxSize, correctLevel: QRCode.CorrectLevel.H }}); 
+                if (logoHTML) {{
+                    container.insertAdjacentHTML('beforeend', logoHTML);
+                }}
             }} 
             generateQR(); 
             window.addEventListener('resize', generateQR);
