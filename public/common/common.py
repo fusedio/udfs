@@ -1090,7 +1090,7 @@ def table_to_tile(
         else:
             return df
     else:
-        df.crs = tile.crs
+        df.crs = bbox.crs
         if clip:
             return df.clip(tile).explode()
         else:
