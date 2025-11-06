@@ -40,40 +40,89 @@ def mutex(filename, wait=1, verbose=False):
         os.unlink(filename)
 
 
-def url_to_qr(url, title='Scan me 🥹'):
+def url_to_qr(url, title='Scan me 🥹', logo_url='https://www.fused.io/favicon.ico'):
+    """
+    Return an HTML page that shows a QR code for *url*.
+    The QR code is generated client-side using the qrcodejs library.
+    A logo (favicon) is overlaid at the centre of the QR code,
+    scaling proportionally with the QR-code container and staying centred on
+    every resize.
+    """
+    # Fallback URL if none is provided
+    if not url:
+        url = "https://example.com"
+
+    # Optional title HTML
     title_html = f"<h3>{title}</h3>" if title else ""
-    html = f"""
+
+    # NOTE: every "{{" and "}}" inside the f-string must be doubled so the
+    # JavaScript object literal is not interpreted as a Python f-string.
+    html = f'''
     <!DOCTYPE html>
     <html>
     <head>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
         <style>
-            * {{ margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }}
-            body {{ display: flex; justify-content: center; align-items: center; background: transparent; height: 100vh; }}
-            .container {{ display: flex; flex-direction: column; 
-            align-items: center; gap: 2vh; background: rgba(0, 0, 0, 0.3); padding: 2vh; border-radius: 1vh; }}
-            h1, h2, h3, p {{ color: #fff; }}
-            #qrcode {{ background: white; }}
+            * {{ margin:0; padding:0; box-sizing:border-box; font-family:system-ui, sans-serif; }}
+            body {{ display:flex; justify-content:center; align-items:center;
+                     background:transparent; height:100vh; }}
+            .container {{ display:flex; flex-direction:column; align-items:center;
+                         gap:2vh; background:rgba(0,0,0,0.3); padding:2vh;
+                         border-radius:1vh; text-align:center; }}
+            h1, h2, h3, p {{ color:#fff; margin-bottom:0.5rem; }}
+            #qrcode {{ position:relative; width:500px; height:500px; }}
+            #qrcode canvas {{ width:100% !important; height:100% !important; }}
+            .logo {{
+                position:absolute; top:50%; left:50%;
+                transform:translate(-50%,-50%);
+                width:20%;               /* scales with the container */
+                height:auto;             /* keep original aspect ratio */
+                max-height:20%;          /* never exceed 20 % of the container */
+                object-fit:contain;
+                background:white; padding:2%; border-radius:8%;
+                box-shadow:0 0 0 2px white;
+                z-index:10;              /* stay on top of the canvas */
+                pointer-events:none;
+            }}
         </style>
     </head>
     <body>
-        <div class="container">{title_html}<div id="qrcode"></div></div>
+        <div class="container">
+            {title_html}
+            <div id="qrcode"></div>
+        </div>
         <script>
-            function generateQR() {{ 
-                const container = document.getElementById('qrcode'); 
-                const titleElement = document.querySelector('h1, h2, h3, p'); 
-                let availableHeight = window.innerHeight - (titleElement ? (titleElement.style.fontSize = '10vw', titleElement.offsetHeight) : 0); 
-                const maxSize = Math.min(window.innerWidth, availableHeight) * 0.9; 
-                container.style.width = container.style.height = maxSize + 'px'; 
-                container.innerHTML = ''; 
-                new QRCode(container, {{ text: "{url}", width: maxSize, height: maxSize, correctLevel: QRCode.CorrectLevel.H }}); 
-            }} 
-            generateQR(); 
+            const logoUrl = "{logo_url}";
+            function generateQR() {{
+                const container = document.getElementById('qrcode');
+
+                /* Clear everything (canvas + old logo) before regenerating */
+                container.innerHTML = '';
+
+                const maxSize = Math.min(window.innerWidth, window.innerHeight) * 0.9;
+                container.style.width = container.style.height = maxSize + 'px';
+
+                new QRCode(container, {{
+                    text: "{url}",
+                    width: maxSize,
+                    height: maxSize,
+                    correctLevel: QRCode.CorrectLevel.H
+                }});
+
+                /* Add the logo on top of the freshly created canvas */
+                if (logoUrl) {{
+                    const logo = document.createElement('img');
+                    logo.src = logoUrl;
+                    logo.className = 'logo';
+                    container.appendChild(logo);
+                }}
+            }}
+            generateQR();
             window.addEventListener('resize', generateQR);
         </script>
     </body>
     </html>
-    """
+    '''
     return html
 
 
