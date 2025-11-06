@@ -683,9 +683,12 @@ def arr_to_bytes(arr, format='png'):
     """Convert a single image array to bytes for common image formats (png, jpg, etc.)."""
     import io
     import imageio
+    import numpy as np
     arr = arr.squeeze()
     if arr.ndim == 3 and arr.shape[0] in (1, 3, 4):
         arr = arr.transpose(1, 2, 0)
+    if arr.dtype in (np.float32, np.float64):
+        arr = (arr * 255).astype(np.uint8) if arr.max() <= 1.0 else arr.astype(np.uint8)
     with io.BytesIO() as buffer:
         try:
             imageio.imwrite(buffer, arr, format=format)
