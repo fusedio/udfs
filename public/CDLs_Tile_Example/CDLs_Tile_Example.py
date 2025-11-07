@@ -67,14 +67,10 @@ def int_to_crop(val):
 
 @fused.cache
 def crop_type_list(crop_type):
-    # Loading from itself through Github so this specific function can also be loaded 
-    # by another UDF later. This would break if we didn't do fused.load() here 
-    # and simply refered to the function in same file
-    cdl_tiles = fused.load("UDF_CDLs_Tile_Example")
     try:
         vals = [int(i) for i in crop_type.split(',')]
     except:
-        vals = cdl_tiles.crop_to_int(crop_type, verbose=False)
+        vals = crop_to_int(crop_type, verbose=False)
     return vals
 
 def filter_crops(arr, crop_type, verbose=True):
