@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds = [-125, 24, -66, 49]  # Continental US bounds (west, south, east, north),
+    bounds: fused.types.Bounds = [-125, 24, -66, 49],  # Continental US bounds (west, south, east, north),
     min_elevation: float = None,
     max_elevation: float = None,
     k_ring_size: int = 1  # K-ring distance (1 or 2)
