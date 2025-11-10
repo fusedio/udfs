@@ -433,7 +433,28 @@ def deckgl_map(
 ):
     """
     Custom DeckGL based HTML Map. Use this to visualize vector data like points & polygons
-    Uses a DeckGL compatible config JSON file to edit color palette, starting lat / lon, etc. 
+    Uses a DeckGL compatible config JSON file to edit color palette, starting lat / lon, etc.
+    
+    Default config:
+    {
+        "initialViewState": {
+            "zoom": 12
+        },
+        "vectorLayer": {
+            "@@type": "GeoJsonLayer",
+            "pointRadiusMinPixels": 10,
+            "pickable": True,
+            "getFillColor": {
+                "@@function": "colorContinuous",
+                "attr": "house_age",
+                "colors": "TealGrn",
+                "domain": [0, 50],
+                "steps": 7,
+                "nullColor": [200, 200, 200, 180]
+            },
+            "tooltipColumns": ["house_age", "mrt_distance", "price"]
+        }
+    }
     """
     from copy import deepcopy
 
@@ -679,7 +700,14 @@ const map = new mapboxgl.Map({
 map.on('load', () => {
   map.addSource('gdf-source', {
     type: 'geojson',
-    data: GEOJSON
+    data: { type: 'FeatureCollection', features: [] }
+  });
+  // Defer data injection so the basemap renders immediately.
+  requestAnimationFrame(() => {
+    const source = map.getSource('gdf-source');
+    if (source) {
+      source.setData(GEOJSON);
+    }
   });
 
   const firstFeature = GEOJSON.features && GEOJSON.features[0];
@@ -811,7 +839,32 @@ def deckgl_hex(
 ):
     """
     Custom DeckGL based HTML Map. Use this to visualize hex data (dataframe containing a hex column)
-    Uses a DeckGL compatible config JSON file to edit color palette, starting lat / lon, tooltip columns, etc. 
+    Uses a DeckGL compatible config JSON file to edit color palette, starting lat / lon, tooltip columns, etc.
+    
+    Default config:
+    {
+        "initialViewState": {
+            "longitude": None,
+            "latitude": None,
+            "zoom": 8,
+            "pitch": 0,
+            "bearing": 0
+        },
+        "hexLayer": {
+            "@@type": "H3HexagonLayer",
+            "filled": True,
+            "pickable": True,
+            "extruded": False,
+            "getHexagon": "@@=properties.hex",
+            "getFillColor": {
+                "@@function": "colorContinuous",
+                "attr": "cnt",
+                "domain": [5000, 0],
+                "steps": 20,
+                "colors": "Magenta"
+            }
+        }
+    }
     """
     from jinja2 import Template
     import pandas as pd
@@ -1187,28 +1240,32 @@ def deckgl_hex(
       zoom: {{ zoom }} 
     });
 
-    // Build hex layer from config
-    const hexCfg = parseHexLayerConfig(CONFIG.hexLayer || {});
-
-    // Create H3 hexagon layer
-    const hexLayer = new H3HexagonLayer({
-      id: 'h3-hexagon-layer',
-      data: normalizedData,
-      pickable: true,
-      wireframe: false,
-      filled: true,
-      extruded: false,
-      coverage: 0.9,
-      getHexagon: d => d.hex,
-      ...hexCfg
-    });
+    function createHexLayer(data) {
+      return new H3HexagonLayer({
+        id: 'h3-hexagon-layer',
+        data,
+        pickable: true,
+        wireframe: false,
+        filled: true,
+        extruded: false,
+        coverage: 0.9,
+        getHexagon: d => d.hex,
+        ...parseHexLayerConfig(CONFIG.hexLayer || {})
+      });
+    }
 
     const overlay = new MapboxOverlay({
       interleaved: false,
-      layers: [hexLayer]
+      layers: [createHexLayer([])]
     });
 
     map.addControl(overlay);
+
+    requestAnimationFrame(() => {
+      overlay.setProps({
+        layers: [createHexLayer(normalizedData)]
+      });
+    });
 
     // Tooltip on hover
     map.on('mousemove', (e) => { 
