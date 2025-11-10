@@ -403,15 +403,40 @@ def folium_raster(data, bounds, opacity=0.7, tiles="CartoDB dark_matter"):
     return m.get_root().render()
 
 
+import json
+from jinja2 import Template
+
+DEFAULT_DECK_CONFIG = {
+    "initialViewState": {
+        "zoom": 12
+    },
+    "vectorLayer": {
+        "@@type": "GeoJsonLayer",
+        "pointRadiusMinPixels": 10,
+        "pickable": True,
+        "getFillColor": {
+            "@@function": "colorContinuous",
+            "attr": "house_age",
+            "colors": "TealGrn",
+            "domain": [0, 50],
+            "steps": 7,
+            "nullColor": [200, 200, 200, 180]
+        },
+        "tooltipAttrs": ["house_age", "mrt_distance", "price"]
+    }
+}
+
 def deckgl_map(
     gdf,
-    config: dict = DEFAULT_DECK_CONFIG,
+    config: typing.Union[dict, str, None] = None,
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
 ):
     """
     Custom DeckGL based HTML Map. Use this to visualize vector data like points & polygons
     Uses a DeckGL compatible config JSON file to edit color palette, starting lat / lon, etc. 
     """
+    from copy import deepcopy
+
     if hasattr(gdf, "crs"):
         try:
             if gdf.crs and getattr(gdf.crs, "to_epsg", lambda: None)() != 4326:
@@ -424,165 +449,186 @@ def deckgl_map(
     except Exception:
         geojson_obj = {"type": "FeatureCollection", "features": []}
 
-    auto_center = (0, 0)
+    auto_center = (0.0, 0.0)
     if hasattr(gdf, "total_bounds"):
         try:
             minx, miny, maxx, maxy = gdf.total_bounds
-            auto_center = ((minx + maxx) / 2, (miny + maxy) / 2)
+            auto_center = ((minx + maxx) / 2.0, (miny + maxy) / 2.0)
         except Exception:
             pass
+
+    if config is None or config == "":
+        user_config = {}
+    elif isinstance(config, str):
+        try:
+            user_config = json.loads(config)
+        except json.JSONDecodeError as exc:
+            print(f"[deckgl_map] Failed to parse config JSON: {exc}")
+            user_config = {}
+    else:
+        user_config = config
+
+    def _merge_dict(base: dict, extra: dict) -> dict:
+        for key, value in extra.items():
+            if isinstance(value, dict) and isinstance(base.get(key), dict):
+                _merge_dict(base[key], value)
+            else:
+                base[key] = value
+        return base
+
+    merged_config = deepcopy(DEFAULT_DECK_CONFIG)
+    if isinstance(user_config, dict):
+        merged_config = _merge_dict(merged_config, deepcopy(user_config))
+
+    initial_view_state = merged_config.get("initialViewState", {})
+    auto_state = {
+        "longitude": float(auto_center[0]) if auto_center else 0.0,
+        "latitude": float(auto_center[1]) if auto_center else 0.0,
+        "zoom": initial_view_state.get("zoom", 11),
+    }
+    
+    # Extract fill color config
+    vector_layer = merged_config.get("vectorLayer", {})
+    fill_color_config = vector_layer.get("getFillColor", {})
+    tooltip_attrs = vector_layer.get("tooltipAttrs", [])
 
     html = Template(r"""
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no"/>
-  <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet"/>
-  <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
-  <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
-  <script type="module">
-    import * as cartocolor from 'https://esm.sh/cartocolor@5.0.2';
-    window.cartocolor = cartocolor;
-  </script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
   <style>
-    html,body{margin:0;height:100%;background:#000}
-    #map{position:absolute;inset:0}
-    .deck-tooltip{font-family:monospace;font-size:11px;background:rgba(0,0,0,.8);color:#fff;padding:6px 8px;border-radius:4px;max-width:240px}
+    html, body { margin: 0; height: 100%; background: #000; }
+    #map { position: absolute; inset: 0; }
+    .mapboxgl-popup-content { background: rgba(0,0,0,0.8); color: #fff; font-family: monospace; font-size: 11px; }
   </style>
 </head>
 <body>
 <div id="map"></div>
 <script>
-const MAPBOX_TOKEN={{mapbox_token|tojson}};
-const GEOJSON={{geojson_obj|tojson}};
-const CONFIG={{config|tojson}};
-const AUTO_CENTER={{auto_center|tojson}};
+const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
+const GEOJSON = {{ geojson_obj | tojson }};
+const AUTO_STATE = {{ auto_state | tojson }};
+const FILL_COLOR_CONFIG = {{ fill_color_config | tojson }};
+const TOOLTIP_ATTRS = {{ tooltip_attrs | tojson }};
 
-function resolveCartoSchemes() {
-  const base = (typeof window !== 'undefined' && window.cartocolor) ? window.cartocolor : {};
-  const lib = base.default && Object.keys(base).length === 1 ? base.default : base;
-  const sequential = lib.sequential || lib?.schemes?.sequential || {};
-  const diverging = lib.diverging || lib?.schemes?.diverging || {};
-  const qualitative = lib.qualitative || lib?.schemes?.qualitative || {};
-  return { ...diverging, ...sequential, ...qualitative };
-}
-
-// Helper to get colors from cartocolor and convert hex to RGB
-function getCartoColors(schemeName, steps) {
+let initialBounds = null;
+if (GEOJSON.features && GEOJSON.features.length > 0) {
   try {
-    const allSchemes = resolveCartoSchemes();
-
-    if (!Object.keys(allSchemes).length) {
-      console.warn('CartoColor library unavailable, using fallback palette');
-      return fallbackColors(steps);
-    }
-
-    const scheme = allSchemes[schemeName] || allSchemes[schemeName.toLowerCase()];
-
-    if (!scheme) {
-      if (schemeName !== 'Magenta') {
-        console.warn(`Color scheme '${schemeName}' not found, falling back to Magenta`);
-        return getCartoColors('Magenta', steps);
+    const bounds = new mapboxgl.LngLatBounds();
+    GEOJSON.features.forEach(feature => {
+      if (feature.geometry.type === 'Point') {
+        bounds.extend(feature.geometry.coordinates);
+      } else if (feature.geometry.type === 'Polygon') {
+        feature.geometry.coordinates[0].forEach(coord => bounds.extend(coord));
+      } else if (feature.geometry.type === 'MultiPolygon') {
+        feature.geometry.coordinates.forEach(poly => {
+          poly[0].forEach(coord => bounds.extend(coord));
+        });
       }
-      console.warn("'Magenta' color scheme not available; using hard-coded fallback palette");
-      return fallbackColors(steps);
-    }
-    
-    // Get colors for the requested steps (or max available)
-    const availableSteps = Object.keys(scheme).map(k => parseInt(k)).filter(n => !isNaN(n)).sort((a,b) => a-b);
-    const bestStep = availableSteps.find(s => s >= steps) || availableSteps[availableSteps.length - 1];
-    const hexColors = scheme[bestStep] || scheme[availableSteps[0]];
-    
-    // Convert hex to RGB arrays
-    const rgbColors = hexColors.map(hex => {
-      const r = parseInt(hex.slice(1,3), 16);
-      const g = parseInt(hex.slice(3,5), 16);
-      const b = parseInt(hex.slice(5,7), 16);
-      return [r, g, b];
     });
-    
-    // Interpolate if we need more steps
-    return interpColors(rgbColors, steps);
-  } catch (e) {
-    console.error('CartoColor error:', e);
-    return fallbackColors(steps);
-  }
+    initialBounds = bounds;
+  } catch (err) {}
 }
 
-function fallbackColors(steps) {
-  const magentaRamp = [[248,203,249,255],[244,171,246,255],[240,134,244,255],[229,80,223,255],[217,13,199,255],[158,1,129,255],[99,1,78,255]];
-  if (!Number.isFinite(steps) || steps <= 0) {
-    return magentaRamp;
-  }
-  if (steps <= magentaRamp.length) {
-    return magentaRamp.slice(0, steps);
-  }
-  return interpColors(magentaRamp, steps);
-}
+mapboxgl.accessToken = MAPBOX_TOKEN;
 
-function interpColors(base,steps){
-  if(steps<=base.length)return base.slice(0,steps);
-  const out=[];
-  for(let i=0;i<steps;i++){
-    const t=i/(steps-1),p=t*(base.length-1),i0=Math.floor(p),i1=Math.min(base.length-1,i0+1),f=p-i0;
-    const c0=base[i0],c1=base[i1];
-    out.push([Math.round(c0[0]+(c1[0]-c0[0])*f),Math.round(c0[1]+(c1[1]-c0[1])*f),Math.round(c0[2]+(c1[2]-c0[2])*f),255]);
+const map = new mapboxgl.Map({
+  container: 'map',
+  style: 'mapbox://styles/mapbox/dark-v10',
+  center: [AUTO_STATE.longitude, AUTO_STATE.latitude],
+  zoom: AUTO_STATE.zoom,
+  preserveDrawingBuffer: true,
+  bounds: initialBounds,
+  fitBoundsOptions: {
+    padding: 50,
+    maxZoom: 15
   }
-  return out;
-}
+});
 
-function buildLayers(cfg){
-  const layers=[];
-  for(const key in cfg){
-    const def=cfg[key];
-    if(!def||!def["@@type"]) continue;
-    const L=deck[def["@@type"]]||deck.GeoJsonLayer;
-    const props={...def};
-    delete props["@@type"];
-    if(!props.data) props.data=GEOJSON;
-    for(const k of Object.keys(props)){
-      const v=props[k];
-      if(v&&v["@@function"]==="colorContinuous"){
-        const attr=v.attr,domain=v.domain||[0,1],steps=v.steps||6;
-        const ramp=getCartoColors(v.colors||'Magenta',steps);
-        const nullColor=v.nullColor||[180,180,180,180];
-        props[k]=f=>{
-          const val=Number(f.properties?.[attr]);
-          if(!Number.isFinite(val)) return nullColor;
-          const t=(val-domain[0])/(domain[1]-domain[0]);
-          const tt=Math.max(0,Math.min(1,t));
-          const idx=Math.floor(tt*(ramp.length-1));
-          return ramp[idx]||nullColor;
-        };
+map.on('load', () => {
+  map.addSource('gdf-source', {
+    type: 'geojson',
+    data: GEOJSON
+  });
+
+  const firstFeature = GEOJSON.features && GEOJSON.features[0];
+  const geomType = firstFeature && firstFeature.geometry && firstFeature.geometry.type;
+  if (geomType === 'Point' || geomType === 'MultiPoint') {
+    map.addLayer({
+      id: 'gdf-layer',
+      type: 'circle',
+      source: 'gdf-source',
+      paint: {
+        'circle-radius': 6,
+        'circle-color': '#0090ff',
+        'circle-opacity': 0.8,
+        'circle-stroke-width': 1,
+        'circle-stroke-color': '#ffffff'
       }
-    }
-    props.pickable=true;
-    layers.push(new L(props));
+    });
+  } else if (geomType === 'LineString' || geomType === 'MultiLineString') {
+    map.addLayer({
+      id: 'gdf-layer',
+      type: 'line',
+      source: 'gdf-source',
+      paint: {
+        'line-color': '#0090ff',
+        'line-width': 2,
+        'line-opacity': 0.8
+      }
+    });
+  } else {
+    // Polygon or MultiPolygon
+    map.addLayer({
+      id: 'gdf-layer-fill',
+      type: 'fill',
+      source: 'gdf-source',
+      paint: {
+        'fill-color': '#0090ff',
+        'fill-opacity': 0.6
+      }
+    });
+    map.addLayer({
+      id: 'gdf-layer-outline',
+      type: 'line',
+      source: 'gdf-source',
+      paint: {
+        'line-color': '#ffffff',
+        'line-width': 1,
+        'line-opacity': 0.8
+      }
+    });
   }
-  return layers;
-}
+  map.on('click', 'gdf-layer', (e) => {
+    if (!e.features || !e.features.length) return;
+    
+    const feature = e.features[0];
+    const props = feature.properties || {};
+    
+    let html = '<div style="padding: 4px;">';
+    const keys = TOOLTIP_ATTRS.length ? TOOLTIP_ATTRS : Object.keys(props);
+    keys.forEach(key => {
+      if (props[key] !== undefined) {
+        html += `<div><strong>${key}:</strong> ${props[key]}</div>`;
+      }
+    });
+    html += '</div>';
+    
+    new mapboxgl.Popup()
+      .setLngLat(e.lngLat)
+      .setHTML(html)
+      .addTo(map);
+  });
 
-mapboxgl.accessToken=MAPBOX_TOKEN;
-const ivs=CONFIG.initialViewState||{};
-const center=[ivs.longitude||AUTO_CENTER[0],ivs.latitude||AUTO_CENTER[1]];
-const zoom=ivs.zoom||11;
-const map=new mapboxgl.Map({container:"map",style:"mapbox://styles/mapbox/dark-v10",center:center,zoom:zoom});
-const overlay=new deck.MapboxOverlay({layers:[]});
-
-map.on("load",()=>{
-  map.addControl(overlay);
-  const layers=buildLayers(CONFIG);
-  const tooltipAttrs=CONFIG.vectorLayer?.tooltipAttrs||[];
-  overlay.setProps({
-    layers:layers,
-    getTooltip:info=>{
-      if(!info.object) return null;
-      const props=info.object.properties||{};
-      const show=tooltipAttrs.length>0?tooltipAttrs: Object.keys(props);
-      const html=show.map(k=>`${k}: ${props[k]}`).join("<br>");
-      return {html:`<div>${html}</div>`};
-    }
+  map.on('mouseenter', 'gdf-layer', () => {
+    map.getCanvas().style.cursor = 'pointer';
+  });
+  map.on('mouseleave', 'gdf-layer', () => {
+    map.getCanvas().style.cursor = '';
   });
 });
 </script>
@@ -591,8 +637,9 @@ map.on("load",()=>{
 """).render(
         mapbox_token=mapbox_token,
         geojson_obj=geojson_obj,
-        config=config,
-        auto_center=auto_center,
+        auto_state=auto_state,
+        fill_color_config=fill_color_config,
+        tooltip_attrs=tooltip_attrs,
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/351515e/public/common/")
@@ -607,7 +654,7 @@ def deckgl_hex(
 ):
     """
     Custom DeckGL based HTML Map. Use this to visualize hex data (dataframe containing a hex column)
-    Uses a DeckGL compatible config JSON file to edit color palette, starting lat / lon, etc. 
+    Uses a DeckGL compatible config JSON file to edit color palette, starting lat / lon, tooltip columns, etc. 
     """
     from jinja2 import Template
     import pandas as pd
@@ -624,6 +671,16 @@ def deckgl_hex(
         merged = deepcopy(DEFAULT_DECK_HEX_CONFIG)
         merged.update(config)
         config = merged
+
+    tooltip_config = None
+    if isinstance(config, dict):
+        tooltip_config = (
+            config.get("tooltipColumns")
+            or config.get("tooltip_columns")
+            or config.get("tooltipAttrs")
+            or config.get("hexLayer", {}).get("tooltipColumns")
+            or config.get("hexLayer", {}).get("tooltipAttrs")
+        )
     
     # Convert dataframe to list of records
     if hasattr(df, 'to_dict'):
@@ -670,12 +727,35 @@ def deckgl_hex(
     auto_zoom = 5
     
     if len(data_records) > 0:
+        if tooltip_config is not None:
+            if isinstance(tooltip_config, str):
+                tooltip_columns = [tooltip_config]
+            elif isinstance(tooltip_config, (list, tuple, set)):
+                tooltip_columns = [
+                    str(col) for col in tooltip_config if isinstance(col, str) and col.strip()
+                ]
+            else:
+                tooltip_columns = []
+        else:
+            tooltip_columns = []
+
+        if tooltip_config is not None:
+            available_keys = set(data_records[0].keys())
+            missing_tooltips = [col for col in tooltip_columns if col not in available_keys]
+            if missing_tooltips:
+                print(f"[deckgl_hex] Warning: tooltip columns not found in data: {missing_tooltips}")
+            tooltip_columns = [col for col in tooltip_columns if col in available_keys]
+        else:
+            tooltip_columns = []
+
         if 'lat' in data_records[0] and 'lng' in data_records[0]:
             lats = [r['lat'] for r in data_records if 'lat' in r]
             lngs = [r['lng'] for r in data_records if 'lng' in r]
             if lats and lngs:
                 auto_center = (sum(lngs)/len(lngs), sum(lats)/len(lats))
                 auto_zoom = 8
+    else:
+        tooltip_columns = []
 
     # Get initialViewState from config, use auto-calculated values as fallback
     initial_view_state = config.get('initialViewState', {})
@@ -694,8 +774,7 @@ def deckgl_hex(
         zoom = auto_zoom
 
     # Infer tooltip columns from data
-    tooltip_columns = []
-    if data_records:
+    if not tooltip_columns and data_records:
         tooltip_columns = [k for k in data_records[0].keys() if k not in ['hex', 'lat', 'lng']]
 
     html = Template(r"""
@@ -887,18 +966,28 @@ def deckgl_hex(
       if (info?.object) {
         map.getCanvas().style.cursor = 'pointer';
         const p = info.object;
-
-        // Build tooltip content
-        const lines = [`hex: ${p.hex.substring(0, 10)}...`];
-          TOOLTIP_COLUMNS.forEach(col => {
-            if (p[col] !== undefined) {
-              const val = p[col];
-              lines.push(`${col}: ${Number(val).toFixed(2)}`);
+        const lines = [];
+        if (!TOOLTIP_COLUMNS.length && p.hex) {
+          lines.push(`hex: ${p.hex.substring(0, 10)}...`);
+        }
+        TOOLTIP_COLUMNS.forEach(col => {
+          if (p[col] !== undefined) {
+            const val = p[col];
+            let display = val;
+            if (typeof val === 'number' && Number.isFinite(val)) {
+              display = val.toFixed(2);
             }
-          });
-        
-        const tooltipText = lines.join(' • ');
+            lines.push(`${col}: ${String(display)}`);
+          }
+        });
+
         const tt = $tooltip();
+        if (!lines.length) {
+          tt.style.display = 'none';
+          return;
+        }
+
+        const tooltipText = lines.join(' • ');
         tt.innerHTML = tooltipText;
         tt.style.left = `${e.point.x + 10}px`;
         tt.style.top = `${e.point.y + 10}px`;
