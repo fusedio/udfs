@@ -603,6 +603,10 @@ def deckgl_map(
   <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <script type="module">
+    import * as cartocolor from 'https://esm.sh/cartocolor@5.0.2';
+    window.cartocolor = cartocolor;
+  </script>
   <style>
     html, body { margin: 0; height: 100%; background: #000; }
     #map { position: absolute; inset: 0; }
@@ -637,12 +641,53 @@ def deckgl_map(
       z-index: 10;
       box-shadow: 0 2px 6px rgba(0,0,0,0.35);
     }
+    .color-legend {
+      position: fixed;
+      left: 12px;
+      bottom: 12px;
+      background: rgba(15, 15, 15, 0.9);
+      color: #fff;
+      padding: 8px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      z-index: 10;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.1);
+      min-width: 140px;
+      display: none;
+    }
+    .color-legend .legend-title {
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #fff;
+    }
+    .color-legend .legend-gradient {
+      width: 100%;
+      height: 12px;
+      border-radius: 2px;
+      margin-bottom: 4px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .color-legend .legend-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #ccc;
+    }
   </style>
 </head>
 <body>
 <div id="map"></div>
 <div id="tooltip"></div>
 <div id="config-error" class="config-error"></div>
+<div id="color-legend" class="color-legend">
+  <div class="legend-title"></div>
+  <div class="legend-gradient"></div>
+  <div class="legend-labels">
+    <span class="legend-min"></span>
+    <span class="legend-max"></span>
+  </div>
+</div>
 <script>
 const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
 const GEOJSON = {{ geojson_obj | tojson }};
@@ -808,6 +853,77 @@ map.on('load', () => {
     map.getCanvas().style.cursor = '';
     tooltipEl.style.display = 'none';
   });
+
+  // Generate color legend if colorContinuous config exists
+  function generateColorLegend() {
+    const cfg = FILL_COLOR_CONFIG;
+    if (!cfg || cfg['@@function'] !== 'colorContinuous') {
+      console.log('[legend] No colorContinuous config found');
+      return;
+    }
+    
+    const attr = cfg.attr || 'value';
+    const domain = cfg.domain || [0, 1];
+    const steps = cfg.steps || 20;
+    const colors = cfg.colors || 'TealGrn';
+    
+    if (!window.cartocolor) {
+      console.log('[legend] Waiting for cartocolor to load...');
+      setTimeout(generateColorLegend, 100);
+      return;
+    }
+    
+    try {
+      const palette = window.cartocolor[colors];
+      if (!palette) {
+        console.warn('[legend] Palette not found:', colors);
+        return;
+      }
+      
+      // Cartocolor palettes are objects with numbered keys (3, 4, 5, etc.)
+      // Find the closest available step count
+      let colorsArray = null;
+      if (palette[steps]) {
+        colorsArray = palette[steps];
+      } else {
+        // Find the highest available step count <= steps, or the max available
+        const availableSteps = Object.keys(palette).map(Number).filter(n => !isNaN(n)).sort((a, b) => b - a);
+        const closestStep = availableSteps.find(s => s <= steps) || availableSteps[availableSteps.length - 1];
+        colorsArray = palette[closestStep];
+      }
+      
+      if (!colorsArray || !Array.isArray(colorsArray)) {
+        console.warn('[legend] Invalid color array for palette:', colors);
+        return;
+      }
+      
+      const gradient = colorsArray.map((c, i) => {
+        const pct = (i / (colorsArray.length - 1)) * 100;
+        return `${c} ${pct}%`;
+      }).join(', ');
+      
+      const legendEl = document.getElementById('color-legend');
+      if (legendEl) {
+        legendEl.querySelector('.legend-title').textContent = attr;
+        legendEl.querySelector('.legend-gradient').style.background = `linear-gradient(to right, ${gradient})`;
+        legendEl.querySelector('.legend-min').textContent = domain[0].toFixed(1);
+        legendEl.querySelector('.legend-max').textContent = domain[1].toFixed(1);
+        legendEl.style.display = 'block';
+        console.log('[legend] Legend generated successfully');
+      } else {
+        console.warn('[legend] Legend element not found');
+      }
+    } catch (err) {
+      console.warn('[legend] Failed to generate color legend:', err);
+    }
+  }
+  
+  // Wait for cartocolor to load
+  if (window.cartocolor) {
+    generateColorLegend();
+  } else {
+    setTimeout(generateColorLegend, 500);
+  }
 });
 
 const errorBox = document.getElementById('config-error');
@@ -1085,12 +1201,53 @@ def deckgl_hex(
       z-index: 8;
       box-shadow: 0 2px 6px rgba(0,0,0,0.35);
     }
+    .color-legend {
+      position: fixed;
+      left: 12px;
+      bottom: 12px;
+      background: rgba(15, 15, 15, 0.9);
+      color: #fff;
+      padding: 8px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      z-index: 10;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.1);
+      min-width: 140px;
+      display: none;
+    }
+    .color-legend .legend-title {
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #fff;
+    }
+    .color-legend .legend-gradient {
+      width: 100%;
+      height: 12px;
+      border-radius: 2px;
+      margin-bottom: 4px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .color-legend .legend-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #ccc;
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <div id="tooltip"></div>
   <div id="config-error"></div>
+  <div id="color-legend" class="color-legend">
+    <div class="legend-title"></div>
+    <div class="legend-gradient"></div>
+    <div class="legend-labels">
+      <span class="legend-min"></span>
+      <span class="legend-max"></span>
+    </div>
+  </div>
 
   <script>
     const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
@@ -1304,6 +1461,79 @@ def deckgl_hex(
         $tooltip().style.display = 'none';
       }
     });
+
+    // Generate color legend if colorContinuous config exists
+    function generateColorLegend() {
+      const hexLayer = CONFIG.hexLayer || {};
+      const fillCfg = hexLayer.getFillColor;
+      if (!fillCfg || fillCfg['@@function'] !== 'colorContinuous') {
+        console.log('[legend] No colorContinuous config found');
+        return;
+      }
+      
+      const attr = fillCfg.attr || 'cnt';
+      const domain = fillCfg.domain || [0, 1];
+      const steps = fillCfg.steps || 20;
+      const colors = fillCfg.colors || 'Magenta';
+      
+      if (!window.cartocolor) {
+        console.log('[legend] Waiting for cartocolor to load...');
+        setTimeout(generateColorLegend, 100);
+        return;
+      }
+      
+      try {
+        const palette = window.cartocolor[colors];
+        if (!palette) {
+          console.warn('[legend] Palette not found:', colors);
+          return;
+        }
+        
+        // Cartocolor palettes are objects with numbered keys (3, 4, 5, etc.)
+        // Find the closest available step count
+        let colorsArray = null;
+        if (palette[steps]) {
+          colorsArray = palette[steps];
+        } else {
+          // Find the highest available step count <= steps, or the max available
+          const availableSteps = Object.keys(palette).map(Number).filter(n => !isNaN(n)).sort((a, b) => b - a);
+          const closestStep = availableSteps.find(s => s <= steps) || availableSteps[availableSteps.length - 1];
+          colorsArray = palette[closestStep];
+        }
+        
+        if (!colorsArray || !Array.isArray(colorsArray)) {
+          console.warn('[legend] Invalid color array for palette:', colors);
+          return;
+        }
+        
+        const gradient = colorsArray.map((c, i) => {
+          const pct = (i / (colorsArray.length - 1)) * 100;
+          return `${c} ${pct}%`;
+        }).join(', ');
+        
+        const legendEl = document.getElementById('color-legend');
+        if (legendEl) {
+          legendEl.querySelector('.legend-title').textContent = attr;
+          legendEl.querySelector('.legend-gradient').style.background = `linear-gradient(to right, ${gradient})`;
+          legendEl.querySelector('.legend-min').textContent = domain[0].toFixed(1);
+          legendEl.querySelector('.legend-max').textContent = domain[1].toFixed(1);
+          legendEl.style.display = 'block';
+          console.log('[legend] Legend generated successfully');
+        } else {
+          console.warn('[legend] Legend element not found');
+        }
+      } catch (err) {
+        console.warn('[legend] Failed to generate color legend:', err);
+      }
+    }
+    
+    // Wait for cartocolor to load
+    if (window.cartocolor) {
+      generateColorLegend();
+    } else {
+      setTimeout(generateColorLegend, 500);
+    }
+
     if (configErrors.length) {
       const box = document.getElementById('config-error');
       if (box) {
