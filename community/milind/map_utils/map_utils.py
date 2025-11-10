@@ -437,6 +437,8 @@ def deckgl_map(
     """
     from copy import deepcopy
 
+    config_errors = []
+
     if hasattr(gdf, "crs"):
         try:
             if gdf.crs and getattr(gdf.crs, "to_epsg", lambda: None)() != 4326:
@@ -464,9 +466,78 @@ def deckgl_map(
             user_config = json.loads(config)
         except json.JSONDecodeError as exc:
             print(f"[deckgl_map] Failed to parse config JSON: {exc}")
+            config_errors.append(f"Failed to parse config JSON: {exc}")
             user_config = {}
     else:
-        user_config = config
+        if isinstance(config, dict):
+            user_config = config
+        else:
+            config_errors.append("Config must be a dict or JSON string. Falling back to defaults.")
+            user_config = {}
+
+    if not isinstance(user_config, dict):
+        config_errors.append("Config must be a dict. Falling back to defaults.")
+        user_config = {}
+
+    # Validate expected structure
+    merged_config = deepcopy(DEFAULT_DECK_CONFIG)
+    if isinstance(user_config, dict):
+        try:
+            def _merge(base: dict, extra: dict) -> dict:
+                for k, v in extra.items():
+                    if isinstance(v, dict) and isinstance(base.get(k), dict):
+                        _merge(base[k], v)
+                    else:
+                        base[k] = v
+                return base
+
+            merged_config = _merge(merged_config, deepcopy(user_config))
+        except Exception as exc:  # pragma: no cover
+            config_errors.append(f"Failed to merge config overrides: {exc}. Using defaults.")
+            merged_config = deepcopy(DEFAULT_DECK_CONFIG)
+    else:
+        merged_config = deepcopy(DEFAULT_DECK_CONFIG)
+
+    initial_view_state = merged_config.get("initialViewState")
+    if not isinstance(initial_view_state, dict):
+        config_errors.append("initialViewState must be an object.")
+        merged_config["initialViewState"] = deepcopy(DEFAULT_DECK_CONFIG["initialViewState"])
+    else:
+        if not isinstance(initial_view_state.get("zoom"), (int, float)):
+            config_errors.append("initialViewState.zoom must be numeric. Using default zoom.")
+            merged_config["initialViewState"]["zoom"] = DEFAULT_DECK_CONFIG["initialViewState"]["zoom"]
+
+    vector_layer = merged_config.get("vectorLayer")
+    if not isinstance(vector_layer, dict):
+        config_errors.append("vectorLayer must be an object; using defaults.")
+        merged_config["vectorLayer"] = deepcopy(DEFAULT_DECK_CONFIG["vectorLayer"])
+        vector_layer = merged_config["vectorLayer"]
+    else:
+        fill_cfg = vector_layer.get("getFillColor")
+        if isinstance(fill_cfg, dict):
+            if fill_cfg.get("@@function") != "colorContinuous":
+                config_errors.append("vectorLayer.getFillColor.@@function must be 'colorContinuous'. Resetting to defaults.")
+                vector_layer["getFillColor"] = deepcopy(DEFAULT_DECK_CONFIG["vectorLayer"]["getFillColor"])
+            else:
+                if not isinstance(fill_cfg.get("attr"), str):
+                    config_errors.append("vectorLayer.getFillColor.attr must be a string column. Using default attr.")
+                    vector_layer["getFillColor"]["attr"] = DEFAULT_DECK_CONFIG["vectorLayer"]["getFillColor"]["attr"]
+                domain = fill_cfg.get("domain")
+                if not (isinstance(domain, (list, tuple)) and len(domain) == 2):
+                    config_errors.append("vectorLayer.getFillColor.domain must be [min, max]. Using default domain.")
+                    vector_layer["getFillColor"]["domain"] = DEFAULT_DECK_CONFIG["vectorLayer"]["getFillColor"]["domain"]
+                steps = fill_cfg.get("steps")
+                if steps is not None and (not isinstance(steps, int) or steps <= 0):
+                    config_errors.append("vectorLayer.getFillColor.steps must be a positive integer. Using default steps.")
+                    vector_layer["getFillColor"]["steps"] = DEFAULT_DECK_CONFIG["vectorLayer"]["getFillColor"]["steps"]
+        elif fill_cfg is not None:
+            config_errors.append("vectorLayer.getFillColor must be an object; using defaults.")
+            vector_layer["getFillColor"] = deepcopy(DEFAULT_DECK_CONFIG["vectorLayer"]["getFillColor"])
+
+        tooltip_attrs = vector_layer.get("tooltipAttrs")
+        if tooltip_attrs is not None and not isinstance(tooltip_attrs, (list, tuple)):
+            config_errors.append("vectorLayer.tooltipAttrs must be an array of column names.")
+            vector_layer["tooltipAttrs"] = DEFAULT_DECK_CONFIG["vectorLayer"]["tooltipAttrs"]
 
     def _merge_dict(base: dict, extra: dict) -> dict:
         for key, value in extra.items():
@@ -476,17 +547,13 @@ def deckgl_map(
                 base[key] = value
         return base
 
-    merged_config = deepcopy(DEFAULT_DECK_CONFIG)
-    if isinstance(user_config, dict):
-        merged_config = _merge_dict(merged_config, deepcopy(user_config))
-
     initial_view_state = merged_config.get("initialViewState", {})
     auto_state = {
         "longitude": float(auto_center[0]) if auto_center else 0.0,
         "latitude": float(auto_center[1]) if auto_center else 0.0,
         "zoom": initial_view_state.get("zoom", 11),
     }
-    
+
     # Extract fill color config
     vector_layer = merged_config.get("vectorLayer", {})
     fill_color_config = vector_layer.get("getFillColor", {})
@@ -504,16 +571,33 @@ def deckgl_map(
     html, body { margin: 0; height: 100%; background: #000; }
     #map { position: absolute; inset: 0; }
     .mapboxgl-popup-content { background: rgba(0,0,0,0.8); color: #fff; font-family: monospace; font-size: 11px; }
+    .config-error {
+      position: fixed;
+      right: 12px;
+      bottom: 12px;
+      background: rgba(180, 30, 30, 0.92);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      max-width: 260px;
+      line-height: 1.4;
+      display: none;
+      z-index: 10;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+    }
   </style>
 </head>
 <body>
 <div id="map"></div>
+<div id="config-error" class="config-error"></div>
 <script>
 const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
 const GEOJSON = {{ geojson_obj | tojson }};
 const AUTO_STATE = {{ auto_state | tojson }};
 const FILL_COLOR_CONFIG = {{ fill_color_config | tojson }};
 const TOOLTIP_ATTRS = {{ tooltip_attrs | tojson }};
+const CONFIG_ERROR = {{ config_error | tojson }};
 
 let initialBounds = null;
 if (GEOJSON.features && GEOJSON.features.length > 0) {
@@ -631,6 +715,12 @@ map.on('load', () => {
     map.getCanvas().style.cursor = '';
   });
 });
+
+const errorBox = document.getElementById('config-error');
+if (CONFIG_ERROR && errorBox) {
+  errorBox.textContent = CONFIG_ERROR;
+  errorBox.style.display = 'block';
+}
 </script>
 </body>
 </html>
@@ -640,6 +730,7 @@ map.on('load', () => {
         auto_state=auto_state,
         fill_color_config=fill_color_config,
         tooltip_attrs=tooltip_attrs,
+        config_error=" • ".join(config_errors),
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/351515e/public/common/")
@@ -661,17 +752,63 @@ def deckgl_hex(
     import json
     from copy import deepcopy
 
+    config_errors = []
+
     # Handle config: None, JSON string, or dict
     if config is None or config == "":
         config = deepcopy(DEFAULT_DECK_HEX_CONFIG)
     elif isinstance(config, str):
-        config = json.loads(config)
-    else:
-        # Merge with defaults
+        try:
+            parsed = json.loads(config)
+        except json.JSONDecodeError as exc:
+            config_errors.append(f"Failed to parse config JSON: {exc}")
+            parsed = {}
+        if isinstance(parsed, dict):
+            merged = deepcopy(DEFAULT_DECK_HEX_CONFIG)
+            merged.update(parsed)
+            config = merged
+        else:
+            config_errors.append("Parsed config is not a JSON object. Falling back to defaults.")
+            config = deepcopy(DEFAULT_DECK_HEX_CONFIG)
+    elif isinstance(config, dict):
         merged = deepcopy(DEFAULT_DECK_HEX_CONFIG)
         merged.update(config)
         config = merged
+    else:
+        config_errors.append("Config must be a dict or JSON string. Falling back to defaults.")
+        config = deepcopy(DEFAULT_DECK_HEX_CONFIG)
 
+    # Validate critical config pieces against expected structure
+    hex_layer = config.get("hexLayer")
+    if not isinstance(hex_layer, dict):
+        config_errors.append("Config.hexLayer must be an object; falling back to defaults.")
+        config["hexLayer"] = deepcopy(DEFAULT_DECK_HEX_CONFIG["hexLayer"])
+        hex_layer = config["hexLayer"]
+
+    if not isinstance(hex_layer.get("getHexagon"), str) or not hex_layer.get("getHexagon"):
+        config_errors.append("hexLayer.getHexagon must be a string expression (e.g. '@@=properties.hex'). Falling back to default accessor.")
+        hex_layer["getHexagon"] = DEFAULT_DECK_HEX_CONFIG["hexLayer"]["getHexagon"]
+
+    fill_cfg = hex_layer.get("getFillColor")
+    if not isinstance(fill_cfg, dict):
+        config_errors.append("hexLayer.getFillColor must be an object with @@function, attr, and domain. Using defaults.")
+        hex_layer["getFillColor"] = deepcopy(DEFAULT_DECK_HEX_CONFIG["hexLayer"]["getFillColor"])
+        fill_cfg = hex_layer["getFillColor"]
+    else:
+        if fill_cfg.get("@@function") != "colorContinuous":
+            config_errors.append("hexLayer.getFillColor.@@function must be 'colorContinuous'. Resetting to defaults.")
+            hex_layer["getFillColor"] = deepcopy(DEFAULT_DECK_HEX_CONFIG["hexLayer"]["getFillColor"])
+            fill_cfg = hex_layer["getFillColor"]
+        else:
+            if not isinstance(fill_cfg.get("attr"), str):
+                config_errors.append("hexLayer.getFillColor.attr must be a string column name. Using default attr.")
+                fill_cfg["attr"] = DEFAULT_DECK_HEX_CONFIG["hexLayer"]["getFillColor"]["attr"]
+        domain = fill_cfg.get("domain")
+        if not (isinstance(domain, (list, tuple)) and len(domain) == 2):
+            config_errors.append("hexLayer.getFillColor.domain must be a [min, max] array. Using default domain.")
+            fill_cfg["domain"] = DEFAULT_DECK_HEX_CONFIG["hexLayer"]["getFillColor"]["domain"]
+
+    tooltip_columns = []
     tooltip_config = None
     if isinstance(config, dict):
         tooltip_config = (
@@ -681,6 +818,8 @@ def deckgl_hex(
             or config.get("hexLayer", {}).get("tooltipColumns")
             or config.get("hexLayer", {}).get("tooltipAttrs")
         )
+
+    config_error = " • ".join(config_errors)
     
     # Convert dataframe to list of records
     if hasattr(df, 'to_dict'):
@@ -812,11 +951,27 @@ def deckgl_hex(
       display: none;
       z-index: 6;
     }
+    #config-error {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      background: rgba(180, 30, 30, 0.92);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      max-width: 260px;
+      line-height: 1.4;
+      display: none;
+      z-index: 8;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <div id="tooltip"></div>
+  <div id="config-error"></div>
 
   <script>
     const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
@@ -824,6 +979,7 @@ def deckgl_hex(
     const DATA = {{ data_records | tojson }};
     const CONFIG = {{ config | tojson }};
     const TOOLTIP_COLUMNS = {{ tooltip_columns | tojson }};
+    const CONFIG_ERROR = {{ config_error | tojson }};
 
     const { MapboxOverlay } = deck;
     const H3HexagonLayer = deck.H3HexagonLayer || (deck.GeoLayers && deck.GeoLayers.H3HexagonLayer);
@@ -997,6 +1153,13 @@ def deckgl_hex(
         $tooltip().style.display = 'none';
       }
     });
+    if (CONFIG_ERROR) {
+      const box = document.getElementById('config-error');
+      if (box) {
+        box.textContent = CONFIG_ERROR;
+        box.style.display = 'block';
+      }
+    }
   </script>
 </body>
 </html>
@@ -1008,6 +1171,7 @@ def deckgl_hex(
         center_lng=center_lng,
         center_lat=center_lat,
         zoom=zoom,
+        config_error=config_error,
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
