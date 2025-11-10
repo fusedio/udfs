@@ -578,6 +578,7 @@ def deckgl_map(
     # Extract fill color config
     vector_layer = merged_config.get("vectorLayer", {})
     fill_color_config = vector_layer.get("getFillColor", {})
+    vector_layer_config = vector_layer.copy()
     tooltip_config = None
     if isinstance(merged_config, dict):
         tooltip_config = merged_config.get("tooltipColumns")
@@ -603,6 +604,8 @@ def deckgl_map(
   <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <script src="https://unpkg.com/deck.gl@9.1.3/dist.min.js"></script>
+  <script src="https://unpkg.com/@deck.gl/carto@9.1.3/dist.min.js"></script>
   <script type="module">
     import * as cartocolor from 'https://esm.sh/cartocolor@5.0.2';
     window.cartocolor = cartocolor;
@@ -693,8 +696,13 @@ const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
 const GEOJSON = {{ geojson_obj | tojson }};
 const AUTO_STATE = {{ auto_state | tojson }};
 const FILL_COLOR_CONFIG = {{ fill_color_config | tojson }};
+const VECTOR_LAYER_CONFIG = {{ vector_layer_config | tojson }};
 const TOOLTIP_COLUMNS = {{ tooltip_columns | tojson }};
 const CONFIG_ERROR = {{ config_error | tojson }};
+
+const { MapboxOverlay } = deck;
+const { GeoJsonLayer } = deck;
+const { colorContinuous } = deck.carto;
 
 let configErrors = [];
 if (CONFIG_ERROR) {
@@ -742,71 +750,83 @@ const map = new mapboxgl.Map({
   }
 });
 
+// Process colorContinuous config
+function processColorContinuous(cfg) {
+  let domain = cfg.domain;
+  if (domain && domain.length === 2) {
+    const [min, max] = domain;
+    const steps = cfg.steps ?? 20;
+    const stepSize = (max - min) / (steps - 1);
+    domain = Array.from({ length: steps }, (_, i) => min + stepSize * i);
+  }
+  return {
+    attr: cfg.attr,
+    domain: domain,
+    colors: cfg.colors || 'TealGrn',
+    nullColor: cfg.nullColor || [184,184,184]
+  };
+}
+
+let overlay = null;
+
 map.on('load', () => {
-  map.addSource('gdf-source', {
-    type: 'geojson',
-    data: { type: 'FeatureCollection', features: [] }
+  // Create empty layer first for fast basemap render
+  const emptyGeoJson = { type: 'FeatureCollection', features: [] };
+  
+  let getFillColor = [0, 144, 255, 200];
+  let getRadius = VECTOR_LAYER_CONFIG?.getRadius || 200;
+  let pointRadiusMinPixels = VECTOR_LAYER_CONFIG?.pointRadiusMinPixels || 10;
+  
+  if (FILL_COLOR_CONFIG && FILL_COLOR_CONFIG['@@function'] === 'colorContinuous') {
+    try {
+      getFillColor = colorContinuous(processColorContinuous(FILL_COLOR_CONFIG));
+    } catch (err) {
+      console.warn('Failed to create colorContinuous function:', err);
+      configErrors.push('Failed to apply colorContinuous config. Using default colors.');
+    }
+  }
+  
+  const layer = new GeoJsonLayer({
+    id: 'gdf-layer',
+    data: emptyGeoJson,
+    pickable: true,
+    stroked: true,
+    filled: true,
+    lineWidthMinPixels: 1,
+    getFillColor: getFillColor,
+    getLineColor: [255, 255, 255, 200],
+    getRadius: getRadius,
+    pointRadiusMinPixels: pointRadiusMinPixels,
+    opacity: 0.8
   });
-  // Defer data injection so the basemap renders immediately.
+  
+  overlay = new MapboxOverlay({
+    interleaved: false,
+    layers: [layer]
+  });
+  
+  map.addControl(overlay);
+  
+  // Defer data injection so the basemap renders immediately
   requestAnimationFrame(() => {
-    const source = map.getSource('gdf-source');
-    if (source) {
-      source.setData(GEOJSON);
+    if (overlay) {
+      overlay.setProps({
+        layers: [new GeoJsonLayer({
+          id: 'gdf-layer',
+          data: GEOJSON,
+          pickable: true,
+          stroked: true,
+          filled: true,
+          lineWidthMinPixels: 1,
+          getFillColor: getFillColor,
+          getLineColor: [255, 255, 255, 200],
+          getRadius: getRadius,
+          pointRadiusMinPixels: pointRadiusMinPixels,
+          opacity: 0.8
+        })]
+      });
     }
   });
-
-  const firstFeature = GEOJSON.features && GEOJSON.features[0];
-  const geomType = firstFeature && firstFeature.geometry && firstFeature.geometry.type;
-  const hoverLayers = [];
-  if (geomType === 'Point' || geomType === 'MultiPoint') {
-    map.addLayer({
-      id: 'gdf-layer',
-      type: 'circle',
-      source: 'gdf-source',
-      paint: {
-        'circle-radius': 6,
-        'circle-color': '#0090ff',
-        'circle-opacity': 0.8,
-        'circle-stroke-width': 1,
-        'circle-stroke-color': '#ffffff'
-      }
-    });
-    hoverLayers.push('gdf-layer');
-  } else if (geomType === 'LineString' || geomType === 'MultiLineString') {
-    map.addLayer({
-      id: 'gdf-layer',
-      type: 'line',
-      source: 'gdf-source',
-      paint: {
-        'line-color': '#0090ff',
-        'line-width': 2,
-        'line-opacity': 0.8
-      }
-    });
-    hoverLayers.push('gdf-layer');
-  } else {
-    // Polygon or MultiPolygon
-    map.addLayer({
-      id: 'gdf-layer-fill',
-      type: 'fill',
-      source: 'gdf-source',
-      paint: {
-        'fill-color': '#0090ff',
-        'fill-opacity': 0.6
-      }
-    });
-    map.addLayer({
-      id: 'gdf-layer-outline',
-      type: 'line',
-      source: 'gdf-source',
-      paint: {
-        'line-color': '#ffffff',
-        'line-width': 1,
-        'line-opacity': 0.8
-      }
-    });
-    hoverLayers.push('gdf-layer-fill', 'gdf-layer-outline');
-  }
 
   const tooltipEl = document.getElementById('tooltip');
 
@@ -829,11 +849,11 @@ map.on('load', () => {
   }
 
   map.on('mousemove', (e) => {
-    if (!hoverLayers.length) return;
-    const feats = map.queryRenderedFeatures(e.point, { layers: hoverLayers });
-    if (feats && feats.length) {
+    if (!overlay) return;
+    const info = overlay.pickObject({ x: e.point.x, y: e.point.y, radius: 4 });
+    if (info?.object) {
       map.getCanvas().style.cursor = 'pointer';
-      const props = feats[0].properties || {};
+      const props = info.object.properties || info.object;
       const lines = buildTooltipLines(props);
       if (!lines.length) {
         tooltipEl.style.display = 'none';
@@ -939,6 +959,7 @@ if (errorBox && configErrors.length) {
         geojson_obj=geojson_obj,
         auto_state=auto_state,
         fill_color_config=fill_color_config,
+        vector_layer_config=vector_layer_config,
         tooltip_columns=tooltip_columns,
         config_error=config_errors,
     )
