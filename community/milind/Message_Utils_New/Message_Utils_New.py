@@ -5,7 +5,7 @@ common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/
 def udf(parameter: str = "yay"):
     # html = button("Click me", parameter=parameter)
     L = ['aasdasd','basdads','casdasd','dasdasd']
-    html = sql_input("", parameter=parameter)
+    html = map_bounds( parameter=parameter)
     return html
  
 
@@ -922,6 +922,107 @@ document.addEventListener('DOMContentLoaded', () => {{
     window.parent.postMessage({{
       type: 'vars',
       payload: {{ vars }},
+      origin: SENDER,
+      parameter: PARAMETER,
+      ts: Date.now()
+    }}, '*');
+  }});
+}});
+</script>
+"""
+    return html if return_html else common.html_to_obj(html)
+
+
+def map_bounds(
+    parameter: str = "channel_1",
+    sender_id: str = "map_bounds_1",
+    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
+    center_lng: float = -74.0,
+    center_lat: float = 40.7,
+    zoom: float = 12.0,
+    style_url: str = "mapbox://styles/mapbox/dark-v10",
+    button_label: str = "Send View",
+    return_html: bool = False,
+):
+    import json
+
+    html = f"""<!doctype html>
+<meta charset="utf-8">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.js"></script>
+
+<style>
+  html, body, #map {{ margin:0; height:100% }}
+  #map {{ position:fixed; inset:0 }}
+  #send {{
+    position:fixed; right:10px; bottom:10px; z-index:10;
+    padding:10px 14px; background:#fff; border:1px solid #999; border-radius:6px;
+    font:14px/1.2 system-ui,-apple-system, Segoe UI, Roboto, Helvetica, Arial; cursor:pointer;
+  }}
+  #send:disabled {{
+    opacity:0.6; cursor:not-allowed;
+  }}
+</style>
+
+<div id="map"></div>
+<button id="send" disabled></button>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {{
+  mapboxgl.accessToken = {json.dumps(mapbox_token)};
+  const PARAMETER = {json.dumps(parameter)};
+  const SENDER  = {json.dumps(sender_id)};
+  const BUTTON_LABEL = {json.dumps(button_label)};
+
+  const map = new mapboxgl.Map({{
+    container: 'map',
+    style: {json.dumps(style_url)},
+    center: [{center_lng}, {center_lat}],
+    zoom: {zoom},
+    dragRotate: false,
+    pitchWithRotate: false
+  }});
+
+  const sendBtn = document.getElementById('send');
+  sendBtn.textContent = BUTTON_LABEL;
+  let lastPayload = null;
+
+  function captureView() {{
+    if (!map || typeof map.getBounds !== 'function') return null;
+    const bounds = map.getBounds();
+    if (!bounds) return null;
+    const numbers = [
+      Number(bounds.getWest()),
+      Number(bounds.getSouth()),
+      Number(bounds.getEast()),
+      Number(bounds.getNorth())
+    ];
+    if (numbers.some(v => !Number.isFinite(v))) return null;
+    const zoom = Number(map.getZoom());
+    if (!Number.isFinite(zoom)) return null;
+    return {{
+      bounds: numbers.join(','),
+      zoom: zoom
+    }};
+  }}
+
+  function refresh() {{
+    const payload = captureView();
+    if (!payload) return;
+    lastPayload = payload;
+    sendBtn.disabled = false;
+  }}
+
+  map.on('load', refresh);
+  ['moveend','zoomend','rotateend','pitchend'].forEach(evt => map.on(evt, refresh));
+
+  sendBtn.addEventListener('click', () => {{
+    if (sendBtn.disabled) return;
+    if (!lastPayload) refresh();
+    if (!lastPayload) return;
+    window.parent.postMessage({{
+      type: 'map_bounds',
+      payload: lastPayload,
       origin: SENDER,
       parameter: PARAMETER,
       ts: Date.now()
