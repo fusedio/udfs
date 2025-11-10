@@ -21,7 +21,7 @@ DEFAULT_CONFIG = r"""{
   } 
 }"""
  
-DEFAULT_STYLE_URL = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+DEFAULT_STYLE_URL = "mapbox://styles/mapbox/dark-v11"
 
 @fused.udf
 def udf( 
@@ -31,7 +31,6 @@ def udf(
     center_lng: float = -119.4179,
     center_lat: float = 36.7783,
     zoom: float = 4,
-    tooltip_columns: list = ["crop_rank_1", "elevation", "daily_mean"],
     default_query: str = "SELECT * FROM data",
     map_style_url: str = "mapbox://styles/mapbox/dark-v11",
 ):
@@ -47,8 +46,8 @@ def udf(
   <title>H3 Parquet Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
 
   <script src="https://unpkg.com/h3-js@4.1.0/dist/h3-js.umd.js"></script>
   <script src="https://unpkg.com/deck.gl@9.1.3/dist.min.js"></script>
@@ -176,7 +175,6 @@ def udf(
     const DEFAULT_STYLE_URL = {{ default_style_url | tojson }};
     const START_CENTER    = [{{ center_lng }}, {{ center_lat }}];
     const START_ZOOM      = {{ zoom }};
-    const TOOLTIP_COLUMNS = {{ tooltip_columns | tojson }};
     const DEFAULT_QUERY   = {{ default_query | tojson }};
     const INITIAL_CONFIG  = {{ config_json | tojson }};
 
@@ -184,6 +182,7 @@ def udf(
     const H3HexagonLayer = deck.H3HexagonLayer || (deck.GeoLayers && deck.GeoLayers.H3HexagonLayer);
     const { colorContinuous } = deck.carto;
 
+    let tooltipColumns = [];
     let duckConn;
     let overlay;
     let map;
@@ -260,6 +259,29 @@ def udf(
       return out;
     }
 
+    function normalizeTooltipColumns(value) {
+      if (!value) return [];
+      if (Array.isArray(value)) {
+        return value
+          .map(v => (typeof v === "string" ? v.trim() : ""))
+          .filter(Boolean);
+      }
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        return trimmed ? [trimmed] : [];
+      }
+      return [];
+    }
+
+    function extractTooltipColumns(conf) {
+      if (!conf || typeof conf !== "object") return [];
+      const raw =
+        conf.tooltipColumns ??
+        conf?.hexLayer?.tooltipColumns ??
+        [];
+      return normalizeTooltipColumns(raw);
+    }
+
     function resolveStyleUrl(styleUrl, token) {
       const trimmed = (styleUrl || '').trim();
       if (!trimmed) return 'mapbox://styles/mapbox/dark-v11';
@@ -309,7 +331,7 @@ def udf(
           obj[colorAttr] = Number.isFinite(n) ? n : null;
         }
 
-        (TOOLTIP_COLUMNS || []).forEach(col => {
+        tooltipColumns.forEach(col => {
           if (obj[col] === undefined) {
             const lowerCol = col.toLowerCase();
             if (obj[lowerCol] !== undefined) {
@@ -384,30 +406,37 @@ def udf(
         if(info?.object){
           map.getCanvas().style.cursor='pointer';
           const p = info.object;
-
           const vals = [];
-          if (TOOLTIP_COLUMNS && TOOLTIP_COLUMNS.length){
-            TOOLTIP_COLUMNS.forEach(col=>{
+
+          if (tooltipColumns.length){
+            tooltipColumns.forEach(col=>{
               if (p[col] !== undefined){
                 const v = p[col];
                 if (typeof v === "number" && Number.isFinite(v)) {
-                  vals.push(col+": "+v.toFixed(2));
+                  vals.push(`${col}: ${v.toFixed(2)}`);
                 } else {
-                  vals.push(col+": "+v);
+                  vals.push(`${col}: ${String(v)}`);
                 }
               }
             });
           } else {
+            if (p.hex) {
+              vals.push(`hex: ${p.hex.substring(0, 10)}...`);
+            }
             const v = p[colorAttr];
             if (v != null) {
               if (typeof v === "number" && Number.isFinite(v)) {
-                vals.push(colorAttr+": "+v.toFixed(2));
+                vals.push(`${colorAttr}: ${v.toFixed(2)}`);
               } else {
-                vals.push(colorAttr+": "+v);
+                vals.push(`${colorAttr}: ${String(v)}`);
               }
             }
           }
-          vals.unshift("hex "+p.hex);
+
+          if (!vals.length) {
+            tooltipEl.style.display='none';
+            return;
+          }
 
           tooltipEl.innerHTML = vals.join(" • ");
           tooltipEl.style.left = (info.x+10)+"px";
@@ -538,6 +567,11 @@ def udf(
         currentConfObj = {};
       }
 
+      const configTooltips = extractTooltipColumns(currentConfObj);
+      if (configTooltips.length) {
+        tooltipColumns = configTooltips;
+      }
+
       const queryInput = document.getElementById("queryInput");
       queryInput.value = DEFAULT_QUERY;
       queryInput.oninput = onSQLChanged;
@@ -568,7 +602,6 @@ def udf(
         center_lng=center_lng,
         center_lat=center_lat,
         zoom=zoom,
-        tooltip_columns=tooltip_columns,
         default_query=default_query,
     )
 
