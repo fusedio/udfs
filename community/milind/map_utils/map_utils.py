@@ -75,7 +75,7 @@ DEFAULT_DECK_CONFIG = {
             "steps": 7,
             "nullColor": [200, 200, 200, 180]
         },
-        "tooltipAttrs": ["house_age", "mrt_distance", "price"]
+        "tooltipColumns": ["house_age", "mrt_distance", "price"]
     }
 }
 
@@ -557,7 +557,22 @@ def deckgl_map(
     # Extract fill color config
     vector_layer = merged_config.get("vectorLayer", {})
     fill_color_config = vector_layer.get("getFillColor", {})
-    tooltip_attrs = vector_layer.get("tooltipAttrs", [])
+    tooltip_config = None
+    if isinstance(merged_config, dict):
+        tooltip_config = merged_config.get("tooltipColumns")
+    if tooltip_config is None and isinstance(vector_layer, dict):
+        tooltip_config = vector_layer.get("tooltipColumns")
+
+    if isinstance(tooltip_config, str):
+        tooltip_columns = [tooltip_config]
+    elif isinstance(tooltip_config, (list, tuple, set)):
+        tooltip_columns = [
+            str(item)
+            for item in tooltip_config
+            if isinstance(item, str) and item.strip()
+        ]
+    else:
+        tooltip_columns = []
 
     html = Template(r"""
 <!DOCTYPE html>
@@ -571,6 +586,21 @@ def deckgl_map(
     html, body { margin: 0; height: 100%; background: #000; }
     #map { position: absolute; inset: 0; }
     .mapboxgl-popup-content { background: rgba(0,0,0,0.8); color: #fff; font-family: monospace; font-size: 11px; }
+    #tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1.4;
+      display: none;
+      z-index: 12;
+      max-width: 260px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+      white-space: nowrap;
+    }
     .config-error {
       position: fixed;
       right: 12px;
@@ -590,14 +620,27 @@ def deckgl_map(
 </head>
 <body>
 <div id="map"></div>
+<div id="tooltip"></div>
 <div id="config-error" class="config-error"></div>
 <script>
 const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
 const GEOJSON = {{ geojson_obj | tojson }};
 const AUTO_STATE = {{ auto_state | tojson }};
 const FILL_COLOR_CONFIG = {{ fill_color_config | tojson }};
-const TOOLTIP_ATTRS = {{ tooltip_attrs | tojson }};
+const TOOLTIP_COLUMNS = {{ tooltip_columns | tojson }};
 const CONFIG_ERROR = {{ config_error | tojson }};
+
+let configErrors = [];
+if (CONFIG_ERROR) {
+  configErrors = configErrors.concat(
+    Array.isArray(CONFIG_ERROR)
+      ? CONFIG_ERROR
+      : String(CONFIG_ERROR)
+          .split(" • ")
+          .map(s => s.trim())
+          .filter(Boolean)
+  );
+}
 
 let initialBounds = null;
 if (GEOJSON.features && GEOJSON.features.length > 0) {
@@ -641,6 +684,7 @@ map.on('load', () => {
 
   const firstFeature = GEOJSON.features && GEOJSON.features[0];
   const geomType = firstFeature && firstFeature.geometry && firstFeature.geometry.type;
+  const hoverLayers = [];
   if (geomType === 'Point' || geomType === 'MultiPoint') {
     map.addLayer({
       id: 'gdf-layer',
@@ -654,6 +698,7 @@ map.on('load', () => {
         'circle-stroke-color': '#ffffff'
       }
     });
+    hoverLayers.push('gdf-layer');
   } else if (geomType === 'LineString' || geomType === 'MultiLineString') {
     map.addLayer({
       id: 'gdf-layer',
@@ -665,6 +710,7 @@ map.on('load', () => {
         'line-opacity': 0.8
       }
     });
+    hoverLayers.push('gdf-layer');
   } else {
     // Polygon or MultiPolygon
     map.addLayer({
@@ -686,39 +732,59 @@ map.on('load', () => {
         'line-opacity': 0.8
       }
     });
+    hoverLayers.push('gdf-layer-fill', 'gdf-layer-outline');
   }
-  map.on('click', 'gdf-layer', (e) => {
-    if (!e.features || !e.features.length) return;
-    
-    const feature = e.features[0];
-    const props = feature.properties || {};
-    
-    let html = '<div style="padding: 4px;">';
-    const keys = TOOLTIP_ATTRS.length ? TOOLTIP_ATTRS : Object.keys(props);
+
+  const tooltipEl = document.getElementById('tooltip');
+
+  function buildTooltipLines(props) {
+    const keys = Array.isArray(TOOLTIP_COLUMNS) && TOOLTIP_COLUMNS.length
+      ? TOOLTIP_COLUMNS
+      : Object.keys(props || {});
+    const lines = [];
     keys.forEach(key => {
-      if (props[key] !== undefined) {
-        html += `<div><strong>${key}:</strong> ${props[key]}</div>`;
+      if (props && props[key] !== undefined) {
+        const val = props[key];
+        let display = val;
+        if (typeof val === 'number' && Number.isFinite(val)) {
+          display = val.toFixed(2);
+        }
+        lines.push(`${key}: ${String(display)}`);
       }
     });
-    html += '</div>';
-    
-    new mapboxgl.Popup()
-      .setLngLat(e.lngLat)
-      .setHTML(html)
-      .addTo(map);
+    return lines;
+  }
+
+  map.on('mousemove', (e) => {
+    if (!hoverLayers.length) return;
+    const feats = map.queryRenderedFeatures(e.point, { layers: hoverLayers });
+    if (feats && feats.length) {
+      map.getCanvas().style.cursor = 'pointer';
+      const props = feats[0].properties || {};
+      const lines = buildTooltipLines(props);
+      if (!lines.length) {
+        tooltipEl.style.display = 'none';
+        return;
+      }
+      tooltipEl.innerHTML = lines.join(' • ');
+      tooltipEl.style.left = `${e.point.x + 10}px`;
+      tooltipEl.style.top = `${e.point.y + 10}px`;
+      tooltipEl.style.display = 'block';
+    } else {
+      map.getCanvas().style.cursor = '';
+      tooltipEl.style.display = 'none';
+    }
   });
 
-  map.on('mouseenter', 'gdf-layer', () => {
-    map.getCanvas().style.cursor = 'pointer';
-  });
-  map.on('mouseleave', 'gdf-layer', () => {
+  map.on('mouseleave', () => {
     map.getCanvas().style.cursor = '';
+    tooltipEl.style.display = 'none';
   });
 });
 
 const errorBox = document.getElementById('config-error');
-if (CONFIG_ERROR && errorBox) {
-  errorBox.textContent = CONFIG_ERROR;
+if (errorBox && configErrors.length) {
+  errorBox.innerHTML = configErrors.map(msg => `<div>${msg}</div>`).join('');
   errorBox.style.display = 'block';
 }
 </script>
@@ -729,8 +795,8 @@ if (CONFIG_ERROR && errorBox) {
         geojson_obj=geojson_obj,
         auto_state=auto_state,
         fill_color_config=fill_color_config,
-        tooltip_attrs=tooltip_attrs,
-        config_error=" • ".join(config_errors),
+        tooltip_columns=tooltip_columns,
+        config_error=config_errors,
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/351515e/public/common/")
@@ -819,7 +885,7 @@ def deckgl_hex(
             or config.get("hexLayer", {}).get("tooltipAttrs")
         )
 
-    config_error = " • ".join(config_errors)
+    config_error_messages = config_errors
     
     # Convert dataframe to list of records
     if hasattr(df, 'to_dict'):
@@ -979,6 +1045,7 @@ def deckgl_hex(
     const DATA = {{ data_records | tojson }};
     const CONFIG = {{ config | tojson }};
     const TOOLTIP_COLUMNS = {{ tooltip_columns | tojson }};
+    const DEFAULT_FILL_CONFIG = {{ default_fill_config | tojson }};
     const CONFIG_ERROR = {{ config_error | tojson }};
 
     const { MapboxOverlay } = deck;
@@ -1033,13 +1100,40 @@ def deckgl_hex(
     }
 
     // Parse hex layer config
+    let configErrors = [];
+    if (CONFIG_ERROR) {
+      configErrors = configErrors.concat(
+        Array.isArray(CONFIG_ERROR)
+          ? CONFIG_ERROR
+          : String(CONFIG_ERROR)
+              .split(" • ")
+              .map(s => s.trim())
+              .filter(Boolean)
+      );
+    }
+
     function parseHexLayerConfig(config) {
       const out = {};
       for (const [k, v] of Object.entries(config || {})) {
         if (k === '@@type') continue;
         if (v && typeof v === 'object' && !Array.isArray(v)) {
           if (v['@@function'] === 'colorContinuous') {
-            out[k] = colorContinuous(processColorContinuous(v));
+            try {
+              out[k] = colorContinuous(processColorContinuous(v));
+            } catch (err) {
+              console.error('colorContinuous parse error:', err);
+              configErrors.push(`hexLayer.${k}: ${err?.message || 'Invalid color configuration (check palette name)'}`);
+              try {
+                out[k] = colorContinuous(processColorContinuous(DEFAULT_FILL_CONFIG));
+              } catch {
+                out[k] = colorContinuous(processColorContinuous({
+                  attr: DEFAULT_FILL_CONFIG.attr || 'cnt',
+                  domain: DEFAULT_FILL_CONFIG.domain || [0, 1],
+                  colors: DEFAULT_FILL_CONFIG.colors || 'Magenta',
+                  nullColor: DEFAULT_FILL_CONFIG.nullColor || [184, 184, 184]
+                }));
+              }
+            }
           } else {
             out[k] = v;
           }
@@ -1153,10 +1247,10 @@ def deckgl_hex(
         $tooltip().style.display = 'none';
       }
     });
-    if (CONFIG_ERROR) {
+    if (configErrors.length) {
       const box = document.getElementById('config-error');
       if (box) {
-        box.textContent = CONFIG_ERROR;
+        box.innerHTML = configErrors.map(msg => `<div>${msg}</div>`).join('');
         box.style.display = 'block';
       }
     }
@@ -1171,7 +1265,8 @@ def deckgl_hex(
         center_lng=center_lng,
         center_lat=center_lat,
         zoom=zoom,
-        config_error=config_error,
+        config_error=config_error_messages,
+        default_fill_config=DEFAULT_DECK_HEX_CONFIG["hexLayer"]["getFillColor"],
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
