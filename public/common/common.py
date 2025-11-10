@@ -358,7 +358,7 @@ def bounds_to_file_chunk(bounds=[-180, -90, 180, 90], target_num_files=64, targe
     return df
 
 def bounds_to_hex(bounds=[-180, -90, 180, 90], res=3, hex_col="hex"):
-    bbox = get_tiles(bounds, 4)
+    bbox = get_tiles(bounds, 4) 
     bbox.geometry=bbox.buffer((bounds[2]-bounds[0])/20)
     df = bbox.to_wkt()
     qr = f""" with t as (
@@ -371,6 +371,13 @@ def bounds_to_hex(bounds=[-180, -90, 180, 90], res=3, hex_col="hex"):
         """
     con = duckdb_connect()
     df = con.sql(qr).df()
+    # If the result is empty, use the centroid of the bounds instead
+    if df.empty:
+        centroid_lng = (bounds[0] + bounds[2]) / 2
+        centroid_lat = (bounds[1] + bounds[3]) / 2
+        df = con.sql(f"""
+            SELECT h3_latlng_to_cell({centroid_lat}, {centroid_lng}, {res}) AS {hex_col}
+        """).df()
     return df
 
 @fused.cache
@@ -1096,15 +1103,14 @@ def table_to_tile(
     use_columns=["geometry"],
     clip=False,
 ):
-    common = fused.load("https://github.com/fusedio/udfs/tree/d74a107/public/common/")
     import geopandas as gpd
     import pandas as pd
     import numpy as np
 
     version = "0.2.3" 
-    bbox = common.to_gdf(bounds)
+    bbox = to_gdf(bounds)
     try:
-        z = common.estimate_zoom(bbox)
+        z = estimate_zoom(bbox)
     except:
         z = min_zoom
     df = fused.get_chunks_metadata(table)
