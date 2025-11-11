@@ -466,6 +466,20 @@ def filter_hex_bounds(df_hex, bounds=[-180, -90, 180, 90], col_hex='hex'):
     ).df()
     return df
 
+def gdf_to_chunk(gdf, as_json=True, **kw):
+    """target_num_tiles=16 | zoom=8"""
+    tiles = get_tiles(gdf.total_bounds, **kw)
+    gdf['fused:centroid_geom'] = gdf.geometry.centroid
+    gdf = gdf.set_geometry('fused:centroid_geom')
+    gdf = gdf.sjoin(tiles[['geometry']], predicate='within', rsuffix='fused')
+    gdf = gdf.set_geometry('geometry')
+    gdf = gdf.drop(columns=['fused:centroid_geom'])
+    if as_json:
+        gdf_list = gdf.groupby('index_fused').apply(lambda x: x.to_json()).tolist()
+    else:
+        gdf_list = [group for _, group in gdf.groupby('index_fused')]
+    return gdf_list
+
 def to_pickle(obj):
     """Encode an object to a pickle byte stream and store in DataFrame."""
     import pickle
