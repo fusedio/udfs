@@ -6,6 +6,8 @@ from shapely.geometry import mapping
 import folium
 import numpy as np
 import typing  # added for Union typing
+from difflib import get_close_matches
+from jinja2 import Template
 
 DEFAULT_CONFIG = {
     # visual
@@ -52,33 +54,6 @@ DEFAULT_POLYGON_CONFIG = {
     "tooltip": "Polygon {id}",
     "basemap": "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
 }
-
-
-
-from jinja2 import Template
-import json
-
-
-DEFAULT_DECK_CONFIG = {
-    "initialViewState": {
-        "zoom": 12
-    },
-    "vectorLayer": {
-        "@@type": "GeoJsonLayer",
-        "pointRadiusMinPixels": 10,
-        "pickable": True,
-        "getFillColor": {
-            "@@function": "colorContinuous",
-            "attr": "house_age",
-            "colors": "TealGrn",
-            "domain": [0, 50],
-            "steps": 7,
-            "nullColor": [200, 200, 200, 180]
-        },
-        "tooltipColumns": ["house_age", "mrt_distance", "price"]
-    }
-}
-
 DEFAULT_DECK_HEX_CONFIG = {
     "initialViewState": {
         "longitude": None,
@@ -101,6 +76,66 @@ DEFAULT_DECK_HEX_CONFIG = {
       "colors": "Magenta"
     }
   } 
+}
+
+KNOWN_CARTOCOLOR_PALETTES = {
+    "Antique", "ArmyRose", "BrwnYl", "Burg", "BurgYl", "BluGrn", "BluYl", "DkBlu",
+    "DarkMint", "Dense", "Earth", "Emrld", "Fall", "Geyser", "GnBu", "GnBuYl",
+    "Greens", "Greys", "Inferno", "Magenta", "Mint", "Oranges", "OrYel", "Peach",
+    "PinkYl", "Plasma", "Purp", "PurpOr", "Purples", "Reds", "Sunset", "SunsetDark",
+    "Teal", "TealGrn", "TealRose", "Temps", "Tropic", "Viridis", "YlGn", "YlOrBr",
+    "YlOrRd"
+}
+
+VALID_HEX_LAYER_PROPS = {
+    "@@type",
+    "aggregationMode",
+    "autoHighlight",
+    "beforeId",
+    "colorAggregation",
+    "colorRange",
+    "colorScaleType",
+    "coverage",
+    "data",
+    "elevationAggregation",
+    "elevationRange",
+    "elevationScale",
+    "elevationScaleType",
+    "extruded",
+    "extensions",
+    "filled",
+    "filterRange",
+    "getColorWeight",
+    "getDashArray",
+    "getElevation",
+    "getElevationWeight",
+    "getFillColor",
+    "getFilterValue",
+    "getHexagon",
+    "getLineColor",
+    "getLineWidth",
+    "getTooltip",
+    "gpuAggregation",
+    "highlightColor",
+    "id",
+    "lineWidthMaxPixels",
+    "lineWidthMinPixels",
+    "lineWidthRange",
+    "lineWidthScale",
+    "lineWidthUnits",
+    "lowerPercentile",
+    "material",
+    "opacity",
+    "parameters",
+    "pickable",
+    "stroked",
+    "tooltipAttrs",
+    "tooltipColumns",
+    "transitions",
+    "updateTriggers",
+    "upperPercentile",
+    "visible",
+    "wireframe",
 }
 
 @fused.udf(cache_max_age=0)
@@ -401,10 +436,6 @@ def folium_raster(data, bounds, opacity=0.7, tiles="CartoDB dark_matter"):
     ).add_to(m)
 
     return m.get_root().render()
-
-
-import json
-from jinja2 import Template
 
 DEFAULT_DECK_CONFIG = {
     "initialViewState": {
@@ -1046,23 +1077,84 @@ def deckgl_hex(
         hex_layer["getHexagon"] = DEFAULT_DECK_HEX_CONFIG["hexLayer"]["getHexagon"]
 
     fill_cfg = hex_layer.get("getFillColor")
-    if not isinstance(fill_cfg, dict):
-        config_errors.append("hexLayer.getFillColor must be an object with @@function, attr, and domain. Using defaults.")
-        hex_layer["getFillColor"] = deepcopy(DEFAULT_DECK_HEX_CONFIG["hexLayer"]["getFillColor"])
-        fill_cfg = hex_layer["getFillColor"]
-    else:
-        if fill_cfg.get("@@function") != "colorContinuous":
-            config_errors.append("hexLayer.getFillColor.@@function must be 'colorContinuous'. Resetting to defaults.")
-            hex_layer["getFillColor"] = deepcopy(DEFAULT_DECK_HEX_CONFIG["hexLayer"]["getFillColor"])
-            fill_cfg = hex_layer["getFillColor"]
+    # Only validate if getFillColor is explicitly provided
+    if fill_cfg is not None:
+        if not isinstance(fill_cfg, dict):
+            config_errors.append("hexLayer.getFillColor must be an object with @@function, attr, and domain. Using Deck.GL defaults.")
+            hex_layer.pop("getFillColor", None)  # Remove invalid config, let Deck.GL use defaults
+        elif fill_cfg.get("@@function") != "colorContinuous":
+            config_errors.append("hexLayer.getFillColor.@@function must be 'colorContinuous'. Using Deck.GL defaults.")
+            hex_layer.pop("getFillColor", None)  # Remove invalid config, let Deck.GL use defaults
         else:
             if not isinstance(fill_cfg.get("attr"), str):
-                config_errors.append("hexLayer.getFillColor.attr must be a string column name. Using default attr.")
-                fill_cfg["attr"] = DEFAULT_DECK_HEX_CONFIG["hexLayer"]["getFillColor"]["attr"]
-        domain = fill_cfg.get("domain")
-        if not (isinstance(domain, (list, tuple)) and len(domain) == 2):
-            config_errors.append("hexLayer.getFillColor.domain must be a [min, max] array. Using default domain.")
-            fill_cfg["domain"] = DEFAULT_DECK_HEX_CONFIG["hexLayer"]["getFillColor"]["domain"]
+                config_errors.append("hexLayer.getFillColor.attr must be a string column name. Using Deck.GL defaults.")
+                hex_layer.pop("getFillColor", None)  # Remove invalid config, let Deck.GL use defaults
+            else:
+                domain = fill_cfg.get("domain")
+                if not (isinstance(domain, (list, tuple)) and len(domain) == 2):
+                    config_errors.append("hexLayer.getFillColor.domain must be a [min, max] array. Using Deck.GL defaults.")
+                    hex_layer.pop("getFillColor", None)  # Remove invalid config, let Deck.GL use defaults
+                else:
+                    colors = fill_cfg.get("colors")
+                    if colors is not None:
+                        if not isinstance(colors, str):
+                            config_errors.append(f"hexLayer.getFillColor.colors must be a palette string (e.g. 'Magenta'). Got {type(colors).__name__}. Using Deck.GL defaults.")
+                            hex_layer.pop("getFillColor", None)
+                        else:
+                            color_name = colors.strip()
+                            if color_name and color_name not in KNOWN_CARTOCOLOR_PALETTES:
+                                suggestion = get_close_matches(color_name, list(KNOWN_CARTOCOLOR_PALETTES), n=1, cutoff=0.7)
+                                if suggestion:
+                                    config_errors.append(
+                                        f"hexLayer.getFillColor.colors '{color_name}' is not a known CartoColor palette. Did you mean '{suggestion[0]}'?"
+                                    )
+                                else:
+                                    valid_list = ", ".join(sorted(KNOWN_CARTOCOLOR_PALETTES))
+                                    config_errors.append(
+                                        f"hexLayer.getFillColor.colors '{color_name}' is not a recognized CartoColor palette. Valid palettes include: {valid_list}."
+                                    )
+
+    line_cfg = hex_layer.get("getLineColor")
+    if line_cfg is not None:
+        if not isinstance(line_cfg, dict):
+            config_errors.append("hexLayer.getLineColor must be an object when provided. Using Deck.GL defaults.")
+            hex_layer.pop("getLineColor", None)
+        elif line_cfg.get("@@function") == "colorContinuous":
+            colors = line_cfg.get("colors")
+            if colors is not None:
+                if not isinstance(colors, str):
+                    config_errors.append(f"hexLayer.getLineColor.colors must be a palette string (e.g. 'TealGrn'). Got {type(colors).__name__}. Using Deck.GL defaults.")
+                    hex_layer.pop("getLineColor", None)
+                else:
+                    color_name = colors.strip()
+                    if color_name and color_name not in KNOWN_CARTOCOLOR_PALETTES:
+                        suggestion = get_close_matches(color_name, list(KNOWN_CARTOCOLOR_PALETTES), n=1, cutoff=0.7)
+                        if suggestion:
+                            config_errors.append(
+                                f"hexLayer.getLineColor.colors '{color_name}' is not a known CartoColor palette. Did you mean '{suggestion[0]}'?"
+                            )
+                        else:
+                            valid_list = ", ".join(sorted(KNOWN_CARTOCOLOR_PALETTES))
+                            config_errors.append(
+                                f"hexLayer.getLineColor.colors '{color_name}' is not a recognized CartoColor palette. Valid palettes include: {valid_list}."
+                            )
+        elif "@@function" in line_cfg:
+            config_errors.append("hexLayer.getLineColor.@@function must be 'colorContinuous' when specified.")
+            hex_layer.pop("getLineColor", None)
+
+    invalid_props = [key for key in list(hex_layer.keys()) if key not in VALID_HEX_LAYER_PROPS]
+    for prop in invalid_props:
+        suggestion = get_close_matches(prop, list(VALID_HEX_LAYER_PROPS), n=1, cutoff=0.7)
+        if suggestion:
+            config_errors.append(
+                f"hexLayer property '{prop}' is not recognized. Did you mean '{suggestion[0]}'?"
+            )
+        else:
+            valid_props_preview = ", ".join(sorted(list(VALID_HEX_LAYER_PROPS))[:8])
+            config_errors.append(
+                f"hexLayer property '{prop}' is not recognized by Deck.GL. Sample valid properties: {valid_props_preview}, ..."
+            )
+        hex_layer.pop(prop, None)
 
     tooltip_columns = []
     tooltip_config = None
@@ -1074,6 +1166,12 @@ def deckgl_hex(
             or config.get("hexLayer", {}).get("tooltipColumns")
             or config.get("hexLayer", {}).get("tooltipAttrs")
         )
+
+    if config_errors:
+        print(f"\n[deckgl_hex] Config validation found {len(config_errors)} issue(s):")
+        for i, msg in enumerate(config_errors, 1):
+            print(f"  {i}. {msg}")
+        print()
 
     config_error_messages = config_errors
     
@@ -1486,16 +1584,20 @@ def deckgl_hex(
     // Generate color legend if colorContinuous config exists
     function generateColorLegend() {
       const hexLayer = CONFIG.hexLayer || {};
-      const fillCfg = hexLayer.getFillColor;
-      if (!fillCfg || fillCfg['@@function'] !== 'colorContinuous') {
-        console.log('[legend] No colorContinuous config found');
-        return;
+      // Check getFillColor first, then getLineColor
+      let colorCfg = hexLayer.getFillColor;
+      if (!colorCfg || colorCfg['@@function'] !== 'colorContinuous') {
+        colorCfg = hexLayer.getLineColor;
+        if (!colorCfg || colorCfg['@@function'] !== 'colorContinuous') {
+          console.log('[legend] No colorContinuous config found in getFillColor or getLineColor');
+          return;
+        }
       }
       
-      const attr = fillCfg.attr || 'cnt';
-      const domain = fillCfg.domain || [0, 1];
-      const steps = fillCfg.steps || 20;
-      const colors = fillCfg.colors || 'Magenta';
+      const attr = colorCfg.attr || 'cnt';
+      const domain = colorCfg.domain || [0, 1];
+      const steps = colorCfg.steps || 20;
+      const colors = colorCfg.colors || 'Magenta';
       
       if (!window.cartocolor) {
         console.log('[legend] Waiting for cartocolor to load...');
