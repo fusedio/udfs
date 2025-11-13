@@ -1,4 +1,6 @@
 import json
+from typing import Any
+
 common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/")
 
 @fused.udf(cache_max_age=0)
@@ -158,9 +160,8 @@ def selectbox(
     label: str,
     options,
     *,
-    index: int | None = 0,
     format_func=None,
-    placeholder: str | None = None,
+    placeholder: Any = None,
     parameter: str = "channel_1",
     sender_id: str = "selectbox_1",
     auto_send_on_load: bool = True,
@@ -186,13 +187,28 @@ def selectbox(
     
     opts = [{"value": str(values[i]), "label": labels[i]} for i in range(len(values))]
     
-    # Validation
-    if index is not None and not (0 <= index < len(options)):
-        raise ValueError(f"index {index} must be within range [0, {len(options)-1}]")
-    
+    # Determine placeholder behavior: allow text or selecting an existing option
+    placeholder_label = "Select an option…"
+    placeholder_is_option = False
+    resolved_index = None
+
+    if placeholder is not None:
+        try:
+            idx = values.index(placeholder)
+            placeholder_is_option = True
+            placeholder_label = labels[idx]
+            resolved_index = idx
+        except ValueError:
+            placeholder_label = str(placeholder) if not isinstance(placeholder, str) else placeholder
+
     OPTIONS_JS = json.dumps(opts, ensure_ascii=False)
-    INDEX_JS = "null" if index is None else json.dumps(int(index))
-    PLACE_JS = json.dumps(placeholder or "Select an option…")
+    # If no placeholder selection and no explicit index, default to first item
+    if resolved_index is None:
+        resolved_index = 0
+
+    INDEX_JS = "null" if resolved_index is None else json.dumps(int(resolved_index))
+    PLACE_JS = json.dumps(placeholder_label)
+    PLACE_IS_OPTION_JS = "true" if placeholder_is_option else "false"
     
     html = f"""<!doctype html>
 <html>
@@ -295,6 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {{
   const OPTIONS = {OPTIONS_JS};
   const INDEX   = {INDEX_JS};
   const PLACE   = {PLACE_JS};
+  const PLACE_IS_OPTION = {PLACE_IS_OPTION_JS};
   const PARAMETER = {json.dumps(parameter)};
   const SENDER  = {json.dumps(sender_id)};
   const AUTO    = {str(auto_send_on_load).lower()};
@@ -302,12 +319,14 @@ document.addEventListener('DOMContentLoaded', () => {{
   
   sel.innerHTML = '';
   
-  const ph = document.createElement('option');
-  ph.textContent = PLACE;
-  ph.disabled = true;
-  ph.selected = (INDEX === null);
-  ph.value = '';
-  sel.appendChild(ph);
+  if (!PLACE_IS_OPTION) {{
+    const ph = document.createElement('option');
+    ph.textContent = PLACE;
+    ph.disabled = true;
+    ph.selected = (INDEX === null);
+    ph.value = '';
+    sel.appendChild(ph);
+  }}
   
   for (const o of OPTIONS) {{
     const opt = document.createElement('option');
@@ -319,8 +338,10 @@ document.addEventListener('DOMContentLoaded', () => {{
   let initialValue = null;
   if (INDEX !== null) {{
     const targetIndex = Math.max(0, Math.min(OPTIONS.length - 1, Number(INDEX)));
-    sel.selectedIndex = targetIndex + 1;
+    sel.selectedIndex = targetIndex + (PLACE_IS_OPTION ? 0 : 1);
     initialValue = OPTIONS[targetIndex]?.value ?? null;
+  }} else if (!PLACE_IS_OPTION) {{
+    sel.selectedIndex = 0;
   }}
   
   function post(val) {{
