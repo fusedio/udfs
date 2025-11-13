@@ -5,7 +5,7 @@ common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/
 def udf(parameter: str = "yay"):
     # html = button("Click me", parameter=parameter)
     L = ['aasdasd','basdads','casdasd','dasdasd']
-    html = map_bounds( parameter=parameter)
+    html = selectbox("This is a dropdown", parameter=parameter, options = L)
     return html
  
 
@@ -195,120 +195,100 @@ def selectbox(
     PLACE_JS = json.dumps(placeholder or "Select an option…")
     
     html = f"""<!doctype html>
+<html>
+<head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  :root {{
-    --bg: #121212;
-    --text: #eee;
-    --text-muted: #999;
-    --border: #333;
-    --input-bg: #1b1b1b;
-    --input-hover: #2a2a2a;
-    --primary: #e8ff59;
-    --primary-dim: rgba(232, 255, 89, 0.1);
-  }}
-  * {{
-    box-sizing: border-box;
-  }}
-  html, body {{
-    height:100vh; margin:0; padding:0;
-    background:var(--bg); color:var(--text);
-    font-family:system-ui,-apple-system,sans-serif;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:0rem;
+  * {{ box-sizing: border-box; }}
+  body {{
+    margin: 0;
+    padding: 20px;
+    min-height: 100%;
+    background: transparent;
+    color: #f3f4f6;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }}
   label {{
-    width:90vw;
-    color:#ddd;
-    font-size:min(25vh, 25px); 
-    margin-bottom:min(10vh, 10px);
-    text-align:left;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.72);
   }}
   label:empty {{
     display: none;
   }}
-  .container {{
-    width:90vw;
-    display:flex;
-    flex-direction:column;
-    gap:0;
-  }}
   .select-wrapper {{
     position: relative;
     width: 100%;
+    min-width: 220px;
   }}
-
-  /* Option A: chevron drawn as background on <select>, using the SAME sizes */
   select {{
     width: 100%;
-    font-size: min(15vh, 15px);
-    padding: min(7.5vh, 7.5px) min(15vh, 15px) min(7.5vh, 7.5px) min(10vh, 10px);
-    border: 1px solid var(--border);
-    border-radius: min(7.5vh, 7.5px);
-    background:
-      /* right arrow tip */
-      linear-gradient(45deg, transparent 50%, var(--text-muted) 50%)
-        right calc(min(10vh, 10px) + min(5vh, 5px)/2) center / min(5vh, 5px) min(5vh, 5px) no-repeat,
-      /* left arrow tip */
-      linear-gradient(-45deg, transparent 50%, var(--text-muted) 50%)
-        right min(10vh, 10px) center / min(5vh, 5px) min(5vh, 5px) no-repeat,
-      var(--input-bg);
-    color: var(--text);
-    outline: none;
-    cursor: pointer;
-    transition: all 150ms ease;
+    padding: 0.65rem 1rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    background: rgba(24, 24, 24, 0.45);
+    color: #f9fafb;
+    font-size: 14px;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    cursor: pointer;
   }}
   select:hover {{
-    background:
-      linear-gradient(45deg, transparent 50%, var(--primary) 50%)
-        right calc(min(10vh, 10px) + min(5vh, 5px)/2) center / min(5vh, 5px) min(5vh, 5px) no-repeat,
-      linear-gradient(-45deg, transparent 50%, var(--primary) 50%)
-        right min(10vh, 10px) center / min(5vh, 5px) min(5vh, 5px) no-repeat,
-      var(--input-hover);
-    border-color: #444;
-    box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.3), 0px 0px 2px 0px rgba(0,0,0,0.2);
-  }}
-  select:focus {{
-    border-color: var(--primary);
-    background:
-      linear-gradient(45deg, transparent 50%, var(--primary) 50%)
-        right calc(min(10vh, 10px) + min(5vh, 5px)/2) center / min(5vh, 5px) min(5vh, 5px) no-repeat,
-      linear-gradient(-45deg, transparent 50%, var(--primary) 50%)
-        right min(10vh, 10px) center / min(5vh, 5px) min(5vh, 5px) no-repeat,
-      var(--input-hover);
-    box-shadow: 0 0 0 2px var(--primary-dim), 1px 1px 0px 0px rgba(0,0,0,0.3);
+    background: rgba(36, 36, 36, 0.6);
+    border-color: rgba(255, 255, 255, 0.38);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.22);
   }}
   select:focus-visible {{
-    outline: 2px solid var(--primary);
-    outline-offset: -2px;
+    outline: 2px solid rgba(232, 255, 89, 0.5);
+    outline-offset: 2px;
+    border-color: rgba(232, 255, 89, 0.65);
+    background: rgba(42, 42, 42, 0.65);
   }}
-
-  /* Pseudo-element removed; colors now change on hover/focus via backgrounds */
-
   select option {{
-    background: var(--input-bg);
-    color: var(--text);
-    padding: 12px;
-    font-size: max(16px);
+    color: #0f172a;
+    background: #f8fafc;
   }}
   select option:disabled {{
-    color: var(--text-muted);
-    font-style: italic;
+    color: rgba(15, 23, 42, 0.6);
   }}
-  select option:checked {{
-    background: var(--primary-dim);
+  .chevron {{
+    pointer-events: none;
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(248, 250, 252, 0.7);
+    font-size: 12px;
+  }}
+  @media (max-width: 640px) {{
+    body {{
+      padding: 16px;
+      gap: 10px;
+    }}
+    label {{
+      font-size: 12px;
+      letter-spacing: 0.05em;
+    }}
+    select {{
+      padding: 0.55rem 0.9rem;
+      font-size: clamp(12px, 3.6vw, 14px);
+    }}
   }}
 </style>
+</head>
+<body>
 <label for="sb" id="lbl">{label}</label>
-<div class="container">
-  <div class="select-wrapper">
-    <select id="sb" aria-labelledby="lbl" aria-label="{label or 'Select box'}"></select>
-  </div>
+<div class="select-wrapper">
+  <select id="sb" aria-labelledby="lbl" aria-label="{label or 'Select box'}"></select>
+  <span class="chevron">▾</span>
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', () => {{
@@ -363,8 +343,11 @@ document.addEventListener('DOMContentLoaded', () => {{
   }}
 }});
 </script>
+</body>
+</html>
 """
     return html if return_html else common.html_to_obj(html)
+
 
 
 
