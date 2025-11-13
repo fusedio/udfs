@@ -199,7 +199,9 @@ def selectbox(
             placeholder_label = labels[idx]
             resolved_index = idx
         except ValueError:
+            # Placeholder not found in options - use as disabled prompt text
             placeholder_label = str(placeholder) if not isinstance(placeholder, str) else placeholder
+            print(f"[selectbox] Warning: placeholder value {repr(placeholder)} not found in options list.")
 
     OPTIONS_JS = json.dumps(opts, ensure_ascii=False)
     # If no placeholder selection and no explicit index, default to first item
