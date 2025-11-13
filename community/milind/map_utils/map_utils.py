@@ -8,6 +8,7 @@ import numpy as np
 import typing  # added for Union typing
 from difflib import get_close_matches
 from jinja2 import Template
+from copy import deepcopy
 
 DEFAULT_CONFIG = {
     # visual
@@ -79,12 +80,17 @@ DEFAULT_DECK_HEX_CONFIG = {
 }
 
 KNOWN_CARTOCOLOR_PALETTES = {
-    "Antique", "ArmyRose", "BrwnYl", "Burg", "BurgYl", "BluGrn", "BluYl", "DkBlu",
-    "DarkMint", "Dense", "Earth", "Emrld", "Fall", "Geyser", "GnBu", "GnBuYl",
-    "Greens", "Greys", "Inferno", "Magenta", "Mint", "Oranges", "OrYel", "Peach",
-    "PinkYl", "Plasma", "Purp", "PurpOr", "Purples", "Reds", "Sunset", "SunsetDark",
-    "Teal", "TealGrn", "TealRose", "Temps", "Tropic", "Viridis", "YlGn", "YlOrBr",
-    "YlOrRd"
+    "Antique", "ArmyRose", "BluGrn", "BluYl", "Bold", "BrwnYl", "Burg", "BurgYl", 
+    "DarkMint", "Earth", "Emrld", "Fall", "Geyser", "Magenta", "Mint", "OrYel", 
+    "Pastel", "Peach", "PinkYl", "Prism", "Purp", "PurpOr", "RedOr", "Safe", 
+    "Sunset", "SunsetDark", "Teal", "TealGrn", "TealRose", "Temps", "Tropic", 
+    "Vivid", "ag_GrnYl", "ag_Sunset", "cb_Accent", "cb_Blues", "cb_BrBG", 
+    "cb_BuGn", "cb_BuPu", "cb_Dark2", "cb_GnBu", "cb_Greens", "cb_Greys", 
+    "cb_OrRd", "cb_Oranges", "cb_PRGn", "cb_Paired", "cb_Pastel1", "cb_Pastel2", 
+    "cb_PiYG", "cb_PuBu", "cb_PuBuGn", "cb_PuOr", "cb_PuRd", "cb_Purples", 
+    "cb_RdBu", "cb_RdGy", "cb_RdPu", "cb_RdYlBu", "cb_RdYlGn", "cb_Reds", 
+    "cb_Set1", "cb_Set2", "cb_Set3", "cb_Spectral", "cb_YlGn", "cb_YlGnBu", 
+    "cb_YlOrBr", "cb_YlOrRd"
 }
 
 VALID_HEX_LAYER_PROPS = {
@@ -445,6 +451,7 @@ DEFAULT_DECK_CONFIG = {
         "@@type": "GeoJsonLayer",
         "pointRadiusMinPixels": 10,
         "pickable": True,
+        "lineWidthMinPixels": 0,  # Default: no lines unless getLineColor is specified
         "getFillColor": {
             "@@function": "colorContinuous",
             "attr": "house_age",
@@ -456,6 +463,177 @@ DEFAULT_DECK_CONFIG = {
         "tooltipAttrs": ["house_age", "mrt_distance", "price"]
     }
 }
+
+
+def _deep_merge_dict(base: dict, extra: dict) -> dict:
+    for key, value in extra.items():
+        if isinstance(value, dict) and isinstance(base.get(key), dict):
+            _deep_merge_dict(base[key], value)
+        else:
+            base[key] = value
+    return base
+
+
+def _load_deckgl_config(raw_config, default_config, component_name: str, errors: list):
+    merged = deepcopy(default_config)
+    if raw_config in (None, ""):
+        return merged
+
+    if isinstance(raw_config, str):
+        try:
+            user_config = json.loads(raw_config)
+        except json.JSONDecodeError as exc:
+            errors.append(f"[{component_name}] Failed to parse config JSON: {exc}")
+            return merged
+    elif isinstance(raw_config, dict):
+        user_config = raw_config
+    else:
+        errors.append(f"[{component_name}] Config must be a dict or JSON string. Using defaults.")
+        return merged
+
+    if not isinstance(user_config, dict):
+        errors.append(f"[{component_name}] Config must be a dict. Using defaults.")
+        return merged
+
+    try:
+        merged = _deep_merge_dict(merged, deepcopy(user_config))
+    except Exception as exc:
+        errors.append(f"[{component_name}] Failed to merge config overrides: {exc}. Using defaults.")
+        merged = deepcopy(default_config)
+    return merged
+
+
+def _validate_initial_view_state(config: dict, default_view_state: dict, component_name: str, errors: list):
+    view_state = config.get("initialViewState")
+    if not isinstance(view_state, dict):
+        errors.append(f"[{component_name}] initialViewState must be an object. Using defaults.")
+        config["initialViewState"] = deepcopy(default_view_state)
+        view_state = config["initialViewState"]
+    else:
+        zoom = view_state.get("zoom")
+        if zoom is not None and not isinstance(zoom, (int, float)):
+            errors.append(f"[{component_name}] initialViewState.zoom must be numeric. Using default zoom.")
+            view_state["zoom"] = default_view_state.get("zoom")
+    return view_state
+
+
+def _ensure_layer_config(config: dict, layer_key: str, default_layer: dict, component_name: str, errors: list):
+    layer = config.get(layer_key)
+    if not isinstance(layer, dict):
+        errors.append(f"[{component_name}] {layer_key} must be an object. Using defaults.")
+        config[layer_key] = deepcopy(default_layer)
+        layer = config[layer_key]
+    return layer
+
+
+def _validate_palette_name(color_name: str, component_name: str, field_path: str, errors: list):
+    if not color_name:
+        return
+    palette = color_name.strip()
+    if palette and palette not in KNOWN_CARTOCOLOR_PALETTES:
+        suggestion = get_close_matches(palette, list(KNOWN_CARTOCOLOR_PALETTES), n=1, cutoff=0.7)
+        if suggestion:
+            errors.append(f"[{component_name}] {field_path} '{palette}' is not a known CartoColor palette. Did you mean '{suggestion[0]}'?")
+        else:
+            valid_list = ", ".join(sorted(KNOWN_CARTOCOLOR_PALETTES))
+            errors.append(f"[{component_name}] {field_path} '{palette}' is not a recognized CartoColor palette. Valid palettes include: {valid_list}.")
+
+
+def _validate_color_accessor(
+    layer: dict,
+    field_name: str,
+    *,
+    component_name: str,
+    errors: list,
+    allow_array: bool,
+    require_color_continuous: bool,
+    fallback_value=None,
+):
+    value = layer.get(field_name)
+    if value is None:
+        return
+
+    def _reset_to_fallback():
+        if fallback_value is None:
+            layer.pop(field_name, None)
+        else:
+            layer[field_name] = deepcopy(fallback_value)
+
+    if isinstance(value, (list, tuple)):
+        if not allow_array:
+            errors.append(f"[{component_name}] {field_name} cannot be an array. Removing value.")
+            _reset_to_fallback()
+            return
+        if len(value) not in (3, 4) or not all(isinstance(v, (int, float)) for v in value):
+            errors.append(f"[{component_name}] {field_name} array must contain 3 or 4 numeric values. Removing value.")
+            _reset_to_fallback()
+        return
+
+    if isinstance(value, dict):
+        fn = value.get("@@function")
+        if require_color_continuous and fn != "colorContinuous":
+            errors.append(f"[{component_name}] {field_name}.@@function must be 'colorContinuous'.")
+            _reset_to_fallback()
+            return
+
+        if fn == "colorContinuous":
+            if not isinstance(value.get("attr"), str):
+                errors.append(f"[{component_name}] {field_name}.attr must be a string column. Resetting attr.")
+                if fallback_value:
+                    value["attr"] = fallback_value.get("attr")
+
+            domain = value.get("domain")
+            if not (isinstance(domain, (list, tuple)) and len(domain) == 2):
+                errors.append(f"[{component_name}] {field_name}.domain must be [min, max]. Resetting domain.")
+                if fallback_value:
+                    value["domain"] = fallback_value.get("domain")
+
+            steps = value.get("steps")
+            if steps is not None and (not isinstance(steps, int) or steps <= 0):
+                errors.append(f"[{component_name}] {field_name}.steps must be a positive integer. Resetting steps.")
+                if fallback_value:
+                    value["steps"] = fallback_value.get("steps")
+
+            colors = value.get("colors")
+            if colors is not None:
+                if not isinstance(colors, str):
+                    errors.append(f"[{component_name}] {field_name}.colors must be a palette string. Resetting colors.")
+                    if fallback_value:
+                        value["colors"] = fallback_value.get("colors")
+                else:
+                    _validate_palette_name(colors, component_name, f"{field_name}.colors", errors)
+        return
+
+    errors.append(f"[{component_name}] {field_name} must be an array or colorContinuous object. Removing value.")
+    _reset_to_fallback()
+
+
+def _extract_tooltip_columns(config_sources, available_columns=None):
+    tooltip_config = None
+    for source in config_sources:
+        if not isinstance(source, dict):
+            continue
+        for key in ("tooltipColumns", "tooltip_columns", "tooltipAttrs"):
+            candidate = source.get(key)
+            if candidate is not None:
+                tooltip_config = candidate
+                break
+        if tooltip_config is not None:
+            break
+
+    if tooltip_config is None:
+        return []
+
+    if isinstance(tooltip_config, str):
+        columns = [tooltip_config.strip()] if tooltip_config.strip() else []
+    elif isinstance(tooltip_config, (list, tuple, set)):
+        columns = [str(item).strip() for item in tooltip_config if isinstance(item, str) and item.strip()]
+    else:
+        return []
+
+    if available_columns is not None:
+        columns = [col for col in columns if col in available_columns]
+    return columns
 
 def deckgl_map(
     gdf,
@@ -487,8 +665,6 @@ def deckgl_map(
         }
     }
     """
-    from copy import deepcopy
-
     config_errors = []
 
     if hasattr(gdf, "crs"):
@@ -511,95 +687,52 @@ def deckgl_map(
         except Exception:
             pass
 
-    if config is None or config == "":
-        user_config = {}
-    elif isinstance(config, str):
-        try:
-            user_config = json.loads(config)
-        except json.JSONDecodeError as exc:
-            print(f"[deckgl_map] Failed to parse config JSON: {exc}")
-            config_errors.append(f"Failed to parse config JSON: {exc}")
-            user_config = {}
-    else:
-        if isinstance(config, dict):
-            user_config = config
-        else:
-            config_errors.append("Config must be a dict or JSON string. Falling back to defaults.")
-            user_config = {}
+    merged_config = _load_deckgl_config(config, DEFAULT_DECK_CONFIG, "deckgl_map", config_errors)
+    initial_view_state = _validate_initial_view_state(
+        merged_config,
+        DEFAULT_DECK_CONFIG["initialViewState"],
+        "deckgl_map",
+        config_errors,
+    )
+    vector_layer = _ensure_layer_config(
+        merged_config,
+        "vectorLayer",
+        DEFAULT_DECK_CONFIG["vectorLayer"],
+        "deckgl_map",
+        config_errors,
+    )
 
-    if not isinstance(user_config, dict):
-        config_errors.append("Config must be a dict. Falling back to defaults.")
-        user_config = {}
+    _validate_color_accessor(
+        vector_layer,
+        "getFillColor",
+        component_name="deckgl_map",
+        errors=config_errors,
+        allow_array=True,
+        require_color_continuous=True,
+        fallback_value=DEFAULT_DECK_CONFIG["vectorLayer"]["getFillColor"],
+    )
+    _validate_color_accessor(
+        vector_layer,
+        "getLineColor",
+        component_name="deckgl_map",
+        errors=config_errors,
+        allow_array=True,
+        require_color_continuous=True,
+        fallback_value=None,
+    )
 
-    # Validate expected structure
-    merged_config = deepcopy(DEFAULT_DECK_CONFIG)
-    if isinstance(user_config, dict):
-        try:
-            def _merge(base: dict, extra: dict) -> dict:
-                for k, v in extra.items():
-                    if isinstance(v, dict) and isinstance(base.get(k), dict):
-                        _merge(base[k], v)
-                    else:
-                        base[k] = v
-                return base
+    tooltip_attrs = vector_layer.get("tooltipAttrs")
+    if tooltip_attrs is not None and not isinstance(tooltip_attrs, (list, tuple)):
+        config_errors.append("[deckgl_map] vectorLayer.tooltipAttrs must be an array of column names.")
+        vector_layer["tooltipAttrs"] = DEFAULT_DECK_CONFIG["vectorLayer"]["tooltipAttrs"]
+    
+    # Print config errors to console for debugging
+    if config_errors:
+        print(f"\n[deckgl_map] Config validation found {len(config_errors)} issue(s):")
+        for i, msg in enumerate(config_errors, 1):
+            print(f"  {i}. {msg}")
+        print()
 
-            merged_config = _merge(merged_config, deepcopy(user_config))
-        except Exception as exc:  # pragma: no cover
-            config_errors.append(f"Failed to merge config overrides: {exc}. Using defaults.")
-            merged_config = deepcopy(DEFAULT_DECK_CONFIG)
-    else:
-        merged_config = deepcopy(DEFAULT_DECK_CONFIG)
-
-    initial_view_state = merged_config.get("initialViewState")
-    if not isinstance(initial_view_state, dict):
-        config_errors.append("initialViewState must be an object.")
-        merged_config["initialViewState"] = deepcopy(DEFAULT_DECK_CONFIG["initialViewState"])
-    else:
-        if not isinstance(initial_view_state.get("zoom"), (int, float)):
-            config_errors.append("initialViewState.zoom must be numeric. Using default zoom.")
-            merged_config["initialViewState"]["zoom"] = DEFAULT_DECK_CONFIG["initialViewState"]["zoom"]
-
-    vector_layer = merged_config.get("vectorLayer")
-    if not isinstance(vector_layer, dict):
-        config_errors.append("vectorLayer must be an object; using defaults.")
-        merged_config["vectorLayer"] = deepcopy(DEFAULT_DECK_CONFIG["vectorLayer"])
-        vector_layer = merged_config["vectorLayer"]
-    else:
-        fill_cfg = vector_layer.get("getFillColor")
-        if isinstance(fill_cfg, dict):
-            if fill_cfg.get("@@function") != "colorContinuous":
-                config_errors.append("vectorLayer.getFillColor.@@function must be 'colorContinuous'. Resetting to defaults.")
-                vector_layer["getFillColor"] = deepcopy(DEFAULT_DECK_CONFIG["vectorLayer"]["getFillColor"])
-            else:
-                if not isinstance(fill_cfg.get("attr"), str):
-                    config_errors.append("vectorLayer.getFillColor.attr must be a string column. Using default attr.")
-                    vector_layer["getFillColor"]["attr"] = DEFAULT_DECK_CONFIG["vectorLayer"]["getFillColor"]["attr"]
-                domain = fill_cfg.get("domain")
-                if not (isinstance(domain, (list, tuple)) and len(domain) == 2):
-                    config_errors.append("vectorLayer.getFillColor.domain must be [min, max]. Using default domain.")
-                    vector_layer["getFillColor"]["domain"] = DEFAULT_DECK_CONFIG["vectorLayer"]["getFillColor"]["domain"]
-                steps = fill_cfg.get("steps")
-                if steps is not None and (not isinstance(steps, int) or steps <= 0):
-                    config_errors.append("vectorLayer.getFillColor.steps must be a positive integer. Using default steps.")
-                    vector_layer["getFillColor"]["steps"] = DEFAULT_DECK_CONFIG["vectorLayer"]["getFillColor"]["steps"]
-        elif fill_cfg is not None:
-            config_errors.append("vectorLayer.getFillColor must be an object; using defaults.")
-            vector_layer["getFillColor"] = deepcopy(DEFAULT_DECK_CONFIG["vectorLayer"]["getFillColor"])
-
-        tooltip_attrs = vector_layer.get("tooltipAttrs")
-        if tooltip_attrs is not None and not isinstance(tooltip_attrs, (list, tuple)):
-            config_errors.append("vectorLayer.tooltipAttrs must be an array of column names.")
-            vector_layer["tooltipAttrs"] = DEFAULT_DECK_CONFIG["vectorLayer"]["tooltipAttrs"]
-
-    def _merge_dict(base: dict, extra: dict) -> dict:
-        for key, value in extra.items():
-            if isinstance(value, dict) and isinstance(base.get(key), dict):
-                _merge_dict(base[key], value)
-            else:
-                base[key] = value
-        return base
-
-    initial_view_state = merged_config.get("initialViewState", {})
     auto_state = {
         "longitude": float(auto_center[0]) if auto_center else 0.0,
         "latitude": float(auto_center[1]) if auto_center else 0.0,
@@ -607,25 +740,10 @@ def deckgl_map(
     }
 
     # Extract fill color config
-    vector_layer = merged_config.get("vectorLayer", {})
     fill_color_config = vector_layer.get("getFillColor", {})
     vector_layer_config = vector_layer.copy()
-    tooltip_config = None
-    if isinstance(merged_config, dict):
-        tooltip_config = merged_config.get("tooltipColumns")
-    if tooltip_config is None and isinstance(vector_layer, dict):
-        tooltip_config = vector_layer.get("tooltipColumns")
-
-    if isinstance(tooltip_config, str):
-        tooltip_columns = [tooltip_config]
-    elif isinstance(tooltip_config, (list, tuple, set)):
-        tooltip_columns = [
-            str(item)
-            for item in tooltip_config
-            if isinstance(item, str) and item.strip()
-        ]
-    else:
-        tooltip_columns = []
+    data_columns = [col for col in gdf.columns if col not in ("geometry",)]
+    tooltip_columns = _extract_tooltip_columns((merged_config, vector_layer), data_columns)
 
     html = Template(r"""
 <!DOCTYPE html>
@@ -635,15 +753,14 @@ def deckgl_map(
   <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-  <script src="https://unpkg.com/deck.gl@9.1.3/dist.min.js"></script>
-  <script src="https://unpkg.com/@deck.gl/carto@9.1.3/dist.min.js"></script>
+  <script src="https://unpkg.com/deck.gl@9.2.2/dist.min.js"></script>
+  <script src="https://unpkg.com/@deck.gl/carto@9.2.2/dist.min.js"></script>
   <script type="module">
     import * as cartocolor from 'https://esm.sh/cartocolor@5.0.2';
     window.cartocolor = cartocolor;
   </script>
   <style>
-    html, body { margin: 0; height: 100%; background: #000; }
-    #map { position: absolute; inset: 0; }
+    html, body, #map { margin: 0; height: 100%; width: 100%; background: #000; }
     .mapboxgl-popup-content { background: rgba(0,0,0,0.8); color: #fff; font-family: monospace; font-size: 11px; }
     #tooltip {
       position: absolute;
@@ -747,23 +864,62 @@ if (CONFIG_ERROR) {
   );
 }
 
+// Calculate bounds from all geometry types
 let initialBounds = null;
 if (GEOJSON.features && GEOJSON.features.length > 0) {
   try {
     const bounds = new mapboxgl.LngLatBounds();
+    
+    function extendBoundsFromCoordinates(coords, depth = 0) {
+      if (depth === 0 && typeof coords[0] === 'number') {
+        // Single coordinate [lng, lat]
+        bounds.extend(coords);
+      } else if (Array.isArray(coords)) {
+        coords.forEach(c => extendBoundsFromCoordinates(c, depth + 1));
+      }
+    }
+    
     GEOJSON.features.forEach(feature => {
-      if (feature.geometry.type === 'Point') {
-        bounds.extend(feature.geometry.coordinates);
-      } else if (feature.geometry.type === 'Polygon') {
-        feature.geometry.coordinates[0].forEach(coord => bounds.extend(coord));
-      } else if (feature.geometry.type === 'MultiPolygon') {
-        feature.geometry.coordinates.forEach(poly => {
-          poly[0].forEach(coord => bounds.extend(coord));
-        });
+      if (!feature.geometry) return;
+      
+      const geom = feature.geometry;
+      switch (geom.type) {
+        case 'Point':
+          bounds.extend(geom.coordinates);
+          break;
+        case 'MultiPoint':
+        case 'LineString':
+          geom.coordinates.forEach(coord => bounds.extend(coord));
+          break;
+        case 'MultiLineString':
+        case 'Polygon':
+          geom.coordinates.forEach(ring => {
+            ring.forEach(coord => bounds.extend(coord));
+          });
+          break;
+        case 'MultiPolygon':
+          geom.coordinates.forEach(poly => {
+            poly.forEach(ring => {
+              ring.forEach(coord => bounds.extend(coord));
+            });
+          });
+          break;
+        case 'GeometryCollection':
+          // Recursively handle geometry collections
+          geom.geometries.forEach(g => {
+            extendBoundsFromCoordinates(g.coordinates);
+          });
+          break;
       }
     });
-    initialBounds = bounds;
-  } catch (err) {}
+    
+    // Only use bounds if we successfully extended it
+    if (!bounds.isEmpty()) {
+      initialBounds = bounds;
+    }
+  } catch (err) {
+    console.warn('[deckgl_map] Error calculating bounds:', err);
+  }
 }
 
 mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -772,13 +928,7 @@ const map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/mapbox/dark-v10',
   center: [AUTO_STATE.longitude, AUTO_STATE.latitude],
-  zoom: AUTO_STATE.zoom,
-  preserveDrawingBuffer: true,
-  bounds: initialBounds,
-  fitBoundsOptions: {
-    padding: 50,
-    maxZoom: 15
-  }
+  zoom: AUTO_STATE.zoom
 });
 
 // Process colorContinuous config
@@ -798,66 +948,66 @@ function processColorContinuous(cfg) {
   };
 }
 
-let overlay = null;
+// Process layer config outside map.on('load') so it's accessible everywhere
+let getFillColor = [0, 144, 255, 200];
+let getRadius = VECTOR_LAYER_CONFIG?.getRadius || 200;
+let pointRadiusMinPixels = VECTOR_LAYER_CONFIG?.pointRadiusMinPixels || 10;
+let lineWidthMinPixels = VECTOR_LAYER_CONFIG?.lineWidthMinPixels ?? 0;
+let getLineColor = VECTOR_LAYER_CONFIG?.getLineColor || [0, 0, 0, 0]; // Transparent by default
 
-map.on('load', () => {
-  // Create empty layer first for fast basemap render
-  const emptyGeoJson = { type: 'FeatureCollection', features: [] };
-  
-  let getFillColor = [0, 144, 255, 200];
-  let getRadius = VECTOR_LAYER_CONFIG?.getRadius || 200;
-  let pointRadiusMinPixels = VECTOR_LAYER_CONFIG?.pointRadiusMinPixels || 10;
-  
-  if (FILL_COLOR_CONFIG && FILL_COLOR_CONFIG['@@function'] === 'colorContinuous') {
-    try {
-      getFillColor = colorContinuous(processColorContinuous(FILL_COLOR_CONFIG));
-    } catch (err) {
-      console.warn('Failed to create colorContinuous function:', err);
-      configErrors.push('Failed to apply colorContinuous config. Using default colors.');
-    }
+if (FILL_COLOR_CONFIG && FILL_COLOR_CONFIG['@@function'] === 'colorContinuous') {
+  try {
+    getFillColor = colorContinuous(processColorContinuous(FILL_COLOR_CONFIG));
+  } catch (err) {
+    console.warn('Failed to create colorContinuous function:', err);
+    configErrors.push('Failed to apply colorContinuous config. Using default colors.');
   }
-  
-  const layer = new GeoJsonLayer({
+}
+
+function createGeoJsonLayer(data) {
+  return new GeoJsonLayer({
     id: 'gdf-layer',
-    data: emptyGeoJson,
+    data,
     pickable: true,
     stroked: true,
     filled: true,
-    lineWidthMinPixels: 1,
+    lineWidthMinPixels: lineWidthMinPixels,
     getFillColor: getFillColor,
-    getLineColor: [255, 255, 255, 200],
+    getLineColor: getLineColor,
     getRadius: getRadius,
     pointRadiusMinPixels: pointRadiusMinPixels,
     opacity: 0.8
   });
-  
-  overlay = new MapboxOverlay({
-    interleaved: false,
-    layers: [layer]
+}
+
+const overlay = new MapboxOverlay({
+  interleaved: false,
+  layers: [createGeoJsonLayer({ type: 'FeatureCollection', features: [] })],
+  glOptions: {
+    preserveDrawingBuffer: true  // Prevents WebGL context loss when iframe loses focus
+  }
+});
+
+map.addControl(overlay);
+
+requestAnimationFrame(() => {
+  overlay.setProps({
+    layers: [createGeoJsonLayer(GEOJSON)]
   });
-  
-  map.addControl(overlay);
-  
-  // Defer data injection so the basemap renders immediately
-  requestAnimationFrame(() => {
-    if (overlay) {
-      overlay.setProps({
-        layers: [new GeoJsonLayer({
-          id: 'gdf-layer',
-          data: GEOJSON,
-          pickable: true,
-          stroked: true,
-          filled: true,
-          lineWidthMinPixels: 1,
-          getFillColor: getFillColor,
-          getLineColor: [255, 255, 255, 200],
-          getRadius: getRadius,
-          pointRadiusMinPixels: pointRadiusMinPixels,
-          opacity: 0.8
-        })]
+});
+
+map.on('load', () => {
+  if (initialBounds && !initialBounds.isEmpty()) {
+    try {
+      map.fitBounds(initialBounds, {
+        padding: 50,
+        maxZoom: 15,
+        duration: 0
       });
+    } catch (err) {
+      console.warn('[deckgl_map] fitBounds failed:', err);
     }
-  });
+  }
 
   const tooltipEl = document.getElementById('tooltip');
 
@@ -1034,138 +1184,57 @@ def deckgl_hex(
         }
     }
     """
-    from jinja2 import Template
-    import pandas as pd
-    import json
-    from copy import deepcopy
-
     config_errors = []
 
-    # Handle config: None, JSON string, or dict
-    if config is None or config == "":
-        config = deepcopy(DEFAULT_DECK_HEX_CONFIG)
-    elif isinstance(config, str):
-        try:
-            parsed = json.loads(config)
-        except json.JSONDecodeError as exc:
-            config_errors.append(f"Failed to parse config JSON: {exc}")
-            parsed = {}
-        if isinstance(parsed, dict):
-            merged = deepcopy(DEFAULT_DECK_HEX_CONFIG)
-            merged.update(parsed)
-            config = merged
-        else:
-            config_errors.append("Parsed config is not a JSON object. Falling back to defaults.")
-            config = deepcopy(DEFAULT_DECK_HEX_CONFIG)
-    elif isinstance(config, dict):
-        merged = deepcopy(DEFAULT_DECK_HEX_CONFIG)
-        merged.update(config)
-        config = merged
-    else:
-        config_errors.append("Config must be a dict or JSON string. Falling back to defaults.")
-        config = deepcopy(DEFAULT_DECK_HEX_CONFIG)
-
-    # Validate critical config pieces against expected structure
-    hex_layer = config.get("hexLayer")
-    if not isinstance(hex_layer, dict):
-        config_errors.append("Config.hexLayer must be an object; falling back to defaults.")
-        config["hexLayer"] = deepcopy(DEFAULT_DECK_HEX_CONFIG["hexLayer"])
-        hex_layer = config["hexLayer"]
+    config = _load_deckgl_config(config, DEFAULT_DECK_HEX_CONFIG, "deckgl_hex", config_errors)
+    _validate_initial_view_state(config, DEFAULT_DECK_HEX_CONFIG["initialViewState"], "deckgl_hex", config_errors)
+    hex_layer = _ensure_layer_config(
+        config,
+        "hexLayer",
+        DEFAULT_DECK_HEX_CONFIG["hexLayer"],
+        "deckgl_hex",
+        config_errors,
+    )
 
     if not isinstance(hex_layer.get("getHexagon"), str) or not hex_layer.get("getHexagon"):
-        config_errors.append("hexLayer.getHexagon must be a string expression (e.g. '@@=properties.hex'). Falling back to default accessor.")
+        config_errors.append("[deckgl_hex] hexLayer.getHexagon must be a string expression (e.g. '@@=properties.hex'). Falling back to default accessor.")
         hex_layer["getHexagon"] = DEFAULT_DECK_HEX_CONFIG["hexLayer"]["getHexagon"]
 
-    fill_cfg = hex_layer.get("getFillColor")
-    # Only validate if getFillColor is explicitly provided
-    if fill_cfg is not None:
-        if not isinstance(fill_cfg, dict):
-            config_errors.append("hexLayer.getFillColor must be an object with @@function, attr, and domain. Using Deck.GL defaults.")
-            hex_layer.pop("getFillColor", None)  # Remove invalid config, let Deck.GL use defaults
-        elif fill_cfg.get("@@function") != "colorContinuous":
-            config_errors.append("hexLayer.getFillColor.@@function must be 'colorContinuous'. Using Deck.GL defaults.")
-            hex_layer.pop("getFillColor", None)  # Remove invalid config, let Deck.GL use defaults
-        else:
-            if not isinstance(fill_cfg.get("attr"), str):
-                config_errors.append("hexLayer.getFillColor.attr must be a string column name. Using Deck.GL defaults.")
-                hex_layer.pop("getFillColor", None)  # Remove invalid config, let Deck.GL use defaults
-            else:
-                domain = fill_cfg.get("domain")
-                if not (isinstance(domain, (list, tuple)) and len(domain) == 2):
-                    config_errors.append("hexLayer.getFillColor.domain must be a [min, max] array. Using Deck.GL defaults.")
-                    hex_layer.pop("getFillColor", None)  # Remove invalid config, let Deck.GL use defaults
-                else:
-                    colors = fill_cfg.get("colors")
-                    if colors is not None:
-                        if not isinstance(colors, str):
-                            config_errors.append(f"hexLayer.getFillColor.colors must be a palette string (e.g. 'Magenta'). Got {type(colors).__name__}. Using Deck.GL defaults.")
-                            hex_layer.pop("getFillColor", None)
-                        else:
-                            color_name = colors.strip()
-                            if color_name and color_name not in KNOWN_CARTOCOLOR_PALETTES:
-                                suggestion = get_close_matches(color_name, list(KNOWN_CARTOCOLOR_PALETTES), n=1, cutoff=0.7)
-                                if suggestion:
-                                    config_errors.append(
-                                        f"hexLayer.getFillColor.colors '{color_name}' is not a known CartoColor palette. Did you mean '{suggestion[0]}'?"
-                                    )
-                                else:
-                                    valid_list = ", ".join(sorted(KNOWN_CARTOCOLOR_PALETTES))
-                                    config_errors.append(
-                                        f"hexLayer.getFillColor.colors '{color_name}' is not a recognized CartoColor palette. Valid palettes include: {valid_list}."
-                                    )
-
-    line_cfg = hex_layer.get("getLineColor")
-    if line_cfg is not None:
-        if not isinstance(line_cfg, dict):
-            config_errors.append("hexLayer.getLineColor must be an object when provided. Using Deck.GL defaults.")
-            hex_layer.pop("getLineColor", None)
-        elif line_cfg.get("@@function") == "colorContinuous":
-            colors = line_cfg.get("colors")
-            if colors is not None:
-                if not isinstance(colors, str):
-                    config_errors.append(f"hexLayer.getLineColor.colors must be a palette string (e.g. 'TealGrn'). Got {type(colors).__name__}. Using Deck.GL defaults.")
-                    hex_layer.pop("getLineColor", None)
-                else:
-                    color_name = colors.strip()
-                    if color_name and color_name not in KNOWN_CARTOCOLOR_PALETTES:
-                        suggestion = get_close_matches(color_name, list(KNOWN_CARTOCOLOR_PALETTES), n=1, cutoff=0.7)
-                        if suggestion:
-                            config_errors.append(
-                                f"hexLayer.getLineColor.colors '{color_name}' is not a known CartoColor palette. Did you mean '{suggestion[0]}'?"
-                            )
-                        else:
-                            valid_list = ", ".join(sorted(KNOWN_CARTOCOLOR_PALETTES))
-                            config_errors.append(
-                                f"hexLayer.getLineColor.colors '{color_name}' is not a recognized CartoColor palette. Valid palettes include: {valid_list}."
-                            )
-        elif "@@function" in line_cfg:
-            config_errors.append("hexLayer.getLineColor.@@function must be 'colorContinuous' when specified.")
-            hex_layer.pop("getLineColor", None)
+    _validate_color_accessor(
+        hex_layer,
+        "getFillColor",
+        component_name="deckgl_hex",
+        errors=config_errors,
+        allow_array=False,
+        require_color_continuous=True,
+        fallback_value=DEFAULT_DECK_HEX_CONFIG["hexLayer"]["getFillColor"],
+    )
+    _validate_color_accessor(
+        hex_layer,
+        "getLineColor",
+        component_name="deckgl_hex",
+        errors=config_errors,
+        allow_array=False,
+        require_color_continuous=True,
+        fallback_value=None,
+    )
 
     invalid_props = [key for key in list(hex_layer.keys()) if key not in VALID_HEX_LAYER_PROPS]
     for prop in invalid_props:
         suggestion = get_close_matches(prop, list(VALID_HEX_LAYER_PROPS), n=1, cutoff=0.7)
         if suggestion:
             config_errors.append(
-                f"hexLayer property '{prop}' is not recognized. Did you mean '{suggestion[0]}'?"
+                f"[deckgl_hex] hexLayer property '{prop}' is not recognized. Did you mean '{suggestion[0]}'?"
             )
         else:
             valid_props_preview = ", ".join(sorted(list(VALID_HEX_LAYER_PROPS))[:8])
             config_errors.append(
-                f"hexLayer property '{prop}' is not recognized by Deck.GL. Sample valid properties: {valid_props_preview}, ..."
+                f"[deckgl_hex] hexLayer property '{prop}' is not recognized by Deck.GL. Sample valid properties: {valid_props_preview}, ..."
             )
         hex_layer.pop(prop, None)
 
+    configured_tooltip_columns = _extract_tooltip_columns((config, hex_layer))
     tooltip_columns = []
-    tooltip_config = None
-    if isinstance(config, dict):
-        tooltip_config = (
-            config.get("tooltipColumns")
-            or config.get("tooltip_columns")
-            or config.get("tooltipAttrs")
-            or config.get("hexLayer", {}).get("tooltipColumns")
-            or config.get("hexLayer", {}).get("tooltipAttrs")
-        )
 
     if config_errors:
         print(f"\n[deckgl_hex] Config validation found {len(config_errors)} issue(s):")
@@ -1220,24 +1289,12 @@ def deckgl_hex(
     auto_zoom = 5
     
     if len(data_records) > 0:
-        if tooltip_config is not None:
-            if isinstance(tooltip_config, str):
-                tooltip_columns = [tooltip_config]
-            elif isinstance(tooltip_config, (list, tuple, set)):
-                tooltip_columns = [
-                    str(col) for col in tooltip_config if isinstance(col, str) and col.strip()
-                ]
-            else:
-                tooltip_columns = []
-        else:
-            tooltip_columns = []
-
-        if tooltip_config is not None:
-            available_keys = set(data_records[0].keys())
-            missing_tooltips = [col for col in tooltip_columns if col not in available_keys]
+        available_keys = set(data_records[0].keys())
+        if configured_tooltip_columns:
+            missing_tooltips = [col for col in configured_tooltip_columns if col not in available_keys]
             if missing_tooltips:
                 print(f"[deckgl_hex] Warning: tooltip columns not found in data: {missing_tooltips}")
-            tooltip_columns = [col for col in tooltip_columns if col in available_keys]
+            tooltip_columns = [col for col in configured_tooltip_columns if col in available_keys]
         else:
             tooltip_columns = []
 
@@ -1284,9 +1341,9 @@ def deckgl_hex(
 
   <!-- Load h3-js FIRST, then deck.gl + geo-layers (+ carto for color ramps) -->
   <script src="https://unpkg.com/h3-js@4.1.0/dist/h3-js.umd.js"></script>
-  <script src="https://unpkg.com/deck.gl@9.1.3/dist.min.js"></script>
-  <script src="https://unpkg.com/@deck.gl/geo-layers@9.1.3/dist.min.js"></script>
-  <script src="https://unpkg.com/@deck.gl/carto@9.1.3/dist.min.js"></script>
+  <script src="https://unpkg.com/deck.gl@9.2.2/dist.min.js"></script>
+  <script src="https://unpkg.com/@deck.gl/geo-layers@9.2.2/dist.min.js"></script>
+  <script src="https://unpkg.com/@deck.gl/carto@9.2.2/dist.min.js"></script>
   <script type="module">
     import * as cartocolor from 'https://esm.sh/cartocolor@5.0.2';
     window.cartocolor = cartocolor;
@@ -1532,7 +1589,10 @@ def deckgl_hex(
 
     const overlay = new MapboxOverlay({
       interleaved: false,
-      layers: [createHexLayer([])]
+      layers: [createHexLayer([])],
+      glOptions: {
+        preserveDrawingBuffer: true  // Prevents WebGL context loss when iframe loses focus
+      }
     });
 
     map.addControl(overlay);
@@ -1821,7 +1881,7 @@ def deckgl_raster(
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no"/>
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet"/>
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
-  <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+  <script src="https://unpkg.com/deck.gl@9.2.2/dist.min.js"></script>
   <style>
     html,body{margin:0;height:100%;background:#000}
     #map{position:absolute;inset:0}
