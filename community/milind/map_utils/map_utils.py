@@ -999,10 +999,13 @@ requestAnimationFrame(() => {
 map.on('load', () => {
   if (initialBounds && !initialBounds.isEmpty()) {
     try {
-      map.fitBounds(initialBounds, {
-        padding: 50,
-        maxZoom: 15,
-        duration: 0
+      // Wait for overlay to be added before fitting bounds
+      requestAnimationFrame(() => {
+        map.fitBounds(initialBounds, {
+          padding: 50,
+          maxZoom: 15,
+          duration: 500
+        });
       });
     } catch (err) {
       console.warn('[deckgl_map] fitBounds failed:', err);
@@ -1601,6 +1604,42 @@ def deckgl_hex(
       overlay.setProps({
         layers: [createHexLayer(normalizedData)]
       });
+    });
+
+    // Calculate and fit bounds from H3 hexagons
+    map.on('load', () => {
+      if (normalizedData.length > 0 && typeof h3 !== 'undefined' && h3.cellToBoundary) {
+        try {
+          const bounds = new mapboxgl.LngLatBounds();
+          
+          // Sample up to 100 hexagons to calculate bounds (for performance)
+          const sampleSize = Math.min(100, normalizedData.length);
+          const step = Math.max(1, Math.floor(normalizedData.length / sampleSize));
+          
+          for (let i = 0; i < normalizedData.length; i += step) {
+            const hex = normalizedData[i].hex;
+            if (hex && h3.isValidCell(hex)) {
+              const boundary = h3.cellToBoundary(hex);
+              boundary.forEach(([lat, lng]) => {
+                bounds.extend([lng, lat]);
+              });
+            }
+          }
+          
+          if (!bounds.isEmpty()) {
+            requestAnimationFrame(() => {
+              map.fitBounds(bounds, {
+                padding: 50,
+                maxZoom: 15,
+                duration: 500
+              });
+            });
+            console.log('[deckgl_hex] Fitted map to hexagon bounds');
+          }
+        } catch (err) {
+          console.warn('[deckgl_hex] Failed to fit bounds:', err);
+        }
+      }
     });
 
     // Tooltip on hover
