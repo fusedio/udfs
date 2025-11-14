@@ -745,7 +745,10 @@ def deckgl_map(
     
     # Extract line width and point radius from vector layer config
     line_width = vector_layer.get("lineWidthMinPixels", 3)
-    point_radius = vector_layer.get("pointRadius", 6)
+    # Support both pointRadius and pointRadiusMinPixels for consistency with deck.gl naming
+    point_radius = vector_layer.get("pointRadiusMinPixels")
+    if point_radius is None:
+        point_radius = vector_layer.get("pointRadius", 6)
 
     auto_state = {
         "longitude": float(auto_center[0]) if auto_center else 0.0,
@@ -973,15 +976,19 @@ function makeInterpolateExpression(attr, colorSpec) {
   }
 
   if (hasPoint) {
+    const radius = POINT_RADIUS || 6;
+    // For very small circles, reduce or remove stroke to make size difference visible
+    const strokeWidth = radius < 2 ? 0 : 1;
+    
     map.addLayer({
       id: 'gdf-circle',
       type: 'circle',
       source: 'gdf-source',
       paint: {
-        'circle-radius': POINT_RADIUS || 6,
+        'circle-radius': radius,
         'circle-color': colorExpr || 'rgba(0,144,255,0.9)',
         'circle-stroke-color': 'rgba(0,0,0,0.5)',
-        'circle-stroke-width': 1,
+        'circle-stroke-width': strokeWidth,
         'circle-opacity': 0.9
       },
       filter: ['any',
