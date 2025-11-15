@@ -1233,6 +1233,9 @@ def deckgl_hex(
     }
     """
     config_errors = []
+    
+    # Save original config to check what user actually provided
+    original_config = config
 
     config = _load_deckgl_config(config, DEFAULT_DECK_HEX_CONFIG, "deckgl_hex", config_errors)
     _validate_initial_view_state(config, DEFAULT_DECK_HEX_CONFIG["initialViewState"], "deckgl_hex", config_errors)
@@ -1266,6 +1269,19 @@ def deckgl_hex(
         require_color_continuous=True,
         fallback_value=None,
     )
+    
+    # Remove default getFillColor if user didn't specify it (to avoid wrong legend defaults)
+    # Check the original config parameter to see if user provided getFillColor
+    user_provided_fill_color = False
+    if isinstance(original_config, dict):
+        user_hex_layer = original_config.get("hexLayer", {})
+        if isinstance(user_hex_layer, dict) and "getFillColor" in user_hex_layer:
+            user_provided_fill_color = True
+    
+    # If user didn't provide getFillColor, remove it from merged config to prevent wrong defaults
+    if not user_provided_fill_color and "getFillColor" in hex_layer:
+        hex_layer.pop("getFillColor", None)
+        print("[deckgl_hex] Removed default getFillColor since user didn't specify it")
 
     invalid_props = [key for key in list(hex_layer.keys()) if key not in VALID_HEX_LAYER_PROPS]
     for prop in invalid_props:
@@ -1738,10 +1754,16 @@ def deckgl_hex(
         }
       }
       
-      const attr = colorCfg.attr || 'cnt';
-      const domain = colorCfg.domain || [0, 1];
-      const steps = colorCfg.steps || 20;
-      const colors = colorCfg.colors || 'Magenta';
+      // Use values from config, no fallbacks - if missing, don't show legend
+      const attr = colorCfg.attr;
+      const domain = colorCfg.domain;
+      const steps = colorCfg.steps || 7;
+      const colors = colorCfg.colors || 'TealGrn';
+      
+      if (!attr || !domain || !Array.isArray(domain) || domain.length !== 2) {
+        console.log('[legend] Invalid color config - missing attr or domain');
+        return;
+      }
       
       if (!window.cartocolor) {
         console.log('[legend] Waiting for cartocolor to load...');
