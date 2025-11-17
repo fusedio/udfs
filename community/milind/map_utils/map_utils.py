@@ -2157,15 +2157,20 @@ def enable_map_sync(html_input, channel: str = "default"):
     moveTimeout = setTimeout(broadcast, 0);
   }}
   
-  map.on('dragstart', () => userInteracting = true);
-  map.on('zoomstart', () => userInteracting = true);
-  map.on('rotatestart', () => userInteracting = true);
-  map.on('pitchstart', () => userInteracting = true);
+  const startInteraction = () => {{
+    userInteracting = true;
+  }};
+  const finishInteraction = () => {{
+    if (!userInteracting) return;
+    userInteracting = false;
+    broadcast();
+  }};
   
-  map.on('dragend', () => {{ userInteracting = false; broadcast(); }});
-  map.on('zoomend', () => {{ userInteracting = false; broadcast(); }});
-  map.on('rotateend', () => {{ userInteracting = false; broadcast(); }});
-  map.on('pitchend', () => {{ userInteracting = false; broadcast(); }});
+  map.on('dragstart', startInteraction);
+  map.on('zoomstart', startInteraction);
+  map.on('rotatestart', startInteraction);
+  map.on('pitchstart', startInteraction);
+  map.on('moveend', finishInteraction);
   
   map.on('move', () => {{
     if (userInteracting && !isSyncing) scheduleBroadcast();
