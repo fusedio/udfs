@@ -2059,3 +2059,153 @@ map.on('load', () => {
 
     common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
     return common.html_to_obj(html)
+
+
+def enable_map_sync(html_input, channel: str = "default"):
+    """
+    Inject BroadcastChannel-based map sync into any Mapbox GL map HTML.
+    
+    Args:
+        html_string: HTML string containing a Mapbox GL map
+        channel: Sync channel name (maps with same channel will sync)
+    
+    Returns:
+        Modified HTML with sync capability
+    
+    Usage:
+        html = deckgl_hex(df, config)
+        synced_html = enable_map_sync(html, channel="my-maps")
+    """
+    channel = channel if "::" in channel else f"map-sync::{channel}"
+
+    # Normalize input to HTML string
+    response_mode = not isinstance(html_input, str)
+    if isinstance(html_input, str):
+        html_string = html_input
+    else:
+        html_string = None
+        text_value = getattr(html_input, "text", None)
+        if isinstance(text_value, str):
+            html_string = text_value
+        else:
+            data_value = getattr(html_input, "data", None)
+            if isinstance(data_value, (bytes, bytearray)):
+                html_string = data_value.decode("utf-8", errors="ignore")
+            elif isinstance(data_value, str):
+                html_string = data_value
+            else:
+                body_value = getattr(html_input, "body", None)
+                if isinstance(body_value, (bytes, bytearray)):
+                    html_string = body_value.decode("utf-8", errors="ignore")
+                elif isinstance(body_value, str):
+                    html_string = body_value
+        if html_string is None:
+            raise TypeError(
+                "html_input must be a str or response-like object with 'text', 'data', or 'body' attribute"
+            )
+    
+    sync_script = f"""
+<script>
+(function() {{
+  if (!window.mapboxgl || !map) return;
+  
+  const CHANNEL = {json.dumps(channel)};
+  const bc = new BroadcastChannel(CHANNEL);
+  const mapId = Math.random().toString(36).substr(2, 9);
+  
+  let isSyncing = false;
+  let userInteracting = false;
+  let lastBroadcast = {{x: NaN, y: NaN, z: NaN}};
+  
+  const eq = (a, b, e) => Math.abs(a - b) < e;
+  
+  function getState() {{
+    const c = map.getCenter();
+    return {{
+      center: [+c.lng.toFixed(6), +c.lat.toFixed(6)],
+      zoom: +map.getZoom().toFixed(3),
+      bearing: +map.getBearing().toFixed(1),
+      pitch: +map.getPitch().toFixed(1),
+      id: mapId,
+      ts: Date.now()
+    }};
+  }}
+  
+  function broadcast() {{
+    if (isSyncing) return;
+    const state = getState();
+    const [x, y] = state.center;
+    const z = state.zoom;
+    
+    if (eq(x, lastBroadcast.x, 1e-6) && 
+        eq(y, lastBroadcast.y, 1e-6) && 
+        eq(z, lastBroadcast.z, 1e-3)) return;
+    
+    lastBroadcast = {{x, y, z}};
+    bc.postMessage(state);
+  }}
+  
+  function applySync(state) {{
+    if (!state || state.id === mapId) return;
+    if (isSyncing || userInteracting) return;
+    
+    isSyncing = true;
+    map.jumpTo({{
+      center: state.center,
+      zoom: state.zoom,
+      bearing: state.bearing,
+      pitch: state.pitch,
+      animate: false
+    }});
+    
+    requestAnimationFrame(() => {{ isSyncing = false; }});
+  }}
+  
+  let moveTimeout = null;
+  function scheduleBroadcast() {{
+    if (moveTimeout) clearTimeout(moveTimeout);
+    moveTimeout = setTimeout(broadcast, 0);
+  }}
+  
+  map.on('dragstart', () => userInteracting = true);
+  map.on('zoomstart', () => userInteracting = true);
+  map.on('rotatestart', () => userInteracting = true);
+  map.on('pitchstart', () => userInteracting = true);
+  
+  map.on('dragend', () => {{ userInteracting = false; broadcast(); }});
+  map.on('zoomend', () => {{ userInteracting = false; broadcast(); }});
+  map.on('rotateend', () => {{ userInteracting = false; broadcast(); }});
+  map.on('pitchend', () => {{ userInteracting = false; broadcast(); }});
+  
+  map.on('move', () => {{
+    if (userInteracting && !isSyncing) scheduleBroadcast();
+  }});
+  
+  bc.onmessage = (e) => applySync(e.data);
+  
+  map.on('load', () => {{
+    setTimeout(() => bc.postMessage(getState()), 100 + Math.random() * 100);
+  }});
+  
+  document.addEventListener('visibilitychange', () => {{
+    if (document.hidden) {{
+      isSyncing = false;
+      userInteracting = false;
+    }}
+  }});
+}})();
+</script>
+"""
+    
+    # Inject before closing </body> tag
+    if "</body>" in html_string:
+        injected_html = html_string.replace("</body>", f"{sync_script}\n</body>")
+    elif "</html>" in html_string:
+        injected_html = html_string.replace("</html>", f"{sync_script}\n</html>")
+    else:
+        injected_html = html_string + sync_script
+
+    if response_mode:
+        common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
+        return common.html_to_obj(injected_html)
+    return injected_html
