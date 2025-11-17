@@ -2074,7 +2074,8 @@ def enable_map_sync(html_input, channel: str = "default"):
     
     Usage:
         html = deckgl_hex(df, config)
-        synced_html = enable_map_sync(html, channel="my-maps")
+        map1 = enable_map_sync(html, channel="channel1")
+        return map1
     """
     channel = channel if "::" in channel else f"map-sync::{channel}"
 
