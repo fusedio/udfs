@@ -1260,17 +1260,6 @@ def deckgl_hex(
         require_color_continuous=True,
         fallback_value=DEFAULT_DECK_HEX_CONFIG["hexLayer"]["getFillColor"],
     )
-    _validate_color_accessor(
-        hex_layer,
-        "getLineColor",
-        component_name="deckgl_hex",
-        errors=config_errors,
-        allow_array=False,
-        require_color_continuous=True,
-        fallback_value=None,
-    )
-    
-    # Remove default getFillColor if user didn't specify it (to avoid wrong legend defaults)
     # Check the original config parameter to see if user provided getFillColor
     user_provided_fill_color = False
     if isinstance(original_config, dict):
