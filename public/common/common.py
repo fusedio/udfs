@@ -584,18 +584,24 @@ def gcs_credentials_from_secret(var='gcs_fused'):
     credentials = service_account.Credentials.from_service_account_info(gcs_secret)
     return credentials
 
-@fused.cache
-def simplify_gdf(gdf, pct=1, args='-o force -clean'):
-    #ref https://github.com/mbloch/mapshaper/blob/master/REFERENCE.md
-    import geopandas as gpd
+def simplify_gdf(gdf, pct=5, args="keep-shapes"):
+    import subprocess
     import uuid
-    import json
-    file_path = f'/mount/cache_data/temp/{uuid.uuid4()}.json'
-    print(file_path)
-    with open(file_path, "w") as f:
-        json.dump(gdf.__geo_interface__, f)
-    print(run_cmd(f'/mount/npm/bin/mapshaper {file_path} -simplify {pct}% {args} -o {file_path.replace(".json","2.json")}',communicate=True))
-    return gpd.read_file(file_path.replace(".json","2.json"))
+    import geopandas as gpd
+    import os
+    temp_file = f"/tmp/{uuid.uuid4()}.zip"
+    run_cmd=["bash", "-c", "/mount/tmp/bin/mapshaper -i - -simplify " + f"{pct}%" + f" {args} -o {temp_file}"]
+    run_cmd_npx=["npx", "mapshaper", "-i", "-", "-simplify", f"{pct}%", args, "-o", temp_file]
+    install_cmd = ["bash", "-c", "npm install -g --prefix /mount/tmp mapshaper"]
+    try:
+        if not os.path.exists("/mount/tmp/bin/mapshaper"):
+            subprocess.run(install_cmd, capture_output=True, check=False)
+        result = subprocess.run(run_cmd, input=gdf.to_json(), capture_output=True, text=True, check=True)
+    except Exception as e:
+        print(f'{e}\ninstalling using npx')
+        result = subprocess.run(run_cmd_npx, input=gdf.to_json(), capture_output=True, text=True)
+    gdf = gpd.read_file(temp_file)[['geometry', 'contour']]
+    return gdf
 
 def html_to_obj(html_str):
 
