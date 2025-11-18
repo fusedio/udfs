@@ -2757,9 +2757,9 @@ def duckdb_connect(verbose=False, home_directory='/tmp/duckdb/'):
         # """)
         con.sql(
         f"""SET home_directory='{home_directory}';
-        FORCE INSTALL 's3://fused-asset/misc/duckdb_extensions/h3.duckdb_extension.gz';
         FORCE INSTALL 's3://fused-asset/misc/duckdb_extensions/httpfs.duckdb_extension.gz';
         FORCE INSTALL 's3://fused-asset/misc/duckdb_extensions/spatial.duckdb_extension.gz';
+        FORCE INSTALL 's3://fused-asset/misc/duckdb_extensions/h3.duckdb_extension.gz';
         """)
     install(home_directory)
     con = duckdb.connect()
