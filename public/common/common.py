@@ -2745,21 +2745,19 @@ def duckdb_connect(verbose=False, home_directory='/tmp/duckdb/'):
     import os
     os.makedirs(home_directory, exist_ok=True)
     import duckdb 
+
+    fused.download('s3://fused-asset/misc/duckdb_extensions/httpfs.duckdb_extension.gz', "httpfs.duckdb_extension.gz")
+    fused.download('s3://fused-asset/misc/duckdb_extensions/spatial.duckdb_extension.gz', "spatial.duckdb_extension.gz")
+    fused.download('s3://fused-asset/misc/duckdb_extensions/h3.duckdb_extension.gz', "h3.duckdb_extension.gz")
+
     @fused.cache(cache_storage='local')
     def install(home_directory):
         con = duckdb.connect()
-        # con.sql(
-        # f"""SET home_directory='{home_directory}';
-        # INSTALL h3 FROM community;
-        # INSTALL 'httpfs';
-        
-        # INSTALL spatial;
-        # """)
         con.sql(
         f"""SET home_directory='{home_directory}';
-        FORCE INSTALL 's3://fused-asset/misc/duckdb_extensions/httpfs.duckdb_extension.gz';
-        FORCE INSTALL 's3://fused-asset/misc/duckdb_extensions/spatial.duckdb_extension.gz';
-        FORCE INSTALL 's3://fused-asset/misc/duckdb_extensions/h3.duckdb_extension.gz';
+        INSTALL '/mount/tmp/httpfs.duckdb_extension.gz';
+        INSTALL '/mount/tmp/spatial.duckdb_extension.gz';
+        INSTALL '/mount/tmp/h3.duckdb_extension.gz';
         """)
     install(home_directory)
     con = duckdb.connect()
