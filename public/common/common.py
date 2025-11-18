@@ -2748,12 +2748,18 @@ def duckdb_connect(verbose=False, home_directory='/tmp/duckdb/'):
     @fused.cache(cache_storage='local')
     def install(home_directory):
         con = duckdb.connect()
+        # con.sql(
+        # f"""SET home_directory='{home_directory}';
+        # INSTALL h3 FROM community;
+        # INSTALL 'httpfs';
+        
+        # INSTALL spatial;
+        # """)
         con.sql(
         f"""SET home_directory='{home_directory}';
-        INSTALL h3 FROM community;
-        INSTALL 'httpfs';
-        
-        INSTALL spatial;
+        INSTALL 's3://fused-asset/misc/duckdb_extensions/h3.duckdb_extension.gz';
+        INSTALL 's3://fused-asset/misc/duckdb_extensions/httpfs.duckdb_extension.gz';
+        INSTALL 's3://fused-asset/misc/duckdb_extensions/spatial.duckdb_extension.gz';
         """)
     install(home_directory)
     con = duckdb.connect()
