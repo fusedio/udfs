@@ -1301,7 +1301,7 @@ def get_tiff_info(tiff_path):
         )
     return gdf.to_crs(epsg=4326)
 
-@fused.cache(cache_folder_path="read_tiff")
+@fused.cache
 def read_tiff(
     bounds,
     input_tiff_path,
