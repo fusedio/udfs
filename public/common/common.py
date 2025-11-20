@@ -1,8 +1,6 @@
-
 @fused.udf
 def udf(bounds: fused.types.Bounds = [-122.4194, 37.7749, -122.4094, 37.7849]):
-    import fused
-    
+    version='2025.11.20.1'
     gdf = to_gdf(bounds)
     return gdf
 
@@ -1274,6 +1272,34 @@ def earth_session(cred):
     )
     return AWSSession(aws_session, requester_pays=False)
 
+def get_tiff_info(tiff_path):
+    import rasterio
+    from shapely.geometry import box
+    import geopandas as gpd
+    with rasterio.open(tiff_path) as src:
+        bounds = src.bounds
+        geometry = box(bounds.left, bounds.bottom, bounds.right, bounds.top)
+        metadata = {
+            'width': [src.width],
+            'height': [src.height],
+            'count': [src.count],  # Number of bands
+            'dtype': [str(src.dtypes[0])],  # Data type
+            'crs': [str(src.crs)],
+            'transform': [str(src.transform)],
+            'nodata': [src.nodata],
+            'driver': [src.driver],
+            'bounds_left': [bounds.left],
+            'bounds_bottom': [bounds.bottom],
+            'bounds_right': [bounds.right],
+            'bounds_top': [bounds.top]
+        }
+        
+        gdf = gpd.GeoDataFrame(
+            metadata,
+            geometry=[geometry],
+            crs=src.crs
+        )
+    return gdf.to_crs(epsg=4326)
 
 @fused.cache(cache_folder_path="read_tiff")
 def read_tiff(
