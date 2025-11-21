@@ -6,10 +6,9 @@ def udf(
     chip_len: int = 256,
     colored: bool = True,
 ):
-    """"""
     import numpy as np
     
-    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/4d1fe05/public/common/")
     tile = common.get_tiles(bounds, clip=True)
 
     input_tiff_path = f"s3://fused-asset/data/cdls/{year}_30m_cdls.tif"
@@ -21,7 +20,6 @@ def udf(
     else:
         print("no data")
         return None
-    # if crop_type:
     
     array_int = filter_crops(array_int, crop_type, verbose=False)
 
