@@ -1,6 +1,6 @@
 @fused.udf
 def udf(bounds: fused.types.Bounds = [-122.4194, 37.7749, -122.4094, 37.7849]):
-    version='2025.11.20.4'
+    version='2025.11.20.5'
     gdf = to_gdf(bounds)
     return gdf
 
@@ -1463,7 +1463,7 @@ def get_tiff_bounds(tiff_path):
         return bounds
 
 @fused.cache(cache_max_age='90d')
-def get_tiff_info(tiff_path):
+def get_tiff_info(tiff_path, include_stats=True):
     import rasterio
     from shapely.geometry import box
     import geopandas as gpd
@@ -1474,10 +1474,12 @@ def get_tiff_info(tiff_path):
             colormap = src.colormap(1)
         except ValueError:
             colormap = None
+        stats=None
         try:
-            stats = src.statistics(1)
+            if include_stats:
+                stats = src.statistics(1)
         except ValueError:
-            stats = None
+            pass
         
         metadata = {
             'width': [src.width],
@@ -1510,7 +1512,10 @@ def get_tiff_info(tiff_path):
 @fused.cache
 def read_tiff_safe(bounds, path, chip_len, max_pixel=10**8, colormap="plasma", reverse=False):
     bbox = to_gdf(bounds) 
-    tiff_meta = get_tiff_info(path)
+    if colormap:
+        tiff_meta = get_tiff_info(path, include_stats=True)
+    else:
+        tiff_meta = get_tiff_info(path, include_stats=False)  
     gdf_clip = tiff_meta.clip(bbox)
     clipped_area = gdf_clip.area[0] if len(gdf_clip) > 0 else 0
     if clipped_area == 0:
