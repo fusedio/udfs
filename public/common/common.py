@@ -1,6 +1,6 @@
 @fused.udf
 def udf(bounds: fused.types.Bounds = [-122.4194, 37.7749, -122.4094, 37.7849]):
-    version='2025.11.20.3'
+    version='2025.11.20.4'
     gdf = to_gdf(bounds)
     return gdf
 
@@ -1272,36 +1272,6 @@ def earth_session(cred):
     )
     return AWSSession(aws_session, requester_pays=False)
 
-def get_tiff_info(tiff_path):
-    import rasterio
-    from shapely.geometry import box
-    import geopandas as gpd
-    with rasterio.open(tiff_path) as src:
-        bounds = src.bounds
-        geometry = box(bounds.left, bounds.bottom, bounds.right, bounds.top)
-        metadata = {
-            'width': [src.width],
-            'height': [src.height],
-            'count': [src.count],  # Number of bands
-            'dtype': [str(src.dtypes[0])],  # Data type
-            'crs': [str(src.crs)],
-            'transform': [str(src.transform)],
-            'nodata': [src.nodata],
-            'driver': [src.driver],
-            'bounds_left': [bounds.left],
-            'bounds_bottom': [bounds.bottom],
-            'bounds_right': [bounds.right],
-            'bounds_top': [bounds.top]
-        }
-        
-        gdf = gpd.GeoDataFrame(
-            metadata,
-            geometry=[geometry],
-            crs=src.crs
-        )
-        gdf['area']=gdf.area
-    return gdf.to_crs(epsg=4326)
-
 @fused.cache
 def read_tiff(
     bounds,
@@ -1482,7 +1452,7 @@ def read_tiff(
         return destination_data
 
 
-def get_bounds_tiff(tiff_path):
+def get_tiff_bounds(tiff_path):
     import rasterio
     with rasterio.open(tiff_path) as src:
         bounds = src.bounds
@@ -1492,7 +1462,53 @@ def get_bounds_tiff(tiff_path):
         bounds = bounds.to_crs(4326)
         return bounds
 
-def read_tiff_safe(bounds, path, chip_len, max_pixel):
+@fused.cache(cache_max_age='90d')
+def get_tiff_info(tiff_path):
+    import rasterio
+    from shapely.geometry import box
+    import geopandas as gpd
+    with rasterio.open(tiff_path) as src:
+        bounds = src.bounds
+        geometry = box(bounds.left, bounds.bottom, bounds.right, bounds.top)
+        try:
+            colormap = src.colormap(1)
+        except ValueError:
+            colormap = None
+        try:
+            stats = src.statistics(1)
+        except ValueError:
+            stats = None
+        
+        metadata = {
+            'width': [src.width],
+            'height': [src.height],
+            'count': [src.count],  # Number of bands
+            'dtype': [str(src.dtypes[0])],  # Data type
+            'crs': [str(src.crs)],
+            'transform': [str(src.transform)],
+            'nodata': [src.nodata],
+            'driver': [src.driver],
+            'bounds_left': [bounds.left],
+            'bounds_bottom': [bounds.bottom],
+            'bounds_right': [bounds.right],
+            'bounds_top': [bounds.top],
+            'stats_min': [stats.min] if stats else [None],
+            'stats_max': [stats.max] if stats else [None],
+            'stats_mean': [stats.mean] if stats else [None],
+            'stats_std': [stats.std] if stats else [None],
+            'colormap': [colormap],
+        }
+        
+        gdf = gpd.GeoDataFrame(
+            metadata,
+            geometry=[geometry],
+            crs=src.crs
+        )
+        gdf['area']=gdf.area
+    return gdf.to_crs(epsg=4326)
+
+@fused.cache
+def read_tiff_safe(bounds, path, chip_len, max_pixel=10**8, colormap="plasma", reverse=False):
     bbox = to_gdf(bounds) 
     tiff_meta = get_tiff_info(path)
     gdf_clip = tiff_meta.clip(bbox)
@@ -1506,9 +1522,12 @@ def read_tiff_safe(bounds, path, chip_len, max_pixel):
         print(f'Zoom in more - pixels: {int(n_pixel):,} > max: {max_pixel:,}')
         return tiff_meta.clip(bbox)
     import numpy as np
-    arr, metadata = read_tiff(bbox, path, output_shape=(chip_len, chip_len), return_colormap=True, resampling='nearest')
-    if metadata.get('colormap'):
-        arr = np.array([metadata['colormap'][value] for value in arr.flat], dtype=np.uint8).reshape(arr.shape + (4,)).transpose(2, 0, 1)
+    arr = read_tiff(bbox, path, output_shape=(chip_len, chip_len), resampling='nearest')
+    if colormap:
+        if tiff_meta['colormap'][0]:
+            arr = np.array([tiff_meta.colormap[0][value] for value in arr.flat], dtype=np.uint8).reshape(arr.shape + (4,)).transpose(2, 0, 1)
+        elif tiff_meta['count'][0]==1 and tiff_meta['stats_max'][0] is not None:
+            arr = arr_to_plasma(arr, min_max=(tiff_meta['stats_min'][0], tiff_meta['stats_max'][0]), colormap=colormap, include_opacity=False, reverse=reverse)
     return arr
 
 def gdf_to_mask_arr(gdf, shape, first_n=None):
