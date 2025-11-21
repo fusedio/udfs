@@ -1,6 +1,6 @@
 @fused.udf
 def udf(bounds: fused.types.Bounds = [-122.4194, 37.7749, -122.4094, 37.7849]):
-    version='2025.11.20.6'
+    version='2025.11.21.1'
     gdf = to_gdf(bounds)
     return gdf
 
@@ -1466,41 +1466,43 @@ def get_tiff_bounds(tiff_path):
 @fused.cache(cache_max_age='90d')
 def get_tiff_info(tiff_path, include_stats=False):
     import rasterio
+    from rasterio.env import Env
     from shapely.geometry import box
     import geopandas as gpd
-    with rasterio.open(tiff_path) as src:
-        bounds = src.bounds
-        geometry = box(bounds.left, bounds.bottom, bounds.right, bounds.top)
-        try:
-            colormap = src.colormap(1)
-        except ValueError:
-            colormap = None
-        stats=None
-        try:
-            if include_stats:
-                stats = src.statistics(1)
-        except ValueError:
-            pass
-        
-        metadata = {
-            'width': [src.width],
-            'height': [src.height],
-            'count': [src.count],  # Number of bands
-            'dtype': [str(src.dtypes[0])],  # Data type
-            'crs': [str(src.crs)],
-            'transform': [str(src.transform)],
-            'nodata': [src.nodata],
-            'driver': [src.driver],
-            'bounds_left': [bounds.left],
-            'bounds_bottom': [bounds.bottom],
-            'bounds_right': [bounds.right],
-            'bounds_top': [bounds.top],
-            'stats_min': [stats.min] if stats else [None],
-            'stats_max': [stats.max] if stats else [None],
-            'stats_mean': [stats.mean] if stats else [None],
-            'stats_std': [stats.std] if stats else [None],
-            'colormap': [colormap],
-        }
+    with Env(GDAL_PAM_ENABLED='NO'):
+        with rasterio.open(tiff_path) as src:
+            bounds = src.bounds
+            geometry = box(bounds.left, bounds.bottom, bounds.right, bounds.top)
+            try:
+                colormap = src.colormap(1)
+            except ValueError:
+                colormap = None
+            stats=None
+            try:
+                if include_stats:
+                    stats = src.statistics(1)
+            except ValueError:
+                pass
+            
+            metadata = {
+                'width': [src.width],
+                'height': [src.height],
+                'count': [src.count],  # Number of bands
+                'dtype': [str(src.dtypes[0])],  # Data type
+                'crs': [str(src.crs)],
+                'transform': [str(src.transform)],
+                'nodata': [src.nodata],
+                'driver': [src.driver],
+                'bounds_left': [bounds.left],
+                'bounds_bottom': [bounds.bottom],
+                'bounds_right': [bounds.right],
+                'bounds_top': [bounds.top],
+                'stats_min': [stats.min] if stats else [None],
+                'stats_max': [stats.max] if stats else [None],
+                'stats_mean': [stats.mean] if stats else [None],
+                'stats_std': [stats.std] if stats else [None],
+                'colormap': [colormap],
+            }
         
         gdf = gpd.GeoDataFrame(
             metadata,
