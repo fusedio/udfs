@@ -1,6 +1,6 @@
 @fused.udf
 def udf(bounds: fused.types.Bounds = [-122.4194, 37.7749, -122.4094, 37.7849]):
-    version='2025.11.20.1'
+    version='2025.11.20.3'
     gdf = to_gdf(bounds)
     return gdf
 
@@ -1299,6 +1299,7 @@ def get_tiff_info(tiff_path):
             geometry=[geometry],
             crs=src.crs
         )
+        gdf['area']=gdf.area
     return gdf.to_crs(epsg=4326)
 
 @fused.cache
@@ -1405,7 +1406,10 @@ def read_tiff(
                     mask = np.isin(source_data, filter_list, invert=True)
                     source_data[mask] = 0
                 if return_colormap:
-                    colormap = src.colormap(1)
+                    try:
+                        colormap = src.colormap(1)
+                    except ValueError:
+                        colormap = None
         except rasterio.RasterioIOError as err:
             print(f"Caught RasterioIOError {err=}, {type(err)=}")
             return  # Return without data
@@ -1460,7 +1464,7 @@ def read_tiff(
     if return_colormap or return_transform or return_crs or return_bounds or return_meta:
         ### TODO: NOT backward comp -- fix colormap / transform 
         metadata={}
-        if return_colormap:
+        if return_colormap and colormap is not None:
             # todo: only set transparency to zero
             colormap[0] = [0, 0, 0, 0]
             metadata['colormap']=colormap
@@ -1487,6 +1491,25 @@ def get_bounds_tiff(tiff_path):
         bounds = gpd.GeoDataFrame({}, geometry=[shapely.box(*bounds)],crs=src.crs)
         bounds = bounds.to_crs(4326)
         return bounds
+
+def read_tiff_safe(bounds, path, chip_len, max_pixel):
+    bbox = to_gdf(bounds) 
+    tiff_meta = get_tiff_info(path)
+    gdf_clip = tiff_meta.clip(bbox)
+    clipped_area = gdf_clip.area[0] if len(gdf_clip) > 0 else 0
+    if clipped_area == 0:
+        print('Out of bounds - pan or zoom to view covered area.')
+        return tiff_meta
+    
+    n_pixel = tiff_meta.width[0] * tiff_meta.height[0] * clipped_area / tiff_meta.area[0]
+    if n_pixel > max_pixel: 
+        print(f'Zoom in more - pixels: {int(n_pixel):,} > max: {max_pixel:,}')
+        return tiff_meta.clip(bbox)
+    import numpy as np
+    arr, metadata = read_tiff(bbox, path, output_shape=(chip_len, chip_len), return_colormap=True, resampling='nearest')
+    if metadata.get('colormap'):
+        arr = np.array([metadata['colormap'][value] for value in arr.flat], dtype=np.uint8).reshape(arr.shape + (4,)).transpose(2, 0, 1)
+    return arr
 
 def gdf_to_mask_arr(gdf, shape, first_n=None):
     from rasterio.features import geometry_mask
