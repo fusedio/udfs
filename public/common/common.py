@@ -1,6 +1,6 @@
 @fused.udf
 def udf(bounds: fused.types.Bounds = [-122.4194, 37.7749, -122.4094, 37.7849]):
-    version='2025.11.20.5'
+    version='2025.11.20.6'
     gdf = to_gdf(bounds)
     return gdf
 
@@ -1351,9 +1351,9 @@ def read_tiff(
                 # # transform_bounds = rasterio.warp.transform_bounds(3857, src_crs, *bounds["geometry"].bounds.iloc[0])
                 # window = src.window(*bounds.to_crs(src_crs).total_bounds)
                 # original_window = src.window(*bounds.to_crs(src_crs).total_bounds)
-                # gridded_window = rasterio.windows.round_window_to_full_blocks(
-                #     original_window, [(1, 1)]
-                # )
+                window = rasterio.windows.round_window_to_full_blocks(
+                    window, [(1, 1)]
+                )
                 # window = gridded_window  # Expand window to nearest full pixels
                 source_data = src.read(
                     window=window,
@@ -1452,6 +1452,7 @@ def read_tiff(
         return destination_data
 
 
+
 def get_tiff_bounds(tiff_path):
     import rasterio
     with rasterio.open(tiff_path) as src:
@@ -1463,7 +1464,7 @@ def get_tiff_bounds(tiff_path):
         return bounds
 
 @fused.cache(cache_max_age='90d')
-def get_tiff_info(tiff_path, include_stats=True):
+def get_tiff_info(tiff_path, include_stats=False):
     import rasterio
     from shapely.geometry import box
     import geopandas as gpd
