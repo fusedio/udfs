@@ -1411,7 +1411,7 @@ def read_tiff(
                 resampling=resampling,
             )
 
-            destination_mask = np.zeros(dst_shape, dtype="int8")
+            # destination_mask = np.zeros(dst_shape, dtype="int8")
             # reproject(
             #     source_data.mask.astype("uint8"),
             #     destination_mask,
@@ -1422,7 +1422,7 @@ def read_tiff(
             #     resampling=Resampling.nearest,
             # )
             destination_data = np.ma.masked_array(
-                destination_data, destination_mask == nodata_value
+                destination_data, destination_data == nodata_value
             )
         else:
             dst_transform = src_transform
