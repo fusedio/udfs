@@ -1,10 +1,7 @@
 @fused.udf
 def udf(path: str):
-    import duckdb
-
-    con = duckdb.connect()
-
-    con.sql("install 'httpfs'; load 'httpfs';")
-    df = con.sql(f"SELECT * FROM read_parquet('{path}')").df()
+    common = fused.load("https://github.com/fusedio/udfs/tree/4dde28e/public/common/")
+    con = common.duckdb_connect()
+    df = con.sql(f"SELECT * FROM read_parquet('{path}') limit 10000").df()
     print(df.T) # transpose the dataframe to make data schema more visible to AI 
     return df
