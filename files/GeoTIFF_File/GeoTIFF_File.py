@@ -1,5 +1,7 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds, path: str, *, chip_len=256):
-    common = fused.load("https://github.com/fusedio/udfs/tree/4d1fe05/public/common/")    
-    arr = common.read_tiff_safe(bounds, path, chip_len, max_pixel=10**8, colormap='plasma')
+def udf(path: str, *,
+    bounds: fused.types.Bounds = [-180, -90, 180, 90],
+    chip_len:int=256):
+    common = fused.load("https://github.com/fusedio/udfs/tree/2a3c93f/public/common/")
+    arr = common.read_tiff_safe(bounds, path, chip_len, max_pixel=10**8, colormap=None) #'plasma')
     return arr
