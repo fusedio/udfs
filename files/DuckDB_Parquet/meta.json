@@ -14,44 +14,36 @@
           "metadata": {
             "fused:description": "Read a Parquet or Geoparquet file.\n\n<!-- fused:previewExt -->\nExtensions: `parquet` `pq` `gpq` `geoparquet`",
             "fused:vizConfig": {
-              "tileLayer": {
-                "@@type": "TileLayer",
-                "minZoom": 0,
-                "maxZoom": 19,
-                "tileSize": 256,
-                "pickable": true
-              },
-              "rasterLayer": {
-                "@@type": "BitmapLayer",
-                "pickable": true
-              },
-              "vectorLayer": {
-                "@@type": "GeoJsonLayer",
-                "stroked": true,
-                "filled": false,
-                "pickable": true,
-                "lineWidthMinPixels": 1,
-                "pointRadiusMinPixels": 1,
-                "getLineColor": {
-                  "@@function": "colorContinuous",
-                  "attr": "value",
-                  "domain": [
-                    0,
-                    10
-                  ],
-                  "colors": "Teal",
-                  "nullColor": [
-                    184,
-                    184,
-                    184
-                  ]
+              {"vectorLayer": {
+                  "@@type": "GeoJsonLayer",
+                  "stroked": true,
+                  "filled": false,
+                  "pickable": true,
+                  "lineWidthMinPixels": 1,
+                  "pointRadiusMinPixels": 1,
+                  "getLineColor": 150,
+                  "getFillColor": {
+                    "@@function": "hasProp",
+                    "property": "value",
+                    "present": "@@=properties.value",
+                    "absent": 1
+                  }
                 },
-                "getFillColor": [
-                  208,
-                  208,
-                  208,
-                  40
-                ]
+                "hexLayer": {
+                  "@@type": "H3HexagonLayer",
+                  "stroked": true,
+                  "filled": true,
+                  "pickable": true,
+                  "extruded": false,
+                  "opacity": 1,
+                  "coverage": 0.9,
+                  "lineWidthMinPixels": 1,
+                  "getHexagon": "@@=properties.hex",
+                  "getLineColor": 150,
+                  "getFillColor": "@@=[100*properties.bsl_count,50*properties.bsl_count, 10*properties.bsl_count]",
+                  "getElevation": "@@=properties.value",
+                  "elevationScale": 10
+                }
               }
             },
             "fused:udfType": "auto",
