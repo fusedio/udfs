@@ -1346,7 +1346,7 @@ def read_tiff(
                             window.height / (output_shape[-2]*2),
                             window.width / (output_shape[-1]*2)
                         )
-                        factor = int(new_factor // factor) * factor
+                        factor = np.ceil(new_factor / factor) * factor
 
                 # # transform_bounds = rasterio.warp.transform_bounds(3857, src_crs, *bounds["geometry"].bounds.iloc[0])
                 # window = src.window(*bounds.to_crs(src_crs).total_bounds)
