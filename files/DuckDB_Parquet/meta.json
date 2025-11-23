@@ -40,7 +40,7 @@
                   "lineWidthMinPixels": 1,
                   "getHexagon": "@@=properties.hex",
                   "getLineColor": 150,
-                  "getFillColor": "@@=[100*properties.bsl_count,50*properties.bsl_count, 10*properties.bsl_count]",
+                  "getFillColor": "@@=[100*properties.value,50*properties.value, 10*properties.value]",
                   "getElevation": "@@=properties.value",
                   "elevationScale": 10
                 }
