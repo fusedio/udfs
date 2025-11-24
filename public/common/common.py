@@ -1531,8 +1531,8 @@ def read_tiff_safe(bounds, path, chip_len, max_pixel=10**8, colormap="plasma", r
         return tiff_meta.clip(bbox)
     import numpy as np
     arr = read_tiff(bbox, path, output_shape=(chip_len, chip_len), resampling='nearest')
-    arr =  np.asarray(arr)
     if colormap:
+        arr =  np.asarray(arr)
         if tiff_meta['colormap'][0]:
             arr = np.array([tiff_meta.colormap[0][value] for value in arr.flat], dtype=np.uint8).reshape(arr.shape + (4,)).transpose(2, 0, 1)
         elif tiff_meta['count'][0]==1 and tiff_meta['stats_max'][0] is not None:
