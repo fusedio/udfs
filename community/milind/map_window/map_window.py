@@ -60,7 +60,7 @@ def udf(
   <script src="https://unpkg.com/@deck.gl/carto@9.1.3/dist.min.js"></script>
 
   <script type="module">
-    import * as duckdb_wasm from "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.1-dev132.0/+esm";
+    import * as duckdb_wasm from "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.30.0/+esm";
     window.__DUCKDB_WASM = duckdb_wasm;
   </script>
   
