@@ -37,9 +37,9 @@ def udf(
       <meta charset="utf-8" />
       <title>""" + safe_title + """</title>
       <script src="https://d3js.org/d3.v7.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.1-dev132.0/dist/duckdb-wasm.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.30.0/dist/duckdb-wasm.js"></script>
       <script type="module">
-          import * as duckdb_wasm from "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.1-dev132.0/+esm";
+          import * as duckdb_wasm from "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.30.0/+esm";
           window.__DUCKDB_WASM = duckdb_wasm;
       </script>
       <style>
