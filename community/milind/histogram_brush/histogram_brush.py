@@ -11,7 +11,7 @@ def udf(
   sync_channel: str = "hist"
 ):
   common = fused.load("https://github.com/fusedio/udfs/tree/351515e/public/common/")
-  _ = fused.load("join_era5_cdl_elevation")
+
   themes = {
       'workbench': {
           'background': '#1a1a1a',
