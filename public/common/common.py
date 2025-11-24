@@ -1682,6 +1682,9 @@ def arr_to_plasma(
 
     data = data.astype(float)
     if min_max:
+        if min_max[0]==min_max[1]:
+            print(f'min & max are equal: {min_max=}->{(min_max[0]-1,min_max[1])}')
+            min_max=(min_max[0]-1,min_max[1])
         norm_data = (data - min_max[0]) / (min_max[1] - min_max[0])
         norm_data = np.clip(norm_data, 0, 1)
     else:
