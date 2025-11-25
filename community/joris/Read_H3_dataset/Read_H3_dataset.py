@@ -9,7 +9,7 @@ def udf(
     res: int = None,
 ):
     # Example using USDA's Crop Data Layer (CDL) dataset for 2024
-    path = "s3://fused-users/fused/joris/ingest_tiff/cdls_30m/year=2024-0/"
+    path = "s3://fused-asset/hex/cdls_v8/year=2024/"
 
     df = read_h3_dataset(path, bounds, res=res, value=value)
     print(df)
@@ -173,8 +173,8 @@ def read_dataset(path, bounds, res, value, base_res=7):
         con = common.duckdb_connect()
         qr = f"""
             SELECT * EXCLUDE(hex), h3_cell_to_parent(hex, {res}) AS hex FROM df
-            WHERE h3_cell_to_lat(hex) BETWEEN {bounds[1]} AND {bounds[3]}
-                AND h3_cell_to_lng(hex) BETWEEN {bounds[0]} AND {bounds[2]}
+            WHERE h3_cell_to_lat(h3_cell_to_parent(hex, {res})) BETWEEN {bounds[1]} AND {bounds[3]}
+              AND h3_cell_to_lng(h3_cell_to_parent(hex, {res})) BETWEEN {bounds[0]} AND {bounds[2]}
         """
         if "cnt" in df.columns:
             qr = f"""
