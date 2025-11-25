@@ -10,51 +10,6 @@ from difflib import get_close_matches
 from jinja2 import Template
 from copy import deepcopy
 
-DEFAULT_CONFIG = {
-    # visual
-    "get_fill_color": [0, 144, 255, 200],  # can be array OR JS expr string OR column name
-    "get_radius": 200,
-    "opacity": 1.0,
-    "pickable": True,
-    # map camera
-    "zoom": 11,
-    "pitch": 0,
-    "bearing": 0,
-    # layer/tooltip
-    "tooltip": None,
-    "basemap": "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
-}
-
-DEFAULT_H3_CONFIG = {
-        "hex_field": "hex",
-        "fill_color": "[0, 144, 255, 180]",
-        "pickable": True,
-        "stroked": True,
-        "filled": True,
-        "extruded": False,
-        "line_color": [255, 255, 255],
-        "line_width_min_pixels": 0.5,
-        "center_lat": None,
-        "center_lon": None,
-        "zoom": 14,
-        "bearing": 0,
-        "pitch": 0,
-        "tooltip": "{__hex__}"
-    }
-
-DEFAULT_POLYGON_CONFIG = {
-    "get_fill_color": [0, 144, 255, 120],
-    "get_line_color": [255, 255, 255],
-    "line_width_min_pixels": 1,
-    "pickable": True,
-    "stroked": True,
-    "filled": True,
-    "zoom": 11,
-    "pitch": 0,
-    "bearing": 0,
-    "tooltip": "Polygon {id}",
-    "basemap": "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
-}
 DEFAULT_DECK_HEX_CONFIG = {
     "initialViewState": {
         "longitude": None,
@@ -77,6 +32,27 @@ DEFAULT_DECK_HEX_CONFIG = {
       "colors": "Magenta"
     }
   } 
+}
+
+DEFAULT_DECK_CONFIG = {
+    "initialViewState": {
+        "zoom": 12
+    },
+    "vectorLayer": {
+        "@@type": "GeoJsonLayer",
+        "pointRadiusMinPixels": 10,
+        "pickable": True,
+        "lineWidthMinPixels": 0,  # Default: no lines unless getLineColor is specified
+        "getFillColor": {
+            "@@function": "colorContinuous",
+            "attr": "house_age",
+            "colors": "TealGrn",
+            "domain": [0, 50],
+            "steps": 7,
+            "nullColor": [200, 200, 200, 180]
+        },
+        "tooltipAttrs": ["house_age", "mrt_distance", "price"]
+    }
 }
 
 KNOWN_CARTOCOLOR_PALETTES = {
@@ -146,494 +122,39 @@ VALID_HEX_LAYER_PROPS = {
 
 @fused.udf(cache_max_age=0)
 def udf(
-    gdf = {
-        "type": "Feature",
-        "properties": {"name": "world"},
-        "geometry": {
-            "type": "Point",
-            "coordinates": [-73.94391387988864, 40.8944276435547]
-        }
-    },
-    config: typing.Union[dict, str, None] = None  # changed UnionType to typing.Union
+    config: typing.Union[dict, str, None] = None
 ):
-    return pydeck_point(gdf, config)
-
-
-def _compute_center_from_points(df):
-    if len(df) == 0:
-        return None, None
-    return float(df["latitude"].mean()), float(df["longitude"].mean())
-
-
-def _compute_center_from_hex(df):
-    if len(df) == 0:
-        return None, None
-    if "latitude" in df.columns and "longitude" in df.columns:
-        return float(df["latitude"].mean()), float(df["longitude"].mean())
-    if "__hex__" in df.columns:
-        import h3
-        centers = df["__hex__"].dropna().map(lambda h: h3.cell_to_latlng(h))
-        if len(centers) == 0:
-            return None, None
-        lats = [lat for lat, lon in centers]
-        lons = [lon for lat, lon in centers]
-        return float(sum(lats) / len(lats)), float(sum(lons) / len(lons))
-    return None, None
-
-
-def _compute_center_from_polygons(df):
-    if len(df) == 0:
-        return None, None
-    centroid = df["geometry"].unary_union.centroid
-    return float(centroid.y), float(centroid.x)
-
-
-def pydeck_point(gdf, config=None):
-    """
-    Pydeck based maps. Use this to render HTML interactive maps from data
-
-    Takes a config dict based on:
-    'config = {
-        "fill_color": '[255, 100 + cnt, 0]' # dynamically sets the colors of the fill based on the `cnt` values col
-    '
-    """
-    if config is None or config == "":
-        cfg = DEFAULT_CONFIG.copy()
-    elif isinstance(config, str):
-        cfg = DEFAULT_CONFIG.copy()
-        cfg.update(json.loads(config))
-    else:
-        cfg = DEFAULT_CONFIG.copy()
-        cfg.update(config)
-
-    if isinstance(gdf, dict):
-        gdf = gpd.GeoDataFrame.from_features([gdf])
-
-    df = pd.DataFrame(gdf.drop(columns="geometry"))
-    df["longitude"] = gdf.geometry.x
-    df["latitude"] = gdf.geometry.y
-
-    auto_lat, auto_lon = _compute_center_from_points(df)
-
-    center_lat = cfg.get("center_lat", auto_lat)
-    center_lon = cfg.get("center_lon", auto_lon)
-
-    if center_lat is None or center_lon is None:
-        raise ValueError("No valid coordinates to center map (no points in gdf)")
-
-    tooltip_template = cfg.get("tooltip")
-    if not tooltip_template:
-        cols = [c for c in df.columns if c not in ["longitude", "latitude"]]
-        if len(cols) == 0:
-            tooltip_template = "lon: {longitude}\nlat: {latitude}"
-        else:
-            tooltip_template = "\n".join([f"{c}: {{{c}}}" for c in cols])
-
-    fill_accessor = cfg.get("get_fill_color", DEFAULT_CONFIG["get_fill_color"])
-    radius_accessor = cfg.get("get_radius", DEFAULT_CONFIG["get_radius"])
-
-    layer = pdk.Layer(
-        "ScatterplotLayer",
-        data=df,
-        get_position=["longitude", "latitude"],
-        get_fill_color=fill_accessor,
-        get_radius=radius_accessor,
-        opacity=cfg.get("opacity", DEFAULT_CONFIG["opacity"]),
-        pickable=cfg.get("pickable", DEFAULT_CONFIG["pickable"]),
-    )
-
-    view_state = pdk.ViewState(
-        latitude=center_lat,
-        longitude=center_lon,
-        zoom=cfg.get("zoom", DEFAULT_CONFIG["zoom"]),
-        pitch=cfg.get("pitch", DEFAULT_CONFIG["pitch"]),
-        bearing=cfg.get("bearing", DEFAULT_CONFIG["bearing"]),
-    )
-
-    deck = pdk.Deck(
-        layers=[layer],
-        initial_view_state=view_state,
-        map_style=cfg.get("basemap", DEFAULT_CONFIG["basemap"]),
-        tooltip={"text": tooltip_template},
-    )
-
-    return deck.to_html(as_string=True)
-
-
-@fused.udf(cache_max_age=0)
-def pydeck_hex(df=None, config: typing.Union[dict, str, None] = None):  # changed UnionType
-    """
-    Pydeck based maps. Use this to render HTML interactive maps from data
-
-    Takes a config dict based on:
-    'config = {
-        "hex_field": "hex",
-        "fill_color": '[255, 100 + cnt, 0]' # dynamically sets the colors of the fill based on the `cnt` values col
-    ''
-    """
+    """Example UDF using deckgl_map with DEFAULT_DECK_CONFIG."""
+    import geopandas as gpd
     import pandas as pd
-    import pydeck as pdk
-    import h3
-    import json
-
-    if config is None or config == "":
-        config = DEFAULT_H3_CONFIG
-    elif isinstance(config, str):
-        config = json.loads(config)
-
-    if df is None:
-        H3_HEX_DATA = "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/sf.h3cells.json"
-        df = pd.read_json(H3_HEX_DATA)
-
-    hex_field = config.get("hex_field", DEFAULT_H3_CONFIG["hex_field"])
-    if hex_field not in df.columns:
-        raise ValueError(f"DataFrame must have a '{hex_field}' column")
-
-    df = df.copy()
-    df["__hex__"] = df[hex_field]
-
-    if not pd.api.types.is_string_dtype(df["__hex__"]):
-        df["__hex__"] = df["__hex__"].apply(
-            lambda h: h3.int_to_str(int(h)) if pd.notna(h) else None
-        )
-
-    auto_lat, auto_lon = _compute_center_from_hex(df)
-    center_lat = config.get("center_lat", None)
-    center_lon = config.get("center_lon", None)
-    if center_lat is None:
-        center_lat = auto_lat
-    if center_lon is None:
-        center_lon = auto_lon
-
-    layer = pdk.Layer(
-        "H3HexagonLayer",
-        df,
-        pickable=config.get("pickable", DEFAULT_H3_CONFIG["pickable"]),
-        stroked=config.get("stroked", DEFAULT_H3_CONFIG["stroked"]),
-        filled=config.get("filled", DEFAULT_H3_CONFIG["filled"]),
-        extruded=config.get("extruded", DEFAULT_H3_CONFIG["extruded"]),
-        get_hexagon="__hex__",
-        get_fill_color=config.get("fill_color", DEFAULT_H3_CONFIG["fill_color"]),
-        get_line_color=config.get("line_color", DEFAULT_H3_CONFIG["line_color"]),
-        line_width_min_pixels=config.get(
-            "line_width_min_pixels",
-            DEFAULT_H3_CONFIG["line_width_min_pixels"]
-        ),
-    )
-
-    view_state = pdk.ViewState(
-        latitude=center_lat,
-        longitude=center_lon,
-        zoom=config.get("zoom", DEFAULT_H3_CONFIG["zoom"]),
-        bearing=config.get("bearing", DEFAULT_H3_CONFIG["bearing"]),
-        pitch=config.get("pitch", DEFAULT_H3_CONFIG["pitch"]),
-    )
-
-    deck = pdk.Deck(
-        layers=[layer],
-        initial_view_state=view_state,
-        tooltip={"text": config.get("tooltip", DEFAULT_H3_CONFIG["tooltip"])},
-    )
-
-    return deck.to_html(as_string=True)
+    from shapely.geometry import Point
+    import random
+    
+    # Create sample point data around New York City
+    # Fields match DEFAULT_DECK_CONFIG expectations
+    data = []
+    base_lat, base_lng = 40.7128, -74.0060
+    
+    for i in range(50):
+        lat = base_lat + (i % 10 - 5) * 0.01
+        lng = base_lng + (i // 10 - 2) * 0.01
+        data.append({
+            'geometry': Point(lng, lat),
+            'house_age': (i % 50),  # 0-49 years, matches domain [0, 50]
+            'mrt_distance': random.randint(100, 5000),  # meters
+            'price': random.randint(200000, 800000),  # dollars
+            'index': i
+        })
+    
+    gdf = gpd.GeoDataFrame(data, crs='EPSG:4326')
+    
+    # Use DEFAULT_DECK_CONFIG if none provided (for points/vectors)
+    if config is None:
+        config = DEFAULT_DECK_CONFIG
+    
+    return deckgl_map(gdf, config)
 
 
-def pydeck_polygon(df, config=None):
-    """
-    Pydeck based maps. Use this to render HTML interactive maps from data
-
-    Takes a config dict based on:
-    'config = {
-        "fill_color": '[255, 100 + cnt, 0]' # dynamically sets the colors of the fill based on the `cnt` values col
-    '
-    """
-    if config is None or config == "":
-        cfg = DEFAULT_POLYGON_CONFIG.copy()
-    elif isinstance(config, str):
-        cfg = DEFAULT_POLYGON_CONFIG.copy()
-        cfg.update(json.loads(config))
-    else:
-        cfg = DEFAULT_POLYGON_CONFIG.copy()
-        cfg.update(config)
-
-    if "geometry" not in df.columns or len(df) == 0:
-        raise ValueError("GeoDataFrame must include a non-empty 'geometry' column")
-
-    auto_lat, auto_lon = _compute_center_from_polygons(df)
-    center_lat = cfg.get("center_lat", auto_lat)
-    center_lon = cfg.get("center_lon", auto_lon)
-    if center_lat is None or center_lon is None:
-        center_lat, center_lon = 0.0, 0.0
-
-    df = df.copy()
-    df["__polygon__"] = df["geometry"].apply(lambda geom: mapping(geom)["coordinates"])
-
-    tooltip_template = cfg.get("tooltip", DEFAULT_POLYGON_CONFIG["tooltip"])
-    if not tooltip_template:
-        cols = [c for c in df.columns if c not in ["geometry", "__polygon__"]]
-        tooltip_template = "\n".join([f"{c}: {{{c}}}" for c in cols]) if cols else "polygon"
-
-    layer = pdk.Layer(
-        "PolygonLayer",
-        df,
-        get_polygon="__polygon__",
-        get_fill_color=cfg.get("get_fill_color", DEFAULT_POLYGON_CONFIG["get_fill_color"]),
-        get_line_color=cfg.get("get_line_color", DEFAULT_POLYGON_CONFIG["get_line_color"]),
-        line_width_min_pixels=cfg.get("line_width_min_pixels", DEFAULT_POLYGON_CONFIG["line_width_min_pixels"]),
-        stroked=cfg.get("stroked", DEFAULT_POLYGON_CONFIG["stroked"]),
-        filled=cfg.get("filled", DEFAULT_POLYGON_CONFIG["filled"]),
-        pickable=cfg.get("pickable", DEFAULT_POLYGON_CONFIG["pickable"]),
-    )
-
-    view_state = pdk.ViewState(
-        latitude=center_lat,
-        longitude=center_lon,
-        zoom=cfg.get("zoom", DEFAULT_POLYGON_CONFIG["zoom"]),
-        pitch=cfg.get("pitch", DEFAULT_POLYGON_CONFIG["pitch"]),
-        bearing=cfg.get("bearing", DEFAULT_POLYGON_CONFIG["bearing"]),
-    )
-
-    deck = pdk.Deck(
-        layers=[layer],
-        initial_view_state=view_state,
-        map_style=cfg.get("basemap", DEFAULT_POLYGON_CONFIG["basemap"]),
-        tooltip={"text": tooltip_template},
-    )
-
-    return deck.to_html(as_string=True)
-
-
-def folium_raster(data, bounds, opacity=0.7, tiles="CartoDB dark_matter"):
-    """
-    Minimal Folium raster overlay utility.
-    Works with rasterio arrays (H, W) or (bands, H, W).
-    """
-    west, south, east, north = bounds
-
-    # shape handling (no normalization)
-    if data.ndim == 2:
-        rgb = np.stack([data, data, data], axis=-1)
-    elif data.ndim == 3:
-        if data.shape[0] >= 3:
-            rgb = np.transpose(data[:3], (1, 2, 0))
-        elif data.shape[0] == 1:
-            rgb = np.stack([data[0], data[0], data[0]], axis=-1)
-        else:
-            h, w = data.shape[1], data.shape[2]
-            rgb = np.zeros((h, w, 3), dtype=np.uint8)
-            for i in range(data.shape[0]):
-                rgb[:, :, i] = data[i]
-    else:
-        raise ValueError(f"Unsupported raster shape: {data.shape}")
-
-    # clip just to be safe
-    rgb = np.clip(rgb, 0, 255).astype(np.uint8)
-
-    # center map
-    center_lat = (south + north) / 2
-    center_lon = (west + east) / 2
-
-    m = folium.Map(location=[center_lat, center_lon], zoom_start=9, tiles=tiles)
-
-    folium.raster_layers.ImageOverlay(
-        image=rgb,
-        bounds=[[south, west], [north, east]],
-        opacity=opacity,
-    ).add_to(m)
-
-    return m.get_root().render()
-
-DEFAULT_DECK_CONFIG = {
-    "initialViewState": {
-        "zoom": 12
-    },
-    "vectorLayer": {
-        "@@type": "GeoJsonLayer",
-        "pointRadiusMinPixels": 10,
-        "pickable": True,
-        "lineWidthMinPixels": 0,  # Default: no lines unless getLineColor is specified
-        "getFillColor": {
-            "@@function": "colorContinuous",
-            "attr": "house_age",
-            "colors": "TealGrn",
-            "domain": [0, 50],
-            "steps": 7,
-            "nullColor": [200, 200, 200, 180]
-        },
-        "tooltipAttrs": ["house_age", "mrt_distance", "price"]
-    }
-}
-
-
-def _deep_merge_dict(base: dict, extra: dict) -> dict:
-    for key, value in extra.items():
-        if isinstance(value, dict) and isinstance(base.get(key), dict):
-            _deep_merge_dict(base[key], value)
-        else:
-            base[key] = value
-    return base
-
-
-def _load_deckgl_config(raw_config, default_config, component_name: str, errors: list):
-    merged = deepcopy(default_config)
-    if raw_config in (None, ""):
-        return merged
-
-    if isinstance(raw_config, str):
-        try:
-            user_config = json.loads(raw_config)
-        except json.JSONDecodeError as exc:
-            errors.append(f"[{component_name}] Failed to parse config JSON: {exc}")
-            return merged
-    elif isinstance(raw_config, dict):
-        user_config = raw_config
-    else:
-        errors.append(f"[{component_name}] Config must be a dict or JSON string. Using defaults.")
-        return merged
-
-    if not isinstance(user_config, dict):
-        errors.append(f"[{component_name}] Config must be a dict. Using defaults.")
-        return merged
-
-    try:
-        merged = _deep_merge_dict(merged, deepcopy(user_config))
-    except Exception as exc:
-        errors.append(f"[{component_name}] Failed to merge config overrides: {exc}. Using defaults.")
-        merged = deepcopy(default_config)
-    return merged
-
-
-def _validate_initial_view_state(config: dict, default_view_state: dict, component_name: str, errors: list):
-    view_state = config.get("initialViewState")
-    if not isinstance(view_state, dict):
-        errors.append(f"[{component_name}] initialViewState must be an object. Using defaults.")
-        config["initialViewState"] = deepcopy(default_view_state)
-        view_state = config["initialViewState"]
-    else:
-        zoom = view_state.get("zoom")
-        if zoom is not None and not isinstance(zoom, (int, float)):
-            errors.append(f"[{component_name}] initialViewState.zoom must be numeric. Using default zoom.")
-            view_state["zoom"] = default_view_state.get("zoom")
-    return view_state
-
-
-def _ensure_layer_config(config: dict, layer_key: str, default_layer: dict, component_name: str, errors: list):
-    layer = config.get(layer_key)
-    if not isinstance(layer, dict):
-        errors.append(f"[{component_name}] {layer_key} must be an object. Using defaults.")
-        config[layer_key] = deepcopy(default_layer)
-        layer = config[layer_key]
-    return layer
-
-
-def _validate_palette_name(color_name: str, component_name: str, field_path: str, errors: list):
-    if not color_name:
-        return
-    palette = color_name.strip()
-    if palette and palette not in KNOWN_CARTOCOLOR_PALETTES:
-        suggestion = get_close_matches(palette, list(KNOWN_CARTOCOLOR_PALETTES), n=1, cutoff=0.7)
-        if suggestion:
-            errors.append(f"[{component_name}] {field_path} '{palette}' is not a known CartoColor palette. Did you mean '{suggestion[0]}'?")
-        else:
-            valid_list = ", ".join(sorted(KNOWN_CARTOCOLOR_PALETTES))
-            errors.append(f"[{component_name}] {field_path} '{palette}' is not a recognized CartoColor palette. Valid palettes include: {valid_list}.")
-
-
-def _validate_color_accessor(
-    layer: dict,
-    field_name: str,
-    *,
-    component_name: str,
-    errors: list,
-    allow_array: bool,
-    require_color_continuous: bool,
-    fallback_value=None,
-):
-    value = layer.get(field_name)
-    if value is None:
-        return
-
-    def _reset_to_fallback():
-        if fallback_value is None:
-            layer.pop(field_name, None)
-        else:
-            layer[field_name] = deepcopy(fallback_value)
-
-    if isinstance(value, (list, tuple)):
-        if not allow_array:
-            errors.append(f"[{component_name}] {field_name} cannot be an array. Removing value.")
-            _reset_to_fallback()
-            return
-        if len(value) not in (3, 4) or not all(isinstance(v, (int, float)) for v in value):
-            errors.append(f"[{component_name}] {field_name} array must contain 3 or 4 numeric values. Removing value.")
-            _reset_to_fallback()
-        return
-
-    if isinstance(value, dict):
-        fn = value.get("@@function")
-        if require_color_continuous and fn != "colorContinuous":
-            errors.append(f"[{component_name}] {field_name}.@@function must be 'colorContinuous'.")
-            _reset_to_fallback()
-            return
-
-        if fn == "colorContinuous":
-            if not isinstance(value.get("attr"), str):
-                errors.append(f"[{component_name}] {field_name}.attr must be a string column. Resetting attr.")
-                if fallback_value:
-                    value["attr"] = fallback_value.get("attr")
-
-            domain = value.get("domain")
-            if not (isinstance(domain, (list, tuple)) and len(domain) == 2):
-                errors.append(f"[{component_name}] {field_name}.domain must be [min, max]. Resetting domain.")
-                if fallback_value:
-                    value["domain"] = fallback_value.get("domain")
-
-            steps = value.get("steps")
-            if steps is not None and (not isinstance(steps, int) or steps <= 0):
-                errors.append(f"[{component_name}] {field_name}.steps must be a positive integer. Resetting steps.")
-                if fallback_value:
-                    value["steps"] = fallback_value.get("steps")
-
-            colors = value.get("colors")
-            if colors is not None:
-                if not isinstance(colors, str):
-                    errors.append(f"[{component_name}] {field_name}.colors must be a palette string. Resetting colors.")
-                    if fallback_value:
-                        value["colors"] = fallback_value.get("colors")
-                else:
-                    _validate_palette_name(colors, component_name, f"{field_name}.colors", errors)
-        return
-
-    errors.append(f"[{component_name}] {field_name} must be an array or colorContinuous object. Removing value.")
-    _reset_to_fallback()
-
-
-def _extract_tooltip_columns(config_sources, available_columns=None):
-    tooltip_config = None
-    for source in config_sources:
-        if not isinstance(source, dict):
-            continue
-        for key in ("tooltipColumns", "tooltip_columns", "tooltipAttrs"):
-            candidate = source.get(key)
-            if candidate is not None:
-                tooltip_config = candidate
-                break
-        if tooltip_config is not None:
-            break
-
-    if tooltip_config is None:
-        return []
-
-    if isinstance(tooltip_config, str):
-        columns = [tooltip_config.strip()] if tooltip_config.strip() else []
-    elif isinstance(tooltip_config, (list, tuple, set)):
-        columns = [str(item).strip() for item in tooltip_config if isinstance(item, str) and item.strip()]
-    else:
-        return []
-
-    if available_columns is not None:
-        columns = [col for col in columns if col in available_columns]
-    return columns
 
 def deckgl_map(
     gdf,
@@ -999,18 +520,24 @@ function makeInterpolateExpression(attr, colorSpec) {
   }
 }
 
+// Flag to prevent multiple fitBounds calls
+let hasInitiallyFit = false;
+
 map.on('load', () => {
   addGeoJsonSourceAndLayers();
 
-  // fit bounds if turf available
-  try {
-    if (window.turf) {
-      const bbox = turf.bbox(GEOJSON);
-      if (bbox && bbox.length === 4) {
-        map.fitBounds([[bbox[0], bbox[1]],[bbox[2], bbox[3]]], { padding: 40, maxZoom: 15, duration: 500 });
+  // fit bounds only once if turf available
+  if (!hasInitiallyFit) {
+    try {
+      if (window.turf) {
+        const bbox = turf.bbox(GEOJSON);
+        if (bbox && bbox.length === 4) {
+          map.fitBounds([[bbox[0], bbox[1]],[bbox[2], bbox[3]]], { padding: 40, maxZoom: 15, duration: 500 });
+          hasInitiallyFit = true;
+        }
       }
-    }
-  } catch(e){}
+    } catch(e){}
+  }
 
   // legend - only show if we have a continuous color scale with an attribute
   const colorSpec = makeColorStops(FILL_COLOR_CONFIG);
@@ -1146,22 +673,30 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) { tr
 window.addEventListener('focus', () => { try { map.triggerRepaint && map.triggerRepaint(); } catch(e) {} });
 window.addEventListener('focusin', () => { try { map.triggerRepaint && map.triggerRepaint(); } catch(e) {} });
 
-// styledata recovery
+// styledata recovery - only recover if layers are actually missing
+let hasLoadedOnce = false;
 map.on('styledata', () => {
   try {
     if (!map || typeof map.getSource !== 'function' || typeof map.getLayer !== 'function') {
       console.warn('[deckgl_map] Map not ready in styledata handler');
       return;
     }
+    
+    // Skip initial styledata events during load
+    if (!hasLoadedOnce) {
+      hasLoadedOnce = true;
+      return;
+    }
+    
     const hasSource = map.getSource('gdf-source');
     const hasFill = map.getLayer('gdf-fill');
     const hasCircle = map.getLayer('gdf-circle');
     const hasLine = map.getLayer('gdf-line-only');
     
+    // Only recover if layers are truly missing
     if (!hasSource || (!hasFill && !hasCircle && !hasLine)) {
+      console.log('[deckgl_map] Recovering missing layers after style change');
       addGeoJsonSourceAndLayers();
-    } else if (hasSource && typeof hasSource.setData === 'function') {
-      hasSource.setData(GEOJSON);
     }
   } catch (err) {
     console.warn('[deckgl_map] styledata recovery failed', err);
@@ -2204,3 +1739,514 @@ def enable_map_sync(html_input, channel: str = "default"):
         common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
         return common.html_to_obj(injected_html)
     return injected_html
+
+
+def _deep_merge_dict(base: dict, extra: dict) -> dict:
+    for key, value in extra.items():
+        if isinstance(value, dict) and isinstance(base.get(key), dict):
+            _deep_merge_dict(base[key], value)
+        else:
+            base[key] = value
+    return base
+
+
+def _load_deckgl_config(raw_config, default_config, component_name: str, errors: list):
+    merged = deepcopy(default_config)
+    if raw_config in (None, ""):
+        return merged
+
+    if isinstance(raw_config, str):
+        try:
+            user_config = json.loads(raw_config)
+        except json.JSONDecodeError as exc:
+            errors.append(f"[{component_name}] Failed to parse config JSON: {exc}")
+            return merged
+    elif isinstance(raw_config, dict):
+        user_config = raw_config
+    else:
+        errors.append(f"[{component_name}] Config must be a dict or JSON string. Using defaults.")
+        return merged
+
+    if not isinstance(user_config, dict):
+        errors.append(f"[{component_name}] Config must be a dict. Using defaults.")
+        return merged
+
+    try:
+        merged = _deep_merge_dict(merged, deepcopy(user_config))
+    except Exception as exc:
+        errors.append(f"[{component_name}] Failed to merge config overrides: {exc}. Using defaults.")
+        merged = deepcopy(default_config)
+    return merged
+
+
+def _validate_initial_view_state(config: dict, default_view_state: dict, component_name: str, errors: list):
+    view_state = config.get("initialViewState")
+    if not isinstance(view_state, dict):
+        errors.append(f"[{component_name}] initialViewState must be an object. Using defaults.")
+        config["initialViewState"] = deepcopy(default_view_state)
+        view_state = config["initialViewState"]
+    else:
+        zoom = view_state.get("zoom")
+        if zoom is not None and not isinstance(zoom, (int, float)):
+            errors.append(f"[{component_name}] initialViewState.zoom must be numeric. Using default zoom.")
+            view_state["zoom"] = default_view_state.get("zoom")
+    return view_state
+
+
+def _ensure_layer_config(config: dict, layer_key: str, default_layer: dict, component_name: str, errors: list):
+    layer = config.get(layer_key)
+    if not isinstance(layer, dict):
+        errors.append(f"[{component_name}] {layer_key} must be an object. Using defaults.")
+        config[layer_key] = deepcopy(default_layer)
+        layer = config[layer_key]
+    return layer
+
+
+def _validate_palette_name(color_name: str, component_name: str, field_path: str, errors: list):
+    if not color_name:
+        return
+    palette = color_name.strip()
+    if palette and palette not in KNOWN_CARTOCOLOR_PALETTES:
+        suggestion = get_close_matches(palette, list(KNOWN_CARTOCOLOR_PALETTES), n=1, cutoff=0.7)
+        if suggestion:
+            errors.append(f"[{component_name}] {field_path} '{palette}' is not a known CartoColor palette. Did you mean '{suggestion[0]}'?")
+        else:
+            valid_list = ", ".join(sorted(KNOWN_CARTOCOLOR_PALETTES))
+            errors.append(f"[{component_name}] {field_path} '{palette}' is not a recognized CartoColor palette. Valid palettes include: {valid_list}.")
+
+
+def _validate_color_accessor(
+    layer: dict,
+    field_name: str,
+    *,
+    component_name: str,
+    errors: list,
+    allow_array: bool,
+    require_color_continuous: bool,
+    fallback_value=None,
+):
+    value = layer.get(field_name)
+    if value is None:
+        return
+
+    def _reset_to_fallback():
+        if fallback_value is None:
+            layer.pop(field_name, None)
+        else:
+            layer[field_name] = deepcopy(fallback_value)
+
+    if isinstance(value, (list, tuple)):
+        if not allow_array:
+            errors.append(f"[{component_name}] {field_name} cannot be an array. Removing value.")
+            _reset_to_fallback()
+            return
+        if len(value) not in (3, 4) or not all(isinstance(v, (int, float)) for v in value):
+            errors.append(f"[{component_name}] {field_name} array must contain 3 or 4 numeric values. Removing value.")
+            _reset_to_fallback()
+        return
+
+    if isinstance(value, dict):
+        fn = value.get("@@function")
+        if require_color_continuous and fn != "colorContinuous":
+            errors.append(f"[{component_name}] {field_name}.@@function must be 'colorContinuous'.")
+            _reset_to_fallback()
+            return
+
+        if fn == "colorContinuous":
+            if not isinstance(value.get("attr"), str):
+                errors.append(f"[{component_name}] {field_name}.attr must be a string column. Resetting attr.")
+                if fallback_value:
+                    value["attr"] = fallback_value.get("attr")
+
+            domain = value.get("domain")
+            if not (isinstance(domain, (list, tuple)) and len(domain) == 2):
+                errors.append(f"[{component_name}] {field_name}.domain must be [min, max]. Resetting domain.")
+                if fallback_value:
+                    value["domain"] = fallback_value.get("domain")
+
+            steps = value.get("steps")
+            if steps is not None and (not isinstance(steps, int) or steps <= 0):
+                errors.append(f"[{component_name}] {field_name}.steps must be a positive integer. Resetting steps.")
+                if fallback_value:
+                    value["steps"] = fallback_value.get("steps")
+
+            colors = value.get("colors")
+            if colors is not None:
+                if not isinstance(colors, str):
+                    errors.append(f"[{component_name}] {field_name}.colors must be a palette string. Resetting colors.")
+                    if fallback_value:
+                        value["colors"] = fallback_value.get("colors")
+                else:
+                    _validate_palette_name(colors, component_name, f"{field_name}.colors", errors)
+        return
+
+    errors.append(f"[{component_name}] {field_name} must be an array or colorContinuous object. Removing value.")
+    _reset_to_fallback()
+
+
+def _extract_tooltip_columns(config_sources, available_columns=None):
+    tooltip_config = None
+    for source in config_sources:
+        if not isinstance(source, dict):
+            continue
+        for key in ("tooltipColumns", "tooltip_columns", "tooltipAttrs"):
+            candidate = source.get(key)
+            if candidate is not None:
+                tooltip_config = candidate
+                break
+        if tooltip_config is not None:
+            break
+
+    if tooltip_config is None:
+        return []
+
+    if isinstance(tooltip_config, str):
+        columns = [tooltip_config.strip()] if tooltip_config.strip() else []
+    elif isinstance(tooltip_config, (list, tuple, set)):
+        columns = [str(item).strip() for item in tooltip_config if isinstance(item, str) and item.strip()]
+    else:
+        return []
+
+    if available_columns is not None:
+        columns = [col for col in columns if col in available_columns]
+    return columns
+
+
+# ============================================================================
+# PYDECK UTILITY FUNCTIONS
+# ============================================================================
+
+def _compute_center_from_points(df):
+    if len(df) == 0:
+        return None, None
+    return float(df["latitude"].mean()), float(df["longitude"].mean())
+
+
+def _compute_center_from_hex(df):
+    if len(df) == 0:
+        return None, None
+    if "latitude" in df.columns and "longitude" in df.columns:
+        return float(df["latitude"].mean()), float(df["longitude"].mean())
+    if "__hex__" in df.columns:
+        import h3
+        centers = df["__hex__"].dropna().map(lambda h: h3.cell_to_latlng(h))
+        if len(centers) == 0:
+            return None, None
+        lats = [lat for lat, lon in centers]
+        lons = [lon for lat, lon in centers]
+        return float(sum(lats) / len(lats)), float(sum(lons) / len(lons))
+    return None, None
+
+
+def _compute_center_from_polygons(df):
+    if len(df) == 0:
+        return None, None
+    centroid = df["geometry"].unary_union.centroid
+    return float(centroid.y), float(centroid.x)
+
+
+# ============================================================================
+# PYDECK CONFIGS
+# ============================================================================
+
+DEFAULT_CONFIG = {
+    # visual
+    "get_fill_color": [0, 144, 255, 200],  # can be array OR JS expr string OR column name
+    "get_radius": 200,
+    "opacity": 1.0,
+    "pickable": True,
+    # map camera
+    "zoom": 11,
+    "pitch": 0,
+    "bearing": 0,
+    # layer/tooltip
+    "tooltip": None,
+    "basemap": "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+}
+
+DEFAULT_H3_CONFIG = {
+        "hex_field": "hex",
+        "fill_color": "[0, 144, 255, 180]",
+        "pickable": True,
+        "stroked": True,
+        "filled": True,
+        "extruded": False,
+        "line_color": [255, 255, 255],
+        "line_width_min_pixels": 0.5,
+        "center_lat": None,
+        "center_lon": None,
+        "zoom": 14,
+        "bearing": 0,
+        "pitch": 0,
+        "tooltip": "{__hex__}"
+    }
+
+DEFAULT_POLYGON_CONFIG = {
+    "get_fill_color": [0, 144, 255, 120],
+    "get_line_color": [255, 255, 255],
+    "line_width_min_pixels": 1,
+    "pickable": True,
+    "stroked": True,
+    "filled": True,
+    "zoom": 11,
+    "pitch": 0,
+    "bearing": 0,
+    "tooltip": "Polygon {id}",
+    "basemap": "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+}
+
+
+def pydeck_point(gdf, config=None):
+    """
+    Pydeck based maps. Use this to render HTML interactive maps from data
+
+    Takes a config dict based on:
+    'config = {
+        "fill_color": '[255, 100 + cnt, 0]' # dynamically sets the colors of the fill based on the `cnt` values col
+    '
+    """
+    if config is None or config == "":
+        cfg = DEFAULT_CONFIG.copy()
+    elif isinstance(config, str):
+        cfg = DEFAULT_CONFIG.copy()
+        cfg.update(json.loads(config))
+    else:
+        cfg = DEFAULT_CONFIG.copy()
+        cfg.update(config)
+
+    if isinstance(gdf, dict):
+        gdf = gpd.GeoDataFrame.from_features([gdf])
+
+    df = pd.DataFrame(gdf.drop(columns="geometry"))
+    df["longitude"] = gdf.geometry.x
+    df["latitude"] = gdf.geometry.y
+
+    auto_lat, auto_lon = _compute_center_from_points(df)
+
+    center_lat = cfg.get("center_lat", auto_lat)
+    center_lon = cfg.get("center_lon", auto_lon)
+
+    if center_lat is None or center_lon is None:
+        raise ValueError("No valid coordinates to center map (no points in gdf)")
+
+    tooltip_template = cfg.get("tooltip")
+    if not tooltip_template:
+        cols = [c for c in df.columns if c not in ["longitude", "latitude"]]
+        if len(cols) == 0:
+            tooltip_template = "lon: {longitude}\nlat: {latitude}"
+        else:
+            tooltip_template = "\n".join([f"{c}: {{{c}}}" for c in cols])
+
+    fill_accessor = cfg.get("get_fill_color", DEFAULT_CONFIG["get_fill_color"])
+    radius_accessor = cfg.get("get_radius", DEFAULT_CONFIG["get_radius"])
+
+    layer = pdk.Layer(
+        "ScatterplotLayer",
+        data=df,
+        get_position=["longitude", "latitude"],
+        get_fill_color=fill_accessor,
+        get_radius=radius_accessor,
+        opacity=cfg.get("opacity", DEFAULT_CONFIG["opacity"]),
+        pickable=cfg.get("pickable", DEFAULT_CONFIG["pickable"]),
+    )
+
+    view_state = pdk.ViewState(
+        latitude=center_lat,
+        longitude=center_lon,
+        zoom=cfg.get("zoom", DEFAULT_CONFIG["zoom"]),
+        pitch=cfg.get("pitch", DEFAULT_CONFIG["pitch"]),
+        bearing=cfg.get("bearing", DEFAULT_CONFIG["bearing"]),
+    )
+
+    deck = pdk.Deck(
+        layers=[layer],
+        initial_view_state=view_state,
+        map_style=cfg.get("basemap", DEFAULT_CONFIG["basemap"]),
+        tooltip={"text": tooltip_template},
+    )
+
+    return deck.to_html(as_string=True)
+
+
+@fused.udf(cache_max_age=0)
+def pydeck_hex(df=None, config: typing.Union[dict, str, None] = None):  # changed UnionType
+    """
+    Pydeck based maps. Use this to render HTML interactive maps from data
+
+    Takes a config dict based on:
+    'config = {
+        "hex_field": "hex",
+        "fill_color": '[255, 100 + cnt, 0]' # dynamically sets the colors of the fill based on the `cnt` values col
+    ''
+    """
+    import pandas as pd
+    import pydeck as pdk
+    import h3
+    import json
+
+    if config is None or config == "":
+        config = DEFAULT_H3_CONFIG
+    elif isinstance(config, str):
+        config = json.loads(config)
+
+    if df is None:
+        H3_HEX_DATA = "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/sf.h3cells.json"
+        df = pd.read_json(H3_HEX_DATA)
+
+    hex_field = config.get("hex_field", DEFAULT_H3_CONFIG["hex_field"])
+    if hex_field not in df.columns:
+        raise ValueError(f"DataFrame must have a '{hex_field}' column")
+
+    df = df.copy()
+    df["__hex__"] = df[hex_field]
+
+    if not pd.api.types.is_string_dtype(df["__hex__"]):
+        df["__hex__"] = df["__hex__"].apply(
+            lambda h: h3.int_to_str(int(h)) if pd.notna(h) else None
+        )
+
+    auto_lat, auto_lon = _compute_center_from_hex(df)
+    center_lat = config.get("center_lat", None)
+    center_lon = config.get("center_lon", None)
+    if center_lat is None:
+        center_lat = auto_lat
+    if center_lon is None:
+        center_lon = auto_lon
+
+    layer = pdk.Layer(
+        "H3HexagonLayer",
+        df,
+        pickable=config.get("pickable", DEFAULT_H3_CONFIG["pickable"]),
+        stroked=config.get("stroked", DEFAULT_H3_CONFIG["stroked"]),
+        filled=config.get("filled", DEFAULT_H3_CONFIG["filled"]),
+        extruded=config.get("extruded", DEFAULT_H3_CONFIG["extruded"]),
+        get_hexagon="__hex__",
+        get_fill_color=config.get("fill_color", DEFAULT_H3_CONFIG["fill_color"]),
+        get_line_color=config.get("line_color", DEFAULT_H3_CONFIG["line_color"]),
+        line_width_min_pixels=config.get(
+            "line_width_min_pixels",
+            DEFAULT_H3_CONFIG["line_width_min_pixels"]
+        ),
+    )
+
+    view_state = pdk.ViewState(
+        latitude=center_lat,
+        longitude=center_lon,
+        zoom=config.get("zoom", DEFAULT_H3_CONFIG["zoom"]),
+        bearing=config.get("bearing", DEFAULT_H3_CONFIG["bearing"]),
+        pitch=config.get("pitch", DEFAULT_H3_CONFIG["pitch"]),
+    )
+
+    deck = pdk.Deck(
+        layers=[layer],
+        initial_view_state=view_state,
+        tooltip={"text": config.get("tooltip", DEFAULT_H3_CONFIG["tooltip"])},
+    )
+
+    return deck.to_html(as_string=True)
+
+
+def pydeck_polygon(df, config=None):
+    """
+    Pydeck based maps. Use this to render HTML interactive maps from data
+
+    Takes a config dict based on:
+    'config = {
+        "fill_color": '[255, 100 + cnt, 0]' # dynamically sets the colors of the fill based on the `cnt` values col
+    '
+    """
+    if config is None or config == "":
+        cfg = DEFAULT_POLYGON_CONFIG.copy()
+    elif isinstance(config, str):
+        cfg = DEFAULT_POLYGON_CONFIG.copy()
+        cfg.update(json.loads(config))
+    else:
+        cfg = DEFAULT_POLYGON_CONFIG.copy()
+        cfg.update(config)
+
+    if "geometry" not in df.columns or len(df) == 0:
+        raise ValueError("GeoDataFrame must include a non-empty 'geometry' column")
+
+    auto_lat, auto_lon = _compute_center_from_polygons(df)
+    center_lat = cfg.get("center_lat", auto_lat)
+    center_lon = cfg.get("center_lon", auto_lon)
+    if center_lat is None or center_lon is None:
+        center_lat, center_lon = 0.0, 0.0
+
+    df = df.copy()
+    df["__polygon__"] = df["geometry"].apply(lambda geom: mapping(geom)["coordinates"])
+
+    tooltip_template = cfg.get("tooltip", DEFAULT_POLYGON_CONFIG["tooltip"])
+    if not tooltip_template:
+        cols = [c for c in df.columns if c not in ["geometry", "__polygon__"]]
+        tooltip_template = "\n".join([f"{c}: {{{c}}}" for c in cols]) if cols else "polygon"
+
+    layer = pdk.Layer(
+        "PolygonLayer",
+        df,
+        get_polygon="__polygon__",
+        get_fill_color=cfg.get("get_fill_color", DEFAULT_POLYGON_CONFIG["get_fill_color"]),
+        get_line_color=cfg.get("get_line_color", DEFAULT_POLYGON_CONFIG["get_line_color"]),
+        line_width_min_pixels=cfg.get("line_width_min_pixels", DEFAULT_POLYGON_CONFIG["line_width_min_pixels"]),
+        stroked=cfg.get("stroked", DEFAULT_POLYGON_CONFIG["stroked"]),
+        filled=cfg.get("filled", DEFAULT_POLYGON_CONFIG["filled"]),
+        pickable=cfg.get("pickable", DEFAULT_POLYGON_CONFIG["pickable"]),
+    )
+
+    view_state = pdk.ViewState(
+        latitude=center_lat,
+        longitude=center_lon,
+        zoom=cfg.get("zoom", DEFAULT_POLYGON_CONFIG["zoom"]),
+        pitch=cfg.get("pitch", DEFAULT_POLYGON_CONFIG["pitch"]),
+        bearing=cfg.get("bearing", DEFAULT_POLYGON_CONFIG["bearing"]),
+    )
+
+    deck = pdk.Deck(
+        layers=[layer],
+        initial_view_state=view_state,
+        map_style=cfg.get("basemap", DEFAULT_POLYGON_CONFIG["basemap"]),
+        tooltip={"text": tooltip_template},
+    )
+
+    return deck.to_html(as_string=True)
+
+
+def folium_raster(data, bounds, opacity=0.7, tiles="CartoDB dark_matter"):
+    """
+    Minimal Folium raster overlay utility.
+    Works with rasterio arrays (H, W) or (bands, H, W).
+    """
+    west, south, east, north = bounds
+
+    # shape handling (no normalization)
+    if data.ndim == 2:
+        rgb = np.stack([data, data, data], axis=-1)
+    elif data.ndim == 3:
+        if data.shape[0] >= 3:
+            rgb = np.transpose(data[:3], (1, 2, 0))
+        elif data.shape[0] == 1:
+            rgb = np.stack([data[0], data[0], data[0]], axis=-1)
+        else:
+            h, w = data.shape[1], data.shape[2]
+            rgb = np.zeros((h, w, 3), dtype=np.uint8)
+            for i in range(data.shape[0]):
+                rgb[:, :, i] = data[i]
+    else:
+        raise ValueError(f"Unsupported raster shape: {data.shape}")
+
+    # clip just to be safe
+    rgb = np.clip(rgb, 0, 255).astype(np.uint8)
+
+    # center map
+    center_lat = (south + north) / 2
+    center_lon = (west + east) / 2
+
+    m = folium.Map(location=[center_lat, center_lon], zoom_start=9, tiles=tiles)
+
+    folium.raster_layers.ImageOverlay(
+        image=rgb,
+        bounds=[[south, west], [north, east]],
+        opacity=opacity,
+    ).add_to(m)
+
+    return m.get_root().render()
