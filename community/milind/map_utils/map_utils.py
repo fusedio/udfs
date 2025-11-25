@@ -1998,6 +1998,10 @@ DEFAULT_POLYGON_CONFIG = {
 
 def pydeck_point(gdf, config=None):
     """
+    DEPRECATED: This is a deprecated map utility and will be removed soon.
+    Only use this if user specifically asks for pydeck maps.
+    Use deckgl_map() instead for modern Deck.GL-based point rendering.
+    
     Pydeck based maps. Use this to render HTML interactive maps from data
 
     Takes a config dict based on:
@@ -2071,6 +2075,10 @@ def pydeck_point(gdf, config=None):
 @fused.udf(cache_max_age=0)
 def pydeck_hex(df=None, config: typing.Union[dict, str, None] = None):  # changed UnionType
     """
+    DEPRECATED: This is a deprecated map utility and will be removed soon.
+    Only use this if user specifically asks for pydeck maps.
+    Use deckgl_hex() instead for modern Deck.GL-based hexagon rendering.
+    
     Pydeck based maps. Use this to render HTML interactive maps from data
 
     Takes a config dict based on:
@@ -2148,6 +2156,10 @@ def pydeck_hex(df=None, config: typing.Union[dict, str, None] = None):  # change
 
 def pydeck_polygon(df, config=None):
     """
+    DEPRECATED: This is a deprecated map utility and will be removed soon.
+    Only use this if user specifically asks for pydeck maps.
+    Use deckgl_map() instead for modern Deck.GL-based polygon rendering.
+    
     Pydeck based maps. Use this to render HTML interactive maps from data
 
     Takes a config dict based on:
