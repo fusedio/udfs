@@ -152,7 +152,7 @@ def udf(
     if config is None:
         config = DEFAULT_DECK_CONFIG
     
-    return deckgl_map(gdf, config)
+    return deckgl_map(gdf, config, basemap = "dark")
 
 
 
@@ -160,11 +160,30 @@ def deckgl_map(
     gdf,
     config: typing.Union[dict, str, None] = None,
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
+    basemap: str = "dark",
 ):
     """
     Mapbox-GL-native implementation with robust native Popup tooltips and recovery.
     Diagnostic message for "no features at cursor" has been removed.
+    
+    Args:
+        gdf: GeoDataFrame to visualize.
+        config: Deck.GL style overrides (dict or JSON string).
+        mapbox_token: Mapbox access token for the embedded map.
+        basemap: 'dark' (default) or 'satellite'. You can also pass a custom Mapbox style URL.
     """
+    basemap_styles = {
+        "dark": "mapbox://styles/mapbox/dark-v10",
+        "satellite": "mapbox://styles/mapbox/satellite-streets-v12",
+    }
+    basemap_key = (basemap or "dark").lower()
+    if basemap_key in ("satellite", "satellite-streets", "sat"):
+        style_url = basemap_styles["satellite"]
+    elif basemap_key in ("dark", "default", "normal"):
+        style_url = basemap_styles["dark"]
+    else:
+        style_url = basemap if basemap else basemap_styles["dark"]
+
     config_errors = []
 
     if hasattr(gdf, "crs"):
@@ -321,7 +340,7 @@ const LINE_COLOR = {{ line_color_rgba | tojson }};
 mapboxgl.accessToken = MAPBOX_TOKEN;
 const map = new mapboxgl.Map({
   container: 'map',
-  style: 'mapbox://styles/mapbox/dark-v10',
+  style: {{ style_url | tojson }},
   center: [AUTO_STATE.longitude, AUTO_STATE.latitude],
   zoom: AUTO_STATE.zoom
 });
@@ -725,6 +744,7 @@ if (errorBox && CONFIG_ERROR && CONFIG_ERROR.length) {
         line_width=line_width,
         point_radius=point_radius,
         line_color_rgba=line_color_rgba,
+        style_url=style_url,
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/351515e/public/common/")
@@ -737,6 +757,7 @@ def deckgl_hex(
     df,
     config = None,  # Can be dict, JSON string, or None
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
+    basemap: str = "dark",
 ):
     """
     Custom DeckGL based HTML Map. Use this to visualize hex data (dataframe containing a hex column)
@@ -766,8 +787,26 @@ def deckgl_hex(
             }
         }
     }
+    Args:
+        df: Pandas/GeoPandas dataframe containing an H3 hex column.
+        config: Optional Deck.GL JSON/dict overrides.
+        mapbox_token: Mapbox token (string).
+        basemap: 'dark' (default) for the Carto dark style or 'satellite' for Mapbox satellite-streets.
+                 You can also pass any custom Mapbox style URL.
     """
     config_errors = []
+    basemap_styles = {
+        "dark": "mapbox://styles/mapbox/dark-v10",
+        "satellite": "mapbox://styles/mapbox/satellite-streets-v12",
+    }
+    basemap_key = (basemap or "dark").lower()
+    if basemap_key in ("satellite", "satellite-streets", "sat"):
+        style_url = basemap_styles["satellite"]
+    elif basemap_key in ("dark", "default", "normal"):
+        style_url = basemap_styles["dark"]
+    else:
+        # Allow raw Mapbox style strings; fall back to dark if empty/invalid.
+        style_url = basemap if basemap else basemap_styles["dark"]
     
     # Save original config to check what user actually provided
     original_config = config
@@ -1015,7 +1054,7 @@ def deckgl_hex(
 
   <script>
     const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
-    const STYLE_URL = "mapbox://styles/mapbox/dark-v10";
+    const STYLE_URL = {{ style_url | tojson }};
     const DATA = {{ data_records | tojson }};
     const CONFIG = {{ config | tojson }};
     const TOOLTIP_COLUMNS = {{ tooltip_columns | tojson }};
@@ -1367,6 +1406,7 @@ def deckgl_hex(
         zoom=zoom,
         config_error=config_error_messages,
         default_fill_config=DEFAULT_DECK_HEX_CONFIG["hexLayer"]["getFillColor"],
+        style_url=style_url,
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
