@@ -175,7 +175,7 @@ def deckgl_map(
     import numpy as _np
     
     # Basemap setup
-    basemap_styles = {"dark": "mapbox://styles/mapbox/dark-v10", "satellite": "mapbox://styles/mapbox/satellite-streets-v12"}
+    basemap_styles = {"dark": "mapbox://styles/mapbox/dark-v11", "satellite": "mapbox://styles/mapbox/satellite-streets-v12", "light": "mapbox://styles/mapbox/light-v11", "streets": "mapbox://styles/mapbox/streets-v12"}
     basemap_key = (basemap or "dark").lower()
     style_url = basemap_styles.get({"sat": "satellite", "satellite-streets": "satellite"}.get(basemap_key, basemap_key), basemap or basemap_styles["dark"])
 
@@ -271,8 +271,8 @@ def deckgl_map(
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
   <script type="module">
     import * as cartocolor from 'https://esm.sh/cartocolor@5.0.2';
     window.cartocolor = cartocolor;
@@ -439,8 +439,28 @@ map.on('mousemove', e => {
 });
 map.on('mouseleave', () => { if(popup){popup.remove();popup=null;} lastKey=null; map.getCanvas().style.cursor=''; });
 
-// Resize handling
-new ResizeObserver(() => { try{map.resize();}catch(e){} }).observe(document.getElementById('map'));
+// Fix for tiles not loading in iframes - aggressive tile refresh
+map.on('load', () => {
+  [100, 300, 600, 1000, 2000].forEach(t => setTimeout(() => { map.resize(); map.triggerRepaint(); }, t));
+});
+map.on('idle', () => { 
+  // Force repaint when map becomes idle to catch missing tiles
+  setTimeout(() => map.triggerRepaint(), 50);
+});
+window.addEventListener('resize', () => { map.resize(); map.triggerRepaint(); });
+document.addEventListener('visibilitychange', () => { 
+  if (!document.hidden) { 
+    setTimeout(() => { map.resize(); map.triggerRepaint(); }, 100);
+    setTimeout(() => { map.resize(); map.triggerRepaint(); }, 500);
+  }
+});
+new ResizeObserver(() => { try { map.resize(); map.triggerRepaint(); } catch(e){} }).observe(document.getElementById('map'));
+// Periodic check for missing tiles during first 5 seconds
+let checks = 0;
+const tileCheck = setInterval(() => {
+  if (++checks > 10) { clearInterval(tileCheck); return; }
+  map.triggerRepaint();
+}, 500);
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
 </body>
@@ -461,200 +481,75 @@ new ResizeObserver(() => { try{map.resize();}catch(e){} }).observe(document.getE
 
 def deckgl_hex(
     df,
-    config = None,  # Can be dict, JSON string, or None
+    config=None,
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     basemap: str = "dark",
 ):
     """
-    Custom DeckGL based HTML Map. Use this to visualize hex data (dataframe containing a hex column)
-    Uses a DeckGL compatible config JSON file to edit color palette, starting lat / lon, tooltip columns, etc.
+    Render H3 hexagon data as an interactive map.
     
-    Default config:
-    {
-        "initialViewState": {
-            "longitude": None,
-            "latitude": None,
-            "zoom": 8,
-            "pitch": 0,
-            "bearing": 0
-        },
-        "hexLayer": {
-            "@@type": "H3HexagonLayer",
-            "filled": True,
-            "pickable": True,
-            "extruded": False,
-            "getHexagon": "@@=properties.hex",
-            "getFillColor": {
-                "@@function": "colorContinuous",
-                "attr": "cnt",
-                "domain": [5000, 0],
-                "steps": 20,
-                "colors": "Magenta"
-            }
-        }
-    }
     Args:
-        df: Pandas/GeoPandas dataframe containing an H3 hex column.
-        config: Optional Deck.GL JSON/dict overrides.
-        mapbox_token: Mapbox token (string).
-        basemap: 'dark' (default) for the Carto dark style or 'satellite' for Mapbox satellite-streets.
-                 You can also pass any custom Mapbox style URL.
+        df: DataFrame with 'hex' column containing H3 cell IDs.
+        config: Optional config dict with hexLayer settings (getFillColor, getLineColor, etc.)
+        mapbox_token: Mapbox access token.
+        basemap: 'dark', 'satellite', or custom Mapbox style URL.
     """
+    # Basemap setup
+    basemap_styles = {"dark": "mapbox://styles/mapbox/dark-v11", "satellite": "mapbox://styles/mapbox/satellite-streets-v12", "light": "mapbox://styles/mapbox/light-v11", "streets": "mapbox://styles/mapbox/streets-v12"}
+    style_url = basemap_styles.get({"sat": "satellite", "satellite-streets": "satellite"}.get((basemap or "dark").lower(), (basemap or "dark").lower()), basemap or basemap_styles["dark"])
+
+    # Config processing
     config_errors = []
-    basemap_styles = {
-        "dark": "mapbox://styles/mapbox/dark-v10",
-        "satellite": "mapbox://styles/mapbox/satellite-streets-v12",
-    }
-    basemap_key = (basemap or "dark").lower()
-    if basemap_key in ("satellite", "satellite-streets", "sat"):
-        style_url = basemap_styles["satellite"]
-    elif basemap_key in ("dark", "default", "normal"):
-        style_url = basemap_styles["dark"]
-    else:
-        # Allow raw Mapbox style strings; fall back to dark if empty/invalid.
-        style_url = basemap if basemap else basemap_styles["dark"]
+    merged_config = _load_deckgl_config(config, DEFAULT_DECK_HEX_CONFIG, "deckgl_hex", config_errors)
+    hex_layer = merged_config.get("hexLayer", {})
     
-    # Save original config to check what user actually provided
-    original_config = config
+    # Validate palette name
+    fill_color_cfg = hex_layer.get("getFillColor", {})
+    if isinstance(fill_color_cfg, dict) and fill_color_cfg.get("@@function") == "colorContinuous":
+        palette_name = fill_color_cfg.get("colors", "Magenta")
+        if palette_name and palette_name not in KNOWN_CARTOCOLOR_PALETTES:
+            suggestion = get_close_matches(palette_name, list(KNOWN_CARTOCOLOR_PALETTES), n=1, cutoff=0.5)
+            if suggestion:
+                print(f"[deckgl_hex] Warning: Palette '{palette_name}' not found. Did you mean '{suggestion[0]}'?")
+            else:
+                print(f"[deckgl_hex] Warning: Palette '{palette_name}' not found. Using fallback.")
+            config_errors.append(f"Palette '{palette_name}' not found")
 
-    config = _load_deckgl_config(config, DEFAULT_DECK_HEX_CONFIG, "deckgl_hex", config_errors)
-    _validate_initial_view_state(config, DEFAULT_DECK_HEX_CONFIG["initialViewState"], "deckgl_hex", config_errors)
-    hex_layer = _ensure_layer_config(
-        config,
-        "hexLayer",
-        DEFAULT_DECK_HEX_CONFIG["hexLayer"],
-        "deckgl_hex",
-        config_errors,
-    )
-
-    if not isinstance(hex_layer.get("getHexagon"), str) or not hex_layer.get("getHexagon"):
-        config_errors.append("[deckgl_hex] hexLayer.getHexagon must be a string expression (e.g. '@@=properties.hex'). Falling back to default accessor.")
-        hex_layer["getHexagon"] = DEFAULT_DECK_HEX_CONFIG["hexLayer"]["getHexagon"]
-
-    _validate_color_accessor(
-        hex_layer,
-        "getFillColor",
-        component_name="deckgl_hex",
-        errors=config_errors,
-        allow_array=False,
-        require_color_continuous=True,
-        fallback_value=DEFAULT_DECK_HEX_CONFIG["hexLayer"]["getFillColor"],
-    )
-    # Check the original config parameter to see if user provided getFillColor
-    user_provided_fill_color = False
-    if isinstance(original_config, dict):
-        user_hex_layer = original_config.get("hexLayer", {})
-        if isinstance(user_hex_layer, dict) and "getFillColor" in user_hex_layer:
-            user_provided_fill_color = True
-    
-    # If user didn't provide getFillColor, remove it from merged config to prevent wrong defaults
-    if not user_provided_fill_color and "getFillColor" in hex_layer:
-        hex_layer.pop("getFillColor", None)
-        print("[deckgl_hex] Removed default getFillColor since user didn't specify it")
-
-    invalid_props = [key for key in list(hex_layer.keys()) if key not in VALID_HEX_LAYER_PROPS]
-    for prop in invalid_props:
-        suggestion = get_close_matches(prop, list(VALID_HEX_LAYER_PROPS), n=1, cutoff=0.7)
-        if suggestion:
-            config_errors.append(
-                f"[deckgl_hex] hexLayer property '{prop}' is not recognized. Did you mean '{suggestion[0]}'?"
-            )
-        else:
-            valid_props_preview = ", ".join(sorted(list(VALID_HEX_LAYER_PROPS))[:8])
-            config_errors.append(
-                f"[deckgl_hex] hexLayer property '{prop}' is not recognized by Deck.GL. Sample valid properties: {valid_props_preview}, ..."
-            )
-        hex_layer.pop(prop, None)
-
-    configured_tooltip_columns = _extract_tooltip_columns((config, hex_layer))
-    tooltip_columns = []
-
-    if config_errors:
-        print(f"\n[deckgl_hex] Config validation found {len(config_errors)} issue(s):")
-        for i, msg in enumerate(config_errors, 1):
-            print(f"  {i}. {msg}")
-        print()
-
-    config_error_messages = config_errors
-    
-    # Convert dataframe to list of records
+    # Convert dataframe to records, handling hex ID conversion
+    data_records = []
     if hasattr(df, 'to_dict'):
-        # Handle both pandas and geopandas dataframes
         data_records = df.to_dict('records')
-        
-        # Convert hex IDs to hex strings to avoid precision loss in JavaScript
-        conversion_count = 0
-        for i, record in enumerate(data_records):
+        for record in data_records:
             hex_val = record.get('hex') or record.get('h3') or record.get('index') or record.get('id')
             if hex_val is not None:
                 try:
-                    # Convert integer to hex string
                     if isinstance(hex_val, (int, float)):
-                        hex_int = int(hex_val)
-                        hex_str = format(hex_int, 'x')  # Convert to hex string
-                        record['hex'] = hex_str
-                        conversion_count += 1
-                        # Debug: print first conversion
-                        if i == 0:
-                            print(f"[deckgl_hex] Converted hex: {hex_int} -> {hex_str}")
+                        record['hex'] = format(int(hex_val), 'x')
                     elif isinstance(hex_val, str) and hex_val.isdigit():
-                        # String that looks like a number
-                        hex_int = int(hex_val)
-                        hex_str = format(hex_int, 'x')
-                        record['hex'] = hex_str
-                        conversion_count += 1
+                        record['hex'] = format(int(hex_val), 'x')
                     else:
-                        # Already a hex string
                         record['hex'] = hex_val
-                        if i == 0:
-                            print(f"[deckgl_hex] Hex already string: {hex_val}")
-                except (ValueError, OverflowError) as e:
-                    print(f"Error converting hex: {hex_val}, {e}")
+                except (ValueError, OverflowError):
                     record['hex'] = None
         
-        if conversion_count > 0:
-            print(f"[deckgl_hex] Converted {conversion_count} hex IDs from int to hex string")
-    else:
-        data_records = []
-    
-    # Auto-calculate center from lat/lng columns if available
-    auto_center = (-119.4179, 36.7783)  # Default to California
-    auto_zoom = 5
-    
-    if len(data_records) > 0:
-        available_keys = set(data_records[0].keys())
-        if configured_tooltip_columns:
-            tooltip_columns = [col for col in configured_tooltip_columns if col in available_keys]
-        else:
-            tooltip_columns = []
+    # Auto-center from data
+    auto_center, auto_zoom = (-119.4179, 36.7783), 5
+    if data_records and 'lat' in data_records[0] and 'lng' in data_records[0]:
+        lats = [r['lat'] for r in data_records if 'lat' in r]
+        lngs = [r['lng'] for r in data_records if 'lng' in r]
+        if lats and lngs:
+            auto_center = (sum(lngs) / len(lngs), sum(lats) / len(lats))
+            auto_zoom = 8
 
-        if 'lat' in data_records[0] and 'lng' in data_records[0]:
-            lats = [r['lat'] for r in data_records if 'lat' in r]
-            lngs = [r['lng'] for r in data_records if 'lng' in r]
-            if lats and lngs:
-                auto_center = (sum(lngs)/len(lngs), sum(lats)/len(lats))
-                auto_zoom = 8
-    else:
-        tooltip_columns = []
+    # View state
+    ivs = merged_config.get('initialViewState', {})
+    center_lng = ivs.get('longitude') or auto_center[0]
+    center_lat = ivs.get('latitude') or auto_center[1]
+    zoom = ivs.get('zoom') or auto_zoom
 
-    # Get initialViewState from config, use auto-calculated values as fallback
-    initial_view_state = config.get('initialViewState', {})
-    center_lng = initial_view_state.get('longitude')
-    center_lat = initial_view_state.get('latitude')
-    zoom = initial_view_state.get('zoom')
-    pitch = initial_view_state.get('pitch', 0)
-    bearing = initial_view_state.get('bearing', 0)
-    
-    # Use auto values if not specified in config
-    if center_lng is None:
-        center_lng = auto_center[0]
-    if center_lat is None:
-        center_lat = auto_center[1]
-    if zoom is None:
-        zoom = auto_zoom
-
-    # Infer tooltip columns from data ONLY if not configured
-    if not tooltip_columns and not configured_tooltip_columns and data_records:
+    # Tooltip columns
+    tooltip_columns = _extract_tooltip_columns((merged_config, hex_layer))
+    if not tooltip_columns and data_records:
         tooltip_columns = [k for k in data_records[0].keys() if k not in ['hex', 'lat', 'lng']]
 
     html = Template(r"""
@@ -662,568 +557,241 @@ def deckgl_hex(
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>H3 Hexagon Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- Mapbox GL -->
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-
-  <!-- H3-js for hex-to-polygon conversion -->
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
   <script src="https://unpkg.com/h3-js@4.1.0/dist/h3-js.umd.js"></script>
-  
-  <!-- Cartocolor for color palettes -->
   <script type="module">
     import * as cartocolor from 'https://esm.sh/cartocolor@5.0.2';
     window.cartocolor = cartocolor;
-    // Dispatch event when loaded
-    window.dispatchEvent(new Event('cartocolor-loaded'));
   </script>
-
   <style>
-    html, body, #map { margin: 0; height: 100%; width: 100%; }
-    #tooltip {
-      position: absolute;
-      pointer-events: none;
-      background: rgba(0,0,0,0.7);
-      color: #fff;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      display: none;
-      z-index: 6;
-    }
-    #config-error {
-      position: fixed;
-      right: 14px;
-      bottom: 14px;
-      background: rgba(180, 30, 30, 0.92);
-      color: #fff;
-      padding: 6px 10px;
-      border-radius: 4px;
-      font-size: 11px;
-      max-width: 260px;
-      line-height: 1.4;
-      display: none;
-      z-index: 8;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
-    }
-    .color-legend {
-      position: fixed;
-      left: 12px;
-      bottom: 12px;
-      background: rgba(15, 15, 15, 0.9);
-      color: #fff;
-      padding: 8px 10px;
-      border-radius: 4px;
-      font-size: 11px;
-      z-index: 10;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
-      border: 1px solid rgba(255,255,255,0.1);
-      min-width: 140px;
-      display: none;
-    }
-    .color-legend .legend-title {
-      margin-bottom: 6px;
-      font-weight: 500;
-      color: #fff;
-    }
-    .color-legend .legend-gradient {
-      width: 100%;
-      height: 12px;
-      border-radius: 2px;
-      margin-bottom: 4px;
-      border: 1px solid rgba(255,255,255,0.2);
-    }
-    .color-legend .legend-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 10px;
-      color: #ccc;
-    }
+    html, body, #map { margin:0; height:100%; width:100%; }
+    #tooltip { position:absolute; pointer-events:none; background:rgba(0,0,0,0.7); color:#fff; padding:4px 8px; border-radius:4px; font-size:12px; display:none; z-index:6; }
+    .config-error { position:fixed; right:12px; bottom:12px; background:rgba(180,30,30,0.92); color:#fff; padding:6px 10px; border-radius:4px; font-size:11px; display:none; z-index:8; max-width:260px; }
+    .color-legend { position:fixed; left:12px; bottom:12px; background:rgba(15,15,15,0.9); color:#fff; padding:8px; border-radius:4px; font-size:11px; display:none; z-index:10; min-width:140px; border:1px solid rgba(255,255,255,0.1); }
+    .color-legend .legend-title { margin-bottom:6px; font-weight:500; }
+    .color-legend .legend-gradient { height:12px; border-radius:2px; margin-bottom:4px; border:1px solid rgba(255,255,255,0.2); }
+    .color-legend .legend-labels { display:flex; justify-content:space-between; font-size:10px; color:#ccc; }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <div id="tooltip"></div>
-  <div id="config-error"></div>
-  <div id="color-legend" class="color-legend">
-    <div class="legend-title"></div>
-    <div class="legend-gradient"></div>
-    <div class="legend-labels">
-      <span class="legend-min"></span>
-      <span class="legend-max"></span>
-    </div>
-  </div>
+<div id="config-error" class="config-error"></div>
+<div id="color-legend" class="color-legend"><div class="legend-title"></div><div class="legend-gradient"></div><div class="legend-labels"><span class="legend-min"></span><span class="legend-max"></span></div></div>
 
   <script>
     const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
-    const STYLE_URL = {{ style_url | tojson }};
     const DATA = {{ data_records | tojson }};
     const CONFIG = {{ config | tojson }};
     const TOOLTIP_COLUMNS = {{ tooltip_columns | tojson }};
-    const DEFAULT_FILL_CONFIG = {{ default_fill_config | tojson }};
-    const CONFIG_ERROR = {{ config_error | tojson }};
+const CONFIG_ERRORS = {{ config_errors | tojson }};
 
-    const $tooltip = () => document.getElementById('tooltip');
-
-    // ----- H3 ID safety (handles string/number/bigint) -----
-    function toH3String(hex) {
-      try {
+// H3 ID conversion
+function toH3(hex) {
         if (hex == null) return null;
+  try {
         if (typeof hex === 'string') {
           const s = hex.startsWith('0x') ? hex.slice(2) : hex;
-          if (/[a-f]/i.test(s)) return s.toLowerCase();
-          if (/^\d+$/.test(s)) return BigInt(s).toString(16);
-            return s.toLowerCase();
+      return /[a-f]/i.test(s) ? s.toLowerCase() : /^\d+$/.test(s) ? BigInt(s).toString(16) : s.toLowerCase();
           }
         if (typeof hex === 'number') return BigInt(Math.trunc(hex)).toString(16);
         if (typeof hex === 'bigint') return hex.toString(16);
-      } catch(e) {
-        console.error('toH3String error:', hex, e);
-      }
+  } catch(e) {}
       return null;
     }
 
-    // Convert H3 hex data to GeoJSON FeatureCollection using h3-js
-    function hexDataToGeoJSON(data) {
+// Convert to GeoJSON
+function toGeoJSON(data) {
       const features = [];
       for (const d of data) {
-        const hexRaw = d.hex ?? d.h3 ?? d.index ?? d.id;
-        const hexId = toH3String(hexRaw);
+    const hexId = toH3(d.hex ?? d.h3 ?? d.index ?? d.id);
         if (!hexId || !h3.isValidCell(hexId)) continue;
-        
         try {
-          // h3.cellToBoundary returns [[lat, lng], ...] - need to swap to [lng, lat] for GeoJSON
           const boundary = h3.cellToBoundary(hexId);
-          const coordinates = boundary.map(([lat, lng]) => [lng, lat]);
-          // Close the polygon
-          coordinates.push(coordinates[0]);
-          
-          features.push({
-            type: 'Feature',
-            properties: { ...d, hex: hexId },
-            geometry: {
-              type: 'Polygon',
-              coordinates: [coordinates]
-            }
-          });
-            } catch (err) {
-          console.warn('Failed to convert hex to polygon:', hexId, err);
-        }
+      const coords = boundary.map(([lat, lng]) => [lng, lat]);
+      coords.push(coords[0]);
+      features.push({ type: 'Feature', properties: { ...d, hex: hexId }, geometry: { type: 'Polygon', coordinates: [coords] }});
+    } catch(e) {}
       }
       return { type: 'FeatureCollection', features };
     }
 
-    // Build color expression for Mapbox from colorContinuous config
-    function buildColorExpression(colorConfig) {
-      if (!colorConfig || colorConfig['@@function'] !== 'colorContinuous') {
-        return 'rgba(0, 144, 255, 0.7)'; // default blue
-      }
-      
-      const attr = colorConfig.attr;
-      let domain = colorConfig.domain;
-      const steps = colorConfig.steps || 7;
-      const paletteName = colorConfig.colors || 'Magenta';
-      
-      if (!attr || !domain || domain.length !== 2) {
-        return 'rgba(0, 144, 255, 0.7)';
-      }
-      
-      // Ensure domain is in ascending order (Mapbox requires this)
-      const isReversed = domain[0] > domain[1];
-      const sortedDomain = isReversed ? [domain[1], domain[0]] : domain;
-      
-      // Wait for cartocolor to be available
-      const palette = window.cartocolor && window.cartocolor[paletteName];
-      if (!palette) {
-        console.warn('[deckgl_hex] Palette not found:', paletteName, '- using fallback');
-        // Fallback gradient
-        return ['interpolate', ['linear'], ['get', attr],
-          sortedDomain[0], 'rgb(255, 245, 240)',
-          sortedDomain[1], 'rgb(103, 0, 31)'
-        ];
-      }
-      
-      // Get colors array from palette
-      const available = Object.keys(palette).map(Number).filter(n => !isNaN(n)).sort((a, b) => a - b);
-      const best = available.find(n => n >= steps) || available[available.length - 1];
-      let colorsArray = palette[best];
-      
-      if (!colorsArray || !colorsArray.length) {
-        return 'rgba(0, 144, 255, 0.7)';
-      }
-      
-      // If domain was reversed, reverse the colors to maintain the intended mapping
-      if (isReversed) {
-        colorsArray = [...colorsArray].reverse();
-      }
-      
-      // Build Mapbox interpolate expression with ascending domain values
-      const expr = ['interpolate', ['linear'], ['get', attr]];
-      for (let i = 0; i < colorsArray.length; i++) {
-        const value = sortedDomain[0] + ((sortedDomain[1] - sortedDomain[0]) * (i / (colorsArray.length - 1)));
-        expr.push(value);
-        expr.push(colorsArray[i]);
-      }
-      
+// Get palette colors from cartocolor
+function getPaletteColors(name, steps) {
+  const pal = window.cartocolor?.[name];
+  if (!pal) return null;
+  const keys = Object.keys(pal).map(Number).filter(n => !isNaN(n)).sort((a, b) => a - b);
+  const best = keys.find(n => n >= steps) || keys[keys.length - 1];
+  return pal[best] ? [...pal[best]] : null;
+}
+
+// Build color expression
+function buildColorExpr(cfg) {
+  if (!cfg || cfg['@@function'] !== 'colorContinuous' || !cfg.attr || !cfg.domain?.length) return 'rgba(0,144,255,0.7)';
+  const [d0, d1] = cfg.domain, rev = d0 > d1, dom = rev ? [d1, d0] : [d0, d1];
+  const steps = cfg.steps || 7, name = cfg.colors || 'TealGrn';
+  let cols = getPaletteColors(name, steps);
+  if (!cols || !cols.length) {
+    return ['interpolate', ['linear'], ['get', cfg.attr], dom[0], 'rgb(237,248,251)', dom[1], 'rgb(0,109,44)'];
+  }
+  if (rev) cols.reverse();
+  const expr = ['interpolate', ['linear'], ['get', cfg.attr]];
+  cols.forEach((c, i) => { expr.push(dom[0] + (dom[1] - dom[0]) * i / (cols.length - 1)); expr.push(c); });
       return expr;
     }
 
-    let configErrors = [];
-    if (CONFIG_ERROR) {
-      configErrors = configErrors.concat(
-        Array.isArray(CONFIG_ERROR) ? CONFIG_ERROR : String(CONFIG_ERROR).split(" • ").map(s => s.trim()).filter(Boolean)
-      );
-    }
+const geojson = toGeoJSON(DATA);
 
-    // Convert data to GeoJSON
-    const geojsonData = hexDataToGeoJSON(DATA);
-
-    // Mapbox init
     mapboxgl.accessToken = MAPBOX_TOKEN;
-    const map = new mapboxgl.Map({ 
-      container: 'map', 
-      style: STYLE_URL, 
-      center: [{{ center_lng }}, {{ center_lat }}], 
-      zoom: {{ zoom }},
-      projection: 'mercator'  // Force flat mercator projection (not globe)
-    });
-    
-    // Additional safeguard: disable globe after map loads
-    map.on('style.load', () => {
-      if (map.setProjection) {
-        map.setProjection('mercator');
-      }
-    });
+const map = new mapboxgl.Map({ container: 'map', style: {{ style_url | tojson }}, center: [{{ center_lng }}, {{ center_lat }}], zoom: {{ zoom }}, projection: 'mercator' });
 
-    // Build elevation expression for Mapbox from getElevation config
-    function buildElevationExpression(elevConfig, hexLayerConfig) {
-      // Check if extrusion is enabled
-      const extruded = hexLayerConfig.extruded;
-      if (!extruded) return null;
-      
-      // Get elevation config - can be a number, accessor string, or object
-      const getElevation = hexLayerConfig.getElevation;
-      const elevationScale = hexLayerConfig.elevationScale || 1;
-      
-      if (typeof getElevation === 'number') {
-        return getElevation * elevationScale;
-      }
-      
-      if (typeof getElevation === 'string' && getElevation.startsWith('@@=')) {
-        // Parse @@=properties.value accessor
-        const match = getElevation.match(/properties\.(\w+)/);
-        if (match) {
-          return ['*', ['get', match[1]], elevationScale];
-        }
-      }
-      
-      // Default: use the color attribute for elevation if available
-      const fillColorConfig = hexLayerConfig.getFillColor;
-      if (fillColorConfig && fillColorConfig.attr) {
-        return ['*', ['get', fillColorConfig.attr], elevationScale];
-      }
-      
-      return 100; // Default height
-    }
+// Convert [r,g,b] or [r,g,b,a] array to rgba string
+function toRgba(arr, defaultAlpha) {
+  if (!Array.isArray(arr) || arr.length < 3) return null;
+  const [r, g, b] = arr;
+  const a = arr.length >= 4 ? arr[3] / 255 : (defaultAlpha ?? 1);
+  return `rgba(${r},${g},${b},${a})`;
+}
 
-    function addHexLayers() {
-      // Remove existing layers/source if present
-      if (map.getLayer('hex-fill')) map.removeLayer('hex-fill');
-      if (map.getLayer('hex-extrusion')) map.removeLayer('hex-extrusion');
-      if (map.getLayer('hex-outline')) map.removeLayer('hex-outline');
-      if (map.getSource('hex-source')) map.removeSource('hex-source');
-      
-      // Add GeoJSON source
-      map.addSource('hex-source', {
-        type: 'geojson',
-        data: geojsonData
-      });
-      
-      // Get config from hexLayer
-      const hexLayerConfig = CONFIG.hexLayer || {};
-      const isFilled = hexLayerConfig.filled !== false;  // Default true
-      const isExtruded = hexLayerConfig.extruded === true;
-      const lineWidth = hexLayerConfig.lineWidthMinPixels || 0.5;
-      
-      // Build fill color expression
-      const fillColorConfig = hexLayerConfig.getFillColor;
-      const fillColor = buildColorExpression(fillColorConfig);
-      
-      // Build line color expression - support both simple array and colorContinuous
-      const lineColorConfig = hexLayerConfig.getLineColor;
-      let lineColor = 'rgba(255, 255, 255, 0.3)';  // Default white outline
-      if (lineColorConfig) {
-        if (lineColorConfig['@@function'] === 'colorContinuous') {
-          // Use colorContinuous for line color
-          lineColor = buildColorExpression(lineColorConfig);
-        } else if (Array.isArray(lineColorConfig)) {
-          // Simple [r,g,b] or [r,g,b,a] array
-          const [r, g, b] = lineColorConfig;
-          const a = lineColorConfig[3] !== undefined ? lineColorConfig[3] / 255 : 1;
-          lineColor = `rgba(${r},${g},${b},${a})`;
-        }
+function addLayers() {
+  ['hex-fill','hex-extrusion','hex-outline'].forEach(id => { try { if(map.getLayer(id)) map.removeLayer(id); } catch(e){} });
+  try { if(map.getSource('hex-source')) map.removeSource('hex-source'); } catch(e){}
+  
+  map.addSource('hex-source', { type: 'geojson', data: geojson });
+  const cfg = CONFIG.hexLayer || {};
+  const fillColor = Array.isArray(cfg.getFillColor) ? toRgba(cfg.getFillColor, 0.8) : buildColorExpr(cfg.getFillColor);
+  const lineColor = cfg.getLineColor ? (Array.isArray(cfg.getLineColor) ? toRgba(cfg.getLineColor, 1) : buildColorExpr(cfg.getLineColor)) : 'rgba(255,255,255,0.3)';
+  
+  if (cfg.extruded) {
+    const elev = cfg.elevationScale || 1;
+    map.addLayer({
+      id:'hex-extrusion',
+      type:'fill-extrusion',
+      source:'hex-source',
+      paint:{
+        'fill-extrusion-color':fillColor,
+        'fill-extrusion-height':cfg.getFillColor?.attr ? ['*',['get',cfg.getFillColor.attr],elev] : 100,
+        'fill-extrusion-base':0,
+        'fill-extrusion-opacity':0.8
       }
-      
-      if (isExtruded) {
-        // Use fill-extrusion layer for 3D
-        const elevationExpr = buildElevationExpression(null, hexLayerConfig);
-        
+    });
+    // Optional outline for extruded view so users can see stroke color
         map.addLayer({
-          id: 'hex-extrusion',
-          type: 'fill-extrusion',
-          source: 'hex-source',
-          paint: {
-            'fill-extrusion-color': fillColor,
-            'fill-extrusion-height': elevationExpr || 100,
-            'fill-extrusion-base': 0,
-            'fill-extrusion-opacity': 0.8
-          }
-        });
-        
+      id:'hex-outline',
+      type:'line',
+      source:'hex-source',
+      paint:{
+        'line-color':lineColor,
+        'line-width':cfg.lineWidthMinPixels || 0.5
+      }
+    });
       } else {
-        // Add fill layer only if filled is true
-        if (isFilled) {
-          map.addLayer({
-            id: 'hex-fill',
-            type: 'fill',
-            source: 'hex-source',
-            paint: {
-              'fill-color': fillColor,
-              'fill-opacity': 0.8
-            }
-          });
-        }
-        
-        // Add outline layer (always add for hex visibility)
-        map.addLayer({
-          id: 'hex-outline',
-          type: 'line',
-          source: 'hex-source',
-          paint: {
-            'line-color': lineColor,
-            'line-width': lineWidth
-          }
-        });
-      }
-    }
+    if (cfg.filled !== false) map.addLayer({ id:'hex-fill', type:'fill', source:'hex-source', paint:{ 'fill-color':fillColor, 'fill-opacity':0.8 }});
+    map.addLayer({ id:'hex-outline', type:'line', source:'hex-source', paint:{ 'line-color':lineColor, 'line-width':cfg.lineWidthMinPixels || 0.5 }});
+  }
+}
 
-    // Fit bounds from GeoJSON
-    function fitToBounds() {
-      if (geojsonData.features.length === 0) return;
-      
-      const bounds = new mapboxgl.LngLatBounds();
-      for (const feature of geojsonData.features) {
-        const coords = feature.geometry.coordinates[0];
-        for (const [lng, lat] of coords) {
-                bounds.extend([lng, lat]);
-            }
-          }
-          
-          if (!bounds.isEmpty()) {
-              map.fitBounds(bounds, {
-                padding: 50,
-                maxZoom: 15,
-                duration: 500
-              });
-      }
-    }
+function showLegend() {
+  const cfg = CONFIG.hexLayer || {};
+  const colorCfg = cfg.filled === false ? (cfg.getLineColor || cfg.getFillColor) : (cfg.getFillColor || cfg.getLineColor);
+  if (!colorCfg || colorCfg['@@function'] !== 'colorContinuous' || !colorCfg.attr || !colorCfg.domain?.length) return;
+  
+  const [d0, d1] = colorCfg.domain;
+  const isReversed = d0 > d1;
+  const steps = colorCfg.steps || 7;
+  const paletteName = colorCfg.colors || 'TealGrn';
+  
+  let cols = getPaletteColors(paletteName, steps);
+  if (!cols || !cols.length) {
+    cols = ['#e0f3db','#ccebc5','#a8ddb5','#7bccc4','#4eb3d3','#2b8cbe','#0868ac','#084081'];
+  }
+  
+  if (isReversed) cols = [...cols].reverse();
+  
+  const leg = document.getElementById('color-legend');
+  leg.querySelector('.legend-title').textContent = colorCfg.attr;
+  leg.querySelector('.legend-gradient').style.background = `linear-gradient(to right, ${cols.map((c, i) => `${c} ${i / (cols.length - 1) * 100}%`).join(', ')})`;
+  leg.querySelector('.legend-min').textContent = d0.toFixed(1);
+  leg.querySelector('.legend-max').textContent = d1.toFixed(1);
+  leg.style.display = 'block';
+}
 
-    let layersAdded = false;
-    
-    function tryAddLayers() {
-      if (layersAdded) return;
-      
-      // Wait for cartocolor if we need it for color expressions
-      const hexLayerConfig = CONFIG.hexLayer || {};
-      const fillColorConfig = hexLayerConfig.getFillColor;
-      const lineColorConfig = hexLayerConfig.getLineColor;
-      const needsCartocolorFill = fillColorConfig && fillColorConfig['@@function'] === 'colorContinuous';
-      const needsCartocolorLine = lineColorConfig && lineColorConfig['@@function'] === 'colorContinuous';
-      
-      if ((needsCartocolorFill || needsCartocolorLine) && !window.cartocolor) {
-        setTimeout(tryAddLayers, 50);
+let layersReady = false;
+function tryInit() {
+  if (layersReady) return;
+  const cfg = CONFIG.hexLayer || {};
+  const colorCfg = cfg.filled === false ? cfg.getLineColor : cfg.getFillColor;
+  const needsCartocolor = colorCfg && colorCfg['@@function'] === 'colorContinuous';
+  
+  if (needsCartocolor && !window.cartocolor) {
+    setTimeout(tryInit, 50);
         return;
       }
       
-      addHexLayers();
-      fitToBounds();
-      layersAdded = true;
-    }
-    
-    map.on('load', () => {
-      tryAddLayers();
-    });
+  layersReady = true;
+  addLayers();
+  showLegend();
+  
+  if (geojson.features.length) {
+    const bounds = new mapboxgl.LngLatBounds();
+    geojson.features.forEach(f => f.geometry.coordinates[0].forEach(c => bounds.extend(c)));
+    if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 500 });
+  }
+  
+  const layer = cfg.extruded ? 'hex-extrusion' : cfg.filled !== false ? 'hex-fill' : 'hex-outline';
+  const tt = document.getElementById('tooltip');
+  
+  map.on('mousemove', layer, (e) => {
+    if (!e.features?.length) return;
+    map.getCanvas().style.cursor = 'pointer';
+    const p = e.features[0].properties;
+    const lines = TOOLTIP_COLUMNS.length ? TOOLTIP_COLUMNS.map(k => p[k] != null ? `${k}: ${typeof p[k]==='number'?p[k].toFixed(2):p[k]}` : '').filter(Boolean) : (p.hex ? [`hex: ${p.hex.slice(0,12)}...`] : []);
+    if (lines.length) { tt.innerHTML = lines.join(' &bull; '); tt.style.left = `${e.point.x+10}px`; tt.style.top = `${e.point.y+10}px`; tt.style.display = 'block'; }
+  });
+  
+  map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = ''; tt.style.display = 'none'; });
+}
 
-    // Re-add layers if style changes (recovery)
-    map.on('styledata', () => {
-      if (!map.getSource('hex-source') && geojsonData.features.length > 0) {
-        layersAdded = false;
-        tryAddLayers();
-      }
-    });
+map.on('load', tryInit);
 
-    // Tooltip on hover using native Mapbox querying
-    // Works for both 'hex-fill' (2D) and 'hex-extrusion' (3D) layers
-    function showTooltip(e) {
-        map.getCanvas().style.cursor = 'pointer';
-      
-      if (e.features && e.features.length > 0) {
-        const props = e.features[0].properties;
-        const lines = [];
-        
-        if (!TOOLTIP_COLUMNS.length && props.hex) {
-          lines.push(`hex: ${props.hex.substring(0, 12)}...`);
-        }
-        
-        TOOLTIP_COLUMNS.forEach(col => {
-          if (props[col] !== undefined && props[col] !== null) {
-            let val = props[col];
-            if (typeof val === 'number' && Number.isFinite(val)) {
-              val = val.toFixed(2);
-            }
-            lines.push(`${col}: ${val}`);
-          }
-        });
+// Fix for tiles not loading in iframes - aggressive tile refresh
+map.on('load', () => {
+  [100, 300, 600, 1000, 2000].forEach(t => setTimeout(() => { map.resize(); map.triggerRepaint(); }, t));
+});
+map.on('idle', () => { 
+  setTimeout(() => map.triggerRepaint(), 50);
+});
+window.addEventListener('resize', () => { map.resize(); map.triggerRepaint(); });
+document.addEventListener('visibilitychange', () => { 
+  if (!document.hidden) { 
+    setTimeout(() => { map.resize(); map.triggerRepaint(); }, 100);
+    setTimeout(() => { map.resize(); map.triggerRepaint(); }, 500);
+  }
+});
+if (window.ResizeObserver) {
+  new ResizeObserver(() => { try { map.resize(); map.triggerRepaint(); } catch(e){} }).observe(document.getElementById('map'));
+}
+// Periodic check for missing tiles during first 5 seconds
+let tileChecks = 0;
+const tileCheckInterval = setInterval(() => {
+  if (++tileChecks > 10) { clearInterval(tileCheckInterval); return; }
+  map.triggerRepaint();
+}, 500);
 
-        const tt = $tooltip();
-        if (lines.length) {
-          tt.innerHTML = lines.join(' &bull; ');
-        tt.style.left = `${e.point.x + 10}px`;
-        tt.style.top = `${e.point.y + 10}px`;
-        tt.style.display = 'block';
-      } else {
-          tt.style.display = 'none';
-        }
-      }
-    }
-    
-    function hideTooltip() {
-        map.getCanvas().style.cursor = '';
-        $tooltip().style.display = 'none';
-      }
-    
-    // Attach tooltip handlers after layers are added
-    map.on('load', () => {
-      // Determine which layer to use for tooltips based on config
-      const hexLayerConfig = CONFIG.hexLayer || {};
-      const isExtruded = hexLayerConfig.extruded === true;
-      const isFilled = hexLayerConfig.filled !== false;
-      
-      // Use appropriate layer for tooltips: extrusion > fill > outline
-      let layerId;
-      if (isExtruded) {
-        layerId = 'hex-extrusion';
-      } else if (isFilled) {
-        layerId = 'hex-fill';
-      } else {
-        layerId = 'hex-outline';  // When filled=false, use outline layer
-      }
-      
-      map.on('mousemove', layerId, showTooltip);
-      map.on('mouseleave', layerId, hideTooltip);
-    });
-
-    // Generate color legend if colorContinuous config exists
-    function generateColorLegend() {
-      const hexLayer = CONFIG.hexLayer || {};
-      // Check getFillColor first, then getLineColor
-      let colorCfg = hexLayer.getFillColor;
-      if (!colorCfg || colorCfg['@@function'] !== 'colorContinuous') {
-        colorCfg = hexLayer.getLineColor;
-        if (!colorCfg || colorCfg['@@function'] !== 'colorContinuous') {
-          return;
-        }
-      }
-      
-      // Use values from config, no fallbacks - if missing, don't show legend
-      const attr = colorCfg.attr;
-      const domain = colorCfg.domain;
-      const steps = colorCfg.steps || 7;
-      const colors = colorCfg.colors || 'TealGrn';
-      
-      if (!attr || !domain || !Array.isArray(domain) || domain.length !== 2) {
-        return;
-      }
-      
-      if (!window.cartocolor) {
-        setTimeout(generateColorLegend, 100);
-        return;
-      }
-      
-      try {
-        const palette = window.cartocolor[colors];
-        if (!palette) {
-          console.warn('[legend] Palette not found:', colors);
-          return;
-        }
-        
-        // Cartocolor palettes are objects with numbered keys (3, 4, 5, etc.)
-        // Find the closest available step count
-        let colorsArray = null;
-        if (palette[steps]) {
-          colorsArray = palette[steps];
-        } else {
-          // Find the highest available step count <= steps, or the max available
-          const availableSteps = Object.keys(palette).map(Number).filter(n => !isNaN(n)).sort((a, b) => b - a);
-          const closestStep = availableSteps.find(s => s <= steps) || availableSteps[availableSteps.length - 1];
-          colorsArray = palette[closestStep];
-        }
-        
-        if (!colorsArray || !Array.isArray(colorsArray)) {
-          console.warn('[legend] Invalid color array for palette:', colors);
-          return;
-        }
-        
-        const gradient = colorsArray.map((c, i) => {
-          const pct = (i / (colorsArray.length - 1)) * 100;
-          return `${c} ${pct}%`;
-        }).join(', ');
-        
-        const legendEl = document.getElementById('color-legend');
-        if (legendEl) {
-          legendEl.querySelector('.legend-title').textContent = attr;
-          legendEl.querySelector('.legend-gradient').style.background = `linear-gradient(to right, ${gradient})`;
-          legendEl.querySelector('.legend-min').textContent = domain[0].toFixed(1);
-          legendEl.querySelector('.legend-max').textContent = domain[1].toFixed(1);
-          legendEl.style.display = 'block';
-        } else {
-          console.warn('[legend] Legend element not found');
-        }
-      } catch (err) {
-        console.warn('[legend] Failed to generate color legend:', err);
-      }
-    }
-    
-    // Wait for cartocolor to load
-    if (window.cartocolor) {
-      generateColorLegend();
-    } else {
-      setTimeout(generateColorLegend, 500);
-    }
-
-    if (configErrors.length) {
+if (CONFIG_ERRORS?.length) {
       const box = document.getElementById('config-error');
-      if (box) {
-        box.innerHTML = configErrors.map(msg => `<div>${msg}</div>`).join('');
+  box.innerHTML = CONFIG_ERRORS.join('<br>');
         box.style.display = 'block';
-      }
     }
   </script>
 </body>
 </html>
 """).render(
-        mapbox_token=mapbox_token,
-        data_records=data_records,
-        config=config,
-        tooltip_columns=tooltip_columns,
-        center_lng=center_lng,
-        center_lat=center_lat,
-        zoom=zoom,
-        config_error=config_error_messages,
-        default_fill_config=DEFAULT_DECK_HEX_CONFIG["hexLayer"]["getFillColor"],
-        style_url=style_url,
+        mapbox_token=mapbox_token, data_records=data_records, config=merged_config,
+        tooltip_columns=tooltip_columns, center_lng=center_lng, center_lat=center_lat,
+        zoom=zoom, config_errors=config_errors, style_url=style_url,
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
@@ -1386,7 +954,7 @@ const TINT_COLOR = {{ tint_color | tojson }};
 mapboxgl.accessToken = MAPBOX_TOKEN;
 const map = new mapboxgl.Map({
   container: 'map',
-  style: 'mapbox://styles/mapbox/dark-v10',
+  style: 'mapbox://styles/mapbox/dark-v11',
   center: [{{ center_lng }}, {{ center_lat }}],
   zoom: {{ zoom }},
   pitch: {{ pitch }},
