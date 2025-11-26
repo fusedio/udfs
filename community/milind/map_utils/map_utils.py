@@ -1185,7 +1185,15 @@ def deckgl_hex(
       container: 'map', 
       style: STYLE_URL, 
       center: [{{ center_lng }}, {{ center_lat }}], 
-      zoom: {{ zoom }}
+      zoom: {{ zoom }},
+      projection: 'mercator'  // Force flat mercator projection (not globe)
+    });
+    
+    // Additional safeguard: disable globe after map loads
+    map.on('style.load', () => {
+      if (map.setProjection) {
+        map.setProjection('mercator');
+      }
     });
 
     // Build elevation expression for Mapbox from getElevation config
