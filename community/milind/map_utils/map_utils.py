@@ -573,8 +573,8 @@ def deckgl_hex(
     # Auto-center from data
     auto_center, auto_zoom = (-119.4179, 36.7783), 5
     if data_records and 'lat' in data_records[0] and 'lng' in data_records[0]:
-        lats = [r['lat'] for r in data_records if 'lat' in r]
-        lngs = [r['lng'] for r in data_records if 'lng' in r]
+        lats = [r["lat"] for r in data_records if "lat" in r]
+        lngs = [r["lng"] for r in data_records if "lng" in r]
         if lats and lngs:
             auto_center = (sum(lngs) / len(lngs), sum(lats) / len(lats))
             auto_zoom = 8
@@ -892,12 +892,10 @@ function tryInit() {
   showLegend();
   
   // Auto-fit to data bounds if no custom view specified
-  console.log('[tryInit] fitBounds check:', { HAS_CUSTOM_VIEW, autoFitDone, features: geojson.features.length });
   if (!HAS_CUSTOM_VIEW && !autoFitDone && geojson.features.length) {
     const bounds = new mapboxgl.LngLatBounds();
     geojson.features.forEach(f => f.geometry.coordinates[0].forEach(c => bounds.extend(c)));
     if (!bounds.isEmpty()) {
-      console.log('[tryInit] Fitting bounds:', bounds.toArray());
       map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 500 });
       autoFitDone = true;
     }
@@ -919,29 +917,10 @@ function tryInit() {
 
 map.on('load', tryInit);
 
-// Fix for tiles not loading in iframes - aggressive tile refresh
-    map.on('load', () => {
-  [100, 300, 600, 1000, 2000].forEach(t => setTimeout(() => { map.resize(); map.triggerRepaint(); }, t));
-});
-map.on('idle', () => { 
-  setTimeout(() => map.triggerRepaint(), 50);
-});
-window.addEventListener('resize', () => { map.resize(); map.triggerRepaint(); });
-document.addEventListener('visibilitychange', () => { 
-  if (!document.hidden) { 
-    setTimeout(() => { map.resize(); map.triggerRepaint(); }, 100);
-    setTimeout(() => { map.resize(); map.triggerRepaint(); }, 500);
-  }
-});
-if (window.ResizeObserver) {
-  new ResizeObserver(() => { try { map.resize(); map.triggerRepaint(); } catch(e){} }).observe(document.getElementById('map'));
-}
-// Periodic check for missing tiles during first 5 seconds
-let tileChecks = 0;
-const tileCheckInterval = setInterval(() => {
-  if (++tileChecks > 10) { clearInterval(tileCheckInterval); return; }
-  map.triggerRepaint();
-}, 500);
+// Fix for tiles not loading in iframes
+map.on('load', () => { [100, 500, 1000].forEach(t => setTimeout(() => map.resize(), t)); });
+window.addEventListener('resize', () => map.resize());
+document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => map.resize(), 100); });
 
 if (CONFIG_ERRORS?.length) {
   const box = document.getElementById('config-error');
@@ -961,7 +940,6 @@ function applyViewState(cfg) {
   const zoom = (typeof ivs.zoom === 'number') ? ivs.zoom : map.getZoom();
   const pitch = (typeof ivs.pitch === 'number') ? Math.min(85, Math.max(0, ivs.pitch)) : map.getPitch();
   const bearing = (typeof ivs.bearing === 'number') ? ivs.bearing : map.getBearing();
-  console.log('[debug] applyViewState:', { lng, lat, zoom, pitch, bearing });
   map.easeTo({ center: [lng, lat], zoom, pitch, bearing, duration: 500 });
   autoFitDone = true; // Only set after actually applying custom view
 }
@@ -1059,7 +1037,7 @@ if (DEBUG_MODE) {
       setValue('cfg-domain-max', color.domain?.[1]);
       setValue('cfg-steps', color.steps ?? 7);
       if (paletteEl && color.colors) paletteEl.value = color.colors;
-    } else {
+      } else {
       populateAttrOptions(numericAttrs[0]);
       setValue('cfg-domain-min', 0);
       setValue('cfg-domain-max', 100);
@@ -1183,7 +1161,7 @@ if (DEBUG_MODE) {
     el.addEventListener('input', scheduleApply);
     el.addEventListener('change', scheduleApply);
   });
-}
+    }
   </script>
 </body>
 </html>
