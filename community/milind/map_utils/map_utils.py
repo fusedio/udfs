@@ -1016,8 +1016,8 @@ def deckgl_hex(
     if zoom is None:
         zoom = auto_zoom
 
-    # Infer tooltip columns from data
-    if not tooltip_columns and data_records:
+    # Infer tooltip columns from data ONLY if not configured
+    if not tooltip_columns and not configured_tooltip_columns and data_records:
         tooltip_columns = [k for k in data_records[0].keys() if k not in ['hex', 'lat', 'lng']]
 
     html = Template(r"""
