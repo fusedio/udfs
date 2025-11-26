@@ -163,78 +163,54 @@ def deckgl_map(
     basemap: str = "dark",
 ):
     """
-    Mapbox-GL-native implementation with robust native Popup tooltips and recovery.
-    Diagnostic message for "no features at cursor" has been removed.
+    Render a GeoDataFrame as an interactive Mapbox GL map with native tooltips.
     
     Args:
-        gdf: GeoDataFrame to visualize.
+        gdf: GeoDataFrame to visualize (points, lines, or polygons).
         config: Deck.GL style overrides (dict or JSON string).
-        mapbox_token: Mapbox access token for the embedded map.
-        basemap: 'dark' (default) or 'satellite'. You can also pass a custom Mapbox style URL.
+        mapbox_token: Mapbox access token.
+        basemap: 'dark', 'satellite', or custom Mapbox style URL.
     """
-    basemap_styles = {
-        "dark": "mapbox://styles/mapbox/dark-v10",
-        "satellite": "mapbox://styles/mapbox/satellite-streets-v12",
-    }
+    import math
+    import numpy as _np
+    
+    # Basemap setup
+    basemap_styles = {"dark": "mapbox://styles/mapbox/dark-v10", "satellite": "mapbox://styles/mapbox/satellite-streets-v12"}
     basemap_key = (basemap or "dark").lower()
-    if basemap_key in ("satellite", "satellite-streets", "sat"):
-        style_url = basemap_styles["satellite"]
-    elif basemap_key in ("dark", "default", "normal"):
-        style_url = basemap_styles["dark"]
-    else:
-        style_url = basemap if basemap else basemap_styles["dark"]
+    style_url = basemap_styles.get({"sat": "satellite", "satellite-streets": "satellite"}.get(basemap_key, basemap_key), basemap or basemap_styles["dark"])
 
     config_errors = []
 
-    if hasattr(gdf, "crs"):
+    # Reproject to EPSG:4326 if needed
+    if hasattr(gdf, "crs") and gdf.crs and getattr(gdf.crs, "to_epsg", lambda: None)() != 4326:
         try:
-            if gdf.crs and getattr(gdf.crs, "to_epsg", lambda: None)() != 4326:
                 gdf = gdf.to_crs(epsg=4326)
-        except Exception as exc:
-            print(f"[deckgl_map] Warning: failed to reproject to EPSG:4326 ({exc})")
+        except Exception:
+            pass
 
-    import math
-    import numpy as _np
-
+    # Convert to GeoJSON
     try:
         geojson_obj = json.loads(gdf.to_json())
     except Exception:
         geojson_obj = {"type": "FeatureCollection", "features": []}
 
-    # --- SANITIZE PROPERTIES: convert non-serializable values to plain strings/numbers ---
+    # Sanitize properties
     def sanitize_value(v):
-        # simple primitives
         if isinstance(v, (float, int, str, bool)) or v is None:
-            if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
-                return None
-            return v
-        # numpy scalars
+            return None if isinstance(v, float) and (math.isnan(v) or math.isinf(v)) else v
         if isinstance(v, (_np.floating, _np.integer, _np.bool_)):
             try:
                 return v.item()
             except Exception:
                 return str(v)
-        # lists/tuples/sets -> comma-joined string
         if isinstance(v, (list, tuple, set)):
-            try:
                 return ", ".join(str(s) for s in v)
-            except Exception:
-                return str(v)
-        # dicts or other objects -> string fallback
-        try:
-            return str(v)
-        except Exception:
-            return None
+        return str(v) if v is not None else None
 
-    if isinstance(geojson_obj, dict) and "features" in geojson_obj:
-        for feat in geojson_obj["features"]:
-            props = feat.get("properties") or {}
-            new_props = {}
-            if isinstance(props, dict):
-                for k, val in props.items():
-                    new_props[k] = sanitize_value(val)
-            feat["properties"] = new_props
+    for feat in geojson_obj.get("features", []):
+        feat["properties"] = {k: sanitize_value(v) for k, v in (feat.get("properties") or {}).items()}
 
+    # Auto-center
     auto_center = (0.0, 0.0)
     if hasattr(gdf, "total_bounds"):
         try:
@@ -243,27 +219,12 @@ def deckgl_map(
         except Exception:
             pass
 
+    # Config processing
     merged_config = _load_deckgl_config(config, DEFAULT_DECK_CONFIG, "deckgl_map", config_errors)
-    initial_view_state = _validate_initial_view_state(
-        merged_config,
-        DEFAULT_DECK_CONFIG["initialViewState"],
-        "deckgl_map",
-        config_errors,
-    )
-    vector_layer = _ensure_layer_config(
-        merged_config,
-        "vectorLayer",
-        DEFAULT_DECK_CONFIG["vectorLayer"],
-        "deckgl_map",
-        config_errors,
-    )
+    initial_view_state = _validate_initial_view_state(merged_config, DEFAULT_DECK_CONFIG["initialViewState"], "deckgl_map", config_errors)
+    vector_layer = _ensure_layer_config(merged_config, "vectorLayer", DEFAULT_DECK_CONFIG["vectorLayer"], "deckgl_map", config_errors)
 
-    tooltip_attrs = vector_layer.get("tooltipAttrs")
-    if tooltip_attrs is not None and not isinstance(tooltip_attrs, (list, tuple)):
-        config_errors.append("[deckgl_map] vectorLayer.tooltipAttrs must be an array of column names.")
-        vector_layer["tooltipAttrs"] = DEFAULT_DECK_CONFIG["vectorLayer"]["tooltipAttrs"]
-    
-    # Helper to convert [r,g,b] or [r,g,b,a] to rgba string
+    # Helper to convert [r,g,b,a] to rgba string
     def to_rgba(color_value, default_alpha=1.0):
         if isinstance(color_value, (list, tuple)) and len(color_value) >= 3:
             r, g, b = int(color_value[0]), int(color_value[1]), int(color_value[2])
@@ -271,35 +232,37 @@ def deckgl_map(
             return f"rgba({r},{g},{b},{a})"
         return None
     
-    # Get fill color config - can be colorContinuous dict OR simple [r,g,b,a] array
+    # Extract color config
     fill_color_raw = vector_layer.get("getFillColor")
-    fill_color_config = {}  # For colorContinuous
-    fill_color_rgba = None  # For simple RGBA
-    color_attr = None
-    
+    fill_color_config, fill_color_rgba, color_attr = {}, None, None
     if isinstance(fill_color_raw, dict) and fill_color_raw.get("@@function") == "colorContinuous":
-        fill_color_config = fill_color_raw
-        color_attr = fill_color_raw.get("attr")
+        fill_color_config, color_attr = fill_color_raw, fill_color_raw.get("attr")
+        # Validate palette name
+        palette_name = fill_color_raw.get("colors", "TealGrn")
+        if palette_name and palette_name not in KNOWN_CARTOCOLOR_PALETTES:
+            suggestion = get_close_matches(palette_name, list(KNOWN_CARTOCOLOR_PALETTES), n=1, cutoff=0.5)
+            if suggestion:
+                print(f"[deckgl_map] Warning: Palette '{palette_name}' not found. Did you mean '{suggestion[0]}'?")
+            else:
+                print(f"[deckgl_map] Warning: Palette '{palette_name}' not found. Using fallback colors.")
+                print(f"  Valid palettes: {', '.join(sorted(list(KNOWN_CARTOCOLOR_PALETTES))[:15])}...")
     elif isinstance(fill_color_raw, (list, tuple)):
         fill_color_rgba = to_rgba(fill_color_raw, default_alpha=0.6)
     
-    # Get line color - simple [r,g,b,a] array
     line_color_rgba = to_rgba(vector_layer.get("getLineColor"), default_alpha=1.0)
     
-    # Extract other properties with sensible defaults
-    line_width = vector_layer.get("lineWidthMinPixels", 1)
+    # Line width validation
+    line_width = vector_layer.get("lineWidthMinPixels") or vector_layer.get("getLineWidth", 1)
+    if not isinstance(line_width, (int, float)) or not math.isfinite(line_width) or line_width < 0:
+        line_width = 1
+
     point_radius = vector_layer.get("pointRadiusMinPixels") or vector_layer.get("pointRadius", 6)
     is_filled = vector_layer.get("filled", True)
     is_stroked = vector_layer.get("stroked", True)
-    opacity = vector_layer.get("opacity", 0.8)  # Default opacity for fill
+    opacity = vector_layer.get("opacity", 0.8)
 
-    auto_state = {
-        "longitude": float(auto_center[0]) if auto_center else 0.0,
-        "latitude": float(auto_center[1]) if auto_center else 0.0,
-        "zoom": initial_view_state.get("zoom", 11),
-    }
-
-    data_columns = [col for col in gdf.columns if col not in ("geometry",)]
+    auto_state = {"longitude": float(auto_center[0]), "latitude": float(auto_center[1]), "zoom": initial_view_state.get("zoom", 11)}
+    data_columns = [col for col in gdf.columns if col != "geometry"]
     tooltip_columns = _extract_tooltip_columns((merged_config, vector_layer), data_columns)
 
     html = Template(r"""
@@ -317,16 +280,16 @@ def deckgl_map(
   <style>
     html, body, #map { margin:0; height:100%; width:100%; background:#000; }
     .mapboxgl-popup-content { font-family: monospace; font-size: 12px; background: rgba(0,0,0,0.85); color:#fff; padding:6px 8px; border-radius:6px; }
-    .config-error { position:fixed; right:12px; bottom:12px; background:rgba(180,30,30,0.92); color:#fff; padding:6px 10px; border-radius:4px; font-size:11px; display:none; z-index:30; }
     .color-legend { position:fixed; left:12px; bottom:12px; background:rgba(15,15,15,0.9); color:#fff; padding:8px; border-radius:4px; font-size:11px; display:none; z-index:30; min-width:140px; border:1px solid rgba(255,255,255,0.08); }
     .color-legend .legend-gradient { height:12px; border-radius:3px; border:1px solid rgba(255,255,255,0.06); margin-bottom:6px; }
     .color-legend .legend-labels { display:flex; justify-content:space-between; color:#ccc; font-size:10px;}
+    .config-error { position:fixed; right:12px; bottom:12px; background:rgba(180,30,30,0.92); color:#fff; padding:8px 12px; border-radius:4px; font-size:11px; display:none; z-index:30; max-width:300px; }
   </style>
 </head>
 <body>
 <div id="map"></div>
-<div id="config-error" class="config-error"></div>
 <div id="color-legend" class="color-legend"><div class="legend-title"></div><div class="legend-gradient"></div><div class="legend-labels"><span class="legend-min"></span><span class="legend-max"></span></div></div>
+<div id="config-error" class="config-error"></div>
 
 <script>
 const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
@@ -335,7 +298,6 @@ const AUTO_STATE = {{ auto_state | tojson }};
 const FILL_COLOR_CONFIG = {{ fill_color_config | tojson }};
 const COLOR_ATTR = {{ color_attr | tojson }};
 const TOOLTIP_COLUMNS = {{ tooltip_columns | tojson }};
-const CONFIG_ERROR = {{ config_error | tojson }};
 const LINE_WIDTH = {{ line_width | tojson }};
 const POINT_RADIUS = {{ point_radius | tojson }};
 const LINE_COLOR = {{ line_color_rgba | tojson }};
@@ -344,458 +306,151 @@ const IS_FILLED = {{ is_filled | tojson }};
 const IS_STROKED = {{ is_stroked | tojson }};
 const OPACITY = {{ opacity | tojson }};
 
+// Build polygon outlines as LineStrings for stroke-only rendering
+function buildOutlines(fc) {
+  if (!fc || !Array.isArray(fc.features)) return { type: 'FeatureCollection', features: [] };
+  const out = [];
+  for (const f of fc.features) {
+    if (!f?.geometry?.coordinates) continue;
+    const g = f.geometry, c = g.coordinates;
+    const rings = g.type === 'Polygon' ? [c] : g.type === 'MultiPolygon' ? c : [];
+    for (const poly of rings) {
+      for (const ring of poly) {
+        if (Array.isArray(ring) && ring.length >= 4)
+          out.push({ type: 'Feature', properties: {...f.properties}, geometry: { type: 'LineString', coordinates: ring }});
+      }
+    }
+  }
+  return { type: 'FeatureCollection', features: out };
+}
+
+const OUTLINES = buildOutlines(GEOJSON);
+
 mapboxgl.accessToken = MAPBOX_TOKEN;
 const map = new mapboxgl.Map({
-  container: 'map',
-  style: {{ style_url | tojson }},
-  center: [AUTO_STATE.longitude, AUTO_STATE.latitude],
-  zoom: AUTO_STATE.zoom
+  container: 'map', style: {{ style_url | tojson }},
+  center: [AUTO_STATE.longitude, AUTO_STATE.latitude], zoom: AUTO_STATE.zoom
 });
 
-// Build color stops (returns {stops: [[v,color],...], domain: [min,max]} or null)
 function makeColorStops(cfg) {
-  if (!cfg || cfg['@@function'] !== 'colorContinuous' || !cfg.domain || cfg.domain.length !== 2) {
-    return null;
+  if (!cfg || cfg['@@function'] !== 'colorContinuous' || !cfg.domain?.length) return null;
+  const [d0, d1] = cfg.domain, rev = d0 > d1, dom = rev ? [d1, d0] : [d0, d1];
+  const steps = cfg.steps || 7, name = cfg.colors || 'TealGrn';
+  const pal = window.cartocolor?.[name];
+  let cols, paletteError = null;
+  if (pal) {
+    const keys = Object.keys(pal).map(Number).filter(n => !isNaN(n)).sort((a, b) => a - b);
+    const bestKey = keys.find(n => n >= steps) || keys[keys.length - 1];
+    cols = pal[bestKey] ? [...pal[bestKey]] : null;
+  } else if (name && window.cartocolor) {
+    paletteError = `Palette "${name}" not found. Valid palettes: ${Object.keys(window.cartocolor).slice(0,10).join(', ')}...`;
   }
-  
-  // Handle reversed domains - Mapbox requires ascending order
-  const rawDomain = cfg.domain;
-  const isReversed = rawDomain[0] > rawDomain[1];
-  const sortedDomain = isReversed ? [rawDomain[1], rawDomain[0]] : rawDomain;
-  
-  const steps = cfg.steps || 7;
-  const paletteName = cfg.colors || 'TealGrn';
-  const palette = (window.cartocolor && window.cartocolor[paletteName]) || null;
-  let colorsArray;
-  if (palette) {
-    const available = Object.keys(palette).map(Number).filter(n=>!isNaN(n)).sort((a,b)=>a-b);
-    const best = available.find(n => n >= steps) || available[available.length-1];
-    colorsArray = [...palette[best]]; // Clone to avoid mutating original
-  } else {
-    console.warn('[deckgl_map] Palette not found:', paletteName, '- using fallback gradient');
-    colorsArray = [];
-    for (let i=0;i<steps;i++){
-      const t = i/(steps-1);
-      const r = Math.round(30 + (0-30)*t);
-      const g = Math.round(120 + (200-120)*t);
-      const b = Math.round(220 + (150-220)*t);
-      colorsArray.push(`rgb(${r},${g},${b})`);
-    }
-  }
-  
-  // If domain was reversed, reverse colors to maintain intended mapping
-  if (isReversed) {
-    colorsArray = colorsArray.reverse();
-  }
-  
-  // Build stops with ascending domain values
-  const stops = [];
-  for (let i=0;i<colorsArray.length;i++){
-    const v = sortedDomain[0] + ((sortedDomain[1]-sortedDomain[0]) * (i/(colorsArray.length-1)));
-    stops.push([v, colorsArray[i]]);
-  }
-  
-  return {stops, domain: sortedDomain};
-}
-
-// Create expression array for Mapbox interpolate: ['interpolate',['linear'],['get', attr], v1,c1, v2,c2, ...]
-function makeInterpolateExpression(attr, colorSpec) {
-  if (!colorSpec || !attr) return null;
-  const expr = ['interpolate', ['linear'], ['get', attr]];
-  colorSpec.stops.forEach(s => {
-    expr.push(s[0]);
-    expr.push(s[1]);
-  });
-  return expr;
-}
-
-  function removeLayerIfExists(id) {
-    if (!map || typeof map.getLayer !== 'function') return;
-    try {
-      const layer = map.getLayer(id);
-      if (layer) {
-        map.removeLayer(id);
-      }
-    } catch(e) {
-      console.warn('[deckgl_map] Failed to remove layer', id, e);
-    }
-  }
-
-  function ensureSource() {
-    if (!map || typeof map.getSource !== 'function' || typeof map.addSource !== 'function') {
-      console.warn('[deckgl_map] Map not ready for source operations');
-      return null;
-    }
-    
-    const existing = map.getSource('gdf-source');
-    if (!existing) {
-      try {
-        map.addSource('gdf-source', { type: 'geojson', data: GEOJSON });
-        return map.getSource('gdf-source');
-      } catch(e) {
-        console.warn('[deckgl_map] Failed to add source', e);
-        return null;
-      }
-    }
-    try {
-      if (typeof existing.setData === 'function') {
-        existing.setData(GEOJSON);
-      }
-      return existing;
-  } catch (err) {
-      console.warn('[deckgl_map] Source update failed, recreating source', err);
-      try { 
-        if (typeof map.removeSource === 'function') {
-          map.removeSource('gdf-source'); 
-        }
-      } catch(e) {}
-      try {
-        map.addSource('gdf-source', { type: 'geojson', data: GEOJSON });
-        return map.getSource('gdf-source');
-      } catch(e) {
-        console.warn('[deckgl_map] Failed to recreate source', e);
-        return null;
-      }
-    }
-  }
-
-  function addGeoJsonSourceAndLayers() {
-    if (!map || typeof map.addLayer !== 'function') {
-      console.warn('[deckgl_map] Map not ready for layer operations');
-      return;
-    }
-    
-    removeLayerIfExists('gdf-fill');
-    removeLayerIfExists('gdf-line');
-    removeLayerIfExists('gdf-line-only');
-    removeLayerIfExists('gdf-circle');
-
-    const source = ensureSource();
-    if (!source) {
-      console.warn('[deckgl_map] Failed to ensure source, skipping layer creation');
-      return;
-    }
-
-    let hasPolygon=false, hasPoint=false, hasLine=false;
-  for (const f of (GEOJSON.features || [])) {
-    const t = f.geometry && f.geometry.type;
-    if (!t) continue;
-    if (t === 'Point' || t === 'MultiPoint') hasPoint = true;
-    if (t === 'Polygon' || t === 'MultiPolygon') hasPolygon = true;
-      if (t === 'LineString' || t === 'MultiLineString') hasLine = true;
-      if (hasPoint && hasPolygon && hasLine) break;
-  }
-
-  const colorSpec = makeColorStops(FILL_COLOR_CONFIG);
-  const colorExpr = makeInterpolateExpression(COLOR_ATTR, colorSpec);
-  
-  // Determine fill color: use colorExpr for continuous, FILL_COLOR for simple rgba, or default
-  const fillColor = colorExpr || FILL_COLOR || 'rgba(0,144,255,0.6)';
-  // Determine line color for polygon borders
-  const polygonLineColor = LINE_COLOR || 'rgba(0,0,0,0.5)';
-  const polygonLineWidth = LINE_WIDTH || 1;
-
-  if (hasPolygon) {
-    // Only add fill layer if IS_FILLED is true
-    if (IS_FILLED !== false) {
-    map.addLayer({
-      id: 'gdf-fill',
-      type: 'fill',
-      source: 'gdf-source',
-      paint: {
-          'fill-color': fillColor,
-          'fill-opacity': OPACITY
-      },
-      filter: ['any',
-        ['==', ['geometry-type'], 'Polygon'],
-        ['==', ['geometry-type'], 'MultiPolygon']
-      ]
-    });
-    }
-
-    // Only add stroke/outline layer if IS_STROKED is true
-    if (IS_STROKED !== false) {
-    map.addLayer({
-      id: 'gdf-line',
-      type: 'line',
-      source: 'gdf-source',
-      paint: {
-          'line-color': polygonLineColor,
-          'line-width': polygonLineWidth
-      },
-      filter: ['any',
-        ['==', ['geometry-type'], 'Polygon'],
-        ['==', ['geometry-type'], 'MultiPolygon']
-      ]
-    });
-    }
-  }
-
-  if (hasLine) {
-    map.addLayer({
-      id: 'gdf-line-only',
-      type: 'line',
-      source: 'gdf-source',
-      paint: {
-        'line-color': LINE_COLOR || colorExpr || 'rgba(255,0,100,0.9)',
-        'line-width': LINE_WIDTH || 3,
-        'line-opacity': 1.0
-      },
-      filter: ['any',
-        ['==', ['geometry-type'], 'LineString'],
-        ['==', ['geometry-type'], 'MultiLineString']
-      ]
+  if (!cols || !cols.length) {
+    cols = Array.from({length: steps}, (_, i) => {
+      const t = i / (steps - 1);
+      return `rgb(${Math.round(255 * (1 - t))}, ${Math.round(100 + 155 * t)}, ${Math.round(100 * t)})`;
     });
   }
-
-  if (hasPoint) {
-    const radius = POINT_RADIUS || 6;
-    // For very small circles, reduce or remove stroke to make size difference visible
-    const strokeWidth = radius < 2 ? 0 : 1;
-    
-    map.addLayer({
-      id: 'gdf-circle',
-      type: 'circle',
-      source: 'gdf-source',
-      paint: {
-        'circle-radius': radius,
-        'circle-color': fillColor,
-        'circle-stroke-color': 'rgba(0,0,0,0.5)',
-        'circle-stroke-width': strokeWidth,
-        'circle-opacity': 0.9
-      },
-      filter: ['any',
-        ['==', ['geometry-type'], 'Point'],
-        ['==', ['geometry-type'], 'MultiPoint']
-      ]
-    });
-  }
+  if (rev) cols.reverse();
+  return { stops: cols.map((c, i) => [dom[0] + (dom[1] - dom[0]) * i / (cols.length - 1), c]), domain: dom, error: paletteError };
 }
 
-// Flag to prevent multiple fitBounds calls
-let hasInitiallyFit = false;
-let layersAdded = false;
+function makeExpr(attr, spec) {
+  if (!spec || !attr) return null;
+  const e = ['interpolate', ['linear'], ['get', attr]];
+  spec.stops.forEach(s => e.push(s[0], s[1]));
+  return e;
+}
 
-function tryAddLayersAndLegend() {
-  if (layersAdded) return;
+function addLayers() {
+  ['gdf-fill','gdf-line','gdf-line-only','gdf-circle'].forEach(id => { try { if(map.getLayer(id)) map.removeLayer(id); } catch(e){} });
   
-  // Wait for cartocolor if we need it for color expressions
-  const needsCartocolor = FILL_COLOR_CONFIG && FILL_COLOR_CONFIG['@@function'] === 'colorContinuous';
-  if (needsCartocolor && !window.cartocolor) {
-      setTimeout(tryAddLayersAndLegend, 50);
-      return;
-    }
-    
-  addGeoJsonSourceAndLayers();
-    layersAdded = true;
+  if (!map.getSource('gdf-source')) map.addSource('gdf-source', { type: 'geojson', data: GEOJSON });
+  else map.getSource('gdf-source').setData(GEOJSON);
+  
+  if (OUTLINES.features.length && !map.getSource('gdf-outline-source')) 
+    map.addSource('gdf-outline-source', { type: 'geojson', data: OUTLINES });
+  else if (map.getSource('gdf-outline-source')) 
+    map.getSource('gdf-outline-source').setData(OUTLINES);
 
-  // fit bounds only once if turf available
-  if (!hasInitiallyFit) {
-  try {
-    if (window.turf) {
-      const bbox = turf.bbox(GEOJSON);
-      if (bbox && bbox.length === 4) {
-        map.fitBounds([[bbox[0], bbox[1]],[bbox[2], bbox[3]]], { padding: 40, maxZoom: 15, duration: 500 });
-          hasInitiallyFit = true;
-      }
-    }
-  } catch(e){}
+  let hasPoly=false, hasPoint=false, hasLine=false;
+  for (const f of GEOJSON.features||[]) {
+    const t = f.geometry?.type;
+    if (t==='Point'||t==='MultiPoint') hasPoint=true;
+    if (t==='Polygon'||t==='MultiPolygon') hasPoly=true;
+    if (t==='LineString'||t==='MultiLineString') hasLine=true;
   }
 
-  // legend - only show if we have a continuous color scale with an attribute
-  const colorSpec = makeColorStops(FILL_COLOR_CONFIG);
-  if (colorSpec && COLOR_ATTR) {
-    const legend = document.getElementById('color-legend');
-    legend.querySelector('.legend-title').textContent = COLOR_ATTR || 'value';
-    const gEl = legend.querySelector('.legend-gradient');
-    const cs = colorSpec.stops.map((s,i)=> {
-      const pct = Math.round((i/(colorSpec.stops.length-1))*100);
-      return `${s[1]} ${pct}%`;
-    }).join(', ');
-    gEl.style.background = `linear-gradient(to right, ${cs})`;
-    legend.querySelector('.legend-min').textContent = Number(colorSpec.domain[0]).toFixed(1);
-    legend.querySelector('.legend-max').textContent = Number(colorSpec.domain[1]).toFixed(1);
-    legend.style.display = 'block';
+  const spec = makeColorStops(FILL_COLOR_CONFIG), expr = makeExpr(COLOR_ATTR, spec);
+  const fill = expr || FILL_COLOR || 'rgba(0,144,255,0.6)';
+  const lineCol = LINE_COLOR || 'rgba(0,0,0,0.5)', lineW = (typeof LINE_WIDTH==='number' && isFinite(LINE_WIDTH)) ? LINE_WIDTH : 1;
+
+  if (hasPoly) {
+    if (IS_FILLED !== false) map.addLayer({ id:'gdf-fill', type:'fill', source:'gdf-source', paint:{'fill-color':fill,'fill-opacity':OPACITY}, filter:['any',['==',['geometry-type'],'Polygon'],['==',['geometry-type'],'MultiPolygon']] });
+    if (IS_STROKED !== false && OUTLINES.features.length) map.addLayer({ id:'gdf-line', type:'line', source:'gdf-outline-source', layout:{'line-join':'round','line-cap':'round'}, paint:{'line-color':lineCol,'line-width':lineW}, filter:['any',['==',['geometry-type'],'LineString'],['==',['geometry-type'],'MultiLineString']] });
   }
+  if (hasLine) map.addLayer({ id:'gdf-line-only', type:'line', source:'gdf-source', layout:{'line-join':'round','line-cap':'round'}, paint:{'line-color':LINE_COLOR||expr||'rgba(255,0,100,0.9)','line-width':LINE_WIDTH||3,'line-opacity':1}, filter:['any',['==',['geometry-type'],'LineString'],['==',['geometry-type'],'MultiLineString']] });
+  if (hasPoint) map.addLayer({ id:'gdf-circle', type:'circle', source:'gdf-source', paint:{'circle-radius':POINT_RADIUS||6,'circle-color':fill,'circle-stroke-color':'rgba(0,0,0,0.5)','circle-stroke-width':(POINT_RADIUS||6)<2?0:1,'circle-opacity':0.9}, filter:['any',['==',['geometry-type'],'Point'],['==',['geometry-type'],'MultiPoint']] });
 }
 
-map.on('load', () => {
-  tryAddLayersAndLegend();
+let loaded = false;
+function init() {
+  if (loaded) return;
+  if (FILL_COLOR_CONFIG?.['@@function']==='colorContinuous' && !window.cartocolor) { setTimeout(init, 50); return; }
+  addLayers(); loaded = true;
+  try { const b = turf?.bbox(GEOJSON); if(b?.length===4) map.fitBounds([[b[0],b[1]],[b[2],b[3]]], {padding:40,maxZoom:15,duration:500}); } catch(e){}
+  const spec = makeColorStops(FILL_COLOR_CONFIG);
+  if (spec && COLOR_ATTR) {
+    const leg = document.getElementById('color-legend');
+    leg.querySelector('.legend-title').textContent = COLOR_ATTR;
+    leg.querySelector('.legend-gradient').style.background = `linear-gradient(to right, ${spec.stops.map((s,i)=>`${s[1]} ${Math.round(i/(spec.stops.length-1)*100)}%`).join(', ')})`;
+    leg.querySelector('.legend-min').textContent = spec.domain[0].toFixed(1);
+    leg.querySelector('.legend-max').textContent = spec.domain[1].toFixed(1);
+    leg.style.display = 'block';
+    // Show palette error if any
+    if (spec.error) {
+      const errBox = document.getElementById('config-error');
+      errBox.textContent = spec.error;
+      errBox.style.display = 'block';
+    }
+  }
+}
+map.on('load', init);
+
+// Tooltip
+let popup = null, lastKey = null;
+function fmt(v) { return v==null?'':typeof v==='number'?(!isFinite(v)?'':v.toFixed(2)):Array.isArray(v)?v.join(', '):String(v); }
+function tip(p) { const k = TOOLTIP_COLUMNS.length ? TOOLTIP_COLUMNS : Object.keys(p||{}); return k.map(k=>p?.[k]!=null&&String(p[k])!=='null'?`${k}: ${fmt(p[k])}`:'').filter(Boolean).join(' • '); }
+function getLayers() { return ['gdf-circle','gdf-fill','gdf-line','gdf-line-only'].filter(id=>{ try{return map.getLayer(id);}catch(e){return false;} }); }
+
+map.on('mousemove', e => {
+  const layers = getLayers(); if (!layers.length) return;
+  const feats = map.queryRenderedFeatures(e.point, { layers });
+  if (feats?.length) {
+    const f = feats[0], key = f.id ?? JSON.stringify(f.properties||{});
+    if (key === lastKey && popup) { popup.setLngLat(e.lngLat); map.getCanvas().style.cursor='pointer'; return; }
+    lastKey = key;
+    const html = tip(f.properties||{});
+    if (!html) { if(popup){popup.remove();popup=null;lastKey=null;} map.getCanvas().style.cursor=''; return; }
+    if (!popup) popup = new mapboxgl.Popup({closeButton:false,closeOnClick:false,offset:10});
+    popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
+    map.getCanvas().style.cursor='pointer';
+  } else { if(popup){popup.remove();popup=null;} lastKey=null; map.getCanvas().style.cursor=''; }
 });
+map.on('mouseleave', () => { if(popup){popup.remove();popup=null;} lastKey=null; map.getCanvas().style.cursor=''; });
 
-// --- NATIVE MAPBOX POPUP TOOLTIP (robust, recovers from missing layers) ---
-let hoverPopup = null;
-let lastFeatureKey = null;
-
-function safeStringify(val) {
-  if (val === null || val === undefined) return '';
-  if (typeof val === 'number') {
-    if (!isFinite(val)) return '';
-    return Number(val).toFixed(2);
-  }
-  if (typeof val === 'string') return val;
-  try {
-    if (Array.isArray(val)) return val.join(', ');
-    return String(val);
-  } catch(e) {
-    return '';
-  }
-}
-
-function makeTooltipHTML(props) {
-  const keys = Array.isArray(TOOLTIP_COLUMNS) && TOOLTIP_COLUMNS.length ? TOOLTIP_COLUMNS : Object.keys(props || {});
-  const lines = [];
-  keys.forEach(k => {
-    if (props && Object.prototype.hasOwnProperty.call(props, k) && props[k] !== null && props[k] !== undefined && String(props[k]) !== 'null') {
-      const v = safeStringify(props[k]);
-      if (v !== '') lines.push(`${k}: ${v}`);
-    }
-  });
-  return lines.join(' • ');
-}
-
-function getActiveLayerIds() {
-  const layers = [];
-  if (!map || typeof map.getLayer !== 'function') return layers;
-  try {
-    if (map.getLayer('gdf-circle')) layers.push('gdf-circle');
-    if (map.getLayer('gdf-fill')) layers.push('gdf-fill');
-    if (map.getLayer('gdf-line')) layers.push('gdf-line');
-    if (map.getLayer('gdf-line-only')) layers.push('gdf-line-only');
-  } catch(e) {
-    console.warn('[deckgl_map] Error checking active layers', e);
-  }
-  return layers;
-}
-
-map.on('mousemove', (e) => {
-  try {
-    const activeLayers = getActiveLayerIds();
-    if (activeLayers.length === 0) return;
-
-    let features = null;
-    try {
-      features = map.queryRenderedFeatures(e.point, { layers: activeLayers });
-    } catch (qerr) {
-      console.warn('[deckgl_map] queryRenderedFeatures failed, attempting recovery:', qerr && qerr.message ? qerr.message : qerr);
-      try {
-        // try to re-add source/layers if a layer was missing
-        addGeoJsonSourceAndLayers();
-        // bail out for this event; next mousemove should find layers
-      return;
-      } catch (readdErr) {
-        console.warn('[deckgl_map] addGeoJsonSourceAndLayers recovery also failed:', readdErr);
-      }
-      // final fallback: query without layers
-      try {
-        features = map.queryRenderedFeatures(e.point);
-      } catch (qerr2) {
-        console.warn('[deckgl_map] fallback queryRenderedFeatures also failed:', qerr2);
-        return;
-      }
-    }
-
-    if (features && features.length) {
-      const f = features[0];
-      const key = f.id !== undefined ? f.id : JSON.stringify(f.properties || {});
-      if (key === lastFeatureKey && hoverPopup) {
-        try { hoverPopup.setLngLat(e.lngLat); } catch(e){}
-        map.getCanvas().style.cursor = 'pointer';
-        return;
-      }
-      lastFeatureKey = key;
-
-      const html = makeTooltipHTML(f.properties || {});
-      if (!html) {
-        if (hoverPopup) { hoverPopup.remove(); hoverPopup = null; lastFeatureKey = null; }
-        map.getCanvas().style.cursor = '';
-        return;
-      }
-      if (!hoverPopup) {
-        hoverPopup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, offset: 10, className: 'gdf-hover-popup' });
-      }
-      hoverPopup.setLngLat(e.lngLat).setHTML(html).addTo(map);
-      map.getCanvas().style.cursor = 'pointer';
-      } else {
-      if (hoverPopup) { hoverPopup.remove(); hoverPopup = null; }
-      lastFeatureKey = null;
-      map.getCanvas().style.cursor = '';
-      }
-    } catch (err) {
-    console.warn('[deckgl_map] tooltip mousemove handler error', err);
-  }
-});
-
-map.on('mouseleave', () => {
-  if (hoverPopup) { hoverPopup.remove(); hoverPopup = null; }
-  lastFeatureKey = null;
-  map.getCanvas().style.cursor = '';
-});
-
-// lightweight recovery/resize handlers
-const container = document.getElementById('map');
-const resizeObserver = new ResizeObserver(() => { try { map.resize(); } catch(e) {} });
-resizeObserver.observe(container);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) { try { map.resize(); } catch(e) {} } });
-window.addEventListener('focus', () => { try { map.triggerRepaint && map.triggerRepaint(); } catch(e) {} });
-window.addEventListener('focusin', () => { try { map.triggerRepaint && map.triggerRepaint(); } catch(e) {} });
-
-// styledata recovery - only recover if layers are actually missing
-let hasLoadedOnce = false;
-map.on('styledata', () => {
-  try {
-    if (!map || typeof map.getSource !== 'function' || typeof map.getLayer !== 'function') {
-      console.warn('[deckgl_map] Map not ready in styledata handler');
-      return;
-    }
-    
-    // Skip initial styledata events during load
-    if (!hasLoadedOnce) {
-      hasLoadedOnce = true;
-      return;
-    }
-    
-    const hasSource = map.getSource('gdf-source');
-    const hasFill = map.getLayer('gdf-fill');
-    const hasCircle = map.getLayer('gdf-circle');
-    const hasLine = map.getLayer('gdf-line-only');
-    
-    // Only recover if layers are truly missing
-    if (!hasSource || (!hasFill && !hasCircle && !hasLine)) {
-      addGeoJsonSourceAndLayers();
-    }
-  } catch (err) {
-    console.warn('[deckgl_map] styledata recovery failed', err);
-  }
-});
-
-const errorBox = document.getElementById('config-error');
-if (errorBox && CONFIG_ERROR && CONFIG_ERROR.length) {
-  errorBox.innerHTML = CONFIG_ERROR.map(m => `<div>${m}</div>`).join('');
-  errorBox.style.display = 'block';
-}
+// Resize handling
+new ResizeObserver(() => { try{map.resize();}catch(e){} }).observe(document.getElementById('map'));
 </script>
-
-<!-- turf for bbox (optional) -->
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
 </body>
 </html>
     """).render(
-        mapbox_token=mapbox_token,
-        geojson_obj=geojson_obj,
-        auto_state=auto_state,
-        fill_color_config=fill_color_config,
-        color_attr=color_attr,
-        tooltip_columns=tooltip_columns,
-        config_error=config_errors,
-        line_width=line_width,
-        point_radius=point_radius,
-        line_color_rgba=line_color_rgba,
-        fill_color_rgba=fill_color_rgba,
-        is_filled=is_filled,
-        is_stroked=is_stroked,
-        opacity=opacity,
-        style_url=style_url,
+        mapbox_token=mapbox_token, geojson_obj=geojson_obj, auto_state=auto_state,
+        fill_color_config=fill_color_config, color_attr=color_attr, tooltip_columns=tooltip_columns,
+        line_width=line_width, point_radius=point_radius, line_color_rgba=line_color_rgba,
+        fill_color_rgba=fill_color_rgba, is_filled=is_filled, is_stroked=is_stroked,
+        opacity=opacity, style_url=style_url,
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/351515e/public/common/")
@@ -913,7 +568,6 @@ def deckgl_hex(
 
     configured_tooltip_columns = _extract_tooltip_columns((config, hex_layer))
     tooltip_columns = []
-    print(f"[deckgl_hex] configured_tooltip_columns from config: {configured_tooltip_columns}")
 
     if config_errors:
         print(f"\n[deckgl_hex] Config validation found {len(config_errors)} issue(s):")
@@ -969,13 +623,8 @@ def deckgl_hex(
     
     if len(data_records) > 0:
         available_keys = set(data_records[0].keys())
-        print(f"[deckgl_hex] Available data columns: {list(available_keys)[:10]}...")
         if configured_tooltip_columns:
-            missing_tooltips = [col for col in configured_tooltip_columns if col not in available_keys]
-            if missing_tooltips:
-                print(f"[deckgl_hex] Warning: tooltip columns not found in data: {missing_tooltips}")
             tooltip_columns = [col for col in configured_tooltip_columns if col in available_keys]
-            print(f"[deckgl_hex] Final tooltip_columns: {tooltip_columns}")
         else:
             tooltip_columns = []
 
