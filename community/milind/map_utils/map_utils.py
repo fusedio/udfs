@@ -243,9 +243,11 @@ def deckgl_map(
             suggestion = get_close_matches(palette_name, list(KNOWN_CARTOCOLOR_PALETTES), n=1, cutoff=0.5)
             if suggestion:
                 print(f"[deckgl_map] Warning: Palette '{palette_name}' not found. Did you mean '{suggestion[0]}'?")
+                config_errors.append(f"Palette '{palette_name}' not found. Did you mean '{suggestion[0]}'?")
             else:
                 print(f"[deckgl_map] Warning: Palette '{palette_name}' not found. Using fallback colors.")
                 print(f"  Valid palettes: {', '.join(sorted(list(KNOWN_CARTOCOLOR_PALETTES))[:15])}...")
+                config_errors.append(f"Palette '{palette_name}' not found. Valid: {', '.join(sorted(list(KNOWN_CARTOCOLOR_PALETTES))[:10])}...")
     elif isinstance(fill_color_raw, (list, tuple)):
         fill_color_rgba = to_rgba(fill_color_raw, default_alpha=0.6)
     
@@ -305,6 +307,7 @@ const FILL_COLOR = {{ fill_color_rgba | tojson }};
 const IS_FILLED = {{ is_filled | tojson }};
 const IS_STROKED = {{ is_stroked | tojson }};
 const OPACITY = {{ opacity | tojson }};
+const CONFIG_ERRORS = {{ config_errors | tojson }};
 
 // Build polygon outlines as LineStrings for stroke-only rendering
 function buildOutlines(fc) {
@@ -461,6 +464,12 @@ const tileCheck = setInterval(() => {
   if (++checks > 10) { clearInterval(tileCheck); return; }
   map.triggerRepaint();
 }, 500);
+
+// Config errors display
+if (CONFIG_ERRORS?.length) {
+  const box = document.getElementById('config-error');
+  if (box) { box.innerHTML = CONFIG_ERRORS.join('<br>'); box.style.display = 'block'; }
+}
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
 </body>
@@ -470,7 +479,7 @@ const tileCheck = setInterval(() => {
         fill_color_config=fill_color_config, color_attr=color_attr, tooltip_columns=tooltip_columns,
         line_width=line_width, point_radius=point_radius, line_color_rgba=line_color_rgba,
         fill_color_rgba=fill_color_rgba, is_filled=is_filled, is_stroked=is_stroked,
-        opacity=opacity, style_url=style_url,
+        opacity=opacity, style_url=style_url, config_errors=config_errors,
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/351515e/public/common/")
@@ -484,6 +493,7 @@ def deckgl_hex(
     config=None,
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     basemap: str = "dark",
+    debug: bool = False,
 ):
     """
     Render H3 hexagon data as an interactive map.
@@ -500,20 +510,48 @@ def deckgl_hex(
 
     # Config processing
     config_errors = []
+    original_config = deepcopy(config) if config else {}
     merged_config = _load_deckgl_config(config, DEFAULT_DECK_HEX_CONFIG, "deckgl_hex", config_errors)
     hex_layer = merged_config.get("hexLayer", {})
-    
-    # Validate palette name
+
+    # Validate hexLayer property names
+    invalid_props = [key for key in list(hex_layer.keys()) if key not in VALID_HEX_LAYER_PROPS]
+    for prop in invalid_props:
+        suggestion = get_close_matches(prop, list(VALID_HEX_LAYER_PROPS), n=1, cutoff=0.6)
+        if suggestion:
+            print(f"[deckgl_hex] Warning: Property '{prop}' not recognized. Did you mean '{suggestion[0]}'?")
+            config_errors.append(f"Property '{prop}' not recognized. Did you mean '{suggestion[0]}'?")
+        else:
+            print(f"[deckgl_hex] Warning: Property '{prop}' not recognized by H3HexagonLayer.")
+            config_errors.append(f"Property '{prop}' not recognized.")
+        hex_layer.pop(prop, None)
+
+    # Validate palette name for getFillColor
     fill_color_cfg = hex_layer.get("getFillColor", {})
     if isinstance(fill_color_cfg, dict) and fill_color_cfg.get("@@function") == "colorContinuous":
-        palette_name = fill_color_cfg.get("colors", "Magenta")
+        palette_name = fill_color_cfg.get("colors", "TealGrn")
         if palette_name and palette_name not in KNOWN_CARTOCOLOR_PALETTES:
             suggestion = get_close_matches(palette_name, list(KNOWN_CARTOCOLOR_PALETTES), n=1, cutoff=0.5)
             if suggestion:
                 print(f"[deckgl_hex] Warning: Palette '{palette_name}' not found. Did you mean '{suggestion[0]}'?")
+                config_errors.append(f"Palette '{palette_name}' not found. Did you mean '{suggestion[0]}'?")
             else:
-                print(f"[deckgl_hex] Warning: Palette '{palette_name}' not found. Using fallback.")
-            config_errors.append(f"Palette '{palette_name}' not found")
+                print(f"[deckgl_hex] Warning: Palette '{palette_name}' not found. Using fallback colors.")
+                print(f"  Valid palettes: {', '.join(sorted(list(KNOWN_CARTOCOLOR_PALETTES))[:15])}...")
+                config_errors.append(f"Palette '{palette_name}' not found. Valid: {', '.join(sorted(list(KNOWN_CARTOCOLOR_PALETTES))[:10])}...")
+
+    # Validate palette name for getLineColor (if colorContinuous)
+    line_color_cfg = hex_layer.get("getLineColor", {})
+    if isinstance(line_color_cfg, dict) and line_color_cfg.get("@@function") == "colorContinuous":
+        palette_name = line_color_cfg.get("colors", "TealGrn")
+        if palette_name and palette_name not in KNOWN_CARTOCOLOR_PALETTES:
+            suggestion = get_close_matches(palette_name, list(KNOWN_CARTOCOLOR_PALETTES), n=1, cutoff=0.5)
+            if suggestion:
+                print(f"[deckgl_hex] Warning: Line palette '{palette_name}' not found. Did you mean '{suggestion[0]}'?")
+                config_errors.append(f"Line palette '{palette_name}' not found. Did you mean '{suggestion[0]}'?")
+            else:
+                print(f"[deckgl_hex] Warning: Line palette '{palette_name}' not found. Using fallback colors.")
+                config_errors.append(f"Line palette '{palette_name}' not found.")
 
     # Convert dataframe to records, handling hex ID conversion
     data_records = []
@@ -546,6 +584,8 @@ def deckgl_hex(
     center_lng = ivs.get('longitude') or auto_center[0]
     center_lat = ivs.get('latitude') or auto_center[1]
     zoom = ivs.get('zoom') or auto_zoom
+    pitch = ivs.get('pitch', 0)
+    bearing = ivs.get('bearing', 0)
 
     # Tooltip columns
     tooltip_columns = _extract_tooltip_columns((merged_config, hex_layer))
@@ -566,27 +606,145 @@ def deckgl_hex(
     window.cartocolor = cartocolor;
   </script>
   <style>
-    html, body, #map { margin:0; height:100%; width:100%; }
+    html, body { margin:0; height:100%; width:100%; display:flex; overflow:hidden; }
+    #map { flex:1; height:100%; }
     #tooltip { position:absolute; pointer-events:none; background:rgba(0,0,0,0.7); color:#fff; padding:4px 8px; border-radius:4px; font-size:12px; display:none; z-index:6; }
     .config-error { position:fixed; right:12px; bottom:12px; background:rgba(180,30,30,0.92); color:#fff; padding:6px 10px; border-radius:4px; font-size:11px; display:none; z-index:8; max-width:260px; }
     .color-legend { position:fixed; left:12px; bottom:12px; background:rgba(15,15,15,0.9); color:#fff; padding:8px; border-radius:4px; font-size:11px; display:none; z-index:10; min-width:140px; border:1px solid rgba(255,255,255,0.1); }
     .color-legend .legend-title { margin-bottom:6px; font-weight:500; }
     .color-legend .legend-gradient { height:12px; border-radius:2px; margin-bottom:4px; border:1px solid rgba(255,255,255,0.2); }
     .color-legend .legend-labels { display:flex; justify-content:space-between; font-size:10px; color:#ccc; }
+    /* Debug Panel - Material Grey + Workbench Theme */
+    #debug-panel { width:400px; height:100%; background:#212121; border-left:1px solid #424242; display:flex; flex-direction:column; font-family:Inter, 'SF Pro Display', 'Segoe UI', sans-serif; color:#f5f5f5; }
+    #debug-header { padding:12px 18px; background:#1a1a1a; border-bottom:1px solid #424242; }
+    #debug-header h3 { margin:0; font-size:12px; font-weight:600; color:#E8FF59; letter-spacing:0.5px; text-transform:uppercase; }
+    #debug-content { flex:1; overflow-y:auto; padding:14px 18px; display:flex; flex-direction:column; gap:16px; }
+    .debug-section { background:#1a1a1a; border:1px solid #424242; border-radius:8px; padding:12px; }
+    .debug-section h4 { margin:0 0 10px 0; font-size:11px; letter-spacing:0.4px; text-transform:uppercase; color:#bdbdbd; }
+    .form-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; }
+    .form-control { display:flex; flex-direction:column; gap:4px; font-size:11px; color:#dcdcdc; }
+    .form-control label { font-weight:600; }
+    .form-control input, .form-control select { background:#111; border:1px solid #333; border-radius:4px; padding:6px 8px; font-size:12px; color:#f5f5f5; outline:none; }
+    .form-control input:focus, .form-control select:focus { border-color:#E8FF59; }
+    .toggle-row { display:flex; align-items:center; gap:8px; font-size:11px; }
+    .toggle-row input { width:16px; height:16px; }
+    .single-column { display:flex; flex-direction:column; gap:10px; }
+    #debug-buttons { display:flex; gap:8px; padding:12px 18px; background:#1a1a1a; border-top:1px solid #424242; }
+    .dbtn { flex:1; border:none; border-radius:4px; padding:10px; font-size:11px; font-weight:600; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px; }
+    .dbtn.primary { background:#E8FF59; color:#1a1a1a; }
+    .dbtn.primary:hover { background:#f0ff7a; }
+    .dbtn.secondary { background:#424242; color:#fff; }
+    .dbtn.secondary:hover { background:#616161; }
+    .dbtn.ghost { background:transparent; color:#E8FF59; border:1px solid rgba(232,255,89,0.3); }
+    .dbtn.ghost:hover { border-color:#E8FF59; }
+    .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#E8FF59; color:#1a1a1a; padding:10px 20px; border-radius:4px; font-weight:600; font-size:12px; z-index:999; animation:fade 2s forwards; }
+    @keyframes fade { 0%,70%{opacity:1} 100%{opacity:0} }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <div id="tooltip"></div>
-<div id="config-error" class="config-error"></div>
-<div id="color-legend" class="color-legend"><div class="legend-title"></div><div class="legend-gradient"></div><div class="legend-labels"><span class="legend-min"></span><span class="legend-max"></span></div></div>
+  <div id="config-error" class="config-error"></div>
+  <div id="color-legend" class="color-legend"><div class="legend-title"></div><div class="legend-gradient"></div><div class="legend-labels"><span class="legend-min"></span><span class="legend-max"></span></div></div>
+  
+  {% if debug %}
+  <div id="debug-panel">
+    <div id="debug-header">
+      <h3>Config</h3>
+    </div>
+    <div id="debug-content">
+      <div class="debug-section">
+        <h4>View</h4>
+        <div class="form-grid">
+          <div class="form-control">
+            <label>Longitude</label>
+            <input type="number" id="cfg-longitude" data-cfg-input step="0.0001" placeholder="auto" />
+          </div>
+          <div class="form-control">
+            <label>Latitude</label>
+            <input type="number" id="cfg-latitude" data-cfg-input step="0.0001" placeholder="auto" />
+          </div>
+          <div class="form-control">
+            <label>Zoom</label>
+            <input type="number" id="cfg-zoom" data-cfg-input step="0.1" min="0" placeholder="auto" />
+          </div>
+          <div class="form-control">
+            <label>Pitch</label>
+            <input type="number" id="cfg-pitch" data-cfg-input step="1" min="0" max="85" placeholder="0-85" />
+          </div>
+          <div class="form-control">
+            <label>Bearing</label>
+            <input type="number" id="cfg-bearing" data-cfg-input step="1" placeholder="deg" />
+          </div>
+    </div>
+  </div>
+
+      <div class="debug-section">
+        <h4>Layer</h4>
+        <div class="single-column">
+          <label class="toggle-row"><input type="checkbox" id="cfg-filled" data-cfg-input checked />Filled polygons</label>
+          <label class="toggle-row"><input type="checkbox" id="cfg-extruded" data-cfg-input />Extruded (3D)</label>
+          <label class="toggle-row"><input type="checkbox" id="cfg-pickable" data-cfg-input checked />Pickable / tooltips</label>
+          <div class="form-control">
+            <label>Elevation Scale</label>
+            <input type="number" id="cfg-elev-scale" data-cfg-input step="0.1" min="0" value="1" />
+          </div>
+        </div>
+      </div>
+
+      <div class="debug-section">
+        <h4>Fill Color</h4>
+        <div class="form-grid">
+          <div class="form-control">
+            <label>Attribute</label>
+            <select id="cfg-attr" data-cfg-input></select>
+          </div>
+          <div class="form-control">
+            <label>Palette</label>
+            <select id="cfg-palette" data-cfg-input>
+              <option value="TealGrn">TealGrn</option>
+              <option value="Teal">Teal</option>
+              <option value="BluGrn">BluGrn</option>
+              <option value="Sunset">Sunset</option>
+              <option value="SunsetDark">SunsetDark</option>
+              <option value="Magenta">Magenta</option>
+              <option value="Earth">Earth</option>
+              <option value="Vivid">Vivid</option>
+              <option value="Emrld">Emrld</option>
+              <option value="OrYel">OrYel</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label>Domain Min</label>
+            <input type="number" id="cfg-domain-min" data-cfg-input step="0.1" value="0" />
+          </div>
+          <div class="form-control">
+            <label>Domain Max</label>
+            <input type="number" id="cfg-domain-max" data-cfg-input step="0.1" value="100" />
+          </div>
+          <div class="form-control">
+            <label>Steps</label>
+            <input type="number" id="cfg-steps" data-cfg-input min="2" max="20" value="7" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="debug-buttons">
+      <button class="dbtn ghost" onclick="copyConfig()">Copy</button>
+      <button class="dbtn secondary" onclick="resetConfig()">Reset</button>
+    </div>
+  </div>
+  {% endif %}
 
   <script>
     const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
     const DATA = {{ data_records | tojson }};
-    const CONFIG = {{ config | tojson }};
+    let CONFIG = {{ config | tojson }};
+    const USER_CONFIG = {{ user_config | tojson }};
+    const ORIGINAL_CONFIG = USER_CONFIG && Object.keys(USER_CONFIG).length ? JSON.parse(JSON.stringify(USER_CONFIG)) : JSON.parse(JSON.stringify(CONFIG));
     const TOOLTIP_COLUMNS = {{ tooltip_columns | tojson }};
-const CONFIG_ERRORS = {{ config_errors | tojson }};
+    const CONFIG_ERRORS = {{ config_errors | tojson }};
+    const DEBUG_MODE = {{ debug | tojson }};
 
 // H3 ID conversion
 function toH3(hex) {
@@ -645,7 +803,7 @@ function buildColorExpr(cfg) {
 const geojson = toGeoJSON(DATA);
 
     mapboxgl.accessToken = MAPBOX_TOKEN;
-const map = new mapboxgl.Map({ container: 'map', style: {{ style_url | tojson }}, center: [{{ center_lng }}, {{ center_lat }}], zoom: {{ zoom }}, projection: 'mercator' });
+const map = new mapboxgl.Map({ container: 'map', style: {{ style_url | tojson }}, center: [{{ center_lng }}, {{ center_lat }}], zoom: {{ zoom }}, pitch: {{ pitch }}, bearing: {{ bearing }}, projection: 'mercator' });
 
 // Convert [r,g,b] or [r,g,b,a] array to rgba string
 function toRgba(arr, defaultAlpha) {
@@ -719,6 +877,7 @@ function showLegend() {
 }
 
 let layersReady = false;
+let autoFitDone = false;
 function tryInit() {
   if (layersReady) return;
   const cfg = CONFIG.hexLayer || {};
@@ -734,10 +893,13 @@ function tryInit() {
   addLayers();
   showLegend();
   
-  if (geojson.features.length) {
+  if (!autoFitDone && geojson.features.length) {
     const bounds = new mapboxgl.LngLatBounds();
     geojson.features.forEach(f => f.geometry.coordinates[0].forEach(c => bounds.extend(c)));
-    if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 500 });
+    if (!bounds.isEmpty()) {
+      map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 500 });
+      autoFitDone = true;
+    }
   }
   
   const layer = cfg.extruded ? 'hex-extrusion' : cfg.filled !== false ? 'hex-fill' : 'hex-outline';
@@ -757,7 +919,7 @@ function tryInit() {
 map.on('load', tryInit);
 
 // Fix for tiles not loading in iframes - aggressive tile refresh
-map.on('load', () => {
+    map.on('load', () => {
   [100, 300, 600, 1000, 2000].forEach(t => setTimeout(() => { map.resize(); map.triggerRepaint(); }, t));
 });
 map.on('idle', () => { 
@@ -781,9 +943,241 @@ const tileCheckInterval = setInterval(() => {
 }, 500);
 
 if (CONFIG_ERRORS?.length) {
-      const box = document.getElementById('config-error');
+  const box = document.getElementById('config-error');
   box.innerHTML = CONFIG_ERRORS.join('<br>');
-        box.style.display = 'block';
+  box.style.display = 'block';
+}
+
+function applyViewState(cfg) {
+  const ivs = cfg?.initialViewState || {};
+  const currentCenter = map.getCenter();
+  const lng = (typeof ivs.longitude === 'number') ? ivs.longitude : currentCenter.lng;
+  const lat = (typeof ivs.latitude === 'number') ? ivs.latitude : currentCenter.lat;
+  const zoom = (typeof ivs.zoom === 'number') ? ivs.zoom : map.getZoom();
+  const pitch = (typeof ivs.pitch === 'number') ? Math.min(85, Math.max(0, ivs.pitch)) : map.getPitch();
+  const bearing = (typeof ivs.bearing === 'number') ? ivs.bearing : map.getBearing();
+  console.log('[debug] applyViewState:', { lng, lat, zoom, pitch, bearing });
+  map.easeTo({ center: [lng, lat], zoom, pitch, bearing, duration: 500 });
+  autoFitDone = true;
+}
+
+// Debug Panel - Form controls
+if (DEBUG_MODE) {
+  const attrSelect = document.getElementById('cfg-attr');
+  const numericAttrs = (() => {
+    if (!DATA.length) return [];
+    const sample = DATA[0];
+    return Object.keys(sample).filter(key => typeof sample[key] === 'number' && !['hex','lat','lng'].includes(key));
+  })();
+
+  function populateAttrOptions(selected) {
+    if (!attrSelect) return;
+    attrSelect.innerHTML = '';
+    if (!numericAttrs.length) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = 'No numeric columns';
+      attrSelect.appendChild(opt);
+      attrSelect.disabled = true;
+      return;
+    }
+    numericAttrs.forEach(attr => {
+      const opt = document.createElement('option');
+      opt.value = attr;
+      opt.textContent = attr;
+      attrSelect.appendChild(opt);
+    });
+    if (selected && numericAttrs.includes(selected)) {
+      attrSelect.value = selected;
+    } else {
+      attrSelect.value = numericAttrs[0];
+    }
+  }
+
+  const BASE_HEX = JSON.parse(JSON.stringify(CONFIG.hexLayer || {}));
+
+  function setValue(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (value === undefined || value === null || Number.isNaN(value)) {
+      el.value = '';
+    } else {
+      el.value = value;
+    }
+  }
+
+  function setCheckbox(id, checked) {
+    const el = document.getElementById(id);
+    if (el) el.checked = Boolean(checked);
+  }
+
+  function getNumber(id) {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    const val = parseFloat(el.value);
+    return Number.isFinite(val) ? val : null;
+  }
+
+  function getCheckbox(id) {
+    const el = document.getElementById(id);
+    return el ? el.checked : false;
+  }
+
+  function updateFormFromConfig(cfg) {
+    const ivs = cfg.initialViewState || {};
+    setValue('cfg-longitude', ivs.longitude);
+    setValue('cfg-latitude', ivs.latitude);
+    setValue('cfg-zoom', ivs.zoom);
+    setValue('cfg-pitch', ivs.pitch);
+    setValue('cfg-bearing', ivs.bearing);
+
+    const hex = cfg.hexLayer || {};
+    setCheckbox('cfg-filled', hex.filled !== false);
+    setCheckbox('cfg-extruded', hex.extruded === true);
+    setCheckbox('cfg-pickable', hex.pickable !== false);
+    setValue('cfg-elev-scale', hex.elevationScale ?? 1);
+
+    const color = hex.getFillColor;
+    const paletteEl = document.getElementById('cfg-palette');
+    if (color && color['@@function'] === 'colorContinuous') {
+      populateAttrOptions(color.attr);
+      if (attrSelect && color.attr) {
+        if (![...attrSelect.options].some(opt => opt.value === color.attr)) {
+          const opt = document.createElement('option');
+          opt.value = color.attr;
+          opt.textContent = color.attr;
+          attrSelect.appendChild(opt);
+        }
+        attrSelect.value = color.attr;
+      }
+      setValue('cfg-domain-min', color.domain?.[0]);
+      setValue('cfg-domain-max', color.domain?.[1]);
+      setValue('cfg-steps', color.steps ?? 7);
+      if (paletteEl && color.colors) paletteEl.value = color.colors;
+    } else {
+      populateAttrOptions(numericAttrs[0]);
+      setValue('cfg-domain-min', 0);
+      setValue('cfg-domain-max', 100);
+      setValue('cfg-steps', 7);
+      if (paletteEl) paletteEl.value = 'TealGrn';
+    }
+  }
+
+  function toPython(value, indent = 4, level = 0) {
+    const pad = ' '.repeat(indent * level);
+    const padNext = ' '.repeat(indent * (level + 1));
+    if (value === null) return 'None';
+    if (typeof value === 'boolean') return value ? 'True' : 'False';
+    if (typeof value === 'number') return String(value);
+    if (typeof value === 'string') return JSON.stringify(value);
+    if (Array.isArray(value)) {
+      if (!value.length) return '[]';
+      const items = value.map(v => padNext + toPython(v, indent, level + 1));
+      return '[\n' + items.join(',\n') + '\n' + pad + ']';
+    }
+    if (typeof value === 'object') {
+      const keys = Object.keys(value);
+      if (!keys.length) return '{}';
+      const entries = keys.map(key => padNext + JSON.stringify(key) + ': ' + toPython(value[key], indent, level + 1));
+      return '{\n' + entries.join(',\n') + '\n' + pad + '}';
+    }
+    return 'None';
+  }
+
+  function buildConfigFromForm() {
+    const cfg = {};
+    const ivs = {};
+    const lon = getNumber('cfg-longitude');
+    const lat = getNumber('cfg-latitude');
+    const zoom = getNumber('cfg-zoom');
+    const pitch = getNumber('cfg-pitch');
+    const bearing = getNumber('cfg-bearing');
+    if (lon !== null) ivs.longitude = lon;
+    if (lat !== null) ivs.latitude = lat;
+    if (zoom !== null) ivs.zoom = zoom;
+    if (pitch !== null) ivs.pitch = Math.min(85, Math.max(0, pitch));
+    if (bearing !== null) ivs.bearing = bearing;
+    if (Object.keys(ivs).length) cfg.initialViewState = ivs;
+
+    const hex = {
+      '@@type': 'H3HexagonLayer',
+      filled: getCheckbox('cfg-filled'),
+      extruded: getCheckbox('cfg-extruded'),
+      pickable: getCheckbox('cfg-pickable'),
+      elevationScale: getNumber('cfg-elev-scale') ?? 1,
+    };
+
+    const attrValue = attrSelect?.value || numericAttrs[0];
+    const domainMin = getNumber('cfg-domain-min');
+    const domainMax = getNumber('cfg-domain-max');
+    const steps = getNumber('cfg-steps') ?? 7;
+    const paletteEl = document.getElementById('cfg-palette');
+    const palette = paletteEl ? paletteEl.value : 'TealGrn';
+
+    hex.getFillColor = {
+      '@@function': 'colorContinuous',
+      attr: attrValue,
+      domain: [
+        domainMin ?? 0,
+        domainMax ?? ((domainMin ?? 0) + 1),
+      ],
+      steps: steps,
+      colors: palette,
+    };
+
+    const preservedKeys = ['getHexagon', 'getElevation', 'lineWidthMinPixels', 'getLineColor', 'tooltipColumns'];
+    preservedKeys.forEach(key => {
+      if (BASE_HEX[key] !== undefined && hex[key] === undefined) {
+        hex[key] = BASE_HEX[key];
+      }
+    });
+    if (!hex.getHexagon) hex.getHexagon = '@@=properties.hex';
+    if (!hex.getElevation) hex.getElevation = BASE_HEX.getElevation || '@@=properties.data_avg';
+
+    cfg.hexLayer = hex;
+    return cfg;
+  }
+
+  function applyConfig(cfg) {
+    CONFIG = JSON.parse(JSON.stringify(cfg));
+    applyViewState(CONFIG);
+    layersReady = false;
+    tryInit();
+  }
+
+  function scheduleApply() {
+    clearTimeout(scheduleApply.timer);
+    scheduleApply.timer = setTimeout(() => {
+      const cfg = buildConfigFromForm();
+      applyConfig(cfg);
+    }, 200);
+  }
+
+  window.copyConfig = function() {
+    const cfg = buildConfigFromForm();
+    const pyStr = 'config = ' + toPython(cfg);
+    navigator.clipboard.writeText(pyStr);
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = '✓ Copied';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2000);
+  };
+
+  window.resetConfig = function() {
+    const original = JSON.parse(JSON.stringify(ORIGINAL_CONFIG));
+    updateFormFromConfig(original);
+    applyConfig(original);
+  };
+
+  populateAttrOptions(ORIGINAL_CONFIG?.hexLayer?.getFillColor?.attr);
+  updateFormFromConfig(ORIGINAL_CONFIG);
+  applyConfig(JSON.parse(JSON.stringify(ORIGINAL_CONFIG)));
+
+  document.querySelectorAll('#debug-panel [data-cfg-input]').forEach(el => {
+    el.addEventListener('input', scheduleApply);
+    el.addEventListener('change', scheduleApply);
+  });
     }
   </script>
 </body>
@@ -791,7 +1185,8 @@ if (CONFIG_ERRORS?.length) {
 """).render(
         mapbox_token=mapbox_token, data_records=data_records, config=merged_config,
         tooltip_columns=tooltip_columns, center_lng=center_lng, center_lat=center_lat,
-        zoom=zoom, config_errors=config_errors, style_url=style_url,
+        zoom=zoom, pitch=pitch, bearing=bearing, config_errors=config_errors, style_url=style_url, debug=debug,
+        user_config=original_config if original_config else merged_config,
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
