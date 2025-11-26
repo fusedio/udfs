@@ -52,7 +52,7 @@ DEFAULT_DECK_CONFIG = {
             "nullColor": [200, 200, 200, 180]
         },
         "tooltipAttrs": ["house_age", "mrt_distance", "price"]
-    }
+  } 
 }
 
 KNOWN_CARTOCOLOR_PALETTES = {
@@ -263,32 +263,35 @@ def deckgl_map(
         config_errors.append("[deckgl_map] vectorLayer.tooltipAttrs must be an array of column names.")
         vector_layer["tooltipAttrs"] = DEFAULT_DECK_CONFIG["vectorLayer"]["tooltipAttrs"]
     
-    # Only use fill color config if user explicitly provided it (not from defaults)
-    # Check the original config to see if user specified getFillColor
-    user_specified_fill_color = False
-    if isinstance(config, dict):
-        user_vector_layer = config.get("vectorLayer", {})
-        if isinstance(user_vector_layer, dict) and "getFillColor" in user_vector_layer:
-            user_specified_fill_color = True
+    # Helper to convert [r,g,b] or [r,g,b,a] to rgba string
+    def to_rgba(color_value, default_alpha=1.0):
+        if isinstance(color_value, (list, tuple)) and len(color_value) >= 3:
+            r, g, b = int(color_value[0]), int(color_value[1]), int(color_value[2])
+            a = color_value[3] / 255.0 if len(color_value) > 3 else default_alpha
+            return f"rgba({r},{g},{b},{a})"
+        return None
     
-    fill_color_config = vector_layer.get("getFillColor", {}) or {} if user_specified_fill_color else {}
-    color_attr = fill_color_config.get("attr", None) if isinstance(fill_color_config, dict) and user_specified_fill_color else None
+    # Get fill color config - can be colorContinuous dict OR simple [r,g,b,a] array
+    fill_color_raw = vector_layer.get("getFillColor")
+    fill_color_config = {}  # For colorContinuous
+    fill_color_rgba = None  # For simple RGBA
+    color_attr = None
     
-    # Extract line color configuration
-    line_color_value = vector_layer.get("getLineColor")
-    line_color_rgba = None
-    if isinstance(line_color_value, (list, tuple)) and len(line_color_value) >= 3:
-        # Convert [r, g, b, a] to rgba string
-        r, g, b = int(line_color_value[0]), int(line_color_value[1]), int(line_color_value[2])
-        a = line_color_value[3] / 255.0 if len(line_color_value) > 3 else 1.0
-        line_color_rgba = f"rgba({r},{g},{b},{a})"
+    if isinstance(fill_color_raw, dict) and fill_color_raw.get("@@function") == "colorContinuous":
+        fill_color_config = fill_color_raw
+        color_attr = fill_color_raw.get("attr")
+    elif isinstance(fill_color_raw, (list, tuple)):
+        fill_color_rgba = to_rgba(fill_color_raw, default_alpha=0.6)
     
-    # Extract line width and point radius from vector layer config
-    line_width = vector_layer.get("lineWidthMinPixels", 3)
-    # Support both pointRadius and pointRadiusMinPixels for consistency with deck.gl naming
-    point_radius = vector_layer.get("pointRadiusMinPixels")
-    if point_radius is None:
-        point_radius = vector_layer.get("pointRadius", 6)
+    # Get line color - simple [r,g,b,a] array
+    line_color_rgba = to_rgba(vector_layer.get("getLineColor"), default_alpha=1.0)
+    
+    # Extract other properties with sensible defaults
+    line_width = vector_layer.get("lineWidthMinPixels", 1)
+    point_radius = vector_layer.get("pointRadiusMinPixels") or vector_layer.get("pointRadius", 6)
+    is_filled = vector_layer.get("filled", True)
+    is_stroked = vector_layer.get("stroked", True)
+    opacity = vector_layer.get("opacity", 0.8)  # Default opacity for fill
 
     auto_state = {
         "longitude": float(auto_center[0]) if auto_center else 0.0,
@@ -336,6 +339,10 @@ const CONFIG_ERROR = {{ config_error | tojson }};
 const LINE_WIDTH = {{ line_width | tojson }};
 const POINT_RADIUS = {{ point_radius | tojson }};
 const LINE_COLOR = {{ line_color_rgba | tojson }};
+const FILL_COLOR = {{ fill_color_rgba | tojson }};
+const IS_FILLED = {{ is_filled | tojson }};
+const IS_STROKED = {{ is_stroked | tojson }};
+const OPACITY = {{ opacity | tojson }};
 
 mapboxgl.accessToken = MAPBOX_TOKEN;
 const map = new mapboxgl.Map({
@@ -350,7 +357,12 @@ function makeColorStops(cfg) {
   if (!cfg || cfg['@@function'] !== 'colorContinuous' || !cfg.domain || cfg.domain.length !== 2) {
     return null;
   }
-  const domain = cfg.domain;
+  
+  // Handle reversed domains - Mapbox requires ascending order
+  const rawDomain = cfg.domain;
+  const isReversed = rawDomain[0] > rawDomain[1];
+  const sortedDomain = isReversed ? [rawDomain[1], rawDomain[0]] : rawDomain;
+  
   const steps = cfg.steps || 7;
   const paletteName = cfg.colors || 'TealGrn';
   const palette = (window.cartocolor && window.cartocolor[paletteName]) || null;
@@ -358,8 +370,9 @@ function makeColorStops(cfg) {
   if (palette) {
     const available = Object.keys(palette).map(Number).filter(n=>!isNaN(n)).sort((a,b)=>a-b);
     const best = available.find(n => n >= steps) || available[available.length-1];
-    colorsArray = palette[best];
+    colorsArray = [...palette[best]]; // Clone to avoid mutating original
   } else {
+    console.warn('[deckgl_map] Palette not found:', paletteName, '- using fallback gradient');
     colorsArray = [];
     for (let i=0;i<steps;i++){
       const t = i/(steps-1);
@@ -369,12 +382,21 @@ function makeColorStops(cfg) {
       colorsArray.push(`rgb(${r},${g},${b})`);
     }
   }
+  
+  // If domain was reversed, reverse colors to maintain intended mapping
+  if (isReversed) {
+    colorsArray = colorsArray.reverse();
+  }
+  
+  // Build stops with ascending domain values
   const stops = [];
   for (let i=0;i<colorsArray.length;i++){
-    const v = domain[0] + ((domain[1]-domain[0]) * (i/(colorsArray.length-1)));
+    const v = sortedDomain[0] + ((sortedDomain[1]-sortedDomain[0]) * (i/(colorsArray.length-1)));
     stops.push([v, colorsArray[i]]);
   }
-  return {stops, domain};
+  
+  console.log('[deckgl_map] Built color stops - domain:', sortedDomain, 'reversed:', isReversed, 'palette:', paletteName);
+  return {stops, domain: sortedDomain};
 }
 
 // Create expression array for Mapbox interpolate: ['interpolate',['linear'],['get', attr], v1,c1, v2,c2, ...]
@@ -467,35 +489,58 @@ function makeInterpolateExpression(attr, colorSpec) {
 
   const colorSpec = makeColorStops(FILL_COLOR_CONFIG);
   const colorExpr = makeInterpolateExpression(COLOR_ATTR, colorSpec);
+  
+  // Determine fill color: use colorExpr for continuous, FILL_COLOR for simple rgba, or default
+  const fillColor = colorExpr || FILL_COLOR || 'rgba(0,144,255,0.6)';
+  // Determine line color for polygon borders
+  const polygonLineColor = LINE_COLOR || 'rgba(0,0,0,0.5)';
+  const polygonLineWidth = LINE_WIDTH || 1;
+
+  console.log('[deckgl_map] Data:', {
+    featureCount: GEOJSON.features ? GEOJSON.features.length : 0,
+    sampleGeomType: GEOJSON.features && GEOJSON.features[0] ? GEOJSON.features[0].geometry?.type : 'none'
+  });
+  console.log('[deckgl_map] Layer config:', {
+    hasPolygon, hasLine, hasPoint,
+    IS_FILLED, IS_STROKED,
+    fillColor, polygonLineColor, polygonLineWidth,
+    LINE_COLOR, FILL_COLOR
+  });
 
   if (hasPolygon) {
+    // Only add fill layer if IS_FILLED is true
+    if (IS_FILLED !== false) {
     map.addLayer({
       id: 'gdf-fill',
       type: 'fill',
       source: 'gdf-source',
       paint: {
-        'fill-color': colorExpr || 'rgba(0,144,255,0.6)',
-        'fill-opacity': 0.8
+          'fill-color': fillColor,
+          'fill-opacity': OPACITY
       },
       filter: ['any',
         ['==', ['geometry-type'], 'Polygon'],
         ['==', ['geometry-type'], 'MultiPolygon']
       ]
     });
+    }
 
+    // Only add stroke/outline layer if IS_STROKED is true
+    if (IS_STROKED !== false) {
     map.addLayer({
       id: 'gdf-line',
       type: 'line',
       source: 'gdf-source',
       paint: {
-        'line-color': 'rgba(0,0,0,0.5)',
-        'line-width': 1
+          'line-color': polygonLineColor,
+          'line-width': polygonLineWidth
       },
       filter: ['any',
         ['==', ['geometry-type'], 'Polygon'],
         ['==', ['geometry-type'], 'MultiPolygon']
       ]
     });
+    }
   }
 
   if (hasLine) {
@@ -526,7 +571,7 @@ function makeInterpolateExpression(attr, colorSpec) {
       source: 'gdf-source',
       paint: {
         'circle-radius': radius,
-        'circle-color': colorExpr || 'rgba(0,144,255,0.9)',
+        'circle-color': fillColor,
         'circle-stroke-color': 'rgba(0,0,0,0.5)',
         'circle-stroke-width': strokeWidth,
         'circle-opacity': 0.9
@@ -541,21 +586,34 @@ function makeInterpolateExpression(attr, colorSpec) {
 
 // Flag to prevent multiple fitBounds calls
 let hasInitiallyFit = false;
+let layersAdded = false;
 
-map.on('load', () => {
+function tryAddLayersAndLegend() {
+  if (layersAdded) return;
+  
+  // Wait for cartocolor if we need it for color expressions
+  const needsCartocolor = FILL_COLOR_CONFIG && FILL_COLOR_CONFIG['@@function'] === 'colorContinuous';
+  if (needsCartocolor && !window.cartocolor) {
+    console.log('[deckgl_map] Waiting for cartocolor to load...');
+    setTimeout(tryAddLayersAndLegend, 50);
+    return;
+  }
+  
   addGeoJsonSourceAndLayers();
+  layersAdded = true;
+  console.log('[deckgl_map] Layers added successfully');
 
   // fit bounds only once if turf available
   if (!hasInitiallyFit) {
-    try {
-      if (window.turf) {
-        const bbox = turf.bbox(GEOJSON);
-        if (bbox && bbox.length === 4) {
-          map.fitBounds([[bbox[0], bbox[1]],[bbox[2], bbox[3]]], { padding: 40, maxZoom: 15, duration: 500 });
+  try {
+    if (window.turf) {
+      const bbox = turf.bbox(GEOJSON);
+      if (bbox && bbox.length === 4) {
+        map.fitBounds([[bbox[0], bbox[1]],[bbox[2], bbox[3]]], { padding: 40, maxZoom: 15, duration: 500 });
           hasInitiallyFit = true;
-        }
       }
-    } catch(e){}
+    }
+  } catch(e){}
   }
 
   // legend - only show if we have a continuous color scale with an attribute
@@ -573,6 +631,10 @@ map.on('load', () => {
     legend.querySelector('.legend-max').textContent = Number(colorSpec.domain[1]).toFixed(1);
     legend.style.display = 'block';
   }
+}
+
+map.on('load', () => {
+  tryAddLayersAndLegend();
 });
 
 // --- NATIVE MAPBOX POPUP TOOLTIP (robust, recovers from missing layers) ---
@@ -744,6 +806,10 @@ if (errorBox && CONFIG_ERROR && CONFIG_ERROR.length) {
         line_width=line_width,
         point_radius=point_radius,
         line_color_rgba=line_color_rgba,
+        fill_color_rgba=fill_color_rgba,
+        is_filled=is_filled,
+        is_stroked=is_stroked,
+        opacity=opacity,
         style_url=style_url,
     )
 
@@ -1072,8 +1138,8 @@ def deckgl_hex(
           const s = hex.startsWith('0x') ? hex.slice(2) : hex;
           if (/[a-f]/i.test(s)) return s.toLowerCase();
           if (/^\d+$/.test(s)) return BigInt(s).toString(16);
-          return s.toLowerCase();
-        }
+            return s.toLowerCase();
+          }
         if (typeof hex === 'number') return BigInt(Math.trunc(hex)).toString(16);
         if (typeof hex === 'bigint') return hex.toString(16);
       } catch(e) {
@@ -1105,7 +1171,7 @@ def deckgl_hex(
               coordinates: [coordinates]
             }
           });
-        } catch (err) {
+            } catch (err) {
           console.warn('Failed to convert hex to polygon:', hexId, err);
         }
       }
@@ -1242,9 +1308,30 @@ def deckgl_hex(
       
       // Get config from hexLayer
       const hexLayerConfig = CONFIG.hexLayer || {};
+      const isFilled = hexLayerConfig.filled !== false;  // Default true
+      const isExtruded = hexLayerConfig.extruded === true;
+      const lineWidth = hexLayerConfig.lineWidthMinPixels || 0.5;
+      
+      // Build fill color expression
       const fillColorConfig = hexLayerConfig.getFillColor;
       const fillColor = buildColorExpression(fillColorConfig);
-      const isExtruded = hexLayerConfig.extruded === true;
+      
+      // Build line color expression - support both simple array and colorContinuous
+      const lineColorConfig = hexLayerConfig.getLineColor;
+      let lineColor = 'rgba(255, 255, 255, 0.3)';  // Default white outline
+      if (lineColorConfig) {
+        if (lineColorConfig['@@function'] === 'colorContinuous') {
+          // Use colorContinuous for line color
+          lineColor = buildColorExpression(lineColorConfig);
+        } else if (Array.isArray(lineColorConfig)) {
+          // Simple [r,g,b] or [r,g,b,a] array
+          const [r, g, b] = lineColorConfig;
+          const a = lineColorConfig[3] !== undefined ? lineColorConfig[3] / 255 : 1;
+          lineColor = `rgba(${r},${g},${b},${a})`;
+        }
+      }
+      
+      console.log('[deckgl_hex] Layer config:', { isFilled, isExtruded, lineWidth, fillColor: typeof fillColor, lineColor: typeof lineColor });
       
       if (isExtruded) {
         // Use fill-extrusion layer for 3D
@@ -1264,25 +1351,27 @@ def deckgl_hex(
         
         console.log('[deckgl_hex] Added 3D extruded layer with elevation:', elevationExpr);
       } else {
-        // Use flat fill layer for 2D
-        map.addLayer({
-          id: 'hex-fill',
-          type: 'fill',
-          source: 'hex-source',
-          paint: {
-            'fill-color': fillColor,
-            'fill-opacity': 0.8
-          }
-        });
+        // Add fill layer only if filled is true
+        if (isFilled) {
+          map.addLayer({
+            id: 'hex-fill',
+            type: 'fill',
+            source: 'hex-source',
+            paint: {
+              'fill-color': fillColor,
+              'fill-opacity': 0.8
+            }
+          });
+        }
         
-        // Add outline layer
+        // Add outline layer (always add for hex visibility)
         map.addLayer({
           id: 'hex-outline',
           type: 'line',
           source: 'hex-source',
           paint: {
-            'line-color': 'rgba(255, 255, 255, 0.3)',
-            'line-width': 0.5
+            'line-color': lineColor,
+            'line-width': lineWidth
           }
         });
       }
@@ -1296,16 +1385,16 @@ def deckgl_hex(
       for (const feature of geojsonData.features) {
         const coords = feature.geometry.coordinates[0];
         for (const [lng, lat] of coords) {
-          bounds.extend([lng, lat]);
-        }
-      }
-      
-      if (!bounds.isEmpty()) {
-        map.fitBounds(bounds, {
-          padding: 50,
-          maxZoom: 15,
-          duration: 500
-        });
+                bounds.extend([lng, lat]);
+            }
+          }
+          
+          if (!bounds.isEmpty()) {
+              map.fitBounds(bounds, {
+                padding: 50,
+                maxZoom: 15,
+                duration: 500
+              });
       }
     }
 
@@ -1317,9 +1406,11 @@ def deckgl_hex(
       // Wait for cartocolor if we need it for color expressions
       const hexLayerConfig = CONFIG.hexLayer || {};
       const fillColorConfig = hexLayerConfig.getFillColor;
-      const needsCartocolor = fillColorConfig && fillColorConfig['@@function'] === 'colorContinuous';
+      const lineColorConfig = hexLayerConfig.getLineColor;
+      const needsCartocolorFill = fillColorConfig && fillColorConfig['@@function'] === 'colorContinuous';
+      const needsCartocolorLine = lineColorConfig && lineColorConfig['@@function'] === 'colorContinuous';
       
-      if (needsCartocolor && !window.cartocolor) {
+      if ((needsCartocolorFill || needsCartocolorLine) && !window.cartocolor) {
         console.log('[deckgl_hex] Waiting for cartocolor to load...');
         setTimeout(tryAddLayers, 50);
         return;
@@ -1347,7 +1438,7 @@ def deckgl_hex(
     // Tooltip on hover using native Mapbox querying
     // Works for both 'hex-fill' (2D) and 'hex-extrusion' (3D) layers
     function showTooltip(e) {
-      map.getCanvas().style.cursor = 'pointer';
+        map.getCanvas().style.cursor = 'pointer';
       
       if (e.features && e.features.length > 0) {
         const props = e.features[0].properties;
@@ -1366,30 +1457,40 @@ def deckgl_hex(
             lines.push(`${col}: ${val}`);
           }
         });
-        
+
         const tt = $tooltip();
         if (lines.length) {
           tt.innerHTML = lines.join(' &bull; ');
-          tt.style.left = `${e.point.x + 10}px`;
-          tt.style.top = `${e.point.y + 10}px`;
-          tt.style.display = 'block';
-        } else {
+        tt.style.left = `${e.point.x + 10}px`;
+        tt.style.top = `${e.point.y + 10}px`;
+        tt.style.display = 'block';
+      } else {
           tt.style.display = 'none';
         }
       }
     }
     
     function hideTooltip() {
-      map.getCanvas().style.cursor = '';
-      $tooltip().style.display = 'none';
-    }
+        map.getCanvas().style.cursor = '';
+        $tooltip().style.display = 'none';
+      }
     
     // Attach tooltip handlers after layers are added
     map.on('load', () => {
       // Determine which layer to use for tooltips based on config
       const hexLayerConfig = CONFIG.hexLayer || {};
       const isExtruded = hexLayerConfig.extruded === true;
-      const layerId = isExtruded ? 'hex-extrusion' : 'hex-fill';
+      const isFilled = hexLayerConfig.filled !== false;
+      
+      // Use appropriate layer for tooltips: extrusion > fill > outline
+      let layerId;
+      if (isExtruded) {
+        layerId = 'hex-extrusion';
+      } else if (isFilled) {
+        layerId = 'hex-fill';
+      } else {
+        layerId = 'hex-outline';  // When filled=false, use outline layer
+      }
       
       map.on('mousemove', layerId, showTooltip);
       map.on('mouseleave', layerId, hideTooltip);
