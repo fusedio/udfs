@@ -638,8 +638,6 @@ def deckgl_hex(
     .single-column { display:flex; flex-direction:column; gap:10px; }
     #debug-buttons { display:flex; gap:8px; padding:12px 18px; background:#1a1a1a; border-top:1px solid #424242; }
     .dbtn { flex:1; border:none; border-radius:4px; padding:10px; font-size:11px; font-weight:600; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px; }
-    .dbtn.primary { background:#E8FF59; color:#1a1a1a; }
-    .dbtn.primary:hover { background:#f0ff7a; }
     .dbtn.secondary { background:#424242; color:#fff; }
     .dbtn.secondary:hover { background:#616161; }
     .dbtn.ghost { background:transparent; color:#E8FF59; border:1px solid rgba(232,255,89,0.3); }
@@ -709,16 +707,8 @@ def deckgl_hex(
           <div class="form-control">
             <label>Palette</label>
             <select id="cfg-palette" data-cfg-input>
-              <option value="TealGrn">TealGrn</option>
-              <option value="Teal">Teal</option>
-              <option value="BluGrn">BluGrn</option>
-              <option value="Sunset">Sunset</option>
-              <option value="SunsetDark">SunsetDark</option>
-              <option value="Magenta">Magenta</option>
-              <option value="Earth">Earth</option>
-              <option value="Vivid">Vivid</option>
-              <option value="Emrld">Emrld</option>
-              <option value="OrYel">OrYel</option>
+              {% for pal in palettes %}<option value="{{ pal }}">{{ pal }}</option>
+              {% endfor %}
             </select>
           </div>
           <div class="form-control">
@@ -901,10 +891,13 @@ function tryInit() {
   addLayers();
   showLegend();
   
-if (!HAS_CUSTOM_VIEW && !autoFitDone && geojson.features.length) {
+  // Auto-fit to data bounds if no custom view specified
+  console.log('[tryInit] fitBounds check:', { HAS_CUSTOM_VIEW, autoFitDone, features: geojson.features.length });
+  if (!HAS_CUSTOM_VIEW && !autoFitDone && geojson.features.length) {
     const bounds = new mapboxgl.LngLatBounds();
     geojson.features.forEach(f => f.geometry.coordinates[0].forEach(c => bounds.extend(c)));
     if (!bounds.isEmpty()) {
+      console.log('[tryInit] Fitting bounds:', bounds.toArray());
       map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 500 });
       autoFitDone = true;
     }
@@ -958,6 +951,10 @@ if (CONFIG_ERRORS?.length) {
 
 function applyViewState(cfg) {
   const ivs = cfg?.initialViewState || {};
+  // Check if user actually specified any view state values
+  const hasCustomView = ['longitude','latitude','zoom','pitch','bearing'].some(k => typeof ivs[k] === 'number');
+  if (!hasCustomView) return; // Don't override auto-fit if no custom view
+  
   const currentCenter = map.getCenter();
   const lng = (typeof ivs.longitude === 'number') ? ivs.longitude : currentCenter.lng;
   const lat = (typeof ivs.latitude === 'number') ? ivs.latitude : currentCenter.lat;
@@ -966,7 +963,7 @@ function applyViewState(cfg) {
   const bearing = (typeof ivs.bearing === 'number') ? ivs.bearing : map.getBearing();
   console.log('[debug] applyViewState:', { lng, lat, zoom, pitch, bearing });
   map.easeTo({ center: [lng, lat], zoom, pitch, bearing, duration: 500 });
-  autoFitDone = true;
+  autoFitDone = true; // Only set after actually applying custom view
 }
 
 // Debug Panel - Form controls
@@ -1180,13 +1177,13 @@ if (DEBUG_MODE) {
 
   populateAttrOptions(ORIGINAL_CONFIG?.hexLayer?.getFillColor?.attr);
   updateFormFromConfig(ORIGINAL_CONFIG);
-  applyConfig(JSON.parse(JSON.stringify(ORIGINAL_CONFIG)));
-
+  
+  // Only bind form events - don't call applyConfig on init, let map.on('load') handle initial render
   document.querySelectorAll('#debug-panel [data-cfg-input]').forEach(el => {
     el.addEventListener('input', scheduleApply);
     el.addEventListener('change', scheduleApply);
   });
-    }
+}
   </script>
 </body>
 </html>
@@ -1195,7 +1192,7 @@ if (DEBUG_MODE) {
         tooltip_columns=tooltip_columns, center_lng=center_lng, center_lat=center_lat,
         zoom=zoom, pitch=pitch, bearing=bearing, config_errors=config_errors, style_url=style_url, debug=debug,
         user_config=original_config if original_config else merged_config,
-        has_custom_view=has_custom_view,
+        has_custom_view=has_custom_view, palettes=sorted(KNOWN_CARTOCOLOR_PALETTES),
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
