@@ -43,7 +43,7 @@ def bounds_to_res(bounds, res_offset=1, max_res=11, min_res=3):
 
 
 def read_overview(hex_res, bounds, path):
-    H3_From_To_Pos = fused.load("https://github.com/fusedlabs/fusedudfs/tree/5b022e0/H3_From_To_Pos/")
+    H3_From_To_Pos = fused.load("https://github.com/fusedio/udfs/tree/e1b4ea0/community/max/H3_From_To_Pos")
     df = H3_From_To_Pos.read_hexfile_bounds(bounds=bounds, url=f"{path}overview/hex{hex_res}.parquet", clip=1)
     # con = common.duckdb_connect()
     # df = con.sql(f'select * from read_parquet("{path}_hex{hex_res}")').df()
