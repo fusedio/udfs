@@ -395,7 +395,6 @@ function makeColorStops(cfg) {
     stops.push([v, colorsArray[i]]);
   }
   
-  console.log('[deckgl_map] Built color stops - domain:', sortedDomain, 'reversed:', isReversed, 'palette:', paletteName);
   return {stops, domain: sortedDomain};
 }
 
@@ -496,17 +495,6 @@ function makeInterpolateExpression(attr, colorSpec) {
   const polygonLineColor = LINE_COLOR || 'rgba(0,0,0,0.5)';
   const polygonLineWidth = LINE_WIDTH || 1;
 
-  console.log('[deckgl_map] Data:', {
-    featureCount: GEOJSON.features ? GEOJSON.features.length : 0,
-    sampleGeomType: GEOJSON.features && GEOJSON.features[0] ? GEOJSON.features[0].geometry?.type : 'none'
-  });
-  console.log('[deckgl_map] Layer config:', {
-    hasPolygon, hasLine, hasPoint,
-    IS_FILLED, IS_STROKED,
-    fillColor, polygonLineColor, polygonLineWidth,
-    LINE_COLOR, FILL_COLOR
-  });
-
   if (hasPolygon) {
     // Only add fill layer if IS_FILLED is true
     if (IS_FILLED !== false) {
@@ -594,14 +582,12 @@ function tryAddLayersAndLegend() {
   // Wait for cartocolor if we need it for color expressions
   const needsCartocolor = FILL_COLOR_CONFIG && FILL_COLOR_CONFIG['@@function'] === 'colorContinuous';
   if (needsCartocolor && !window.cartocolor) {
-    console.log('[deckgl_map] Waiting for cartocolor to load...');
-    setTimeout(tryAddLayersAndLegend, 50);
-    return;
-  }
-  
+      setTimeout(tryAddLayersAndLegend, 50);
+      return;
+    }
+    
   addGeoJsonSourceAndLayers();
-  layersAdded = true;
-  console.log('[deckgl_map] Layers added successfully');
+    layersAdded = true;
 
   // fit bounds only once if turf available
   if (!hasInitiallyFit) {
@@ -776,7 +762,6 @@ map.on('styledata', () => {
     
     // Only recover if layers are truly missing
     if (!hasSource || (!hasFill && !hasCircle && !hasLine)) {
-      console.log('[deckgl_map] Recovering missing layers after style change');
       addGeoJsonSourceAndLayers();
     }
   } catch (err) {
@@ -928,6 +913,7 @@ def deckgl_hex(
 
     configured_tooltip_columns = _extract_tooltip_columns((config, hex_layer))
     tooltip_columns = []
+    print(f"[deckgl_hex] configured_tooltip_columns from config: {configured_tooltip_columns}")
 
     if config_errors:
         print(f"\n[deckgl_hex] Config validation found {len(config_errors)} issue(s):")
@@ -983,11 +969,13 @@ def deckgl_hex(
     
     if len(data_records) > 0:
         available_keys = set(data_records[0].keys())
+        print(f"[deckgl_hex] Available data columns: {list(available_keys)[:10]}...")
         if configured_tooltip_columns:
             missing_tooltips = [col for col in configured_tooltip_columns if col not in available_keys]
             if missing_tooltips:
                 print(f"[deckgl_hex] Warning: tooltip columns not found in data: {missing_tooltips}")
             tooltip_columns = [col for col in configured_tooltip_columns if col in available_keys]
+            print(f"[deckgl_hex] Final tooltip_columns: {tooltip_columns}")
         else:
             tooltip_columns = []
 
@@ -1230,7 +1218,6 @@ def deckgl_hex(
         expr.push(colorsArray[i]);
       }
       
-      console.log('[deckgl_hex] Built color expression for attr:', attr, 'domain:', sortedDomain, 'reversed:', isReversed);
       return expr;
     }
 
@@ -1243,7 +1230,6 @@ def deckgl_hex(
 
     // Convert data to GeoJSON
     const geojsonData = hexDataToGeoJSON(DATA);
-    console.log('[deckgl_hex] Converted', geojsonData.features.length, 'hexagons to GeoJSON');
 
     // Mapbox init
     mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -1331,8 +1317,6 @@ def deckgl_hex(
         }
       }
       
-      console.log('[deckgl_hex] Layer config:', { isFilled, isExtruded, lineWidth, fillColor: typeof fillColor, lineColor: typeof lineColor });
-      
       if (isExtruded) {
         // Use fill-extrusion layer for 3D
         const elevationExpr = buildElevationExpression(null, hexLayerConfig);
@@ -1349,7 +1333,6 @@ def deckgl_hex(
           }
         });
         
-        console.log('[deckgl_hex] Added 3D extruded layer with elevation:', elevationExpr);
       } else {
         // Add fill layer only if filled is true
         if (isFilled) {
@@ -1411,7 +1394,6 @@ def deckgl_hex(
       const needsCartocolorLine = lineColorConfig && lineColorConfig['@@function'] === 'colorContinuous';
       
       if ((needsCartocolorFill || needsCartocolorLine) && !window.cartocolor) {
-        console.log('[deckgl_hex] Waiting for cartocolor to load...');
         setTimeout(tryAddLayers, 50);
         return;
       }
@@ -1419,7 +1401,6 @@ def deckgl_hex(
       addHexLayers();
       fitToBounds();
       layersAdded = true;
-      console.log('[deckgl_hex] Layers added successfully');
     }
     
     map.on('load', () => {
@@ -1429,7 +1410,6 @@ def deckgl_hex(
     // Re-add layers if style changes (recovery)
     map.on('styledata', () => {
       if (!map.getSource('hex-source') && geojsonData.features.length > 0) {
-        console.log('[deckgl_hex] Recovering layers after style change');
         layersAdded = false;
         tryAddLayers();
       }
@@ -1504,7 +1484,6 @@ def deckgl_hex(
       if (!colorCfg || colorCfg['@@function'] !== 'colorContinuous') {
         colorCfg = hexLayer.getLineColor;
         if (!colorCfg || colorCfg['@@function'] !== 'colorContinuous') {
-          console.log('[legend] No colorContinuous config found in getFillColor or getLineColor');
           return;
         }
       }
@@ -1516,12 +1495,10 @@ def deckgl_hex(
       const colors = colorCfg.colors || 'TealGrn';
       
       if (!attr || !domain || !Array.isArray(domain) || domain.length !== 2) {
-        console.log('[legend] Invalid color config - missing attr or domain');
         return;
       }
       
       if (!window.cartocolor) {
-        console.log('[legend] Waiting for cartocolor to load...');
         setTimeout(generateColorLegend, 100);
         return;
       }
@@ -1562,7 +1539,6 @@ def deckgl_hex(
           legendEl.querySelector('.legend-min').textContent = domain[0].toFixed(1);
           legendEl.querySelector('.legend-max').textContent = domain[1].toFixed(1);
           legendEl.style.display = 'block';
-          console.log('[legend] Legend generated successfully');
         } else {
           console.warn('[legend] Legend element not found');
         }
