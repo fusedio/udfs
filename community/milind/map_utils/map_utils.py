@@ -586,6 +586,13 @@ def deckgl_hex(
     zoom = ivs.get('zoom') or auto_zoom
     pitch = ivs.get('pitch', 0)
     bearing = ivs.get('bearing', 0)
+    user_initial_state = {}
+    if isinstance(original_config, dict):
+        user_initial_state = original_config.get('initialViewState', {}) or {}
+    has_custom_view = any(
+        user_initial_state.get(key) is not None
+        for key in ('longitude', 'latitude', 'zoom', 'pitch', 'bearing')
+    )
 
     # Tooltip columns
     tooltip_columns = _extract_tooltip_columns((merged_config, hex_layer))
@@ -745,6 +752,7 @@ def deckgl_hex(
     const TOOLTIP_COLUMNS = {{ tooltip_columns | tojson }};
     const CONFIG_ERRORS = {{ config_errors | tojson }};
     const DEBUG_MODE = {{ debug | tojson }};
+    const HAS_CUSTOM_VIEW = {{ has_custom_view | tojson }};
 
 // H3 ID conversion
 function toH3(hex) {
@@ -893,7 +901,7 @@ function tryInit() {
   addLayers();
   showLegend();
   
-  if (!autoFitDone && geojson.features.length) {
+if (!HAS_CUSTOM_VIEW && !autoFitDone && geojson.features.length) {
     const bounds = new mapboxgl.LngLatBounds();
     geojson.features.forEach(f => f.geometry.coordinates[0].forEach(c => bounds.extend(c)));
     if (!bounds.isEmpty()) {
@@ -1187,6 +1195,7 @@ if (DEBUG_MODE) {
         tooltip_columns=tooltip_columns, center_lng=center_lng, center_lat=center_lat,
         zoom=zoom, pitch=pitch, bearing=bearing, config_errors=config_errors, style_url=style_url, debug=debug,
         user_config=original_config if original_config else merged_config,
+        has_custom_view=has_custom_view,
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
