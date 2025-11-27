@@ -167,9 +167,20 @@ def read_dataset(path, bounds, res, value, base_res=7):
             GROUP BY 1,2
         """
         df = con.sql(qr).df()
+        return df
 
+    # files with "hex" column
+    if res == data_res:
+        # reading at originnal data resolution -> no aggregation needed
+        con = common.duckdb_connect()
+        qr = f"""
+            SELECT * FROM df
+            WHERE h3_cell_to_lat(hex) BETWEEN {bounds[1]} AND {bounds[3]}
+              AND h3_cell_to_lng(hex) BETWEEN {bounds[0]} AND {bounds[2]}
+        """
+        df = con.sql(qr).df()
+        
     else:
-        # files with "hex" column
         con = common.duckdb_connect()
         qr = f"""
             SELECT * EXCLUDE(hex), h3_cell_to_parent(hex, {res}) AS hex FROM df
