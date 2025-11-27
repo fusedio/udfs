@@ -1,6 +1,6 @@
 @fused.udf
 def udf(bounds: fused.types.Bounds = [-122.4194, 37.7749, -122.4094, 37.7849]):
-    version='2025.11.21.1'
+    version='2025.11.27.0'
     gdf = to_gdf(bounds)
     return gdf
 
@@ -183,7 +183,38 @@ def get_jobs_status(jobs, wait=True, sleep_seconds=3):
         not_done=(df.status=='terminated').mean()<1
         print(f'\r{df.status.value_counts().to_dict()} | elapsed time: {datetime.now() - s}', end='', flush=True)
     return df
+
+def s3_copy(src_path, dst_path):
+    import s3fs
+    fs = s3fs.S3FileSystem()
+    if not fs.exists(dst_path):
+        fs.copy(src_path, dst_path)
+        return f"Successfully copied from {src_path} to {dst_path}"
+    else:
+        return f"File already exists at {dst_path}, skipping copy"
+
+def s3_list(path, include_metadata=True):
+    import s3fs
+    import pandas as pd
+    fs = s3fs.S3FileSystem()
     
+    if include_metadata:
+        files_info = fs.find(path, detail=True)
+        df = pd.DataFrame.from_dict(files_info, orient='index')
+        df['path'] = 's3://' + df.index
+        df['size_mb'] = round(df['Size'] / (1024 * 1024), 2)
+        df['filename'] = df.index.str.split('/').str[-1]
+        df['last_modified'] = pd.to_datetime(df['LastModified']).dt.strftime('%Y-%m-%d %H:%M:%S')
+        df['extension'] = df.filename.apply(lambda x: x.split('.')[-1] if '.' in x else '')
+        df = df[['filename', 'extension', 'path', 'size_mb', 'last_modified']]
+        df = df.sort_values('last_modified', ascending=False)
+        print(f"Total size: {df.size_mb.sum():.2f} MB ({df.size_mb.sum() / 1024:.2f} GB)")
+    else:
+        files = fs.find(path)
+        df = pd.DataFrame(files, columns=['path'])
+        df['path'] = 's3://' + df['path']
+    return df.reset_index(drop=True)
+
 def get_s3_size(file_path):
     import fused
     return sum([i.size for i in fused.api.list(file_path, details=1) if i.size])/10**9
