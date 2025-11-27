@@ -495,29 +495,49 @@ def deckgl_hex(
     basemap: str = "dark",
     debug: bool = False,
     tile_url: str = None,
+    layers: list = None,
 ):
     """
     Render H3 hexagon data as an interactive map.
     
-    Supports two modes:
+    Supports three modes:
     1. Static mode (default): Pass a DataFrame with 'hex' column
-    2. Tile mode: Pass tile_url template (e.g. "https://example.com/tiles/{z}/{x}/{y}?dtype_out_vector=json")
+    2. Tile mode: Pass tile_url template
+    3. Multi-layer mode: Pass layers list with multiple datasets
     
     Args:
-        df: DataFrame with 'hex' column containing H3 cell IDs (ignored in tile mode).
+        df: DataFrame with 'hex' column containing H3 cell IDs (ignored in tile/multi-layer mode).
         config: Optional config dict with hexLayer settings (getFillColor, getLineColor, etc.)
         mapbox_token: Mapbox access token.
         basemap: 'dark', 'satellite', or custom Mapbox style URL.
         debug: Show debug panel for config tweaking.
         tile_url: XYZ tile URL template with {z}/{x}/{y} placeholders. When provided, enables tile mode.
+        layers: List of layer dicts for multi-layer mode. Each dict has:
+            - "data": DataFrame with hex column
+            - "config": hexLayer config for this layer
+            - "name": Display name for layer toggle (optional)
     
     Examples:
-        # Static mode
+        # Static mode (single layer)
         deckgl_hex(df, config, debug=True)
         
         # Tile mode
         deckgl_hex(tile_url="https://example.com/tiles/{z}/{x}/{y}?dtype_out_vector=json", config=config)
+        
+        # Multi-layer mode
+        deckgl_hex(layers=[
+            {"data": df1, "config": config1, "name": "Population"},
+            {"data": df2, "config": config2, "name": "Income"},
+        ], debug=True)
     """
+    # Route to multi-layer mode if layers is provided
+    if layers:
+        return _deckgl_hex_multi(
+            layers=layers,
+            mapbox_token=mapbox_token,
+            basemap=basemap,
+        )
+    
     # Route to tile mode if tile_url is provided
     if tile_url:
         return _deckgl_hex_tiles(
@@ -1199,6 +1219,517 @@ if (DEBUG_MODE) {
         zoom=zoom, pitch=pitch, bearing=bearing, config_errors=config_errors, style_url=style_url, debug=debug,
         user_config=original_config if original_config else merged_config,
         has_custom_view=has_custom_view, palettes=sorted(KNOWN_CARTOCOLOR_PALETTES),
+    )
+
+    common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
+    return common.html_to_obj(html)
+
+
+def _deckgl_hex_multi(
+    layers: list,
+    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
+    basemap: str = "dark",
+):
+    """
+    Render multiple H3 hexagon layers with a layer toggle panel.
+    
+    Args:
+        layers: List of layer dicts, each with:
+            - "data": DataFrame with hex column
+            - "config": hexLayer config for this layer
+            - "name": Display name for layer toggle (optional)
+        mapbox_token: Mapbox access token.
+        basemap: 'dark', 'satellite', or custom Mapbox style URL.
+    """
+    # Basemap setup
+    basemap_styles = {"dark": "mapbox://styles/mapbox/dark-v11", "satellite": "mapbox://styles/mapbox/satellite-streets-v12", "light": "mapbox://styles/mapbox/light-v11", "streets": "mapbox://styles/mapbox/streets-v12"}
+    style_url = basemap_styles.get({"sat": "satellite", "satellite-streets": "satellite"}.get((basemap or "dark").lower(), (basemap or "dark").lower()), basemap or basemap_styles["dark"])
+
+    # Process each layer
+    processed_layers = []
+    all_bounds = []
+    
+    for i, layer_def in enumerate(layers):
+        df = layer_def.get("data")
+        config = layer_def.get("config", {})
+        name = layer_def.get("name", f"Layer {i + 1}")
+        
+        # Config processing
+        config_errors = []
+        original_config = deepcopy(config) if config else {}
+        merged_config = _load_deckgl_config(config, DEFAULT_DECK_HEX_CONFIG, f"deckgl_hex_layer_{i}", config_errors)
+        hex_layer = merged_config.get("hexLayer", {})
+        
+        # Validate hexLayer property names
+        invalid_props = [key for key in list(hex_layer.keys()) if key not in VALID_HEX_LAYER_PROPS]
+        for prop in invalid_props:
+            suggestion = get_close_matches(prop, list(VALID_HEX_LAYER_PROPS), n=1, cutoff=0.6)
+            if suggestion:
+                print(f"[deckgl_hex] Warning: Layer '{name}' property '{prop}' not recognized. Did you mean '{suggestion[0]}'?")
+            hex_layer.pop(prop, None)
+        
+        # Convert dataframe to records
+        data_records = []
+        if hasattr(df, 'to_dict'):
+            data_records = df.to_dict('records')
+            for record in data_records:
+                hex_val = record.get('hex') or record.get('h3') or record.get('index') or record.get('id')
+                if hex_val is not None:
+                    try:
+                        if isinstance(hex_val, (int, float)):
+                            record['hex'] = format(int(hex_val), 'x')
+                        elif isinstance(hex_val, str) and hex_val.isdigit():
+                            record['hex'] = format(int(hex_val), 'x')
+                        else:
+                            record['hex'] = hex_val
+                    except (ValueError, OverflowError):
+                        record['hex'] = None
+        
+        # Extract tooltip columns
+        tooltip_columns = _extract_tooltip_columns((merged_config, hex_layer))
+        if not tooltip_columns and data_records:
+            tooltip_columns = [k for k in data_records[0].keys() if k not in ['hex', 'lat', 'lng']]
+        
+        processed_layers.append({
+            "id": f"layer-{i}",
+            "name": name,
+            "data": data_records,
+            "config": merged_config,
+            "hexLayer": hex_layer,
+            "tooltipColumns": tooltip_columns,
+            "visible": True,
+        })
+    
+    # Auto-center from all layers' data
+    auto_center, auto_zoom = (-119.4179, 36.7783), 5
+    
+    # Check first layer for custom view state
+    first_config = layers[0].get("config", {}) if layers else {}
+    user_initial_state = first_config.get('initialViewState', {}) or {}
+    has_custom_view = any(
+        user_initial_state.get(key) is not None
+        for key in ('longitude', 'latitude', 'zoom', 'pitch', 'bearing')
+    )
+    
+    ivs = processed_layers[0]["config"].get('initialViewState', {}) if processed_layers else {}
+    center_lng = ivs.get('longitude') or auto_center[0]
+    center_lat = ivs.get('latitude') or auto_center[1]
+    zoom = ivs.get('zoom') or auto_zoom
+    pitch = ivs.get('pitch', 0)
+    bearing = ivs.get('bearing', 0)
+
+    html = Template(r"""
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
+  <script src="https://unpkg.com/h3-js@4.1.0/dist/h3-js.umd.js"></script>
+  <script type="module">
+    import * as cartocolor from 'https://esm.sh/cartocolor@5.0.2';
+    window.cartocolor = cartocolor;
+  </script>
+  <style>
+    html, body { margin:0; height:100%; width:100%; display:flex; overflow:hidden; }
+    #map { flex:1; height:100%; }
+    #tooltip { position:absolute; pointer-events:none; background:rgba(0,0,0,0.7); color:#fff; padding:4px 8px; border-radius:4px; font-size:12px; display:none; z-index:6; }
+    
+    /* Layer Toggle Panel */
+    #layer-panel {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      background: rgba(26, 26, 26, 0.95);
+      border: 1px solid #424242;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: Inter, 'SF Pro Display', 'Segoe UI', sans-serif;
+      color: #f5f5f5;
+      min-width: 180px;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    #layer-panel h4 {
+      margin: 0 0 10px 0;
+      font-size: 11px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      color: #E8FF59;
+      font-weight: 600;
+    }
+    .layer-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid #333;
+    }
+    .layer-item:last-child { border-bottom: none; }
+    .layer-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #ffffff;
+    }
+    .layer-item .layer-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .layer-item .layer-name {
+      flex: 1;
+      font-size: 12px;
+      color: #dcdcdc;
+    }
+    .layer-item.disabled .layer-name {
+      color: #666;
+      text-decoration: line-through;
+    }
+    
+    /* Legend */
+    .color-legend { 
+      position: fixed; 
+      left: 12px; 
+      bottom: 12px; 
+      background: rgba(15,15,15,0.9); 
+      color: #fff; 
+      padding: 8px; 
+      border-radius: 4px; 
+      font-size: 11px; 
+      z-index: 10; 
+      min-width: 140px; 
+      border: 1px solid rgba(255,255,255,0.1); 
+    }
+    .legend-layer { margin-bottom: 12px; }
+    .legend-layer:last-child { margin-bottom: 0; }
+    .legend-layer .legend-title { margin-bottom: 6px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+    .legend-layer .legend-title .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+    .legend-layer .legend-gradient { height: 10px; border-radius: 2px; margin-bottom: 4px; border: 1px solid rgba(255,255,255,0.2); }
+    .legend-layer .legend-labels { display: flex; justify-content: space-between; font-size: 10px; color: #ccc; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="tooltip"></div>
+  
+  <!-- Layer Toggle Panel -->
+  <div id="layer-panel">
+    <h4>Layers</h4>
+    <div id="layer-list"></div>
+  </div>
+  
+  <!-- Legend -->
+  <div id="color-legend" class="color-legend" style="display:none;"></div>
+
+  <script>
+    const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
+    const LAYERS_DATA = {{ layers_data | tojson }};
+    const HAS_CUSTOM_VIEW = {{ has_custom_view | tojson }};
+    
+    // Track layer visibility
+    const layerVisibility = {};
+    LAYERS_DATA.forEach(l => { layerVisibility[l.id] = l.visible; });
+
+    // H3 ID conversion
+    function toH3(hex) {
+      if (hex == null) return null;
+      try {
+        if (typeof hex === 'string') {
+          const s = hex.startsWith('0x') ? hex.slice(2) : hex;
+          return /[a-f]/i.test(s) ? s.toLowerCase() : /^\d+$/.test(s) ? BigInt(s).toString(16) : s.toLowerCase();
+        }
+        if (typeof hex === 'number') return BigInt(Math.trunc(hex)).toString(16);
+        if (typeof hex === 'bigint') return hex.toString(16);
+      } catch(e) {}
+      return null;
+    }
+
+    // Convert to GeoJSON
+    function toGeoJSON(data) {
+      const features = [];
+      for (const d of data) {
+        const hexId = toH3(d.hex ?? d.h3 ?? d.index ?? d.id);
+        if (!hexId || !h3.isValidCell(hexId)) continue;
+        try {
+          const boundary = h3.cellToBoundary(hexId);
+          const coords = boundary.map(([lat, lng]) => [lng, lat]);
+          coords.push(coords[0]);
+          features.push({ type: 'Feature', properties: { ...d, hex: hexId }, geometry: { type: 'Polygon', coordinates: [coords] }});
+        } catch(e) {}
+      }
+      return { type: 'FeatureCollection', features };
+    }
+
+    // Get palette colors from cartocolor
+    function getPaletteColors(name, steps) {
+      const pal = window.cartocolor?.[name];
+      if (!pal) return null;
+      const keys = Object.keys(pal).map(Number).filter(n => !isNaN(n)).sort((a, b) => a - b);
+      const best = keys.find(n => n >= steps) || keys[keys.length - 1];
+      return pal[best] ? [...pal[best]] : null;
+    }
+
+    // Build color expression
+    function buildColorExpr(cfg) {
+      if (!cfg || cfg['@@function'] !== 'colorContinuous' || !cfg.attr || !cfg.domain?.length) return 'rgba(0,144,255,0.7)';
+      const [d0, d1] = cfg.domain, rev = d0 > d1, dom = rev ? [d1, d0] : [d0, d1];
+      const steps = cfg.steps || 7, name = cfg.colors || 'TealGrn';
+      let cols = getPaletteColors(name, steps);
+      if (!cols || !cols.length) {
+        return ['interpolate', ['linear'], ['get', cfg.attr], dom[0], 'rgb(237,248,251)', dom[1], 'rgb(0,109,44)'];
+      }
+      if (rev) cols.reverse();
+      const expr = ['interpolate', ['linear'], ['get', cfg.attr]];
+      cols.forEach((c, i) => { expr.push(dom[0] + (dom[1] - dom[0]) * i / (cols.length - 1)); expr.push(c); });
+      return expr;
+    }
+
+    // Convert [r,g,b] or [r,g,b,a] array to rgba string
+    function toRgba(arr, defaultAlpha) {
+      if (!Array.isArray(arr) || arr.length < 3) return null;
+      const [r, g, b] = arr;
+      const a = arr.length >= 4 ? arr[3] / 255 : (defaultAlpha ?? 1);
+      return `rgba(${r},${g},${b},${a})`;
+    }
+
+    // Precompute GeoJSON for each layer
+    const layerGeoJSONs = {};
+    LAYERS_DATA.forEach(l => {
+      layerGeoJSONs[l.id] = toGeoJSON(l.data);
+    });
+
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+    const map = new mapboxgl.Map({ 
+      container: 'map', 
+      style: {{ style_url | tojson }}, 
+      center: [{{ center_lng }}, {{ center_lat }}], 
+      zoom: {{ zoom }}, 
+      pitch: {{ pitch }}, 
+      bearing: {{ bearing }}, 
+      projection: 'mercator' 
+    });
+
+    function addAllLayers() {
+      // Remove existing layers
+      LAYERS_DATA.forEach(l => {
+        [`${l.id}-fill`, `${l.id}-outline`].forEach(id => { 
+          try { if(map.getLayer(id)) map.removeLayer(id); } catch(e){} 
+        });
+        try { if(map.getSource(l.id)) map.removeSource(l.id); } catch(e){}
+      });
+      
+      // Add layers in order
+      LAYERS_DATA.forEach((l, idx) => {
+        const geojson = layerGeoJSONs[l.id];
+        map.addSource(l.id, { type: 'geojson', data: geojson });
+        
+        const cfg = l.hexLayer || {};
+        const fillColor = Array.isArray(cfg.getFillColor) ? toRgba(cfg.getFillColor, 0.8) : buildColorExpr(cfg.getFillColor);
+        const lineColor = cfg.getLineColor ? (Array.isArray(cfg.getLineColor) ? toRgba(cfg.getLineColor, 1) : buildColorExpr(cfg.getLineColor)) : 'rgba(255,255,255,0.3)';
+        const visible = layerVisibility[l.id];
+        
+        if (cfg.filled !== false) {
+          map.addLayer({ 
+            id: `${l.id}-fill`, 
+            type: 'fill', 
+            source: l.id, 
+            paint: { 'fill-color': fillColor, 'fill-opacity': 0.8 },
+            layout: { 'visibility': visible ? 'visible' : 'none' }
+          });
+        }
+        map.addLayer({ 
+          id: `${l.id}-outline`, 
+          type: 'line', 
+          source: l.id, 
+          paint: { 'line-color': lineColor, 'line-width': cfg.lineWidthMinPixels || 0.5 },
+          layout: { 'visibility': visible ? 'visible' : 'none' }
+        });
+      });
+    }
+
+    function toggleLayerVisibility(layerId, visible) {
+      layerVisibility[layerId] = visible;
+      [`${layerId}-fill`, `${layerId}-outline`].forEach(id => {
+        try { 
+          if(map.getLayer(id)) {
+            map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
+          }
+        } catch(e){}
+      });
+      updateLegend();
+      updateLayerPanel();
+    }
+
+    function updateLayerPanel() {
+      const list = document.getElementById('layer-list');
+      if (!list) return;
+      
+      list.innerHTML = LAYERS_DATA.map(l => {
+        const visible = layerVisibility[l.id];
+        const cfg = l.hexLayer || {};
+        const fillCfg = cfg.getFillColor;
+        let colorPreview = '#0090ff';
+        if (Array.isArray(fillCfg)) {
+          colorPreview = toRgba(fillCfg, 1) || colorPreview;
+        } else if (fillCfg && fillCfg['@@function'] === 'colorContinuous') {
+          const cols = getPaletteColors(fillCfg.colors || 'TealGrn', fillCfg.steps || 7);
+          if (cols && cols.length) colorPreview = cols[Math.floor(cols.length / 2)];
+        }
+        
+        return `
+          <div class="layer-item ${visible ? '' : 'disabled'}">
+            <input type="checkbox" ${visible ? 'checked' : ''} onchange="toggleLayerVisibility('${l.id}', this.checked)" />
+            <div class="layer-color" style="background:${colorPreview};"></div>
+            <span class="layer-name">${l.name}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateLegend() {
+      const legend = document.getElementById('color-legend');
+      if (!legend) return;
+      
+      const visibleLayers = LAYERS_DATA.filter(l => layerVisibility[l.id]);
+      if (!visibleLayers.length) {
+        legend.style.display = 'none';
+        return;
+      }
+      
+      let html = '';
+      visibleLayers.forEach(l => {
+        const cfg = l.hexLayer || {};
+        const colorCfg = cfg.getFillColor;
+        if (!colorCfg || colorCfg['@@function'] !== 'colorContinuous' || !colorCfg.attr || !colorCfg.domain?.length) return;
+        
+        const [d0, d1] = colorCfg.domain;
+        const isReversed = d0 > d1;
+        const steps = colorCfg.steps || 7;
+        const paletteName = colorCfg.colors || 'TealGrn';
+        
+        let cols = getPaletteColors(paletteName, steps);
+        if (!cols || !cols.length) {
+          cols = ['#e0f3db','#ccebc5','#a8ddb5','#7bccc4','#4eb3d3','#2b8cbe','#0868ac','#084081'];
+        }
+        if (isReversed) cols = [...cols].reverse();
+        
+        const gradient = `linear-gradient(to right, ${cols.map((c, i) => `${c} ${i / (cols.length - 1) * 100}%`).join(', ')})`;
+        const dotColor = cols[Math.floor(cols.length / 2)];
+        
+        html += `
+          <div class="legend-layer">
+            <div class="legend-title">
+              <span class="legend-dot" style="background:${dotColor};"></span>
+              ${l.name}: ${colorCfg.attr}
+            </div>
+            <div class="legend-gradient" style="background:${gradient};"></div>
+            <div class="legend-labels">
+              <span>${d0.toFixed(1)}</span>
+              <span>${d1.toFixed(1)}</span>
+            </div>
+          </div>
+        `;
+      });
+      
+      if (html) {
+        legend.innerHTML = html;
+        legend.style.display = 'block';
+      } else {
+        legend.style.display = 'none';
+      }
+    }
+
+    let layersReady = false;
+    let autoFitDone = false;
+    
+    function tryInit() {
+      if (layersReady) return;
+      
+      // Check if cartocolor is loaded (needed for color interpolation)
+      const needsCartocolor = LAYERS_DATA.some(l => {
+        const cfg = l.hexLayer || {};
+        const colorCfg = cfg.getFillColor;
+        return colorCfg && colorCfg['@@function'] === 'colorContinuous';
+      });
+      
+      if (needsCartocolor && !window.cartocolor) {
+        setTimeout(tryInit, 50);
+        return;
+      }
+      
+      layersReady = true;
+      addAllLayers();
+      updateLayerPanel();
+      updateLegend();
+      
+      // Auto-fit to combined bounds
+      if (!HAS_CUSTOM_VIEW && !autoFitDone) {
+        const bounds = new mapboxgl.LngLatBounds();
+        LAYERS_DATA.forEach(l => {
+          const geojson = layerGeoJSONs[l.id];
+          if (geojson.features.length) {
+            geojson.features.forEach(f => f.geometry.coordinates[0].forEach(c => bounds.extend(c)));
+          }
+        });
+        if (!bounds.isEmpty()) {
+          map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 500 });
+          autoFitDone = true;
+        }
+      }
+      
+      // Setup tooltips for all layers
+      const tt = document.getElementById('tooltip');
+      LAYERS_DATA.forEach(l => {
+        const fillLayerId = `${l.id}-fill`;
+        const outlineLayerId = `${l.id}-outline`;
+        
+        [fillLayerId, outlineLayerId].forEach(layerId => {
+          if (!map.getLayer(layerId)) return;
+          
+          map.on('mousemove', layerId, (e) => {
+            if (!e.features?.length || !layerVisibility[l.id]) return;
+            map.getCanvas().style.cursor = 'pointer';
+            const p = e.features[0].properties;
+            const cols = l.tooltipColumns || [];
+            const lines = cols.length 
+              ? cols.map(k => p[k] != null ? `${k}: ${typeof p[k]==='number'?p[k].toFixed(2):p[k]}` : '').filter(Boolean) 
+              : (p.hex ? [`hex: ${p.hex.slice(0,12)}...`] : []);
+            if (lines.length) { 
+              tt.innerHTML = `<strong>${l.name}</strong><br>` + lines.join(' &bull; '); 
+              tt.style.left = `${e.point.x+10}px`; 
+              tt.style.top = `${e.point.y+10}px`; 
+              tt.style.display = 'block'; 
+            }
+          });
+          
+          map.on('mouseleave', layerId, () => { 
+            map.getCanvas().style.cursor = ''; 
+            tt.style.display = 'none'; 
+          });
+        });
+      });
+    }
+
+    map.on('load', tryInit);
+    map.on('load', () => { [100, 500, 1000].forEach(t => setTimeout(() => map.resize(), t)); });
+    window.addEventListener('resize', () => map.resize());
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => map.resize(), 100); });
+  </script>
+</body>
+</html>
+""").render(
+        mapbox_token=mapbox_token,
+        layers_data=processed_layers,
+        style_url=style_url,
+        center_lng=center_lng,
+        center_lat=center_lat,
+        zoom=zoom,
+        pitch=pitch,
+        bearing=bearing,
+        has_custom_view=has_custom_view,
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
