@@ -1371,7 +1371,7 @@ def _deckgl_hex_multi(
       width: 16px;
       height: 16px;
       cursor: pointer;
-      accent-color: #ffffff;
+      accent-color: #E8FF59;
     }
     .layer-item .layer-color {
       width: 14px;
@@ -1515,7 +1515,7 @@ def _deckgl_hex_multi(
     function addAllLayers() {
       // Remove existing layers
       LAYERS_DATA.forEach(l => {
-        [`${l.id}-fill`, `${l.id}-outline`].forEach(id => { 
+        [`${l.id}-fill`, `${l.id}-extrusion`, `${l.id}-outline`].forEach(id => { 
           try { if(map.getLayer(id)) map.removeLayer(id); } catch(e){} 
         });
         try { if(map.getSource(l.id)) map.removeSource(l.id); } catch(e){}
@@ -1531,28 +1531,53 @@ def _deckgl_hex_multi(
         const lineColor = cfg.getLineColor ? (Array.isArray(cfg.getLineColor) ? toRgba(cfg.getLineColor, 1) : buildColorExpr(cfg.getLineColor)) : 'rgba(255,255,255,0.3)';
         const visible = layerVisibility[l.id];
         
-        if (cfg.filled !== false) {
+        if (cfg.extruded) {
+          // 3D extrusion mode
+          const elev = cfg.elevationScale || 1;
           map.addLayer({ 
-            id: `${l.id}-fill`, 
-            type: 'fill', 
+            id: `${l.id}-extrusion`, 
+            type: 'fill-extrusion', 
             source: l.id, 
-            paint: { 'fill-color': fillColor, 'fill-opacity': 0.8 },
+            paint: { 
+              'fill-extrusion-color': fillColor, 
+              'fill-extrusion-height': cfg.getFillColor?.attr ? ['*', ['get', cfg.getFillColor.attr], elev] : 100,
+              'fill-extrusion-base': 0,
+              'fill-extrusion-opacity': 0.8
+            },
+            layout: { 'visibility': visible ? 'visible' : 'none' }
+          });
+          map.addLayer({ 
+            id: `${l.id}-outline`, 
+            type: 'line', 
+            source: l.id, 
+            paint: { 'line-color': lineColor, 'line-width': cfg.lineWidthMinPixels || 0.5 },
+            layout: { 'visibility': visible ? 'visible' : 'none' }
+          });
+        } else {
+          // Flat 2D mode
+          if (cfg.filled !== false) {
+            map.addLayer({ 
+              id: `${l.id}-fill`, 
+              type: 'fill', 
+              source: l.id, 
+              paint: { 'fill-color': fillColor, 'fill-opacity': 0.8 },
+              layout: { 'visibility': visible ? 'visible' : 'none' }
+            });
+          }
+          map.addLayer({ 
+            id: `${l.id}-outline`, 
+            type: 'line', 
+            source: l.id, 
+            paint: { 'line-color': lineColor, 'line-width': cfg.lineWidthMinPixels || 0.5 },
             layout: { 'visibility': visible ? 'visible' : 'none' }
           });
         }
-        map.addLayer({ 
-          id: `${l.id}-outline`, 
-          type: 'line', 
-          source: l.id, 
-          paint: { 'line-color': lineColor, 'line-width': cfg.lineWidthMinPixels || 0.5 },
-          layout: { 'visibility': visible ? 'visible' : 'none' }
-        });
       });
     }
 
     function toggleLayerVisibility(layerId, visible) {
       layerVisibility[layerId] = visible;
-      [`${layerId}-fill`, `${layerId}-outline`].forEach(id => {
+      [`${layerId}-fill`, `${layerId}-extrusion`, `${layerId}-outline`].forEach(id => {
         try { 
           if(map.getLayer(id)) {
             map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
@@ -1683,10 +1708,13 @@ def _deckgl_hex_multi(
       // Setup tooltips for all layers
       const tt = document.getElementById('tooltip');
       LAYERS_DATA.forEach(l => {
-        const fillLayerId = `${l.id}-fill`;
-        const outlineLayerId = `${l.id}-outline`;
+        const cfg = l.hexLayer || {};
+        // Include extrusion layer for 3D mode
+        const layerIds = cfg.extruded 
+          ? [`${l.id}-extrusion`, `${l.id}-outline`]
+          : [`${l.id}-fill`, `${l.id}-outline`];
         
-        [fillLayerId, outlineLayerId].forEach(layerId => {
+        layerIds.forEach(layerId => {
           if (!map.getLayer(layerId)) return;
           
           map.on('mousemove', layerId, (e) => {
