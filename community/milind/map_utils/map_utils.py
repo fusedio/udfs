@@ -2595,6 +2595,176 @@ map.on('load', () => {
     return common.html_to_obj(html)
 
 
+def enable_map_broadcast(html_input, channel: str = "fused-bus", dataset: str = "all"):
+    """
+    Inject viewport broadcast into any Mapbox GL map HTML.
+    
+    When the map moves, this broadcasts the visible bounds as a spatial filter
+    that other components (like histograms) can use to filter their data.
+    
+    Args:
+        html_input: HTML string or response object containing a Mapbox GL map
+        channel: BroadcastChannel name (must match histogram's channel)
+        dataset: Dataset identifier for filtering (use "all" to broadcast to all)
+    
+    Returns:
+        Modified HTML with broadcast capability
+    
+    Usage:
+        html = deckgl_hex(df, config)
+        map_with_broadcast = enable_map_broadcast(html, channel="fused-bus")
+        return map_with_broadcast
+    """
+    # Normalize input to HTML string
+    response_mode = not isinstance(html_input, str)
+    if isinstance(html_input, str):
+        html_string = html_input
+    else:
+        html_string = None
+        text_value = getattr(html_input, "text", None)
+        if isinstance(text_value, str):
+            html_string = text_value
+        else:
+            data_value = getattr(html_input, "data", None)
+            if isinstance(data_value, (bytes, bytearray)):
+                html_string = data_value.decode("utf-8", errors="ignore")
+            elif isinstance(data_value, str):
+                html_string = data_value
+            else:
+                body_value = getattr(html_input, "body", None)
+                if isinstance(body_value, (bytes, bytearray)):
+                    html_string = body_value.decode("utf-8", errors="ignore")
+                elif isinstance(body_value, str):
+                    html_string = body_value
+        if html_string is None:
+            raise TypeError(
+                "html_input must be a str or response-like object with 'text', 'data', or 'body' attribute"
+            )
+    
+    broadcast_script = f"""
+<script>
+(function() {{
+  if (!window.mapboxgl || typeof map === 'undefined') return;
+  
+  const CHANNEL = {json.dumps(channel)};
+  const DATASET = {json.dumps(dataset)};
+  const componentId = 'map-broadcast-' + Math.random().toString(36).substr(2, 9);
+  
+  // Setup BroadcastChannel
+  let bc = null;
+  try {{ if ('BroadcastChannel' in window) bc = new BroadcastChannel(CHANNEL); }} catch (e) {{}}
+  
+  // Send message to all possible targets
+  function busSend(obj) {{
+    const s = JSON.stringify(obj);
+    try {{ if (bc) bc.postMessage(obj); }} catch(e) {{}}
+    try {{ window.parent.postMessage(s, '*'); }} catch(e) {{}}
+    try {{ if (window.top && window.top !== window.parent) window.top.postMessage(s, '*'); }} catch(e) {{}}
+    try {{
+      if (window.top && window.top.frames) {{
+        for (let i = 0; i < window.top.frames.length; i++) {{
+          const f = window.top.frames[i];
+          if (f !== window) try {{ f.postMessage(s, '*'); }} catch(e) {{}}
+        }}
+      }}
+    }} catch(e) {{}}
+  }}
+  
+  // Track last bounds to avoid duplicate broadcasts
+  let lastBounds = null;
+  
+  function getBoundsArray() {{
+    const b = map.getBounds();
+    return [
+      +b.getWest().toFixed(6),
+      +b.getSouth().toFixed(6),
+      +b.getEast().toFixed(6),
+      +b.getNorth().toFixed(6)
+    ];
+  }}
+  
+  function boundsEqual(a, b) {{
+    if (!a || !b) return false;
+    return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3];
+  }}
+  
+  function broadcastBounds() {{
+    const bounds = getBoundsArray();
+    if (boundsEqual(bounds, lastBounds)) return;
+    lastBounds = bounds;
+    
+    const [west, south, east, north] = bounds;
+    
+    // Send unified filter message (compatible with histogram_message.py)
+    busSend({{
+      type: 'filter',
+      fromComponent: componentId,
+      timestamp: Date.now(),
+      dataset: DATASET,
+      filter: {{
+        type: 'spatial',
+        field: 'geometry',
+        values: [west, south, east, north]  // [minLng, minLat, maxLng, maxLat]
+      }}
+    }});
+    
+    // Also send legacy format for backwards compatibility
+    busSend({{
+      type: 'spatial_filter',
+      source: componentId,
+      timestamp: Date.now(),
+      bounds: {{
+        sw: {{ lng: west, lat: south }},
+        ne: {{ lng: east, lat: north }}
+      }}
+    }});
+  }}
+  
+  // Listen for map movement - broadcast immediately on every move
+  map.on('move', broadcastBounds);
+  map.on('moveend', broadcastBounds);
+  
+  // Initial broadcast on load
+  map.on('load', () => {{
+    setTimeout(broadcastBounds, 300);
+  }});
+  
+  // If map is already loaded, broadcast now
+  if (map.loaded()) {{
+    setTimeout(broadcastBounds, 100);
+  }}
+  
+  // Announce component ready
+  setTimeout(() => {{
+    busSend({{
+      type: 'component_ready',
+      componentType: 'map',
+      componentId: componentId,
+      capabilities: ['spatial_filter'],
+      dataSource: 'viewport',
+      protocol: 'unified'
+    }});
+  }}, 200);
+  
+  console.log('[map_broadcast] Initialized on channel:', CHANNEL);
+}})();
+</script>
+"""
+    
+    # Inject before closing </body> tag
+    if "</body>" in html_string:
+        injected_html = html_string.replace("</body>", f"{broadcast_script}\n</body>")
+    elif "</html>" in html_string:
+        injected_html = html_string.replace("</html>", f"{broadcast_script}\n</html>")
+    else:
+        injected_html = html_string + broadcast_script
+
+    if response_mode:
+        common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
+        return common.html_to_obj(injected_html)
+    return injected_html
+
+
 def enable_map_sync(html_input, channel: str = "default"):
     """
     Inject BroadcastChannel-based map sync into any Mapbox GL map HTML.
