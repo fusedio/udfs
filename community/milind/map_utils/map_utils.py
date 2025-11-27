@@ -815,6 +815,9 @@ function addLayers() {
   ['hex-fill','hex-extrusion','hex-outline'].forEach(id => { try { if(map.getLayer(id)) map.removeLayer(id); } catch(e){} });
   try { if(map.getSource('hex-source')) map.removeSource('hex-source'); } catch(e){}
   
+  // Don't add layers if no data
+  if (!geojson.features?.length) return;
+  
   map.addSource('hex-source', { type: 'geojson', data: geojson });
   const cfg = CONFIG.hexLayer || {};
   const fillColor = Array.isArray(cfg.getFillColor) ? toRgba(cfg.getFillColor, 0.8) : buildColorExpr(cfg.getFillColor);
@@ -833,8 +836,7 @@ function addLayers() {
         'fill-extrusion-opacity':0.8
       }
     });
-    // Optional outline for extruded view so users can see stroke color
-        map.addLayer({
+    map.addLayer({
       id:'hex-outline',
       type:'line',
       source:'hex-source',
@@ -843,7 +845,7 @@ function addLayers() {
         'line-width':cfg.lineWidthMinPixels || 0.5
       }
     });
-      } else {
+  } else {
     if (cfg.filled !== false) map.addLayer({ id:'hex-fill', type:'fill', source:'hex-source', paint:{ 'fill-color':fillColor, 'fill-opacity':0.8 }});
     map.addLayer({ id:'hex-outline', type:'line', source:'hex-source', paint:{ 'line-color':lineColor, 'line-width':cfg.lineWidthMinPixels || 0.5 }});
   }
@@ -1139,12 +1141,39 @@ if (DEBUG_MODE) {
   window.copyConfig = function() {
     const cfg = buildConfigFromForm();
     const pyStr = 'config = ' + toPython(cfg);
-    navigator.clipboard.writeText(pyStr);
-    const t = document.createElement('div');
-    t.className = 'toast';
-    t.textContent = '✓ Copied';
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 2000);
+    
+    // Try modern clipboard API first, fallback to execCommand
+    const copyToClipboard = (text) => {
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+      }
+      // Fallback for non-HTTPS or iframes
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.cssText = 'position:fixed;left:-9999px;top:-9999px';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        return Promise.resolve();
+      } catch (e) {
+        return Promise.reject(e);
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    };
+    
+    copyToClipboard(pyStr).then(() => {
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.textContent = '✓ Copied';
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 2000);
+    }).catch(() => {
+      // If all else fails, show the config in an alert for manual copy
+      prompt('Copy this config:', pyStr);
+    });
   };
 
   window.resetConfig = function() {
