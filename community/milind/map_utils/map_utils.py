@@ -1580,9 +1580,13 @@ def _deckgl_hex_tiles(
         data: TILE_URL,
         tileSize: tileCfg.tileSize ?? 256,
         minZoom: tileCfg.minZoom ?? 0,
-        maxZoom: tileCfg.maxZoom ?? 19,
+        maxZoom: tileCfg.maxZoom ?? 12,
         pickable: tileCfg.pickable ?? true,
         maxRequests: 6,
+        // Keep tiles visible when zoomed past maxZoom
+        extent: null,
+        zoomOffset: 0,
+        refinementStrategy: 'best-available',
         getTileData,
         renderSubLayers: (props) => {
           const data = props.data || [];
