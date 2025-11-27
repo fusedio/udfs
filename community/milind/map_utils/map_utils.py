@@ -643,6 +643,8 @@ def deckgl_hex(
     .dbtn.ghost { background:transparent; color:#E8FF59; border:1px solid rgba(232,255,89,0.3); }
     .dbtn.ghost:hover { border-color:#E8FF59; }
     .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#E8FF59; color:#1a1a1a; padding:10px 20px; border-radius:4px; font-weight:600; font-size:12px; z-index:999; animation:fade 2s forwards; }
+    #cfg-output { width:100%; min-height:160px; resize:vertical; background:#111; color:#f5f5f5; border:1px solid #333; border-radius:6px; padding:10px; font-family:SFMono-Regular,Consolas,monospace; font-size:12px; }
+    .hint { margin:0 0 8px 0; font-size:10px; color:#bdbdbd; letter-spacing:0.3px; text-transform:uppercase; }
     @keyframes fade { 0%,70%{opacity:1} 100%{opacity:0} }
   </style>
 </head>
@@ -724,6 +726,11 @@ def deckgl_hex(
             <input type="number" id="cfg-steps" data-cfg-input min="2" max="20" value="7" />
           </div>
         </div>
+      </div>
+      <div class="debug-section">
+        <h4>Config Output</h4>
+        <p class="hint">Generate then drag/select to copy manually</p>
+        <textarea id="cfg-output" readonly placeholder="Click Copy to populate config..."></textarea>
       </div>
     </div>
     <div id="debug-buttons">
@@ -815,9 +822,6 @@ function addLayers() {
   ['hex-fill','hex-extrusion','hex-outline'].forEach(id => { try { if(map.getLayer(id)) map.removeLayer(id); } catch(e){} });
   try { if(map.getSource('hex-source')) map.removeSource('hex-source'); } catch(e){}
   
-  // Don't add layers if no data
-  if (!geojson.features?.length) return;
-  
   map.addSource('hex-source', { type: 'geojson', data: geojson });
   const cfg = CONFIG.hexLayer || {};
   const fillColor = Array.isArray(cfg.getFillColor) ? toRgba(cfg.getFillColor, 0.8) : buildColorExpr(cfg.getFillColor);
@@ -836,7 +840,8 @@ function addLayers() {
         'fill-extrusion-opacity':0.8
       }
     });
-    map.addLayer({
+    // Optional outline for extruded view so users can see stroke color
+        map.addLayer({
       id:'hex-outline',
       type:'line',
       source:'hex-source',
@@ -845,7 +850,7 @@ function addLayers() {
         'line-width':cfg.lineWidthMinPixels || 0.5
       }
     });
-  } else {
+      } else {
     if (cfg.filled !== false) map.addLayer({ id:'hex-fill', type:'fill', source:'hex-source', paint:{ 'fill-color':fillColor, 'fill-opacity':0.8 }});
     map.addLayer({ id:'hex-outline', type:'line', source:'hex-source', paint:{ 'line-color':lineColor, 'line-width':cfg.lineWidthMinPixels || 0.5 }});
   }
@@ -1138,42 +1143,19 @@ if (DEBUG_MODE) {
     }, 200);
   }
 
+  const outputArea = document.getElementById('cfg-output');
+
   window.copyConfig = function() {
     const cfg = buildConfigFromForm();
     const pyStr = 'config = ' + toPython(cfg);
-    
-    // Try modern clipboard API first, fallback to execCommand
-    const copyToClipboard = (text) => {
-      if (navigator.clipboard && window.isSecureContext) {
-        return navigator.clipboard.writeText(text);
-      }
-      // Fallback for non-HTTPS or iframes
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      textarea.style.cssText = 'position:fixed;left:-9999px;top:-9999px';
-      document.body.appendChild(textarea);
-      textarea.focus();
-      textarea.select();
-      try {
-        document.execCommand('copy');
-        return Promise.resolve();
-      } catch (e) {
-        return Promise.reject(e);
-      } finally {
-        document.body.removeChild(textarea);
-      }
-    };
-    
-    copyToClipboard(pyStr).then(() => {
-      const t = document.createElement('div');
-      t.className = 'toast';
-      t.textContent = '✓ Copied';
-      document.body.appendChild(t);
-      setTimeout(() => t.remove(), 2000);
-    }).catch(() => {
-      // If all else fails, show the config in an alert for manual copy
-      prompt('Copy this config:', pyStr);
-    });
+    if (outputArea) {
+      outputArea.value = pyStr;
+      outputArea.focus();
+      outputArea.select();
+      outputArea.scrollTop = 0;
+    } else {
+      console.log(pyStr);
+    }
   };
 
   window.resetConfig = function() {
@@ -2092,6 +2074,6 @@ def folium_raster(data, bounds, opacity=0.7, tiles="CartoDB dark_matter"):
         image=rgb,
         bounds=[[south, west], [north, east]],
         opacity=opacity,
-    ).add_to(m)
+    ).add_to(m) 
 
     return m.get_root().render()
