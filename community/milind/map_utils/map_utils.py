@@ -666,9 +666,8 @@ def deckgl_hex(
     .dbtn.ghost { background:transparent; color:#E8FF59; border:1px solid rgba(232,255,89,0.3); }
     .dbtn.ghost:hover { border-color:#E8FF59; }
     .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#E8FF59; color:#1a1a1a; padding:10px 20px; border-radius:4px; font-weight:600; font-size:12px; z-index:999; animation:fade 2s forwards; }
-    #cfg-output { width:100%; min-height:160px; resize:vertical; background:#111; color:#f5f5f5; border:1px solid #333; border-radius:6px; padding:10px; font-family:SFMono-Regular,Consolas,monospace; font-size:12px; }
-    .hint { margin:0 0 8px 0; font-size:10px; color:#bdbdbd; letter-spacing:0.3px; text-transform:uppercase; }
     @keyframes fade { 0%,70%{opacity:1} 100%{opacity:0} }
+    #cfg-output { width:100%; min-height:120px; resize:vertical; background:#111; color:#f5f5f5; border:1px solid #333; border-radius:6px; padding:10px; font-family:SFMono-Regular,Consolas,monospace; font-size:11px; line-height:1.4; }
   </style>
 </head>
 <body>
@@ -752,12 +751,10 @@ def deckgl_hex(
       </div>
       <div class="debug-section">
         <h4>Config Output</h4>
-        <p class="hint">Generate then drag/select to copy manually</p>
-        <textarea id="cfg-output" readonly placeholder="Click Copy to populate config..."></textarea>
+        <textarea id="cfg-output" readonly></textarea>
       </div>
     </div>
     <div id="debug-buttons">
-      <button class="dbtn ghost" onclick="copyConfig()">Copy</button>
       <button class="dbtn secondary" onclick="resetConfig()">Reset</button>
     </div>
   </div>
@@ -1158,28 +1155,25 @@ if (DEBUG_MODE) {
     tryInit();
   }
 
+  // Update config output textarea
+  const outputArea = document.getElementById('cfg-output');
+  function updateConfigOutput() {
+    if (!outputArea) return;
+    const cfg = buildConfigFromForm();
+    outputArea.value = 'config = ' + toPython(cfg);
+  }
+
   function scheduleApply() {
     clearTimeout(scheduleApply.timer);
     scheduleApply.timer = setTimeout(() => {
       const cfg = buildConfigFromForm();
       applyConfig(cfg);
+      updateConfigOutput();
     }, 200);
   }
 
-  const outputArea = document.getElementById('cfg-output');
-
-  window.copyConfig = function() {
-    const cfg = buildConfigFromForm();
-    const pyStr = 'config = ' + toPython(cfg);
-    if (outputArea) {
-      outputArea.value = pyStr;
-      outputArea.focus();
-      outputArea.select();
-      outputArea.scrollTop = 0;
-    } else {
-      console.log(pyStr);
-    }
-  };
+  // Initial config output
+  updateConfigOutput();
 
   window.resetConfig = function() {
     const original = JSON.parse(JSON.stringify(ORIGINAL_CONFIG));
@@ -1311,8 +1305,7 @@ def _deckgl_hex_tiles(
     .dbtn.secondary:hover { background:#616161; }
     .dbtn.ghost { background:transparent; color:#E8FF59; border:1px solid rgba(232,255,89,0.3); }
     .dbtn.ghost:hover { border-color:#E8FF59; }
-    #cfg-output { width:100%; min-height:160px; resize:vertical; background:#111; color:#f5f5f5; border:1px solid #333; border-radius:6px; padding:10px; font-family:SFMono-Regular,Consolas,monospace; font-size:12px; }
-    .hint { margin:0 0 8px 0; font-size:10px; color:#bdbdbd; letter-spacing:0.3px; text-transform:uppercase; }
+    #cfg-output { width:100%; min-height:120px; resize:vertical; background:#111; color:#f5f5f5; border:1px solid #333; border-radius:6px; padding:10px; font-family:SFMono-Regular,Consolas,monospace; font-size:11px; line-height:1.4; }
   </style>
 </head>
 <body>
@@ -1382,12 +1375,10 @@ def _deckgl_hex_tiles(
       </div>
       <div class="debug-section">
         <h4>Config Output</h4>
-        <p class="hint">Generate then drag/select to copy manually</p>
-        <textarea id="cfg-output" readonly placeholder="Click Copy to populate config..."></textarea>
+        <textarea id="cfg-output" readonly></textarea>
       </div>
     </div>
     <div id="debug-buttons">
-      <button class="dbtn ghost" onclick="copyConfig()">Copy</button>
       <button class="dbtn secondary" onclick="resetConfig()">Reset</button>
     </div>
   </div>
@@ -1763,31 +1754,32 @@ def _deckgl_hex_tiles(
         rebuildOverlay(newHexCfg, attr);
       }
 
+      // Update config output textarea
+      const outputArea = document.getElementById('cfg-output');
+      function updateConfigOutput() {
+        if (!outputArea) return;
+        const cfg = buildConfigFromForm();
+        outputArea.value = 'config = ' + toPython(cfg);
+      }
+
       // Debounced apply
       let applyTimer = null;
       function scheduleApply() {
         clearTimeout(applyTimer);
-        applyTimer = setTimeout(applyConfigFromForm, 300);
+        applyTimer = setTimeout(() => {
+          applyConfigFromForm();
+          updateConfigOutput();
+        }, 300);
       }
 
       // Bind form inputs
       document.querySelectorAll('#debug-panel input, #debug-panel select').forEach(el => {
-        if (el.id === 'cfg-output') return;
         el.addEventListener('input', scheduleApply);
         el.addEventListener('change', scheduleApply);
       });
 
-      const outputArea = document.getElementById('cfg-output');
-      window.copyConfig = function() {
-        const cfg = buildConfigFromForm();
-        const pyStr = 'config = ' + toPython(cfg);
-        if (outputArea) {
-          outputArea.value = pyStr;
-          outputArea.focus();
-          outputArea.select();
-          outputArea.scrollTop = 0;
-        }
-      };
+      // Initial config output
+      updateConfigOutput();
 
       window.resetConfig = function() {
         document.getElementById('cfg-longitude').value = {{ center_lng }};
@@ -1801,6 +1793,7 @@ def _deckgl_hex_tiles(
         document.getElementById('cfg-domain-max').value = {{ domain_max }};
         document.getElementById('cfg-steps').value = {{ steps }};
         applyConfigFromForm();
+        updateConfigOutput();
       };
     }
   </script>
