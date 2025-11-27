@@ -1271,8 +1271,8 @@ def _deckgl_hex_tiles(
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
   <script src="https://unpkg.com/h3-js@4.1.0/dist/h3-js.umd.js"></script>
   <script src="https://unpkg.com/deck.gl@9.1.3/dist.min.js"></script>
   <script src="https://unpkg.com/@deck.gl/geo-layers@9.1.3/dist.min.js"></script>
@@ -1493,7 +1493,8 @@ def _deckgl_hex_tiles(
       center: [{{ center_lng }}, {{ center_lat }}],
       zoom: {{ zoom }},
       pitch: {{ pitch }},
-      bearing: {{ bearing }}
+      bearing: {{ bearing }},
+      projection: 'mercator'
     });
 
     // Fetch tile data
