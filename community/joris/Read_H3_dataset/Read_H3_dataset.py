@@ -14,9 +14,9 @@ def udf(
     df = read_h3_dataset(path, bounds, res=res, value=value)
     print(df)
 
-    if "area" in df.columns:
+    if "cnt" in df.columns:
         # for overview files with cnt statistic
-        df["pct"] = 255 * df["area"] / df["area"].max()
+        df["pct"] = df["cnt"] / df["cnt_total"]
     
     return df
 
@@ -140,9 +140,6 @@ def read_dataset(path, bounds, res, value, base_res=7):
         res = data_res
         print(f"truncating to data resolution {res}")
 
-    if value is not None:
-        df = df[df["data"] == value]
-
     if "pos7" in df.columns:
         # old style files with pos7, pos8, etc columns
         
@@ -167,10 +164,9 @@ def read_dataset(path, bounds, res, value, base_res=7):
             GROUP BY 1,2
         """
         df = con.sql(qr).df()
-        return df
 
     # files with "hex" column
-    if res == data_res:
+    elif res == data_res:
         # reading at originnal data resolution -> no aggregation needed
         con = common.duckdb_connect()
         qr = f"""
@@ -192,9 +188,8 @@ def read_dataset(path, bounds, res, value, base_res=7):
                 SELECT
                     hex,
                     data,
-                    (100*sum(cnt/cnt_total)/7^{11-res})::FLOAT pct,
-                    (h3_cell_area(hex,'m^2')*pct/100) as area,
-                    (sum(cnt/cnt_total)*h3_cell_area(h3_cell_to_center_child(any_value(hex),11),'m^2'))::DOUBLE area2
+                    SUM(cnt)::INT AS cnt,
+                    SUM(SUM(cnt)) OVER (PARTITION BY hex)::INT AS cnt_total
                 FROM ({qr}) 
                 GROUP BY 1,2
             """
@@ -218,5 +213,8 @@ def read_dataset(path, bounds, res, value, base_res=7):
                 GROUP BY 1
             """
         df = con.sql(qr).df()
+
+    if value is not None:
+        df = df[df["data"] == value].reset_index(drop=True)
 
     return df
