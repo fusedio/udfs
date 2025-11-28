@@ -1,0 +1,80 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "DEM_Terrarium_H3_Example",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "hexLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "extruded": true,
+                "opacity": 1,
+                "coverage": 1,
+                "lineWidthMinPixels": 1,
+                "getHexagon": "@@=properties.hex",
+                "getFillColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "metric",
+                  "domain": [
+                    15400,
+                    1262
+                  ],
+                  "steps": 50,
+                  "colors": "BluYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFilColor": [
+                  184,
+                  184,
+                  184
+                ],
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "metric",
+                  "present": "@@=properties.metric",
+                  "absent": 1
+                },
+                "elevationScale": 2.5
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "DEM_Terrarium_H3_Example",
+            "fused:name": "DEM_Terrarium_H3_Example",
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 0.3171528770341913,
+              "longitude": -78.77450183522531,
+              "zoom": 10.926813117879666,
+              "pitch": 60,
+              "bearing": 0
+            }
+          },
+          "source": "DEM_Terrarium_H3_Example.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
