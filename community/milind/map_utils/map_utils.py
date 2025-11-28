@@ -1233,14 +1233,23 @@ def _deckgl_hex_multi(
 ):
     """
     Render multiple H3 hexagon layers with a layer toggle panel.
+    Supports both static data and tile layers.
     
     Args:
         layers: List of layer dicts, each with:
-            - "data": DataFrame with hex column
+            - "data": DataFrame with hex column (for static layers)
+            - "tile_url": XYZ tile URL template (for tile layers) - use this OR data, not both
             - "config": hexLayer config for this layer
             - "name": Display name for layer toggle (optional)
         mapbox_token: Mapbox access token.
         basemap: 'dark', 'satellite', or custom Mapbox style URL.
+    
+    Examples:
+        # Mixed static and tile layers
+        deckgl_hex(layers=[
+            {"data": df1, "config": config1, "name": "Static Layer"},
+            {"tile_url": "https://example.com/tiles/{z}/{x}/{y}", "config": config2, "name": "Tile Layer"},
+        ])
     """
     # Basemap setup
     basemap_styles = {"dark": "mapbox://styles/mapbox/dark-v11", "satellite": "mapbox://styles/mapbox/satellite-streets-v12", "light": "mapbox://styles/mapbox/light-v11", "streets": "mapbox://styles/mapbox/streets-v12"}
@@ -1249,9 +1258,11 @@ def _deckgl_hex_multi(
     # Process each layer
     processed_layers = []
     all_bounds = []
+    has_tile_layers = False
     
     for i, layer_def in enumerate(layers):
         df = layer_def.get("data")
+        tile_url = layer_def.get("tile_url")
         config = layer_def.get("config", {})
         name = layer_def.get("name", f"Layer {i + 1}")
         
@@ -1260,6 +1271,7 @@ def _deckgl_hex_multi(
         original_config = deepcopy(config) if config else {}
         merged_config = _load_deckgl_config(config, DEFAULT_DECK_HEX_CONFIG, f"deckgl_hex_layer_{i}", config_errors)
         hex_layer = merged_config.get("hexLayer", {})
+        tile_layer_config = merged_config.get("tileLayer", {})
         
         # Validate hexLayer property names
         invalid_props = [key for key in list(hex_layer.keys()) if key not in VALID_HEX_LAYER_PROPS]
@@ -1269,9 +1281,14 @@ def _deckgl_hex_multi(
                 print(f"[deckgl_hex] Warning: Layer '{name}' property '{prop}' not recognized. Did you mean '{suggestion[0]}'?")
             hex_layer.pop(prop, None)
         
-        # Convert dataframe to records
+        # Determine layer type
+        is_tile_layer = tile_url is not None
+        if is_tile_layer:
+            has_tile_layers = True
+        
+        # Convert dataframe to records (for static layers)
         data_records = []
-        if hasattr(df, 'to_dict'):
+        if not is_tile_layer and hasattr(df, 'to_dict'):
             data_records = df.to_dict('records')
             for record in data_records:
                 hex_val = record.get('hex') or record.get('h3') or record.get('index') or record.get('id')
@@ -1295,6 +1312,9 @@ def _deckgl_hex_multi(
             "id": f"layer-{i}",
             "name": name,
             "data": data_records,
+            "tileUrl": tile_url,
+            "isTileLayer": is_tile_layer,
+            "tileLayerConfig": tile_layer_config,
             "config": merged_config,
             "hexLayer": hex_layer,
             "tooltipColumns": tooltip_columns,
@@ -1328,6 +1348,11 @@ def _deckgl_hex_multi(
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
   <script src="https://unpkg.com/h3-js@4.1.0/dist/h3-js.umd.js"></script>
+  {% if has_tile_layers %}
+  <script src="https://unpkg.com/deck.gl@9.1.3/dist.min.js"></script>
+  <script src="https://unpkg.com/@deck.gl/geo-layers@9.1.3/dist.min.js"></script>
+  <script src="https://unpkg.com/@deck.gl/carto@9.1.3/dist.min.js"></script>
+  {% endif %}
   <script type="module">
     import * as cartocolor from 'https://esm.sh/cartocolor@5.0.2';
     window.cartocolor = cartocolor;
@@ -1496,11 +1521,16 @@ def _deckgl_hex_multi(
       return `rgba(${r},${g},${b},${a})`;
     }
 
-    // Precompute GeoJSON for each layer
+    // Precompute GeoJSON for static layers
     const layerGeoJSONs = {};
     LAYERS_DATA.forEach(l => {
-      layerGeoJSONs[l.id] = toGeoJSON(l.data);
+      if (!l.isTileLayer) {
+        layerGeoJSONs[l.id] = toGeoJSON(l.data);
+      }
     });
+
+    // Check if we have any tile layers
+    const HAS_TILE_LAYERS = LAYERS_DATA.some(l => l.isTileLayer);
 
     mapboxgl.accessToken = MAPBOX_TOKEN;
     const map = new mapboxgl.Map({ 
@@ -1513,18 +1543,167 @@ def _deckgl_hex_multi(
       projection: 'mercator' 
     });
 
-    function addAllLayers() {
-      // Remove existing layers
-      LAYERS_DATA.forEach(l => {
-        [`${l.id}-fill`, `${l.id}-extrusion`, `${l.id}-outline`].forEach(id => { 
-          try { if(map.getLayer(id)) map.removeLayer(id); } catch(e){} 
+    // Deck.gl overlay for tile layers (only if we have tile layers)
+    let deckOverlay = null;
+    const tileLayers = {};  // Track deck.gl tile layer instances
+
+    {% if has_tile_layers %}
+    // Tile layer helpers
+    const { TileLayer, MapboxOverlay } = deck;
+    const H3HexagonLayer = deck.H3HexagonLayer || (deck.GeoLayers && deck.GeoLayers.H3HexagonLayer);
+    const { colorContinuous } = deck.carto;
+
+    function toH3String(hex) {
+      try {
+        if (hex == null) return null;
+        if (typeof hex === 'string') {
+          const s = hex.startsWith('0x') ? hex.slice(2) : hex;
+          return (/^\d+$/.test(s) ? BigInt(s).toString(16) : s.toLowerCase());
+        }
+        if (typeof hex === 'number') return BigInt(Math.trunc(hex)).toString(16);
+        if (typeof hex === 'bigint') return hex.toString(16);
+        if (Array.isArray(hex) && hex.length === 2) {
+          const a = (BigInt(hex[0]) << 32n) | BigInt(hex[1]);
+          const b = (BigInt(hex[1]) << 32n) | BigInt(hex[0]);
+          const sa = a.toString(16), sb = b.toString(16);
+          if (h3.isValidCell?.(sa)) return sa;
+          if (h3.isValidCell?.(sb)) return sb;
+          return sa;
+        }
+      } catch (_) {}
+      return null;
+    }
+
+    function normalizeTileData(raw) {
+      const arr = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : (Array.isArray(raw?.features) ? raw.features : []));
+      const rows = arr.map(d => d?.properties ? { ...d.properties } : { ...d });
+      return rows.map(p => {
+        const hexRaw = p.hex ?? p.h3 ?? p.index ?? p.id;
+        const hex = toH3String(hexRaw);
+        if (!hex) return null;
+        const props = { ...p, hex };
+        return { ...props, properties: { ...props } };
+      }).filter(Boolean);
+    }
+
+    function processColorContinuousCfg(cfg) {
+      let domain = cfg.domain;
+      if (domain && domain.length === 2) {
+        const [min, max] = domain;
+        const steps = cfg.steps ?? 20;
+        const stepSize = (max - min) / (steps - 1);
+        domain = Array.from({ length: steps }, (_, i) => min + stepSize * i);
+      }
+      return { attr: cfg.attr, domain, colors: cfg.colors || 'TealGrn', nullColor: cfg.nullColor || [184, 184, 184] };
+    }
+
+    function parseHexLayerConfigForDeck(config) {
+      const out = {};
+      for (const [k, v] of Object.entries(config || {})) {
+        if (k === '@@type') continue;
+        if (v && typeof v === 'object' && !Array.isArray(v)) {
+          if (v['@@function'] === 'colorContinuous') {
+            out[k] = colorContinuous(processColorContinuousCfg(v));
+          } else {
+            out[k] = v;
+          }
+        } else if (typeof v === 'string' && v.startsWith('@@=')) {
+          const code = v.slice(3);
+          out[k] = (obj) => {
+            try {
+              const fn = new Function('object', `const properties = object?.properties || object || {}; return (${code});`);
+              return fn(obj);
+            } catch (e) { return null; }
+          };
+        } else {
+          out[k] = v;
+        }
+      }
+      return out;
+    }
+
+    function buildTileLayer(layerDef) {
+      const tileUrl = layerDef.tileUrl;
+      const tileCfg = layerDef.tileLayerConfig || {};
+      const hexCfg = parseHexLayerConfigForDeck(layerDef.hexLayer || {});
+      const visible = layerVisibility[layerDef.id];
+      const layerOpacity = (typeof layerDef.hexLayer?.opacity === 'number') ? layerDef.hexLayer.opacity : 0.8;
+
+      return new TileLayer({
+        id: `${layerDef.id}-tiles`,
+        data: tileUrl,
+        tileSize: tileCfg.tileSize ?? 256,
+        minZoom: tileCfg.minZoom ?? 0,
+        maxZoom: tileCfg.maxZoom ?? 12,
+        pickable: true,
+        visible: visible,
+        maxRequests: 6,
+        refinementStrategy: 'best-available',
+        getTileData: async ({ index, signal }) => {
+          const { x, y, z } = index;
+          const url = tileUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+          try {
+            const res = await fetch(url, { signal });
+            if (!res.ok) return [];
+            let text = await res.text();
+            text = text.replace(/\"(hex|h3|index)\"\s*:\s*(\d+)/gi, (_m, k, d) => `"${k}":"${d}"`);
+            const data = JSON.parse(text);
+            return normalizeTileData(data);
+          } catch (e) { return []; }
+        },
+        renderSubLayers: (props) => {
+          const data = props.data || [];
+          if (!data.length) return null;
+          if (H3HexagonLayer) {
+            return new H3HexagonLayer({
+              id: `${props.id}-h3`,
+              data,
+              pickable: true, stroked: false, filled: true, extruded: false,
+              coverage: 0.9, lineWidthMinPixels: 1,
+              opacity: layerOpacity,
+              getHexagon: d => d.hex,
+              ...hexCfg
+            });
+          }
+          return null;
+        }
+      });
+    }
+
+    function rebuildDeckOverlay() {
+      // Only include visible tile layers
+      const deckLayers = LAYERS_DATA
+        .filter(l => l.isTileLayer && layerVisibility[l.id])
+        .map(l => buildTileLayer(l));
+      
+      if (deckOverlay) {
+        deckOverlay.setProps({ layers: deckLayers });
+      } else if (deckLayers.length > 0) {
+        deckOverlay = new MapboxOverlay({
+          interleaved: false,
+          layers: deckLayers
         });
-        try { if(map.getSource(l.id)) map.removeSource(l.id); } catch(e){}
+        map.addControl(deckOverlay);
+      }
+    }
+    {% endif %}
+
+    function addAllLayers() {
+      // Remove existing Mapbox layers for static layers
+      LAYERS_DATA.forEach(l => {
+        if (!l.isTileLayer) {
+          [`${l.id}-fill`, `${l.id}-extrusion`, `${l.id}-outline`].forEach(id => { 
+            try { if(map.getLayer(id)) map.removeLayer(id); } catch(e){} 
+          });
+          try { if(map.getSource(l.id)) map.removeSource(l.id); } catch(e){}
+        }
       });
       
-      // Add layers in reverse menu order so top of menu renders on top of map
+      // Add static layers in reverse menu order so top of menu renders on top of map
       const renderOrder = [...LAYERS_DATA].reverse();
       renderOrder.forEach((l) => {
+        if (l.isTileLayer) return;  // Skip tile layers - handled by Deck.gl
+        
         const geojson = layerGeoJSONs[l.id];
         map.addSource(l.id, { type: 'geojson', data: geojson });
         
@@ -1576,20 +1755,35 @@ def _deckgl_hex_multi(
           });
         }
       });
+
+      // Add tile layers using Deck.gl
+      {% if has_tile_layers %}
+      rebuildDeckOverlay();
+      {% endif %}
     }
 
-    function toggleLayerVisibility(layerId, visible) {
+    window.toggleLayerVisibility = function(layerId, visible) {
       layerVisibility[layerId] = visible;
-      [`${layerId}-fill`, `${layerId}-extrusion`, `${layerId}-outline`].forEach(id => {
-        try { 
-          if(map.getLayer(id)) {
-            map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
-          }
-        } catch(e){}
-      });
+      
+      const layerDef = LAYERS_DATA.find(l => l.id === layerId);
+      if (layerDef && layerDef.isTileLayer) {
+        // Tile layer - rebuild deck overlay
+        {% if has_tile_layers %}
+        rebuildDeckOverlay();
+        {% endif %}
+      } else {
+        // Static layer - toggle Mapbox layers
+        [`${layerId}-fill`, `${layerId}-extrusion`, `${layerId}-outline`].forEach(id => {
+          try { 
+            if(map.getLayer(id)) {
+              map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
+            }
+          } catch(e){}
+        });
+      }
       updateLegend();
       updateLayerPanel();
-    }
+    };
 
     function updateLayerPanel() {
       const list = document.getElementById('layer-list');
@@ -1607,11 +1801,13 @@ def _deckgl_hex_multi(
           if (cols && cols.length) colorPreview = cols[Math.floor(cols.length / 2)];
         }
         
+        const tileIcon = l.isTileLayer ? ' 🗺️' : '';
+        
         return `
           <div class="layer-item ${visible ? '' : 'disabled'}">
             <input type="checkbox" ${visible ? 'checked' : ''} onchange="toggleLayerVisibility('${l.id}', this.checked)" />
             <div class="layer-color" style="background:${colorPreview};"></div>
-            <span class="layer-name">${l.name}</span>
+            <span class="layer-name">${l.name}${tileIcon}</span>
           </div>
         `;
       }).join('');
@@ -1693,12 +1889,13 @@ def _deckgl_hex_multi(
       updateLayerPanel();
       updateLegend();
       
-      // Auto-fit to combined bounds
+      // Auto-fit to combined bounds (static layers only)
       if (!HAS_CUSTOM_VIEW && !autoFitDone) {
         const bounds = new mapboxgl.LngLatBounds();
         LAYERS_DATA.forEach(l => {
+          if (l.isTileLayer) return;  // Skip tile layers for auto-fit
           const geojson = layerGeoJSONs[l.id];
-          if (geojson.features.length) {
+          if (geojson && geojson.features && geojson.features.length) {
             geojson.features.forEach(f => f.geometry.coordinates[0].forEach(c => bounds.extend(c)));
           }
         });
@@ -1708,9 +1905,11 @@ def _deckgl_hex_multi(
         }
       }
       
-      // Setup tooltips for all layers
+      // Setup tooltips for static layers (Mapbox GL layers)
       const tt = document.getElementById('tooltip');
       LAYERS_DATA.forEach(l => {
+        if (l.isTileLayer) return;  // Tile layer tooltips handled separately
+        
         const cfg = l.hexLayer || {};
         // Include extrusion layer for 3D mode
         const layerIds = cfg.extruded 
@@ -1742,6 +1941,46 @@ def _deckgl_hex_multi(
           });
         });
       });
+
+      // Setup tooltips for tile layers (Deck.gl layers)
+      {% if has_tile_layers %}
+      map.on('mousemove', (e) => {
+        if (!deckOverlay) return;
+        const info = deckOverlay.pickObject({ x: e.point.x, y: e.point.y, radius: 4 });
+        if (info?.object) {
+          // Find which tile layer this belongs to
+          const layerId = info.layer?.id?.split('-tiles-')[0];
+          const layerDef = LAYERS_DATA.find(l => l.id === layerId || info.layer?.id?.startsWith(l.id));
+          if (layerDef && layerVisibility[layerDef.id]) {
+            map.getCanvas().style.cursor = 'pointer';
+            const p = info.object;
+            const cols = layerDef.tooltipColumns || [];
+            const colorAttr = layerDef.hexLayer?.getFillColor?.attr || 'metric';
+            const lines = [`hex: ${p.hex?.slice(0, 12)}...`];
+            if (cols.length) {
+              cols.forEach(col => {
+                if (p[col] !== undefined) {
+                  const val = p[col];
+                  lines.push(`${col}: ${typeof val === 'number' ? val.toFixed(2) : val}`);
+                }
+              });
+            } else if (p[colorAttr] != null) {
+              lines.push(`${colorAttr}: ${Number(p[colorAttr]).toFixed(2)}`);
+            }
+            tt.innerHTML = `<strong>${layerDef.name}</strong><br>` + lines.join(' &bull; ');
+            tt.style.left = `${e.point.x + 10}px`;
+            tt.style.top = `${e.point.y + 10}px`;
+            tt.style.display = 'block';
+            return;
+          }
+        }
+        // Only hide if no static layer tooltip is showing
+        if (!map.queryRenderedFeatures(e.point).length) {
+          tt.style.display = 'none';
+          map.getCanvas().style.cursor = '';
+        }
+      });
+      {% endif %}
     }
 
     map.on('load', tryInit);
@@ -1761,6 +2000,7 @@ def _deckgl_hex_multi(
         pitch=pitch,
         bearing=bearing,
         has_custom_view=has_custom_view,
+        has_tile_layers=has_tile_layers,
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
