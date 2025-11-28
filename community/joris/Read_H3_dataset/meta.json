@@ -76,7 +76,7 @@
                   "@@function": "colorContinuous",
                   "attr": "pct",
                   "domain": [
-                    100,
+                    1,
                     0
                   ],
                   "steps": 20,
