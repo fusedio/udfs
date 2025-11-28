@@ -2765,6 +2765,122 @@ def enable_map_broadcast(html_input, channel: str = "fused-bus", dataset: str = 
     return injected_html
 
 
+def enable_location_listener(html_input, channel: str = "fused-bus"):
+    """
+    Inject location listener into any Mapbox GL map HTML.
+    
+    When a location_selector broadcasts a location change, this map will
+    automatically pan/zoom to fit the specified bounds.
+    
+    Args:
+        html_input: HTML string or response object containing a Mapbox GL map
+        channel: BroadcastChannel name (must match location_selector's channel)
+    
+    Returns:
+        Modified HTML with location listener capability
+    
+    Usage:
+        html = deckgl_hex(df, config)
+        map_with_listener = enable_location_listener(html, channel="fused-bus")
+        return map_with_listener
+    """
+    # Normalize input to HTML string
+    response_mode = not isinstance(html_input, str)
+    if isinstance(html_input, str):
+        html_string = html_input
+    else:
+        html_string = None
+        text_value = getattr(html_input, "text", None)
+        if isinstance(text_value, str):
+            html_string = text_value
+        else:
+            data_value = getattr(html_input, "data", None)
+            if isinstance(data_value, (bytes, bytearray)):
+                html_string = data_value.decode("utf-8", errors="ignore")
+            elif isinstance(data_value, str):
+                html_string = data_value
+            else:
+                body_value = getattr(html_input, "body", None)
+                if isinstance(body_value, (bytes, bytearray)):
+                    html_string = body_value.decode("utf-8", errors="ignore")
+                elif isinstance(body_value, str):
+                    html_string = body_value
+        if html_string is None:
+            raise TypeError(
+                "html_input must be a str or response-like object with 'text', 'data', or 'body' attribute"
+            )
+    
+    listener_script = f"""
+<script>
+(function() {{
+  if (typeof map === 'undefined') return;
+  
+  const CHANNEL = {json.dumps(channel)};
+  const componentId = 'map-location-listener-' + Math.random().toString(36).substr(2, 9);
+  
+  // Setup BroadcastChannel
+  let bc = null;
+  try {{ if ('BroadcastChannel' in window) bc = new BroadcastChannel(CHANNEL); }} catch (e) {{}}
+  
+  function handleLocationChange(message) {{
+    try {{
+      if (typeof message === 'string') {{
+        try {{ message = JSON.parse(message); }} catch (_) {{ return; }}
+      }}
+      if (!message) return;
+      
+      // Handle location_change messages from location_selector
+      if (message.type === 'location_change' && message.location) {{
+        const loc = message.location;
+        
+        if (loc.bounds && Array.isArray(loc.bounds) && loc.bounds.length === 4) {{
+          const [west, south, east, north] = loc.bounds;
+          
+          // Fit map to bounds
+          map.fitBounds(
+            [[west, south], [east, north]],
+            {{
+              padding: 50,
+              duration: 1000,
+              maxZoom: 15
+            }}
+          );
+          
+          console.log('[map_location_listener] Panned to:', loc.name, loc.bounds);
+        }}
+      }}
+    }} catch (e) {{
+      console.warn('[map_location_listener] Error handling message:', e);
+    }}
+  }}
+  
+  // Listen on BroadcastChannel
+  if (bc) {{
+    bc.onmessage = (ev) => handleLocationChange(ev.data);
+  }}
+  
+  // Also listen via postMessage
+  window.addEventListener('message', (ev) => handleLocationChange(ev.data));
+  
+  console.log('[map_location_listener] Initialized on channel:', CHANNEL);
+}})();
+</script>
+"""
+    
+    # Inject before closing </body> tag
+    if "</body>" in html_string:
+        injected_html = html_string.replace("</body>", f"{listener_script}\n</body>")
+    elif "</html>" in html_string:
+        injected_html = html_string.replace("</html>", f"{listener_script}\n</html>")
+    else:
+        injected_html = html_string + listener_script
+
+    if response_mode:
+        common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
+        return common.html_to_obj(injected_html)
+    return injected_html
+
+
 def enable_map_sync(html_input, channel: str = "default"):
     """
     Inject BroadcastChannel-based map sync into any Mapbox GL map HTML.
