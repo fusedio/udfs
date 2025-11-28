@@ -866,6 +866,7 @@ function addLayers() {
   const cfg = CONFIG.hexLayer || {};
   const fillColor = Array.isArray(cfg.getFillColor) ? toRgba(cfg.getFillColor, 0.8) : buildColorExpr(cfg.getFillColor);
   const lineColor = cfg.getLineColor ? (Array.isArray(cfg.getLineColor) ? toRgba(cfg.getLineColor, 1) : buildColorExpr(cfg.getLineColor)) : 'rgba(255,255,255,0.3)';
+  const layerOpacity = (typeof cfg.opacity === 'number' && isFinite(cfg.opacity)) ? Math.max(0, Math.min(1, cfg.opacity)) : 0.8;
   
   if (cfg.extruded) {
     const elev = cfg.elevationScale || 1;
@@ -877,7 +878,7 @@ function addLayers() {
         'fill-extrusion-color':fillColor,
         'fill-extrusion-height':cfg.getFillColor?.attr ? ['*',['get',cfg.getFillColor.attr],elev] : 100,
         'fill-extrusion-base':0,
-        'fill-extrusion-opacity':0.8
+        'fill-extrusion-opacity':layerOpacity
       }
     });
     // Optional outline for extruded view so users can see stroke color
@@ -890,8 +891,8 @@ function addLayers() {
         'line-width':cfg.lineWidthMinPixels || 0.5
       }
     });
-      } else {
-    if (cfg.filled !== false) map.addLayer({ id:'hex-fill', type:'fill', source:'hex-source', paint:{ 'fill-color':fillColor, 'fill-opacity':0.8 }});
+  } else {
+    if (cfg.filled !== false) map.addLayer({ id:'hex-fill', type:'fill', source:'hex-source', paint:{ 'fill-color':fillColor, 'fill-opacity':layerOpacity }});
     map.addLayer({ id:'hex-outline', type:'line', source:'hex-source', paint:{ 'line-color':lineColor, 'line-width':cfg.lineWidthMinPixels || 0.5 }});
   }
 }
@@ -1521,14 +1522,16 @@ def _deckgl_hex_multi(
         try { if(map.getSource(l.id)) map.removeSource(l.id); } catch(e){}
       });
       
-      // Add layers in order
-      LAYERS_DATA.forEach((l, idx) => {
+      // Add layers in reverse menu order so top of menu renders on top of map
+      const renderOrder = [...LAYERS_DATA].reverse();
+      renderOrder.forEach((l) => {
         const geojson = layerGeoJSONs[l.id];
         map.addSource(l.id, { type: 'geojson', data: geojson });
         
         const cfg = l.hexLayer || {};
         const fillColor = Array.isArray(cfg.getFillColor) ? toRgba(cfg.getFillColor, 0.8) : buildColorExpr(cfg.getFillColor);
         const lineColor = cfg.getLineColor ? (Array.isArray(cfg.getLineColor) ? toRgba(cfg.getLineColor, 1) : buildColorExpr(cfg.getLineColor)) : 'rgba(255,255,255,0.3)';
+        const layerOpacity = (typeof cfg.opacity === 'number' && isFinite(cfg.opacity)) ? Math.max(0, Math.min(1, cfg.opacity)) : 0.8;
         const visible = layerVisibility[l.id];
         
         if (cfg.extruded) {
@@ -1542,7 +1545,7 @@ def _deckgl_hex_multi(
               'fill-extrusion-color': fillColor, 
               'fill-extrusion-height': cfg.getFillColor?.attr ? ['*', ['get', cfg.getFillColor.attr], elev] : 100,
               'fill-extrusion-base': 0,
-              'fill-extrusion-opacity': 0.8
+              'fill-extrusion-opacity': layerOpacity
             },
             layout: { 'visibility': visible ? 'visible' : 'none' }
           });
@@ -1560,7 +1563,7 @@ def _deckgl_hex_multi(
               id: `${l.id}-fill`, 
               type: 'fill', 
               source: l.id, 
-              paint: { 'fill-color': fillColor, 'fill-opacity': 0.8 },
+              paint: { 'fill-color': fillColor, 'fill-opacity': layerOpacity },
               layout: { 'visibility': visible ? 'visible' : 'none' }
             });
           }
