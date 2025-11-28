@@ -14,9 +14,9 @@ def udf(
     df = read_h3_dataset(path, bounds, res=res, value=value)
     print(df)
 
-    if "cnt" in df.columns:
-        # for overview files with cnt statistic
-        df["pct"] = df["cnt"] / df["cnt_total"]
+    if "cnt" in df.columns and "pct" not in df.columns:
+        # for overview files with cnt statistic (TODO add more accurate version in reader)
+        df["pct"] = df["cnt"] / df["cnt_total"] * 100
     
     return df
 
@@ -170,7 +170,10 @@ def read_dataset(path, bounds, res, value, base_res=7):
         # reading at originnal data resolution -> no aggregation needed
         con = common.duckdb_connect()
         qr = f"""
-            SELECT * FROM df
+            SELECT
+                *,
+                (100*cnt/cnt_total)::FLOAT AS pct
+            FROM df
             WHERE h3_cell_to_lat(hex) BETWEEN {bounds[1]} AND {bounds[3]}
               AND h3_cell_to_lng(hex) BETWEEN {bounds[0]} AND {bounds[2]}
         """
@@ -189,7 +192,8 @@ def read_dataset(path, bounds, res, value, base_res=7):
                     hex,
                     data,
                     SUM(cnt)::INT AS cnt,
-                    SUM(SUM(cnt)) OVER (PARTITION BY hex)::INT AS cnt_total
+                    SUM(SUM(cnt)) OVER (PARTITION BY hex)::INT AS cnt_total,
+                    (100*SUM(cnt/cnt_total)/7^{data_res-res})::FLOAT AS pct
                 FROM ({qr}) 
                 GROUP BY 1,2
             """
