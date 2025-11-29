@@ -202,6 +202,7 @@ def s3_list(path, include_metadata=True):
         files_info = fs.find(path, detail=True)
         df = pd.DataFrame.from_dict(files_info, orient='index')
         df['path'] = 's3://' + df.index
+        df = df.rename(columns={'size': 'Size'})
         df['size_mb'] = round(df['Size'] / (1024 * 1024), 2)
         df['filename'] = df.index.str.split('/').str[-1]
         df['last_modified'] = pd.to_datetime(df['LastModified']).dt.strftime('%Y-%m-%d %H:%M:%S')
