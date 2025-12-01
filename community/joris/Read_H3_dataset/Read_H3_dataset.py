@@ -14,10 +14,6 @@ def udf(
     df = read_h3_dataset(path, bounds, res=res, value=value)
     print(df)
 
-    if "cnt" in df.columns and "pct" not in df.columns:
-        # for overview files with cnt statistic (TODO add more accurate version in reader)
-        df["pct"] = df["cnt"] / df["cnt_total"] * 100
-    
     return df
 
 
@@ -122,6 +118,13 @@ def read_overview(path, bounds, res, value):
 
     if not filtered:
         df = common.filter_hex_bounds(df, bounds, col_hex="hex")
+
+    if "cnt" in df.columns and "pct" not in df.columns:
+        # TODO: this is not accurate if the hex cells at the original resolution
+        # did not cover the full cell at the current overview resolution
+        # -> need to add that to the ingested data
+         df["pct"] = df["cnt"] / df["cnt_total"] * 100
+
     return df
 
 
@@ -169,14 +172,21 @@ def read_dataset(path, bounds, res, value, base_res=7):
     elif res == data_res:
         # reading at originnal data resolution -> no aggregation needed
         con = common.duckdb_connect()
-        qr = f"""
-            SELECT
-                *,
-                (100*cnt/cnt_total)::FLOAT AS pct
-            FROM df
-            WHERE h3_cell_to_lat(hex) BETWEEN {bounds[1]} AND {bounds[3]}
-              AND h3_cell_to_lng(hex) BETWEEN {bounds[0]} AND {bounds[2]}
-        """
+        if "cnt" in df.columns:
+            qr = f"""
+                SELECT
+                    *,
+                    (100*cnt/cnt_total)::FLOAT AS pct
+                FROM df
+                WHERE h3_cell_to_lat(hex) BETWEEN {bounds[1]} AND {bounds[3]}
+                  AND h3_cell_to_lng(hex) BETWEEN {bounds[0]} AND {bounds[2]}
+            """
+        else:
+            qr = f"""
+                SELECT * FROM df
+                WHERE h3_cell_to_lat(hex) BETWEEN {bounds[1]} AND {bounds[3]}
+                  AND h3_cell_to_lng(hex) BETWEEN {bounds[0]} AND {bounds[2]}
+            """
         df = con.sql(qr).df()
         
     else:
