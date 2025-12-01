@@ -1303,10 +1303,10 @@ def _deckgl_hex_multi(
                     except (ValueError, OverflowError):
                         record['hex'] = None
         
-        # Extract tooltip columns
-        tooltip_columns = _extract_tooltip_columns((merged_config, hex_layer))
-        if not tooltip_columns and data_records:
-            tooltip_columns = [k for k in data_records[0].keys() if k not in ['hex', 'lat', 'lng']]
+        # Extract tooltip columns - check config root, hexLayer, and original layer config
+        tooltip_columns = _extract_tooltip_columns((config, merged_config, hex_layer))
+        # Only fall back to all columns if tooltipColumns was never specified at all
+        # (not if it was specified but empty)
         
         processed_layers.append({
             "id": f"layer-{i}",
@@ -1905,41 +1905,73 @@ def _deckgl_hex_multi(
         }
       }
       
-      // Setup tooltips for static layers (Mapbox GL layers)
+      // Setup unified tooltip for static layers - query all layers and pick topmost
       const tt = document.getElementById('tooltip');
+      
+      // Build list of all queryable layer IDs in render order (top to bottom)
+      // Layers are rendered in reverse menu order, so menu order = visual top-to-bottom
+      const allQueryableLayers = [];
       LAYERS_DATA.forEach(l => {
-        if (l.isTileLayer) return;  // Tile layer tooltips handled separately
-        
+        if (l.isTileLayer) return;
         const cfg = l.hexLayer || {};
-        // Include extrusion layer for 3D mode
         const layerIds = cfg.extruded 
           ? [`${l.id}-extrusion`, `${l.id}-outline`]
           : [`${l.id}-fill`, `${l.id}-outline`];
-        
         layerIds.forEach(layerId => {
-          if (!map.getLayer(layerId)) return;
-          
-          map.on('mousemove', layerId, (e) => {
-            if (!e.features?.length || !layerVisibility[l.id]) return;
-            map.getCanvas().style.cursor = 'pointer';
-            const p = e.features[0].properties;
-            const cols = l.tooltipColumns || [];
-            const lines = cols.length 
-              ? cols.map(k => p[k] != null ? `${k}: ${typeof p[k]==='number'?p[k].toFixed(2):p[k]}` : '').filter(Boolean) 
-              : (p.hex ? [`hex: ${p.hex.slice(0,12)}...`] : []);
-            if (lines.length) { 
-              tt.innerHTML = `<strong>${l.name}</strong><br>` + lines.join(' &bull; '); 
-              tt.style.left = `${e.point.x+10}px`; 
-              tt.style.top = `${e.point.y+10}px`; 
-              tt.style.display = 'block'; 
-            }
-          });
-          
-          map.on('mouseleave', layerId, () => { 
-            map.getCanvas().style.cursor = ''; 
-            tt.style.display = 'none'; 
-          });
+          allQueryableLayers.push({ layerId, layerDef: l });
         });
+      });
+      
+      map.on('mousemove', (e) => {
+        // Query all static layers at this point
+        const queryIds = allQueryableLayers.map(x => x.layerId).filter(id => map.getLayer(id));
+        if (!queryIds.length) return;
+        
+        const features = map.queryRenderedFeatures(e.point, { layers: queryIds });
+        if (!features?.length) {
+          tt.style.display = 'none';
+          map.getCanvas().style.cursor = '';
+          return;
+        }
+        
+        // Find the topmost visible layer's feature
+        // Features are returned in render order (topmost first)
+        let topFeature = null;
+        let topLayerDef = null;
+        for (const f of features) {
+          const match = allQueryableLayers.find(x => x.layerId === f.layer.id);
+          if (match && layerVisibility[match.layerDef.id]) {
+            topFeature = f;
+            topLayerDef = match.layerDef;
+            break;
+          }
+        }
+        
+        if (!topFeature || !topLayerDef) {
+          tt.style.display = 'none';
+          map.getCanvas().style.cursor = '';
+          return;
+        }
+        
+        map.getCanvas().style.cursor = 'pointer';
+        const p = topFeature.properties;
+        const cols = topLayerDef.tooltipColumns || [];
+        const lines = cols.length 
+          ? cols.map(k => p[k] != null ? `${k}: ${typeof p[k]==='number'?p[k].toFixed(2):p[k]}` : '').filter(Boolean) 
+          : (p.hex ? [`hex: ${p.hex.slice(0,12)}...`] : []);
+        if (lines.length) { 
+          tt.innerHTML = `<strong>${topLayerDef.name}</strong><br>` + lines.join(' &bull; '); 
+          tt.style.left = `${e.point.x+10}px`; 
+          tt.style.top = `${e.point.y+10}px`; 
+          tt.style.display = 'block'; 
+        } else {
+          tt.style.display = 'none';
+        }
+      });
+      
+      map.on('mouseleave', () => { 
+        map.getCanvas().style.cursor = ''; 
+        tt.style.display = 'none'; 
       });
 
       // Setup tooltips for tile layers (Deck.gl layers)
