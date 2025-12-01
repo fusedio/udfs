@@ -4,6 +4,30 @@ def udf(name: str = "world"):
 
     return pd.DataFrame({"hello": [name]})
 
+
+def read_tiff_naip(
+    bounds, input_tiff_path, crs, buffer_degree, output_shape, resample_order=0
+):
+    from io import BytesIO
+    import numpy as np
+    import rasterio
+    from rasterio.session import AWSSession
+    from scipy.ndimage import zoom
+    bounds = to_gdf(bounds)
+    out_buf = BytesIO()
+    with rasterio.Env(AWSSession(requester_pays=True)):
+        with rasterio.open(input_tiff_path) as src:
+            if buffer_degree != 0:
+                bounds.geometry = bounds.geometry.buffer(buffer_degree)
+            bbox_projected = bounds.to_crs(crs)
+            window = src.window(*bbox_projected.total_bounds)
+            data = src.read(window=window, boundless=True)
+            zoom_factors = np.array(output_shape) / np.array(data[0].shape)
+            rgb = np.array(
+                [zoom(arr, zoom_factors, order=resample_order) for arr in data]
+            )
+        return rgb
+
 def download_file(url, destination):
     import requests
 
