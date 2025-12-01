@@ -1709,7 +1709,7 @@ def arr_to_color(arr, colormap, out_dtype="uint8"):
 
 
 def arr_to_plasma(
-    data, min_max=(0, 255), colormap="plasma", include_opacity=False, reverse=True
+    data, min_max=(0, 255), colormap="plasma", include_opacity=False, reverse=False
 ):
     import numpy as np
 
