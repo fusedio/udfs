@@ -1292,16 +1292,23 @@ def geom_stats(gdf, arr, output_shape=(255, 255)):
     return gdf
 
 
-def earth_session(cred):
+def create_aws_session(cred):
     from job2.credentials import get_session
     from rasterio.session import AWSSession
-
-    aws_session = get_session(
-        cred["env"],
-        earthdatalogin_username=cred["username"],
-        earthdatalogin_password=cred["password"],
-    )
-    return AWSSession(aws_session, requester_pays=False)
+    if 'requester_pays' in cred:
+        requester_pays=cred.pop('requester_pays')
+        
+    else:
+        requester_pays=False
+    if 'username' in cred:
+        return AWSSession(get_session(
+                    cred["env"],
+                    earthdatalogin_username=cred["username"],
+                    earthdatalogin_password=cred["password"],
+                ), requester_pays=requester_pays)
+    else:
+        return AWSSession(get_session(**cred), requester_pays=requester_pays)
+        
 
 @fused.cache
 def read_tiff(
@@ -1317,7 +1324,7 @@ def read_tiff(
     return_meta=False,
     cred=None,
     resampling = 'nearest'
-):
+):  
     import os
     from contextlib import ExitStack
 
@@ -1327,27 +1334,24 @@ def read_tiff(
     from rasterio.warp import Resampling, reproject
     from scipy.ndimage import zoom
         
-    version = "0.2.0"
-
-    
     if isinstance(resampling, str):
         resampling = getattr(Resampling, resampling.lower())
 
     if not cred:
         context = rasterio.Env()
     else:
-        aws_session = earth_session(cred=cred)
+        aws_session = create_aws_session(cred=cred)
         context = rasterio.Env(
             aws_session,
             GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
             GDAL_HTTP_COOKIEFILE=os.path.expanduser("/tmp/cookies.txt"),
             GDAL_HTTP_COOKIEJAR=os.path.expanduser("/tmp/cookies.txt"),
         )
+    bounds = to_gdf(bounds)
     with ExitStack() as stack:
         stack.enter_context(context)
         try:
             with rasterio.open(input_tiff_path, OVERVIEW_LEVEL=overview_level) as src:
-                # with rasterio.Env():
                 if src.crs:
                     src_crs = src.crs
                 else:
@@ -1412,11 +1416,9 @@ def read_tiff(
                     except ValueError:
                         colormap = None
         except rasterio.RasterioIOError as err:
-            print(f"Caught RasterioIOError {err=}, {type(err)=}")
-            return  # Return without data
+            raise ValueError(f"Caught RasterioIOError {err=}, {type(err)=} | if reading from s3, you may set `cred={{'requester_pays':True}}`")
         except Exception as err:
-            print(f"Unexpected {err=}, {type(err)=}")
-            raise
+            raise ValueError(f"Unexpected {err=}, {type(err)=}")
         if output_shape:
             # reproject
             bbox_web = bounds.to_crs("EPSG:3857")
@@ -2519,32 +2521,6 @@ def bbox_stac_items(bounds, table):
     ret_gdf = pd.concat(matching_images)
     ret_gdf = ret_gdf[ret_gdf.intersects(bounds)]
     return ret_gdf
-
-
-# todo: switch to read_tiff with requester_pays option
-def read_tiff_naip(
-    bounds, input_tiff_path, crs, buffer_degree, output_shape, resample_order=0
-):
-    from io import BytesIO
-    import numpy as np
-    import rasterio
-    from rasterio.session import AWSSession
-    from scipy.ndimage import zoom
-
-    out_buf = BytesIO()
-    with rasterio.Env(AWSSession(requester_pays=True)):
-        with rasterio.open(input_tiff_path) as src:
-            if buffer_degree != 0:
-                bounds.geometry = bounds.geometry.buffer(buffer_degree)
-            bbox_projected = bounds.to_crs(crs)
-            window = src.window(*bbox_projected.total_bounds)
-            data = src.read(window=window, boundless=True)
-            zoom_factors = np.array(output_shape) / np.array(data[0].shape)
-            rgb = np.array(
-                [zoom(arr, zoom_factors, order=resample_order) for arr in data]
-            )
-        return rgb
-
 
 def image_server_bbox(
     image_url,
