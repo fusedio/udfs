@@ -47,7 +47,10 @@ def read_h3_dataset(
         print(f"using resolution {res}")
 
     available_overviews = list_available_overviews(path, cache_verbose=False)
-
+    if available_overviews and res < min(available_overviews):
+        res = min(available_overviews)
+        print(f"truncating to lowest overview resolution {res}")
+        
     if res in available_overviews:
         df = read_overview(path, bounds, res, value)
         return df
@@ -56,9 +59,9 @@ def read_h3_dataset(
     return df
 
 
-def bounds_to_res(bounds, res_offset=1, max_res=11, min_res=3):
+def bounds_to_res(bounds, res_offset=1):
     z = common.estimate_zoom(bounds)
-    return max(min(int(3 + z / 1.5 - res_offset), max_res), min_res)
+    return int(3 + z / 1.5 - res_offset)
 
 
 @fused.cache(cache_max_age="30m")
