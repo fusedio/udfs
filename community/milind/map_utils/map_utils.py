@@ -530,712 +530,33 @@ def deckgl_hex(
             {"data": df2, "config": config2, "name": "Income"},
         ], debug=True)
     """
-    # Route to multi-layer mode if layers is provided
-    if layers:
-        return _deckgl_hex_multi(
-            layers=layers,
-            mapbox_token=mapbox_token,
-            basemap=basemap,
-        )
-    
-    # Route to tile mode if tile_url is provided
-    if tile_url:
-        return _deckgl_hex_tiles(
-            tile_url=tile_url,
-            config=config,
-            mapbox_token=mapbox_token,
-            basemap=basemap,
-            debug=debug,
-        )
-    # Basemap setup
-    basemap_styles = {"dark": "mapbox://styles/mapbox/dark-v11", "satellite": "mapbox://styles/mapbox/satellite-streets-v12", "light": "mapbox://styles/mapbox/light-v11", "streets": "mapbox://styles/mapbox/streets-v12"}
-    style_url = basemap_styles.get({"sat": "satellite", "satellite-streets": "satellite"}.get((basemap or "dark").lower(), (basemap or "dark").lower()), basemap or basemap_styles["dark"])
-
-    # Config processing
-    config_errors = []
-    original_config = deepcopy(config) if config else {}
-    merged_config = _load_deckgl_config(config, DEFAULT_DECK_HEX_CONFIG, "deckgl_hex", config_errors)
-    hex_layer = merged_config.get("hexLayer", {})
-
-    # Validate hexLayer property names
-    invalid_props = [key for key in list(hex_layer.keys()) if key not in VALID_HEX_LAYER_PROPS]
-    for prop in invalid_props:
-        suggestion = get_close_matches(prop, list(VALID_HEX_LAYER_PROPS), n=1, cutoff=0.6)
-        if suggestion:
-            print(f"[deckgl_hex] Warning: Property '{prop}' not recognized. Did you mean '{suggestion[0]}'?")
-            config_errors.append(f"Property '{prop}' not recognized. Did you mean '{suggestion[0]}'?")
+    # Normalize all inputs to layers list format
+    if layers is None:
+        if df is not None:
+            layers = [{"data": df, "config": config, "name": "Layer 1"}]
+        elif tile_url is not None:
+            layers = [{"tile_url": tile_url, "config": config, "name": "Tile Layer"}]
         else:
-            print(f"[deckgl_hex] Warning: Property '{prop}' not recognized by H3HexagonLayer.")
-            config_errors.append(f"Property '{prop}' not recognized.")
-        hex_layer.pop(prop, None)
-
-    # Validate palette name for getFillColor
-    fill_color_cfg = hex_layer.get("getFillColor", {})
-    if isinstance(fill_color_cfg, dict) and fill_color_cfg.get("@@function") == "colorContinuous":
-        palette_name = fill_color_cfg.get("colors", "TealGrn")
-        if palette_name and palette_name not in KNOWN_CARTOCOLOR_PALETTES:
-            suggestion = get_close_matches(palette_name, list(KNOWN_CARTOCOLOR_PALETTES), n=1, cutoff=0.5)
-            if suggestion:
-                print(f"[deckgl_hex] Warning: Palette '{palette_name}' not found. Did you mean '{suggestion[0]}'?")
-                config_errors.append(f"Palette '{palette_name}' not found. Did you mean '{suggestion[0]}'?")
-            else:
-                print(f"[deckgl_hex] Warning: Palette '{palette_name}' not found. Using fallback colors.")
-                print(f"  Valid palettes: {', '.join(sorted(list(KNOWN_CARTOCOLOR_PALETTES))[:15])}...")
-                config_errors.append(f"Palette '{palette_name}' not found. Valid: {', '.join(sorted(list(KNOWN_CARTOCOLOR_PALETTES))[:10])}...")
-
-    # Validate palette name for getLineColor (if colorContinuous)
-    line_color_cfg = hex_layer.get("getLineColor", {})
-    if isinstance(line_color_cfg, dict) and line_color_cfg.get("@@function") == "colorContinuous":
-        palette_name = line_color_cfg.get("colors", "TealGrn")
-        if palette_name and palette_name not in KNOWN_CARTOCOLOR_PALETTES:
-            suggestion = get_close_matches(palette_name, list(KNOWN_CARTOCOLOR_PALETTES), n=1, cutoff=0.5)
-            if suggestion:
-                print(f"[deckgl_hex] Warning: Line palette '{palette_name}' not found. Did you mean '{suggestion[0]}'?")
-                config_errors.append(f"Line palette '{palette_name}' not found. Did you mean '{suggestion[0]}'?")
-            else:
-                print(f"[deckgl_hex] Warning: Line palette '{palette_name}' not found. Using fallback colors.")
-                config_errors.append(f"Line palette '{palette_name}' not found.")
-
-    # Convert dataframe to records, handling hex ID conversion
-    data_records = []
-    if hasattr(df, 'to_dict'):
-        data_records = df.to_dict('records')
-        for record in data_records:
-            hex_val = record.get('hex') or record.get('h3') or record.get('index') or record.get('id')
-            if hex_val is not None:
-                try:
-                    if isinstance(hex_val, (int, float)):
-                        record['hex'] = format(int(hex_val), 'x')
-                    elif isinstance(hex_val, str) and hex_val.isdigit():
-                        record['hex'] = format(int(hex_val), 'x')
-                    else:
-                        record['hex'] = hex_val
-                except (ValueError, OverflowError):
-                    record['hex'] = None
-        
-    # Auto-center from data
-    auto_center, auto_zoom = (-119.4179, 36.7783), 5
-    if data_records and 'lat' in data_records[0] and 'lng' in data_records[0]:
-        lats = [r["lat"] for r in data_records if "lat" in r]
-        lngs = [r["lng"] for r in data_records if "lng" in r]
-        if lats and lngs:
-            auto_center = (sum(lngs) / len(lngs), sum(lats) / len(lats))
-            auto_zoom = 8
-
-    # View state
-    ivs = merged_config.get('initialViewState', {})
-    center_lng = ivs.get('longitude') or auto_center[0]
-    center_lat = ivs.get('latitude') or auto_center[1]
-    zoom = ivs.get('zoom') or auto_zoom
-    pitch = ivs.get('pitch', 0)
-    bearing = ivs.get('bearing', 0)
-    user_initial_state = {}
-    if isinstance(original_config, dict):
-        user_initial_state = original_config.get('initialViewState', {}) or {}
-    # Only longitude/latitude/zoom count as "custom view" - pitch/bearing should still allow auto-fit
-    has_custom_view = any(
-        user_initial_state.get(key) is not None
-        for key in ('longitude', 'latitude', 'zoom')
+            raise ValueError("Provide df, tile_url, or layers parameter")
+    
+    # Use unified multi-layer implementation for everything
+    return _deckgl_hex_multi(
+        layers=layers,
+        mapbox_token=mapbox_token,
+        basemap=basemap,
+        debug=debug,
     )
-
-    # Tooltip columns
-    tooltip_columns = _extract_tooltip_columns((merged_config, hex_layer))
-    if not tooltip_columns and data_records:
-        tooltip_columns = [k for k in data_records[0].keys() if k not in ['hex', 'lat', 'lng']]
-
-    html = Template(r"""
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet" />
-  <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
-  <script src="https://unpkg.com/h3-js@4.1.0/dist/h3-js.umd.js"></script>
-  <script type="module">
-    import * as cartocolor from 'https://esm.sh/cartocolor@5.0.2';
-    window.cartocolor = cartocolor;
-  </script>
-  <style>
-    html, body { margin:0; height:100%; width:100%; display:flex; overflow:hidden; }
-    #map { flex:1; height:100%; }
-    #tooltip { position:absolute; pointer-events:none; background:rgba(0,0,0,0.7); color:#fff; padding:4px 8px; border-radius:4px; font-size:12px; display:none; z-index:6; }
-    .config-error { position:fixed; right:12px; bottom:12px; background:rgba(180,30,30,0.92); color:#fff; padding:6px 10px; border-radius:4px; font-size:11px; display:none; z-index:8; max-width:260px; }
-    .color-legend { position:fixed; left:12px; bottom:12px; background:rgba(15,15,15,0.9); color:#fff; padding:8px; border-radius:4px; font-size:11px; display:none; z-index:10; min-width:140px; border:1px solid rgba(255,255,255,0.1); }
-    .color-legend .legend-title { margin-bottom:6px; font-weight:500; }
-    .color-legend .legend-gradient { height:12px; border-radius:2px; margin-bottom:4px; border:1px solid rgba(255,255,255,0.2); }
-    .color-legend .legend-labels { display:flex; justify-content:space-between; font-size:10px; color:#ccc; }
-    /* Debug Panel - Material Grey + Workbench Theme */
-    #debug-panel { width:400px; height:100%; background:#212121; border-left:1px solid #424242; display:flex; flex-direction:column; font-family:Inter, 'SF Pro Display', 'Segoe UI', sans-serif; color:#f5f5f5; }
-    #debug-header { padding:12px 18px; background:#1a1a1a; border-bottom:1px solid #424242; }
-    #debug-header h3 { margin:0; font-size:12px; font-weight:600; color:#E8FF59; letter-spacing:0.5px; text-transform:uppercase; }
-    #debug-content { flex:1; overflow-y:auto; padding:14px 18px; display:flex; flex-direction:column; gap:16px; }
-    .debug-section { background:#1a1a1a; border:1px solid #424242; border-radius:8px; padding:12px; }
-    .debug-section h4 { margin:0 0 10px 0; font-size:11px; letter-spacing:0.4px; text-transform:uppercase; color:#bdbdbd; }
-    .form-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; }
-    .form-control { display:flex; flex-direction:column; gap:4px; font-size:11px; color:#dcdcdc; }
-    .form-control label { font-weight:600; }
-    .form-control input, .form-control select { background:#111; border:1px solid #333; border-radius:4px; padding:6px 8px; font-size:12px; color:#f5f5f5; outline:none; }
-    .form-control input:focus, .form-control select:focus { border-color:#E8FF59; }
-    .toggle-row { display:flex; align-items:center; gap:8px; font-size:11px; }
-    .toggle-row input { width:16px; height:16px; }
-    .single-column { display:flex; flex-direction:column; gap:10px; }
-    #debug-buttons { display:flex; gap:8px; padding:12px 18px; background:#1a1a1a; border-top:1px solid #424242; }
-    .dbtn { flex:1; border:none; border-radius:4px; padding:10px; font-size:11px; font-weight:600; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px; }
-    .dbtn.secondary { background:#424242; color:#fff; }
-    .dbtn.secondary:hover { background:#616161; }
-    .dbtn.ghost { background:transparent; color:#E8FF59; border:1px solid rgba(232,255,89,0.3); }
-    .dbtn.ghost:hover { border-color:#E8FF59; }
-    .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#E8FF59; color:#1a1a1a; padding:10px 20px; border-radius:4px; font-weight:600; font-size:12px; z-index:999; animation:fade 2s forwards; }
-    @keyframes fade { 0%,70%{opacity:1} 100%{opacity:0} }
-    #cfg-output { width:100%; min-height:120px; resize:vertical; background:#111; color:#f5f5f5; border:1px solid #333; border-radius:6px; padding:10px; font-family:SFMono-Regular,Consolas,monospace; font-size:11px; line-height:1.4; }
-  </style>
-</head>
-<body>
-  <div id="map"></div>
-  <div id="tooltip"></div>
-  <div id="config-error" class="config-error"></div>
-  <div id="color-legend" class="color-legend"><div class="legend-title"></div><div class="legend-gradient"></div><div class="legend-labels"><span class="legend-min"></span><span class="legend-max"></span></div></div>
-  
-  {% if debug %}
-  <div id="debug-panel">
-    <div id="debug-header">
-      <h3>Config</h3>
-    </div>
-    <div id="debug-content">
-      <div class="debug-section">
-        <h4>View</h4>
-        <div class="form-grid">
-          <div class="form-control">
-            <label>Longitude</label>
-            <input type="number" id="cfg-longitude" data-cfg-input step="0.0001" placeholder="auto" />
-          </div>
-          <div class="form-control">
-            <label>Latitude</label>
-            <input type="number" id="cfg-latitude" data-cfg-input step="0.0001" placeholder="auto" />
-          </div>
-          <div class="form-control">
-            <label>Zoom</label>
-            <input type="number" id="cfg-zoom" data-cfg-input step="0.1" min="0" placeholder="auto" />
-          </div>
-          <div class="form-control">
-            <label>Pitch</label>
-            <input type="number" id="cfg-pitch" data-cfg-input step="1" min="0" max="85" placeholder="0-85" />
-          </div>
-          <div class="form-control">
-            <label>Bearing</label>
-            <input type="number" id="cfg-bearing" data-cfg-input step="1" placeholder="deg" />
-          </div>
-    </div>
-  </div>
-
-      <div class="debug-section">
-        <h4>Layer</h4>
-        <div class="single-column">
-          <label class="toggle-row"><input type="checkbox" id="cfg-filled" data-cfg-input checked />Filled polygons</label>
-          <label class="toggle-row"><input type="checkbox" id="cfg-extruded" data-cfg-input />Extruded (3D)</label>
-          <label class="toggle-row"><input type="checkbox" id="cfg-pickable" data-cfg-input checked />Pickable / tooltips</label>
-          <div class="form-control">
-            <label>Elevation Scale</label>
-            <input type="number" id="cfg-elev-scale" data-cfg-input step="0.1" min="0" value="1" />
-          </div>
-        </div>
-      </div>
-
-      <div class="debug-section">
-        <h4>Fill Color</h4>
-        <div class="form-grid">
-          <div class="form-control">
-            <label>Attribute</label>
-            <select id="cfg-attr" data-cfg-input></select>
-          </div>
-          <div class="form-control">
-            <label>Palette</label>
-            <select id="cfg-palette" data-cfg-input>
-              {% for pal in palettes %}<option value="{{ pal }}">{{ pal }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="form-control">
-            <label>Domain Min</label>
-            <input type="number" id="cfg-domain-min" data-cfg-input step="0.1" value="0" />
-          </div>
-          <div class="form-control">
-            <label>Domain Max</label>
-            <input type="number" id="cfg-domain-max" data-cfg-input step="0.1" value="100" />
-          </div>
-          <div class="form-control">
-            <label>Steps</label>
-            <input type="number" id="cfg-steps" data-cfg-input min="2" max="20" value="7" />
-          </div>
-        </div>
-      </div>
-      <div class="debug-section">
-        <h4>Config Output</h4>
-        <textarea id="cfg-output" readonly></textarea>
-      </div>
-    </div>
-    <div id="debug-buttons">
-      <button class="dbtn secondary" onclick="resetConfig()">Reset</button>
-    </div>
-  </div>
-  {% endif %}
-
-  <script>
-    const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
-    const DATA = {{ data_records | tojson }};
-    let CONFIG = {{ config | tojson }};
-    const USER_CONFIG = {{ user_config | tojson }};
-    const ORIGINAL_CONFIG = USER_CONFIG && Object.keys(USER_CONFIG).length ? JSON.parse(JSON.stringify(USER_CONFIG)) : JSON.parse(JSON.stringify(CONFIG));
-    const TOOLTIP_COLUMNS = {{ tooltip_columns | tojson }};
-    const CONFIG_ERRORS = {{ config_errors | tojson }};
-    const DEBUG_MODE = {{ debug | tojson }};
-    const HAS_CUSTOM_VIEW = {{ has_custom_view | tojson }};
-
-// H3 ID conversion
-function toH3(hex) {
-        if (hex == null) return null;
-  try {
-        if (typeof hex === 'string') {
-          const s = hex.startsWith('0x') ? hex.slice(2) : hex;
-      return /[a-f]/i.test(s) ? s.toLowerCase() : /^\d+$/.test(s) ? BigInt(s).toString(16) : s.toLowerCase();
-          }
-        if (typeof hex === 'number') return BigInt(Math.trunc(hex)).toString(16);
-        if (typeof hex === 'bigint') return hex.toString(16);
-  } catch(e) {}
-      return null;
-    }
-
-// Convert to GeoJSON
-function toGeoJSON(data) {
-      const features = [];
-      for (const d of data) {
-    const hexId = toH3(d.hex ?? d.h3 ?? d.index ?? d.id);
-        if (!hexId || !h3.isValidCell(hexId)) continue;
-        try {
-          const boundary = h3.cellToBoundary(hexId);
-      const coords = boundary.map(([lat, lng]) => [lng, lat]);
-      coords.push(coords[0]);
-      features.push({ type: 'Feature', properties: { ...d, hex: hexId }, geometry: { type: 'Polygon', coordinates: [coords] }});
-    } catch(e) {}
-      }
-      return { type: 'FeatureCollection', features };
-    }
-
-// Get palette colors from cartocolor
-function getPaletteColors(name, steps) {
-  const pal = window.cartocolor?.[name];
-  if (!pal) return null;
-  const keys = Object.keys(pal).map(Number).filter(n => !isNaN(n)).sort((a, b) => a - b);
-  const best = keys.find(n => n >= steps) || keys[keys.length - 1];
-  return pal[best] ? [...pal[best]] : null;
-}
-
-// Build color expression
-function buildColorExpr(cfg) {
-  if (!cfg || cfg['@@function'] !== 'colorContinuous' || !cfg.attr || !cfg.domain?.length) return 'rgba(0,144,255,0.7)';
-  const [d0, d1] = cfg.domain, rev = d0 > d1, dom = rev ? [d1, d0] : [d0, d1];
-  const steps = cfg.steps || 7, name = cfg.colors || 'TealGrn';
-  let cols = getPaletteColors(name, steps);
-  if (!cols || !cols.length) {
-    return ['interpolate', ['linear'], ['get', cfg.attr], dom[0], 'rgb(237,248,251)', dom[1], 'rgb(0,109,44)'];
-  }
-  if (rev) cols.reverse();
-  const expr = ['interpolate', ['linear'], ['get', cfg.attr]];
-  cols.forEach((c, i) => { expr.push(dom[0] + (dom[1] - dom[0]) * i / (cols.length - 1)); expr.push(c); });
-      return expr;
-    }
-
-const geojson = toGeoJSON(DATA);
-
-    mapboxgl.accessToken = MAPBOX_TOKEN;
-const map = new mapboxgl.Map({ container: 'map', style: {{ style_url | tojson }}, center: [{{ center_lng }}, {{ center_lat }}], zoom: {{ zoom }}, pitch: {{ pitch }}, bearing: {{ bearing }}, projection: 'mercator' });
-
-// Convert [r,g,b] or [r,g,b,a] array to rgba string
-function toRgba(arr, defaultAlpha) {
-  if (!Array.isArray(arr) || arr.length < 3) return null;
-  const [r, g, b] = arr;
-  const a = arr.length >= 4 ? arr[3] / 255 : (defaultAlpha ?? 1);
-  return `rgba(${r},${g},${b},${a})`;
-}
-
-function addLayers() {
-  ['hex-fill','hex-extrusion','hex-outline'].forEach(id => { try { if(map.getLayer(id)) map.removeLayer(id); } catch(e){} });
-  try { if(map.getSource('hex-source')) map.removeSource('hex-source'); } catch(e){}
-  
-  map.addSource('hex-source', { type: 'geojson', data: geojson });
-  const cfg = CONFIG.hexLayer || {};
-  const fillColor = Array.isArray(cfg.getFillColor) ? toRgba(cfg.getFillColor, 0.8) : buildColorExpr(cfg.getFillColor);
-  const lineColor = cfg.getLineColor ? (Array.isArray(cfg.getLineColor) ? toRgba(cfg.getLineColor, 1) : buildColorExpr(cfg.getLineColor)) : 'rgba(255,255,255,0.3)';
-  const layerOpacity = (typeof cfg.opacity === 'number' && isFinite(cfg.opacity)) ? Math.max(0, Math.min(1, cfg.opacity)) : 0.8;
-  
-  if (cfg.extruded) {
-    const elev = cfg.elevationScale || 1;
-    map.addLayer({
-      id:'hex-extrusion',
-      type:'fill-extrusion',
-      source:'hex-source',
-      paint:{
-        'fill-extrusion-color':fillColor,
-        'fill-extrusion-height':cfg.getFillColor?.attr ? ['*',['get',cfg.getFillColor.attr],elev] : 100,
-        'fill-extrusion-base':0,
-        'fill-extrusion-opacity':layerOpacity
-      }
-    });
-    // Optional outline for extruded view so users can see stroke color
-        map.addLayer({
-      id:'hex-outline',
-      type:'line',
-      source:'hex-source',
-      paint:{
-        'line-color':lineColor,
-        'line-width':cfg.lineWidthMinPixels || 0.5
-      }
-    });
-  } else {
-    if (cfg.filled !== false) map.addLayer({ id:'hex-fill', type:'fill', source:'hex-source', paint:{ 'fill-color':fillColor, 'fill-opacity':layerOpacity }});
-    map.addLayer({ id:'hex-outline', type:'line', source:'hex-source', paint:{ 'line-color':lineColor, 'line-width':cfg.lineWidthMinPixels || 0.5 }});
-  }
-}
-
-function showLegend() {
-  const cfg = CONFIG.hexLayer || {};
-  const colorCfg = cfg.filled === false ? (cfg.getLineColor || cfg.getFillColor) : (cfg.getFillColor || cfg.getLineColor);
-  if (!colorCfg || colorCfg['@@function'] !== 'colorContinuous' || !colorCfg.attr || !colorCfg.domain?.length) return;
-  
-  const [d0, d1] = colorCfg.domain;
-  const isReversed = d0 > d1;
-  const steps = colorCfg.steps || 7;
-  const paletteName = colorCfg.colors || 'TealGrn';
-  
-  let cols = getPaletteColors(paletteName, steps);
-  if (!cols || !cols.length) {
-    cols = ['#e0f3db','#ccebc5','#a8ddb5','#7bccc4','#4eb3d3','#2b8cbe','#0868ac','#084081'];
-  }
-  
-  if (isReversed) cols = [...cols].reverse();
-  
-  const leg = document.getElementById('color-legend');
-  leg.querySelector('.legend-title').textContent = colorCfg.attr;
-  leg.querySelector('.legend-gradient').style.background = `linear-gradient(to right, ${cols.map((c, i) => `${c} ${i / (cols.length - 1) * 100}%`).join(', ')})`;
-  leg.querySelector('.legend-min').textContent = d0.toFixed(1);
-  leg.querySelector('.legend-max').textContent = d1.toFixed(1);
-  leg.style.display = 'block';
-}
-
-let layersReady = false;
-let autoFitDone = false;
-function tryInit() {
-  if (layersReady) return;
-  const cfg = CONFIG.hexLayer || {};
-  const colorCfg = cfg.filled === false ? cfg.getLineColor : cfg.getFillColor;
-  const needsCartocolor = colorCfg && colorCfg['@@function'] === 'colorContinuous';
-  
-  if (needsCartocolor && !window.cartocolor) {
-    setTimeout(tryInit, 50);
-        return;
-      }
-      
-  layersReady = true;
-  addLayers();
-  showLegend();
-  
-  // Auto-fit to data bounds if no custom view specified
-  if (!HAS_CUSTOM_VIEW && !autoFitDone && geojson.features.length) {
-    const bounds = new mapboxgl.LngLatBounds();
-    geojson.features.forEach(f => f.geometry.coordinates[0].forEach(c => bounds.extend(c)));
-    if (!bounds.isEmpty()) {
-      // Preserve pitch and bearing from config during fitBounds
-      map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 500, pitch: {{ pitch }}, bearing: {{ bearing }} });
-      autoFitDone = true;
-    }
-  }
-  
-  const layer = cfg.extruded ? 'hex-extrusion' : cfg.filled !== false ? 'hex-fill' : 'hex-outline';
-  const tt = document.getElementById('tooltip');
-  
-  map.on('mousemove', layer, (e) => {
-    if (!e.features?.length) return;
-    map.getCanvas().style.cursor = 'pointer';
-    const p = e.features[0].properties;
-    const lines = TOOLTIP_COLUMNS.length ? TOOLTIP_COLUMNS.map(k => p[k] != null ? `${k}: ${typeof p[k]==='number'?p[k].toFixed(2):p[k]}` : '').filter(Boolean) : (p.hex ? [`hex: ${p.hex.slice(0,12)}...`] : []);
-    if (lines.length) { tt.innerHTML = lines.join(' &bull; '); tt.style.left = `${e.point.x+10}px`; tt.style.top = `${e.point.y+10}px`; tt.style.display = 'block'; }
-  });
-  
-  map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = ''; tt.style.display = 'none'; });
-}
-
-map.on('load', tryInit);
-
-// Fix for tiles not loading in iframes
-map.on('load', () => { [100, 500, 1000].forEach(t => setTimeout(() => map.resize(), t)); });
-window.addEventListener('resize', () => map.resize());
-document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => map.resize(), 100); });
-
-if (CONFIG_ERRORS?.length) {
-  const box = document.getElementById('config-error');
-  box.innerHTML = CONFIG_ERRORS.join('<br>');
-  box.style.display = 'block';
-}
-
-function applyViewState(cfg) {
-  const ivs = cfg?.initialViewState || {};
-  // Check if user actually specified any view state values
-  const hasCustomView = ['longitude','latitude','zoom','pitch','bearing'].some(k => typeof ivs[k] === 'number');
-  if (!hasCustomView) return; // Don't override auto-fit if no custom view
-  
-  const currentCenter = map.getCenter();
-  const lng = (typeof ivs.longitude === 'number') ? ivs.longitude : currentCenter.lng;
-  const lat = (typeof ivs.latitude === 'number') ? ivs.latitude : currentCenter.lat;
-  const zoom = (typeof ivs.zoom === 'number') ? ivs.zoom : map.getZoom();
-  const pitch = (typeof ivs.pitch === 'number') ? Math.min(85, Math.max(0, ivs.pitch)) : map.getPitch();
-  const bearing = (typeof ivs.bearing === 'number') ? ivs.bearing : map.getBearing();
-  map.easeTo({ center: [lng, lat], zoom, pitch, bearing, duration: 500 });
-  autoFitDone = true; // Only set after actually applying custom view
-}
-
-// Debug Panel - Form controls
-if (DEBUG_MODE) {
-  const attrSelect = document.getElementById('cfg-attr');
-  const numericAttrs = (() => {
-    if (!DATA.length) return [];
-    const sample = DATA[0];
-    return Object.keys(sample).filter(key => typeof sample[key] === 'number' && !['hex','lat','lng'].includes(key));
-  })();
-
-  function populateAttrOptions(selected) {
-    if (!attrSelect) return;
-    attrSelect.innerHTML = '';
-    if (!numericAttrs.length) {
-      const opt = document.createElement('option');
-      opt.value = '';
-      opt.textContent = 'No numeric columns';
-      attrSelect.appendChild(opt);
-      attrSelect.disabled = true;
-      return;
-    }
-    numericAttrs.forEach(attr => {
-      const opt = document.createElement('option');
-      opt.value = attr;
-      opt.textContent = attr;
-      attrSelect.appendChild(opt);
-    });
-    if (selected && numericAttrs.includes(selected)) {
-      attrSelect.value = selected;
-    } else {
-      attrSelect.value = numericAttrs[0];
-    }
-  }
-
-  const BASE_HEX = JSON.parse(JSON.stringify(CONFIG.hexLayer || {}));
-
-  function setValue(id, value) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (value === undefined || value === null || Number.isNaN(value)) {
-      el.value = '';
-    } else {
-      el.value = value;
-    }
-  }
-
-  function setCheckbox(id, checked) {
-    const el = document.getElementById(id);
-    if (el) el.checked = Boolean(checked);
-  }
-
-  function getNumber(id) {
-    const el = document.getElementById(id);
-    if (!el) return null;
-    const val = parseFloat(el.value);
-    return Number.isFinite(val) ? val : null;
-  }
-
-  function getCheckbox(id) {
-    const el = document.getElementById(id);
-    return el ? el.checked : false;
-  }
-
-  function updateFormFromConfig(cfg) {
-    const ivs = cfg.initialViewState || {};
-    setValue('cfg-longitude', ivs.longitude);
-    setValue('cfg-latitude', ivs.latitude);
-    setValue('cfg-zoom', ivs.zoom);
-    setValue('cfg-pitch', ivs.pitch);
-    setValue('cfg-bearing', ivs.bearing);
-
-    const hex = cfg.hexLayer || {};
-    setCheckbox('cfg-filled', hex.filled !== false);
-    setCheckbox('cfg-extruded', hex.extruded === true);
-    setCheckbox('cfg-pickable', hex.pickable !== false);
-    setValue('cfg-elev-scale', hex.elevationScale ?? 1);
-
-    const color = hex.getFillColor;
-    const paletteEl = document.getElementById('cfg-palette');
-    if (color && color['@@function'] === 'colorContinuous') {
-      populateAttrOptions(color.attr);
-      if (attrSelect && color.attr) {
-        if (![...attrSelect.options].some(opt => opt.value === color.attr)) {
-          const opt = document.createElement('option');
-          opt.value = color.attr;
-          opt.textContent = color.attr;
-          attrSelect.appendChild(opt);
-        }
-        attrSelect.value = color.attr;
-      }
-      setValue('cfg-domain-min', color.domain?.[0]);
-      setValue('cfg-domain-max', color.domain?.[1]);
-      setValue('cfg-steps', color.steps ?? 7);
-      if (paletteEl && color.colors) paletteEl.value = color.colors;
-      } else {
-      populateAttrOptions(numericAttrs[0]);
-      setValue('cfg-domain-min', 0);
-      setValue('cfg-domain-max', 100);
-      setValue('cfg-steps', 7);
-      if (paletteEl) paletteEl.value = 'TealGrn';
-    }
-  }
-
-  function toPython(value, indent = 4, level = 0) {
-    const pad = ' '.repeat(indent * level);
-    const padNext = ' '.repeat(indent * (level + 1));
-    if (value === null) return 'None';
-    if (typeof value === 'boolean') return value ? 'True' : 'False';
-    if (typeof value === 'number') return String(value);
-    if (typeof value === 'string') return JSON.stringify(value);
-    if (Array.isArray(value)) {
-      if (!value.length) return '[]';
-      const items = value.map(v => padNext + toPython(v, indent, level + 1));
-      return '[\n' + items.join(',\n') + '\n' + pad + ']';
-    }
-    if (typeof value === 'object') {
-      const keys = Object.keys(value);
-      if (!keys.length) return '{}';
-      const entries = keys.map(key => padNext + JSON.stringify(key) + ': ' + toPython(value[key], indent, level + 1));
-      return '{\n' + entries.join(',\n') + '\n' + pad + '}';
-    }
-    return 'None';
-  }
-
-  function buildConfigFromForm() {
-    const cfg = {};
-    const ivs = {};
-    const lon = getNumber('cfg-longitude');
-    const lat = getNumber('cfg-latitude');
-    const zoom = getNumber('cfg-zoom');
-    const pitch = getNumber('cfg-pitch');
-    const bearing = getNumber('cfg-bearing');
-    if (lon !== null) ivs.longitude = lon;
-    if (lat !== null) ivs.latitude = lat;
-    if (zoom !== null) ivs.zoom = zoom;
-    if (pitch !== null) ivs.pitch = Math.min(85, Math.max(0, pitch));
-    if (bearing !== null) ivs.bearing = bearing;
-    if (Object.keys(ivs).length) cfg.initialViewState = ivs;
-
-    const hex = {
-      '@@type': 'H3HexagonLayer',
-      filled: getCheckbox('cfg-filled'),
-      extruded: getCheckbox('cfg-extruded'),
-      pickable: getCheckbox('cfg-pickable'),
-      elevationScale: getNumber('cfg-elev-scale') ?? 1,
-    };
-
-    const attrValue = attrSelect?.value || numericAttrs[0];
-    const domainMin = getNumber('cfg-domain-min');
-    const domainMax = getNumber('cfg-domain-max');
-    const steps = getNumber('cfg-steps') ?? 7;
-    const paletteEl = document.getElementById('cfg-palette');
-    const palette = paletteEl ? paletteEl.value : 'TealGrn';
-
-    hex.getFillColor = {
-      '@@function': 'colorContinuous',
-      attr: attrValue,
-      domain: [
-        domainMin ?? 0,
-        domainMax ?? ((domainMin ?? 0) + 1),
-      ],
-      steps: steps,
-      colors: palette,
-    };
-
-    const preservedKeys = ['getHexagon', 'getElevation', 'lineWidthMinPixels', 'getLineColor', 'tooltipColumns'];
-    preservedKeys.forEach(key => {
-      if (BASE_HEX[key] !== undefined && hex[key] === undefined) {
-        hex[key] = BASE_HEX[key];
-      }
-    });
-    if (!hex.getHexagon) hex.getHexagon = '@@=properties.hex';
-    if (!hex.getElevation) hex.getElevation = BASE_HEX.getElevation || '@@=properties.data_avg';
-
-    cfg.hexLayer = hex;
-    return cfg;
-  }
-
-  function applyConfig(cfg) {
-    CONFIG = JSON.parse(JSON.stringify(cfg));
-    applyViewState(CONFIG);
-    layersReady = false;
-    tryInit();
-  }
-
-  // Update config output textarea
-  const outputArea = document.getElementById('cfg-output');
-  function updateConfigOutput() {
-    if (!outputArea) return;
-    const cfg = buildConfigFromForm();
-    outputArea.value = 'config = ' + toPython(cfg);
-  }
-
-  function scheduleApply() {
-    clearTimeout(scheduleApply.timer);
-    scheduleApply.timer = setTimeout(() => {
-      const cfg = buildConfigFromForm();
-      applyConfig(cfg);
-      updateConfigOutput();
-    }, 200);
-  }
-
-  // Initial config output
-  updateConfigOutput();
-
-  window.resetConfig = function() {
-    const original = JSON.parse(JSON.stringify(ORIGINAL_CONFIG));
-    updateFormFromConfig(original);
-    applyConfig(original);
-  };
-
-  populateAttrOptions(ORIGINAL_CONFIG?.hexLayer?.getFillColor?.attr);
-  updateFormFromConfig(ORIGINAL_CONFIG);
-  
-  // Only bind form events - don't call applyConfig on init, let map.on('load') handle initial render
-  document.querySelectorAll('#debug-panel [data-cfg-input]').forEach(el => {
-    el.addEventListener('input', scheduleApply);
-    el.addEventListener('change', scheduleApply);
-  });
-    }
-  </script>
-</body>
-</html>
-""").render(
-        mapbox_token=mapbox_token, data_records=data_records, config=merged_config,
-        tooltip_columns=tooltip_columns, center_lng=center_lng, center_lat=center_lat,
-        zoom=zoom, pitch=pitch, bearing=bearing, config_errors=config_errors, style_url=style_url, debug=debug,
-        user_config=original_config if original_config else merged_config,
-        has_custom_view=has_custom_view, palettes=sorted(KNOWN_CARTOCOLOR_PALETTES),
-    )
-
-    common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
-    return common.html_to_obj(html)
 
 
 def _deckgl_hex_multi(
     layers: list,
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     basemap: str = "dark",
+    debug: bool = False,
 ):
     """
-    Render multiple H3 hexagon layers with a layer toggle panel.
-    Supports both static data and tile layers.
+    Unified implementation for rendering H3 hexagon layers.
+    Handles single layer, multi-layer, static data, and tile layers.
     
     Args:
         layers: List of layer dicts, each with:
@@ -1245,13 +566,17 @@ def _deckgl_hex_multi(
             - "name": Display name for layer toggle (optional)
         mapbox_token: Mapbox access token.
         basemap: 'dark', 'satellite', or custom Mapbox style URL.
+        debug: Show debug panel for config tweaking.
     
     Examples:
-        # Mixed static and tile layers
+        # Single layer (called via deckgl_hex)
+        deckgl_hex(df, config, debug=True)
+        
+        # Multi-layer
         deckgl_hex(layers=[
             {"data": df1, "config": config1, "name": "Static Layer"},
             {"tile_url": "https://example.com/tiles/{z}/{x}/{y}", "config": config2, "name": "Tile Layer"},
-        ])
+        ], debug=True)
     """
     # Basemap setup
     basemap_styles = {"dark": "mapbox://styles/mapbox/dark-v11", "satellite": "mapbox://styles/mapbox/satellite-streets-v12", "light": "mapbox://styles/mapbox/light-v11", "streets": "mapbox://styles/mapbox/streets-v12"}
@@ -1282,7 +607,7 @@ def _deckgl_hex_multi(
             if suggestion:
                 print(f"[deckgl_hex] Warning: Layer '{name}' property '{prop}' not recognized. Did you mean '{suggestion[0]}'?")
             hex_layer.pop(prop, None)
-        
+
         # Determine layer type
         is_tile_layer = tile_url is not None
         if is_tile_layer:
@@ -1307,6 +632,7 @@ def _deckgl_hex_multi(
         
         # Extract tooltip columns - check config root, hexLayer, and original layer config
         tooltip_columns = _extract_tooltip_columns((config, merged_config, hex_layer))
+        print(f"[deckgl_hex] Layer '{name}' tooltipColumns from config: {config.get('tooltipColumns')}, extracted: {tooltip_columns}")
         # Only fall back to all columns if tooltipColumns was never specified at all
         # (not if it was specified but empty)
         
@@ -1419,17 +745,17 @@ def _deckgl_hex_multi(
     }
     
     /* Legend */
-    .color-legend { 
-      position: fixed; 
-      left: 12px; 
-      bottom: 12px; 
+    .color-legend {
+      position: fixed;
+      left: 12px;
+      bottom: 12px;
       background: rgba(15,15,15,0.9); 
-      color: #fff; 
+      color: #fff;
       padding: 8px; 
-      border-radius: 4px; 
-      font-size: 11px; 
-      z-index: 10; 
-      min-width: 140px; 
+      border-radius: 4px;
+      font-size: 11px;
+      z-index: 10;
+      min-width: 140px;
       border: 1px solid rgba(255,255,255,0.1); 
     }
     .legend-layer { margin-bottom: 12px; }
@@ -1438,6 +764,47 @@ def _deckgl_hex_multi(
     .legend-layer .legend-title .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
     .legend-layer .legend-gradient { height: 10px; border-radius: 2px; margin-bottom: 4px; border: 1px solid rgba(255,255,255,0.2); }
     .legend-layer .legend-labels { display: flex; justify-content: space-between; font-size: 10px; color: #ccc; }
+    
+    {% if debug %}
+    /* Debug Panel */
+    #debug-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 320px;
+      height: 100%;
+      background: #212121;
+      border-left: 1px solid #424242;
+      display: flex;
+      flex-direction: column;
+      font-family: Inter, 'SF Pro Display', 'Segoe UI', sans-serif;
+      color: #f5f5f5;
+      z-index: 200;
+    }
+    #layer-panel { right: 332px !important; }
+    #debug-header { padding: 12px 16px; background: #1a1a1a; border-bottom: 1px solid #424242; }
+    #debug-header h3 { margin: 0; font-size: 12px; font-weight: 600; color: #E8FF59; letter-spacing: 0.5px; text-transform: uppercase; }
+    #debug-tabs { display: flex; gap: 6px; padding: 10px 12px; background: #1a1a1a; border-bottom: 1px solid #333; overflow-y: auto; overflow-x: hidden; flex-shrink: 0; flex-wrap: wrap; max-height: 120px; }
+    #debug-tabs::-webkit-scrollbar { height: 4px; width: 4px; }
+    #debug-tabs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    .debug-tab { padding: 6px 12px; font-size: 11px; font-weight: 500; color: #888; cursor: pointer; border: 1px solid #444; background: #2a2a2a; border-radius: 4px; transition: all 0.15s; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1 1 calc(50% - 8px); min-width: 120px; }
+    .debug-tab:hover { color: #ccc; background: #333; border-color: #555; }
+    .debug-tab.active { color: #1a1a1a; background: #E8FF59; border-color: #E8FF59; }
+    .debug-tab .tab-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+    .debug-tab.active .tab-dot { box-shadow: 0 0 0 1px rgba(0,0,0,0.3); }
+    #debug-content { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
+    .debug-section { background: #1a1a1a; border: 1px solid #424242; border-radius: 8px; padding: 12px; }
+    .debug-section h4 { margin: 0 0 10px 0; font-size: 11px; letter-spacing: 0.4px; text-transform: uppercase; color: #bdbdbd; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .form-control { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #dcdcdc; }
+    .form-control label { font-weight: 600; }
+    .form-control input, .form-control select { background: #111; border: 1px solid #333; border-radius: 4px; padding: 6px 8px; font-size: 12px; color: #f5f5f5; outline: none; }
+    .form-control input:focus, .form-control select:focus { border-color: #E8FF59; }
+    .toggle-row { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+    .toggle-row input { width: 16px; height: 16px; accent-color: #E8FF59; }
+    .single-column { display: flex; flex-direction: column; gap: 10px; }
+    #dbg-config { width: 100%; min-height: 100px; resize: vertical; background: #111; color: #f5f5f5; border: 1px solid #333; border-radius: 6px; padding: 10px; font-family: SFMono-Regular, Consolas, monospace; font-size: 11px; line-height: 1.4; }
+    {% endif %}
   </style>
 </head>
 <body>
@@ -1448,10 +815,85 @@ def _deckgl_hex_multi(
   <div id="layer-panel">
     <h4>Layers</h4>
     <div id="layer-list"></div>
-  </div>
+    </div>
   
   <!-- Legend -->
   <div id="color-legend" class="color-legend" style="display:none;"></div>
+  
+  {% if debug %}
+  <!-- Debug Panel -->
+  <div id="debug-panel">
+    <div id="debug-header">
+      <h3>Layer Config</h3>
+  </div>
+    <div id="debug-tabs"></div>
+    <div id="debug-content">
+      <div class="debug-section">
+        <h4>View</h4>
+        <div class="form-grid">
+          <div class="form-control">
+            <label>Longitude</label>
+            <input type="number" id="cfg-longitude" data-cfg-input step="0.0001" placeholder="auto" />
+          </div>
+          <div class="form-control">
+            <label>Latitude</label>
+            <input type="number" id="cfg-latitude" data-cfg-input step="0.0001" placeholder="auto" />
+          </div>
+          <div class="form-control">
+            <label>Zoom</label>
+            <input type="number" id="cfg-zoom" data-cfg-input step="0.1" min="0" placeholder="auto" />
+          </div>
+          <div class="form-control">
+            <label>Pitch</label>
+            <input type="number" id="cfg-pitch" data-cfg-input step="1" min="0" max="85" placeholder="0-85" />
+          </div>
+          <div class="form-control">
+            <label>Bearing</label>
+            <input type="number" id="cfg-bearing" data-cfg-input step="1" placeholder="deg" />
+          </div>
+        </div>
+      </div>
+      <div class="debug-section">
+        <h4>Layer</h4>
+        <div class="single-column">
+          <label class="toggle-row"><input type="checkbox" id="cfg-filled" data-cfg-input checked />Filled</label>
+          <label class="toggle-row"><input type="checkbox" id="cfg-extruded" data-cfg-input />Extruded (3D)</label>
+          <div class="form-control">
+            <label>Elevation Scale</label>
+            <input type="number" id="cfg-elev-scale" data-cfg-input step="0.1" min="0" value="1" />
+          </div>
+        </div>
+      </div>
+      <div class="debug-section">
+        <h4>Fill Color</h4>
+        <div class="form-grid">
+          <div class="form-control">
+            <label>Attribute</label>
+            <select id="cfg-attr" data-cfg-input></select>
+          </div>
+          <div class="form-control">
+            <label>Palette</label>
+            <select id="cfg-palette" data-cfg-input>
+              {% for pal in palettes %}<option value="{{ pal }}">{{ pal }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-control">
+            <label>Domain Min</label>
+            <input type="number" id="cfg-domain-min" data-cfg-input step="0.1" value="0" />
+          </div>
+          <div class="form-control">
+            <label>Domain Max</label>
+            <input type="number" id="cfg-domain-max" data-cfg-input step="0.1" value="100" />
+          </div>
+        </div>
+      </div>
+      <div class="debug-section">
+        <h4>Config Output</h4>
+        <textarea id="dbg-config" readonly></textarea>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <script>
     const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
@@ -1628,9 +1070,23 @@ def _deckgl_hex_multi(
     function buildTileLayer(layerDef) {
       const tileUrl = layerDef.tileUrl;
       const tileCfg = layerDef.tileLayerConfig || {};
-      const hexCfg = parseHexLayerConfigForDeck(layerDef.hexLayer || {});
+      const rawHexLayer = layerDef.hexLayer || {};
+      const hexCfg = parseHexLayerConfigForDeck(rawHexLayer);
       const visible = layerVisibility[layerDef.id];
-      const layerOpacity = (typeof layerDef.hexLayer?.opacity === 'number') ? layerDef.hexLayer.opacity : 0.8;
+      const layerOpacity = (typeof rawHexLayer.opacity === 'number') ? rawHexLayer.opacity : 0.8;
+      const isExtruded = rawHexLayer.extruded === true;
+      const elevationScale = rawHexLayer.elevationScale || 1;
+      
+      // Determine elevation attribute - use getElevation config or fall back to color attr
+      let elevationAttr = null;
+      if (rawHexLayer.getElevation) {
+        // Parse @@=properties.attr style accessor
+        const match = String(rawHexLayer.getElevation).match(/@@=properties\.([A-Za-z0-9_]+)/);
+        if (match) elevationAttr = match[1];
+      }
+      if (!elevationAttr && rawHexLayer.getFillColor?.attr) {
+        elevationAttr = rawHexLayer.getFillColor.attr;
+      }
 
       return new TileLayer({
         id: `${layerDef.id}-tiles`,
@@ -1658,15 +1114,31 @@ def _deckgl_hex_multi(
           const data = props.data || [];
           if (!data.length) return null;
           if (H3HexagonLayer) {
-            return new H3HexagonLayer({
+            const subLayerProps = {
               id: `${props.id}-h3`,
-              data,
-              pickable: true, stroked: false, filled: true, extruded: false,
-              coverage: 0.9, lineWidthMinPixels: 1,
+        data,
+        pickable: true,
+              stroked: false,
+        filled: true,
+              extruded: isExtruded,
+              elevationScale: elevationScale,
+        coverage: 0.9,
+              lineWidthMinPixels: 1,
               opacity: layerOpacity,
-              getHexagon: d => d.hex,
+        getHexagon: d => d.hex,
               ...hexCfg
-            });
+            };
+            
+            // Add getElevation accessor if extruded and we have an attribute
+            if (isExtruded && elevationAttr) {
+              subLayerProps.getElevation = d => {
+                const props = d?.properties || d || {};
+                const val = Number(props[elevationAttr]);
+                return Number.isFinite(val) ? val : 0;
+              };
+            }
+            
+            return new H3HexagonLayer(subLayerProps);
           }
           return null;
         }
@@ -1674,16 +1146,23 @@ def _deckgl_hex_multi(
     }
 
     function rebuildDeckOverlay() {
-      // Only include visible tile layers
-      const deckLayers = LAYERS_DATA
+      // Only include visible tile layers - reverse order so first in menu renders on top
+      const deckLayers = [...LAYERS_DATA]
+        .reverse()
         .filter(l => l.isTileLayer && layerVisibility[l.id])
         .map(l => buildTileLayer(l));
       
       if (deckOverlay) {
-        deckOverlay.setProps({ layers: deckLayers });
-      } else if (deckLayers.length > 0) {
+        try {
+          map.removeControl(deckOverlay);
+          deckOverlay.finalize?.();
+        } catch (e) {}
+        deckOverlay = null;
+      }
+      
+      if (deckLayers.length > 0) {
         deckOverlay = new MapboxOverlay({
-          interleaved: false,
+      interleaved: false,
           layers: deckLayers
         });
         map.addControl(deckOverlay);
@@ -1795,12 +1274,13 @@ def _deckgl_hex_multi(
       list.innerHTML = LAYERS_DATA.map(l => {
         const visible = layerVisibility[l.id];
         const cfg = l.hexLayer || {};
-        const fillCfg = cfg.getFillColor;
+        // Use getLineColor for preview when filled is false
+        const colorCfg = (cfg.filled === false && cfg.getLineColor) ? cfg.getLineColor : cfg.getFillColor;
         let colorPreview = '#0090ff';
-        if (Array.isArray(fillCfg)) {
-          colorPreview = toRgba(fillCfg, 1) || colorPreview;
-        } else if (fillCfg && fillCfg['@@function'] === 'colorContinuous') {
-          const cols = getPaletteColors(fillCfg.colors || 'TealGrn', fillCfg.steps || 7);
+        if (Array.isArray(colorCfg)) {
+          colorPreview = toRgba(colorCfg, 1) || colorPreview;
+        } else if (colorCfg && colorCfg['@@function'] === 'colorContinuous') {
+          const cols = getPaletteColors(colorCfg.colors || 'TealGrn', colorCfg.steps || 7);
           if (cols && cols.length) colorPreview = cols[Math.floor(cols.length / 2)];
         }
         
@@ -1829,7 +1309,8 @@ def _deckgl_hex_multi(
       let html = '';
       visibleLayers.forEach(l => {
         const cfg = l.hexLayer || {};
-        const colorCfg = cfg.getFillColor;
+        // Use getLineColor for legend when filled is false, otherwise use getFillColor
+        const colorCfg = (cfg.filled === false && cfg.getLineColor) ? cfg.getLineColor : cfg.getFillColor;
         if (!colorCfg || colorCfg['@@function'] !== 'colorContinuous' || !colorCfg.attr || !colorCfg.domain?.length) return;
         
         const [d0, d1] = colorCfg.domain;
@@ -1906,6 +1387,13 @@ def _deckgl_hex_multi(
           // Preserve pitch and bearing from config during fitBounds
           map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 500, pitch: {{ pitch }}, bearing: {{ bearing }} });
           autoFitDone = true;
+          {% if debug %}
+          map.once('moveend', () => {
+            setTimeout(() => {
+              try { updateFormFromLayer(activeLayerIdx); } catch (e) {}
+            }, 50);
+          });
+          {% endif %}
         }
       }
       
@@ -1923,10 +1411,10 @@ def _deckgl_hex_multi(
           : [`${l.id}-fill`, `${l.id}-outline`];
         layerIds.forEach(layerId => {
           allQueryableLayers.push({ layerId, layerDef: l });
-        });
-      });
+              });
+            });
       
-      map.on('mousemove', (e) => {
+    map.on('mousemove', (e) => { 
         // Query all static layers at this point
         const queryIds = allQueryableLayers.map(x => x.layerId).filter(id => map.getLayer(id));
         if (!queryIds.length) return;
@@ -1956,7 +1444,7 @@ def _deckgl_hex_multi(
           map.getCanvas().style.cursor = '';
           return;
         }
-        
+
         map.getCanvas().style.cursor = 'pointer';
         const p = topFeature.properties;
         const cols = topLayerDef.tooltipColumns || [];
@@ -1967,20 +1455,20 @@ def _deckgl_hex_multi(
           tt.innerHTML = `<strong>${topLayerDef.name}</strong><br>` + lines.join(' &bull; '); 
           tt.style.left = `${e.point.x+10}px`; 
           tt.style.top = `${e.point.y+10}px`; 
-          tt.style.display = 'block'; 
-        } else {
+        tt.style.display = 'block';
+      } else {
           tt.style.display = 'none';
         }
       });
       
       map.on('mouseleave', () => { 
-        map.getCanvas().style.cursor = ''; 
+        map.getCanvas().style.cursor = '';
         tt.style.display = 'none'; 
       });
 
       // Setup tooltips for tile layers (Deck.gl layers)
       {% if has_tile_layers %}
-      map.on('mousemove', (e) => {
+      map.on('mousemove', (e) => { 
         if (!deckOverlay) return;
         const info = deckOverlay.pickObject({ x: e.point.x, y: e.point.y, radius: 4 });
         if (info?.object) {
@@ -1989,26 +1477,34 @@ def _deckgl_hex_multi(
           const layerDef = LAYERS_DATA.find(l => l.id === layerId || info.layer?.id?.startsWith(l.id));
           if (layerDef && layerVisibility[layerDef.id]) {
             map.getCanvas().style.cursor = 'pointer';
-            const p = info.object;
+            // Get properties - check both root level and nested properties object
+            const obj = info.object;
+            const p = obj?.properties || obj || {};
             const cols = layerDef.tooltipColumns || [];
             const colorAttr = layerDef.hexLayer?.getFillColor?.attr || 'metric';
-            const lines = [`hex: ${p.hex?.slice(0, 12)}...`];
+            const hexVal = p.hex || obj.hex;
+            const lines = hexVal ? [`hex: ${String(hexVal).slice(0, 12)}...`] : [];
+            
             if (cols.length) {
               cols.forEach(col => {
-                if (p[col] !== undefined) {
-                  const val = p[col];
+                const val = p[col] ?? obj[col];
+                if (val !== undefined && val !== null) {
                   lines.push(`${col}: ${typeof val === 'number' ? val.toFixed(2) : val}`);
                 }
               });
-            } else if (p[colorAttr] != null) {
-              lines.push(`${colorAttr}: ${Number(p[colorAttr]).toFixed(2)}`);
+            } else if (p[colorAttr] != null || obj[colorAttr] != null) {
+              const val = p[colorAttr] ?? obj[colorAttr];
+              lines.push(`${colorAttr}: ${Number(val).toFixed(2)}`);
             }
-            tt.innerHTML = `<strong>${layerDef.name}</strong><br>` + lines.join(' &bull; ');
-            tt.style.left = `${e.point.x + 10}px`;
-            tt.style.top = `${e.point.y + 10}px`;
-            tt.style.display = 'block';
-            return;
-          }
+            
+            if (lines.length) {
+              tt.innerHTML = `<strong>${layerDef.name}</strong><br>` + lines.join(' &bull; ');
+              tt.style.left = `${e.point.x + 10}px`;
+              tt.style.top = `${e.point.y + 10}px`;
+              tt.style.display = 'block';
+            }
+          return;
+        }
         }
         // Only hide if no static layer tooltip is showing
         if (!map.queryRenderedFeatures(e.point).length) {
@@ -2023,6 +1519,349 @@ def _deckgl_hex_multi(
     map.on('load', () => { [100, 500, 1000].forEach(t => setTimeout(() => map.resize(), t)); });
     window.addEventListener('resize', () => map.resize());
     document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => map.resize(), 100); });
+    
+    {% if debug %}
+    // Debug Panel Logic
+    const DEBUG_MODE = true;
+    let activeLayerIdx = 0;
+    
+    function setInputValue(id, value) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (value === undefined || value === null || Number.isNaN(value)) {
+        el.value = '';
+      } else {
+        el.value = value;
+      }
+    }
+    
+    function getNumericInput(id) {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      const val = parseFloat(el.value);
+      return Number.isFinite(val) ? val : null;
+    }
+    
+    function applyViewToMap(view) {
+      if (!view || Object.keys(view).length === 0) return;
+      const currentCenter = map.getCenter();
+      const currentZoom = map.getZoom();
+      const currentPitch = map.getPitch();
+      const currentBearing = map.getBearing();
+      map.easeTo({
+        center: [
+          Number.isFinite(view.longitude) ? view.longitude : currentCenter.lng,
+          Number.isFinite(view.latitude) ? view.latitude : currentCenter.lat
+        ],
+        zoom: Number.isFinite(view.zoom) ? view.zoom : currentZoom,
+        pitch: Number.isFinite(view.pitch) ? Math.min(85, Math.max(0, view.pitch)) : currentPitch,
+        bearing: Number.isFinite(view.bearing) ? view.bearing : currentBearing,
+        duration: 400
+      });
+    }
+    
+    // Build layer tabs
+    function buildDebugTabs() {
+      const tabsEl = document.getElementById('debug-tabs');
+      if (!tabsEl) return;
+      tabsEl.innerHTML = '';
+      LAYERS_DATA.forEach((layer, i) => {
+        const tab = document.createElement('div');
+        tab.className = 'debug-tab' + (i === activeLayerIdx ? ' active' : '');
+        const colorCfg = layer.hexLayer?.getFillColor;
+        const dotColor = (colorCfg && colorCfg['@@function'] === 'colorContinuous') 
+          ? (getPaletteColors(colorCfg.colors || 'TealGrn', 7)?.[3] || '#888') 
+          : '#888';
+        tab.innerHTML = `<span class="tab-dot" style="background:${dotColor}"></span>${layer.name}`;
+        tab.onclick = () => { activeLayerIdx = i; buildDebugTabs(); updateFormFromLayer(i); };
+        tabsEl.appendChild(tab);
+      });
+    }
+    
+    function autoDomainForAttr(layerIdx, attr) {
+      const layer = LAYERS_DATA[layerIdx];
+      if (!layer || !layer.data?.length || !attr) return null;
+      const vals = layer.data.map(row => Number(row?.[attr])).filter(v => Number.isFinite(v));
+      if (!vals.length) return null;
+      return [Math.min(...vals), Math.max(...vals)];
+    }
+    
+    // Populate attribute dropdown from layer data
+    function populateAttrOptions(layerIdx) {
+      const attrSelect = document.getElementById('cfg-attr');
+      if (!attrSelect) return [];
+      const layer = LAYERS_DATA[layerIdx];
+      const data = layer?.data || [];
+      attrSelect.innerHTML = '';
+      attrSelect.disabled = false;
+      
+      // Gather numeric attrs from data (if available)
+      let numericAttrs = [];
+      if (data.length) {
+        const sample = data[0];
+        numericAttrs = Object.keys(sample).filter(k => typeof sample[k] === 'number' && !['hex','lat','lng'].includes(k));
+      }
+      
+      if (numericAttrs.length) {
+        numericAttrs.forEach(attr => {
+          const opt = document.createElement('option');
+          opt.value = attr;
+          opt.textContent = attr;
+          attrSelect.appendChild(opt);
+        });
+        } else {
+        // Fall back to attribute defined in config (useful for tile layers where we don't have local data)
+        const hex = layer?.hexLayer || {};
+        const isFilled = hex.filled !== false;
+        const attrFromConfig = isFilled ? hex.getFillColor?.attr : (hex.getLineColor?.attr || hex.getFillColor?.attr);
+        if (attrFromConfig) {
+          const opt = document.createElement('option');
+          opt.value = attrFromConfig;
+          opt.textContent = attrFromConfig;
+          attrSelect.appendChild(opt);
+          numericAttrs = [attrFromConfig];
+        } else {
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = 'No numeric columns';
+          attrSelect.appendChild(opt);
+          attrSelect.disabled = true;
+        }
+      }
+      return numericAttrs;
+    }
+    
+    // Update form from layer config
+    function updateFormFromLayer(layerIdx) {
+      const layer = LAYERS_DATA[layerIdx];
+      if (!layer) return;
+      const hex = layer.hexLayer || {};
+      const isFilled = hex.filled !== false;
+      const baseView = {};
+      if (map) {
+        const c = map.getCenter();
+        baseView.longitude = c.lng;
+        baseView.latitude = c.lat;
+        baseView.zoom = map.getZoom();
+        baseView.pitch = map.getPitch();
+        baseView.bearing = map.getBearing();
+      }
+      const viewCfg = (layer.config && layer.config.initialViewState) || {};
+      const view = {
+        longitude: viewCfg.longitude ?? baseView.longitude,
+        latitude: viewCfg.latitude ?? baseView.latitude,
+        zoom: viewCfg.zoom ?? baseView.zoom,
+        pitch: viewCfg.pitch ?? baseView.pitch,
+        bearing: viewCfg.bearing ?? baseView.bearing,
+      };
+      setInputValue('cfg-longitude', view.longitude);
+      setInputValue('cfg-latitude', view.latitude);
+      setInputValue('cfg-zoom', view.zoom);
+      setInputValue('cfg-pitch', view.pitch);
+      setInputValue('cfg-bearing', view.bearing);
+      document.getElementById('cfg-filled').checked = isFilled;
+      document.getElementById('cfg-extruded').checked = hex.extruded === true;
+      document.getElementById('cfg-elev-scale').value = hex.elevationScale ?? 1;
+      
+      // Use getLineColor when filled is false, otherwise getFillColor
+      const colorCfg = isFilled ? hex.getFillColor : (hex.getLineColor || hex.getFillColor);
+      const numericAttrs = populateAttrOptions(layerIdx);
+      const attrSelect = document.getElementById('cfg-attr');
+      const paletteSelect = document.getElementById('cfg-palette');
+      
+      if (colorCfg && colorCfg['@@function'] === 'colorContinuous') {
+        if (attrSelect && colorCfg.attr) attrSelect.value = colorCfg.attr;
+        document.getElementById('cfg-domain-min').value = colorCfg.domain?.[0] ?? 0;
+        document.getElementById('cfg-domain-max').value = colorCfg.domain?.[1] ?? 100;
+        if (paletteSelect && colorCfg.colors) paletteSelect.value = colorCfg.colors;
+        } else {
+        document.getElementById('cfg-domain-min').value = 0;
+        document.getElementById('cfg-domain-max').value = 100;
+      }
+      updateConfigOutput();
+    }
+    
+    // Build config from form
+    function buildConfigFromForm() {
+      const view = {};
+      const lon = getNumericInput('cfg-longitude');
+      const lat = getNumericInput('cfg-latitude');
+      const zoom = getNumericInput('cfg-zoom');
+      const pitch = getNumericInput('cfg-pitch');
+      const bearing = getNumericInput('cfg-bearing');
+      if (lon !== null) view.longitude = lon;
+      if (lat !== null) view.latitude = lat;
+      if (zoom !== null) view.zoom = zoom;
+      if (pitch !== null) view.pitch = pitch;
+      if (bearing !== null) view.bearing = bearing;
+      
+      const isFilled = document.getElementById('cfg-filled').checked;
+      const colorConfig = {
+        '@@function': 'colorContinuous',
+        attr: document.getElementById('cfg-attr').value,
+        domain: [
+          parseFloat(document.getElementById('cfg-domain-min').value) || 0,
+          parseFloat(document.getElementById('cfg-domain-max').value) || 100
+        ],
+        colors: document.getElementById('cfg-palette').value || 'TealGrn'
+      };
+      const hex = {
+        '@@type': 'H3HexagonLayer',
+        filled: isFilled,
+        extruded: document.getElementById('cfg-extruded').checked,
+        elevationScale: parseFloat(document.getElementById('cfg-elev-scale').value) || 1,
+      };
+      // Use getLineColor when filled is false, otherwise getFillColor
+      if (isFilled) {
+        hex.getFillColor = colorConfig;
+      } else {
+        hex.getLineColor = colorConfig;
+      }
+      const cfg = { hexLayer: hex };
+      if (Object.keys(view).length) {
+        cfg.initialViewState = view;
+      }
+      return cfg;
+    }
+    
+    // Convert to Python
+    function toPython(value, indent = 4, level = 0) {
+      const pad = ' '.repeat(indent * level);
+      const padNext = ' '.repeat(indent * (level + 1));
+      if (value === null) return 'None';
+      if (typeof value === 'boolean') return value ? 'True' : 'False';
+      if (typeof value === 'number') return String(value);
+      if (typeof value === 'string') return JSON.stringify(value);
+      if (Array.isArray(value)) {
+        if (!value.length) return '[]';
+        return '[' + value.map(v => toPython(v, indent, level)).join(', ') + ']';
+      }
+      if (typeof value === 'object') {
+        const keys = Object.keys(value);
+        if (!keys.length) return '{}';
+        const entries = keys.map(key => padNext + JSON.stringify(key) + ': ' + toPython(value[key], indent, level + 1));
+        return '{\n' + entries.join(',\n') + '\n' + pad + '}';
+      }
+      return 'None';
+    }
+    
+    // Update config output
+    function updateConfigOutput() {
+      const cfg = buildConfigFromForm();
+      const output = document.getElementById('dbg-config');
+      if (output) output.value = 'config = ' + toPython(cfg);
+    }
+    
+    // Apply debug config to layer
+    function applyDebugConfig() {
+      const layer = LAYERS_DATA[activeLayerIdx];
+      if (!layer) return;
+      
+      const builtConfig = buildConfigFromForm();
+      const prevHex = layer.hexLayer || {};
+      const wasFilled = prevHex.filled !== false;
+      const newHex = builtConfig.hexLayer;
+      const newView = builtConfig.initialViewState || {};
+      const wasExtruded = layer.hexLayer?.extruded === true;
+      const isExtruded = newHex.extruded === true;
+      
+      // Update layer config
+      layer.hexLayer = { ...layer.hexLayer, ...newHex };
+      layer.config.hexLayer = layer.hexLayer;
+      if (Object.keys(newView).length) {
+        layer.config.initialViewState = newView;
+        applyViewToMap(newView);
+        autoFitDone = true;
+      }
+      
+      // Update paint properties directly for efficiency
+      if (layer.isTileLayer) {
+        {% if has_tile_layers %}
+        rebuildDeckOverlay();
+        {% endif %}
+        updateLegend();
+        updateLayerPanel();
+        buildDebugTabs();
+          return;
+        }
+        
+      const layerId = layer.id;
+      const fillId = `${layerId}-fill`;
+      const extId = `${layerId}-extrusion`;
+      const outlineId = `${layerId}-outline`;
+      
+      const isFilled = newHex.filled !== false;
+      const colorCfg = isFilled ? newHex.getFillColor : newHex.getLineColor;
+      const colorExpr = buildColorExpr(colorCfg);
+      
+      if (wasExtruded !== isExtruded || wasFilled !== isFilled) {
+        // Mode changed - rebuild layers
+        layersReady = false;
+        tryInit();
+      } else if (isExtruded) {
+        // Update extrusion paint
+        if (map.getLayer(extId)) {
+          map.setPaintProperty(extId, 'fill-extrusion-color', colorExpr);
+          const elev = newHex.elevationScale || 1;
+          const attr = colorCfg?.attr;
+          if (attr) map.setPaintProperty(extId, 'fill-extrusion-height', ['*', ['get', attr], elev]);
+        }
+      } else if (isFilled) {
+        // Update fill paint
+        if (map.getLayer(fillId)) {
+          map.setPaintProperty(fillId, 'fill-color', colorExpr);
+          map.setLayoutProperty(fillId, 'visibility', 'visible');
+        }
+    } else {
+        // Update line color (filled: false)
+        if (map.getLayer(outlineId)) {
+          map.setPaintProperty(outlineId, 'line-color', colorExpr);
+        }
+        // Hide fill layer
+        if (map.getLayer(fillId)) {
+          map.setLayoutProperty(fillId, 'visibility', 'none');
+        }
+      }
+      
+      updateLegend();
+      updateLayerPanel();
+      buildDebugTabs();
+    }
+    
+    // Debounced apply
+    let applyTimer;
+    function scheduleApply() {
+      clearTimeout(applyTimer);
+      applyTimer = setTimeout(() => {
+        applyDebugConfig();
+        updateConfigOutput();
+      }, 150);
+    }
+    
+    // Bind form events
+    document.querySelectorAll('#debug-panel [data-cfg-input]').forEach(el => {
+      el.addEventListener('input', scheduleApply);
+      el.addEventListener('change', scheduleApply);
+    });
+    const attrSelectEl = document.getElementById('cfg-attr');
+    if (attrSelectEl) {
+      attrSelectEl.addEventListener('change', (e) => {
+        const domain = autoDomainForAttr(activeLayerIdx, e.target.value);
+        if (domain) {
+          document.getElementById('cfg-domain-min').value = domain[0];
+          document.getElementById('cfg-domain-max').value = domain[1];
+        }
+      });
+    }
+    
+    // Init debug panel after map loads
+    map.on('load', () => {
+      setTimeout(() => {
+        buildDebugTabs();
+        updateFormFromLayer(0);
+      }, 100);
+    });
+    {% endif %}
   </script>
 </body>
 </html>
@@ -2037,629 +1876,13 @@ def _deckgl_hex_multi(
         bearing=bearing,
         has_custom_view=has_custom_view,
         has_tile_layers=has_tile_layers,
-    )
-
-    common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
-    return common.html_to_obj(html)
-
-
-def _deckgl_hex_tiles(
-    tile_url: str,
-    config=None,
-    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
-    basemap: str = "dark",
-    debug: bool = False,
-):
-    """
-    Internal: Render H3 hexagon tiles from an XYZ tile URL using Deck.gl TileLayer + H3HexagonLayer.
-    Called by deckgl_hex when tile_url is provided.
-    """
-    # Basemap setup
-    basemap_styles = {"dark": "mapbox://styles/mapbox/dark-v11", "satellite": "mapbox://styles/mapbox/satellite-streets-v12", "light": "mapbox://styles/mapbox/light-v11", "streets": "mapbox://styles/mapbox/streets-v12"}
-    style_url = basemap_styles.get({"sat": "satellite", "satellite-streets": "satellite"}.get((basemap or "dark").lower(), (basemap or "dark").lower()), basemap or basemap_styles["dark"])
-
-    # Config processing
-    config_errors = []
-    original_config = deepcopy(config) if config else {}
-    merged_config = _load_deckgl_config(config, DEFAULT_DECK_HEX_CONFIG, "deckgl_hex", config_errors)
-    hex_layer = merged_config.get("hexLayer", {})
-    tile_layer = merged_config.get("tileLayer", {})
-
-    # Validate hexLayer property names
-    invalid_props = [key for key in list(hex_layer.keys()) if key not in VALID_HEX_LAYER_PROPS]
-    for prop in invalid_props:
-        suggestion = get_close_matches(prop, list(VALID_HEX_LAYER_PROPS), n=1, cutoff=0.6)
-        if suggestion:
-            config_errors.append(f"Property '{prop}' not recognized. Did you mean '{suggestion[0]}'?")
-        else:
-            config_errors.append(f"Property '{prop}' not recognized.")
-        hex_layer.pop(prop, None)
-
-    # Validate palette name for getFillColor
-    fill_color_cfg = hex_layer.get("getFillColor", {})
-    if isinstance(fill_color_cfg, dict) and fill_color_cfg.get("@@function") == "colorContinuous":
-        palette_name = fill_color_cfg.get("colors", "TealGrn")
-        if palette_name and palette_name not in KNOWN_CARTOCOLOR_PALETTES:
-            suggestion = get_close_matches(palette_name, list(KNOWN_CARTOCOLOR_PALETTES), n=1, cutoff=0.5)
-            if suggestion:
-                config_errors.append(f"Palette '{palette_name}' not found. Did you mean '{suggestion[0]}'?")
-            else:
-                config_errors.append(f"Palette '{palette_name}' not found.")
-
-    # View state
-    ivs = merged_config.get('initialViewState', {})
-    center_lng = ivs.get('longitude') or -119.4179
-    center_lat = ivs.get('latitude') or 36.7783
-    zoom = ivs.get('zoom') or 5
-    pitch = ivs.get('pitch', 0)
-    bearing = ivs.get('bearing', 0)
-
-    # Tooltip columns
-    tooltip_columns = _extract_tooltip_columns((merged_config, hex_layer))
-
-    html = Template(r"""
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet" />
-  <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
-  <script src="https://unpkg.com/h3-js@4.1.0/dist/h3-js.umd.js"></script>
-  <script src="https://unpkg.com/deck.gl@9.1.3/dist.min.js"></script>
-  <script src="https://unpkg.com/@deck.gl/geo-layers@9.1.3/dist.min.js"></script>
-  <script src="https://unpkg.com/@deck.gl/carto@9.1.3/dist.min.js"></script>
-  <script type="module">
-    import * as cartocolor from 'https://esm.sh/cartocolor@5.0.2';
-    window.cartocolor = cartocolor;
-  </script>
-  <style>
-    html, body { margin:0; height:100%; width:100%; display:flex; overflow:hidden; }
-    #map { flex:1; height:100%; }
-    #tooltip { position:absolute; pointer-events:none; background:rgba(0,0,0,0.7); color:#fff; padding:4px 8px; border-radius:4px; font-size:12px; display:none; z-index:6; }
-    .config-error { position:fixed; right:12px; bottom:12px; background:rgba(180,30,30,0.92); color:#fff; padding:6px 10px; border-radius:4px; font-size:11px; display:none; z-index:8; max-width:260px; }
-    .color-legend { position:fixed; left:12px; bottom:12px; background:rgba(15,15,15,0.9); color:#fff; padding:8px; border-radius:4px; font-size:11px; display:none; z-index:10; min-width:140px; border:1px solid rgba(255,255,255,0.1); }
-    .color-legend .legend-title { margin-bottom:6px; font-weight:500; }
-    .color-legend .legend-gradient { height:12px; border-radius:2px; margin-bottom:4px; border:1px solid rgba(255,255,255,0.2); }
-    .color-legend .legend-labels { display:flex; justify-content:space-between; font-size:10px; color:#ccc; }
-    /* Debug Panel */
-    #debug-panel { width:400px; height:100%; background:#212121; border-left:1px solid #424242; display:flex; flex-direction:column; font-family:Inter, 'SF Pro Display', 'Segoe UI', sans-serif; color:#f5f5f5; }
-    #debug-header { padding:12px 18px; background:#1a1a1a; border-bottom:1px solid #424242; }
-    #debug-header h3 { margin:0; font-size:12px; font-weight:600; color:#E8FF59; letter-spacing:0.5px; text-transform:uppercase; }
-    #debug-content { flex:1; overflow-y:auto; padding:14px 18px; display:flex; flex-direction:column; gap:16px; }
-    .debug-section { background:#1a1a1a; border:1px solid #424242; border-radius:8px; padding:12px; }
-    .debug-section h4 { margin:0 0 10px 0; font-size:11px; letter-spacing:0.4px; text-transform:uppercase; color:#bdbdbd; }
-    .form-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; }
-    .form-control { display:flex; flex-direction:column; gap:4px; font-size:11px; color:#dcdcdc; }
-    .form-control label { font-weight:600; }
-    .form-control input, .form-control select { background:#111; border:1px solid #333; border-radius:4px; padding:6px 8px; font-size:12px; color:#f5f5f5; outline:none; }
-    .form-control input:focus, .form-control select:focus { border-color:#E8FF59; }
-    .toggle-row { display:flex; align-items:center; gap:8px; font-size:11px; }
-    .toggle-row input { width:16px; height:16px; }
-    .single-column { display:flex; flex-direction:column; gap:10px; }
-    #debug-buttons { display:flex; gap:8px; padding:12px 18px; background:#1a1a1a; border-top:1px solid #424242; }
-    .dbtn { flex:1; border:none; border-radius:4px; padding:10px; font-size:11px; font-weight:600; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px; }
-    .dbtn.secondary { background:#424242; color:#fff; }
-    .dbtn.secondary:hover { background:#616161; }
-    .dbtn.ghost { background:transparent; color:#E8FF59; border:1px solid rgba(232,255,89,0.3); }
-    .dbtn.ghost:hover { border-color:#E8FF59; }
-    #cfg-output { width:100%; min-height:120px; resize:vertical; background:#111; color:#f5f5f5; border:1px solid #333; border-radius:6px; padding:10px; font-family:SFMono-Regular,Consolas,monospace; font-size:11px; line-height:1.4; }
-  </style>
-</head>
-<body>
-  <div id="map"></div>
-  <div id="tooltip"></div>
-  <div id="config-error" class="config-error"></div>
-  <div id="color-legend" class="color-legend"><div class="legend-title"></div><div class="legend-gradient"></div><div class="legend-labels"><span class="legend-min"></span><span class="legend-max"></span></div></div>
-  
-  {% if debug %}
-  <div id="debug-panel">
-    <div id="debug-header">
-      <h3>Config (Tile Mode)</h3>
-    </div>
-    <div id="debug-content">
-      <div class="debug-section">
-        <h4>View</h4>
-        <div class="form-grid">
-          <div class="form-control">
-            <label>Longitude</label>
-            <input type="number" id="cfg-longitude" step="0.0001" value="{{ center_lng }}" />
-          </div>
-          <div class="form-control">
-            <label>Latitude</label>
-            <input type="number" id="cfg-latitude" step="0.0001" value="{{ center_lat }}" />
-          </div>
-          <div class="form-control">
-            <label>Zoom</label>
-            <input type="number" id="cfg-zoom" step="0.1" min="0" value="{{ zoom }}" />
-          </div>
-          <div class="form-control">
-            <label>Pitch</label>
-            <input type="number" id="cfg-pitch" step="1" min="0" max="85" value="{{ pitch }}" />
-          </div>
-          <div class="form-control">
-            <label>Bearing</label>
-            <input type="number" id="cfg-bearing" step="1" value="{{ bearing }}" />
-          </div>
-        </div>
-      </div>
-      <div class="debug-section">
-        <h4>Fill Color</h4>
-        <div class="form-grid">
-          <div class="form-control">
-            <label>Attribute</label>
-            <input type="text" id="cfg-attr" value="{{ color_attr }}" />
-          </div>
-          <div class="form-control">
-            <label>Palette</label>
-            <select id="cfg-palette">
-              {% for pal in palettes %}<option value="{{ pal }}" {% if pal == palette_name %}selected{% endif %}>{{ pal }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="form-control">
-            <label>Domain Min</label>
-            <input type="number" id="cfg-domain-min" step="0.1" value="{{ domain_min }}" />
-          </div>
-          <div class="form-control">
-            <label>Domain Max</label>
-            <input type="number" id="cfg-domain-max" step="0.1" value="{{ domain_max }}" />
-          </div>
-          <div class="form-control">
-            <label>Steps</label>
-            <input type="number" id="cfg-steps" min="2" max="20" value="{{ steps }}" />
-          </div>
-        </div>
-      </div>
-      <div class="debug-section">
-        <h4>Config Output</h4>
-        <textarea id="cfg-output" readonly></textarea>
-      </div>
-    </div>
-    <div id="debug-buttons">
-      <button class="dbtn secondary" onclick="resetConfig()">Reset</button>
-    </div>
-  </div>
-  {% endif %}
-
-  <script>
-    const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
-    const TILE_URL = {{ tile_url | tojson }};
-    const CONFIG = {{ config | tojson }};
-    const TOOLTIP_COLUMNS = {{ tooltip_columns | tojson }};
-    const CONFIG_ERRORS = {{ config_errors | tojson }};
-    const DEBUG_MODE = {{ debug | tojson }};
-
-    const { TileLayer, PolygonLayer, MapboxOverlay } = deck;
-    const H3HexagonLayer = deck.H3HexagonLayer || (deck.GeoLayers && deck.GeoLayers.H3HexagonLayer);
-    const { colorContinuous } = deck.carto;
-
-    const $tooltip = () => document.getElementById('tooltip');
-
-    // @@= expression evaluator
-    function evalExpression(expr, object) {
-      if (typeof expr === 'string' && expr.startsWith('@@=')) {
-        const code = expr.slice(3);
-        try {
-          const fn = new Function('object', `const properties = object?.properties || object || {}; return (${code});`);
-          return fn(object);
-        } catch (e) { return null; }
-      }
-      return expr;
-    }
-
-    // colorContinuous domain expansion
-    function processColorContinuous(cfg) {
-      let domain = cfg.domain;
-      if (domain && domain.length === 2) {
-        const [min, max] = domain;
-        const steps = cfg.steps ?? 20;
-        const stepSize = (max - min) / (steps - 1);
-        domain = Array.from({ length: steps }, (_, i) => min + stepSize * i);
-      }
-      return { attr: cfg.attr, domain, colors: cfg.colors || 'TealGrn', nullColor: cfg.nullColor || [184, 184, 184] };
-    }
-
-    function parseHexLayerConfig(config) {
-      const out = {};
-      for (const [k, v] of Object.entries(config || {})) {
-        if (k === '@@type') continue;
-        if (v && typeof v === 'object' && !Array.isArray(v)) {
-          if (v['@@function'] === 'colorContinuous') {
-            out[k] = colorContinuous(processColorContinuous(v));
-          } else {
-            out[k] = v;
-          }
-        } else if (typeof v === 'string' && v.startsWith('@@=')) {
-          out[k] = (obj) => evalExpression(v, obj);
-        } else {
-          out[k] = v;
-        }
-      }
-      return out;
-    }
-
-    // H3 ID safety (handles string/number/bigint/[hi,lo])
-    function toH3String(hex) {
-      try {
-        if (hex == null) return null;
-        if (typeof hex === 'string') {
-          const s = hex.startsWith('0x') ? hex.slice(2) : hex;
-          return (/^\d+$/.test(s) ? BigInt(s).toString(16) : s.toLowerCase());
-        }
-        if (typeof hex === 'number') return BigInt(Math.trunc(hex)).toString(16);
-        if (typeof hex === 'bigint') return hex.toString(16);
-        if (Array.isArray(hex) && hex.length === 2) {
-          const a = (BigInt(hex[0]) << 32n) | BigInt(hex[1]);
-          const b = (BigInt(hex[1]) << 32n) | BigInt(hex[0]);
-          const sa = a.toString(16), sb = b.toString(16);
-          if (h3.isValidCell?.(sa)) return sa;
-          if (h3.isValidCell?.(sb)) return sb;
-          return sa;
-        }
-      } catch (_) {}
-      return null;
-    }
-
-    // Normalize tile JSON to data rows
-    function normalize(raw) {
-      const arr = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : (Array.isArray(raw?.features) ? raw.features : []));
-      const rows = arr.map(d => d?.properties ? { ...d.properties } : { ...d });
-      return rows.map(p => {
-        const hexRaw = p.hex ?? p.h3 ?? p.index ?? p.id;
-        const hex = toH3String(hexRaw);
-        if (!hex) return null;
-        const props = { ...p, hex };
-        return { ...props, properties: { ...props } };
-      }).filter(Boolean);
-    }
-
-    // Mapbox init
-    mapboxgl.accessToken = MAPBOX_TOKEN;
-    const map = new mapboxgl.Map({
-      container: 'map',
-      style: {{ style_url | tojson }},
-      center: [{{ center_lng }}, {{ center_lat }}],
-      zoom: {{ zoom }},
-      pitch: {{ pitch }},
-      bearing: {{ bearing }},
-      projection: 'mercator'
-    });
-
-    // Fetch tile data
-    async function getTileData({ index, signal }) {
-      const { x, y, z } = index;
-      const url = TILE_URL.replace('{z}', z).replace('{x}', x).replace('{y}', y);
-      try {
-        const res = await fetch(url, { signal });
-        if (!res.ok) throw new Error(String(res.status));
-        let text = await res.text();
-        text = text.replace(/\"(hex|h3|index)\"\s*:\s*(\d+)/gi, (_m, k, d) => `"${k}":"${d}"`);
-        const data = JSON.parse(text);
-        const out = normalize(data);
-        return out;
-      } catch (e) {
-        return [];
-      }
-    }
-
-    // Build layers
-    const tileCfg = CONFIG.tileLayer || {};
-    const hexCfg = parseHexLayerConfig(CONFIG.hexLayer || {});
-    const colorAttr = CONFIG.hexLayer?.getFillColor?.attr || 'metric';
-
-    // Get palette colors from cartocolor
-    function getPaletteColors(name, steps) {
-      const pal = window.cartocolor?.[name];
-      if (!pal) return null;
-      const keys = Object.keys(pal).map(Number).filter(n => !isNaN(n)).sort((a, b) => a - b);
-      const best = keys.find(n => n >= steps) || keys[keys.length - 1];
-      return pal[best] ? [...pal[best]] : null;
-    }
-
-    // Build legend gradient from palette
-    function updateLegend(attr, domain, paletteName, steps) {
-      const leg = document.getElementById('color-legend');
-      if (!leg) return;
-
-      const [d0, d1] = domain || [0, 100];
-      const isReversed = d0 > d1;
-      let cols = getPaletteColors(paletteName, steps || 7);
-      
-      // Fallback colors if palette not found
-      if (!cols || !cols.length) {
-        cols = ['#e0f3db','#ccebc5','#a8ddb5','#7bccc4','#4eb3d3','#2b8cbe','#0868ac','#084081'];
-      }
-      
-      if (isReversed) cols = [...cols].reverse();
-
-      leg.querySelector('.legend-title').textContent = attr;
-      leg.querySelector('.legend-gradient').style.background = `linear-gradient(to right, ${cols.map((c, i) => `${c} ${i / (cols.length - 1) * 100}%`).join(', ')})`;
-      leg.querySelector('.legend-min').textContent = d0.toFixed(1);
-      leg.querySelector('.legend-max').textContent = d1.toFixed(1);
-      leg.style.display = 'block';
-    }
-
-    // Initial legend setup (wait for cartocolor to load)
-    function initLegend() {
-      const colorCfg = CONFIG.hexLayer?.getFillColor;
-      if (!colorCfg || colorCfg['@@function'] !== 'colorContinuous') return;
-      
-      if (!window.cartocolor) {
-        setTimeout(initLegend, 50);
-        return;
-      }
-      
-      updateLegend(
-        colorCfg.attr || 'metric',
-        colorCfg.domain || [0, 100],
-        colorCfg.colors || 'Magenta',
-        colorCfg.steps || 20
-      );
-    }
-    initLegend();
-
-    // Current hex layer config (mutable for debug panel)
-    let currentHexCfg = hexCfg;
-    let currentColorAttr = colorAttr;
-
-    function buildTileLayer() {
-      return new TileLayer({
-        id: 'hex-tiles-' + Date.now(),
-        data: TILE_URL,
-        tileSize: tileCfg.tileSize ?? 256,
-        minZoom: tileCfg.minZoom ?? 0,
-        maxZoom: tileCfg.maxZoom ?? 12,
-        pickable: tileCfg.pickable ?? true,
-        maxRequests: 6,
-        // Keep tiles visible when zoomed past maxZoom
-        extent: null,
-        zoomOffset: 0,
-        refinementStrategy: 'best-available',
-        getTileData,
-        renderSubLayers: (props) => {
-          const data = props.data || [];
-          if (!data.length) return null;
-          if (H3HexagonLayer) {
-            return new H3HexagonLayer({
-              id: `${props.id}-h3`,
-              data,
-              pickable: true, stroked: false, filled: true, extruded: false,
-              coverage: 0.9, lineWidthMinPixels: 1,
-              getHexagon: d => d.hex,
-              ...currentHexCfg
-            });
-          }
-          // Fallback: PolygonLayer
-          const polys = data.map(d => {
-            const ring = h3.cellToBoundary(d.hex, true).map(([lat, lng]) => [lng, lat]);
-            return { ...d, polygon: ring };
-          });
-          return new PolygonLayer({
-            id: `${props.id}-poly-fallback`,
-            data: polys,
-            pickable: true, stroked: true, filled: true, extruded: false,
-            getPolygon: d => d.polygon,
-            getFillColor: [184, 184, 184, 220],
-            getLineColor: [200, 200, 200, 255],
-            lineWidthMinPixels: 1
-          });
-        }
-      });
-    }
-
-    let overlay = new MapboxOverlay({
-      interleaved: false,
-      layers: [buildTileLayer()]
-    });
-    map.addControl(overlay);
-
-    // Function to rebuild overlay with new config
-    function rebuildOverlay(newHexCfg, newColorAttr) {
-      currentHexCfg = newHexCfg;
-      currentColorAttr = newColorAttr || currentColorAttr;
-      overlay.setProps({ layers: [buildTileLayer()] });
-    }
-
-    // Tooltip on hover
-    map.on('mousemove', (e) => {
-      const info = overlay.pickObject({ x: e.point.x, y: e.point.y, radius: 4 });
-      if (info?.object) {
-        map.getCanvas().style.cursor = 'pointer';
-        const p = info.object;
-        const lines = [`hex: ${p.hex?.slice(0, 12)}...`];
-        if (TOOLTIP_COLUMNS?.length) {
-          TOOLTIP_COLUMNS.forEach(col => {
-            if (p[col] !== undefined) {
-              const val = p[col];
-              lines.push(`${col}: ${typeof val === 'number' ? val.toFixed(2) : val}`);
-            }
-          });
-        } else {
-          const val = p[currentColorAttr] ?? p.metric;
-          if (val != null) lines.push(`${currentColorAttr}: ${Number(val).toFixed(2)}`);
-        }
-        const tt = $tooltip();
-        tt.innerHTML = lines.join(' &bull; ');
-        tt.style.left = `${e.point.x + 10}px`;
-        tt.style.top = `${e.point.y + 10}px`;
-        tt.style.display = 'block';
-      } else {
-        map.getCanvas().style.cursor = '';
-        $tooltip().style.display = 'none';
-      }
-    });
-
-    // Config errors
-    if (CONFIG_ERRORS?.length) {
-      const box = document.getElementById('config-error');
-      box.innerHTML = CONFIG_ERRORS.join('<br>');
-      box.style.display = 'block';
-    }
-
-    // Debug panel functions
-    if (DEBUG_MODE) {
-      function toPython(value, indent = 4, level = 0) {
-        const pad = ' '.repeat(indent * level);
-        const padNext = ' '.repeat(indent * (level + 1));
-        if (value === null) return 'None';
-        if (typeof value === 'boolean') return value ? 'True' : 'False';
-        if (typeof value === 'number') return String(value);
-        if (typeof value === 'string') return JSON.stringify(value);
-        if (Array.isArray(value)) {
-          if (!value.length) return '[]';
-          const items = value.map(v => padNext + toPython(v, indent, level + 1));
-          return '[\n' + items.join(',\n') + '\n' + pad + ']';
-        }
-        if (typeof value === 'object') {
-          const keys = Object.keys(value);
-          if (!keys.length) return '{}';
-          const entries = keys.map(key => padNext + JSON.stringify(key) + ': ' + toPython(value[key], indent, level + 1));
-          return '{\n' + entries.join(',\n') + '\n' + pad + '}';
-        }
-        return 'None';
-      }
-
-      function buildConfigFromForm() {
-        const cfg = { initialViewState: {}, hexLayer: { '@@type': 'H3HexagonLayer' } };
-        const lon = parseFloat(document.getElementById('cfg-longitude')?.value);
-        const lat = parseFloat(document.getElementById('cfg-latitude')?.value);
-        const zoom = parseFloat(document.getElementById('cfg-zoom')?.value);
-        const pitch = parseFloat(document.getElementById('cfg-pitch')?.value);
-        const bearing = parseFloat(document.getElementById('cfg-bearing')?.value);
-        if (!isNaN(lon)) cfg.initialViewState.longitude = lon;
-        if (!isNaN(lat)) cfg.initialViewState.latitude = lat;
-        if (!isNaN(zoom)) cfg.initialViewState.zoom = zoom;
-        if (!isNaN(pitch)) cfg.initialViewState.pitch = pitch;
-        if (!isNaN(bearing)) cfg.initialViewState.bearing = bearing;
-
-        const attr = document.getElementById('cfg-attr')?.value || 'metric';
-        const palette = document.getElementById('cfg-palette')?.value || 'Magenta';
-        const domainMin = parseFloat(document.getElementById('cfg-domain-min')?.value) || 0;
-        const domainMax = parseFloat(document.getElementById('cfg-domain-max')?.value) || 100;
-        const steps = parseInt(document.getElementById('cfg-steps')?.value) || 20;
-
-        cfg.hexLayer.getFillColor = {
-          '@@function': 'colorContinuous',
-          attr, domain: [domainMin, domainMax], steps, colors: palette
-        };
-        return cfg;
-      }
-
-      // Build new hexCfg from form and apply to overlay
-      function applyConfigFromForm() {
-        const attr = document.getElementById('cfg-attr')?.value || 'metric';
-        const palette = document.getElementById('cfg-palette')?.value || 'Magenta';
-        const domainMin = parseFloat(document.getElementById('cfg-domain-min')?.value) || 0;
-        const domainMax = parseFloat(document.getElementById('cfg-domain-max')?.value) || 100;
-        const steps = parseInt(document.getElementById('cfg-steps')?.value) || 20;
-
-        // Build colorContinuous config
-        const colorCfg = {
-          '@@function': 'colorContinuous',
-          attr,
-          domain: [domainMin, domainMax],
-          steps,
-          colors: palette
-        };
-
-        // Process into deck.gl accessor
-        const newHexCfg = {
-          getFillColor: colorContinuous(processColorContinuous(colorCfg))
-        };
-
-        // Apply view state changes
-        const lon = parseFloat(document.getElementById('cfg-longitude')?.value);
-        const lat = parseFloat(document.getElementById('cfg-latitude')?.value);
-        const zoom = parseFloat(document.getElementById('cfg-zoom')?.value);
-        const pitch = parseFloat(document.getElementById('cfg-pitch')?.value);
-        const bearing = parseFloat(document.getElementById('cfg-bearing')?.value);
-
-        if (!isNaN(lon) && !isNaN(lat)) {
-          map.easeTo({
-            center: [lon, lat],
-            zoom: isNaN(zoom) ? map.getZoom() : zoom,
-            pitch: isNaN(pitch) ? map.getPitch() : Math.min(85, Math.max(0, pitch)),
-            bearing: isNaN(bearing) ? map.getBearing() : bearing,
-            duration: 500
-          });
-        }
-
-        // Update legend with proper gradient
-        updateLegend(attr, [domainMin, domainMax], palette, steps);
-
-        // Rebuild overlay with new config
-        rebuildOverlay(newHexCfg, attr);
-      }
-
-      // Update config output textarea
-      const outputArea = document.getElementById('cfg-output');
-      function updateConfigOutput() {
-        if (!outputArea) return;
-        const cfg = buildConfigFromForm();
-        outputArea.value = 'config = ' + toPython(cfg);
-      }
-
-      // Debounced apply
-      let applyTimer = null;
-      function scheduleApply() {
-        clearTimeout(applyTimer);
-        applyTimer = setTimeout(() => {
-          applyConfigFromForm();
-          updateConfigOutput();
-        }, 300);
-      }
-
-      // Bind form inputs
-      document.querySelectorAll('#debug-panel input, #debug-panel select').forEach(el => {
-        el.addEventListener('input', scheduleApply);
-        el.addEventListener('change', scheduleApply);
-      });
-
-      // Initial config output
-      updateConfigOutput();
-
-      window.resetConfig = function() {
-        document.getElementById('cfg-longitude').value = {{ center_lng }};
-        document.getElementById('cfg-latitude').value = {{ center_lat }};
-        document.getElementById('cfg-zoom').value = {{ zoom }};
-        document.getElementById('cfg-pitch').value = {{ pitch }};
-        document.getElementById('cfg-bearing').value = {{ bearing }};
-        document.getElementById('cfg-attr').value = {{ color_attr | tojson }};
-        document.getElementById('cfg-palette').value = {{ palette_name | tojson }};
-        document.getElementById('cfg-domain-min').value = {{ domain_min }};
-        document.getElementById('cfg-domain-max').value = {{ domain_max }};
-        document.getElementById('cfg-steps').value = {{ steps }};
-        applyConfigFromForm();
-        updateConfigOutput();
-      };
-    }
-  </script>
-</body>
-</html>
-""").render(
-        mapbox_token=mapbox_token,
-        tile_url=tile_url,
-        config=merged_config,
-        tooltip_columns=tooltip_columns or [],
-        center_lng=center_lng,
-        center_lat=center_lat,
-        zoom=zoom,
-        pitch=pitch,
-        bearing=bearing,
-        config_errors=config_errors,
-        style_url=style_url,
         debug=debug,
         palettes=sorted(KNOWN_CARTOCOLOR_PALETTES),
-        color_attr=fill_color_cfg.get("attr", "metric") if isinstance(fill_color_cfg, dict) else "metric",
-        palette_name=fill_color_cfg.get("colors", "Magenta") if isinstance(fill_color_cfg, dict) else "Magenta",
-        domain_min=fill_color_cfg.get("domain", [0, 100])[0] if isinstance(fill_color_cfg, dict) else 0,
-        domain_max=fill_color_cfg.get("domain", [0, 100])[1] if isinstance(fill_color_cfg, dict) else 100,
-        steps=fill_color_cfg.get("steps", 20) if isinstance(fill_color_cfg, dict) else 20,
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
     return common.html_to_obj(html)
+
 
 
 def deckgl_raster(
@@ -3153,6 +2376,184 @@ def enable_location_listener(html_input, channel: str = "fused-bus"):
         injected_html = html_string.replace("</html>", f"{listener_script}\n</html>")
     else:
         injected_html = html_string + listener_script
+
+    if response_mode:
+        common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
+        return common.html_to_obj(injected_html)
+    return injected_html
+
+
+def enable_hex_click_broadcast(
+    html_input,
+    channel: str = "fused-bus",
+    message_type: str = "hex_click",
+    properties: list = None,
+):
+
+    # Normalize input to HTML string
+    response_mode = not isinstance(html_input, str)
+    if isinstance(html_input, str):
+        html_string = html_input
+    else:
+        html_string = None
+        text_value = getattr(html_input, "text", None)
+        if isinstance(text_value, str):
+            html_string = text_value
+        else:
+            data_value = getattr(html_input, "data", None)
+            if isinstance(data_value, (bytes, bytearray)):
+                html_string = data_value.decode("utf-8", errors="ignore")
+            elif isinstance(data_value, str):
+                html_string = data_value
+            else:
+                body_value = getattr(html_input, "body", None)
+                if isinstance(body_value, (bytes, bytearray)):
+                    html_string = body_value.decode("utf-8", errors="ignore")
+                elif isinstance(body_value, str):
+                    html_string = body_value
+        if html_string is None:
+            raise TypeError(
+                "html_input must be a str or response-like object with 'text', 'data', or 'body' attribute"
+            )
+    
+    properties_js = json.dumps(properties) if properties else "null"
+    
+    click_script = f"""
+<script>
+(function() {{
+  if (typeof map === 'undefined') return;
+  
+  const CHANNEL = {json.dumps(channel)};
+  const MESSAGE_TYPE = {json.dumps(message_type)};
+  const PROPERTIES_FILTER = {properties_js};
+  const componentId = 'hex-click-' + Math.random().toString(36).substr(2, 9);
+  
+  // Setup BroadcastChannel
+  let bc = null;
+  try {{ if ('BroadcastChannel' in window) bc = new BroadcastChannel(CHANNEL); }} catch (e) {{}}
+  
+  // Send message to all possible targets
+  function busSend(obj) {{
+    const s = JSON.stringify(obj);
+    try {{ if (bc) bc.postMessage(obj); }} catch(e) {{}}
+    try {{ window.parent.postMessage(s, '*'); }} catch(e) {{}}
+    try {{ if (window.top && window.top !== window.parent) window.top.postMessage(s, '*'); }} catch(e) {{}}
+    try {{
+      if (window.top && window.top.frames) {{
+        for (let i = 0; i < window.top.frames.length; i++) {{
+          const f = window.top.frames[i];
+          if (f !== window) try {{ f.postMessage(s, '*'); }} catch(e) {{}}
+        }}
+      }}
+    }} catch(e) {{}}
+  }}
+  
+  // Get all queryable layer IDs
+  function getQueryableLayers() {{
+    const layers = [];
+    // Try to get layers from LAYERS_DATA if available (multi-layer hex maps)
+    if (typeof LAYERS_DATA !== 'undefined' && Array.isArray(LAYERS_DATA)) {{
+      LAYERS_DATA.forEach(l => {{
+        if (!l.isTileLayer) {{
+          const cfg = l.hexLayer || {{}};
+          if (cfg.extruded) {{
+            layers.push(`${{l.id}}-extrusion`);
+          }} else {{
+            layers.push(`${{l.id}}-fill`);
+          }}
+          layers.push(`${{l.id}}-outline`);
+        }}
+      }});
+    }}
+    // Also try common layer IDs
+    ['gdf-fill', 'gdf-circle', 'hex-fill', 'hex-line'].forEach(id => {{
+      if (map.getLayer(id) && !layers.includes(id)) layers.push(id);
+    }});
+    return layers.filter(id => {{ try {{ return map.getLayer(id); }} catch(e) {{ return false; }} }});
+  }}
+  
+  // Handle click on hex
+  map.on('click', (e) => {{
+    const layers = getQueryableLayers();
+    if (!layers.length) return;
+    
+    const features = map.queryRenderedFeatures(e.point, {{ layers }});
+    if (!features || !features.length) return;
+    
+    const feature = features[0];
+    const props = feature.properties || {{}};
+    const hexId = props.hex || props.h3 || props.index || props.id || null;
+    
+    // Filter properties if specified
+    let propsToSend = {{}};
+    if (PROPERTIES_FILTER && Array.isArray(PROPERTIES_FILTER)) {{
+      PROPERTIES_FILTER.forEach(key => {{
+        if (props[key] !== undefined) propsToSend[key] = props[key];
+      }});
+    }} else {{
+      propsToSend = {{ ...props }};
+    }}
+    
+    // Send the click message
+    const message = {{
+      type: MESSAGE_TYPE,
+      hex: hexId,
+      properties: propsToSend,
+      lngLat: {{ lng: e.lngLat.lng, lat: e.lngLat.lat }},
+      timestamp: Date.now(),
+      fromComponent: componentId
+    }};
+    
+    busSend(message);
+    console.log('[hex_click_broadcast] Clicked hex:', hexId, propsToSend);
+  }});
+  
+  // Also handle clicks on Deck.gl tile layers if present
+  if (typeof deckOverlay !== 'undefined' && deckOverlay) {{
+    map.on('click', (e) => {{
+      const info = deckOverlay.pickObject({{ x: e.point.x, y: e.point.y, radius: 4 }});
+      if (info?.object) {{
+        const obj = info.object;
+        const props = obj?.properties || obj || {{}};
+        const hexId = props.hex || obj.hex || null;
+        
+        let propsToSend = {{}};
+        if (PROPERTIES_FILTER && Array.isArray(PROPERTIES_FILTER)) {{
+          PROPERTIES_FILTER.forEach(key => {{
+            const val = props[key] ?? obj[key];
+            if (val !== undefined) propsToSend[key] = val;
+          }});
+        }} else {{
+          propsToSend = {{ ...props }};
+        }}
+        
+        const message = {{
+          type: MESSAGE_TYPE,
+          hex: hexId,
+          properties: propsToSend,
+          lngLat: {{ lng: e.lngLat.lng, lat: e.lngLat.lat }},
+          timestamp: Date.now(),
+          fromComponent: componentId
+        }};
+        
+        busSend(message);
+        console.log('[hex_click_broadcast] Clicked tile hex:', hexId, propsToSend);
+      }}
+    }});
+  }}
+  
+  console.log('[hex_click_broadcast] Initialized on channel:', CHANNEL);
+}})();
+</script>
+"""
+    
+    # Inject before closing </body> tag
+    if "</body>" in html_string:
+        injected_html = html_string.replace("</body>", f"{click_script}\n</body>")
+    elif "</html>" in html_string:
+        injected_html = html_string.replace("</html>", f"{click_script}\n</html>")
+    else:
+        injected_html = html_string + click_script
 
     if response_mode:
         common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
