@@ -632,9 +632,10 @@ def deckgl_hex(
     user_initial_state = {}
     if isinstance(original_config, dict):
         user_initial_state = original_config.get('initialViewState', {}) or {}
+    # Only longitude/latitude/zoom count as "custom view" - pitch/bearing should still allow auto-fit
     has_custom_view = any(
         user_initial_state.get(key) is not None
-        for key in ('longitude', 'latitude', 'zoom', 'pitch', 'bearing')
+        for key in ('longitude', 'latitude', 'zoom')
     )
 
     # Tooltip columns
@@ -944,7 +945,8 @@ function tryInit() {
     const bounds = new mapboxgl.LngLatBounds();
     geojson.features.forEach(f => f.geometry.coordinates[0].forEach(c => bounds.extend(c)));
     if (!bounds.isEmpty()) {
-      map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 500 });
+      // Preserve pitch and bearing from config during fitBounds
+      map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 500, pitch: {{ pitch }}, bearing: {{ bearing }} });
       autoFitDone = true;
     }
   }
@@ -1325,11 +1327,12 @@ def _deckgl_hex_multi(
     auto_center, auto_zoom = (-119.4179, 36.7783), 5
     
     # Check first layer for custom view state
+    # Only longitude/latitude/zoom count as "custom view" - pitch/bearing should still allow auto-fit
     first_config = layers[0].get("config", {}) if layers else {}
     user_initial_state = first_config.get('initialViewState', {}) or {}
     has_custom_view = any(
         user_initial_state.get(key) is not None
-        for key in ('longitude', 'latitude', 'zoom', 'pitch', 'bearing')
+        for key in ('longitude', 'latitude', 'zoom')
     )
     
     ivs = processed_layers[0]["config"].get('initialViewState', {}) if processed_layers else {}
@@ -1900,7 +1903,8 @@ def _deckgl_hex_multi(
           }
         });
         if (!bounds.isEmpty()) {
-          map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 500 });
+          // Preserve pitch and bearing from config during fitBounds
+          map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 500, pitch: {{ pitch }}, bearing: {{ bearing }} });
           autoFitDone = true;
         }
       }
