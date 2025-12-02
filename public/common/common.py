@@ -37,7 +37,20 @@ def mutex(filename, wait=1, verbose=False):
         f.close()
         os.unlink(filename)
 
+def pip_install(package="numpy", path="/tmp", verbose=False):
+    import subprocess
+    import sys
 
+    result = subprocess.run(f"uv pip install --upgrade {package} --target {path} -v", capture_output=True, text=True, shell=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"{package} installation failed: {result.stderr}")
+    else:
+        print(f"{package} installed successfully.")
+        if verbose:
+            print(f"{result.stdout}{result.stderr}")
+    sys.path.insert(0, path)
+    
+        
 def url_to_qr(url, title='Scan me 🥹', logo_url='https://www.fused.io/favicon.ico'):
     """
     Return an HTML page that shows a QR code for *url*.
