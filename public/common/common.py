@@ -37,7 +37,7 @@ def mutex(filename, wait=1, verbose=False):
         f.close()
         os.unlink(filename)
 
-def pip_install(package="numpy", path="/tmp", verbose=False):
+def pip_install(package="numpy", path="/tmp/uv_packages", verbose=False):
     import subprocess
     import sys
 
