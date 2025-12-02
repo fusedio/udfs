@@ -950,6 +950,7 @@ def read_shape_zip(url, file_index=0, name_prefix=""):
 
 @fused.cache
 def stac_to_gdf(bounds, datetime='2024', collections=["sentinel-2-l2a"], columns=['id', 'geometry', 'bounds', 'assets', 'datetime', 'eo:cloud_cover'], query={"eo:cloud_cover": {"lt": 20}}, catalog='mspc', explode_assets=False, version=0):
+    bounds = to_gdf(bounds)
     import pystac_client
     import stac_geoparquet
     if catalog.lower()=='aws':
