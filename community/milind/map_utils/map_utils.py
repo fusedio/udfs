@@ -548,6 +548,1053 @@ def deckgl_hex(
     )
 
 
+def deckgl_layers(
+    layers: list,
+    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
+    basemap: str = "dark",
+    debug: bool = False,
+):
+    """
+    Render mixed hex and vector layers on a single interactive map.
+    
+    This function combines the capabilities of deckgl_hex and deckgl_map,
+    allowing you to render H3 hexagons and GeoJSON vectors together.
+    
+    Args:
+        layers: List of layer dicts, each with:
+            - "type": "hex" or "vector" (required)
+            - "data": DataFrame with hex column (for hex) or GeoDataFrame (for vector)
+            - "tile_url": XYZ tile URL template (for hex tile layers, use instead of data)
+            - "config": Layer config dict (hexLayer for hex, vectorLayer for vector)
+            - "name": Display name for layer toggle (optional)
+        mapbox_token: Mapbox access token.
+        basemap: 'dark', 'satellite', or custom Mapbox style URL.
+        debug: Show debug panel for config tweaking (hex layers only for now).
+    
+    Examples:
+        # Mix hex and vector layers
+        deckgl_layers(layers=[
+            {
+                "type": "hex",
+                "data": hex_df,
+                "config": {
+                    "hexLayer": {
+                        "filled": True,
+                        "getFillColor": {"@@function": "colorContinuous", "attr": "value", "domain": [0, 100], "colors": "Mint"}
+                    }
+                },
+                "name": "Elevation"
+            },
+            {
+                "type": "vector",
+                "data": boundaries_gdf,
+                "config": {
+                    "vectorLayer": {
+                        "filled": False,
+                        "stroked": True,
+                        "getLineColor": [255, 255, 0],
+                        "lineWidthMinPixels": 2
+                    }
+                },
+                "name": "Farm Boundaries"
+            },
+        ], basemap="dark")
+    
+    Returns:
+        HTML object for rendering in Fused Workbench
+    """
+    import math
+    
+    # Basemap setup
+    basemap_styles = {
+        "dark": "mapbox://styles/mapbox/dark-v11",
+        "satellite": "mapbox://styles/mapbox/satellite-streets-v12",
+        "light": "mapbox://styles/mapbox/light-v11",
+        "streets": "mapbox://styles/mapbox/streets-v12"
+    }
+    style_url = basemap_styles.get(
+        {"sat": "satellite", "satellite-streets": "satellite"}.get((basemap or "dark").lower(), (basemap or "dark").lower()),
+        basemap or basemap_styles["dark"]
+    )
+
+    # Process each layer
+    processed_layers = []
+    has_tile_layers = False
+    
+    for i, layer_def in enumerate(layers):
+        layer_type = layer_def.get("type", "hex").lower()
+        df = layer_def.get("data")
+        tile_url = layer_def.get("tile_url")
+        config = layer_def.get("config", {})
+        name = layer_def.get("name", f"Layer {i + 1}")
+        
+        config_errors = []
+        original_config = deepcopy(config) if config else {}
+        
+        if layer_type == "hex":
+            # Process hex layer (same as _deckgl_hex_multi)
+            merged_config = _load_deckgl_config(config, DEFAULT_DECK_HEX_CONFIG, f"deckgl_layers_hex_{i}", config_errors)
+            hex_layer = merged_config.get("hexLayer", {})
+            tile_layer_config = merged_config.get("tileLayer", {})
+            
+            # Validate hexLayer property names
+            invalid_props = [key for key in list(hex_layer.keys()) if key not in VALID_HEX_LAYER_PROPS]
+            for prop in invalid_props:
+                suggestion = get_close_matches(prop, list(VALID_HEX_LAYER_PROPS), n=1, cutoff=0.6)
+                if suggestion:
+                    print(f"[deckgl_layers] Warning: Layer '{name}' property '{prop}' not recognized. Did you mean '{suggestion[0]}'?")
+                hex_layer.pop(prop, None)
+            
+            is_tile_layer = tile_url is not None
+            if is_tile_layer:
+                has_tile_layers = True
+            
+            # Convert dataframe to records (for static layers)
+            data_records = []
+            if not is_tile_layer and df is not None and hasattr(df, 'to_dict'):
+                data_records = df.to_dict('records')
+                for record in data_records:
+                    hex_val = record.get('hex') or record.get('h3') or record.get('index') or record.get('id')
+                    if hex_val is not None:
+                        try:
+                            if isinstance(hex_val, (int, float)):
+                                record['hex'] = format(int(hex_val), 'x')
+                            elif isinstance(hex_val, str) and hex_val.isdigit():
+                                record['hex'] = format(int(hex_val), 'x')
+                            else:
+                                record['hex'] = hex_val
+                        except (ValueError, OverflowError):
+                            record['hex'] = None
+            
+            tooltip_columns = _extract_tooltip_columns((config, merged_config, hex_layer))
+            
+            processed_layers.append({
+                "id": f"layer-{i}",
+                "name": name,
+                "layerType": "hex",
+                "data": data_records,
+                "tileUrl": tile_url,
+                "isTileLayer": is_tile_layer,
+                "tileLayerConfig": tile_layer_config,
+                "config": merged_config,
+                "hexLayer": hex_layer,
+                "tooltipColumns": tooltip_columns,
+                "visible": True,
+            })
+            
+        elif layer_type == "vector":
+            # Process vector layer (similar to deckgl_map)
+            merged_config = _load_deckgl_config(config, DEFAULT_DECK_CONFIG, f"deckgl_layers_vector_{i}", config_errors)
+            vector_layer = merged_config.get("vectorLayer", {})
+            
+            # Convert GeoDataFrame to GeoJSON
+            geojson_obj = {"type": "FeatureCollection", "features": []}
+            if df is not None and hasattr(df, "to_json"):
+                # Reproject to EPSG:4326 if needed
+                if hasattr(df, "crs") and df.crs and getattr(df.crs, "to_epsg", lambda: None)() != 4326:
+                    try:
+                        df = df.to_crs(epsg=4326)
+                    except Exception:
+                        pass
+                
+                try:
+                    geojson_obj = json.loads(df.to_json())
+                except Exception:
+                    pass
+                
+                # Sanitize properties
+                def sanitize_value(v):
+                    if isinstance(v, (float, int, str, bool)) or v is None:
+                        return None if isinstance(v, float) and (math.isnan(v) or math.isinf(v)) else v
+                    if hasattr(v, 'item'):
+                        try:
+                            return v.item()
+                        except Exception:
+                            return str(v)
+                    if isinstance(v, (list, tuple, set)):
+                        return ", ".join(str(s) for s in v)
+                    return str(v) if v is not None else None
+                
+                for feat in geojson_obj.get("features", []):
+                    feat["properties"] = {k: sanitize_value(v) for k, v in (feat.get("properties") or {}).items()}
+            
+            # Extract color config
+            fill_color_raw = vector_layer.get("getFillColor")
+            fill_color_config = {}
+            fill_color_rgba = None
+            color_attr = None
+            
+            if isinstance(fill_color_raw, dict) and fill_color_raw.get("@@function") == "colorContinuous":
+                fill_color_config = fill_color_raw
+                color_attr = fill_color_raw.get("attr")
+            elif isinstance(fill_color_raw, (list, tuple)) and len(fill_color_raw) >= 3:
+                r, g, b = int(fill_color_raw[0]), int(fill_color_raw[1]), int(fill_color_raw[2])
+                a = fill_color_raw[3] / 255.0 if len(fill_color_raw) > 3 else 0.6
+                fill_color_rgba = f"rgba({r},{g},{b},{a})"
+            
+            line_color_raw = vector_layer.get("getLineColor")
+            line_color_rgba = None
+            line_color_config = {}
+            line_color_attr = None
+            
+            if isinstance(line_color_raw, dict) and line_color_raw.get("@@function") == "colorContinuous":
+                line_color_config = line_color_raw
+                line_color_attr = line_color_raw.get("attr")
+            elif isinstance(line_color_raw, (list, tuple)) and len(line_color_raw) >= 3:
+                r, g, b = int(line_color_raw[0]), int(line_color_raw[1]), int(line_color_raw[2])
+                a = line_color_raw[3] / 255.0 if len(line_color_raw) > 3 else 1.0
+                line_color_rgba = f"rgba({r},{g},{b},{a})"
+            
+            data_columns = [col for col in (df.columns if df is not None and hasattr(df, 'columns') else []) if col != "geometry"]
+            tooltip_columns = _extract_tooltip_columns((config, merged_config, vector_layer), data_columns)
+            
+            processed_layers.append({
+                "id": f"layer-{i}",
+                "name": name,
+                "layerType": "vector",
+                "geojson": geojson_obj,
+                "config": merged_config,
+                "vectorLayer": vector_layer,
+                "fillColorConfig": fill_color_config,
+                "fillColorRgba": fill_color_rgba,
+                "colorAttr": color_attr,
+                "lineColorConfig": line_color_config,
+                "lineColorRgba": line_color_rgba,
+                "lineColorAttr": line_color_attr,
+                "lineWidth": vector_layer.get("lineWidthMinPixels") or vector_layer.get("getLineWidth", 1),
+                "pointRadius": vector_layer.get("pointRadiusMinPixels") or vector_layer.get("pointRadius", 6),
+                "isFilled": vector_layer.get("filled", True),
+                "isStroked": vector_layer.get("stroked", True),
+                "opacity": vector_layer.get("opacity", 0.8),
+                "tooltipColumns": tooltip_columns,
+                "visible": True,
+            })
+    
+    # Auto-center from all layers' data
+    auto_center, auto_zoom = (-119.4179, 36.7783), 5
+    
+    # Check first layer for custom view state
+    first_config = layers[0].get("config", {}) if layers else {}
+    user_initial_state = first_config.get('initialViewState', {}) or {}
+    has_custom_view = any(
+        user_initial_state.get(key) is not None
+        for key in ('longitude', 'latitude', 'zoom')
+    )
+    
+    ivs = processed_layers[0]["config"].get('initialViewState', {}) if processed_layers else {}
+    center_lng = ivs.get('longitude') or auto_center[0]
+    center_lat = ivs.get('latitude') or auto_center[1]
+    zoom = ivs.get('zoom') or auto_zoom
+    pitch = ivs.get('pitch', 0)
+    bearing = ivs.get('bearing', 0)
+
+    html = Template(r"""
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
+  <script src="https://unpkg.com/h3-js@4.1.0/dist/h3-js.umd.js"></script>
+  {% if has_tile_layers %}
+  <script src="https://unpkg.com/deck.gl@9.1.3/dist.min.js"></script>
+  <script src="https://unpkg.com/@deck.gl/geo-layers@9.1.3/dist.min.js"></script>
+  <script src="https://unpkg.com/@deck.gl/carto@9.1.3/dist.min.js"></script>
+  {% endif %}
+  <script type="module">
+    import * as cartocolor from 'https://esm.sh/cartocolor@5.0.2';
+    window.cartocolor = cartocolor;
+  </script>
+  <style>
+    html, body { margin:0; height:100%; width:100%; display:flex; overflow:hidden; }
+    #map { flex:1; height:100%; }
+    #tooltip { position:absolute; pointer-events:none; background:rgba(0,0,0,0.8); color:#fff; padding:6px 10px; border-radius:4px; font-size:12px; display:none; z-index:6; max-width:300px; }
+    
+    /* Layer Toggle Panel */
+    #layer-panel {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      background: rgba(26, 26, 26, 0.95);
+      border: 1px solid #424242;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: Inter, 'SF Pro Display', 'Segoe UI', sans-serif;
+      color: #f5f5f5;
+      min-width: 180px;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    #layer-panel h4 {
+      margin: 0 0 10px 0;
+      font-size: 11px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      color: #E8FF59;
+      font-weight: 600;
+    }
+    .layer-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid #333;
+    }
+    .layer-item:last-child { border-bottom: none; }
+    .layer-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #E8FF59;
+    }
+    .layer-item .layer-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .layer-item .layer-name {
+      flex: 1;
+      font-size: 12px;
+      color: #dcdcdc;
+    }
+    .layer-item .layer-type {
+      font-size: 9px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .layer-item.disabled .layer-name {
+      color: #666;
+      text-decoration: line-through;
+    }
+    
+    /* Legend */
+    .color-legend {
+      position: fixed;
+      left: 12px;
+      bottom: 12px;
+      background: rgba(15,15,15,0.9); 
+      color: #fff;
+      padding: 8px; 
+      border-radius: 4px;
+      font-size: 11px;
+      z-index: 10;
+      min-width: 140px;
+      border: 1px solid rgba(255,255,255,0.1); 
+    }
+    .legend-layer { margin-bottom: 12px; }
+    .legend-layer:last-child { margin-bottom: 0; }
+    .legend-layer .legend-title { margin-bottom: 6px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+    .legend-layer .legend-title .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+    .legend-layer .legend-gradient { height: 10px; border-radius: 2px; margin-bottom: 4px; border: 1px solid rgba(255,255,255,0.2); }
+    .legend-layer .legend-labels { display: flex; justify-content: space-between; font-size: 10px; color: #ccc; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="tooltip"></div>
+  
+  <!-- Layer Toggle Panel -->
+  <div id="layer-panel">
+    <h4>Layers</h4>
+    <div id="layer-list"></div>
+  </div>
+  
+  <!-- Legend -->
+  <div id="color-legend" class="color-legend" style="display:none;"></div>
+
+  <script>
+    const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
+    const LAYERS_DATA = {{ layers_data | tojson }};
+    const HAS_CUSTOM_VIEW = {{ has_custom_view | tojson }};
+    
+    // Track layer visibility
+    const layerVisibility = {};
+    LAYERS_DATA.forEach(l => { layerVisibility[l.id] = l.visible; });
+
+    // ========== H3 Hex Utilities ==========
+    function toH3(hex) {
+      if (hex == null) return null;
+      try {
+        if (typeof hex === 'string') {
+          const s = hex.startsWith('0x') ? hex.slice(2) : hex;
+          return /[a-f]/i.test(s) ? s.toLowerCase() : /^\d+$/.test(s) ? BigInt(s).toString(16) : s.toLowerCase();
+        }
+        if (typeof hex === 'number') return BigInt(Math.trunc(hex)).toString(16);
+        if (typeof hex === 'bigint') return hex.toString(16);
+      } catch(e) {}
+      return null;
+    }
+
+    function hexToGeoJSON(data) {
+      const features = [];
+      for (const d of data) {
+        const hexId = toH3(d.hex ?? d.h3 ?? d.index ?? d.id);
+        if (!hexId || !h3.isValidCell(hexId)) continue;
+        try {
+          const boundary = h3.cellToBoundary(hexId);
+          const coords = boundary.map(([lat, lng]) => [lng, lat]);
+          coords.push(coords[0]);
+          features.push({ type: 'Feature', properties: { ...d, hex: hexId }, geometry: { type: 'Polygon', coordinates: [coords] }});
+        } catch(e) {}
+      }
+      return { type: 'FeatureCollection', features };
+    }
+
+    // ========== Color Utilities ==========
+    function getPaletteColors(name, steps) {
+      const pal = window.cartocolor?.[name];
+      if (!pal) return null;
+      const keys = Object.keys(pal).map(Number).filter(n => !isNaN(n)).sort((a, b) => a - b);
+      const best = keys.find(n => n >= steps) || keys[keys.length - 1];
+      return pal[best] ? [...pal[best]] : null;
+    }
+
+    function buildColorExpr(cfg) {
+      if (!cfg || cfg['@@function'] !== 'colorContinuous' || !cfg.attr || !cfg.domain?.length) return null;
+      const [d0, d1] = cfg.domain, rev = d0 > d1, dom = rev ? [d1, d0] : [d0, d1];
+      const steps = cfg.steps || 7, name = cfg.colors || 'TealGrn';
+      let cols = getPaletteColors(name, steps);
+      if (!cols || !cols.length) {
+        return ['interpolate', ['linear'], ['get', cfg.attr], dom[0], 'rgb(237,248,251)', dom[1], 'rgb(0,109,44)'];
+      }
+      if (rev) cols.reverse();
+      const expr = ['interpolate', ['linear'], ['get', cfg.attr]];
+      cols.forEach((c, i) => { expr.push(dom[0] + (dom[1] - dom[0]) * i / (cols.length - 1)); expr.push(c); });
+      return expr;
+    }
+
+    function toRgba(arr, defaultAlpha) {
+      if (!Array.isArray(arr) || arr.length < 3) return null;
+      const [r, g, b] = arr;
+      const a = arr.length >= 4 ? arr[3] / 255 : (defaultAlpha ?? 1);
+      return `rgba(${r},${g},${b},${a})`;
+    }
+
+    // ========== Precompute Data ==========
+    const layerGeoJSONs = {};
+    LAYERS_DATA.forEach(l => {
+      if (l.layerType === 'hex' && !l.isTileLayer) {
+        layerGeoJSONs[l.id] = hexToGeoJSON(l.data);
+      } else if (l.layerType === 'vector') {
+        layerGeoJSONs[l.id] = l.geojson;
+      }
+    });
+
+    const HAS_TILE_LAYERS = LAYERS_DATA.some(l => l.layerType === 'hex' && l.isTileLayer);
+
+    // ========== Map Setup ==========
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+    const map = new mapboxgl.Map({ 
+      container: 'map', 
+      style: {{ style_url | tojson }}, 
+      center: [{{ center_lng }}, {{ center_lat }}], 
+      zoom: {{ zoom }}, 
+      pitch: {{ pitch }}, 
+      bearing: {{ bearing }}, 
+      projection: 'mercator' 
+    });
+
+    // Deck.gl overlay for tile layers
+    let deckOverlay = null;
+
+    {% if has_tile_layers %}
+    const { TileLayer, MapboxOverlay } = deck;
+    const H3HexagonLayer = deck.H3HexagonLayer || (deck.GeoLayers && deck.GeoLayers.H3HexagonLayer);
+    const { colorContinuous } = deck.carto;
+
+    function toH3String(hex) {
+      try {
+        if (hex == null) return null;
+        if (typeof hex === 'string') {
+          const s = hex.startsWith('0x') ? hex.slice(2) : hex;
+          return (/^\d+$/.test(s) ? BigInt(s).toString(16) : s.toLowerCase());
+        }
+        if (typeof hex === 'number') return BigInt(Math.trunc(hex)).toString(16);
+        if (typeof hex === 'bigint') return hex.toString(16);
+      } catch (_) {}
+      return null;
+    }
+
+    function normalizeTileData(raw) {
+      const arr = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : (Array.isArray(raw?.features) ? raw.features : []));
+      const rows = arr.map(d => d?.properties ? { ...d.properties } : { ...d });
+      return rows.map(p => {
+        const hexRaw = p.hex ?? p.h3 ?? p.index ?? p.id;
+        const hex = toH3String(hexRaw);
+        if (!hex) return null;
+        const props = { ...p, hex };
+        return { ...props, properties: { ...props } };
+      }).filter(Boolean);
+    }
+
+    function processColorContinuousCfg(cfg) {
+      let domain = cfg.domain;
+      if (domain && domain.length === 2) {
+        const [min, max] = domain;
+        const steps = cfg.steps ?? 20;
+        const stepSize = (max - min) / (steps - 1);
+        domain = Array.from({ length: steps }, (_, i) => min + stepSize * i);
+      }
+      return { attr: cfg.attr, domain, colors: cfg.colors || 'TealGrn', nullColor: cfg.nullColor || [184, 184, 184] };
+    }
+
+    function parseHexLayerConfigForDeck(config) {
+      const out = {};
+      for (const [k, v] of Object.entries(config || {})) {
+        if (k === '@@type') continue;
+        if (v && typeof v === 'object' && !Array.isArray(v)) {
+          if (v['@@function'] === 'colorContinuous') {
+            out[k] = colorContinuous(processColorContinuousCfg(v));
+          } else {
+            out[k] = v;
+          }
+        } else if (typeof v === 'string' && v.startsWith('@@=')) {
+          const code = v.slice(3);
+          out[k] = (obj) => {
+            try {
+              const fn = new Function('object', `const properties = object?.properties || object || {}; return (${code});`);
+              return fn(obj);
+            } catch (e) { return null; }
+          };
+        } else {
+          out[k] = v;
+        }
+      }
+      return out;
+    }
+
+    function buildTileLayer(layerDef) {
+      const tileUrl = layerDef.tileUrl;
+      const tileCfg = layerDef.tileLayerConfig || {};
+      const rawHexLayer = layerDef.hexLayer || {};
+      const hexCfg = parseHexLayerConfigForDeck(rawHexLayer);
+      const visible = layerVisibility[layerDef.id];
+      const layerOpacity = (typeof rawHexLayer.opacity === 'number') ? rawHexLayer.opacity : 0.8;
+      const isExtruded = rawHexLayer.extruded === true;
+      const elevationScale = rawHexLayer.elevationScale || 1;
+
+      return new TileLayer({
+        id: `${layerDef.id}-tiles`,
+        data: tileUrl,
+        tileSize: tileCfg.tileSize ?? 256,
+        minZoom: tileCfg.minZoom ?? 0,
+        maxZoom: tileCfg.maxZoom ?? 12,
+        pickable: true,
+        visible: visible,
+        maxRequests: 6,
+        refinementStrategy: 'best-available',
+        getTileData: async ({ index, signal }) => {
+          const { x, y, z } = index;
+          const url = tileUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+          try {
+            const res = await fetch(url, { signal });
+            if (!res.ok) return [];
+            let text = await res.text();
+            text = text.replace(/\"(hex|h3|index)\"\s*:\s*(\d+)/gi, (_m, k, d) => `"${k}":"${d}"`);
+            const data = JSON.parse(text);
+            return normalizeTileData(data);
+          } catch (e) { return []; }
+        },
+        renderSubLayers: (props) => {
+          const data = props.data || [];
+          if (!data.length) return null;
+          if (H3HexagonLayer) {
+            return new H3HexagonLayer({
+              id: `${props.id}-h3`,
+              data,
+              pickable: true,
+              stroked: false,
+              filled: true,
+              extruded: isExtruded,
+              elevationScale: elevationScale,
+              coverage: 0.9,
+              lineWidthMinPixels: 1,
+              opacity: layerOpacity,
+              getHexagon: d => d.hex,
+              ...hexCfg
+            });
+          }
+          return null;
+        }
+      });
+    }
+
+    function rebuildDeckOverlay() {
+      const deckLayers = [...LAYERS_DATA]
+        .reverse()
+        .filter(l => l.layerType === 'hex' && l.isTileLayer && layerVisibility[l.id])
+        .map(l => buildTileLayer(l));
+      
+      if (deckOverlay) {
+        try {
+          map.removeControl(deckOverlay);
+          deckOverlay.finalize?.();
+        } catch (e) {}
+        deckOverlay = null;
+      }
+      
+      if (deckLayers.length > 0) {
+        deckOverlay = new MapboxOverlay({
+          interleaved: false,
+          layers: deckLayers
+        });
+        map.addControl(deckOverlay);
+      }
+    }
+    {% endif %}
+
+    // ========== Add All Layers ==========
+    function addAllLayers() {
+      // Remove existing layers
+      LAYERS_DATA.forEach(l => {
+        [`${l.id}-fill`, `${l.id}-extrusion`, `${l.id}-outline`, `${l.id}-circle`, `${l.id}-line`].forEach(id => { 
+          try { if(map.getLayer(id)) map.removeLayer(id); } catch(e){} 
+        });
+        try { if(map.getSource(l.id)) map.removeSource(l.id); } catch(e){}
+      });
+      
+      // Add layers in reverse menu order so top of menu renders on top of map
+      const renderOrder = [...LAYERS_DATA].reverse();
+      renderOrder.forEach((l) => {
+        if (l.layerType === 'hex' && l.isTileLayer) return;  // Skip tile layers - handled by Deck.gl
+        
+        const geojson = layerGeoJSONs[l.id];
+        if (!geojson || !geojson.features?.length) return;
+        
+        map.addSource(l.id, { type: 'geojson', data: geojson });
+        const visible = layerVisibility[l.id];
+        
+        if (l.layerType === 'hex') {
+          // Hex layer rendering
+          const cfg = l.hexLayer || {};
+          const fillColor = Array.isArray(cfg.getFillColor) ? toRgba(cfg.getFillColor, 0.8) : buildColorExpr(cfg.getFillColor) || 'rgba(0,144,255,0.7)';
+          const lineColor = cfg.getLineColor ? (Array.isArray(cfg.getLineColor) ? toRgba(cfg.getLineColor, 1) : buildColorExpr(cfg.getLineColor)) : 'rgba(255,255,255,0.3)';
+          const layerOpacity = (typeof cfg.opacity === 'number' && isFinite(cfg.opacity)) ? Math.max(0, Math.min(1, cfg.opacity)) : 0.8;
+          
+          if (cfg.extruded) {
+            const elev = cfg.elevationScale || 1;
+            map.addLayer({ 
+              id: `${l.id}-extrusion`, 
+              type: 'fill-extrusion', 
+              source: l.id, 
+              paint: { 
+                'fill-extrusion-color': fillColor, 
+                'fill-extrusion-height': cfg.getFillColor?.attr ? ['*', ['get', cfg.getFillColor.attr], elev] : 100,
+                'fill-extrusion-base': 0,
+                'fill-extrusion-opacity': layerOpacity
+              },
+              layout: { 'visibility': visible ? 'visible' : 'none' }
+            });
+          } else {
+            if (cfg.filled !== false) {
+              map.addLayer({ 
+                id: `${l.id}-fill`, 
+                type: 'fill', 
+                source: l.id, 
+                paint: { 'fill-color': fillColor, 'fill-opacity': layerOpacity },
+                layout: { 'visibility': visible ? 'visible' : 'none' }
+              });
+            }
+          }
+          map.addLayer({ 
+            id: `${l.id}-outline`, 
+            type: 'line', 
+            source: l.id, 
+            paint: { 'line-color': lineColor, 'line-width': cfg.lineWidthMinPixels || 0.5 },
+            layout: { 'visibility': visible ? 'visible' : 'none' }
+          });
+          
+        } else if (l.layerType === 'vector') {
+          // Vector layer rendering
+          const fillColorExpr = l.fillColorConfig?.['@@function'] === 'colorContinuous' ? buildColorExpr(l.fillColorConfig) : (l.fillColorRgba || 'rgba(0,144,255,0.6)');
+          const lineColorExpr = l.lineColorConfig?.['@@function'] === 'colorContinuous' ? buildColorExpr(l.lineColorConfig) : (l.lineColorRgba || 'rgba(100,100,100,0.8)');
+          const lineW = (typeof l.lineWidth === 'number' && isFinite(l.lineWidth)) ? l.lineWidth : 1;
+          const layerOpacity = (typeof l.opacity === 'number' && isFinite(l.opacity)) ? Math.max(0, Math.min(1, l.opacity)) : 0.8;
+          
+          // Detect geometry types
+          let hasPoly = false, hasPoint = false, hasLine = false;
+          for (const f of geojson.features || []) {
+            const t = f.geometry?.type;
+            if (t === 'Point' || t === 'MultiPoint') hasPoint = true;
+            if (t === 'Polygon' || t === 'MultiPolygon') hasPoly = true;
+            if (t === 'LineString' || t === 'MultiLineString') hasLine = true;
+          }
+          
+          if (hasPoly) {
+            if (l.isFilled !== false) {
+              map.addLayer({ 
+                id: `${l.id}-fill`, 
+                type: 'fill', 
+                source: l.id, 
+                paint: { 'fill-color': fillColorExpr, 'fill-opacity': layerOpacity },
+                filter: ['any', ['==', ['geometry-type'], 'Polygon'], ['==', ['geometry-type'], 'MultiPolygon']],
+                layout: { 'visibility': visible ? 'visible' : 'none' }
+              });
+            }
+            if (l.isStroked !== false) {
+              map.addLayer({ 
+                id: `${l.id}-outline`, 
+                type: 'line', 
+                source: l.id, 
+                layout: { 'line-join': 'round', 'line-cap': 'round', 'visibility': visible ? 'visible' : 'none' },
+                paint: { 'line-color': lineColorExpr, 'line-width': lineW },
+                filter: ['any', ['==', ['geometry-type'], 'Polygon'], ['==', ['geometry-type'], 'MultiPolygon']]
+              });
+            }
+          }
+          if (hasLine) {
+            map.addLayer({ 
+              id: `${l.id}-line`, 
+              type: 'line', 
+              source: l.id, 
+              layout: { 'line-join': 'round', 'line-cap': 'round', 'visibility': visible ? 'visible' : 'none' },
+              paint: { 'line-color': lineColorExpr, 'line-width': lineW, 'line-opacity': 1 },
+              filter: ['any', ['==', ['geometry-type'], 'LineString'], ['==', ['geometry-type'], 'MultiLineString']]
+            });
+          }
+          if (hasPoint) {
+            map.addLayer({ 
+              id: `${l.id}-circle`, 
+              type: 'circle', 
+              source: l.id, 
+              paint: { 
+                'circle-radius': l.pointRadius || 6, 
+                'circle-color': fillColorExpr, 
+                'circle-stroke-color': 'rgba(0,0,0,0.5)', 
+                'circle-stroke-width': 1, 
+                'circle-opacity': 0.9 
+              },
+              filter: ['any', ['==', ['geometry-type'], 'Point'], ['==', ['geometry-type'], 'MultiPoint']],
+              layout: { 'visibility': visible ? 'visible' : 'none' }
+            });
+          }
+        }
+      });
+
+      {% if has_tile_layers %}
+      rebuildDeckOverlay();
+      {% endif %}
+    }
+
+    // ========== Layer Visibility Toggle ==========
+    window.toggleLayerVisibility = function(layerId, visible) {
+      layerVisibility[layerId] = visible;
+      
+      const layerDef = LAYERS_DATA.find(l => l.id === layerId);
+      if (layerDef && layerDef.layerType === 'hex' && layerDef.isTileLayer) {
+        {% if has_tile_layers %}
+        rebuildDeckOverlay();
+        {% endif %}
+      } else {
+        [`${layerId}-fill`, `${layerId}-extrusion`, `${layerId}-outline`, `${layerId}-circle`, `${layerId}-line`].forEach(id => {
+          try { 
+            if(map.getLayer(id)) {
+              map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
+            }
+          } catch(e){}
+        });
+      }
+      updateLegend();
+      updateLayerPanel();
+    };
+
+    // ========== Layer Panel ==========
+    function updateLayerPanel() {
+      const list = document.getElementById('layer-list');
+      if (!list) return;
+      
+      list.innerHTML = LAYERS_DATA.map(l => {
+        const visible = layerVisibility[l.id];
+        let colorPreview = '#0090ff';
+        
+        if (l.layerType === 'hex') {
+          const cfg = l.hexLayer || {};
+          const colorCfg = (cfg.filled === false && cfg.getLineColor) ? cfg.getLineColor : cfg.getFillColor;
+          if (Array.isArray(colorCfg)) {
+            colorPreview = toRgba(colorCfg, 1) || colorPreview;
+          } else if (colorCfg && colorCfg['@@function'] === 'colorContinuous') {
+            const cols = getPaletteColors(colorCfg.colors || 'TealGrn', colorCfg.steps || 7);
+            if (cols && cols.length) colorPreview = cols[Math.floor(cols.length / 2)];
+          }
+        } else if (l.layerType === 'vector') {
+          if (l.fillColorRgba) colorPreview = l.fillColorRgba;
+          else if (l.fillColorConfig?.colors) {
+            const cols = getPaletteColors(l.fillColorConfig.colors, 7);
+            if (cols && cols.length) colorPreview = cols[Math.floor(cols.length / 2)];
+          }
+        }
+        
+        const typeIcon = l.layerType === 'hex' ? (l.isTileLayer ? '⬡' : '⬢') : '◇';
+        
+        return `
+          <div class="layer-item ${visible ? '' : 'disabled'}">
+            <input type="checkbox" ${visible ? 'checked' : ''} onchange="toggleLayerVisibility('${l.id}', this.checked)" />
+            <div class="layer-color" style="background:${colorPreview};"></div>
+            <span class="layer-name">${l.name}</span>
+            <span class="layer-type">${typeIcon}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ========== Legend ==========
+    function updateLegend() {
+      const legend = document.getElementById('color-legend');
+      if (!legend) return;
+      
+      const visibleLayers = LAYERS_DATA.filter(l => layerVisibility[l.id]);
+      if (!visibleLayers.length) {
+        legend.style.display = 'none';
+        return;
+      }
+      
+      let html = '';
+      visibleLayers.forEach(l => {
+        let colorCfg = null;
+        
+        if (l.layerType === 'hex') {
+          const cfg = l.hexLayer || {};
+          colorCfg = (cfg.filled === false && cfg.getLineColor) ? cfg.getLineColor : cfg.getFillColor;
+        } else if (l.layerType === 'vector') {
+          colorCfg = l.fillColorConfig?.['@@function'] === 'colorContinuous' ? l.fillColorConfig : null;
+        }
+        
+        if (!colorCfg || colorCfg['@@function'] !== 'colorContinuous' || !colorCfg.attr || !colorCfg.domain?.length) return;
+        
+        const [d0, d1] = colorCfg.domain;
+        const isReversed = d0 > d1;
+        const steps = colorCfg.steps || 7;
+        const paletteName = colorCfg.colors || 'TealGrn';
+        
+        let cols = getPaletteColors(paletteName, steps);
+        if (!cols || !cols.length) {
+          cols = ['#e0f3db','#ccebc5','#a8ddb5','#7bccc4','#4eb3d3','#2b8cbe','#0868ac','#084081'];
+        }
+        if (isReversed) cols = [...cols].reverse();
+        
+        const gradient = `linear-gradient(to right, ${cols.map((c, i) => `${c} ${i / (cols.length - 1) * 100}%`).join(', ')})`;
+        const dotColor = cols[Math.floor(cols.length / 2)];
+        
+        html += `
+          <div class="legend-layer">
+            <div class="legend-title">
+              <span class="legend-dot" style="background:${dotColor};"></span>
+              ${l.name}: ${colorCfg.attr}
+            </div>
+            <div class="legend-gradient" style="background:${gradient};"></div>
+            <div class="legend-labels">
+              <span>${d0.toFixed(1)}</span>
+              <span>${d1.toFixed(1)}</span>
+            </div>
+          </div>
+        `;
+      });
+      
+      if (html) {
+        legend.innerHTML = html;
+        legend.style.display = 'block';
+      } else {
+        legend.style.display = 'none';
+      }
+    }
+
+    // ========== Initialization ==========
+    let layersReady = false;
+    let autoFitDone = false;
+    
+    function tryInit() {
+      if (layersReady) return;
+      
+      const needsCartocolor = LAYERS_DATA.some(l => {
+        if (l.layerType === 'hex') {
+          const cfg = l.hexLayer || {};
+          return cfg.getFillColor?.['@@function'] === 'colorContinuous' || cfg.getLineColor?.['@@function'] === 'colorContinuous';
+        } else if (l.layerType === 'vector') {
+          return l.fillColorConfig?.['@@function'] === 'colorContinuous' || l.lineColorConfig?.['@@function'] === 'colorContinuous';
+        }
+        return false;
+      });
+      
+      if (needsCartocolor && !window.cartocolor) {
+        setTimeout(tryInit, 50);
+        return;
+      }
+      
+      layersReady = true;
+      addAllLayers();
+      updateLayerPanel();
+      updateLegend();
+      
+      // Auto-fit to combined bounds
+      if (!HAS_CUSTOM_VIEW && !autoFitDone) {
+        const bounds = new mapboxgl.LngLatBounds();
+        LAYERS_DATA.forEach(l => {
+          if (l.layerType === 'hex' && l.isTileLayer) return;
+          const geojson = layerGeoJSONs[l.id];
+          if (geojson && geojson.features && geojson.features.length) {
+            geojson.features.forEach(f => {
+              if (f.geometry.type === 'Point') {
+                bounds.extend(f.geometry.coordinates);
+              } else if (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon') {
+                const coords = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+                coords.forEach(poly => poly[0]?.forEach(c => bounds.extend(c)));
+              } else if (f.geometry.type === 'LineString') {
+                f.geometry.coordinates.forEach(c => bounds.extend(c));
+              }
+            });
+          }
+        });
+        if (!bounds.isEmpty()) {
+          map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 500, pitch: {{ pitch }}, bearing: {{ bearing }} });
+          autoFitDone = true;
+        }
+      }
+      
+      // Setup unified tooltip
+      const tt = document.getElementById('tooltip');
+      const allQueryableLayers = [];
+      LAYERS_DATA.forEach(l => {
+        if (l.layerType === 'hex' && l.isTileLayer) return;
+        const layerIds = [];
+        if (l.layerType === 'hex') {
+          const cfg = l.hexLayer || {};
+          if (cfg.extruded) {
+            layerIds.push(`${l.id}-extrusion`);
+          } else {
+            layerIds.push(`${l.id}-fill`);
+          }
+          layerIds.push(`${l.id}-outline`);
+        } else if (l.layerType === 'vector') {
+          layerIds.push(`${l.id}-fill`, `${l.id}-outline`, `${l.id}-circle`, `${l.id}-line`);
+        }
+        layerIds.forEach(layerId => {
+          allQueryableLayers.push({ layerId, layerDef: l });
+        });
+      });
+      
+      map.on('mousemove', (e) => { 
+        const queryIds = allQueryableLayers.map(x => x.layerId).filter(id => map.getLayer(id));
+        if (!queryIds.length) return;
+        
+        const features = map.queryRenderedFeatures(e.point, { layers: queryIds });
+        if (!features?.length) {
+          tt.style.display = 'none';
+          map.getCanvas().style.cursor = '';
+          return;
+        }
+        
+        let topFeature = null;
+        let topLayerDef = null;
+        for (const f of features) {
+          const match = allQueryableLayers.find(x => x.layerId === f.layer.id);
+          if (match && layerVisibility[match.layerDef.id]) {
+            topFeature = f;
+            topLayerDef = match.layerDef;
+            break;
+          }
+        }
+        
+        if (!topFeature || !topLayerDef) {
+          tt.style.display = 'none';
+          map.getCanvas().style.cursor = '';
+          return;
+        }
+
+        map.getCanvas().style.cursor = 'pointer';
+        const p = topFeature.properties;
+        const cols = topLayerDef.tooltipColumns || [];
+        const lines = cols.length 
+          ? cols.map(k => p[k] != null ? `${k}: ${typeof p[k]==='number'?p[k].toFixed(2):p[k]}` : '').filter(Boolean) 
+          : (p.hex ? [`hex: ${p.hex.slice(0,12)}...`] : Object.keys(p).slice(0, 5).map(k => `${k}: ${p[k]}`));
+        if (lines.length) { 
+          tt.innerHTML = `<strong>${topLayerDef.name}</strong><br>` + lines.join(' &bull; '); 
+          tt.style.left = `${e.point.x+10}px`; 
+          tt.style.top = `${e.point.y+10}px`; 
+          tt.style.display = 'block';
+        } else {
+          tt.style.display = 'none';
+        }
+      });
+      
+      map.on('mouseleave', () => { 
+        map.getCanvas().style.cursor = '';
+        tt.style.display = 'none'; 
+      });
+
+      {% if has_tile_layers %}
+      map.on('mousemove', (e) => { 
+        if (!deckOverlay) return;
+        const info = deckOverlay.pickObject({ x: e.point.x, y: e.point.y, radius: 4 });
+        if (info?.object) {
+          const layerId = info.layer?.id?.split('-tiles-')[0];
+          const layerDef = LAYERS_DATA.find(l => l.id === layerId || info.layer?.id?.startsWith(l.id));
+          if (layerDef && layerVisibility[layerDef.id]) {
+            map.getCanvas().style.cursor = 'pointer';
+            const obj = info.object;
+            const p = obj?.properties || obj || {};
+            const cols = layerDef.tooltipColumns || [];
+            const colorAttr = layerDef.hexLayer?.getFillColor?.attr || 'metric';
+            const hexVal = p.hex || obj.hex;
+            const lines = hexVal ? [`hex: ${String(hexVal).slice(0, 12)}...`] : [];
+            
+            if (cols.length) {
+              cols.forEach(col => {
+                const val = p[col] ?? obj[col];
+                if (val !== undefined && val !== null) {
+                  lines.push(`${col}: ${typeof val === 'number' ? val.toFixed(2) : val}`);
+                }
+              });
+            } else if (p[colorAttr] != null || obj[colorAttr] != null) {
+              const val = p[colorAttr] ?? obj[colorAttr];
+              lines.push(`${colorAttr}: ${Number(val).toFixed(2)}`);
+            }
+            
+            if (lines.length) {
+              tt.innerHTML = `<strong>${layerDef.name}</strong><br>` + lines.join(' &bull; ');
+              tt.style.left = `${e.point.x + 10}px`;
+              tt.style.top = `${e.point.y + 10}px`;
+              tt.style.display = 'block';
+            }
+            return;
+          }
+        }
+        if (!map.queryRenderedFeatures(e.point).length) {
+          tt.style.display = 'none';
+          map.getCanvas().style.cursor = '';
+        }
+      });
+      {% endif %}
+    }
+
+    map.on('load', tryInit);
+    map.on('load', () => { [100, 500, 1000].forEach(t => setTimeout(() => map.resize(), t)); });
+    window.addEventListener('resize', () => map.resize());
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => map.resize(), 100); });
+  </script>
+</body>
+</html>
+""").render(
+        mapbox_token=mapbox_token,
+        layers_data=processed_layers,
+        style_url=style_url,
+        center_lng=center_lng,
+        center_lat=center_lat,
+        zoom=zoom,
+        pitch=pitch,
+        bearing=bearing,
+        has_custom_view=has_custom_view,
+        has_tile_layers=has_tile_layers,
+        debug=debug,
+        palettes=sorted(KNOWN_CARTOCOLOR_PALETTES),
+    )
+
+    common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
+    return common.html_to_obj(html)
+
+
 def _deckgl_hex_multi(
     layers: list,
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
