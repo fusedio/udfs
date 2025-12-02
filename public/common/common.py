@@ -427,6 +427,11 @@ def estimate_h3_res(geom=[-180, -90, 180, 90], n_cells=1000):
     res=int(math.ceil(15 - (math.log(area / n_cells) / math.log(7))))
     return min(15, max(res,1))
 
+def get_h3_cell_resolution(hex_id: int = 636217394683708479):
+    """Given a hex cell, returns the H3 Res of the cell"""
+    import h3.api.basic_int as h3
+    return h3.get_resolution(hex_id)
+
 def gdf_to_hex(gdf, res=11, add_latlng_cols=['lat','lng']):
     import pandas as pd
     con = duckdb_connect()
