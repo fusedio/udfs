@@ -281,7 +281,10 @@ def deckgl_map(
   </script>
   <style>
     html, body, #map { margin:0; height:100%; width:100%; background:#000; }
-    .mapboxgl-popup-content { font-family: monospace; font-size: 12px; background: rgba(0,0,0,0.85); color:#fff; padding:6px 8px; border-radius:6px; }
+    .mapboxgl-popup-content { font-family: Inter,'SF Pro Display','Segoe UI',sans-serif; font-size: 12px; background: rgba(15,15,15,0.95); color:#fff; padding:10px 14px; border-radius:6px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 4px 16px rgba(0,0,0,0.4); max-width:320px; }
+    .mapboxgl-popup-content .tt-row { display:flex; justify-content:space-between; padding:3px 0; gap:12px; }
+    .mapboxgl-popup-content .tt-key { color:rgba(255,255,255,0.6); font-size:11px; }
+    .mapboxgl-popup-content .tt-val { color:#fff; font-weight:500; text-align:right; max-width:180px; word-break:break-word; }
     .color-legend { position:fixed; left:12px; bottom:12px; background:rgba(15,15,15,0.9); color:#fff; padding:8px; border-radius:4px; font-size:11px; display:none; z-index:30; min-width:140px; border:1px solid rgba(255,255,255,0.08); }
     .color-legend .legend-gradient { height:12px; border-radius:3px; border:1px solid rgba(255,255,255,0.06); margin-bottom:6px; }
     .color-legend .legend-labels { display:flex; justify-content:space-between; color:#ccc; font-size:10px;}
@@ -423,7 +426,7 @@ map.on('load', init);
 // Tooltip
 let popup = null, lastKey = null;
 function fmt(v) { return v==null?'':typeof v==='number'?(!isFinite(v)?'':v.toFixed(2)):Array.isArray(v)?v.join(', '):String(v); }
-function tip(p) { const k = TOOLTIP_COLUMNS.length ? TOOLTIP_COLUMNS : Object.keys(p||{}); return k.map(k=>p?.[k]!=null&&String(p[k])!=='null'?`${k}: ${fmt(p[k])}`:'').filter(Boolean).join(' • '); }
+function tip(p) { const k = TOOLTIP_COLUMNS.length ? TOOLTIP_COLUMNS : Object.keys(p||{}); return k.map(k=>p?.[k]!=null&&String(p[k])!=='null'?`<span class="tt-row"><span class="tt-key">${k}</span><span class="tt-val">${fmt(p[k])}</span></span>`:'').filter(Boolean).join(''); }
 function getLayers() { return ['gdf-circle','gdf-fill','gdf-line','gdf-line-only'].filter(id=>{ try{return map.getLayer(id);}catch(e){return false;} }); }
 
 map.on('mousemove', e => {
@@ -552,7 +555,6 @@ def deckgl_layers(
     layers: list,
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     basemap: str = "dark",
-    debug: bool = False,
 ):
     """
     Render mixed hex and vector layers on a single interactive map.
@@ -569,7 +571,6 @@ def deckgl_layers(
             - "name": Display name for layer toggle (optional)
         mapbox_token: Mapbox access token.
         basemap: 'dark', 'satellite', or custom Mapbox style URL.
-        debug: Show debug panel for config tweaking (hex layers only for now).
     
     Examples:
         # Mix hex and vector layers
@@ -809,7 +810,11 @@ def deckgl_layers(
   <style>
     html, body { margin:0; height:100%; width:100%; display:flex; overflow:hidden; }
     #map { flex:1; height:100%; }
-    #tooltip { position:absolute; pointer-events:none; background:rgba(0,0,0,0.8); color:#fff; padding:6px 10px; border-radius:4px; font-size:12px; display:none; z-index:6; max-width:300px; }
+    #tooltip { position:absolute; pointer-events:none; background:rgba(15,15,15,0.95); color:#fff; padding:10px 14px; border-radius:6px; font-size:12px; display:none; z-index:6; max-width:320px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 4px 16px rgba(0,0,0,0.4); font-family:Inter,'SF Pro Display','Segoe UI',sans-serif; }
+    #tooltip .tt-title { display:block; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.15); font-size:11px; letter-spacing:0.3px; text-transform:uppercase; color:#E8FF59; }
+    #tooltip .tt-row { display:flex; justify-content:space-between; padding:3px 0; gap:12px; }
+    #tooltip .tt-key { color:rgba(255,255,255,0.6); font-size:11px; }
+    #tooltip .tt-val { color:#fff; font-weight:500; text-align:right; max-width:180px; word-break:break-word; }
     
     /* Layer Toggle Panel */
     #layer-panel {
@@ -1507,10 +1512,10 @@ def deckgl_layers(
         const p = topFeature.properties;
         const cols = topLayerDef.tooltipColumns || [];
         const lines = cols.length 
-          ? cols.map(k => p[k] != null ? `${k}: ${typeof p[k]==='number'?p[k].toFixed(2):p[k]}` : '').filter(Boolean) 
-          : (p.hex ? [`hex: ${p.hex.slice(0,12)}...`] : Object.keys(p).slice(0, 5).map(k => `${k}: ${p[k]}`));
+          ? cols.map(k => p[k] != null ? `<span class="tt-row"><span class="tt-key">${k}</span><span class="tt-val">${typeof p[k]==='number'?p[k].toFixed(2):p[k]}</span></span>` : '').filter(Boolean) 
+          : (p.hex ? [`<span class="tt-row"><span class="tt-key">hex</span><span class="tt-val">${p.hex.slice(0,12)}...</span></span>`] : Object.keys(p).slice(0, 5).map(k => `<span class="tt-row"><span class="tt-key">${k}</span><span class="tt-val">${p[k]}</span></span>`));
         if (lines.length) { 
-          tt.innerHTML = `<strong>${topLayerDef.name}</strong><br>` + lines.join(' &bull; '); 
+          tt.innerHTML = `<strong class="tt-title">${topLayerDef.name}</strong>` + lines.join(''); 
           tt.style.left = `${e.point.x+10}px`; 
           tt.style.top = `${e.point.y+10}px`; 
           tt.style.display = 'block';
@@ -1538,22 +1543,22 @@ def deckgl_layers(
             const cols = layerDef.tooltipColumns || [];
             const colorAttr = layerDef.hexLayer?.getFillColor?.attr || 'metric';
             const hexVal = p.hex || obj.hex;
-            const lines = hexVal ? [`hex: ${String(hexVal).slice(0, 12)}...`] : [];
+            const lines = hexVal ? [`<span class="tt-row"><span class="tt-key">hex</span><span class="tt-val">${String(hexVal).slice(0, 12)}...</span></span>`] : [];
             
             if (cols.length) {
               cols.forEach(col => {
                 const val = p[col] ?? obj[col];
                 if (val !== undefined && val !== null) {
-                  lines.push(`${col}: ${typeof val === 'number' ? val.toFixed(2) : val}`);
+                  lines.push(`<span class="tt-row"><span class="tt-key">${col}</span><span class="tt-val">${typeof val === 'number' ? val.toFixed(2) : val}</span></span>`);
                 }
               });
             } else if (p[colorAttr] != null || obj[colorAttr] != null) {
               const val = p[colorAttr] ?? obj[colorAttr];
-              lines.push(`${colorAttr}: ${Number(val).toFixed(2)}`);
+              lines.push(`<span class="tt-row"><span class="tt-key">${colorAttr}</span><span class="tt-val">${Number(val).toFixed(2)}</span></span>`);
             }
             
             if (lines.length) {
-              tt.innerHTML = `<strong>${layerDef.name}</strong><br>` + lines.join(' &bull; ');
+              tt.innerHTML = `<strong class="tt-title">${layerDef.name}</strong>` + lines.join('');
               tt.style.left = `${e.point.x + 10}px`;
               tt.style.top = `${e.point.y + 10}px`;
               tt.style.display = 'block';
@@ -1587,8 +1592,6 @@ def deckgl_layers(
         bearing=bearing,
         has_custom_view=has_custom_view,
         has_tile_layers=has_tile_layers,
-        debug=debug,
-        palettes=sorted(KNOWN_CARTOCOLOR_PALETTES),
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
@@ -1736,7 +1739,11 @@ def _deckgl_hex_multi(
   <style>
     html, body { margin:0; height:100%; width:100%; display:flex; overflow:hidden; }
     #map { flex:1; height:100%; }
-    #tooltip { position:absolute; pointer-events:none; background:rgba(0,0,0,0.7); color:#fff; padding:4px 8px; border-radius:4px; font-size:12px; display:none; z-index:6; }
+    #tooltip { position:absolute; pointer-events:none; background:rgba(15,15,15,0.95); color:#fff; padding:10px 14px; border-radius:6px; font-size:12px; display:none; z-index:6; max-width:320px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 4px 16px rgba(0,0,0,0.4); font-family:Inter,'SF Pro Display','Segoe UI',sans-serif; }
+    #tooltip .tt-title { display:block; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.15); font-size:11px; letter-spacing:0.3px; text-transform:uppercase; color:#E8FF59; }
+    #tooltip .tt-row { display:flex; justify-content:space-between; padding:3px 0; gap:12px; }
+    #tooltip .tt-key { color:rgba(255,255,255,0.6); font-size:11px; }
+    #tooltip .tt-val { color:#fff; font-weight:500; text-align:right; max-width:180px; word-break:break-word; }
     
     /* Layer Toggle Panel */
     #layer-panel {
@@ -2496,10 +2503,10 @@ def _deckgl_hex_multi(
         const p = topFeature.properties;
         const cols = topLayerDef.tooltipColumns || [];
         const lines = cols.length 
-          ? cols.map(k => p[k] != null ? `${k}: ${typeof p[k]==='number'?p[k].toFixed(2):p[k]}` : '').filter(Boolean) 
-          : (p.hex ? [`hex: ${p.hex.slice(0,12)}...`] : []);
+          ? cols.map(k => p[k] != null ? `<span class="tt-row"><span class="tt-key">${k}</span><span class="tt-val">${typeof p[k]==='number'?p[k].toFixed(2):p[k]}</span></span>` : '').filter(Boolean) 
+          : (p.hex ? [`<span class="tt-row"><span class="tt-key">hex</span><span class="tt-val">${p.hex.slice(0,12)}...</span></span>`] : []);
         if (lines.length) { 
-          tt.innerHTML = `<strong>${topLayerDef.name}</strong><br>` + lines.join(' &bull; '); 
+          tt.innerHTML = `<strong class="tt-title">${topLayerDef.name}</strong>` + lines.join(''); 
           tt.style.left = `${e.point.x+10}px`; 
           tt.style.top = `${e.point.y+10}px`; 
         tt.style.display = 'block';
@@ -2530,22 +2537,22 @@ def _deckgl_hex_multi(
             const cols = layerDef.tooltipColumns || [];
             const colorAttr = layerDef.hexLayer?.getFillColor?.attr || 'metric';
             const hexVal = p.hex || obj.hex;
-            const lines = hexVal ? [`hex: ${String(hexVal).slice(0, 12)}...`] : [];
+            const lines = hexVal ? [`<span class="tt-row"><span class="tt-key">hex</span><span class="tt-val">${String(hexVal).slice(0, 12)}...</span></span>`] : [];
             
             if (cols.length) {
               cols.forEach(col => {
                 const val = p[col] ?? obj[col];
                 if (val !== undefined && val !== null) {
-                  lines.push(`${col}: ${typeof val === 'number' ? val.toFixed(2) : val}`);
+                  lines.push(`<span class="tt-row"><span class="tt-key">${col}</span><span class="tt-val">${typeof val === 'number' ? val.toFixed(2) : val}</span></span>`);
                 }
               });
             } else if (p[colorAttr] != null || obj[colorAttr] != null) {
               const val = p[colorAttr] ?? obj[colorAttr];
-              lines.push(`${colorAttr}: ${Number(val).toFixed(2)}`);
+              lines.push(`<span class="tt-row"><span class="tt-key">${colorAttr}</span><span class="tt-val">${Number(val).toFixed(2)}</span></span>`);
             }
             
             if (lines.length) {
-              tt.innerHTML = `<strong>${layerDef.name}</strong><br>` + lines.join(' &bull; ');
+              tt.innerHTML = `<strong class="tt-title">${layerDef.name}</strong>` + lines.join('');
               tt.style.left = `${e.point.x + 10}px`;
               tt.style.top = `${e.point.y + 10}px`;
               tt.style.display = 'block';
