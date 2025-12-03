@@ -499,6 +499,7 @@ def deckgl_hex(
     debug: bool = False,
     tile_url: str = None,
     layers: list = None,
+    highlight_on_click: bool = True,
 ):
     """
     Render H3 hexagon data as an interactive map.
@@ -548,6 +549,7 @@ def deckgl_hex(
         mapbox_token=mapbox_token,
         basemap=basemap,
         debug=debug,
+        highlight_on_click=highlight_on_click,
     )
 
 
@@ -555,6 +557,7 @@ def deckgl_layers(
     layers: list,
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     basemap: str = "dark",
+    highlight_on_click: bool = True,
 ):
     """
     Render mixed hex and vector layers on a single interactive map.
@@ -1578,6 +1581,74 @@ def deckgl_layers(
     map.on('load', () => { [100, 500, 1000].forEach(t => setTimeout(() => map.resize(), t)); });
     window.addEventListener('resize', () => map.resize());
     document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => map.resize(), 100); });
+    
+    {% if highlight_on_click %}
+    // Click-to-highlight
+    (function() {
+      const HL_RGBA = 'rgba(255,255,0,1)', HL_LW = 3;
+      let selected = null, added = false;
+      
+      function toH3(hex) {
+        if (!hex) return null;
+        try {
+          if (typeof hex === 'string') return /^\d+$/.test(hex) ? BigInt(hex).toString(16) : hex.toLowerCase();
+          return BigInt(Math.trunc(hex)).toString(16);
+        } catch(e) { return null; }
+      }
+      
+      function highlight(hexId) {
+        let geojson = { type: 'FeatureCollection', features: [] };
+        if (hexId && typeof h3 !== 'undefined') {
+          try {
+            const id = toH3(hexId);
+            if (id && h3.isValidCell(id)) {
+              const b = h3.cellToBoundary(id).map(([lat,lng]) => [lng,lat]);
+              b.push(b[0]);
+              geojson.features.push({ type:'Feature', geometry:{ type:'Polygon', coordinates:[b] } });
+            }
+          } catch(e) {}
+        }
+        if (!added) {
+          map.addSource('hex-hl', { type:'geojson', data:geojson });
+          map.addLayer({ id:'hex-hl-fill', type:'fill', source:'hex-hl', paint:{'fill-color':HL_RGBA,'fill-opacity':0.2} });
+          map.addLayer({ id:'hex-hl-line', type:'line', source:'hex-hl', paint:{'line-color':HL_RGBA,'line-width':HL_LW} });
+          added = true;
+        } else map.getSource('hex-hl').setData(geojson);
+        selected = hexId;
+      }
+      
+      function getLayers() {
+        const layers = [];
+        if (typeof LAYERS_DATA !== 'undefined') LAYERS_DATA.forEach(l => {
+          if (l.isTileLayer) return;
+          const ids = l.layerType === 'vector' 
+            ? [`${l.id}-fill`, `${l.id}-circle`, `${l.id}-line`]
+            : [l.hexLayer?.extruded ? `${l.id}-extrusion` : `${l.id}-fill`];
+          ids.forEach(id => { try { if (map.getLayer(id)) layers.push(id); } catch(e){} });
+        });
+        ['gdf-fill','gdf-circle','hex-fill'].forEach(id => { try { if (map.getLayer(id)) layers.push(id); } catch(e){} });
+        return layers;
+      }
+      
+      map.on('load', () => {
+        map.on('click', e => {
+          const queryLayers = getLayers();
+          if (!queryLayers.length) return;
+          let feats = [];
+          try { feats = map.queryRenderedFeatures(e.point, { layers: queryLayers }) || []; } catch(err) {}
+          const hex = feats?.[0]?.properties?.hex || feats?.[0]?.properties?.h3;
+          if (hex) { highlight(hex); }
+          else if (typeof deckOverlay !== 'undefined') {
+            const info = deckOverlay?.pickObject?.({ x:e.point.x, y:e.point.y, radius:4 });
+            const h = info?.object?.properties?.hex || info?.object?.hex;
+            if (h) { highlight(h); }
+            else if (selected) { highlight(null); }
+          }
+          else if (selected) { highlight(null); }
+        });
+      });
+    })();
+    {% endif %}
   </script>
 </body>
 </html>
@@ -1592,6 +1663,7 @@ def deckgl_layers(
         bearing=bearing,
         has_custom_view=has_custom_view,
         has_tile_layers=has_tile_layers,
+        highlight_on_click=highlight_on_click,
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
@@ -1603,6 +1675,7 @@ def _deckgl_hex_multi(
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     basemap: str = "dark",
     debug: bool = False,
+    highlight_on_click: bool = True,
 ):
     """
     Unified implementation for rendering H3 hexagon layers.
@@ -2574,6 +2647,72 @@ def _deckgl_hex_multi(
     window.addEventListener('resize', () => map.resize());
     document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => map.resize(), 100); });
     
+    {% if highlight_on_click %}
+    // Click-to-highlight
+    (function() {
+      const HL_RGBA = 'rgba(255,255,0,1)', HL_LW = 3;
+      let selected = null, added = false;
+      
+      function toH3(hex) {
+        if (!hex) return null;
+        try {
+          if (typeof hex === 'string') return /^\d+$/.test(hex) ? BigInt(hex).toString(16) : hex.toLowerCase();
+          return BigInt(Math.trunc(hex)).toString(16);
+        } catch(e) { return null; }
+      }
+      
+      function highlight(hexId) {
+        let geojson = { type: 'FeatureCollection', features: [] };
+        if (hexId && typeof h3 !== 'undefined') {
+          try {
+            const id = toH3(hexId);
+            if (id && h3.isValidCell(id)) {
+              const b = h3.cellToBoundary(id).map(([lat,lng]) => [lng,lat]);
+              b.push(b[0]);
+              geojson.features.push({ type:'Feature', geometry:{ type:'Polygon', coordinates:[b] } });
+            }
+          } catch(e) {}
+        }
+        if (!added) {
+          map.addSource('hex-hl', { type:'geojson', data:geojson });
+          map.addLayer({ id:'hex-hl-fill', type:'fill', source:'hex-hl', paint:{'fill-color':HL_RGBA,'fill-opacity':0.2} });
+          map.addLayer({ id:'hex-hl-line', type:'line', source:'hex-hl', paint:{'line-color':HL_RGBA,'line-width':HL_LW} });
+          added = true;
+        } else map.getSource('hex-hl').setData(geojson);
+        selected = hexId;
+      }
+      
+      function getLayers() {
+        const layers = [];
+        if (typeof LAYERS_DATA !== 'undefined') LAYERS_DATA.forEach(l => {
+          if (l.isTileLayer) return;
+          const id = l.hexLayer?.extruded ? `${l.id}-extrusion` : `${l.id}-fill`;
+          try { if (map.getLayer(id)) layers.push(id); } catch(e){}
+        });
+        ['gdf-fill','gdf-circle','hex-fill'].forEach(id => { try { if (map.getLayer(id)) layers.push(id); } catch(e){} });
+        return layers;
+      }
+      
+      map.on('load', () => {
+        map.on('click', e => {
+          const queryLayers = getLayers();
+          if (!queryLayers.length) return;
+          let feats = [];
+          try { feats = map.queryRenderedFeatures(e.point, { layers: queryLayers }) || []; } catch(err) {}
+          const hex = feats?.[0]?.properties?.hex || feats?.[0]?.properties?.h3;
+          if (hex) { highlight(hex); }
+          else if (typeof deckOverlay !== 'undefined') {
+            const info = deckOverlay?.pickObject?.({ x:e.point.x, y:e.point.y, radius:4 });
+            const h = info?.object?.properties?.hex || info?.object?.hex;
+            if (h) { highlight(h); }
+            else if (selected) { highlight(null); }
+          }
+          else if (selected) { highlight(null); }
+        });
+      });
+    })();
+    {% endif %}
+    
     {% if debug %}
     // Debug Panel Logic
     const DEBUG_MODE = true;
@@ -2931,6 +3070,7 @@ def _deckgl_hex_multi(
         has_custom_view=has_custom_view,
         has_tile_layers=has_tile_layers,
         debug=debug,
+        highlight_on_click=highlight_on_click,
         palettes=sorted(KNOWN_CARTOCOLOR_PALETTES),
     )
 
@@ -3613,6 +3753,114 @@ def enable_hex_click_broadcast(
         common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
         return common.html_to_obj(injected_html)
     return injected_html
+
+
+def enable_hex_click_highlight(
+    html_input,
+    highlight_color: list = [255, 255, 0, 255],
+    highlight_line_width: int = 3,
+):
+    """
+    Enable click-to-highlight on hex layers. Click a hex to highlight it, click elsewhere to clear.
+    
+    Args:
+        html_input: HTML from deckgl_hex/deckgl_layers
+        highlight_color: RGBA color [r, g, b, a] (0-255)
+        highlight_line_width: Outline width in pixels
+    
+    Usage:
+        html = enable_hex_click_highlight(deckgl_hex(df, config))
+    """
+    import json
+    
+    html_string = _normalize_html_input(html_input)
+    response_mode = not isinstance(html_input, str)
+    
+    r, g, b = highlight_color[:3]
+    a = highlight_color[3] / 255 if len(highlight_color) > 3 else 1
+    rgba = f"rgba({r},{g},{b},{a})"
+    
+    script = f"""
+<script>
+(function() {{
+  if (typeof map === 'undefined') return;
+  const RGBA = '{rgba}', LW = {highlight_line_width};
+  let selected = null, added = false;
+  
+  function toH3(hex) {{
+    if (!hex) return null;
+    try {{
+      if (typeof hex === 'string') return /^\\d+$/.test(hex) ? BigInt(hex).toString(16) : hex.toLowerCase();
+      return BigInt(Math.trunc(hex)).toString(16);
+    }} catch(e) {{ return null; }}
+  }}
+  
+  function highlight(hexId) {{
+    let geojson = {{ type: 'FeatureCollection', features: [] }};
+    if (hexId && typeof h3 !== 'undefined') {{
+      try {{
+        const id = toH3(hexId);
+        if (id && h3.isValidCell(id)) {{
+          const b = h3.cellToBoundary(id).map(([lat,lng]) => [lng,lat]);
+          b.push(b[0]);
+          geojson.features.push({{ type:'Feature', geometry:{{ type:'Polygon', coordinates:[b] }} }});
+        }}
+      }} catch(e) {{}}
+    }}
+    if (!added) {{
+      map.addSource('hex-hl', {{ type:'geojson', data:geojson }});
+      map.addLayer({{ id:'hex-hl-fill', type:'fill', source:'hex-hl', paint:{{'fill-color':RGBA,'fill-opacity':0.25}} }});
+      map.addLayer({{ id:'hex-hl-line', type:'line', source:'hex-hl', paint:{{'line-color':RGBA,'line-width':LW}} }});
+      added = true;
+    }} else map.getSource('hex-hl').setData(geojson);
+    selected = hexId;
+  }}
+  
+  function getLayers() {{
+    const layers = [];
+    if (typeof LAYERS_DATA !== 'undefined') LAYERS_DATA.forEach(l => {{
+      if (!l.isTileLayer) layers.push(l.hexLayer?.extruded ? `${{l.id}}-extrusion` : `${{l.id}}-fill`);
+    }});
+    ['gdf-fill','gdf-circle','hex-fill'].forEach(id => {{ if (map.getLayer(id)) layers.push(id); }});
+    return layers;
+  }}
+  
+  map.on('load', () => {{
+    map.on('click', e => {{
+      const feats = map.queryRenderedFeatures(e.point, {{ layers: getLayers() }});
+      const hex = feats?.[0]?.properties?.hex || feats?.[0]?.properties?.h3;
+      if (hex) {{ highlight(hex); console.log('[highlight]', hex); }}
+      else if (typeof deckOverlay !== 'undefined') {{
+        const info = deckOverlay?.pickObject?.({{ x:e.point.x, y:e.point.y, radius:4 }});
+        const h = info?.object?.properties?.hex || info?.object?.hex;
+        if (h) {{ highlight(h); console.log('[highlight]', h); }}
+        else if (selected) {{ highlight(null); }}
+      }}
+      else if (selected) {{ highlight(null); }}
+    }});
+  }});
+}})();
+</script>
+"""
+    
+    injected = html_string.replace("</body>", f"{script}</body>") if "</body>" in html_string else html_string + script
+    if response_mode:
+        common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
+        return common.html_to_obj(injected)
+    return injected
+
+
+def _normalize_html_input(html_input):
+    """Extract HTML string from various input types."""
+    if isinstance(html_input, str):
+        return html_input
+    for attr in ['text', 'data', 'body']:
+        val = getattr(html_input, attr, None)
+        if isinstance(val, str):
+            return val
+        if isinstance(val, (bytes, bytearray)):
+            return val.decode('utf-8', errors='ignore')
+    raise TypeError("html_input must be str or response-like object")
 
 
 def enable_map_sync(html_input, channel: str = "default"):
