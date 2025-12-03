@@ -4673,7 +4673,7 @@ def folium_raster(data, bounds, opacity=0.7, tiles="CartoDB dark_matter"):
     """
     west, south, east, north = bounds
 
-    # shape handling (no normalization)
+    # shape handling (no normalizon)
     if data.ndim == 2:
         rgb = np.stack([data, data, data], axis=-1)
     elif data.ndim == 3:
