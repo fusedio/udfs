@@ -1132,7 +1132,7 @@ def deckgl_layers(
       return out;
     }
 
-    function buildTileLayer(layerDef) {
+    function buildTileLayer(layerDef, beforeId = null) {
       const tileUrl = layerDef.tileUrl;
       const tileCfg = layerDef.tileLayerConfig || {};
       const rawHexLayer = layerDef.hexLayer || {};
@@ -1142,7 +1142,7 @@ def deckgl_layers(
       const isExtruded = rawHexLayer.extruded === true;
       const elevationScale = rawHexLayer.elevationScale || 1;
 
-      return new TileLayer({
+      const layerProps = {
         id: `${layerDef.id}-tiles`,
         data: tileUrl,
         tileSize: tileCfg.tileSize ?? 256,
@@ -1185,14 +1185,19 @@ def deckgl_layers(
           }
           return null;
         }
-      });
+      };
+      
+      // Add beforeId for z-order control in interleaved mode
+      if (beforeId) {
+        layerProps.beforeId = beforeId;
+      }
+      
+      return new TileLayer(layerProps);
     }
 
     function rebuildDeckOverlay() {
-      const deckLayers = [...LAYERS_DATA]
-        .reverse()
-        .filter(l => l.layerType === 'hex' && l.isTileLayer && layerVisibility[l.id])
-        .map(l => buildTileLayer(l));
+      const tileLayers = LAYERS_DATA
+        .filter(l => l.layerType === 'hex' && l.isTileLayer && layerVisibility[l.id]);
       
       if (deckOverlay) {
         try {
@@ -1202,12 +1207,42 @@ def deckgl_layers(
         deckOverlay = null;
       }
       
-      if (deckLayers.length > 0) {
-        deckOverlay = new MapboxOverlay({
-          interleaved: false,
-          layers: deckLayers
-        });
-        map.addControl(deckOverlay);
+      if (tileLayers.length === 0) return;
+      
+      // Determine the bottom-most Mapbox layer belonging to our static layers
+      const allMapboxLayers = map.getStyle()?.layers || [];
+      let bottomMostLayerId = null;
+      for (const mapLayer of allMapboxLayers) {
+        const isOurLayer = LAYERS_DATA.some(l => 
+          !l.isTileLayer && (
+            mapLayer.id === `${l.id}-fill` ||
+            mapLayer.id === `${l.id}-outline` ||
+            mapLayer.id === `${l.id}-line` ||
+            mapLayer.id === `${l.id}-circle` ||
+            mapLayer.id === `${l.id}-extrusion`
+          )
+        );
+        if (isOurLayer) {
+          bottomMostLayerId = mapLayer.id;
+          break;
+        }
+      }
+      
+      // Reverse to keep UI order consistent (top of menu renders on top)
+      const deckLayers = tileLayers
+        .slice()
+        .reverse()
+        .map(l => buildTileLayer(l));
+      
+      deckOverlay = new MapboxOverlay({
+        interleaved: true,
+        layers: deckLayers
+      });
+      map.addControl(deckOverlay);
+      
+      const overlayLayerId = deckOverlay?._mapboxLayer?.id;
+      if (overlayLayerId && bottomMostLayerId) {
+        try { map.moveLayer(overlayLayerId, bottomMostLayerId); } catch (e) {}
       }
     }
     {% endif %}
@@ -2361,7 +2396,7 @@ def _deckgl_hex_multi(
       return out;
     }
 
-    function buildTileLayer(layerDef) {
+    function buildTileLayer(layerDef, beforeId = null) {
       const tileUrl = layerDef.tileUrl;
       const tileCfg = layerDef.tileLayerConfig || {};
       const rawHexLayer = layerDef.hexLayer || {};
@@ -2382,7 +2417,7 @@ def _deckgl_hex_multi(
         elevationAttr = rawHexLayer.getFillColor.attr;
       }
 
-      return new TileLayer({
+      const layerProps = {
         id: `${layerDef.id}-tiles`,
         data: tileUrl,
         tileSize: tileCfg.tileSize ?? 256,
@@ -2436,15 +2471,18 @@ def _deckgl_hex_multi(
           }
           return null;
         }
-      });
+      };
+      
+      // Add beforeId for z-order control in interleaved mode
+      if (beforeId) {
+        layerProps.beforeId = beforeId;
+      }
+      
+      return new TileLayer(layerProps);
     }
 
     function rebuildDeckOverlay() {
-      // Only include visible tile layers - reverse order so first in menu renders on top
-      const deckLayers = [...LAYERS_DATA]
-        .reverse()
-        .filter(l => l.isTileLayer && layerVisibility[l.id])
-        .map(l => buildTileLayer(l));
+      const tileLayers = LAYERS_DATA.filter(l => l.isTileLayer && layerVisibility[l.id]);
       
       if (deckOverlay) {
         try {
@@ -2454,12 +2492,38 @@ def _deckgl_hex_multi(
         deckOverlay = null;
       }
       
-      if (deckLayers.length > 0) {
-        deckOverlay = new MapboxOverlay({
-      interleaved: false,
-          layers: deckLayers
-        });
-        map.addControl(deckOverlay);
+      if (tileLayers.length === 0) return;
+      
+      const allMapboxLayers = map.getStyle()?.layers || [];
+      let bottomMostLayerId = null;
+      for (const mapLayer of allMapboxLayers) {
+        const isOurLayer = LAYERS_DATA.some(l =>
+          !l.isTileLayer && (
+            mapLayer.id === `${l.id}-fill` ||
+            mapLayer.id === `${l.id}-outline` ||
+            mapLayer.id === `${l.id}-extrusion`
+          )
+        );
+        if (isOurLayer) {
+          bottomMostLayerId = mapLayer.id;
+          break;
+        }
+      }
+      
+      const deckLayers = tileLayers
+        .slice()
+        .reverse()
+        .map(l => buildTileLayer(l));
+      
+      deckOverlay = new MapboxOverlay({
+        interleaved: true,
+        layers: deckLayers
+      });
+      map.addControl(deckOverlay);
+      
+      const overlayLayerId = deckOverlay?._mapboxLayer?.id;
+      if (overlayLayerId && bottomMostLayerId) {
+        try { map.moveLayer(overlayLayerId, bottomMostLayerId); } catch (e) {}
       }
     }
     {% endif %}
