@@ -656,7 +656,9 @@ def deckgl_layers(
             # Convert dataframe to records (for static layers)
             data_records = []
             if not is_tile_layer and df is not None and hasattr(df, 'to_dict'):
-                data_records = df.to_dict('records')
+                # Drop geometry column - hex layers use hex ID, not geometry
+                df_clean = df.drop(columns=['geometry'], errors='ignore') if hasattr(df, 'drop') else df
+                data_records = df_clean.to_dict('records')
                 for record in data_records:
                     hex_val = record.get('hex') or record.get('h3') or record.get('index') or record.get('id')
                     if hex_val is not None:
@@ -898,6 +900,15 @@ def deckgl_layers(
     .legend-layer .legend-title .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
     .legend-layer .legend-gradient { height: 10px; border-radius: 2px; margin-bottom: 4px; border: 1px solid rgba(255,255,255,0.2); }
     .legend-layer .legend-labels { display: flex; justify-content: space-between; font-size: 10px; color: #ccc; }
+    .legend-layer .legend-categories { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; max-height: 440px; overflow-y: scroll; padding-right: 4px; }
+    .legend-layer .legend-categories::-webkit-scrollbar { width: 4px; }
+    .legend-layer .legend-categories::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 2px; }
+    .legend-layer .legend-categories::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+    .legend-layer .legend-categories::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+    .legend-layer .legend-cat-item { display: flex; align-items: center; gap: 8px; font-size: 11px; flex-shrink: 0; }
+    .legend-layer .legend-cat-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.2); flex-shrink: 0; }
+    .legend-layer .legend-cat-label { color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+    .legend-layer .legend-cat-more { font-size: 10px; color: #888; font-style: italic; margin-top: 2px; }
   </style>
 </head>
 <body>
@@ -960,8 +971,51 @@ def deckgl_layers(
       return pal[best] ? [...pal[best]] : null;
     }
 
-    function buildColorExpr(cfg) {
-      if (!cfg || cfg['@@function'] !== 'colorContinuous' || !cfg.attr || !cfg.domain?.length) return null;
+    // Extract unique categories from data for an attribute, with optional label mapping
+    function getUniqueCategories(data, attr, labelAttr) {
+      const seen = new Map(); // Map category value -> label
+      (data || []).forEach(d => {
+        const val = d?.[attr] ?? d?.properties?.[attr];
+        if (val != null && val !== '' && val !== 'null') {
+          if (!seen.has(val)) {
+            const label = labelAttr ? (d?.[labelAttr] ?? d?.properties?.[labelAttr] ?? val) : val;
+            seen.set(val, label);
+          }
+        }
+      });
+      // Sort by category value and return {value, label} pairs
+      const sorted = [...seen.entries()].sort((a, b) => {
+        if (typeof a[0] === 'number' && typeof b[0] === 'number') return a[0] - b[0];
+        return String(a[0]).localeCompare(String(b[0]));
+      });
+      return sorted.map(([value, label]) => ({ value, label }));
+    }
+    
+    function buildColorExpr(cfg, data) {
+      if (!cfg || !cfg.attr) return null;
+      
+      // Handle colorCategories
+      if (cfg['@@function'] === 'colorCategories') {
+        // Auto-detect categories from data if not provided
+        let catPairs = cfg.categories 
+          ? cfg.categories.map(c => typeof c === 'object' ? c : { value: c, label: c })
+          : getUniqueCategories(data, cfg.attr, cfg.labelAttr);
+        
+        if (!catPairs.length) return 'rgba(128,128,128,0.5)';
+        
+        const name = cfg.colors || 'Bold';
+        const cols = getPaletteColors(name, Math.max(catPairs.length, 3)) || ['#7F3C8D','#11A579','#3969AC','#F2B701','#E73F74','#80BA5A','#E68310','#008695','#CF1C90','#f97b72'];
+        const fallback = cfg.nullColor ? `rgb(${cfg.nullColor.slice(0,3).join(',')})` : 'rgba(128,128,128,0.5)';
+        const expr = ['match', ['get', cfg.attr]];
+        catPairs.forEach((cat, i) => { expr.push(cat.value); expr.push(cols[i % cols.length]); });
+        expr.push(fallback);
+        // Store detected categories back for legend (with labels)
+        cfg._detectedCategories = catPairs;
+        return expr;
+      }
+      
+      // Handle colorContinuous
+      if (cfg['@@function'] !== 'colorContinuous' || !cfg.domain?.length) return null;
       const [d0, d1] = cfg.domain, rev = d0 > d1, dom = rev ? [d1, d0] : [d0, d1];
       const steps = cfg.steps || 7, name = cfg.colors || 'TealGrn';
       let cols = getPaletteColors(name, steps);
@@ -1178,8 +1232,8 @@ def deckgl_layers(
         if (l.layerType === 'hex') {
           // Hex layer rendering
           const cfg = l.hexLayer || {};
-          const fillColor = Array.isArray(cfg.getFillColor) ? toRgba(cfg.getFillColor, 0.8) : buildColorExpr(cfg.getFillColor) || 'rgba(0,144,255,0.7)';
-          const lineColor = cfg.getLineColor ? (Array.isArray(cfg.getLineColor) ? toRgba(cfg.getLineColor, 1) : buildColorExpr(cfg.getLineColor)) : 'rgba(255,255,255,0.3)';
+          const fillColor = Array.isArray(cfg.getFillColor) ? toRgba(cfg.getFillColor, 0.8) : buildColorExpr(cfg.getFillColor, l.data) || 'rgba(0,144,255,0.7)';
+          const lineColor = cfg.getLineColor ? (Array.isArray(cfg.getLineColor) ? toRgba(cfg.getLineColor, 1) : buildColorExpr(cfg.getLineColor, l.data)) : 'rgba(255,255,255,0.3)';
           const layerOpacity = (typeof cfg.opacity === 'number' && isFinite(cfg.opacity)) ? Math.max(0, Math.min(1, cfg.opacity)) : 0.8;
           
           if (cfg.extruded) {
@@ -1217,8 +1271,9 @@ def deckgl_layers(
           
         } else if (l.layerType === 'vector') {
           // Vector layer rendering
-          const fillColorExpr = l.fillColorConfig?.['@@function'] === 'colorContinuous' ? buildColorExpr(l.fillColorConfig) : (l.fillColorRgba || 'rgba(0,144,255,0.6)');
-          const lineColorExpr = l.lineColorConfig?.['@@function'] === 'colorContinuous' ? buildColorExpr(l.lineColorConfig) : (l.lineColorRgba || 'rgba(100,100,100,0.8)');
+          const vecData = l.geojson?.features?.map(f => f.properties) || [];
+          const fillColorExpr = l.fillColorConfig?.['@@function'] ? buildColorExpr(l.fillColorConfig, vecData) : (l.fillColorRgba || 'rgba(0,144,255,0.6)');
+          const lineColorExpr = l.lineColorConfig?.['@@function'] ? buildColorExpr(l.lineColorConfig, vecData) : (l.lineColorRgba || 'rgba(100,100,100,0.8)');
           const lineW = (typeof l.lineWidth === 'number' && isFinite(l.lineWidth)) ? l.lineWidth : 1;
           const layerOpacity = (typeof l.opacity === 'number' && isFinite(l.opacity)) ? Math.max(0, Math.min(1, l.opacity)) : 0.8;
           
@@ -1367,15 +1422,55 @@ def deckgl_layers(
           const cfg = l.hexLayer || {};
           colorCfg = (cfg.filled === false && cfg.getLineColor) ? cfg.getLineColor : cfg.getFillColor;
         } else if (l.layerType === 'vector') {
-          colorCfg = l.fillColorConfig?.['@@function'] === 'colorContinuous' ? l.fillColorConfig : null;
+          colorCfg = l.fillColorConfig;
         }
         
-        if (!colorCfg || colorCfg['@@function'] !== 'colorContinuous' || !colorCfg.attr || !colorCfg.domain?.length) return;
+        if (!colorCfg || !colorCfg.attr) return;
+        
+        const fnType = colorCfg['@@function'];
+        const paletteName = colorCfg.colors || (fnType === 'colorCategories' ? 'Bold' : 'TealGrn');
+        
+        // Handle categorical legend
+        if (fnType === 'colorCategories') {
+          // Use detected categories or provided ones
+          let catPairs = colorCfg._detectedCategories || colorCfg.categories || [];
+          // Normalize to {value, label} format
+          catPairs = catPairs.map(c => typeof c === 'object' && c.label ? c : { value: c, label: c });
+          if (!catPairs.length) return;
+          
+          let cols = getPaletteColors(paletteName, Math.max(catPairs.length, 3));
+          if (!cols || !cols.length) {
+            cols = ['#7F3C8D','#11A579','#3969AC','#F2B701','#E73F74','#80BA5A','#E68310','#008695','#CF1C90','#f97b72'];
+          }
+          
+          // Use labelAttr name in title if available
+          const titleAttr = colorCfg.labelAttr || colorCfg.attr;
+          
+          html += `
+            <div class="legend-layer">
+              <div class="legend-title">
+                <span class="legend-dot" style="background:${cols[0]};"></span>
+                ${l.name}: ${titleAttr}
+              </div>
+              <div class="legend-categories">
+                ${catPairs.map((cat, i) => `
+                  <div class="legend-cat-item">
+                    <div class="legend-cat-swatch" style="background:${cols[i % cols.length]};"></div>
+                    <span class="legend-cat-label" title="${cat.label}">${cat.label}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+          return;
+        }
+        
+        // Handle continuous legend
+        if (fnType !== 'colorContinuous' || !colorCfg.domain?.length) return;
         
         const [d0, d1] = colorCfg.domain;
         const isReversed = d0 > d1;
         const steps = colorCfg.steps || 7;
-        const paletteName = colorCfg.colors || 'TealGrn';
         
         let cols = getPaletteColors(paletteName, steps);
         if (!cols || !cols.length) {
@@ -1739,7 +1834,9 @@ def _deckgl_hex_multi(
         # Convert dataframe to records (for static layers)
         data_records = []
         if not is_tile_layer and hasattr(df, 'to_dict'):
-            data_records = df.to_dict('records')
+            # Drop geometry column - hex layers use hex ID, not geometry
+            df_clean = df.drop(columns=['geometry'], errors='ignore') if hasattr(df, 'drop') else df
+            data_records = df_clean.to_dict('records')
             for record in data_records:
                 hex_val = record.get('hex') or record.get('h3') or record.get('index') or record.get('id')
                 if hex_val is not None:
@@ -1891,6 +1988,15 @@ def _deckgl_hex_multi(
     .legend-layer .legend-title .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
     .legend-layer .legend-gradient { height: 10px; border-radius: 2px; margin-bottom: 4px; border: 1px solid rgba(255,255,255,0.2); }
     .legend-layer .legend-labels { display: flex; justify-content: space-between; font-size: 10px; color: #ccc; }
+    .legend-layer .legend-categories { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; max-height: 440px; overflow-y: scroll; padding-right: 4px; }
+    .legend-layer .legend-categories::-webkit-scrollbar { width: 4px; }
+    .legend-layer .legend-categories::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 2px; }
+    .legend-layer .legend-categories::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+    .legend-layer .legend-categories::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+    .legend-layer .legend-cat-item { display: flex; align-items: center; gap: 8px; font-size: 11px; flex-shrink: 0; }
+    .legend-layer .legend-cat-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.2); flex-shrink: 0; }
+    .legend-layer .legend-cat-label { color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+    .legend-layer .legend-cat-more { font-size: 10px; color: #888; font-style: italic; margin-top: 2px; }
     
     {% if debug %}
     /* Debug Panel */
@@ -2070,9 +2176,52 @@ def _deckgl_hex_multi(
       return pal[best] ? [...pal[best]] : null;
     }
 
+    // Extract unique categories from data for an attribute, with optional label mapping
+    function getUniqueCategories(data, attr, labelAttr) {
+      const seen = new Map(); // Map category value -> label
+      (data || []).forEach(d => {
+        const val = d?.[attr] ?? d?.properties?.[attr];
+        if (val != null && val !== '' && val !== 'null') {
+          if (!seen.has(val)) {
+            const label = labelAttr ? (d?.[labelAttr] ?? d?.properties?.[labelAttr] ?? val) : val;
+            seen.set(val, label);
+          }
+        }
+      });
+      // Sort by category value and return {value, label} pairs
+      const sorted = [...seen.entries()].sort((a, b) => {
+        if (typeof a[0] === 'number' && typeof b[0] === 'number') return a[0] - b[0];
+        return String(a[0]).localeCompare(String(b[0]));
+      });
+      return sorted.map(([value, label]) => ({ value, label }));
+    }
+    
     // Build color expression
-    function buildColorExpr(cfg) {
-      if (!cfg || cfg['@@function'] !== 'colorContinuous' || !cfg.attr || !cfg.domain?.length) return 'rgba(0,144,255,0.7)';
+    function buildColorExpr(cfg, data) {
+      if (!cfg || !cfg.attr) return 'rgba(0,144,255,0.7)';
+      
+      // Handle colorCategories
+      if (cfg['@@function'] === 'colorCategories') {
+        // Auto-detect categories from data if not provided
+        let catPairs = cfg.categories 
+          ? cfg.categories.map(c => typeof c === 'object' ? c : { value: c, label: c })
+          : getUniqueCategories(data, cfg.attr, cfg.labelAttr);
+        
+        if (!catPairs.length) return 'rgba(128,128,128,0.5)';
+        
+        const name = cfg.colors || 'Bold';
+        const cols = getPaletteColors(name, Math.max(catPairs.length, 3)) || ['#7F3C8D','#11A579','#3969AC','#F2B701','#E73F74','#80BA5A','#E68310','#008695','#CF1C90','#f97b72'];
+        const fallback = cfg.nullColor ? `rgb(${cfg.nullColor.slice(0,3).join(',')})` : 'rgba(128,128,128,0.5)';
+        const expr = ['match', ['get', cfg.attr]];
+        catPairs.forEach((cat, i) => { expr.push(cat.value); expr.push(cols[i % cols.length]); });
+        expr.push(fallback);
+        // Store detected categories back for legend (with labels)
+        cfg._detectedCategories = catPairs;
+        return expr;
+      }
+      
+      // Handle colorContinuous
+      if (cfg['@@function'] !== 'colorContinuous' || !cfg.domain?.length) return 'rgba(0,144,255,0.7)';
       const [d0, d1] = cfg.domain, rev = d0 > d1, dom = rev ? [d1, d0] : [d0, d1];
       const steps = cfg.steps || 7, name = cfg.colors || 'TealGrn';
       let cols = getPaletteColors(name, steps);
@@ -2317,8 +2466,8 @@ def _deckgl_hex_multi(
         map.addSource(l.id, { type: 'geojson', data: geojson });
         
         const cfg = l.hexLayer || {};
-        const fillColor = Array.isArray(cfg.getFillColor) ? toRgba(cfg.getFillColor, 0.8) : buildColorExpr(cfg.getFillColor);
-        const lineColor = cfg.getLineColor ? (Array.isArray(cfg.getLineColor) ? toRgba(cfg.getLineColor, 1) : buildColorExpr(cfg.getLineColor)) : 'rgba(255,255,255,0.3)';
+        const fillColor = Array.isArray(cfg.getFillColor) ? toRgba(cfg.getFillColor, 0.8) : buildColorExpr(cfg.getFillColor, l.data);
+        const lineColor = cfg.getLineColor ? (Array.isArray(cfg.getLineColor) ? toRgba(cfg.getLineColor, 1) : buildColorExpr(cfg.getLineColor, l.data)) : 'rgba(255,255,255,0.3)';
         const layerOpacity = (typeof cfg.opacity === 'number' && isFinite(cfg.opacity)) ? Math.max(0, Math.min(1, cfg.opacity)) : 0.8;
         const visible = layerVisibility[l.id];
         
@@ -2436,14 +2585,53 @@ def _deckgl_hex_multi(
       let html = '';
       visibleLayers.forEach(l => {
         const cfg = l.hexLayer || {};
-        // Use getLineColor for legend when filled is false, otherwise use getFillColor
         const colorCfg = (cfg.filled === false && cfg.getLineColor) ? cfg.getLineColor : cfg.getFillColor;
-        if (!colorCfg || colorCfg['@@function'] !== 'colorContinuous' || !colorCfg.attr || !colorCfg.domain?.length) return;
+        if (!colorCfg || !colorCfg.attr) return;
+        
+        const fnType = colorCfg['@@function'];
+        const paletteName = colorCfg.colors || (fnType === 'colorCategories' ? 'Bold' : 'TealGrn');
+        
+        // Handle categorical legend
+        if (fnType === 'colorCategories') {
+          // Use detected categories or provided ones
+          let catPairs = colorCfg._detectedCategories || colorCfg.categories || [];
+          // Normalize to {value, label} format
+          catPairs = catPairs.map(c => typeof c === 'object' && c.label ? c : { value: c, label: c });
+          if (!catPairs.length) return;
+          
+          let cols = getPaletteColors(paletteName, Math.max(catPairs.length, 3));
+          if (!cols || !cols.length) {
+            cols = ['#7F3C8D','#11A579','#3969AC','#F2B701','#E73F74','#80BA5A','#E68310','#008695','#CF1C90','#f97b72'];
+          }
+          
+          // Use labelAttr name in title if available
+          const titleAttr = colorCfg.labelAttr || colorCfg.attr;
+          
+          html += `
+            <div class="legend-layer">
+              <div class="legend-title">
+                <span class="legend-dot" style="background:${cols[0]};"></span>
+                ${l.name}: ${titleAttr}
+              </div>
+              <div class="legend-categories">
+                ${catPairs.map((cat, i) => `
+                  <div class="legend-cat-item">
+                    <div class="legend-cat-swatch" style="background:${cols[i % cols.length]};"></div>
+                    <span class="legend-cat-label" title="${cat.label}">${cat.label}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+          return;
+        }
+        
+        // Handle continuous legend
+        if (fnType !== 'colorContinuous' || !colorCfg.domain?.length) return;
         
         const [d0, d1] = colorCfg.domain;
         const isReversed = d0 > d1;
         const steps = colorCfg.steps || 7;
-        const paletteName = colorCfg.colors || 'TealGrn';
         
         let cols = getPaletteColors(paletteName, steps);
         if (!cols || !cols.length) {
@@ -2985,7 +3173,8 @@ def _deckgl_hex_multi(
       
       const isFilled = newHex.filled !== false;
       const colorCfg = isFilled ? newHex.getFillColor : newHex.getLineColor;
-      const colorExpr = buildColorExpr(colorCfg);
+      const layer = LAYERS_DATA[activeLayerIdx];
+      const colorExpr = buildColorExpr(colorCfg, layer?.data);
       
       if (wasExtruded !== isExtruded || wasFilled !== isFilled) {
         // Mode changed - rebuild layers
@@ -3819,21 +4008,26 @@ def enable_hex_click_highlight(
   function getLayers() {{
     const layers = [];
     if (typeof LAYERS_DATA !== 'undefined') LAYERS_DATA.forEach(l => {{
-      if (!l.isTileLayer) layers.push(l.hexLayer?.extruded ? `${{l.id}}-extrusion` : `${{l.id}}-fill`);
+      if (l.isTileLayer) return;
+      const id = l.hexLayer?.extruded ? `${{l.id}}-extrusion` : `${{l.id}}-fill`;
+      try {{ if (map.getLayer(id)) layers.push(id); }} catch(e) {{}}
     }});
-    ['gdf-fill','gdf-circle','hex-fill'].forEach(id => {{ if (map.getLayer(id)) layers.push(id); }});
+    ['gdf-fill','gdf-circle','hex-fill'].forEach(id => {{ try {{ if (map.getLayer(id)) layers.push(id); }} catch(e) {{}} }});
     return layers;
   }}
   
   map.on('load', () => {{
     map.on('click', e => {{
-      const feats = map.queryRenderedFeatures(e.point, {{ layers: getLayers() }});
+      const queryLayers = getLayers();
+      if (!queryLayers.length) return;
+      let feats = [];
+      try {{ feats = map.queryRenderedFeatures(e.point, {{ layers: queryLayers }}) || []; }} catch(err) {{}}
       const hex = feats?.[0]?.properties?.hex || feats?.[0]?.properties?.h3;
-      if (hex) {{ highlight(hex); console.log('[highlight]', hex); }}
+      if (hex) {{ highlight(hex); }}
       else if (typeof deckOverlay !== 'undefined') {{
         const info = deckOverlay?.pickObject?.({{ x:e.point.x, y:e.point.y, radius:4 }});
         const h = info?.object?.properties?.hex || info?.object?.hex;
-        if (h) {{ highlight(h); console.log('[highlight]', h); }}
+        if (h) {{ highlight(h); }}
         else if (selected) {{ highlight(null); }}
       }}
       else if (selected) {{ highlight(null); }}
