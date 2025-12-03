@@ -1232,7 +1232,7 @@ def deckgl_layers(
       const deckLayers = tileLayers
         .slice()
         .reverse()
-        .map(l => buildTileLayer(l));
+        .map(l => buildTileLayer(l, bottomMostLayerId));
       
       deckOverlay = new MapboxOverlay({
         interleaved: true,
@@ -1240,9 +1240,20 @@ def deckgl_layers(
       });
       map.addControl(deckOverlay);
       
-      const overlayLayerId = deckOverlay?._mapboxLayer?.id;
-      if (overlayLayerId && bottomMostLayerId) {
-        try { map.moveLayer(overlayLayerId, bottomMostLayerId); } catch (e) {}
+      if (bottomMostLayerId) {
+        const moveDeckLayers = () => {
+          deckLayers.forEach(layer => {
+            const layerId = layer?.id || layer?.props?.id;
+            if (!layerId) return;
+            try {
+              if (map.getLayer(layerId)) {
+                map.moveLayer(layerId, bottomMostLayerId);
+              }
+            } catch (e) {}
+          });
+        };
+        setTimeout(moveDeckLayers, 0);
+        map.once('idle', moveDeckLayers);
       }
     }
     {% endif %}
@@ -2513,7 +2524,7 @@ def _deckgl_hex_multi(
       const deckLayers = tileLayers
         .slice()
         .reverse()
-        .map(l => buildTileLayer(l));
+        .map(l => buildTileLayer(l, bottomMostLayerId));
       
       deckOverlay = new MapboxOverlay({
         interleaved: true,
@@ -2521,9 +2532,20 @@ def _deckgl_hex_multi(
       });
       map.addControl(deckOverlay);
       
-      const overlayLayerId = deckOverlay?._mapboxLayer?.id;
-      if (overlayLayerId && bottomMostLayerId) {
-        try { map.moveLayer(overlayLayerId, bottomMostLayerId); } catch (e) {}
+      if (bottomMostLayerId) {
+        const moveDeckLayers = () => {
+          deckLayers.forEach(layer => {
+            const layerId = layer?.id || layer?.props?.id;
+            if (!layerId) return;
+            try {
+              if (map.getLayer(layerId)) {
+                map.moveLayer(layerId, bottomMostLayerId);
+              }
+            } catch (e) {}
+          });
+        };
+        setTimeout(moveDeckLayers, 0);
+        map.once('idle', moveDeckLayers);
       }
     }
     {% endif %}
@@ -4673,7 +4695,7 @@ def folium_raster(data, bounds, opacity=0.7, tiles="CartoDB dark_matter"):
     """
     west, south, east, north = bounds
 
-    # shape handling (no normalizon)
+    # shape handling (no normalization)
     if data.ndim == 2:
         rgb = np.stack([data, data, data], axis=-1)
     elif data.ndim == 3:
