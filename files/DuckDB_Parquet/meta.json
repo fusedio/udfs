@@ -14,7 +14,7 @@
           "metadata": {
             "fused:description": "Read a Parquet or Geoparquet file.\n\n<!-- fused:previewExt -->\nExtensions: `parquet` `pq` `gpq` `geoparquet`",
             "fused:vizConfig": {
-              {"vectorLayer": {
+              "vectorLayer": {
                   "@@type": "GeoJsonLayer",
                   "stroked": true,
                   "filled": false,
@@ -44,7 +44,6 @@
                   "getElevation": "@@=properties.value",
                   "elevationScale": 10
                 }
-              }
             },
             "fused:udfType": "auto",
             "fused:slug": "DuckDB_Parquet",
