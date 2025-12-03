@@ -1050,6 +1050,7 @@ def deckgl_layers(
     });
 
     const HAS_TILE_LAYERS = LAYERS_DATA.some(l => l.layerType === 'hex' && l.isTileLayer);
+    const TILE_CACHE = new Map();
 
     // ========== Map Setup ==========
     mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -1155,14 +1156,18 @@ def deckgl_layers(
         getTileData: async ({ index, signal }) => {
           const { x, y, z } = index;
           const url = tileUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+          const cacheKey = `${tileUrl}|${z}|${x}|${y}`;
+          if (TILE_CACHE.has(cacheKey)) return TILE_CACHE.get(cacheKey);
           try {
             const res = await fetch(url, { signal });
             if (!res.ok) return [];
             let text = await res.text();
             text = text.replace(/\"(hex|h3|index)\"\s*:\s*(\d+)/gi, (_m, k, d) => `"${k}":"${d}"`);
             const data = JSON.parse(text);
-            return normalizeTileData(data);
-          } catch (e) { return []; }
+            const normalized = normalizeTileData(data);
+            TILE_CACHE.set(cacheKey, normalized);
+            return normalized;
+          } catch (e) { return TILE_CACHE.get(cacheKey) || []; }
         },
         renderSubLayers: (props) => {
           const data = props.data || [];
@@ -1199,15 +1204,16 @@ def deckgl_layers(
       const tileLayers = LAYERS_DATA
         .filter(l => l.layerType === 'hex' && l.isTileLayer && layerVisibility[l.id]);
       
-      if (deckOverlay) {
-        try {
-          map.removeControl(deckOverlay);
-          deckOverlay.finalize?.();
-        } catch (e) {}
-        deckOverlay = null;
+      if (tileLayers.length === 0) {
+        if (deckOverlay) {
+          try {
+            map.removeControl(deckOverlay);
+            deckOverlay.finalize?.();
+          } catch (e) {}
+          deckOverlay = null;
+        }
+        return;
       }
-      
-      if (tileLayers.length === 0) return;
       
       // Determine the bottom-most Mapbox layer belonging to our static layers
       const allMapboxLayers = map.getStyle()?.layers || [];
@@ -1234,26 +1240,24 @@ def deckgl_layers(
         .reverse()
         .map(l => buildTileLayer(l, bottomMostLayerId));
       
-      deckOverlay = new MapboxOverlay({
-        interleaved: true,
-        layers: deckLayers
-      });
-      map.addControl(deckOverlay);
-      
-      if (bottomMostLayerId) {
-        const moveDeckLayers = () => {
-          deckLayers.forEach(layer => {
-            const layerId = layer?.id || layer?.props?.id;
-            if (!layerId) return;
-            try {
-              if (map.getLayer(layerId)) {
-                map.moveLayer(layerId, bottomMostLayerId);
-              }
-            } catch (e) {}
-          });
-        };
-        setTimeout(moveDeckLayers, 0);
-        map.once('idle', moveDeckLayers);
+      if (!deckOverlay) {
+        deckOverlay = new MapboxOverlay({
+          interleaved: true,
+          layers: deckLayers
+        });
+        map.addControl(deckOverlay);
+        if (bottomMostLayerId) {
+          const moveOverlay = () => {
+            const overlayLayerId = deckOverlay?._mapboxLayer?.id;
+            if (overlayLayerId) {
+              try { map.moveLayer(overlayLayerId, bottomMostLayerId); } catch (e) {}
+            }
+          };
+          setTimeout(moveOverlay, 0);
+          map.once('idle', moveOverlay);
+        }
+      } else {
+        deckOverlay.setProps({ layers: deckLayers });
       }
     }
     {% endif %}
@@ -2316,6 +2320,7 @@ def _deckgl_hex_multi(
 
     // Check if we have any tile layers
     const HAS_TILE_LAYERS = LAYERS_DATA.some(l => l.isTileLayer);
+    const TILE_CACHE = new Map();
 
     mapboxgl.accessToken = MAPBOX_TOKEN;
     const map = new mapboxgl.Map({ 
@@ -2441,14 +2446,18 @@ def _deckgl_hex_multi(
         getTileData: async ({ index, signal }) => {
           const { x, y, z } = index;
           const url = tileUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+          const cacheKey = `${tileUrl}|${z}|${x}|${y}`;
+          if (TILE_CACHE.has(cacheKey)) return TILE_CACHE.get(cacheKey);
           try {
             const res = await fetch(url, { signal });
             if (!res.ok) return [];
             let text = await res.text();
             text = text.replace(/\"(hex|h3|index)\"\s*:\s*(\d+)/gi, (_m, k, d) => `"${k}":"${d}"`);
             const data = JSON.parse(text);
-            return normalizeTileData(data);
-          } catch (e) { return []; }
+            const normalized = normalizeTileData(data);
+            TILE_CACHE.set(cacheKey, normalized);
+            return normalized;
+          } catch (e) { return TILE_CACHE.get(cacheKey) || []; }
         },
         renderSubLayers: (props) => {
           const data = props.data || [];
@@ -2495,15 +2504,16 @@ def _deckgl_hex_multi(
     function rebuildDeckOverlay() {
       const tileLayers = LAYERS_DATA.filter(l => l.isTileLayer && layerVisibility[l.id]);
       
-      if (deckOverlay) {
-        try {
-          map.removeControl(deckOverlay);
-          deckOverlay.finalize?.();
-        } catch (e) {}
-        deckOverlay = null;
+      if (tileLayers.length === 0) {
+        if (deckOverlay) {
+          try {
+            map.removeControl(deckOverlay);
+            deckOverlay.finalize?.();
+          } catch (e) {}
+          deckOverlay = null;
+        }
+        return;
       }
-      
-      if (tileLayers.length === 0) return;
       
       const allMapboxLayers = map.getStyle()?.layers || [];
       let bottomMostLayerId = null;
@@ -2526,26 +2536,18 @@ def _deckgl_hex_multi(
         .reverse()
         .map(l => buildTileLayer(l, bottomMostLayerId));
       
-      deckOverlay = new MapboxOverlay({
-        interleaved: true,
-        layers: deckLayers
-      });
-      map.addControl(deckOverlay);
-      
-      if (bottomMostLayerId) {
-        const moveDeckLayers = () => {
-          deckLayers.forEach(layer => {
-            const layerId = layer?.id || layer?.props?.id;
-            if (!layerId) return;
-            try {
-              if (map.getLayer(layerId)) {
-                map.moveLayer(layerId, bottomMostLayerId);
-              }
-            } catch (e) {}
-          });
-        };
-        setTimeout(moveDeckLayers, 0);
-        map.once('idle', moveDeckLayers);
+      if (!deckOverlay) {
+        deckOverlay = new MapboxOverlay({
+          interleaved: true,
+          layers: deckLayers
+        });
+        map.addControl(deckOverlay);
+        const overlayLayerId = deckOverlay?._mapboxLayer?.id;
+        if (overlayLayerId && bottomMostLayerId) {
+          try { map.moveLayer(overlayLayerId, bottomMostLayerId); } catch (e) {}
+        }
+      } else {
+        deckOverlay.setProps({ layers: deckLayers });
       }
     }
     {% endif %}
