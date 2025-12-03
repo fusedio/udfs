@@ -235,7 +235,7 @@ def deckgl_map(
     # Extract color config
     fill_color_raw = vector_layer.get("getFillColor")
     fill_color_config, fill_color_rgba, color_attr = {}, None, None
-    if isinstance(fill_color_raw, dict) and fill_color_raw.get("@@function") == "colorContinuous":
+    if isinstance(fill_color_raw, dict) and fill_color_raw.get("@@function") in ("colorContinuous", "colorCategories"):
         fill_color_config, color_attr = fill_color_raw, fill_color_raw.get("attr")
         # Validate palette name
         palette_name = fill_color_raw.get("colors", "TealGrn")
@@ -724,19 +724,24 @@ def deckgl_layers(
                 for feat in geojson_obj.get("features", []):
                     feat["properties"] = {k: sanitize_value(v) for k, v in (feat.get("properties") or {}).items()}
             
-            # Extract color config
-            fill_color_raw = vector_layer.get("getFillColor")
+            # Extract color config - only if layer is filled
             fill_color_config = {}
             fill_color_rgba = None
             color_attr = None
             
-            if isinstance(fill_color_raw, dict) and fill_color_raw.get("@@function") == "colorContinuous":
-                fill_color_config = fill_color_raw
-                color_attr = fill_color_raw.get("attr")
-            elif isinstance(fill_color_raw, (list, tuple)) and len(fill_color_raw) >= 3:
-                r, g, b = int(fill_color_raw[0]), int(fill_color_raw[1]), int(fill_color_raw[2])
-                a = fill_color_raw[3] / 255.0 if len(fill_color_raw) > 3 else 0.6
-                fill_color_rgba = f"rgba({r},{g},{b},{a})"
+            # Check if filled is explicitly False in original config
+            original_vector = (config or {}).get("vectorLayer", {})
+            is_filled = original_vector.get("filled", True) and vector_layer.get("filled", True)
+            
+            if is_filled:
+                fill_color_raw = vector_layer.get("getFillColor")
+                if isinstance(fill_color_raw, dict) and fill_color_raw.get("@@function") in ("colorContinuous", "colorCategories"):
+                    fill_color_config = fill_color_raw
+                    color_attr = fill_color_raw.get("attr")
+                elif isinstance(fill_color_raw, (list, tuple)) and len(fill_color_raw) >= 3:
+                    r, g, b = int(fill_color_raw[0]), int(fill_color_raw[1]), int(fill_color_raw[2])
+                    a = fill_color_raw[3] / 255.0 if len(fill_color_raw) > 3 else 0.6
+                    fill_color_rgba = f"rgba({r},{g},{b},{a})"
             
             line_color_raw = vector_layer.get("getLineColor")
             line_color_rgba = None
@@ -769,7 +774,7 @@ def deckgl_layers(
                 "lineColorAttr": line_color_attr,
                 "lineWidth": vector_layer.get("lineWidthMinPixels") or vector_layer.get("getLineWidth", 1),
                 "pointRadius": vector_layer.get("pointRadiusMinPixels") or vector_layer.get("pointRadius", 6),
-                "isFilled": vector_layer.get("filled", True),
+                "isFilled": is_filled,
                 "isStroked": vector_layer.get("stroked", True),
                 "opacity": vector_layer.get("opacity", 0.8),
                 "tooltipColumns": tooltip_columns,
@@ -869,10 +874,8 @@ def deckgl_layers(
       font-size: 12px;
       color: #dcdcdc;
     }
-    .layer-item .layer-type {
-      font-size: 9px;
-      color: #888;
-      text-transform: uppercase;
+    .legend-layer { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .legend-layer:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none;
       letter-spacing: 0.3px;
     }
     .layer-item.disabled .layer-name {
@@ -894,10 +897,11 @@ def deckgl_layers(
       min-width: 140px;
       border: 1px solid rgba(255,255,255,0.1); 
     }
-    .legend-layer { margin-bottom: 12px; }
-    .legend-layer:last-child { margin-bottom: 0; }
+    .legend-layer { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .legend-layer:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
     .legend-layer .legend-title { margin-bottom: 6px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
     .legend-layer .legend-title .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+    .legend-layer .legend-title .legend-line { width: 20px; height: 3px; border-radius: 1px; }
     .legend-layer .legend-gradient { height: 10px; border-radius: 2px; margin-bottom: 4px; border: 1px solid rgba(255,255,255,0.2); }
     .legend-layer .legend-labels { display: flex; justify-content: space-between; font-size: 10px; color: #ccc; }
     .legend-layer .legend-categories { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; max-height: 440px; overflow-y: scroll; padding-right: 4px; }
@@ -1378,26 +1382,25 @@ def deckgl_layers(
           const colorCfg = (cfg.filled === false && cfg.getLineColor) ? cfg.getLineColor : cfg.getFillColor;
           if (Array.isArray(colorCfg)) {
             colorPreview = toRgba(colorCfg, 1) || colorPreview;
-          } else if (colorCfg && colorCfg['@@function'] === 'colorContinuous') {
-            const cols = getPaletteColors(colorCfg.colors || 'TealGrn', colorCfg.steps || 7);
+          } else if (colorCfg?.['@@function'] === 'colorContinuous' || colorCfg?.['@@function'] === 'colorCategories') {
+            const paletteName = colorCfg.colors || (colorCfg['@@function'] === 'colorCategories' ? 'Bold' : 'TealGrn');
+            const cols = getPaletteColors(paletteName, colorCfg.steps || 7);
             if (cols && cols.length) colorPreview = cols[Math.floor(cols.length / 2)];
           }
         } else if (l.layerType === 'vector') {
-          if (l.fillColorRgba) colorPreview = l.fillColorRgba;
+          if (l.lineColorRgba && !l.isFilled) colorPreview = l.lineColorRgba;
+          else if (l.fillColorRgba) colorPreview = l.fillColorRgba;
           else if (l.fillColorConfig?.colors) {
             const cols = getPaletteColors(l.fillColorConfig.colors, 7);
             if (cols && cols.length) colorPreview = cols[Math.floor(cols.length / 2)];
           }
         }
         
-        const typeIcon = l.layerType === 'hex' ? (l.isTileLayer ? '⬡' : '⬢') : '◇';
-        
         return `
           <div class="layer-item ${visible ? '' : 'disabled'}">
             <input type="checkbox" ${visible ? 'checked' : ''} onchange="toggleLayerVisibility('${l.id}', this.checked)" />
             <div class="layer-color" style="background:${colorPreview};"></div>
             <span class="layer-name">${l.name}</span>
-            <span class="layer-type">${typeIcon}</span>
           </div>
         `;
       }).join('');
@@ -1423,11 +1426,25 @@ def deckgl_layers(
           colorCfg = (cfg.filled === false && cfg.getLineColor) ? cfg.getLineColor : cfg.getFillColor;
         } else if (l.layerType === 'vector') {
           colorCfg = l.fillColorConfig;
+          
+          // Show simple line legend for stroke-only vector layers
+          if (!colorCfg?.['@@function'] && l.lineColorRgba && !l.isFilled) {
+            html += `
+              <div class="legend-layer">
+                <div class="legend-title">
+                  <span class="legend-line" style="background:${l.lineColorRgba};"></span>
+                  ${l.name}
+                </div>
+              </div>
+            `;
+            return;
+          }
         }
         
-        if (!colorCfg || !colorCfg.attr) return;
-        
-        const fnType = colorCfg['@@function'];
+        // Only show legend for layers with explicit color functions
+        const fnType = colorCfg?.['@@function'];
+        if (!fnType || !colorCfg?.attr) return;
+        if (fnType !== 'colorContinuous' && fnType !== 'colorCategories') return;
         const paletteName = colorCfg.colors || (fnType === 'colorCategories' ? 'Bold' : 'TealGrn');
         
         // Handle categorical legend
@@ -1982,10 +1999,11 @@ def _deckgl_hex_multi(
       min-width: 140px;
       border: 1px solid rgba(255,255,255,0.1); 
     }
-    .legend-layer { margin-bottom: 12px; }
-    .legend-layer:last-child { margin-bottom: 0; }
+    .legend-layer { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .legend-layer:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
     .legend-layer .legend-title { margin-bottom: 6px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
     .legend-layer .legend-title .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+    .legend-layer .legend-title .legend-line { width: 20px; height: 3px; border-radius: 1px; }
     .legend-layer .legend-gradient { height: 10px; border-radius: 2px; margin-bottom: 4px; border: 1px solid rgba(255,255,255,0.2); }
     .legend-layer .legend-labels { display: flex; justify-content: space-between; font-size: 10px; color: #ccc; }
     .legend-layer .legend-categories { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; max-height: 440px; overflow-y: scroll; padding-right: 4px; }
@@ -2555,18 +2573,17 @@ def _deckgl_hex_multi(
         let colorPreview = '#0090ff';
         if (Array.isArray(colorCfg)) {
           colorPreview = toRgba(colorCfg, 1) || colorPreview;
-        } else if (colorCfg && colorCfg['@@function'] === 'colorContinuous') {
-          const cols = getPaletteColors(colorCfg.colors || 'TealGrn', colorCfg.steps || 7);
+        } else if (colorCfg?.['@@function'] === 'colorContinuous' || colorCfg?.['@@function'] === 'colorCategories') {
+          const paletteName = colorCfg.colors || (colorCfg['@@function'] === 'colorCategories' ? 'Bold' : 'TealGrn');
+          const cols = getPaletteColors(paletteName, colorCfg.steps || 7);
           if (cols && cols.length) colorPreview = cols[Math.floor(cols.length / 2)];
         }
-        
-        const tileIcon = l.isTileLayer ? ' 🗺️' : '';
         
         return `
           <div class="layer-item ${visible ? '' : 'disabled'}">
             <input type="checkbox" ${visible ? 'checked' : ''} onchange="toggleLayerVisibility('${l.id}', this.checked)" />
             <div class="layer-color" style="background:${colorPreview};"></div>
-            <span class="layer-name">${l.name}${tileIcon}</span>
+            <span class="layer-name">${l.name}</span>
           </div>
         `;
       }).join('');
@@ -2586,9 +2603,12 @@ def _deckgl_hex_multi(
       visibleLayers.forEach(l => {
         const cfg = l.hexLayer || {};
         const colorCfg = (cfg.filled === false && cfg.getLineColor) ? cfg.getLineColor : cfg.getFillColor;
-        if (!colorCfg || !colorCfg.attr) return;
         
-        const fnType = colorCfg['@@function'];
+        // Only show legend for layers with explicit color functions
+        const fnType = colorCfg?.['@@function'];
+        if (!fnType || !colorCfg?.attr) return;
+        if (fnType !== 'colorContinuous' && fnType !== 'colorCategories') return;
+        
         const paletteName = colorCfg.colors || (fnType === 'colorCategories' ? 'Bold' : 'TealGrn');
         
         // Handle categorical legend
