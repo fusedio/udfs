@@ -1,7 +1,7 @@
 @fused.udf
 def udf(
     bounds: fused.types.Bounds = [-0.113, 51.503, -0.099, 51.513],
-    release: str = "2025-09-24-0",
+    release: str = "2025-11-19-0",
     theme: str = None,
     overture_type: str = None,
     use_columns: list = None,
@@ -20,7 +20,7 @@ def udf(
 
 def get_overture(
     bounds: fused.types.Bounds = None,
-    release: str = "2025-09-24-0",
+    release: str = "2025-11-19-0",
     theme: str = None,
     overture_type: str = None,
     use_columns: list = None,
