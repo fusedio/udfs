@@ -790,54 +790,50 @@ def deckgl_layers(
       background: rgba(26, 26, 26, 0.95);
       border: 1px solid #424242;
       border-radius: 8px;
-      padding: 12px;
+      padding: 8px 10px;
       font-family: Inter, 'SF Pro Display', 'Segoe UI', sans-serif;
       color: #f5f5f5;
-      min-width: 180px;
+      min-width: 160px;
       z-index: 100;
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
-    #layer-panel h4 {
-      margin: 0 0 10px 0;
-      font-size: 11px;
-      letter-spacing: 0.4px;
-      text-transform: uppercase;
-      color: #E8FF59;
-      font-weight: 600;
     }
     .layer-item {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 8px 0;
+      gap: 8px;
+      padding: 6px 0;
       border-bottom: 1px solid #333;
     }
     .layer-item:last-child { border-bottom: none; }
-    .layer-item input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
+    .layer-item .layer-eye {
+      width: 18px;
+      height: 18px;
       cursor: pointer;
-      accent-color: #E8FF59;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #aaa;
+      font-size: 14px;
+      transition: color 0.15s;
+      user-select: none;
     }
+    .layer-item .layer-eye:hover { color: #fff; }
+    .layer-item.disabled .layer-eye { color: #555; }
     .layer-item .layer-color {
-      width: 14px;
-      height: 14px;
+      width: 12px;
+      height: 12px;
       border-radius: 3px;
-      border: 1px solid rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.15);
     }
     .layer-item .layer-name {
       flex: 1;
       font-size: 12px;
-      color: #dcdcdc;
+      color: #ccc;
+      transition: color 0.15s;
     }
+    .layer-item.disabled .layer-name { color: #555; }
     .legend-layer { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    .legend-layer:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none;
-      letter-spacing: 0.3px;
-    }
-    .layer-item.disabled .layer-name {
-      color: #666;
-      text-decoration: line-through;
-    }
+    .legend-layer:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; letter-spacing: 0.3px; }
     
     /* Legend */
     .color-legend {
@@ -918,7 +914,6 @@ def deckgl_layers(
   
   <!-- Layer Toggle Panel -->
   <div id="layer-panel">
-    <h4>Layers</h4>
     <div id="layer-list"></div>
   </div>
   
@@ -1518,9 +1513,12 @@ def deckgl_layers(
           }
         }
         
+        const eyeIcon = visible 
+          ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
+          : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
         return `
-          <div class="layer-item ${visible ? '' : 'disabled'}">
-            <input type="checkbox" ${visible ? 'checked' : ''} onchange="toggleLayerVisibility('${l.id}', this.checked)" />
+          <div class="layer-item ${visible ? '' : 'disabled'}" data-layer-id="${l.id}">
+            <span class="layer-eye" onclick="toggleLayerVisibility('${l.id}', ${!visible})">${eyeIcon}</span>
             <div class="layer-color" style="background:${colorPreview};"></div>
             <span class="layer-name">${l.name}</span>
           </div>
