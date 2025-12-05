@@ -1218,33 +1218,77 @@ def deckgl_layers(
         north: mapBounds.getNorth()
       };
       
-      // Collect values from tiles that intersect viewport
-      const values = [];
-      let visibleTileCount = 0;
+      // Prune tiles that are far from viewport (keep only nearby tiles)
+      const tilesToKeep = {};
+      const tilesToDelete = [];
       
       for (const [tileKey, data] of Object.entries(tileData)) {
-        // Parse tile coordinates from key (format: "z/x/y")
         const [z, x, y] = tileKey.split('/').map(Number);
-        
-        // Get geographic bounds for this tile
         const tileBounds = tileToBounds(x, y, z);
         
-        // Only include data from tiles that intersect viewport
-        if (boundsIntersect(tileBounds, viewportBounds)) {
-          visibleTileCount++;
-          for (const item of data) {
-            const val = item?.[attr] ?? item?.properties?.[attr];
-            if (typeof val === 'number' && isFinite(val)) {
-              values.push(val);
-            }
+        // Keep tiles that intersect viewport OR are within 2 tile-widths
+        const tileWidth = Math.abs(tileBounds.east - tileBounds.west);
+        const expandedViewport = {
+          west: viewportBounds.west - tileWidth * 2,
+          east: viewportBounds.east + tileWidth * 2,
+          south: viewportBounds.south - tileWidth * 2,
+          north: viewportBounds.north + tileWidth * 2
+        };
+        
+        if (boundsIntersect(tileBounds, expandedViewport)) {
+          tilesToKeep[tileKey] = data;
+        } else {
+          tilesToDelete.push(tileKey);
+        }
+      }
+      
+      // Prune old tiles
+      if (tilesToDelete.length > 0) {
+        tilesToDelete.forEach(key => delete TILE_DATA_STORE[layerId][key]);
+        console.log(`[AutoDomain] Pruned ${tilesToDelete.length} old tiles from ${layerId}`);
+      }
+      
+      // Collect values from hexagons actually inside viewport
+      const values = [];
+      let visibleHexCount = 0;
+      
+      for (const [tileKey, data] of Object.entries(tilesToKeep)) {
+        for (const item of data) {
+          // Get hex ID
+          const hexId = item?.hex ?? item?.properties?.hex;
+          if (!hexId) continue;
+          
+          // Get hex center location using H3
+          if (typeof h3 !== 'undefined' && h3.cellToLatLng) {
+            try {
+              const [lat, lng] = h3.cellToLatLng(hexId);
+              
+              // Check if hex center is inside viewport
+              if (lng >= viewportBounds.west && 
+                  lng <= viewportBounds.east && 
+                  lat >= viewportBounds.south && 
+                  lat <= viewportBounds.north) {
+                
+                const val = item?.[attr] ?? item?.properties?.[attr];
+                if (typeof val === 'number' && isFinite(val)) {
+                  values.push(val);
+                  visibleHexCount++;
+                }
+              }
+            } catch(e) {}
           }
         }
       }
       
-      console.log(`[AutoDomain] ${layerId}: ${visibleTileCount} visible tiles, ${values.length} values`);
+      if (!values.length) {
+        console.log(`[AutoDomain] ${layerId}: No hexes in viewport, using fallback domain`);
+        return null;
+      }
       
-      if (!values.length) return null;
-      return [Math.min(...values), Math.max(...values)];
+      const minVal = Math.min(...values);
+      const maxVal = Math.max(...values);
+      console.log(`[AutoDomain] ${layerId}: ${visibleHexCount} hexes in viewport → [${minVal.toFixed(2)}, ${maxVal.toFixed(2)}]`);
+      return [minVal, maxVal];
     }
 
     function parseHexLayerConfigForDeck(config, layerId = null) {
@@ -1289,7 +1333,7 @@ def deckgl_layers(
       const layerOpacity = (typeof rawHexLayer.opacity === 'number') ? rawHexLayer.opacity : 0.8;
       const isExtruded = rawHexLayer.extruded === true;
       const elevationScale = rawHexLayer.elevationScale || 1;
-      
+
       // Check if this layer has autoDomain enabled
       const hasAutoDomain = rawHexLayer.getFillColor?.autoDomain === true;
       
@@ -1963,7 +2007,7 @@ def deckgl_layers(
                 b.push(b[0]);
                 geojson.features.push({ type:'Feature', geometry:{ type:'Polygon', coordinates:[b] }, properties: props });
               }
-            } catch(e) {}
+      } catch(e) {}
           }
           // Otherwise use the feature's actual geometry (for vectors)
           else if (feature.geometry) {
@@ -2125,9 +2169,9 @@ def deckgl_layers(
           features = map.queryRenderedFeatures(event.point, { layers: clickableLayers }) || [];
         } catch(err) {
           console.warn('[ClickBroadcast] Error querying features:', err);
-          return;
-        }
-        
+        return;
+      }
+      
         if (!features.length) return;
         
         // Use the top-most feature
@@ -2150,7 +2194,7 @@ def deckgl_layers(
               propertiesToSend[key] = properties[key];
             }
           });
-        } else {
+      } else {
           propertiesToSend = { ...properties };
         }
         
@@ -2182,7 +2226,7 @@ def deckgl_layers(
         console.log('[ClickBroadcast] Initialized on channel:', CHANNEL);
       });
     })();
-    {% endif %}
+      {% endif %}
     
     {% if debug %}
     // ========== Debug Panel Functions ==========
