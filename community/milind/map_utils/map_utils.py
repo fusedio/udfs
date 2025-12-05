@@ -534,22 +534,25 @@ def deckgl_hex(
             {"data": df2, "config": config2, "name": "Income"},
         ], debug=True)
     """
-    # Normalize all inputs to layers list format
+    # Normalize all inputs to layers list format with type="hex"
     if layers is None:
         if df is not None:
-            layers = [{"data": df, "config": config, "name": "Layer 1"}]
+            layers = [{"type": "hex", "data": df, "config": config, "name": "Layer 1"}]
         elif tile_url is not None:
-            layers = [{"tile_url": tile_url, "config": config, "name": "Tile Layer"}]
+            layers = [{"type": "hex", "tile_url": tile_url, "config": config, "name": "Tile Layer"}]
         else:
             raise ValueError("Provide df, tile_url, or layers parameter")
+    else:
+        # Ensure all layers have type="hex"
+        layers = [{"type": "hex", **layer_def} for layer_def in layers]
     
-    # Use unified multi-layer implementation for everything
-    return _deckgl_hex_multi(
+    # Use unified deckgl_layers implementation
+    return deckgl_layers(
         layers=layers,
         mapbox_token=mapbox_token,
         basemap=basemap,
-        debug=debug,
         highlight_on_click=highlight_on_click,
+        debug=debug,
     )
 
 
@@ -558,6 +561,7 @@ def deckgl_layers(
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     basemap: str = "dark",
     highlight_on_click: bool = True,
+    debug: bool = False,
 ):
     """
     Render mixed hex and vector layers on a single interactive map.
@@ -636,7 +640,7 @@ def deckgl_layers(
         original_config = deepcopy(config) if config else {}
         
         if layer_type == "hex":
-            # Process hex layer (same as _deckgl_hex_multi)
+            # Process hex layer
             merged_config = _load_deckgl_config(config, DEFAULT_DECK_HEX_CONFIG, f"deckgl_layers_hex_{i}", config_errors)
             hex_layer = merged_config.get("hexLayer", {})
             tile_layer_config = merged_config.get("tileLayer", {})
@@ -913,6 +917,47 @@ def deckgl_layers(
     .legend-layer .legend-cat-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.2); flex-shrink: 0; }
     .legend-layer .legend-cat-label { color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
     .legend-layer .legend-cat-more { font-size: 10px; color: #888; font-style: italic; margin-top: 2px; }
+    
+    {% if debug %}
+    /* Debug Panel */
+    #debug-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 320px;
+      height: 100%;
+      background: #212121;
+      border-left: 1px solid #424242;
+      display: flex;
+      flex-direction: column;
+      font-family: Inter, 'SF Pro Display', 'Segoe UI', sans-serif;
+      color: #f5f5f5;
+      z-index: 200;
+    }
+    #layer-panel { right: 332px !important; }
+    #debug-header { padding: 12px 16px; background: #1a1a1a; border-bottom: 1px solid #424242; }
+    #debug-header h3 { margin: 0; font-size: 12px; font-weight: 600; color: #E8FF59; letter-spacing: 0.5px; text-transform: uppercase; }
+    #debug-tabs { display: flex; gap: 6px; padding: 10px 12px; background: #1a1a1a; border-bottom: 1px solid #333; overflow-y: auto; overflow-x: hidden; flex-shrink: 0; flex-wrap: wrap; max-height: 120px; }
+    #debug-tabs::-webkit-scrollbar { height: 4px; width: 4px; }
+    #debug-tabs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    .debug-tab { padding: 6px 12px; font-size: 11px; font-weight: 500; color: #888; cursor: pointer; border: 1px solid #444; background: #2a2a2a; border-radius: 4px; transition: all 0.15s; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1 1 calc(50% - 8px); min-width: 120px; }
+    .debug-tab:hover { color: #ccc; background: #333; border-color: #555; }
+    .debug-tab.active { color: #1a1a1a; background: #E8FF59; border-color: #E8FF59; }
+    .debug-tab .tab-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+    .debug-tab.active .tab-dot { box-shadow: 0 0 0 1px rgba(0,0,0,0.3); }
+    #debug-content { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
+    .debug-section { background: #1a1a1a; border: 1px solid #424242; border-radius: 8px; padding: 12px; }
+    .debug-section h4 { margin: 0 0 10px 0; font-size: 11px; letter-spacing: 0.4px; text-transform: uppercase; color: #bdbdbd; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .form-control { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #dcdcdc; }
+    .form-control label { font-weight: 600; }
+    .form-control input, .form-control select { background: #111; border: 1px solid #333; border-radius: 4px; padding: 6px 8px; font-size: 12px; color: #f5f5f5; outline: none; }
+    .form-control input:focus, .form-control select:focus { border-color: #E8FF59; }
+    .toggle-row { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+    .toggle-row input { width: 16px; height: 16px; accent-color: #E8FF59; }
+    .single-column { display: flex; flex-direction: column; gap: 10px; }
+    #dbg-config { width: 100%; min-height: 100px; resize: vertical; background: #111; color: #f5f5f5; border: 1px solid #333; border-radius: 6px; padding: 10px; font-family: SFMono-Regular, Consolas, monospace; font-size: 11px; line-height: 1.4; }
+    {% endif %}
   </style>
 </head>
 <body>
@@ -927,6 +972,81 @@ def deckgl_layers(
   
   <!-- Legend -->
   <div id="color-legend" class="color-legend" style="display:none;"></div>
+  
+  {% if debug %}
+  <!-- Debug Panel -->
+  <div id="debug-panel">
+    <div id="debug-header">
+      <h3>Layer Config</h3>
+    </div>
+    <div id="debug-tabs"></div>
+    <div id="debug-content">
+      <div class="debug-section">
+        <h4>View</h4>
+        <div class="form-grid">
+          <div class="form-control">
+            <label>Longitude</label>
+            <input type="number" id="cfg-longitude" data-cfg-input step="0.0001" placeholder="auto" />
+          </div>
+          <div class="form-control">
+            <label>Latitude</label>
+            <input type="number" id="cfg-latitude" data-cfg-input step="0.0001" placeholder="auto" />
+          </div>
+          <div class="form-control">
+            <label>Zoom</label>
+            <input type="number" id="cfg-zoom" data-cfg-input step="0.1" min="0" placeholder="auto" />
+          </div>
+          <div class="form-control">
+            <label>Pitch</label>
+            <input type="number" id="cfg-pitch" data-cfg-input step="1" min="0" max="85" placeholder="0-85" />
+          </div>
+          <div class="form-control">
+            <label>Bearing</label>
+            <input type="number" id="cfg-bearing" data-cfg-input step="1" placeholder="deg" />
+          </div>
+        </div>
+      </div>
+      <div class="debug-section">
+        <h4>Layer</h4>
+        <div class="single-column">
+          <label class="toggle-row"><input type="checkbox" id="cfg-filled" data-cfg-input checked />Filled</label>
+          <label class="toggle-row"><input type="checkbox" id="cfg-extruded" data-cfg-input />Extruded (3D)</label>
+          <div class="form-control">
+            <label>Elevation Scale</label>
+            <input type="number" id="cfg-elev-scale" data-cfg-input step="0.1" min="0" value="1" />
+          </div>
+        </div>
+      </div>
+      <div class="debug-section">
+        <h4>Fill Color</h4>
+        <div class="form-grid">
+          <div class="form-control">
+            <label>Attribute</label>
+            <select id="cfg-attr" data-cfg-input></select>
+          </div>
+          <div class="form-control">
+            <label>Palette</label>
+            <select id="cfg-palette" data-cfg-input>
+              {% for pal in palettes %}<option value="{{ pal }}">{{ pal }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-control">
+            <label>Domain Min</label>
+            <input type="number" id="cfg-domain-min" data-cfg-input step="0.1" value="0" />
+          </div>
+          <div class="form-control">
+            <label>Domain Max</label>
+            <input type="number" id="cfg-domain-max" data-cfg-input step="0.1" value="100" />
+          </div>
+        </div>
+      </div>
+      <div class="debug-section">
+        <h4>Config Output</h4>
+        <textarea id="dbg-config" readonly></textarea>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <script>
     const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
@@ -1205,12 +1325,12 @@ def deckgl_layers(
         .filter(l => l.layerType === 'hex' && l.isTileLayer && layerVisibility[l.id]);
       
       if (tileLayers.length === 0) {
-        if (deckOverlay) {
-          try {
-            map.removeControl(deckOverlay);
-            deckOverlay.finalize?.();
-          } catch (e) {}
-          deckOverlay = null;
+      if (deckOverlay) {
+        try {
+          map.removeControl(deckOverlay);
+          deckOverlay.finalize?.();
+        } catch (e) {}
+        deckOverlay = null;
         }
         return;
       }
@@ -1750,7 +1870,7 @@ def deckgl_layers(
       const HL_RGBA = 'rgba(255,255,0,1)', HL_LW = 3;
       let selected = null, added = false;
       
-      function toH3(hex) {
+    function toH3(hex) {
         if (!hex) return null;
         try {
           if (typeof hex === 'string') return /^\d+$/.test(hex) ? BigInt(hex).toString(16) : hex.toLowerCase();
@@ -1782,7 +1902,7 @@ def deckgl_layers(
       function getLayers() {
         const layers = [];
         if (typeof LAYERS_DATA !== 'undefined') LAYERS_DATA.forEach(l => {
-          if (l.isTileLayer) return;
+        if (l.isTileLayer) return;
           const ids = l.layerType === 'vector' 
             ? [`${l.id}-fill`, `${l.id}-circle`, `${l.id}-line`]
             : [l.hexLayer?.extruded ? `${l.id}-extrusion` : `${l.id}-fill`];
@@ -1810,1410 +1930,121 @@ def deckgl_layers(
         });
       });
     })();
-    {% endif %}
-  </script>
-</body>
-</html>
-""").render(
-        mapbox_token=mapbox_token,
-        layers_data=processed_layers,
-        style_url=style_url,
-        center_lng=center_lng,
-        center_lat=center_lat,
-        zoom=zoom,
-        pitch=pitch,
-        bearing=bearing,
-        has_custom_view=has_custom_view,
-        has_tile_layers=has_tile_layers,
-        highlight_on_click=highlight_on_click,
-    )
-
-    common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
-    return common.html_to_obj(html)
-
-
-def _deckgl_hex_multi(
-    layers: list,
-    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
-    basemap: str = "dark",
-    debug: bool = False,
-    highlight_on_click: bool = True,
-):
-    """
-    Unified implementation for rendering H3 hexagon layers.
-    Handles single layer, multi-layer, static data, and tile layers.
-    
-    Args:
-        layers: List of layer dicts, each with:
-            - "data": DataFrame with hex column (for static layers)
-            - "tile_url": XYZ tile URL template (for tile layers) - use this OR data, not both
-            - "config": hexLayer config for this layer
-            - "name": Display name for layer toggle (optional)
-        mapbox_token: Mapbox access token.
-        basemap: 'dark', 'satellite', or custom Mapbox style URL.
-        debug: Show debug panel for config tweaking.
-    
-    Examples:
-        # Single layer (called via deckgl_hex)
-        deckgl_hex(df, config, debug=True)
-        
-        # Multi-layer
-        deckgl_hex(layers=[
-            {"data": df1, "config": config1, "name": "Static Layer"},
-            {"tile_url": "https://example.com/tiles/{z}/{x}/{y}", "config": config2, "name": "Tile Layer"},
-        ], debug=True)
-    """
-    # Basemap setup
-    basemap_styles = {"dark": "mapbox://styles/mapbox/dark-v11", "satellite": "mapbox://styles/mapbox/satellite-streets-v12", "light": "mapbox://styles/mapbox/light-v11", "streets": "mapbox://styles/mapbox/streets-v12"}
-    style_url = basemap_styles.get({"sat": "satellite", "satellite-streets": "satellite"}.get((basemap or "dark").lower(), (basemap or "dark").lower()), basemap or basemap_styles["dark"])
-
-    # Process each layer
-    processed_layers = []
-    all_bounds = []
-    has_tile_layers = False
-    
-    for i, layer_def in enumerate(layers):
-        df = layer_def.get("data")
-        tile_url = layer_def.get("tile_url")
-        config = layer_def.get("config", {})
-        name = layer_def.get("name", f"Layer {i + 1}")
-        
-        # Config processing
-        config_errors = []
-        original_config = deepcopy(config) if config else {}
-        merged_config = _load_deckgl_config(config, DEFAULT_DECK_HEX_CONFIG, f"deckgl_hex_layer_{i}", config_errors)
-        hex_layer = merged_config.get("hexLayer", {})
-        tile_layer_config = merged_config.get("tileLayer", {})
-        
-        # Validate hexLayer property names
-        invalid_props = [key for key in list(hex_layer.keys()) if key not in VALID_HEX_LAYER_PROPS]
-        for prop in invalid_props:
-            suggestion = get_close_matches(prop, list(VALID_HEX_LAYER_PROPS), n=1, cutoff=0.6)
-            if suggestion:
-                print(f"[deckgl_hex] Warning: Layer '{name}' property '{prop}' not recognized. Did you mean '{suggestion[0]}'?")
-            hex_layer.pop(prop, None)
-
-        # Determine layer type
-        is_tile_layer = tile_url is not None
-        if is_tile_layer:
-            has_tile_layers = True
-        
-        # Convert dataframe to records (for static layers)
-        data_records = []
-        if not is_tile_layer and hasattr(df, 'to_dict'):
-            # Drop geometry column - hex layers use hex ID, not geometry
-            df_clean = df.drop(columns=['geometry'], errors='ignore') if hasattr(df, 'drop') else df
-            data_records = df_clean.to_dict('records')
-            for record in data_records:
-                hex_val = record.get('hex') or record.get('h3') or record.get('index') or record.get('id')
-                if hex_val is not None:
-                    try:
-                        if isinstance(hex_val, (int, float)):
-                            record['hex'] = format(int(hex_val), 'x')
-                        elif isinstance(hex_val, str) and hex_val.isdigit():
-                            record['hex'] = format(int(hex_val), 'x')
-                        else:
-                            record['hex'] = hex_val
-                    except (ValueError, OverflowError):
-                        record['hex'] = None
-        
-        # Extract tooltip columns - check config root, hexLayer, and original layer config
-        tooltip_columns = _extract_tooltip_columns((config, merged_config, hex_layer))
-        print(f"[deckgl_hex] Layer '{name}' tooltipColumns from config: {config.get('tooltipColumns')}, extracted: {tooltip_columns}")
-        # Only fall back to all columns if tooltipColumns was never specified at all
-        # (not if it was specified but empty)
-        
-        processed_layers.append({
-            "id": f"layer-{i}",
-            "name": name,
-            "data": data_records,
-            "tileUrl": tile_url,
-            "isTileLayer": is_tile_layer,
-            "tileLayerConfig": tile_layer_config,
-            "config": merged_config,
-            "hexLayer": hex_layer,
-            "tooltipColumns": tooltip_columns,
-            "visible": True,
-        })
-    
-    # Auto-center from all layers' data
-    auto_center, auto_zoom = (-119.4179, 36.7783), 5
-    
-    # Check first layer for custom view state
-    # Only longitude/latitude/zoom count as "custom view" - pitch/bearing should still allow auto-fit
-    first_config = layers[0].get("config", {}) if layers else {}
-    user_initial_state = first_config.get('initialViewState', {}) or {}
-    has_custom_view = any(
-        user_initial_state.get(key) is not None
-        for key in ('longitude', 'latitude', 'zoom')
-    )
-    
-    ivs = processed_layers[0]["config"].get('initialViewState', {}) if processed_layers else {}
-    center_lng = ivs.get('longitude') or auto_center[0]
-    center_lat = ivs.get('latitude') or auto_center[1]
-    zoom = ivs.get('zoom') or auto_zoom
-    pitch = ivs.get('pitch', 0)
-    bearing = ivs.get('bearing', 0)
-
-    html = Template(r"""
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet" />
-  <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
-  <script src="https://unpkg.com/h3-js@4.1.0/dist/h3-js.umd.js"></script>
-  {% if has_tile_layers %}
-  <script src="https://unpkg.com/deck.gl@9.1.3/dist.min.js"></script>
-  <script src="https://unpkg.com/@deck.gl/geo-layers@9.1.3/dist.min.js"></script>
-  <script src="https://unpkg.com/@deck.gl/carto@9.1.3/dist.min.js"></script>
-  {% endif %}
-  <script type="module">
-    import * as cartocolor from 'https://esm.sh/cartocolor@5.0.2';
-    window.cartocolor = cartocolor;
-  </script>
-  <style>
-    html, body { margin:0; height:100%; width:100%; display:flex; overflow:hidden; }
-    #map { flex:1; height:100%; }
-    #tooltip { position:absolute; pointer-events:none; background:rgba(15,15,15,0.95); color:#fff; padding:10px 14px; border-radius:6px; font-size:12px; display:none; z-index:6; max-width:320px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 4px 16px rgba(0,0,0,0.4); font-family:Inter,'SF Pro Display','Segoe UI',sans-serif; }
-    #tooltip .tt-title { display:block; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.15); font-size:11px; letter-spacing:0.3px; text-transform:uppercase; color:#E8FF59; }
-    #tooltip .tt-row { display:flex; justify-content:space-between; padding:3px 0; gap:12px; }
-    #tooltip .tt-key { color:rgba(255,255,255,0.6); font-size:11px; }
-    #tooltip .tt-val { color:#fff; font-weight:500; text-align:right; max-width:180px; word-break:break-word; }
-    
-    /* Layer Toggle Panel */
-    #layer-panel {
-      position: fixed;
-      top: 12px;
-      right: 12px;
-      background: rgba(26, 26, 26, 0.95);
-      border: 1px solid #424242;
-      border-radius: 8px;
-      padding: 12px;
-      font-family: Inter, 'SF Pro Display', 'Segoe UI', sans-serif;
-      color: #f5f5f5;
-      min-width: 180px;
-      z-index: 100;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
-    #layer-panel h4 {
-      margin: 0 0 10px 0;
-      font-size: 11px;
-      letter-spacing: 0.4px;
-      text-transform: uppercase;
-      color: #E8FF59;
-      font-weight: 600;
-    }
-    .layer-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 0;
-      border-bottom: 1px solid #333;
-    }
-    .layer-item:last-child { border-bottom: none; }
-    .layer-item input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      cursor: pointer;
-      accent-color: #E8FF59;
-    }
-    .layer-item .layer-color {
-      width: 14px;
-      height: 14px;
-      border-radius: 3px;
-      border: 1px solid rgba(255,255,255,0.2);
-    }
-    .layer-item .layer-name {
-      flex: 1;
-      font-size: 12px;
-      color: #dcdcdc;
-    }
-    .layer-item.disabled .layer-name {
-      color: #666;
-      text-decoration: line-through;
-    }
-    
-    /* Legend */
-    .color-legend {
-      position: fixed;
-      left: 12px;
-      bottom: 12px;
-      background: rgba(15,15,15,0.9); 
-      color: #fff;
-      padding: 8px; 
-      border-radius: 4px;
-      font-size: 11px;
-      z-index: 10;
-      min-width: 140px;
-      border: 1px solid rgba(255,255,255,0.1); 
-    }
-    .legend-layer { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    .legend-layer:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
-    .legend-layer .legend-title { margin-bottom: 6px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
-    .legend-layer .legend-title .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
-    .legend-layer .legend-title .legend-line { width: 20px; height: 3px; border-radius: 1px; }
-    .legend-layer .legend-gradient { height: 10px; border-radius: 2px; margin-bottom: 4px; border: 1px solid rgba(255,255,255,0.2); }
-    .legend-layer .legend-labels { display: flex; justify-content: space-between; font-size: 10px; color: #ccc; }
-    .legend-layer .legend-categories { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; max-height: 440px; overflow-y: scroll; padding-right: 4px; }
-    .legend-layer .legend-categories::-webkit-scrollbar { width: 4px; }
-    .legend-layer .legend-categories::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 2px; }
-    .legend-layer .legend-categories::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
-    .legend-layer .legend-categories::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
-    .legend-layer .legend-cat-item { display: flex; align-items: center; gap: 8px; font-size: 11px; flex-shrink: 0; }
-    .legend-layer .legend-cat-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.2); flex-shrink: 0; }
-    .legend-layer .legend-cat-label { color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
-    .legend-layer .legend-cat-more { font-size: 10px; color: #888; font-style: italic; margin-top: 2px; }
+      {% endif %}
     
     {% if debug %}
-    /* Debug Panel */
-    #debug-panel {
-      position: fixed;
-      top: 0;
-      right: 0;
-      width: 320px;
-      height: 100%;
-      background: #212121;
-      border-left: 1px solid #424242;
-      display: flex;
-      flex-direction: column;
-      font-family: Inter, 'SF Pro Display', 'Segoe UI', sans-serif;
-      color: #f5f5f5;
-      z-index: 200;
-    }
-    #layer-panel { right: 332px !important; }
-    #debug-header { padding: 12px 16px; background: #1a1a1a; border-bottom: 1px solid #424242; }
-    #debug-header h3 { margin: 0; font-size: 12px; font-weight: 600; color: #E8FF59; letter-spacing: 0.5px; text-transform: uppercase; }
-    #debug-tabs { display: flex; gap: 6px; padding: 10px 12px; background: #1a1a1a; border-bottom: 1px solid #333; overflow-y: auto; overflow-x: hidden; flex-shrink: 0; flex-wrap: wrap; max-height: 120px; }
-    #debug-tabs::-webkit-scrollbar { height: 4px; width: 4px; }
-    #debug-tabs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-    .debug-tab { padding: 6px 12px; font-size: 11px; font-weight: 500; color: #888; cursor: pointer; border: 1px solid #444; background: #2a2a2a; border-radius: 4px; transition: all 0.15s; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1 1 calc(50% - 8px); min-width: 120px; }
-    .debug-tab:hover { color: #ccc; background: #333; border-color: #555; }
-    .debug-tab.active { color: #1a1a1a; background: #E8FF59; border-color: #E8FF59; }
-    .debug-tab .tab-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
-    .debug-tab.active .tab-dot { box-shadow: 0 0 0 1px rgba(0,0,0,0.3); }
-    #debug-content { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
-    .debug-section { background: #1a1a1a; border: 1px solid #424242; border-radius: 8px; padding: 12px; }
-    .debug-section h4 { margin: 0 0 10px 0; font-size: 11px; letter-spacing: 0.4px; text-transform: uppercase; color: #bdbdbd; }
-    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .form-control { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #dcdcdc; }
-    .form-control label { font-weight: 600; }
-    .form-control input, .form-control select { background: #111; border: 1px solid #333; border-radius: 4px; padding: 6px 8px; font-size: 12px; color: #f5f5f5; outline: none; }
-    .form-control input:focus, .form-control select:focus { border-color: #E8FF59; }
-    .toggle-row { display: flex; align-items: center; gap: 8px; font-size: 11px; }
-    .toggle-row input { width: 16px; height: 16px; accent-color: #E8FF59; }
-    .single-column { display: flex; flex-direction: column; gap: 10px; }
-    #dbg-config { width: 100%; min-height: 100px; resize: vertical; background: #111; color: #f5f5f5; border: 1px solid #333; border-radius: 6px; padding: 10px; font-family: SFMono-Regular, Consolas, monospace; font-size: 11px; line-height: 1.4; }
-    {% endif %}
-  </style>
-</head>
-<body>
-  <div id="map"></div>
-  <div id="tooltip"></div>
-  
-  <!-- Layer Toggle Panel -->
-  <div id="layer-panel">
-    <h4>Layers</h4>
-    <div id="layer-list"></div>
-    </div>
-  
-  <!-- Legend -->
-  <div id="color-legend" class="color-legend" style="display:none;"></div>
-  
-  {% if debug %}
-  <!-- Debug Panel -->
-  <div id="debug-panel">
-    <div id="debug-header">
-      <h3>Layer Config</h3>
-  </div>
-    <div id="debug-tabs"></div>
-    <div id="debug-content">
-      <div class="debug-section">
-        <h4>View</h4>
-        <div class="form-grid">
-          <div class="form-control">
-            <label>Longitude</label>
-            <input type="number" id="cfg-longitude" data-cfg-input step="0.0001" placeholder="auto" />
-          </div>
-          <div class="form-control">
-            <label>Latitude</label>
-            <input type="number" id="cfg-latitude" data-cfg-input step="0.0001" placeholder="auto" />
-          </div>
-          <div class="form-control">
-            <label>Zoom</label>
-            <input type="number" id="cfg-zoom" data-cfg-input step="0.1" min="0" placeholder="auto" />
-          </div>
-          <div class="form-control">
-            <label>Pitch</label>
-            <input type="number" id="cfg-pitch" data-cfg-input step="1" min="0" max="85" placeholder="0-85" />
-          </div>
-          <div class="form-control">
-            <label>Bearing</label>
-            <input type="number" id="cfg-bearing" data-cfg-input step="1" placeholder="deg" />
-          </div>
-        </div>
-      </div>
-      <div class="debug-section">
-        <h4>Layer</h4>
-        <div class="single-column">
-          <label class="toggle-row"><input type="checkbox" id="cfg-filled" data-cfg-input checked />Filled</label>
-          <label class="toggle-row"><input type="checkbox" id="cfg-extruded" data-cfg-input />Extruded (3D)</label>
-          <div class="form-control">
-            <label>Elevation Scale</label>
-            <input type="number" id="cfg-elev-scale" data-cfg-input step="0.1" min="0" value="1" />
-          </div>
-        </div>
-      </div>
-      <div class="debug-section">
-        <h4>Fill Color</h4>
-        <div class="form-grid">
-          <div class="form-control">
-            <label>Attribute</label>
-            <select id="cfg-attr" data-cfg-input></select>
-          </div>
-          <div class="form-control">
-            <label>Palette</label>
-            <select id="cfg-palette" data-cfg-input>
-              {% for pal in palettes %}<option value="{{ pal }}">{{ pal }}</option>{% endfor %}
-            </select>
-          </div>
-          <div class="form-control">
-            <label>Domain Min</label>
-            <input type="number" id="cfg-domain-min" data-cfg-input step="0.1" value="0" />
-          </div>
-          <div class="form-control">
-            <label>Domain Max</label>
-            <input type="number" id="cfg-domain-max" data-cfg-input step="0.1" value="100" />
-          </div>
-        </div>
-      </div>
-      <div class="debug-section">
-        <h4>Config Output</h4>
-        <textarea id="dbg-config" readonly></textarea>
-      </div>
-    </div>
-  </div>
-  {% endif %}
-
-  <script>
-    const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
-    const LAYERS_DATA = {{ layers_data | tojson }};
-    const HAS_CUSTOM_VIEW = {{ has_custom_view | tojson }};
-    
-    // Track layer visibility
-    const layerVisibility = {};
-    LAYERS_DATA.forEach(l => { layerVisibility[l.id] = l.visible; });
-
-    // H3 ID conversion
-    function toH3(hex) {
-      if (hex == null) return null;
-      try {
-        if (typeof hex === 'string') {
-          const s = hex.startsWith('0x') ? hex.slice(2) : hex;
-          return /[a-f]/i.test(s) ? s.toLowerCase() : /^\d+$/.test(s) ? BigInt(s).toString(16) : s.toLowerCase();
-        }
-        if (typeof hex === 'number') return BigInt(Math.trunc(hex)).toString(16);
-        if (typeof hex === 'bigint') return hex.toString(16);
-      } catch(e) {}
-      return null;
-    }
-
-    // Convert to GeoJSON
-    function toGeoJSON(data) {
-      const features = [];
-      for (const d of data) {
-        const hexId = toH3(d.hex ?? d.h3 ?? d.index ?? d.id);
-        if (!hexId || !h3.isValidCell(hexId)) continue;
-        try {
-          const boundary = h3.cellToBoundary(hexId);
-          const coords = boundary.map(([lat, lng]) => [lng, lat]);
-          coords.push(coords[0]);
-          features.push({ type: 'Feature', properties: { ...d, hex: hexId }, geometry: { type: 'Polygon', coordinates: [coords] }});
-        } catch(e) {}
-      }
-      return { type: 'FeatureCollection', features };
-    }
-
-    // Get palette colors from cartocolor
-    function getPaletteColors(name, steps) {
-      const pal = window.cartocolor?.[name];
-      if (!pal) return null;
-      const keys = Object.keys(pal).map(Number).filter(n => !isNaN(n)).sort((a, b) => a - b);
-      const best = keys.find(n => n >= steps) || keys[keys.length - 1];
-      return pal[best] ? [...pal[best]] : null;
-    }
-
-    // Extract unique categories from data for an attribute, with optional label mapping
-    function getUniqueCategories(data, attr, labelAttr) {
-      const seen = new Map(); // Map category value -> label
-      (data || []).forEach(d => {
-        const val = d?.[attr] ?? d?.properties?.[attr];
-        if (val != null && val !== '' && val !== 'null') {
-          if (!seen.has(val)) {
-            const label = labelAttr ? (d?.[labelAttr] ?? d?.properties?.[labelAttr] ?? val) : val;
-            seen.set(val, label);
-          }
-        }
-      });
-      // Sort by category value and return {value, label} pairs
-      const sorted = [...seen.entries()].sort((a, b) => {
-        if (typeof a[0] === 'number' && typeof b[0] === 'number') return a[0] - b[0];
-        return String(a[0]).localeCompare(String(b[0]));
-      });
-      return sorted.map(([value, label]) => ({ value, label }));
-    }
-    
-    // Build color expression
-    function buildColorExpr(cfg, data) {
-      if (!cfg || !cfg.attr) return 'rgba(0,144,255,0.7)';
-      
-      // Handle colorCategories
-      if (cfg['@@function'] === 'colorCategories') {
-        // Auto-detect categories from data if not provided
-        let catPairs = cfg.categories 
-          ? cfg.categories.map(c => typeof c === 'object' ? c : { value: c, label: c })
-          : getUniqueCategories(data, cfg.attr, cfg.labelAttr);
-        
-        if (!catPairs.length) return 'rgba(128,128,128,0.5)';
-        
-        const name = cfg.colors || 'Bold';
-        const cols = getPaletteColors(name, Math.max(catPairs.length, 3)) || ['#7F3C8D','#11A579','#3969AC','#F2B701','#E73F74','#80BA5A','#E68310','#008695','#CF1C90','#f97b72'];
-        const fallback = cfg.nullColor ? `rgb(${cfg.nullColor.slice(0,3).join(',')})` : 'rgba(128,128,128,0.5)';
-        const expr = ['match', ['get', cfg.attr]];
-        catPairs.forEach((cat, i) => { expr.push(cat.value); expr.push(cols[i % cols.length]); });
-        expr.push(fallback);
-        // Store detected categories back for legend (with labels)
-        cfg._detectedCategories = catPairs;
-        return expr;
-      }
-      
-      // Handle colorContinuous
-      if (cfg['@@function'] !== 'colorContinuous' || !cfg.domain?.length) return 'rgba(0,144,255,0.7)';
-      const [d0, d1] = cfg.domain, rev = d0 > d1, dom = rev ? [d1, d0] : [d0, d1];
-      const steps = cfg.steps || 7, name = cfg.colors || 'TealGrn';
-      let cols = getPaletteColors(name, steps);
-      if (!cols || !cols.length) {
-        return ['interpolate', ['linear'], ['get', cfg.attr], dom[0], 'rgb(237,248,251)', dom[1], 'rgb(0,109,44)'];
-      }
-      if (rev) cols.reverse();
-      const expr = ['interpolate', ['linear'], ['get', cfg.attr]];
-      cols.forEach((c, i) => { expr.push(dom[0] + (dom[1] - dom[0]) * i / (cols.length - 1)); expr.push(c); });
-      return expr;
-    }
-
-    // Convert [r,g,b] or [r,g,b,a] array to rgba string
-    function toRgba(arr, defaultAlpha) {
-      if (!Array.isArray(arr) || arr.length < 3) return null;
-      const [r, g, b] = arr;
-      const a = arr.length >= 4 ? arr[3] / 255 : (defaultAlpha ?? 1);
-      return `rgba(${r},${g},${b},${a})`;
-    }
-
-    // Precompute GeoJSON for static layers
-    const layerGeoJSONs = {};
-    LAYERS_DATA.forEach(l => {
-      if (!l.isTileLayer) {
-        layerGeoJSONs[l.id] = toGeoJSON(l.data);
-      }
-    });
-
-    // Check if we have any tile layers
-    const HAS_TILE_LAYERS = LAYERS_DATA.some(l => l.isTileLayer);
-    const TILE_CACHE = new Map();
-
-    mapboxgl.accessToken = MAPBOX_TOKEN;
-    const map = new mapboxgl.Map({ 
-      container: 'map', 
-      style: {{ style_url | tojson }}, 
-      center: [{{ center_lng }}, {{ center_lat }}], 
-      zoom: {{ zoom }}, 
-      pitch: {{ pitch }}, 
-      bearing: {{ bearing }}, 
-      projection: 'mercator' 
-    });
-
-    // Deck.gl overlay for tile layers (only if we have tile layers)
-    let deckOverlay = null;
-    const tileLayers = {};  // Track deck.gl tile layer instances
-
-    {% if has_tile_layers %}
-    // Tile layer helpers
-    const { TileLayer, MapboxOverlay } = deck;
-    const H3HexagonLayer = deck.H3HexagonLayer || (deck.GeoLayers && deck.GeoLayers.H3HexagonLayer);
-    const { colorContinuous } = deck.carto;
-
-    function toH3String(hex) {
-      try {
-        if (hex == null) return null;
-        if (typeof hex === 'string') {
-          const s = hex.startsWith('0x') ? hex.slice(2) : hex;
-          return (/^\d+$/.test(s) ? BigInt(s).toString(16) : s.toLowerCase());
-        }
-        if (typeof hex === 'number') return BigInt(Math.trunc(hex)).toString(16);
-        if (typeof hex === 'bigint') return hex.toString(16);
-        if (Array.isArray(hex) && hex.length === 2) {
-          const a = (BigInt(hex[0]) << 32n) | BigInt(hex[1]);
-          const b = (BigInt(hex[1]) << 32n) | BigInt(hex[0]);
-          const sa = a.toString(16), sb = b.toString(16);
-          if (h3.isValidCell?.(sa)) return sa;
-          if (h3.isValidCell?.(sb)) return sb;
-          return sa;
-        }
-      } catch (_) {}
-      return null;
-    }
-
-    function normalizeTileData(raw) {
-      const arr = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : (Array.isArray(raw?.features) ? raw.features : []));
-      const rows = arr.map(d => d?.properties ? { ...d.properties } : { ...d });
-      return rows.map(p => {
-        const hexRaw = p.hex ?? p.h3 ?? p.index ?? p.id;
-        const hex = toH3String(hexRaw);
-        if (!hex) return null;
-        const props = { ...p, hex };
-        return { ...props, properties: { ...props } };
-      }).filter(Boolean);
-    }
-
-    function processColorContinuousCfg(cfg) {
-      let domain = cfg.domain;
-      if (domain && domain.length === 2) {
-        const [min, max] = domain;
-        const steps = cfg.steps ?? 20;
-        const stepSize = (max - min) / (steps - 1);
-        domain = Array.from({ length: steps }, (_, i) => min + stepSize * i);
-      }
-      return { attr: cfg.attr, domain, colors: cfg.colors || 'TealGrn', nullColor: cfg.nullColor || [184, 184, 184] };
-    }
-
-    function parseHexLayerConfigForDeck(config) {
-      const out = {};
-      for (const [k, v] of Object.entries(config || {})) {
-        if (k === '@@type') continue;
-        if (v && typeof v === 'object' && !Array.isArray(v)) {
-          if (v['@@function'] === 'colorContinuous') {
-            out[k] = colorContinuous(processColorContinuousCfg(v));
-          } else {
-            out[k] = v;
-          }
-        } else if (typeof v === 'string' && v.startsWith('@@=')) {
-          const code = v.slice(3);
-          out[k] = (obj) => {
-            try {
-              const fn = new Function('object', `const properties = object?.properties || object || {}; return (${code});`);
-              return fn(obj);
-            } catch (e) { return null; }
-          };
-        } else {
-          out[k] = v;
-        }
-      }
-      return out;
-    }
-
-    function buildTileLayer(layerDef, beforeId = null) {
-      const tileUrl = layerDef.tileUrl;
-      const tileCfg = layerDef.tileLayerConfig || {};
-      const rawHexLayer = layerDef.hexLayer || {};
-      const hexCfg = parseHexLayerConfigForDeck(rawHexLayer);
-      const visible = layerVisibility[layerDef.id];
-      const layerOpacity = (typeof rawHexLayer.opacity === 'number') ? rawHexLayer.opacity : 0.8;
-      const isExtruded = rawHexLayer.extruded === true;
-      const elevationScale = rawHexLayer.elevationScale || 1;
-      
-      // Determine elevation attribute - use getElevation config or fall back to color attr
-      let elevationAttr = null;
-      if (rawHexLayer.getElevation) {
-        // Parse @@=properties.attr style accessor
-        const match = String(rawHexLayer.getElevation).match(/@@=properties\.([A-Za-z0-9_]+)/);
-        if (match) elevationAttr = match[1];
-      }
-      if (!elevationAttr && rawHexLayer.getFillColor?.attr) {
-        elevationAttr = rawHexLayer.getFillColor.attr;
-      }
-
-      const layerProps = {
-        id: `${layerDef.id}-tiles`,
-        data: tileUrl,
-        tileSize: tileCfg.tileSize ?? 256,
-        minZoom: tileCfg.minZoom ?? 0,
-        maxZoom: tileCfg.maxZoom ?? 12,
-        pickable: true,
-        visible: visible,
-        maxRequests: 6,
-        refinementStrategy: 'best-available',
-        getTileData: async ({ index, signal }) => {
-          const { x, y, z } = index;
-          const url = tileUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
-          const cacheKey = `${tileUrl}|${z}|${x}|${y}`;
-          if (TILE_CACHE.has(cacheKey)) return TILE_CACHE.get(cacheKey);
-          try {
-            const res = await fetch(url, { signal });
-            if (!res.ok) return [];
-            let text = await res.text();
-            text = text.replace(/\"(hex|h3|index)\"\s*:\s*(\d+)/gi, (_m, k, d) => `"${k}":"${d}"`);
-            const data = JSON.parse(text);
-            const normalized = normalizeTileData(data);
-            TILE_CACHE.set(cacheKey, normalized);
-            return normalized;
-          } catch (e) { return TILE_CACHE.get(cacheKey) || []; }
-        },
-        renderSubLayers: (props) => {
-          const data = props.data || [];
-          if (!data.length) return null;
-          if (H3HexagonLayer) {
-            const subLayerProps = {
-              id: `${props.id}-h3`,
-        data,
-        pickable: true,
-              stroked: false,
-        filled: true,
-              extruded: isExtruded,
-              elevationScale: elevationScale,
-        coverage: 0.9,
-              lineWidthMinPixels: 1,
-              opacity: layerOpacity,
-        getHexagon: d => d.hex,
-              ...hexCfg
-            };
-            
-            // Add getElevation accessor if extruded and we have an attribute
-            if (isExtruded && elevationAttr) {
-              subLayerProps.getElevation = d => {
-                const props = d?.properties || d || {};
-                const val = Number(props[elevationAttr]);
-                return Number.isFinite(val) ? val : 0;
-              };
-            }
-            
-            return new H3HexagonLayer(subLayerProps);
-          }
-          return null;
-        }
-      };
-      
-      // Add beforeId for z-order control in interleaved mode
-      if (beforeId) {
-        layerProps.beforeId = beforeId;
-      }
-      
-      return new TileLayer(layerProps);
-    }
-
-    function rebuildDeckOverlay() {
-      const tileLayers = LAYERS_DATA.filter(l => l.isTileLayer && layerVisibility[l.id]);
-      
-      if (tileLayers.length === 0) {
-        if (deckOverlay) {
-          try {
-            map.removeControl(deckOverlay);
-            deckOverlay.finalize?.();
-          } catch (e) {}
-          deckOverlay = null;
-        }
-        return;
-      }
-      
-      const allMapboxLayers = map.getStyle()?.layers || [];
-      let bottomMostLayerId = null;
-      for (const mapLayer of allMapboxLayers) {
-        const isOurLayer = LAYERS_DATA.some(l =>
-          !l.isTileLayer && (
-            mapLayer.id === `${l.id}-fill` ||
-            mapLayer.id === `${l.id}-outline` ||
-            mapLayer.id === `${l.id}-extrusion`
-          )
-        );
-        if (isOurLayer) {
-          bottomMostLayerId = mapLayer.id;
-          break;
-        }
-      }
-      
-      const deckLayers = tileLayers
-        .slice()
-        .reverse()
-        .map(l => buildTileLayer(l, bottomMostLayerId));
-      
-      if (!deckOverlay) {
-        deckOverlay = new MapboxOverlay({
-          interleaved: true,
-          layers: deckLayers
-        });
-        map.addControl(deckOverlay);
-        const overlayLayerId = deckOverlay?._mapboxLayer?.id;
-        if (overlayLayerId && bottomMostLayerId) {
-          try { map.moveLayer(overlayLayerId, bottomMostLayerId); } catch (e) {}
-        }
-      } else {
-        deckOverlay.setProps({ layers: deckLayers });
-      }
-    }
-    {% endif %}
-
-    function addAllLayers() {
-      // Remove existing Mapbox layers for static layers
-      LAYERS_DATA.forEach(l => {
-        if (!l.isTileLayer) {
-          [`${l.id}-fill`, `${l.id}-extrusion`, `${l.id}-outline`].forEach(id => { 
-            try { if(map.getLayer(id)) map.removeLayer(id); } catch(e){} 
-          });
-          try { if(map.getSource(l.id)) map.removeSource(l.id); } catch(e){}
-        }
-      });
-      
-      // Add static layers in reverse menu order so top of menu renders on top of map
-      const renderOrder = [...LAYERS_DATA].reverse();
-      renderOrder.forEach((l) => {
-        if (l.isTileLayer) return;  // Skip tile layers - handled by Deck.gl
-        
-        const geojson = layerGeoJSONs[l.id];
-        map.addSource(l.id, { type: 'geojson', data: geojson });
-        
-        const cfg = l.hexLayer || {};
-        const fillColor = Array.isArray(cfg.getFillColor) ? toRgba(cfg.getFillColor, 0.8) : buildColorExpr(cfg.getFillColor, l.data);
-        const lineColor = cfg.getLineColor ? (Array.isArray(cfg.getLineColor) ? toRgba(cfg.getLineColor, 1) : buildColorExpr(cfg.getLineColor, l.data)) : 'rgba(255,255,255,0.3)';
-        const layerOpacity = (typeof cfg.opacity === 'number' && isFinite(cfg.opacity)) ? Math.max(0, Math.min(1, cfg.opacity)) : 0.8;
-        const visible = layerVisibility[l.id];
-        
-        if (cfg.extruded) {
-          // 3D extrusion mode
-          const elev = cfg.elevationScale || 1;
-          map.addLayer({ 
-            id: `${l.id}-extrusion`, 
-            type: 'fill-extrusion', 
-            source: l.id, 
-            paint: { 
-              'fill-extrusion-color': fillColor, 
-              'fill-extrusion-height': cfg.getFillColor?.attr ? ['*', ['get', cfg.getFillColor.attr], elev] : 100,
-              'fill-extrusion-base': 0,
-              'fill-extrusion-opacity': layerOpacity
-            },
-            layout: { 'visibility': visible ? 'visible' : 'none' }
-          });
-          map.addLayer({ 
-            id: `${l.id}-outline`, 
-            type: 'line', 
-            source: l.id, 
-            paint: { 'line-color': lineColor, 'line-width': cfg.lineWidthMinPixels || 0.5 },
-            layout: { 'visibility': visible ? 'visible' : 'none' }
-          });
-        } else {
-          // Flat 2D mode
-          if (cfg.filled !== false) {
-            map.addLayer({ 
-              id: `${l.id}-fill`, 
-              type: 'fill', 
-              source: l.id, 
-              paint: { 'fill-color': fillColor, 'fill-opacity': layerOpacity },
-              layout: { 'visibility': visible ? 'visible' : 'none' }
-            });
-          }
-          map.addLayer({ 
-            id: `${l.id}-outline`, 
-            type: 'line', 
-            source: l.id, 
-            paint: { 'line-color': lineColor, 'line-width': cfg.lineWidthMinPixels || 0.5 },
-            layout: { 'visibility': visible ? 'visible' : 'none' }
-          });
-        }
-      });
-
-      // Add tile layers using Deck.gl
-      {% if has_tile_layers %}
-      rebuildDeckOverlay();
-      {% endif %}
-    }
-
-    window.toggleLayerVisibility = function(layerId, visible) {
-      layerVisibility[layerId] = visible;
-      
-      const layerDef = LAYERS_DATA.find(l => l.id === layerId);
-      if (layerDef && layerDef.isTileLayer) {
-        // Tile layer - rebuild deck overlay
-        {% if has_tile_layers %}
-        rebuildDeckOverlay();
-        {% endif %}
-      } else {
-        // Static layer - toggle Mapbox layers
-        [`${layerId}-fill`, `${layerId}-extrusion`, `${layerId}-outline`].forEach(id => {
-          try { 
-            if(map.getLayer(id)) {
-              map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
-            }
-          } catch(e){}
-        });
-      }
-      updateLegend();
-      updateLayerPanel();
-    };
-
-    function updateLayerPanel() {
-      const list = document.getElementById('layer-list');
-      if (!list) return;
-      
-      list.innerHTML = LAYERS_DATA.map(l => {
-        const visible = layerVisibility[l.id];
-        const cfg = l.hexLayer || {};
-        // Use getLineColor for preview when filled is false
-        const colorCfg = (cfg.filled === false && cfg.getLineColor) ? cfg.getLineColor : cfg.getFillColor;
-        let colorPreview = '#0090ff';
-        if (Array.isArray(colorCfg)) {
-          colorPreview = toRgba(colorCfg, 1) || colorPreview;
-        } else if (colorCfg?.['@@function'] === 'colorContinuous' || colorCfg?.['@@function'] === 'colorCategories') {
-          const paletteName = colorCfg.colors || (colorCfg['@@function'] === 'colorCategories' ? 'Bold' : 'TealGrn');
-          const cols = getPaletteColors(paletteName, colorCfg.steps || 7);
-          if (cols && cols.length) colorPreview = cols[Math.floor(cols.length / 2)];
-        }
-        
-        return `
-          <div class="layer-item ${visible ? '' : 'disabled'}">
-            <input type="checkbox" ${visible ? 'checked' : ''} onchange="toggleLayerVisibility('${l.id}', this.checked)" />
-            <div class="layer-color" style="background:${colorPreview};"></div>
-            <span class="layer-name">${l.name}</span>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function updateLegend() {
-      const legend = document.getElementById('color-legend');
-      if (!legend) return;
-      
-      const visibleLayers = LAYERS_DATA.filter(l => layerVisibility[l.id]);
-      if (!visibleLayers.length) {
-        legend.style.display = 'none';
-        return;
-      }
-      
-      let html = '';
-      visibleLayers.forEach(l => {
-        const cfg = l.hexLayer || {};
-        const colorCfg = (cfg.filled === false && cfg.getLineColor) ? cfg.getLineColor : cfg.getFillColor;
-        
-        // Only show legend for layers with explicit color functions
-        const fnType = colorCfg?.['@@function'];
-        if (!fnType || !colorCfg?.attr) return;
-        if (fnType !== 'colorContinuous' && fnType !== 'colorCategories') return;
-        
-        const paletteName = colorCfg.colors || (fnType === 'colorCategories' ? 'Bold' : 'TealGrn');
-        
-        // Handle categorical legend
-        if (fnType === 'colorCategories') {
-          // Use detected categories or provided ones
-          let catPairs = colorCfg._detectedCategories || colorCfg.categories || [];
-          // Normalize to {value, label} format
-          catPairs = catPairs.map(c => typeof c === 'object' && c.label ? c : { value: c, label: c });
-          if (!catPairs.length) return;
-          
-          let cols = getPaletteColors(paletteName, Math.max(catPairs.length, 3));
-          if (!cols || !cols.length) {
-            cols = ['#7F3C8D','#11A579','#3969AC','#F2B701','#E73F74','#80BA5A','#E68310','#008695','#CF1C90','#f97b72'];
-          }
-          
-          // Use labelAttr name in title if available
-          const titleAttr = colorCfg.labelAttr || colorCfg.attr;
-          
-          html += `
-            <div class="legend-layer">
-              <div class="legend-title">
-                <span class="legend-dot" style="background:${cols[0]};"></span>
-                ${l.name}: ${titleAttr}
-              </div>
-              <div class="legend-categories">
-                ${catPairs.map((cat, i) => `
-                  <div class="legend-cat-item">
-                    <div class="legend-cat-swatch" style="background:${cols[i % cols.length]};"></div>
-                    <span class="legend-cat-label" title="${cat.label}">${cat.label}</span>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-          `;
-          return;
-        }
-        
-        // Handle continuous legend
-        if (fnType !== 'colorContinuous' || !colorCfg.domain?.length) return;
-        
-        const [d0, d1] = colorCfg.domain;
-        const isReversed = d0 > d1;
-        const steps = colorCfg.steps || 7;
-        
-        let cols = getPaletteColors(paletteName, steps);
-        if (!cols || !cols.length) {
-          cols = ['#e0f3db','#ccebc5','#a8ddb5','#7bccc4','#4eb3d3','#2b8cbe','#0868ac','#084081'];
-        }
-        if (isReversed) cols = [...cols].reverse();
-        
-        const gradient = `linear-gradient(to right, ${cols.map((c, i) => `${c} ${i / (cols.length - 1) * 100}%`).join(', ')})`;
-        const dotColor = cols[Math.floor(cols.length / 2)];
-        
-        html += `
-          <div class="legend-layer">
-            <div class="legend-title">
-              <span class="legend-dot" style="background:${dotColor};"></span>
-              ${l.name}: ${colorCfg.attr}
-            </div>
-            <div class="legend-gradient" style="background:${gradient};"></div>
-            <div class="legend-labels">
-              <span>${d0.toFixed(1)}</span>
-              <span>${d1.toFixed(1)}</span>
-            </div>
-          </div>
-        `;
-      });
-      
-      if (html) {
-        legend.innerHTML = html;
-        legend.style.display = 'block';
-      } else {
-        legend.style.display = 'none';
-      }
-    }
-
-    let layersReady = false;
-    let autoFitDone = false;
-    
-    function tryInit() {
-      if (layersReady) return;
-      
-      // Check if cartocolor is loaded (needed for color interpolation)
-      const needsCartocolor = LAYERS_DATA.some(l => {
-        const cfg = l.hexLayer || {};
-        const colorCfg = cfg.getFillColor;
-        return colorCfg && colorCfg['@@function'] === 'colorContinuous';
-      });
-      
-      if (needsCartocolor && !window.cartocolor) {
-        setTimeout(tryInit, 50);
-        return;
-      }
-      
-      layersReady = true;
-      addAllLayers();
-      updateLayerPanel();
-      updateLegend();
-      
-      // Auto-fit to combined bounds (static layers only)
-      if (!HAS_CUSTOM_VIEW && !autoFitDone) {
-        const bounds = new mapboxgl.LngLatBounds();
-        LAYERS_DATA.forEach(l => {
-          if (l.isTileLayer) return;  // Skip tile layers for auto-fit
-          const geojson = layerGeoJSONs[l.id];
-          if (geojson && geojson.features && geojson.features.length) {
-            geojson.features.forEach(f => f.geometry.coordinates[0].forEach(c => bounds.extend(c)));
-          }
-        });
-        if (!bounds.isEmpty()) {
-          // Preserve pitch and bearing from config during fitBounds
-          map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 500, pitch: {{ pitch }}, bearing: {{ bearing }} });
-          autoFitDone = true;
-          {% if debug %}
-          map.once('moveend', () => {
-            setTimeout(() => {
-              try { updateFormFromLayer(activeLayerIdx); } catch (e) {}
-            }, 50);
-          });
-          {% endif %}
-        }
-      }
-      
-      // Setup unified tooltip for static layers - query all layers and pick topmost
-      const tt = document.getElementById('tooltip');
-      
-      // Build list of all queryable layer IDs in render order (top to bottom)
-      // Layers are rendered in reverse menu order, so menu order = visual top-to-bottom
-      const allQueryableLayers = [];
-      LAYERS_DATA.forEach(l => {
-        if (l.isTileLayer) return;
-        const cfg = l.hexLayer || {};
-        const layerIds = cfg.extruded 
-          ? [`${l.id}-extrusion`, `${l.id}-outline`]
-          : [`${l.id}-fill`, `${l.id}-outline`];
-        layerIds.forEach(layerId => {
-          allQueryableLayers.push({ layerId, layerDef: l });
-              });
-            });
-      
-    map.on('mousemove', (e) => { 
-        // Query all static layers at this point
-        const queryIds = allQueryableLayers.map(x => x.layerId).filter(id => map.getLayer(id));
-        if (!queryIds.length) return;
-        
-        const features = map.queryRenderedFeatures(e.point, { layers: queryIds });
-        if (!features?.length) {
-          tt.style.display = 'none';
-          map.getCanvas().style.cursor = '';
-          return;
-        }
-        
-        // Find the topmost visible layer's feature
-        // Features are returned in render order (topmost first)
-        let topFeature = null;
-        let topLayerDef = null;
-        for (const f of features) {
-          const match = allQueryableLayers.find(x => x.layerId === f.layer.id);
-          if (match && layerVisibility[match.layerDef.id]) {
-            topFeature = f;
-            topLayerDef = match.layerDef;
-            break;
-          }
-        }
-        
-        if (!topFeature || !topLayerDef) {
-          tt.style.display = 'none';
-          map.getCanvas().style.cursor = '';
-          return;
-        }
-
-        map.getCanvas().style.cursor = 'pointer';
-        const p = topFeature.properties;
-        const cols = topLayerDef.tooltipColumns || [];
-        const lines = cols.length 
-          ? cols.map(k => p[k] != null ? `<span class="tt-row"><span class="tt-key">${k}</span><span class="tt-val">${typeof p[k]==='number'?p[k].toFixed(2):p[k]}</span></span>` : '').filter(Boolean) 
-          : (p.hex ? [`<span class="tt-row"><span class="tt-key">hex</span><span class="tt-val">${p.hex.slice(0,12)}...</span></span>`] : []);
-        if (lines.length) { 
-          tt.innerHTML = `<strong class="tt-title">${topLayerDef.name}</strong>` + lines.join(''); 
-          tt.style.left = `${e.point.x+10}px`; 
-          tt.style.top = `${e.point.y+10}px`; 
-        tt.style.display = 'block';
-      } else {
-          tt.style.display = 'none';
-        }
-      });
-      
-      map.on('mouseleave', () => { 
-        map.getCanvas().style.cursor = '';
-        tt.style.display = 'none'; 
-      });
-
-      // Setup tooltips for tile layers (Deck.gl layers)
-      {% if has_tile_layers %}
-      map.on('mousemove', (e) => { 
-        if (!deckOverlay) return;
-        const info = deckOverlay.pickObject({ x: e.point.x, y: e.point.y, radius: 4 });
-        if (info?.object) {
-          // Find which tile layer this belongs to
-          const layerId = info.layer?.id?.split('-tiles-')[0];
-          const layerDef = LAYERS_DATA.find(l => l.id === layerId || info.layer?.id?.startsWith(l.id));
-          if (layerDef && layerVisibility[layerDef.id]) {
-            map.getCanvas().style.cursor = 'pointer';
-            // Get properties - check both root level and nested properties object
-            const obj = info.object;
-            const p = obj?.properties || obj || {};
-            const cols = layerDef.tooltipColumns || [];
-            const colorAttr = layerDef.hexLayer?.getFillColor?.attr || 'metric';
-            const hexVal = p.hex || obj.hex;
-            const lines = hexVal ? [`<span class="tt-row"><span class="tt-key">hex</span><span class="tt-val">${String(hexVal).slice(0, 12)}...</span></span>`] : [];
-            
-            if (cols.length) {
-              cols.forEach(col => {
-                const val = p[col] ?? obj[col];
-                if (val !== undefined && val !== null) {
-                  lines.push(`<span class="tt-row"><span class="tt-key">${col}</span><span class="tt-val">${typeof val === 'number' ? val.toFixed(2) : val}</span></span>`);
-                }
-              });
-            } else if (p[colorAttr] != null || obj[colorAttr] != null) {
-              const val = p[colorAttr] ?? obj[colorAttr];
-              lines.push(`<span class="tt-row"><span class="tt-key">${colorAttr}</span><span class="tt-val">${Number(val).toFixed(2)}</span></span>`);
-            }
-            
-            if (lines.length) {
-              tt.innerHTML = `<strong class="tt-title">${layerDef.name}</strong>` + lines.join('');
-              tt.style.left = `${e.point.x + 10}px`;
-              tt.style.top = `${e.point.y + 10}px`;
-              tt.style.display = 'block';
-            }
-          return;
-        }
-        }
-        // Only hide if no static layer tooltip is showing
-        if (!map.queryRenderedFeatures(e.point).length) {
-          tt.style.display = 'none';
-          map.getCanvas().style.cursor = '';
-        }
-      });
-      {% endif %}
-    }
-
-    map.on('load', tryInit);
-    map.on('load', () => { [100, 500, 1000].forEach(t => setTimeout(() => map.resize(), t)); });
-    window.addEventListener('resize', () => map.resize());
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => map.resize(), 100); });
-    
-    {% if highlight_on_click %}
-    // Click-to-highlight
-    (function() {
-      const HL_RGBA = 'rgba(255,255,0,1)', HL_LW = 3;
-      let selected = null, added = false;
-      
-      function toH3(hex) {
-        if (!hex) return null;
-        try {
-          if (typeof hex === 'string') return /^\d+$/.test(hex) ? BigInt(hex).toString(16) : hex.toLowerCase();
-          return BigInt(Math.trunc(hex)).toString(16);
-        } catch(e) { return null; }
-      }
-      
-      function highlight(hexId) {
-        let geojson = { type: 'FeatureCollection', features: [] };
-        if (hexId && typeof h3 !== 'undefined') {
-          try {
-            const id = toH3(hexId);
-            if (id && h3.isValidCell(id)) {
-              const b = h3.cellToBoundary(id).map(([lat,lng]) => [lng,lat]);
-              b.push(b[0]);
-              geojson.features.push({ type:'Feature', geometry:{ type:'Polygon', coordinates:[b] } });
-            }
-          } catch(e) {}
-        }
-        if (!added) {
-          map.addSource('hex-hl', { type:'geojson', data:geojson });
-          map.addLayer({ id:'hex-hl-fill', type:'fill', source:'hex-hl', paint:{'fill-color':HL_RGBA,'fill-opacity':0.2} });
-          map.addLayer({ id:'hex-hl-line', type:'line', source:'hex-hl', paint:{'line-color':HL_RGBA,'line-width':HL_LW} });
-          added = true;
-        } else map.getSource('hex-hl').setData(geojson);
-        selected = hexId;
-      }
-      
-      function getLayers() {
-        const layers = [];
-        if (typeof LAYERS_DATA !== 'undefined') LAYERS_DATA.forEach(l => {
-          if (l.isTileLayer) return;
-          const id = l.hexLayer?.extruded ? `${l.id}-extrusion` : `${l.id}-fill`;
-          try { if (map.getLayer(id)) layers.push(id); } catch(e){}
-        });
-        ['gdf-fill','gdf-circle','hex-fill'].forEach(id => { try { if (map.getLayer(id)) layers.push(id); } catch(e){} });
-        return layers;
-      }
-      
-      map.on('load', () => {
-        map.on('click', e => {
-          const queryLayers = getLayers();
-          if (!queryLayers.length) return;
-          let feats = [];
-          try { feats = map.queryRenderedFeatures(e.point, { layers: queryLayers }) || []; } catch(err) {}
-          const hex = feats?.[0]?.properties?.hex || feats?.[0]?.properties?.h3;
-          if (hex) { highlight(hex); }
-          else if (typeof deckOverlay !== 'undefined') {
-            const info = deckOverlay?.pickObject?.({ x:e.point.x, y:e.point.y, radius:4 });
-            const h = info?.object?.properties?.hex || info?.object?.hex;
-            if (h) { highlight(h); }
-            else if (selected) { highlight(null); }
-          }
-          else if (selected) { highlight(null); }
-        });
-      });
-    })();
-    {% endif %}
-    
-    {% if debug %}
-    // Debug Panel Logic
-    const DEBUG_MODE = true;
+    // ========== Debug Panel Functions ==========
     let activeLayerIdx = 0;
     
-    function setInputValue(id, value) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      if (value === undefined || value === null || Number.isNaN(value)) {
-        el.value = '';
-      } else {
-        el.value = value;
-      }
-    }
-    
-    function getNumericInput(id) {
-      const el = document.getElementById(id);
-      if (!el) return null;
-      const val = parseFloat(el.value);
-      return Number.isFinite(val) ? val : null;
-    }
-    
-    function applyViewToMap(view) {
-      if (!view || Object.keys(view).length === 0) return;
-      const currentCenter = map.getCenter();
-      const currentZoom = map.getZoom();
-      const currentPitch = map.getPitch();
-      const currentBearing = map.getBearing();
-      map.easeTo({
-        center: [
-          Number.isFinite(view.longitude) ? view.longitude : currentCenter.lng,
-          Number.isFinite(view.latitude) ? view.latitude : currentCenter.lat
-        ],
-        zoom: Number.isFinite(view.zoom) ? view.zoom : currentZoom,
-        pitch: Number.isFinite(view.pitch) ? Math.min(85, Math.max(0, view.pitch)) : currentPitch,
-        bearing: Number.isFinite(view.bearing) ? view.bearing : currentBearing,
-        duration: 400
+    function getNumericAttrs(layerIdx) {
+      const layer = LAYERS_DATA[layerIdx];
+      if (!layer) return [];
+      const data = layer.data || (layer.geojson?.features?.map(f => f.properties) || []);
+      if (!data.length) return [];
+      const sample = data.slice(0, 50);
+      const attrs = new Set();
+      sample.forEach(d => {
+        Object.keys(d || {}).forEach(k => {
+          if (k !== 'hex' && k !== 'geometry' && typeof d[k] === 'number') attrs.add(k);
+        });
       });
-    }
-    
-    // Build layer tabs
-    function buildDebugTabs() {
-      const tabsEl = document.getElementById('debug-tabs');
-      if (!tabsEl) return;
-      tabsEl.innerHTML = '';
-      LAYERS_DATA.forEach((layer, i) => {
-        const tab = document.createElement('div');
-        tab.className = 'debug-tab' + (i === activeLayerIdx ? ' active' : '');
-        const colorCfg = layer.hexLayer?.getFillColor;
-        const dotColor = (colorCfg && colorCfg['@@function'] === 'colorContinuous') 
-          ? (getPaletteColors(colorCfg.colors || 'TealGrn', 7)?.[3] || '#888') 
-          : '#888';
-        tab.innerHTML = `<span class="tab-dot" style="background:${dotColor}"></span>${layer.name}`;
-        tab.onclick = () => { activeLayerIdx = i; buildDebugTabs(); updateFormFromLayer(i); };
-        tabsEl.appendChild(tab);
-      });
+      return [...attrs].sort();
     }
     
     function autoDomainForAttr(layerIdx, attr) {
       const layer = LAYERS_DATA[layerIdx];
-      if (!layer || !layer.data?.length || !attr) return null;
-      const vals = layer.data.map(row => Number(row?.[attr])).filter(v => Number.isFinite(v));
+      if (!layer || !attr) return null;
+      const data = layer.data || (layer.geojson?.features?.map(f => f.properties) || []);
+      const vals = data.map(d => d?.[attr]).filter(v => typeof v === 'number' && isFinite(v));
       if (!vals.length) return null;
       return [Math.min(...vals), Math.max(...vals)];
     }
     
-    // Populate attribute dropdown from layer data
-    function populateAttrOptions(layerIdx) {
-      const attrSelect = document.getElementById('cfg-attr');
-      if (!attrSelect) return [];
-      const layer = LAYERS_DATA[layerIdx];
-      const data = layer?.data || [];
-      attrSelect.innerHTML = '';
-      attrSelect.disabled = false;
-      
-      // Gather numeric attrs from data (if available)
-      let numericAttrs = [];
-      if (data.length) {
-        const sample = data[0];
-        numericAttrs = Object.keys(sample).filter(k => typeof sample[k] === 'number' && !['hex','lat','lng'].includes(k));
-      }
-      
-      if (numericAttrs.length) {
-        numericAttrs.forEach(attr => {
-          const opt = document.createElement('option');
-          opt.value = attr;
-          opt.textContent = attr;
-          attrSelect.appendChild(opt);
-        });
-        } else {
-        // Fall back to attribute defined in config (useful for tile layers where we don't have local data)
-        const hex = layer?.hexLayer || {};
-        const isFilled = hex.filled !== false;
-        const attrFromConfig = isFilled ? hex.getFillColor?.attr : (hex.getLineColor?.attr || hex.getFillColor?.attr);
-        if (attrFromConfig) {
-          const opt = document.createElement('option');
-          opt.value = attrFromConfig;
-          opt.textContent = attrFromConfig;
-          attrSelect.appendChild(opt);
-          numericAttrs = [attrFromConfig];
-        } else {
-          const opt = document.createElement('option');
-          opt.value = '';
-          opt.textContent = 'No numeric columns';
-          attrSelect.appendChild(opt);
-          attrSelect.disabled = true;
-        }
-      }
-      return numericAttrs;
+    function buildDebugTabs() {
+      const container = document.getElementById('debug-tabs');
+      if (!container) return;
+      container.innerHTML = '';
+      LAYERS_DATA.forEach((l, i) => {
+        const tab = document.createElement('div');
+        tab.className = 'debug-tab' + (i === activeLayerIdx ? ' active' : '');
+        const colorCfg = l.hexLayer?.getFillColor || l.hexLayer?.getLineColor || l.fillColorConfig;
+        const palName = colorCfg?.colors || 'Magenta';
+        const colors = getPaletteColors(palName, 5) || ['#666'];
+        const midColor = colors[Math.floor(colors.length / 2)];
+        tab.innerHTML = `<span class="tab-dot" style="background:${midColor}"></span>${l.name}`;
+        tab.onclick = () => { activeLayerIdx = i; buildDebugTabs(); updateFormFromLayer(i); };
+        container.appendChild(tab);
+      });
     }
     
-    // Update form from layer config
-    function updateFormFromLayer(layerIdx) {
-      const layer = LAYERS_DATA[layerIdx];
+    function updateFormFromLayer(idx) {
+      const layer = LAYERS_DATA[idx];
       if (!layer) return;
       const hex = layer.hexLayer || {};
-      const isFilled = hex.filled !== false;
-      const baseView = {};
-      if (map) {
-        const c = map.getCenter();
-        baseView.longitude = c.lng;
-        baseView.latitude = c.lat;
-        baseView.zoom = map.getZoom();
-        baseView.pitch = map.getPitch();
-        baseView.bearing = map.getBearing();
-      }
-      const viewCfg = (layer.config && layer.config.initialViewState) || {};
-      const view = {
-        longitude: viewCfg.longitude ?? baseView.longitude,
-        latitude: viewCfg.latitude ?? baseView.latitude,
-        zoom: viewCfg.zoom ?? baseView.zoom,
-        pitch: viewCfg.pitch ?? baseView.pitch,
-        bearing: viewCfg.bearing ?? baseView.bearing,
-      };
-      setInputValue('cfg-longitude', view.longitude);
-      setInputValue('cfg-latitude', view.latitude);
-      setInputValue('cfg-zoom', view.zoom);
-      setInputValue('cfg-pitch', view.pitch);
-      setInputValue('cfg-bearing', view.bearing);
-      document.getElementById('cfg-filled').checked = isFilled;
-      document.getElementById('cfg-extruded').checked = hex.extruded === true;
-      document.getElementById('cfg-elev-scale').value = hex.elevationScale ?? 1;
+      const colorCfg = hex.getFillColor || hex.getLineColor || {};
+      const viewCfg = layer.config?.initialViewState || {};
       
-      // Use getLineColor when filled is false, otherwise getFillColor
-      const colorCfg = isFilled ? hex.getFillColor : (hex.getLineColor || hex.getFillColor);
-      const numericAttrs = populateAttrOptions(layerIdx);
+      const attrs = getNumericAttrs(idx);
       const attrSelect = document.getElementById('cfg-attr');
-      const paletteSelect = document.getElementById('cfg-palette');
+      if (attrSelect) {
+        attrSelect.innerHTML = attrs.map(a => `<option value="${a}">${a}</option>`).join('');
+        attrSelect.value = colorCfg.attr || attrs[0] || '';
+      }
       
-      if (colorCfg && colorCfg['@@function'] === 'colorContinuous') {
-        if (attrSelect && colorCfg.attr) attrSelect.value = colorCfg.attr;
+      document.getElementById('cfg-palette').value = colorCfg.colors || 'Magenta';
         document.getElementById('cfg-domain-min').value = colorCfg.domain?.[0] ?? 0;
         document.getElementById('cfg-domain-max').value = colorCfg.domain?.[1] ?? 100;
-        if (paletteSelect && colorCfg.colors) paletteSelect.value = colorCfg.colors;
-        } else {
-        document.getElementById('cfg-domain-min').value = 0;
-        document.getElementById('cfg-domain-max').value = 100;
-      }
+      document.getElementById('cfg-filled').checked = hex.filled !== false;
+      document.getElementById('cfg-extruded').checked = hex.extruded === true;
+      document.getElementById('cfg-elev-scale').value = hex.elevationScale || 1;
+      document.getElementById('cfg-longitude').value = viewCfg.longitude || '';
+      document.getElementById('cfg-latitude').value = viewCfg.latitude || '';
+      document.getElementById('cfg-zoom').value = viewCfg.zoom || '';
+      document.getElementById('cfg-pitch').value = viewCfg.pitch || 0;
+      document.getElementById('cfg-bearing').value = viewCfg.bearing || 0;
+      
       updateConfigOutput();
     }
     
-    // Build config from form
+    function applyViewToMap(viewCfg) {
+      if (viewCfg.longitude && viewCfg.latitude) map.setCenter([viewCfg.longitude, viewCfg.latitude]);
+      if (viewCfg.zoom) map.setZoom(viewCfg.zoom);
+      if (viewCfg.pitch != null) map.setPitch(viewCfg.pitch);
+      if (viewCfg.bearing != null) map.setBearing(viewCfg.bearing);
+    }
+    
     function buildConfigFromForm() {
-      const view = {};
-      const lon = getNumericInput('cfg-longitude');
-      const lat = getNumericInput('cfg-latitude');
-      const zoom = getNumericInput('cfg-zoom');
-      const pitch = getNumericInput('cfg-pitch');
-      const bearing = getNumericInput('cfg-bearing');
-      if (lon !== null) view.longitude = lon;
-      if (lat !== null) view.latitude = lat;
-      if (zoom !== null) view.zoom = zoom;
-      if (pitch !== null) view.pitch = pitch;
-      if (bearing !== null) view.bearing = bearing;
-      
       const isFilled = document.getElementById('cfg-filled').checked;
       const colorConfig = {
         '@@function': 'colorContinuous',
         attr: document.getElementById('cfg-attr').value,
-        domain: [
-          parseFloat(document.getElementById('cfg-domain-min').value) || 0,
-          parseFloat(document.getElementById('cfg-domain-max').value) || 100
-        ],
-        colors: document.getElementById('cfg-palette').value || 'TealGrn'
+        colors: document.getElementById('cfg-palette').value,
+        domain: [parseFloat(document.getElementById('cfg-domain-min').value) || 0, parseFloat(document.getElementById('cfg-domain-max').value) || 100],
+        steps: 7
       };
+      const view = {};
+      const lng = parseFloat(document.getElementById('cfg-longitude').value);
+      const lat = parseFloat(document.getElementById('cfg-latitude').value);
+      const zm = parseFloat(document.getElementById('cfg-zoom').value);
+      const pt = parseFloat(document.getElementById('cfg-pitch').value);
+      const br = parseFloat(document.getElementById('cfg-bearing').value);
+      if (!isNaN(lng)) view.longitude = lng;
+      if (!isNaN(lat)) view.latitude = lat;
+      if (!isNaN(zm)) view.zoom = zm;
+      if (!isNaN(pt)) view.pitch = pt;
+      if (!isNaN(br)) view.bearing = br;
       const hex = {
-        '@@type': 'H3HexagonLayer',
         filled: isFilled,
         extruded: document.getElementById('cfg-extruded').checked,
         elevationScale: parseFloat(document.getElementById('cfg-elev-scale').value) || 1,
       };
-      // Use getLineColor when filled is false, otherwise getFillColor
-      if (isFilled) {
-        hex.getFillColor = colorConfig;
-      } else {
-        hex.getLineColor = colorConfig;
-      }
+      if (isFilled) hex.getFillColor = colorConfig;
+      else hex.getLineColor = colorConfig;
       const cfg = { hexLayer: hex };
-      if (Object.keys(view).length) {
-        cfg.initialViewState = view;
-      }
+      if (Object.keys(view).length) cfg.initialViewState = view;
       return cfg;
     }
     
-    // Convert to Python
     function toPython(value, indent = 4, level = 0) {
       const pad = ' '.repeat(indent * level);
       const padNext = ' '.repeat(indent * (level + 1));
@@ -3221,114 +2052,50 @@ def _deckgl_hex_multi(
       if (typeof value === 'boolean') return value ? 'True' : 'False';
       if (typeof value === 'number') return String(value);
       if (typeof value === 'string') return JSON.stringify(value);
-      if (Array.isArray(value)) {
-        if (!value.length) return '[]';
-        return '[' + value.map(v => toPython(v, indent, level)).join(', ') + ']';
-      }
+      if (Array.isArray(value)) return !value.length ? '[]' : '[' + value.map(v => toPython(v, indent, level)).join(', ') + ']';
       if (typeof value === 'object') {
         const keys = Object.keys(value);
         if (!keys.length) return '{}';
-        const entries = keys.map(key => padNext + JSON.stringify(key) + ': ' + toPython(value[key], indent, level + 1));
-        return '{\n' + entries.join(',\n') + '\n' + pad + '}';
+        return '{\n' + keys.map(key => padNext + JSON.stringify(key) + ': ' + toPython(value[key], indent, level + 1)).join(',\n') + '\n' + pad + '}';
       }
       return 'None';
     }
     
-    // Update config output
     function updateConfigOutput() {
       const cfg = buildConfigFromForm();
       const output = document.getElementById('dbg-config');
       if (output) output.value = 'config = ' + toPython(cfg);
     }
     
-    // Apply debug config to layer
     function applyDebugConfig() {
       const layer = LAYERS_DATA[activeLayerIdx];
-      if (!layer) return;
-      
+      if (!layer || layer.layerType === 'vector') return;
       const builtConfig = buildConfigFromForm();
-      const prevHex = layer.hexLayer || {};
-      const wasFilled = prevHex.filled !== false;
       const newHex = builtConfig.hexLayer;
       const newView = builtConfig.initialViewState || {};
-      const wasExtruded = layer.hexLayer?.extruded === true;
-      const isExtruded = newHex.extruded === true;
-      
-      // Update layer config
       layer.hexLayer = { ...layer.hexLayer, ...newHex };
       layer.config.hexLayer = layer.hexLayer;
       if (Object.keys(newView).length) {
         layer.config.initialViewState = newView;
         applyViewToMap(newView);
-        autoFitDone = true;
       }
-      
-      // Update paint properties directly for efficiency
       if (layer.isTileLayer) {
-        {% if has_tile_layers %}
-        rebuildDeckOverlay();
-        {% endif %}
-        updateLegend();
-        updateLayerPanel();
-        buildDebugTabs();
-          return;
-        }
-        
-      const layerId = layer.id;
-      const fillId = `${layerId}-fill`;
-      const extId = `${layerId}-extrusion`;
-      const outlineId = `${layerId}-outline`;
-      
-      const isFilled = newHex.filled !== false;
-      const colorCfg = isFilled ? newHex.getFillColor : newHex.getLineColor;
-      const layer = LAYERS_DATA[activeLayerIdx];
-      const colorExpr = buildColorExpr(colorCfg, layer?.data);
-      
-      if (wasExtruded !== isExtruded || wasFilled !== isFilled) {
-        // Mode changed - rebuild layers
+        {% if has_tile_layers %}rebuildDeckOverlay();{% endif %}
+      } else {
         layersReady = false;
         tryInit();
-      } else if (isExtruded) {
-        // Update extrusion paint
-        if (map.getLayer(extId)) {
-          map.setPaintProperty(extId, 'fill-extrusion-color', colorExpr);
-          const elev = newHex.elevationScale || 1;
-          const attr = colorCfg?.attr;
-          if (attr) map.setPaintProperty(extId, 'fill-extrusion-height', ['*', ['get', attr], elev]);
-        }
-      } else if (isFilled) {
-        // Update fill paint
-        if (map.getLayer(fillId)) {
-          map.setPaintProperty(fillId, 'fill-color', colorExpr);
-          map.setLayoutProperty(fillId, 'visibility', 'visible');
-        }
-    } else {
-        // Update line color (filled: false)
-        if (map.getLayer(outlineId)) {
-          map.setPaintProperty(outlineId, 'line-color', colorExpr);
-        }
-        // Hide fill layer
-        if (map.getLayer(fillId)) {
-          map.setLayoutProperty(fillId, 'visibility', 'none');
-        }
       }
-      
       updateLegend();
       updateLayerPanel();
       buildDebugTabs();
     }
     
-    // Debounced apply
     let applyTimer;
     function scheduleApply() {
       clearTimeout(applyTimer);
-      applyTimer = setTimeout(() => {
-        applyDebugConfig();
-        updateConfigOutput();
-      }, 150);
+      applyTimer = setTimeout(() => { applyDebugConfig(); updateConfigOutput(); }, 150);
     }
     
-    // Bind form events
     document.querySelectorAll('#debug-panel [data-cfg-input]').forEach(el => {
       el.addEventListener('input', scheduleApply);
       el.addEventListener('change', scheduleApply);
@@ -3343,14 +2110,7 @@ def _deckgl_hex_multi(
         }
       });
     }
-    
-    // Init debug panel after map loads
-    map.on('load', () => {
-      setTimeout(() => {
-        buildDebugTabs();
-        updateFormFromLayer(0);
-      }, 100);
-    });
+    map.on('load', () => { setTimeout(() => { buildDebugTabs(); updateFormFromLayer(0); }, 100); });
     {% endif %}
   </script>
 </body>
@@ -3366,8 +2126,8 @@ def _deckgl_hex_multi(
         bearing=bearing,
         has_custom_view=has_custom_view,
         has_tile_layers=has_tile_layers,
-        debug=debug,
         highlight_on_click=highlight_on_click,
+        debug=debug,
         palettes=sorted(KNOWN_CARTOCOLOR_PALETTES),
     )
 
@@ -3608,31 +2368,7 @@ def enable_map_broadcast(html_input, channel: str = "fused-bus", dataset: str = 
         map_with_broadcast = enable_map_broadcast(html, channel="fused-bus")
         return map_with_broadcast
     """
-    # Normalize input to HTML string
-    response_mode = not isinstance(html_input, str)
-    if isinstance(html_input, str):
-        html_string = html_input
-    else:
-        html_string = None
-        text_value = getattr(html_input, "text", None)
-        if isinstance(text_value, str):
-            html_string = text_value
-        else:
-            data_value = getattr(html_input, "data", None)
-            if isinstance(data_value, (bytes, bytearray)):
-                html_string = data_value.decode("utf-8", errors="ignore")
-            elif isinstance(data_value, str):
-                html_string = data_value
-            else:
-                body_value = getattr(html_input, "body", None)
-                if isinstance(body_value, (bytes, bytearray)):
-                    html_string = body_value.decode("utf-8", errors="ignore")
-                elif isinstance(body_value, str):
-                    html_string = body_value
-        if html_string is None:
-            raise TypeError(
-                "html_input must be a str or response-like object with 'text', 'data', or 'body' attribute"
-            )
+    html_string, response_mode = _normalize_html_input(html_input)
     
     broadcast_script = f"""
 <script>
@@ -3777,31 +2513,7 @@ def enable_location_listener(html_input, channel: str = "fused-bus"):
         map_with_listener = enable_location_listener(html, channel="fused-bus")
         return map_with_listener
     """
-    # Normalize input to HTML string
-    response_mode = not isinstance(html_input, str)
-    if isinstance(html_input, str):
-        html_string = html_input
-    else:
-        html_string = None
-        text_value = getattr(html_input, "text", None)
-        if isinstance(text_value, str):
-            html_string = text_value
-        else:
-            data_value = getattr(html_input, "data", None)
-            if isinstance(data_value, (bytes, bytearray)):
-                html_string = data_value.decode("utf-8", errors="ignore")
-            elif isinstance(data_value, str):
-                html_string = data_value
-            else:
-                body_value = getattr(html_input, "body", None)
-                if isinstance(body_value, (bytes, bytearray)):
-                    html_string = body_value.decode("utf-8", errors="ignore")
-                elif isinstance(body_value, str):
-                    html_string = body_value
-        if html_string is None:
-            raise TypeError(
-                "html_input must be a str or response-like object with 'text', 'data', or 'body' attribute"
-            )
+    html_string, response_mode = _normalize_html_input(html_input)
     
     listener_script = f"""
 <script>
@@ -3880,33 +2592,7 @@ def enable_hex_click_broadcast(
     message_type: str = "hex_click",
     properties: list = None,
 ):
-
-    # Normalize input to HTML string
-    response_mode = not isinstance(html_input, str)
-    if isinstance(html_input, str):
-        html_string = html_input
-    else:
-        html_string = None
-        text_value = getattr(html_input, "text", None)
-        if isinstance(text_value, str):
-            html_string = text_value
-        else:
-            data_value = getattr(html_input, "data", None)
-            if isinstance(data_value, (bytes, bytearray)):
-                html_string = data_value.decode("utf-8", errors="ignore")
-            elif isinstance(data_value, str):
-                html_string = data_value
-            else:
-                body_value = getattr(html_input, "body", None)
-                if isinstance(body_value, (bytes, bytearray)):
-                    html_string = body_value.decode("utf-8", errors="ignore")
-                elif isinstance(body_value, str):
-                    html_string = body_value
-        if html_string is None:
-            raise TypeError(
-                "html_input must be a str or response-like object with 'text', 'data', or 'body' attribute"
-            )
-    
+    html_string, response_mode = _normalize_html_input(html_input)
     properties_js = json.dumps(properties) if properties else "null"
     
     click_script = f"""
@@ -4069,32 +2755,7 @@ def enable_map_sync(html_input, channel: str = "default"):
         return map1
     """
     channel = channel if "::" in channel else f"map-sync::{channel}"
-
-    # Normalize input to HTML string
-    response_mode = not isinstance(html_input, str)
-    if isinstance(html_input, str):
-        html_string = html_input
-    else:
-        html_string = None
-        text_value = getattr(html_input, "text", None)
-        if isinstance(text_value, str):
-            html_string = text_value
-        else:
-            data_value = getattr(html_input, "data", None)
-            if isinstance(data_value, (bytes, bytearray)):
-                html_string = data_value.decode("utf-8", errors="ignore")
-            elif isinstance(data_value, str):
-                html_string = data_value
-            else:
-                body_value = getattr(html_input, "body", None)
-                if isinstance(body_value, (bytes, bytearray)):
-                    html_string = body_value.decode("utf-8", errors="ignore")
-                elif isinstance(body_value, str):
-                    html_string = body_value
-        if html_string is None:
-            raise TypeError(
-                "html_input must be a str or response-like object with 'text', 'data', or 'body' attribute"
-            )
+    html_string, response_mode = _normalize_html_input(html_input)
     
     sync_script = f"""
 <script>
@@ -4206,6 +2867,44 @@ def enable_map_sync(html_input, channel: str = "default"):
         common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
         return common.html_to_obj(injected_html)
     return injected_html
+
+
+def _normalize_html_input(html_input):
+    """
+    Convert HTML string or response-like object to (html_string, response_mode) tuple.
+    
+    Args:
+        html_input: HTML string or response object with 'text', 'data', or 'body' attribute
+    
+    Returns:
+        (html_string, response_mode): Normalized HTML string and whether input was a response object
+    """
+    response_mode = not isinstance(html_input, str)
+    if isinstance(html_input, str):
+        return html_input, False
+    
+    html_string = None
+    text_value = getattr(html_input, "text", None)
+    if isinstance(text_value, str):
+        html_string = text_value
+    else:
+        data_value = getattr(html_input, "data", None)
+        if isinstance(data_value, (bytes, bytearray)):
+            html_string = data_value.decode("utf-8", errors="ignore")
+        elif isinstance(data_value, str):
+            html_string = data_value
+        else:
+            body_value = getattr(html_input, "body", None)
+            if isinstance(body_value, (bytes, bytearray)):
+                html_string = body_value.decode("utf-8", errors="ignore")
+            elif isinstance(body_value, str):
+                html_string = body_value
+    
+    if html_string is None:
+        raise TypeError(
+            "html_input must be a str or response-like object with 'text', 'data', or 'body' attribute"
+        )
+    return html_string, response_mode
 
 
 def _deep_merge_dict(base: dict, extra: dict) -> dict:
@@ -4412,6 +3111,48 @@ def _compute_center_from_polygons(df):
     return float(centroid.y), float(centroid.x)
 
 
+
+def folium_raster(data, bounds, opacity=0.7, tiles="CartoDB dark_matter"):
+    """
+    Minimal Folium raster overlay utility.
+    Works with rasterio arrays (H, W) or (bands, H, W).
+    """
+    west, south, east, north = bounds
+
+    # shape handling (no normalization)
+    if data.ndim == 2:
+        rgb = np.stack([data, data, data], axis=-1)
+    elif data.ndim == 3:
+        if data.shape[0] >= 3:
+            rgb = np.transpose(data[:3], (1, 2, 0))
+        elif data.shape[0] == 1:
+            rgb = np.stack([data[0], data[0], data[0]], axis=-1)
+        else:
+            h, w = data.shape[1], data.shape[2]
+            rgb = np.zeros((h, w, 3), dtype=np.uint8)
+            for i in range(data.shape[0]):
+                rgb[:, :, i] = data[i]
+    else:
+        raise ValueError(f"Unsupported raster shape: {data.shape}")
+
+    # clip just to be safe
+    rgb = np.clip(rgb, 0, 255).astype(np.uint8)
+
+    # center map
+    center_lat = (south + north) / 2
+    center_lon = (west + east) / 2
+
+    m = folium.Map(location=[center_lat, center_lon], zoom_start=9, tiles=tiles)
+
+    folium.raster_layers.ImageOverlay(
+        image=rgb,
+        bounds=[[south, west], [north, east]],
+        opacity=opacity,
+    ).add_to(m) 
+
+    return m.get_root().render()
+
+
 # ============================================================================
 # PYDECK CONFIGS
 # ============================================================================
@@ -4465,11 +3206,7 @@ DEFAULT_POLYGON_CONFIG = {
 
 def pydeck_point(gdf, config=None):
     """
-    DEPRECATED: This is a deprecated map utility and will be removed soon.
-    Only use this if user specifically asks for pydeck maps.
-    Use deckgl_map() instead for modern Deck.GL-based point rendering.
-    
-    Pydeck based maps. Use this to render HTML interactive maps from data
+    Pydeck based maps. Use this to render HTML interactive maps from data.
 
     Takes a config dict based on:
     'config = {
@@ -4540,13 +3277,9 @@ def pydeck_point(gdf, config=None):
 
 
 @fused.udf(cache_max_age=0)
-def pydeck_hex(df=None, config: typing.Union[dict, str, None] = None):  # changed UnionType
+def pydeck_hex(df=None, config: typing.Union[dict, str, None] = None):
     """
-    DEPRECATED: This is a deprecated map utility and will be removed soon.
-    Only use this if user specifically asks for pydeck maps.
-    Use deckgl_hex() instead for modern Deck.GL-based hexagon rendering.
-    
-    Pydeck based maps. Use this to render HTML interactive maps from data
+    Pydeck based maps. Use this to render HTML interactive maps from data.
 
     Takes a config dict based on:
     'config = {
@@ -4623,11 +3356,7 @@ def pydeck_hex(df=None, config: typing.Union[dict, str, None] = None):  # change
 
 def pydeck_polygon(df, config=None):
     """
-    DEPRECATED: This is a deprecated map utility and will be removed soon.
-    Only use this if user specifically asks for pydeck maps.
-    Use deckgl_map() instead for modern Deck.GL-based polygon rendering.
-    
-    Pydeck based maps. Use this to render HTML interactive maps from data
+    Pydeck based maps. Use this to render HTML interactive maps from data.
 
     Takes a config dict based on:
     'config = {
@@ -4688,44 +3417,3 @@ def pydeck_polygon(df, config=None):
     )
 
     return deck.to_html(as_string=True)
-
-
-def folium_raster(data, bounds, opacity=0.7, tiles="CartoDB dark_matter"):
-    """
-    Minimal Folium raster overlay utility.
-    Works with rasterio arrays (H, W) or (bands, H, W).
-    """
-    west, south, east, north = bounds
-
-    # shape handling (no normalization)
-    if data.ndim == 2:
-        rgb = np.stack([data, data, data], axis=-1)
-    elif data.ndim == 3:
-        if data.shape[0] >= 3:
-            rgb = np.transpose(data[:3], (1, 2, 0))
-        elif data.shape[0] == 1:
-            rgb = np.stack([data[0], data[0], data[0]], axis=-1)
-        else:
-            h, w = data.shape[1], data.shape[2]
-            rgb = np.zeros((h, w, 3), dtype=np.uint8)
-            for i in range(data.shape[0]):
-                rgb[:, :, i] = data[i]
-    else:
-        raise ValueError(f"Unsupported raster shape: {data.shape}")
-
-    # clip just to be safe
-    rgb = np.clip(rgb, 0, 255).astype(np.uint8)
-
-    # center map
-    center_lat = (south + north) / 2
-    center_lon = (west + east) / 2
-
-    m = folium.Map(location=[center_lat, center_lon], zoom_start=9, tiles=tiles)
-
-    folium.raster_layers.ImageOverlay(
-        image=rgb,
-        bounds=[[south, west], [north, east]],
-        opacity=opacity,
-    ).add_to(m) 
-
-    return m.get_root().render()
