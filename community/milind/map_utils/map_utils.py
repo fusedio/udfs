@@ -191,21 +191,9 @@ def deckgl_map(
     except Exception:
         geojson_obj = {"type": "FeatureCollection", "features": []}
 
-    # Sanitize properties
-    def sanitize_value(v):
-        if isinstance(v, (float, int, str, bool)) or v is None:
-            return None if isinstance(v, float) and (math.isnan(v) or math.isinf(v)) else v
-        if isinstance(v, (_np.floating, _np.integer, _np.bool_)):
-            try:
-                return v.item()
-            except Exception:
-                return str(v)
-        if isinstance(v, (list, tuple, set)):
-                return ", ".join(str(s) for s in v)
-        return str(v) if v is not None else None
-
+    # Sanitize properties using shared utility
     for feat in geojson_obj.get("features", []):
-        feat["properties"] = {k: sanitize_value(v) for k, v in (feat.get("properties") or {}).items()}
+        feat["properties"] = {k: _sanitize_geojson_value(v) for k, v in (feat.get("properties") or {}).items()}
 
     # Auto-center
     auto_center = (0.0, 0.0)
@@ -636,19 +624,21 @@ def deckgl_layers(
             if not is_tile_layer and df is not None and hasattr(df, 'to_dict'):
                 # Drop geometry column - hex layers use hex ID, not geometry
                 df_clean = df.drop(columns=['geometry'], errors='ignore') if hasattr(df, 'drop') else df
-                data_records = df_clean.to_dict('records')
-                for record in data_records:
-                    hex_val = record.get('hex') or record.get('h3') or record.get('index') or record.get('id')
-                    if hex_val is not None:
+                
+                # Vectorized hex ID conversion (faster than looping)
+                hex_col = next((c for c in ['hex', 'h3', 'index', 'id'] if c in df_clean.columns), None)
+                if hex_col:
+                    def _to_hex_str(val):
+                        if val is None: return None
                         try:
-                            if isinstance(hex_val, (int, float)):
-                                record['hex'] = format(int(hex_val), 'x')
-                            elif isinstance(hex_val, str) and hex_val.isdigit():
-                                record['hex'] = format(int(hex_val), 'x')
-                            else:
-                                record['hex'] = hex_val
-                        except (ValueError, OverflowError):
-                            record['hex'] = None
+                            if isinstance(val, (int, float)): return format(int(val), 'x')
+                            if isinstance(val, str): return format(int(val), 'x') if val.isdigit() else val
+                        except (ValueError, OverflowError): pass
+                        return None
+                    df_clean = df_clean.copy()
+                    df_clean['hex'] = df_clean[hex_col].apply(_to_hex_str)
+                
+                data_records = df_clean.to_dict('records')
             
             tooltip_columns = _extract_tooltip_columns((config, merged_config, hex_layer))
             
@@ -686,21 +676,9 @@ def deckgl_layers(
                 except Exception:
                     pass
                 
-                # Sanitize properties
-                def sanitize_value(v):
-                    if isinstance(v, (float, int, str, bool)) or v is None:
-                        return None if isinstance(v, float) and (math.isnan(v) or math.isinf(v)) else v
-                    if hasattr(v, 'item'):
-                        try:
-                            return v.item()
-                        except Exception:
-                            return str(v)
-                    if isinstance(v, (list, tuple, set)):
-                        return ", ".join(str(s) for s in v)
-                    return str(v) if v is not None else None
-                
+                # Sanitize properties using shared utility
                 for feat in geojson_obj.get("features", []):
-                    feat["properties"] = {k: sanitize_value(v) for k, v in (feat.get("properties") or {}).items()}
+                    feat["properties"] = {k: _sanitize_geojson_value(v) for k, v in (feat.get("properties") or {}).items()}
             
             # Extract color config - only if layer is filled
             fill_color_config = {}
@@ -2960,6 +2938,23 @@ def _extract_tooltip_columns(config_sources, available_columns=None):
     if available_columns is not None:
         columns = [col for col in columns if col in available_columns]
     return columns
+
+
+def _sanitize_geojson_value(v):
+    """Sanitize a value for JSON serialization (shared utility)."""
+    import math
+    if isinstance(v, (float, int, str, bool)) or v is None:
+        if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
+            return None
+        return v
+    if hasattr(v, 'item'):  # numpy types
+        try:
+            return v.item()
+        except Exception:
+            return str(v)
+    if isinstance(v, (list, tuple, set)):
+        return ", ".join(str(s) for s in v)
+    return str(v) if v is not None else None
 
 
 # ============================================================================
