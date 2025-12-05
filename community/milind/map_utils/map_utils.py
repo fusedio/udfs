@@ -1128,6 +1128,7 @@ def deckgl_layers(
 
     const HAS_TILE_LAYERS = LAYERS_DATA.some(l => l.layerType === 'hex' && l.isTileLayer);
     const TILE_CACHE = new Map();
+    const TILE_DATA_STORE = {};  // Track loaded tile data per layer for autoDomain
 
     // ========== Map Setup ==========
     mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -1174,8 +1175,8 @@ def deckgl_layers(
       }).filter(Boolean);
     }
 
-    function processColorContinuousCfg(cfg) {
-      let domain = cfg.domain;
+    function processColorContinuousCfg(cfg, computedDomain = null) {
+      let domain = computedDomain || cfg.domain;
       if (domain && domain.length === 2) {
         const [min, max] = domain;
         const steps = cfg.steps ?? 20;
@@ -1185,13 +1186,82 @@ def deckgl_layers(
       return { attr: cfg.attr, domain, colors: cfg.colors || 'TealGrn', nullColor: cfg.nullColor || [184, 184, 184] };
     }
 
-    function parseHexLayerConfigForDeck(config) {
+    // Convert tile coordinates to geographic bounds
+    function tileToBounds(x, y, z) {
+      const n = Math.PI - (2 * Math.PI * y) / Math.pow(2, z);
+      const west = (x / Math.pow(2, z)) * 360 - 180;
+      const north = (180 / Math.PI) * Math.atan(Math.sinh(n));
+      
+      const n2 = Math.PI - (2 * Math.PI * (y + 1)) / Math.pow(2, z);
+      const east = ((x + 1) / Math.pow(2, z)) * 360 - 180;
+      const south = (180 / Math.PI) * Math.atan(Math.sinh(n2));
+      
+      return { west, south, east, north };
+    }
+    
+    // Check if two bounds intersect
+    function boundsIntersect(a, b) {
+      return !(a.east < b.west || a.west > b.east || a.north < b.south || a.south > b.north);
+    }
+    
+    // Calculate domain from visible tile data for autoDomain layers
+    function calculateDomainFromTiles(layerId, attr) {
+      const tileData = TILE_DATA_STORE[layerId];
+      if (!tileData || !Object.keys(tileData).length) return null;
+      
+      // Get viewport bounds
+      const mapBounds = map.getBounds();
+      const viewportBounds = {
+        west: mapBounds.getWest(),
+        east: mapBounds.getEast(),
+        south: mapBounds.getSouth(),
+        north: mapBounds.getNorth()
+      };
+      
+      // Collect values from tiles that intersect viewport
+      const values = [];
+      let visibleTileCount = 0;
+      
+      for (const [tileKey, data] of Object.entries(tileData)) {
+        // Parse tile coordinates from key (format: "z/x/y")
+        const [z, x, y] = tileKey.split('/').map(Number);
+        
+        // Get geographic bounds for this tile
+        const tileBounds = tileToBounds(x, y, z);
+        
+        // Only include data from tiles that intersect viewport
+        if (boundsIntersect(tileBounds, viewportBounds)) {
+          visibleTileCount++;
+          for (const item of data) {
+            const val = item?.[attr] ?? item?.properties?.[attr];
+            if (typeof val === 'number' && isFinite(val)) {
+              values.push(val);
+            }
+          }
+        }
+      }
+      
+      console.log(`[AutoDomain] ${layerId}: ${visibleTileCount} visible tiles, ${values.length} values`);
+      
+      if (!values.length) return null;
+      return [Math.min(...values), Math.max(...values)];
+    }
+
+    function parseHexLayerConfigForDeck(config, layerId = null) {
       const out = {};
       for (const [k, v] of Object.entries(config || {})) {
         if (k === '@@type') continue;
         if (v && typeof v === 'object' && !Array.isArray(v)) {
           if (v['@@function'] === 'colorContinuous') {
-            out[k] = colorContinuous(processColorContinuousCfg(v));
+            // Check if autoDomain is enabled
+            let computedDomain = null;
+            if (v.autoDomain === true && layerId && v.attr) {
+              computedDomain = calculateDomainFromTiles(layerId, v.attr);
+              if (computedDomain) {
+                console.log(`[AutoDomain] ${layerId}: ${v.attr} → [${computedDomain[0].toFixed(2)}, ${computedDomain[1].toFixed(2)}]`);
+              }
+            }
+            out[k] = colorContinuous(processColorContinuousCfg(v, computedDomain));
           } else {
             out[k] = v;
           }
@@ -1214,11 +1284,19 @@ def deckgl_layers(
       const tileUrl = layerDef.tileUrl;
       const tileCfg = layerDef.tileLayerConfig || {};
       const rawHexLayer = layerDef.hexLayer || {};
-      const hexCfg = parseHexLayerConfigForDeck(rawHexLayer);
+      const hexCfg = parseHexLayerConfigForDeck(rawHexLayer, layerDef.id);
       const visible = layerVisibility[layerDef.id];
       const layerOpacity = (typeof rawHexLayer.opacity === 'number') ? rawHexLayer.opacity : 0.8;
       const isExtruded = rawHexLayer.extruded === true;
       const elevationScale = rawHexLayer.elevationScale || 1;
+      
+      // Check if this layer has autoDomain enabled
+      const hasAutoDomain = rawHexLayer.getFillColor?.autoDomain === true;
+      
+      // Initialize tile data store for this layer if autoDomain is enabled
+      if (hasAutoDomain && !TILE_DATA_STORE[layerDef.id]) {
+        TILE_DATA_STORE[layerDef.id] = {};
+      }
 
       const layerProps = {
         id: `${layerDef.id}-tiles`,
@@ -1234,7 +1312,15 @@ def deckgl_layers(
           const { x, y, z } = index;
           const url = tileUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
           const cacheKey = `${tileUrl}|${z}|${x}|${y}`;
-          if (TILE_CACHE.has(cacheKey)) return TILE_CACHE.get(cacheKey);
+          if (TILE_CACHE.has(cacheKey)) {
+            const cachedData = TILE_CACHE.get(cacheKey);
+            // Store tile data for autoDomain
+            if (hasAutoDomain) {
+              const tileKey = `${z}/${x}/${y}`;
+              TILE_DATA_STORE[layerDef.id][tileKey] = cachedData;
+            }
+            return cachedData;
+          }
           try {
             const res = await fetch(url, { signal });
             if (!res.ok) return [];
@@ -1243,6 +1329,11 @@ def deckgl_layers(
             const data = JSON.parse(text);
             const normalized = normalizeTileData(data);
             TILE_CACHE.set(cacheKey, normalized);
+            // Store tile data for autoDomain
+            if (hasAutoDomain) {
+              const tileKey = `${z}/${x}/${y}`;
+              TILE_DATA_STORE[layerDef.id][tileKey] = normalized;
+            }
             return normalized;
           } catch (e) { return TILE_CACHE.get(cacheKey) || []; }
         },
@@ -1336,6 +1427,24 @@ def deckgl_layers(
       } else {
         deckOverlay.setProps({ layers: deckLayers });
       }
+    }
+    
+    // Auto-domain viewport listener: rebuild when viewport changes
+    const hasAutoDomainLayers = LAYERS_DATA.some(l => 
+      l.layerType === 'hex' && 
+      l.isTileLayer && 
+      l.hexLayer?.getFillColor?.autoDomain === true
+    );
+    
+    if (hasAutoDomainLayers) {
+      let autoDomainTimeout = null;
+      map.on('moveend', () => {
+        clearTimeout(autoDomainTimeout);
+        autoDomainTimeout = setTimeout(() => {
+          console.log('[AutoDomain] Viewport changed, recalculating domains...');
+          rebuildDeckOverlay();
+        }, 300);  // Debounce: wait 300ms after movement stops
+      });
     }
     {% endif %}
 
