@@ -1303,6 +1303,12 @@ def deckgl_layers(
               computedDomain = calculateDomainFromTiles(layerId, v.attr);
               if (computedDomain) {
                 console.log(`[AutoDomain] ${layerId}: ${v.attr} → [${computedDomain[0].toFixed(2)}, ${computedDomain[1].toFixed(2)}]`);
+                
+                // Store dynamic domain for legend updates
+                const layerData = LAYERS_DATA.find(l => l.id === layerId);
+                if (layerData && layerData.hexLayer && layerData.hexLayer.getFillColor) {
+                  layerData.hexLayer.getFillColor._dynamicDomain = computedDomain;
+                }
               }
             }
             out[k] = colorContinuous(processColorContinuousCfg(v, computedDomain));
@@ -1487,6 +1493,7 @@ def deckgl_layers(
         autoDomainTimeout = setTimeout(() => {
           console.log('[AutoDomain] Viewport changed, recalculating domains...');
           rebuildDeckOverlay();
+          updateLegend();  // Update legend with new dynamic domains
         }, 300);  // Debounce: wait 300ms after movement stops
       });
     }
@@ -1768,7 +1775,9 @@ def deckgl_layers(
         // Handle continuous legend
         if (fnType !== 'colorContinuous' || !colorCfg.domain?.length) return;
         
-        const [d0, d1] = colorCfg.domain;
+        // Use dynamic domain if available (from autoDomain calculation)
+        const domain = colorCfg._dynamicDomain || colorCfg.domain;
+        const [d0, d1] = domain;
         const isReversed = d0 > d1;
         const steps = colorCfg.steps || 7;
         
