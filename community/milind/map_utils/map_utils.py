@@ -6,7 +6,6 @@ from shapely.geometry import mapping
 import folium
 import numpy as np
 import typing  # added for Union typing
-from difflib import get_close_matches
 from jinja2 import Template
 from copy import deepcopy
 
@@ -179,8 +178,6 @@ def deckgl_map(
     basemap_key = (basemap or "dark").lower()
     style_url = basemap_styles.get({"sat": "satellite", "satellite-streets": "satellite"}.get(basemap_key, basemap_key), basemap or basemap_styles["dark"])
 
-    config_errors = []
-
     # Reproject to EPSG:4326 if needed
     if hasattr(gdf, "crs") and gdf.crs and getattr(gdf.crs, "to_epsg", lambda: None)() != 4326:
         try:
@@ -220,9 +217,9 @@ def deckgl_map(
             pass
 
     # Config processing
-    merged_config = _load_deckgl_config(config, DEFAULT_DECK_CONFIG, "deckgl_map", config_errors)
-    initial_view_state = _validate_initial_view_state(merged_config, DEFAULT_DECK_CONFIG["initialViewState"], "deckgl_map", config_errors)
-    vector_layer = _ensure_layer_config(merged_config, "vectorLayer", DEFAULT_DECK_CONFIG["vectorLayer"], "deckgl_map", config_errors)
+    merged_config = _load_deckgl_config(config, DEFAULT_DECK_CONFIG)
+    initial_view_state = _get_view_state(merged_config, DEFAULT_DECK_CONFIG["initialViewState"])
+    vector_layer = _get_layer_config(merged_config, "vectorLayer", DEFAULT_DECK_CONFIG["vectorLayer"])
 
     # Helper to convert [r,g,b,a] to rgba string
     def to_rgba(color_value, default_alpha=1.0):
@@ -237,17 +234,6 @@ def deckgl_map(
     fill_color_config, fill_color_rgba, color_attr = {}, None, None
     if isinstance(fill_color_raw, dict) and fill_color_raw.get("@@function") in ("colorContinuous", "colorCategories"):
         fill_color_config, color_attr = fill_color_raw, fill_color_raw.get("attr")
-        # Validate palette name
-        palette_name = fill_color_raw.get("colors", "TealGrn")
-        if palette_name and palette_name not in KNOWN_CARTOCOLOR_PALETTES:
-            suggestion = get_close_matches(palette_name, list(KNOWN_CARTOCOLOR_PALETTES), n=1, cutoff=0.5)
-            if suggestion:
-                print(f"[deckgl_map] Warning: Palette '{palette_name}' not found. Did you mean '{suggestion[0]}'?")
-                config_errors.append(f"Palette '{palette_name}' not found. Did you mean '{suggestion[0]}'?")
-            else:
-                print(f"[deckgl_map] Warning: Palette '{palette_name}' not found. Using fallback colors.")
-                print(f"  Valid palettes: {', '.join(sorted(list(KNOWN_CARTOCOLOR_PALETTES))[:15])}...")
-                config_errors.append(f"Palette '{palette_name}' not found. Valid: {', '.join(sorted(list(KNOWN_CARTOCOLOR_PALETTES))[:10])}...")
     elif isinstance(fill_color_raw, (list, tuple)):
         fill_color_rgba = to_rgba(fill_color_raw, default_alpha=0.6)
     
@@ -310,7 +296,6 @@ const FILL_COLOR = {{ fill_color_rgba | tojson }};
 const IS_FILLED = {{ is_filled | tojson }};
 const IS_STROKED = {{ is_stroked | tojson }};
 const OPACITY = {{ opacity | tojson }};
-const CONFIG_ERRORS = {{ config_errors | tojson }};
 
 // Build polygon outlines as LineStrings for stroke-only rendering
 function buildOutlines(fc) {
@@ -468,11 +453,6 @@ const tileCheck = setInterval(() => {
   map.triggerRepaint();
 }, 500);
 
-// Config errors display
-if (CONFIG_ERRORS?.length) {
-  const box = document.getElementById('config-error');
-  if (box) { box.innerHTML = CONFIG_ERRORS.join('<br>'); box.style.display = 'block'; }
-}
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
 </body>
@@ -482,7 +462,7 @@ if (CONFIG_ERRORS?.length) {
         fill_color_config=fill_color_config, color_attr=color_attr, tooltip_columns=tooltip_columns,
         line_width=line_width, point_radius=point_radius, line_color_rgba=line_color_rgba,
         fill_color_rgba=fill_color_rgba, is_filled=is_filled, is_stroked=is_stroked,
-        opacity=opacity, style_url=style_url, config_errors=config_errors,
+        opacity=opacity, style_url=style_url,
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/351515e/public/common/")
@@ -636,22 +616,16 @@ def deckgl_layers(
         config = layer_def.get("config", {})
         name = layer_def.get("name", f"Layer {i + 1}")
         
-        config_errors = []
-        original_config = deepcopy(config) if config else {}
-        
         if layer_type == "hex":
             # Process hex layer
-            merged_config = _load_deckgl_config(config, DEFAULT_DECK_HEX_CONFIG, f"deckgl_layers_hex_{i}", config_errors)
+            merged_config = _load_deckgl_config(config, DEFAULT_DECK_HEX_CONFIG)
             hex_layer = merged_config.get("hexLayer", {})
             tile_layer_config = merged_config.get("tileLayer", {})
             
-            # Validate hexLayer property names
-            invalid_props = [key for key in list(hex_layer.keys()) if key not in VALID_HEX_LAYER_PROPS]
-            for prop in invalid_props:
-                suggestion = get_close_matches(prop, list(VALID_HEX_LAYER_PROPS), n=1, cutoff=0.6)
-                if suggestion:
-                    print(f"[deckgl_layers] Warning: Layer '{name}' property '{prop}' not recognized. Did you mean '{suggestion[0]}'?")
-                hex_layer.pop(prop, None)
+            # Remove invalid hexLayer properties silently
+            for key in list(hex_layer.keys()):
+                if key not in VALID_HEX_LAYER_PROPS:
+                    hex_layer.pop(key, None)
             
             is_tile_layer = tile_url is not None
             if is_tile_layer:
@@ -694,7 +668,7 @@ def deckgl_layers(
             
         elif layer_type == "vector":
             # Process vector layer (similar to deckgl_map)
-            merged_config = _load_deckgl_config(config, DEFAULT_DECK_CONFIG, f"deckgl_layers_vector_{i}", config_errors)
+            merged_config = _load_deckgl_config(config, DEFAULT_DECK_CONFIG)
             vector_layer = merged_config.get("vectorLayer", {})
             
             # Convert GeoDataFrame to GeoJSON
@@ -2916,7 +2890,8 @@ def _deep_merge_dict(base: dict, extra: dict) -> dict:
     return base
 
 
-def _load_deckgl_config(raw_config, default_config, component_name: str, errors: list):
+def _load_deckgl_config(raw_config, default_config):
+    """Merge user config with defaults. Returns merged config dict."""
     merged = deepcopy(default_config)
     if raw_config in (None, ""):
         return merged
@@ -2924,130 +2899,39 @@ def _load_deckgl_config(raw_config, default_config, component_name: str, errors:
     if isinstance(raw_config, str):
         try:
             user_config = json.loads(raw_config)
-        except json.JSONDecodeError as exc:
-            errors.append(f"[{component_name}] Failed to parse config JSON: {exc}")
+        except json.JSONDecodeError:
             return merged
     elif isinstance(raw_config, dict):
         user_config = raw_config
     else:
-        errors.append(f"[{component_name}] Config must be a dict or JSON string. Using defaults.")
         return merged
 
     if not isinstance(user_config, dict):
-        errors.append(f"[{component_name}] Config must be a dict. Using defaults.")
         return merged
 
     try:
-        merged = _deep_merge_dict(merged, deepcopy(user_config))
-    except Exception as exc:
-        errors.append(f"[{component_name}] Failed to merge config overrides: {exc}. Using defaults.")
-        merged = deepcopy(default_config)
-    return merged
+        return _deep_merge_dict(merged, deepcopy(user_config))
+    except Exception:
+        return deepcopy(default_config)
 
 
-def _validate_initial_view_state(config: dict, default_view_state: dict, component_name: str, errors: list):
+def _get_view_state(config: dict, default_view_state: dict):
+    """Get initialViewState from config, falling back to defaults."""
     view_state = config.get("initialViewState")
     if not isinstance(view_state, dict):
-        errors.append(f"[{component_name}] initialViewState must be an object. Using defaults.")
         config["initialViewState"] = deepcopy(default_view_state)
-        view_state = config["initialViewState"]
-    else:
-        zoom = view_state.get("zoom")
-        if zoom is not None and not isinstance(zoom, (int, float)):
-            errors.append(f"[{component_name}] initialViewState.zoom must be numeric. Using default zoom.")
-            view_state["zoom"] = default_view_state.get("zoom")
+        return config["initialViewState"]
     return view_state
 
 
-def _ensure_layer_config(config: dict, layer_key: str, default_layer: dict, component_name: str, errors: list):
+def _get_layer_config(config: dict, layer_key: str, default_layer: dict):
+    """Get layer config from config, falling back to defaults."""
     layer = config.get(layer_key)
     if not isinstance(layer, dict):
-        errors.append(f"[{component_name}] {layer_key} must be an object. Using defaults.")
         config[layer_key] = deepcopy(default_layer)
-        layer = config[layer_key]
-    return layer
+    return config[layer_key]
 
 
-def _validate_palette_name(color_name: str, component_name: str, field_path: str, errors: list):
-    if not color_name:
-        return
-    palette = color_name.strip()
-    if palette and palette not in KNOWN_CARTOCOLOR_PALETTES:
-        suggestion = get_close_matches(palette, list(KNOWN_CARTOCOLOR_PALETTES), n=1, cutoff=0.7)
-        if suggestion:
-            errors.append(f"[{component_name}] {field_path} '{palette}' is not a known CartoColor palette. Did you mean '{suggestion[0]}'?")
-        else:
-            valid_list = ", ".join(sorted(KNOWN_CARTOCOLOR_PALETTES))
-            errors.append(f"[{component_name}] {field_path} '{palette}' is not a recognized CartoColor palette. Valid palettes include: {valid_list}.")
-
-
-def _validate_color_accessor(
-    layer: dict,
-    field_name: str,
-    *,
-    component_name: str,
-    errors: list,
-    allow_array: bool,
-    require_color_continuous: bool,
-    fallback_value=None,
-):
-    value = layer.get(field_name)
-    if value is None:
-        return
-
-    def _reset_to_fallback():
-        if fallback_value is None:
-            layer.pop(field_name, None)
-        else:
-            layer[field_name] = deepcopy(fallback_value)
-
-    if isinstance(value, (list, tuple)):
-        if not allow_array:
-            errors.append(f"[{component_name}] {field_name} cannot be an array. Removing value.")
-            _reset_to_fallback()
-            return
-        if len(value) not in (3, 4) or not all(isinstance(v, (int, float)) for v in value):
-            errors.append(f"[{component_name}] {field_name} array must contain 3 or 4 numeric values. Removing value.")
-            _reset_to_fallback()
-        return
-
-    if isinstance(value, dict):
-        fn = value.get("@@function")
-        if require_color_continuous and fn != "colorContinuous":
-            errors.append(f"[{component_name}] {field_name}.@@function must be 'colorContinuous'.")
-            _reset_to_fallback()
-            return
-
-        if fn == "colorContinuous":
-            if not isinstance(value.get("attr"), str):
-                errors.append(f"[{component_name}] {field_name}.attr must be a string column. Resetting attr.")
-                if fallback_value:
-                    value["attr"] = fallback_value.get("attr")
-
-            domain = value.get("domain")
-            if not (isinstance(domain, (list, tuple)) and len(domain) == 2):
-                errors.append(f"[{component_name}] {field_name}.domain must be [min, max]. Resetting domain.")
-                if fallback_value:
-                    value["domain"] = fallback_value.get("domain")
-
-            steps = value.get("steps")
-            if steps is not None and (not isinstance(steps, int) or steps <= 0):
-                errors.append(f"[{component_name}] {field_name}.steps must be a positive integer. Resetting steps.")
-                if fallback_value:
-                    value["steps"] = fallback_value.get("steps")
-
-            colors = value.get("colors")
-            if colors is not None:
-                if not isinstance(colors, str):
-                    errors.append(f"[{component_name}] {field_name}.colors must be a palette string. Resetting colors.")
-                    if fallback_value:
-                        value["colors"] = fallback_value.get("colors")
-                else:
-                    _validate_palette_name(colors, component_name, f"{field_name}.colors", errors)
-        return
-
-    errors.append(f"[{component_name}] {field_name} must be an array or colorContinuous object. Removing value.")
-    _reset_to_fallback()
 
 
 def _extract_tooltip_columns(config_sources, available_columns=None):
