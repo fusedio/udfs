@@ -468,6 +468,7 @@ def deckgl_hex(
     tile_url: str = None,
     layers: list = None,
     highlight_on_click: bool = True,
+    on_click: dict = None,
 ):
     """
     Render H3 hexagon data as an interactive map.
@@ -488,6 +489,7 @@ def deckgl_hex(
             - "data": DataFrame with hex column
             - "config": hexLayer config for this layer
             - "name": Display name for layer toggle (optional)
+        on_click: Dict to broadcast clicks. Keys: properties, channel, message_type, include_coords, include_layer.
     
     Examples:
         # Static mode (single layer)
@@ -521,6 +523,7 @@ def deckgl_hex(
         basemap=basemap,
         highlight_on_click=highlight_on_click,
         debug=debug,
+        on_click=on_click,
     )
 
 
@@ -530,6 +533,7 @@ def deckgl_layers(
     basemap: str = "dark",
     highlight_on_click: bool = True,
     debug: bool = False,
+    on_click: dict = None,
 ):
     """
     Render mixed hex and vector layers on a single interactive map.
@@ -546,6 +550,12 @@ def deckgl_layers(
             - "name": Display name for layer toggle (optional)
         mapbox_token: Mapbox access token.
         basemap: 'dark', 'satellite', or custom Mapbox style URL.
+        on_click: Dict to configure click broadcasting. Keys:
+            - "properties": List of property names to include (default: all)
+            - "channel": BroadcastChannel name (default: "fused-bus")
+            - "message_type": Message type string (default: "feature_click")
+            - "include_coords": Include click lat/lng (default: True)
+            - "include_layer": Include layer name (default: True)
     
     Examples:
         # Mix hex and vector layers
@@ -1514,8 +1524,8 @@ def deckgl_layers(
         }
         
         const eyeIcon = visible 
-          ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
-          : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+          ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>'
+          : '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>';
         return `
           <div class="layer-item ${visible ? '' : 'disabled'}" data-layer-id="${l.id}">
             <span class="layer-eye" onclick="toggleLayerVisibility('${l.id}', ${!visible})">${eyeIcon}</span>
@@ -1815,12 +1825,12 @@ def deckgl_layers(
     document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => map.resize(), 100); });
     
     {% if highlight_on_click %}
-    // Click-to-highlight
+    // Click-to-highlight (hex and vector)
     (function() {
-      const HL_RGBA = 'rgba(255,255,0,1)', HL_LW = 3;
+      const HL_FILL = 'rgba(255,255,0,0.3)', HL_LINE = 'rgba(255,255,0,1)', HL_LW = 3;
       let selected = null, added = false;
       
-    function toH3(hex) {
+      function toH3(hex) {
         if (!hex) return null;
         try {
           if (typeof hex === 'string') return /^\d+$/.test(hex) ? BigInt(hex).toString(16) : hex.toLowerCase();
@@ -1828,31 +1838,45 @@ def deckgl_layers(
         } catch(e) { return null; }
       }
       
-      function highlight(hexId) {
+      function highlight(feature) {
         let geojson = { type: 'FeatureCollection', features: [] };
-        if (hexId && typeof h3 !== 'undefined') {
-          try {
-            const id = toH3(hexId);
-            if (id && h3.isValidCell(id)) {
-              const b = h3.cellToBoundary(id).map(([lat,lng]) => [lng,lat]);
-              b.push(b[0]);
-              geojson.features.push({ type:'Feature', geometry:{ type:'Polygon', coordinates:[b] } });
-            }
-          } catch(e) {}
+        
+        if (feature) {
+          const props = feature.properties || {};
+          const hexId = props.hex || props.h3;
+          
+          // If it's a hex, use H3 to get boundary
+          if (hexId && typeof h3 !== 'undefined') {
+            try {
+              const id = toH3(hexId);
+              if (id && h3.isValidCell(id)) {
+                const b = h3.cellToBoundary(id).map(([lat,lng]) => [lng,lat]);
+                b.push(b[0]);
+                geojson.features.push({ type:'Feature', geometry:{ type:'Polygon', coordinates:[b] }, properties: props });
+              }
+            } catch(e) {}
+          }
+          // Otherwise use the feature's actual geometry (for vectors)
+          else if (feature.geometry) {
+            geojson.features.push({ type:'Feature', geometry: feature.geometry, properties: props });
+          }
         }
+        
         if (!added) {
-          map.addSource('hex-hl', { type:'geojson', data:geojson });
-          map.addLayer({ id:'hex-hl-fill', type:'fill', source:'hex-hl', paint:{'fill-color':HL_RGBA,'fill-opacity':0.2} });
-          map.addLayer({ id:'hex-hl-line', type:'line', source:'hex-hl', paint:{'line-color':HL_RGBA,'line-width':HL_LW} });
+          map.addSource('feature-hl', { type:'geojson', data:geojson });
+          map.addLayer({ id:'feature-hl-fill', type:'fill', source:'feature-hl', paint:{'fill-color':HL_FILL,'fill-opacity':1} });
+          map.addLayer({ id:'feature-hl-line', type:'line', source:'feature-hl', paint:{'line-color':HL_LINE,'line-width':HL_LW} });
           added = true;
-        } else map.getSource('hex-hl').setData(geojson);
-        selected = hexId;
+        } else {
+          map.getSource('feature-hl').setData(geojson);
+        }
+        selected = feature;
       }
       
       function getLayers() {
         const layers = [];
         if (typeof LAYERS_DATA !== 'undefined') LAYERS_DATA.forEach(l => {
-        if (l.isTileLayer) return;
+          if (l.isTileLayer) return;
           const ids = l.layerType === 'vector' 
             ? [`${l.id}-fill`, `${l.id}-circle`, `${l.id}-line`]
             : [l.hexLayer?.extruded ? `${l.id}-extrusion` : `${l.id}-fill`];
@@ -1866,21 +1890,190 @@ def deckgl_layers(
         map.on('click', e => {
           const queryLayers = getLayers();
           if (!queryLayers.length) return;
+          
           let feats = [];
           try { feats = map.queryRenderedFeatures(e.point, { layers: queryLayers }) || []; } catch(err) {}
-          const hex = feats?.[0]?.properties?.hex || feats?.[0]?.properties?.h3;
-          if (hex) { highlight(hex); }
-          else if (typeof deckOverlay !== 'undefined') {
+          
+          if (feats.length > 0) {
+            highlight(feats[0]);
+          } else if (typeof deckOverlay !== 'undefined') {
             const info = deckOverlay?.pickObject?.({ x:e.point.x, y:e.point.y, radius:4 });
-            const h = info?.object?.properties?.hex || info?.object?.hex;
-            if (h) { highlight(h); }
-            else if (selected) { highlight(null); }
+            if (info?.object) {
+              highlight({ properties: info.object.properties || info.object, geometry: null });
+            } else if (selected) {
+              highlight(null);
+            }
+          } else if (selected) {
+            highlight(null);
           }
-          else if (selected) { highlight(null); }
         });
       });
     })();
-      {% endif %}
+    {% endif %}
+    
+    {% if on_click %}
+    // Click broadcast - sends click events on any map feature (hex or vector)
+    (function() {
+      const CONFIG = {{ on_click | tojson }};
+      const CHANNEL = CONFIG.channel || 'fused-bus';
+      const MESSAGE_TYPE = CONFIG.message_type || 'feature_click';
+      const PROPERTY_FILTER = CONFIG.properties || null;  // null = send all
+      const INCLUDE_COORDS = CONFIG.include_coords !== false;
+      const INCLUDE_LAYER = CONFIG.include_layer !== false;
+      
+      // Setup broadcast channel
+      let broadcastChannel = null;
+      try {
+        if ('BroadcastChannel' in window) {
+          broadcastChannel = new BroadcastChannel(CHANNEL);
+        }
+      } catch(e) {
+        console.warn('[ClickBroadcast] BroadcastChannel not available:', e);
+      }
+      
+      // Broadcast to all possible targets
+      function broadcast(message) {
+        const messageStr = JSON.stringify(message);
+        
+        // BroadcastChannel (same-origin tabs/windows)
+        if (broadcastChannel) {
+          try { broadcastChannel.postMessage(message); } catch(e) {}
+        }
+        
+        // PostMessage to parent frame
+        try { window.parent.postMessage(messageStr, '*'); } catch(e) {}
+        
+        // PostMessage to top frame (if different from parent)
+        try {
+          if (window.top && window.top !== window.parent) {
+            window.top.postMessage(messageStr, '*');
+          }
+        } catch(e) {}
+        
+        // PostMessage to all sibling frames
+        try {
+          if (window.top && window.top.frames) {
+            for (let i = 0; i < window.top.frames.length; i++) {
+              const frame = window.top.frames[i];
+              if (frame !== window) {
+                try { frame.postMessage(messageStr, '*'); } catch(e) {}
+              }
+            }
+          }
+        } catch(e) {}
+      }
+      
+      // Get all layers that should respond to clicks
+      function getClickableLayers() {
+        const layerIds = [];
+        
+        // From LAYERS_DATA (multi-layer maps)
+        if (typeof LAYERS_DATA !== 'undefined' && Array.isArray(LAYERS_DATA)) {
+          LAYERS_DATA.forEach(layerDef => {
+            if (layerDef.isTileLayer) return;  // Skip tile layers (handled separately)
+            
+            if (layerDef.layerType === 'vector') {
+              // Vector layers: fill, circle, line
+              [`${layerDef.id}-fill`, `${layerDef.id}-circle`, `${layerDef.id}-line`].forEach(id => {
+                try {
+                  if (map.getLayer(id)) layerIds.push(id);
+                } catch(e) {}
+              });
+            } else if (layerDef.layerType === 'hex') {
+              // Hex layers: extrusion or fill
+              const ids = layerDef.hexLayer?.extruded 
+                ? [`${layerDef.id}-extrusion`] 
+                : [`${layerDef.id}-fill`];
+              ids.forEach(id => {
+                try {
+                  if (map.getLayer(id)) layerIds.push(id);
+                } catch(e) {}
+              });
+            }
+          });
+        }
+        
+        // Fallback: legacy single-layer IDs
+        ['gdf-fill', 'gdf-circle', 'hex-fill'].forEach(id => {
+          try {
+            if (map.getLayer(id) && !layerIds.includes(id)) {
+              layerIds.push(id);
+            }
+          } catch(e) {}
+        });
+        
+        return layerIds;
+      }
+      
+      // Handle click event
+      function handleClick(event) {
+        const clickableLayers = getClickableLayers();
+        if (!clickableLayers.length) return;
+        
+        // Query features at click point
+        let features = [];
+        try {
+          features = map.queryRenderedFeatures(event.point, { layers: clickableLayers }) || [];
+        } catch(err) {
+          console.warn('[ClickBroadcast] Error querying features:', err);
+          return;
+        }
+        
+        if (!features.length) return;
+        
+        // Use the top-most feature
+        const feature = features[0];
+        const properties = feature.properties || {};
+        const layerId = feature.layer?.id || '';
+        
+        // Find user-friendly layer name from LAYERS_DATA
+        let layerName = layerId;
+        if (typeof LAYERS_DATA !== 'undefined') {
+          const layerDef = LAYERS_DATA.find(l => layerId.startsWith(l.id));
+          if (layerDef) layerName = layerDef.name || layerDef.id;
+        }
+        
+        // Filter properties if specified, otherwise send all
+        let propertiesToSend = {};
+        if (PROPERTY_FILTER && Array.isArray(PROPERTY_FILTER)) {
+          PROPERTY_FILTER.forEach(key => {
+            if (properties[key] !== undefined) {
+              propertiesToSend[key] = properties[key];
+            }
+          });
+        } else {
+          propertiesToSend = { ...properties };
+        }
+        
+        // Build message
+        const message = {
+          type: MESSAGE_TYPE,
+          properties: propertiesToSend,
+          timestamp: Date.now()
+        };
+        
+        if (INCLUDE_COORDS) {
+          message.lngLat = {
+            lng: event.lngLat.lng,
+            lat: event.lngLat.lat
+          };
+        }
+        
+        if (INCLUDE_LAYER) {
+          message.layer = layerName;
+        }
+        
+        broadcast(message);
+        console.log('[ClickBroadcast] Feature clicked:', message);
+      }
+      
+      // Initialize click handler when map is ready
+      map.on('load', () => {
+        map.on('click', handleClick);
+        console.log('[ClickBroadcast] Initialized on channel:', CHANNEL);
+      });
+    })();
+    {% endif %}
     
     {% if debug %}
     // ========== Debug Panel Functions ==========
@@ -2079,6 +2272,7 @@ def deckgl_layers(
         highlight_on_click=highlight_on_click,
         debug=debug,
         palettes=sorted(KNOWN_CARTOCOLOR_PALETTES),
+        on_click=on_click or {},
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
