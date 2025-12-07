@@ -851,8 +851,14 @@ def deckgl_layers(
       return !(a.east < b.west || a.west > b.east || a.north < b.south || a.south > b.north);
     }
     
-    // Calculate domain from visible tile data for autoDomain layers
+    // AutoDomain: calculate domain from visible tiles (only when zoom >= 10)
+    const AUTO_DOMAIN_MAX_SAMPLES = 5000;
+    const AUTO_DOMAIN_MIN_ZOOM = 10;
+    
     function calculateDomainFromTiles(layerId, attr) {
+      // Only calculate when zoomed in enough
+      if (map.getZoom() < AUTO_DOMAIN_MIN_ZOOM) return null;
+      
       const tileData = TILE_DATA_STORE[layerId];
       if (!tileData || !Object.keys(tileData).length) return null;
       
@@ -865,77 +871,82 @@ def deckgl_layers(
         north: mapBounds.getNorth()
       };
       
-      // Prune tiles that are far from viewport (keep only nearby tiles)
-      const tilesToKeep = {};
-      const tilesToDelete = [];
+      // First pass: count total values and collect tile refs
+      let totalCount = 0;
+      const viewportTiles = [];
       
       for (const [tileKey, data] of Object.entries(tileData)) {
         const [z, x, y] = tileKey.split('/').map(Number);
         const tileBounds = tileToBounds(x, y, z);
         
-        // Keep tiles that intersect viewport OR are within 2 tile-widths
-        const tileWidth = Math.abs(tileBounds.east - tileBounds.west);
-        const expandedViewport = {
-          west: viewportBounds.west - tileWidth * 2,
-          east: viewportBounds.east + tileWidth * 2,
-          south: viewportBounds.south - tileWidth * 2,
-          north: viewportBounds.north + tileWidth * 2
-        };
-        
-        if (boundsIntersect(tileBounds, expandedViewport)) {
-          tilesToKeep[tileKey] = data;
-        } else {
-          tilesToDelete.push(tileKey);
+        if (boundsIntersect(tileBounds, viewportBounds)) {
+          viewportTiles.push(data);
+          totalCount += data.length;
         }
       }
       
-      // Prune old tiles
-      if (tilesToDelete.length > 0) {
-        tilesToDelete.forEach(key => delete TILE_DATA_STORE[layerId][key]);
-        console.log(`[AutoDomain] Pruned ${tilesToDelete.length} old tiles from ${layerId}`);
+      if (totalCount < 10) return null;
+      
+      // Calculate sampling rate to keep under MAX_SAMPLES
+      const sampleRate = Math.min(1, AUTO_DOMAIN_MAX_SAMPLES / totalCount);
+      const values = [];
+      
+      // Collect values with sampling
+      for (const data of viewportTiles) {
+        for (const item of data) {
+          // Sample: skip items based on sample rate
+          if (sampleRate < 1 && Math.random() > sampleRate) continue;
+          
+          const val = item?.[attr] ?? item?.properties?.[attr];
+          if (typeof val === 'number' && isFinite(val)) {
+            values.push(val);
+          }
+          
+          // Hard cap just in case
+          if (values.length >= AUTO_DOMAIN_MAX_SAMPLES) break;
+        }
+        if (values.length >= AUTO_DOMAIN_MAX_SAMPLES) break;
       }
       
-      // Collect values from hexagons actually inside viewport
-      const values = [];
-      let visibleHexCount = 0;
+      if (values.length < 10) return null;
       
-      for (const [tileKey, data] of Object.entries(tilesToKeep)) {
-        for (const item of data) {
-          // Get hex ID
-          const hexId = item?.hex ?? item?.properties?.hex;
-          if (!hexId) continue;
-          
-          // Get hex center location using H3
-          if (typeof h3 !== 'undefined' && h3.cellToLatLng) {
-            try {
-              const [lat, lng] = h3.cellToLatLng(hexId);
-              
-              // Check if hex center is inside viewport
-              if (lng >= viewportBounds.west && 
-                  lng <= viewportBounds.east && 
-                  lat >= viewportBounds.south && 
-                  lat <= viewportBounds.north) {
-                
-                const val = item?.[attr] ?? item?.properties?.[attr];
-                if (typeof val === 'number' && isFinite(val)) {
-                  values.push(val);
-                  visibleHexCount++;
-                }
-              }
-            } catch(e) {}
+      // Sort sampled values and use percentiles (2nd-98th)
+      values.sort((a, b) => a - b);
+      const p2 = Math.floor(values.length * 0.02);
+      const p98 = Math.floor(values.length * 0.98);
+      const minVal = values[p2];
+      const maxVal = values[Math.min(p98, values.length - 1)];
+      
+      if (minVal >= maxVal) return [minVal - 1, maxVal + 1];
+      return [minVal, maxVal];
+    }
+    
+    // Track tile loading for autoDomain
+    let autoDomainTilesLoading = 0;
+    
+    function scheduleAutoDomainUpdate() {
+      if (autoDomainTilesLoading > 0) return;  // Still loading
+      
+      let needsRebuild = false;
+      LAYERS_DATA.forEach(l => {
+        if (l.isTileLayer && l.hexLayer?.getFillColor?.autoDomain) {
+          const newDomain = calculateDomainFromTiles(l.id, l.hexLayer.getFillColor.attr);
+          if (newDomain) {
+            const old = l.hexLayer.getFillColor._dynamicDomain;
+            // Only rebuild if domain changed >5%
+            if (!old || Math.abs(newDomain[0] - old[0]) / (old[1] - old[0] || 1) > 0.05 ||
+                        Math.abs(newDomain[1] - old[1]) / (old[1] - old[0] || 1) > 0.05) {
+              l.hexLayer.getFillColor._dynamicDomain = newDomain;
+              needsRebuild = true;
+            }
           }
         }
-      }
+      });
       
-      if (!values.length) {
-        console.log(`[AutoDomain] ${layerId}: No hexes in viewport, using fallback domain`);
-        return null;
+      if (needsRebuild) {
+        rebuildDeckOverlay();
+        updateLegend();
       }
-      
-      const minVal = Math.min(...values);
-      const maxVal = Math.max(...values);
-      console.log(`[AutoDomain] ${layerId}: ${visibleHexCount} hexes in viewport → [${minVal.toFixed(2)}, ${maxVal.toFixed(2)}]`);
-      return [minVal, maxVal];
     }
 
     function parseHexLayerConfigForDeck(config, layerId = null) {
@@ -944,21 +955,17 @@ def deckgl_layers(
         if (k === '@@type') continue;
         if (v && typeof v === 'object' && !Array.isArray(v)) {
           if (v['@@function'] === 'colorContinuous') {
-            // Check if autoDomain is enabled
-            let computedDomain = null;
-            if (v.autoDomain === true && layerId && v.attr) {
-              computedDomain = calculateDomainFromTiles(layerId, v.attr);
-              if (computedDomain) {
-                console.log(`[AutoDomain] ${layerId}: ${v.attr} → [${computedDomain[0].toFixed(2)}, ${computedDomain[1].toFixed(2)}]`);
-                
-                // Store dynamic domain for legend updates
-                const layerData = LAYERS_DATA.find(l => l.id === layerId);
-                if (layerData && layerData.hexLayer && layerData.hexLayer.getFillColor) {
-                  layerData.hexLayer.getFillColor._dynamicDomain = computedDomain;
-                }
+            // For autoDomain: use stored dynamic domain if calculated, otherwise use config default
+            let domainToUse = null;
+            if (v.autoDomain === true && layerId) {
+              // Check if we already calculated a domain for this layer
+              const layerData = LAYERS_DATA.find(l => l.id === layerId);
+              if (layerData?.hexLayer?.getFillColor?._dynamicDomain) {
+                domainToUse = layerData.hexLayer.getFillColor._dynamicDomain;
               }
+              // If no calculated domain yet, use config default (tiles will render with default)
             }
-            out[k] = colorContinuous(processColorContinuousCfg(v, computedDomain));
+            out[k] = colorContinuous(processColorContinuousCfg(v, domainToUse));
           } else {
             out[k] = v;
           }
@@ -1009,26 +1016,49 @@ def deckgl_layers(
           const { x, y, z } = index;
           const url = tileUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
           const cacheKey = `${tileUrl}|${z}|${x}|${y}`;
+          const tileKey = `${z}/${x}/${y}`;
+          
+          // Return cached data immediately
           if (TILE_CACHE.has(cacheKey)) {
             const cachedData = TILE_CACHE.get(cacheKey);
-            // Store tile data for debug panel and autoDomain
-            const tileKey = `${z}/${x}/${y}`;
             TILE_DATA_STORE[layerDef.id][tileKey] = cachedData;
             return cachedData;
           }
+          
+          // Track loading for autoDomain
+          if (hasAutoDomain) autoDomainTilesLoading++;
+          
           try {
             const res = await fetch(url, { signal });
-            if (!res.ok) return [];
+            if (!res.ok) {
+              if (hasAutoDomain) {
+                autoDomainTilesLoading--;
+                // Check if all tiles loaded
+                setTimeout(scheduleAutoDomainUpdate, 100);
+              }
+              return [];
+            }
             let text = await res.text();
             text = text.replace(/\"(hex|h3|index)\"\s*:\s*(\d+)/gi, (_m, k, d) => `"${k}":"${d}"`);
             const data = JSON.parse(text);
             const normalized = normalizeTileData(data);
             TILE_CACHE.set(cacheKey, normalized);
-            // Store tile data for debug panel and autoDomain
-            const tileKey = `${z}/${x}/${y}`;
             TILE_DATA_STORE[layerDef.id][tileKey] = normalized;
+            
+            // Track tile loaded for autoDomain
+            if (hasAutoDomain) {
+              autoDomainTilesLoading--;
+              // Check if all tiles loaded (debounce to batch updates)
+              setTimeout(scheduleAutoDomainUpdate, 100);
+            }
             return normalized;
-          } catch (e) { return TILE_CACHE.get(cacheKey) || []; }
+          } catch (e) {
+            if (hasAutoDomain) {
+              autoDomainTilesLoading--;
+              setTimeout(scheduleAutoDomainUpdate, 100);
+            }
+            return TILE_CACHE.get(cacheKey) || [];
+          }
         },
         renderSubLayers: (props) => {
           const data = props.data || [];
@@ -1133,12 +1163,9 @@ def deckgl_layers(
       let autoDomainTimeout = null;
       map.on('moveend', () => {
         clearTimeout(autoDomainTimeout);
-        autoDomainTimeout = setTimeout(() => {
-          console.log('[AutoDomain] Viewport changed, recalculating domains...');
-          rebuildDeckOverlay();
-          updateLegend();  // Update legend with new dynamic domains
-        }, 300);  // Debounce: wait 300ms after movement stops
+        autoDomainTimeout = setTimeout(scheduleAutoDomainUpdate, 800);
       });
+      map.once('idle', () => setTimeout(scheduleAutoDomainUpdate, 2000));
     }
     {% endif %}
 
