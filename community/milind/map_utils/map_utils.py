@@ -151,311 +151,18 @@ def udf(
     if config is None:
         config = DEFAULT_DECK_CONFIG
     
-    return deckgl_map(gdf, config)
+    # Ensure the map centers on New York City
+    if config is None:
+        config = {}
+    # Set initial view state to NYC coordinates if not already specified
+    view_state = config.get("initialViewState", {})
+    view_state.setdefault("longitude", -74.0060)
+    view_state.setdefault("latitude", 40.7128)
+    view_state.setdefault("zoom", 12)
+    config["initialViewState"] = view_state
 
-
-
-def deckgl_map(
-    gdf,
-    config: typing.Union[dict, str, None] = None,
-    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
-    basemap: str = "dark",
-):
-    """
-    Render a GeoDataFrame as an interactive Mapbox GL map with native tooltips.
-    
-    Args:
-        gdf: GeoDataFrame to visualize (points, lines, or polygons).
-        config: Deck.GL style overrides (dict or JSON string).
-        mapbox_token: Mapbox access token.
-        basemap: 'dark', 'satellite', or custom Mapbox style URL.
-    """
-    import math
-    import numpy as _np
-    
-    # Basemap setup
-    basemap_styles = {"dark": "mapbox://styles/mapbox/dark-v11", "satellite": "mapbox://styles/mapbox/satellite-streets-v12", "light": "mapbox://styles/mapbox/light-v11", "streets": "mapbox://styles/mapbox/streets-v12"}
-    basemap_key = (basemap or "dark").lower()
-    style_url = basemap_styles.get({"sat": "satellite", "satellite-streets": "satellite"}.get(basemap_key, basemap_key), basemap or basemap_styles["dark"])
-
-    # Reproject to EPSG:4326 if needed
-    if hasattr(gdf, "crs") and gdf.crs and getattr(gdf.crs, "to_epsg", lambda: None)() != 4326:
-        try:
-                gdf = gdf.to_crs(epsg=4326)
-        except Exception:
-            pass
-
-    # Convert to GeoJSON
-    try:
-        geojson_obj = json.loads(gdf.to_json())
-    except Exception:
-        geojson_obj = {"type": "FeatureCollection", "features": []}
-
-    # Sanitize properties using shared utility
-    for feat in geojson_obj.get("features", []):
-        feat["properties"] = {k: _sanitize_geojson_value(v) for k, v in (feat.get("properties") or {}).items()}
-
-    # Auto-center
-    auto_center = (0.0, 0.0)
-    if hasattr(gdf, "total_bounds"):
-        try:
-            minx, miny, maxx, maxy = gdf.total_bounds
-            auto_center = ((minx + maxx) / 2.0, (miny + maxy) / 2.0)
-        except Exception:
-            pass
-
-    # Config processing
-    merged_config = _load_deckgl_config(config, DEFAULT_DECK_CONFIG)
-    initial_view_state = _get_view_state(merged_config, DEFAULT_DECK_CONFIG["initialViewState"])
-    vector_layer = _get_layer_config(merged_config, "vectorLayer", DEFAULT_DECK_CONFIG["vectorLayer"])
-
-    # Helper to convert [r,g,b,a] to rgba string
-    def to_rgba(color_value, default_alpha=1.0):
-        if isinstance(color_value, (list, tuple)) and len(color_value) >= 3:
-            r, g, b = int(color_value[0]), int(color_value[1]), int(color_value[2])
-            a = color_value[3] / 255.0 if len(color_value) > 3 else default_alpha
-            return f"rgba({r},{g},{b},{a})"
-        return None
-    
-    # Extract color config
-    fill_color_raw = vector_layer.get("getFillColor")
-    fill_color_config, fill_color_rgba, color_attr = {}, None, None
-    if isinstance(fill_color_raw, dict) and fill_color_raw.get("@@function") in ("colorContinuous", "colorCategories"):
-        fill_color_config, color_attr = fill_color_raw, fill_color_raw.get("attr")
-    elif isinstance(fill_color_raw, (list, tuple)):
-        fill_color_rgba = to_rgba(fill_color_raw, default_alpha=0.6)
-    
-    line_color_rgba = to_rgba(vector_layer.get("getLineColor"), default_alpha=1.0)
-    
-    # Line width validation
-    line_width = vector_layer.get("lineWidthMinPixels") or vector_layer.get("getLineWidth", 1)
-    if not isinstance(line_width, (int, float)) or not math.isfinite(line_width) or line_width < 0:
-        line_width = 1
-
-    point_radius = vector_layer.get("pointRadiusMinPixels") or vector_layer.get("pointRadius", 6)
-    is_filled = vector_layer.get("filled", True)
-    is_stroked = vector_layer.get("stroked", True)
-    opacity = vector_layer.get("opacity", 0.8)
-
-    auto_state = {"longitude": float(auto_center[0]), "latitude": float(auto_center[1]), "zoom": initial_view_state.get("zoom", 11)}
-    data_columns = [col for col in gdf.columns if col != "geometry"]
-    tooltip_columns = _extract_tooltip_columns((merged_config, vector_layer), data_columns)
-
-    html = Template(r"""
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet" />
-  <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
-  <script type="module">
-    import * as cartocolor from 'https://esm.sh/cartocolor@5.0.2';
-    window.cartocolor = cartocolor;
-  </script>
-  <style>
-    html, body, #map { margin:0; height:100%; width:100%; background:#000; }
-    .mapboxgl-popup-content { font-family: Inter,'SF Pro Display','Segoe UI',sans-serif; font-size: 12px; background: rgba(15,15,15,0.95); color:#fff; padding:10px 14px; border-radius:6px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 4px 16px rgba(0,0,0,0.4); max-width:320px; }
-    .mapboxgl-popup-content .tt-row { display:flex; justify-content:space-between; padding:3px 0; gap:12px; }
-    .mapboxgl-popup-content .tt-key { color:rgba(255,255,255,0.6); font-size:11px; }
-    .mapboxgl-popup-content .tt-val { color:#fff; font-weight:500; text-align:right; max-width:180px; word-break:break-word; }
-    .color-legend { position:fixed; left:12px; bottom:12px; background:rgba(15,15,15,0.9); color:#fff; padding:8px; border-radius:4px; font-size:11px; display:none; z-index:30; min-width:140px; border:1px solid rgba(255,255,255,0.08); }
-    .color-legend .legend-gradient { height:12px; border-radius:3px; border:1px solid rgba(255,255,255,0.06); margin-bottom:6px; }
-    .color-legend .legend-labels { display:flex; justify-content:space-between; color:#ccc; font-size:10px;}
-    .config-error { position:fixed; right:12px; bottom:12px; background:rgba(180,30,30,0.92); color:#fff; padding:8px 12px; border-radius:4px; font-size:11px; display:none; z-index:30; max-width:300px; }
-  </style>
-</head>
-<body>
-<div id="map"></div>
-<div id="color-legend" class="color-legend"><div class="legend-title"></div><div class="legend-gradient"></div><div class="legend-labels"><span class="legend-min"></span><span class="legend-max"></span></div></div>
-<div id="config-error" class="config-error"></div>
-
-<script>
-const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
-const GEOJSON = {{ geojson_obj | tojson }};
-const AUTO_STATE = {{ auto_state | tojson }};
-const FILL_COLOR_CONFIG = {{ fill_color_config | tojson }};
-const COLOR_ATTR = {{ color_attr | tojson }};
-const TOOLTIP_COLUMNS = {{ tooltip_columns | tojson }};
-const LINE_WIDTH = {{ line_width | tojson }};
-const POINT_RADIUS = {{ point_radius | tojson }};
-const LINE_COLOR = {{ line_color_rgba | tojson }};
-const FILL_COLOR = {{ fill_color_rgba | tojson }};
-const IS_FILLED = {{ is_filled | tojson }};
-const IS_STROKED = {{ is_stroked | tojson }};
-const OPACITY = {{ opacity | tojson }};
-
-// Build polygon outlines as LineStrings for stroke-only rendering
-function buildOutlines(fc) {
-  if (!fc || !Array.isArray(fc.features)) return { type: 'FeatureCollection', features: [] };
-  const out = [];
-  for (const f of fc.features) {
-    if (!f?.geometry?.coordinates) continue;
-    const g = f.geometry, c = g.coordinates;
-    const rings = g.type === 'Polygon' ? [c] : g.type === 'MultiPolygon' ? c : [];
-    for (const poly of rings) {
-      for (const ring of poly) {
-        if (Array.isArray(ring) && ring.length >= 4)
-          out.push({ type: 'Feature', properties: {...f.properties}, geometry: { type: 'LineString', coordinates: ring }});
-      }
-    }
-  }
-  return { type: 'FeatureCollection', features: out };
-}
-
-const OUTLINES = buildOutlines(GEOJSON);
-
-mapboxgl.accessToken = MAPBOX_TOKEN;
-const map = new mapboxgl.Map({
-  container: 'map', style: {{ style_url | tojson }},
-  center: [AUTO_STATE.longitude, AUTO_STATE.latitude], zoom: AUTO_STATE.zoom
-});
-
-function makeColorStops(cfg) {
-  if (!cfg || cfg['@@function'] !== 'colorContinuous' || !cfg.domain?.length) return null;
-  const [d0, d1] = cfg.domain, rev = d0 > d1, dom = rev ? [d1, d0] : [d0, d1];
-  const steps = cfg.steps || 7, name = cfg.colors || 'TealGrn';
-  const pal = window.cartocolor?.[name];
-  let cols, paletteError = null;
-  if (pal) {
-    const keys = Object.keys(pal).map(Number).filter(n => !isNaN(n)).sort((a, b) => a - b);
-    const bestKey = keys.find(n => n >= steps) || keys[keys.length - 1];
-    cols = pal[bestKey] ? [...pal[bestKey]] : null;
-  } else if (name && window.cartocolor) {
-    paletteError = `Palette "${name}" not found. Valid palettes: ${Object.keys(window.cartocolor).slice(0,10).join(', ')}...`;
-  }
-  if (!cols || !cols.length) {
-    cols = Array.from({length: steps}, (_, i) => {
-      const t = i / (steps - 1);
-      return `rgb(${Math.round(255 * (1 - t))}, ${Math.round(100 + 155 * t)}, ${Math.round(100 * t)})`;
-    });
-  }
-  if (rev) cols.reverse();
-  return { stops: cols.map((c, i) => [dom[0] + (dom[1] - dom[0]) * i / (cols.length - 1), c]), domain: dom, error: paletteError };
-}
-
-function makeExpr(attr, spec) {
-  if (!spec || !attr) return null;
-  const e = ['interpolate', ['linear'], ['get', attr]];
-  spec.stops.forEach(s => e.push(s[0], s[1]));
-  return e;
-}
-
-function addLayers() {
-  ['gdf-fill','gdf-line','gdf-line-only','gdf-circle'].forEach(id => { try { if(map.getLayer(id)) map.removeLayer(id); } catch(e){} });
-  
-  if (!map.getSource('gdf-source')) map.addSource('gdf-source', { type: 'geojson', data: GEOJSON });
-  else map.getSource('gdf-source').setData(GEOJSON);
-  
-  if (OUTLINES.features.length && !map.getSource('gdf-outline-source')) 
-    map.addSource('gdf-outline-source', { type: 'geojson', data: OUTLINES });
-  else if (map.getSource('gdf-outline-source')) 
-    map.getSource('gdf-outline-source').setData(OUTLINES);
-
-  let hasPoly=false, hasPoint=false, hasLine=false;
-  for (const f of GEOJSON.features||[]) {
-    const t = f.geometry?.type;
-    if (t==='Point'||t==='MultiPoint') hasPoint=true;
-    if (t==='Polygon'||t==='MultiPolygon') hasPoly=true;
-    if (t==='LineString'||t==='MultiLineString') hasLine=true;
-  }
-
-  const spec = makeColorStops(FILL_COLOR_CONFIG), expr = makeExpr(COLOR_ATTR, spec);
-  const fill = expr || FILL_COLOR || 'rgba(0,144,255,0.6)';
-  const lineCol = LINE_COLOR || 'rgba(0,0,0,0.5)', lineW = (typeof LINE_WIDTH==='number' && isFinite(LINE_WIDTH)) ? LINE_WIDTH : 1;
-
-  if (hasPoly) {
-    if (IS_FILLED !== false) map.addLayer({ id:'gdf-fill', type:'fill', source:'gdf-source', paint:{'fill-color':fill,'fill-opacity':OPACITY}, filter:['any',['==',['geometry-type'],'Polygon'],['==',['geometry-type'],'MultiPolygon']] });
-    if (IS_STROKED !== false && OUTLINES.features.length) map.addLayer({ id:'gdf-line', type:'line', source:'gdf-outline-source', layout:{'line-join':'round','line-cap':'round'}, paint:{'line-color':lineCol,'line-width':lineW}, filter:['any',['==',['geometry-type'],'LineString'],['==',['geometry-type'],'MultiLineString']] });
-  }
-  if (hasLine) map.addLayer({ id:'gdf-line-only', type:'line', source:'gdf-source', layout:{'line-join':'round','line-cap':'round'}, paint:{'line-color':LINE_COLOR||expr||'rgba(255,0,100,0.9)','line-width':LINE_WIDTH||3,'line-opacity':1}, filter:['any',['==',['geometry-type'],'LineString'],['==',['geometry-type'],'MultiLineString']] });
-  if (hasPoint) map.addLayer({ id:'gdf-circle', type:'circle', source:'gdf-source', paint:{'circle-radius':POINT_RADIUS||6,'circle-color':fill,'circle-stroke-color':'rgba(0,0,0,0.5)','circle-stroke-width':(POINT_RADIUS||6)<2?0:1,'circle-opacity':0.9}, filter:['any',['==',['geometry-type'],'Point'],['==',['geometry-type'],'MultiPoint']] });
-}
-
-let loaded = false;
-function init() {
-  if (loaded) return;
-  if (FILL_COLOR_CONFIG?.['@@function']==='colorContinuous' && !window.cartocolor) { setTimeout(init, 50); return; }
-  addLayers(); loaded = true;
-  try { const b = turf?.bbox(GEOJSON); if(b?.length===4) map.fitBounds([[b[0],b[1]],[b[2],b[3]]], {padding:40,maxZoom:15,duration:500}); } catch(e){}
-  const spec = makeColorStops(FILL_COLOR_CONFIG);
-  if (spec && COLOR_ATTR) {
-    const leg = document.getElementById('color-legend');
-    leg.querySelector('.legend-title').textContent = COLOR_ATTR;
-    leg.querySelector('.legend-gradient').style.background = `linear-gradient(to right, ${spec.stops.map((s,i)=>`${s[1]} ${Math.round(i/(spec.stops.length-1)*100)}%`).join(', ')})`;
-    leg.querySelector('.legend-min').textContent = spec.domain[0].toFixed(1);
-    leg.querySelector('.legend-max').textContent = spec.domain[1].toFixed(1);
-    leg.style.display = 'block';
-    // Show palette error if any
-    if (spec.error) {
-      const errBox = document.getElementById('config-error');
-      errBox.textContent = spec.error;
-      errBox.style.display = 'block';
-    }
-  }
-}
-map.on('load', init);
-
-// Tooltip
-let popup = null, lastKey = null;
-function fmt(v) { return v==null?'':typeof v==='number'?(!isFinite(v)?'':v.toFixed(2)):Array.isArray(v)?v.join(', '):String(v); }
-function tip(p) { const k = TOOLTIP_COLUMNS.length ? TOOLTIP_COLUMNS : Object.keys(p||{}); return k.map(k=>p?.[k]!=null&&String(p[k])!=='null'?`<span class="tt-row"><span class="tt-key">${k}</span><span class="tt-val">${fmt(p[k])}</span></span>`:'').filter(Boolean).join(''); }
-function getLayers() { return ['gdf-circle','gdf-fill','gdf-line','gdf-line-only'].filter(id=>{ try{return map.getLayer(id);}catch(e){return false;} }); }
-
-map.on('mousemove', e => {
-  const layers = getLayers(); if (!layers.length) return;
-  const feats = map.queryRenderedFeatures(e.point, { layers });
-  if (feats?.length) {
-    const f = feats[0], key = f.id ?? JSON.stringify(f.properties||{});
-    if (key === lastKey && popup) { popup.setLngLat(e.lngLat); map.getCanvas().style.cursor='pointer'; return; }
-    lastKey = key;
-    const html = tip(f.properties||{});
-    if (!html) { if(popup){popup.remove();popup=null;lastKey=null;} map.getCanvas().style.cursor=''; return; }
-    if (!popup) popup = new mapboxgl.Popup({closeButton:false,closeOnClick:false,offset:10});
-    popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
-    map.getCanvas().style.cursor='pointer';
-  } else { if(popup){popup.remove();popup=null;} lastKey=null; map.getCanvas().style.cursor=''; }
-});
-map.on('mouseleave', () => { if(popup){popup.remove();popup=null;} lastKey=null; map.getCanvas().style.cursor=''; });
-
-// Fix for tiles not loading in iframes - aggressive tile refresh
-map.on('load', () => {
-  [100, 300, 600, 1000, 2000].forEach(t => setTimeout(() => { map.resize(); map.triggerRepaint(); }, t));
-});
-map.on('idle', () => { 
-  // Force repaint when map becomes idle to catch missing tiles
-  setTimeout(() => map.triggerRepaint(), 50);
-});
-window.addEventListener('resize', () => { map.resize(); map.triggerRepaint(); });
-document.addEventListener('visibilitychange', () => { 
-  if (!document.hidden) { 
-    setTimeout(() => { map.resize(); map.triggerRepaint(); }, 100);
-    setTimeout(() => { map.resize(); map.triggerRepaint(); }, 500);
-  }
-});
-new ResizeObserver(() => { try { map.resize(); map.triggerRepaint(); } catch(e){} }).observe(document.getElementById('map'));
-// Periodic check for missing tiles during first 5 seconds
-let checks = 0;
-const tileCheck = setInterval(() => {
-  if (++checks > 10) { clearInterval(tileCheck); return; }
-  map.triggerRepaint();
-}, 500);
-
-</script>
-<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
-</body>
-</html>
-    """).render(
-        mapbox_token=mapbox_token, geojson_obj=geojson_obj, auto_state=auto_state,
-        fill_color_config=fill_color_config, color_attr=color_attr, tooltip_columns=tooltip_columns,
-        line_width=line_width, point_radius=point_radius, line_color_rgba=line_color_rgba,
-        fill_color_rgba=fill_color_rgba, is_filled=is_filled, is_stroked=is_stroked,
-        opacity=opacity, style_url=style_url,
-    )
-
-    common = fused.load("https://github.com/fusedio/udfs/tree/351515e/public/common/")
-    return common.html_to_obj(html)
-
+    layers = [{"type": "vector", "data": gdf, "config": config, "name": "Sample Points"}]
+    return deckgl_layers(layers=layers)
 
 
 
@@ -464,47 +171,13 @@ def deckgl_hex(
     config=None,
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     basemap: str = "dark",
-    debug: bool = False,
     tile_url: str = None,
     layers: list = None,
     highlight_on_click: bool = True,
     on_click: dict = None,
+    debug: bool = False,
 ):
-    """
-    Render H3 hexagon data as an interactive map.
-    
-    Supports three modes:
-    1. Static mode (default): Pass a DataFrame with 'hex' column
-    2. Tile mode: Pass tile_url template
-    3. Multi-layer mode: Pass layers list with multiple datasets
-    
-    Args:
-        df: DataFrame with 'hex' column containing H3 cell IDs (ignored in tile/multi-layer mode).
-        config: Optional config dict with hexLayer settings (getFillColor, getLineColor, etc.)
-        mapbox_token: Mapbox access token.
-        basemap: 'dark', 'satellite', or custom Mapbox style URL.
-        debug: Show debug panel for config tweaking.
-        tile_url: XYZ tile URL template with {z}/{x}/{y} placeholders. When provided, enables tile mode.
-        layers: List of layer dicts for multi-layer mode. Each dict has:
-            - "data": DataFrame with hex column
-            - "config": hexLayer config for this layer
-            - "name": Display name for layer toggle (optional)
-        on_click: Dict to broadcast clicks. Keys: properties, channel, message_type, include_coords, include_layer.
-    
-    Examples:
-        # Static mode (single layer)
-        deckgl_hex(df, config, debug=True)
-        
-        # Tile mode
-        deckgl_hex(tile_url="https://example.com/tiles/{z}/{x}/{y}?dtype_out_vector=json", config=config)
-        
-        # Multi-layer mode
-        deckgl_hex(layers=[
-            {"data": df1, "config": config1, "name": "Population"},
-            {"data": df2, "config": config2, "name": "Income"},
-        ], debug=True)
-    """
-    # Normalize all inputs to layers list format with type="hex"
+
     if layers is None:
         if df is not None:
             layers = [{"type": "hex", "data": df, "config": config, "name": "Layer 1"}]
@@ -522,8 +195,8 @@ def deckgl_hex(
         mapbox_token=mapbox_token,
         basemap=basemap,
         highlight_on_click=highlight_on_click,
-        debug=debug,
         on_click=on_click,
+        debug=debug,
     )
 
 
@@ -532,8 +205,8 @@ def deckgl_layers(
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     basemap: str = "dark",
     highlight_on_click: bool = True,
-    debug: bool = False,
     on_click: dict = None,
+    debug: bool = False,
 ):
     """
     Render mixed hex and vector layers on a single interactive map.
@@ -876,46 +549,25 @@ def deckgl_layers(
     .legend-layer .legend-cat-label { color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
     .legend-layer .legend-cat-more { font-size: 10px; color: #888; font-style: italic; margin-top: 2px; }
     
-    {% if debug %}
-    /* Debug Panel */
-    #debug-panel {
-      position: fixed;
-      top: 0;
-      right: 0;
-      width: 320px;
-      height: 100%;
-      background: #212121;
-      border-left: 1px solid #424242;
-      display: flex;
-      flex-direction: column;
-      font-family: Inter, 'SF Pro Display', 'Segoe UI', sans-serif;
-      color: #f5f5f5;
-      z-index: 200;
-    }
-    #layer-panel { right: 332px !important; }
-    #debug-header { padding: 12px 16px; background: #1a1a1a; border-bottom: 1px solid #424242; }
-    #debug-header h3 { margin: 0; font-size: 12px; font-weight: 600; color: #E8FF59; letter-spacing: 0.5px; text-transform: uppercase; }
-    #debug-tabs { display: flex; gap: 6px; padding: 10px 12px; background: #1a1a1a; border-bottom: 1px solid #333; overflow-y: auto; overflow-x: hidden; flex-shrink: 0; flex-wrap: wrap; max-height: 120px; }
-    #debug-tabs::-webkit-scrollbar { height: 4px; width: 4px; }
-    #debug-tabs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-    .debug-tab { padding: 6px 12px; font-size: 11px; font-weight: 500; color: #888; cursor: pointer; border: 1px solid #444; background: #2a2a2a; border-radius: 4px; transition: all 0.15s; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1 1 calc(50% - 8px); min-width: 120px; }
-    .debug-tab:hover { color: #ccc; background: #333; border-color: #555; }
-    .debug-tab.active { color: #1a1a1a; background: #E8FF59; border-color: #E8FF59; }
-    .debug-tab .tab-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
-    .debug-tab.active .tab-dot { box-shadow: 0 0 0 1px rgba(0,0,0,0.3); }
-    #debug-content { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
-    .debug-section { background: #1a1a1a; border: 1px solid #424242; border-radius: 8px; padding: 12px; }
-    .debug-section h4 { margin: 0 0 10px 0; font-size: 11px; letter-spacing: 0.4px; text-transform: uppercase; color: #bdbdbd; }
-    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .form-control { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #dcdcdc; }
-    .form-control label { font-weight: 600; }
-    .form-control input, .form-control select { background: #111; border: 1px solid #333; border-radius: 4px; padding: 6px 8px; font-size: 12px; color: #f5f5f5; outline: none; }
-    .form-control input:focus, .form-control select:focus { border-color: #E8FF59; }
-    .toggle-row { display: flex; align-items: center; gap: 8px; font-size: 11px; }
-    .toggle-row input { width: 16px; height: 16px; accent-color: #E8FF59; }
-    .single-column { display: flex; flex-direction: column; gap: 10px; }
-    #dbg-config { width: 100%; min-height: 100px; resize: vertical; background: #111; color: #f5f5f5; border: 1px solid #333; border-radius: 6px; padding: 10px; font-family: SFMono-Regular, Consolas, monospace; font-size: 11px; line-height: 1.4; }
-    {% endif %}
+    /* Debug Panel - Minimal */
+    #debug-panel { position: fixed; left: 0; top: 0; width: 280px; height: 100%; background: rgba(24,24,24,0.98); border-right: 1px solid #333; transform: translateX(0); transition: transform 0.2s ease; z-index: 199; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    #debug-panel.collapsed { transform: translateX(-100%); }
+    #debug-toggle { position: fixed; top: 50%; width: 24px; height: 48px; background: rgba(30,30,30,0.9); border: 1px solid #333; border-left: none; border-radius: 0 6px 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #888; font-size: 14px; z-index: 200; transition: left 0.2s ease, background 0.15s, color 0.15s; transform: translateY(-50%); left: 280px; }
+    #debug-panel.collapsed + #debug-toggle { left: 0; }
+    #debug-toggle:hover { background: rgba(50,50,50,0.95); color: #ccc; }
+    #debug-content { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+    .debug-section { background: rgba(40,40,40,0.6); border: 1px solid #333; border-radius: 6px; padding: 10px; }
+    .debug-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #666; margin-bottom: 8px; }
+    .debug-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .debug-row:last-child { margin-bottom: 0; }
+    .debug-label { font-size: 11px; color: #999; min-width: 70px; }
+    .debug-input { flex: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; }
+    .debug-input:focus { border-color: #555; }
+    .debug-select { flex: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; cursor: pointer; }
+    .debug-select:focus { border-color: #555; }
+    .debug-checkbox { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #999; cursor: pointer; }
+    .debug-checkbox input { width: 14px; height: 14px; cursor: pointer; accent-color: #666; }
+    .debug-output { width: 100%; min-height: 100px; resize: vertical; background: #111; color: #aaa; border: 1px solid #333; border-radius: 4px; padding: 8px; font-family: 'SF Mono', Consolas, monospace; font-size: 10px; line-height: 1.4; }
   </style>
 </head>
 <body>
@@ -929,80 +581,75 @@ def deckgl_layers(
   
   <!-- Legend -->
   <div id="color-legend" class="color-legend" style="display:none;"></div>
-  
+
   {% if debug %}
   <!-- Debug Panel -->
   <div id="debug-panel">
-    <div id="debug-header">
-      <h3>Layer Config</h3>
-    </div>
-    <div id="debug-tabs"></div>
     <div id="debug-content">
       <div class="debug-section">
-        <h4>View</h4>
-        <div class="form-grid">
-          <div class="form-control">
-            <label>Longitude</label>
-            <input type="number" id="cfg-longitude" data-cfg-input step="0.0001" placeholder="auto" />
-          </div>
-          <div class="form-control">
-            <label>Latitude</label>
-            <input type="number" id="cfg-latitude" data-cfg-input step="0.0001" placeholder="auto" />
-          </div>
-          <div class="form-control">
-            <label>Zoom</label>
-            <input type="number" id="cfg-zoom" data-cfg-input step="0.1" min="0" placeholder="auto" />
-          </div>
-          <div class="form-control">
-            <label>Pitch</label>
-            <input type="number" id="cfg-pitch" data-cfg-input step="1" min="0" max="85" placeholder="0-85" />
-          </div>
-          <div class="form-control">
-            <label>Bearing</label>
-            <input type="number" id="cfg-bearing" data-cfg-input step="1" placeholder="deg" />
-          </div>
+        <div class="debug-section-title">View</div>
+        <div class="debug-row">
+          <span class="debug-label">Longitude</span>
+          <input type="number" class="debug-input" id="dbg-lng" step="0.0001" />
+        </div>
+        <div class="debug-row">
+          <span class="debug-label">Latitude</span>
+          <input type="number" class="debug-input" id="dbg-lat" step="0.0001" />
+        </div>
+        <div class="debug-row">
+          <span class="debug-label">Zoom</span>
+          <input type="number" class="debug-input" id="dbg-zoom" step="0.1" min="0" max="22" />
+        </div>
+        <div class="debug-row">
+          <span class="debug-label">Pitch</span>
+          <input type="number" class="debug-input" id="dbg-pitch" step="1" min="0" max="85" />
+        </div>
+        <div class="debug-row">
+          <span class="debug-label">Bearing</span>
+          <input type="number" class="debug-input" id="dbg-bearing" step="1" />
         </div>
       </div>
       <div class="debug-section">
-        <h4>Layer</h4>
-        <div class="single-column">
-          <label class="toggle-row"><input type="checkbox" id="cfg-filled" data-cfg-input checked />Filled</label>
-          <label class="toggle-row"><input type="checkbox" id="cfg-extruded" data-cfg-input />Extruded (3D)</label>
-          <div class="form-control">
-            <label>Elevation Scale</label>
-            <input type="number" id="cfg-elev-scale" data-cfg-input step="0.1" min="0" value="1" />
-          </div>
+        <div class="debug-section-title">Layer</div>
+        <label class="debug-checkbox"><input type="checkbox" id="dbg-filled" checked /> Filled</label>
+        <label class="debug-checkbox"><input type="checkbox" id="dbg-extruded" /> Extruded</label>
+        <div class="debug-row" style="margin-top:6px;">
+          <span class="debug-label">Opacity</span>
+          <input type="number" class="debug-input" id="dbg-opacity" step="0.1" min="0" max="1" value="0.8" />
         </div>
       </div>
       <div class="debug-section">
-        <h4>Fill Color</h4>
-        <div class="form-grid">
-          <div class="form-control">
-            <label>Attribute</label>
-            <select id="cfg-attr" data-cfg-input></select>
-          </div>
-          <div class="form-control">
-            <label>Palette</label>
-            <select id="cfg-palette" data-cfg-input>
-              {% for pal in palettes %}<option value="{{ pal }}">{{ pal }}</option>{% endfor %}
-            </select>
-          </div>
-          <div class="form-control">
-            <label>Domain Min</label>
-            <input type="number" id="cfg-domain-min" data-cfg-input step="0.1" value="0" />
-          </div>
-          <div class="form-control">
-            <label>Domain Max</label>
-            <input type="number" id="cfg-domain-max" data-cfg-input step="0.1" value="100" />
-          </div>
+        <div class="debug-section-title">Fill Color</div>
+        <div class="debug-row">
+          <span class="debug-label">Attribute</span>
+          <select class="debug-select" id="dbg-attr"></select>
+        </div>
+        <div class="debug-row">
+          <span class="debug-label">Palette</span>
+          <select class="debug-select" id="dbg-palette">
+            {% for pal in palettes %}<option value="{{ pal }}">{{ pal }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="debug-row">
+          <span class="debug-label">Domain Min</span>
+          <input type="number" class="debug-input" id="dbg-domain-min" step="0.1" />
+        </div>
+        <div class="debug-row">
+          <span class="debug-label">Domain Max</span>
+          <input type="number" class="debug-input" id="dbg-domain-max" step="0.1" />
+        </div>
+        <div class="debug-row">
+          <span class="debug-label">Steps</span>
+          <input type="number" class="debug-input" id="dbg-steps" step="1" min="2" max="20" value="7" />
         </div>
       </div>
       <div class="debug-section">
-        <h4>Config Output</h4>
-        <textarea id="dbg-config" readonly></textarea>
+        <div class="debug-section-title">Config Output</div>
+        <textarea id="dbg-output" class="debug-output" readonly></textarea>
       </div>
     </div>
   </div>
+  <div id="debug-toggle" onclick="toggleDebugPanel()">&#x2039;</div>
   {% endif %}
 
   <script>
@@ -1343,8 +990,8 @@ def deckgl_layers(
       // Check if this layer has autoDomain enabled
       const hasAutoDomain = rawHexLayer.getFillColor?.autoDomain === true;
       
-      // Initialize tile data store for this layer if autoDomain is enabled
-      if (hasAutoDomain && !TILE_DATA_STORE[layerDef.id]) {
+      // Always initialize tile data store for debug panel attribute detection
+      if (!TILE_DATA_STORE[layerDef.id]) {
         TILE_DATA_STORE[layerDef.id] = {};
       }
 
@@ -1364,11 +1011,9 @@ def deckgl_layers(
           const cacheKey = `${tileUrl}|${z}|${x}|${y}`;
           if (TILE_CACHE.has(cacheKey)) {
             const cachedData = TILE_CACHE.get(cacheKey);
-            // Store tile data for autoDomain
-            if (hasAutoDomain) {
-              const tileKey = `${z}/${x}/${y}`;
-              TILE_DATA_STORE[layerDef.id][tileKey] = cachedData;
-            }
+            // Store tile data for debug panel and autoDomain
+            const tileKey = `${z}/${x}/${y}`;
+            TILE_DATA_STORE[layerDef.id][tileKey] = cachedData;
             return cachedData;
           }
           try {
@@ -1379,11 +1024,9 @@ def deckgl_layers(
             const data = JSON.parse(text);
             const normalized = normalizeTileData(data);
             TILE_CACHE.set(cacheKey, normalized);
-            // Store tile data for autoDomain
-            if (hasAutoDomain) {
-              const tileKey = `${z}/${x}/${y}`;
-              TILE_DATA_STORE[layerDef.id][tileKey] = normalized;
-            }
+            // Store tile data for debug panel and autoDomain
+            const tileKey = `${z}/${x}/${y}`;
+            TILE_DATA_STORE[layerDef.id][tileKey] = normalized;
             return normalized;
           } catch (e) { return TILE_CACHE.get(cacheKey) || []; }
         },
@@ -2235,187 +1878,312 @@ def deckgl_layers(
         console.log('[ClickBroadcast] Initialized on channel:', CHANNEL);
       });
     })();
-      {% endif %}
+    {% endif %}
     
     {% if debug %}
-    // ========== Debug Panel Functions ==========
-    let activeLayerIdx = 0;
+    // Debug Panel functionality
+    const DEBUG_MODE = true;
+    let debugApplyTimeout = null;
     
-    function getNumericAttrs(layerIdx) {
-      const layer = LAYERS_DATA[layerIdx];
-      if (!layer) return [];
-      const data = layer.data || (layer.geojson?.features?.map(f => f.properties) || []);
-      if (!data.length) return [];
-      const sample = data.slice(0, 50);
-      const attrs = new Set();
-      sample.forEach(d => {
-        Object.keys(d || {}).forEach(k => {
-          if (k !== 'hex' && k !== 'geometry' && typeof d[k] === 'number') attrs.add(k);
-        });
-      });
-      return [...attrs].sort();
-    }
+    // Current debug state for live updates
+    const debugState = {
+      attr: 'metric',
+      palette: 'TealGrn',
+      domainMin: 0,
+      domainMax: 100,
+      steps: 7,
+      filled: true,
+      extruded: false,
+      opacity: 0.8
+    };
     
-    function autoDomainForAttr(layerIdx, attr) {
-      const layer = LAYERS_DATA[layerIdx];
-      if (!layer || !attr) return null;
-      const data = layer.data || (layer.geojson?.features?.map(f => f.properties) || []);
-      const vals = data.map(d => d?.[attr]).filter(v => typeof v === 'number' && isFinite(v));
-      if (!vals.length) return null;
-      return [Math.min(...vals), Math.max(...vals)];
-    }
-    
-    function buildDebugTabs() {
-      const container = document.getElementById('debug-tabs');
-      if (!container) return;
-      container.innerHTML = '';
-      LAYERS_DATA.forEach((l, i) => {
-        const tab = document.createElement('div');
-        tab.className = 'debug-tab' + (i === activeLayerIdx ? ' active' : '');
-        const colorCfg = l.hexLayer?.getFillColor || l.hexLayer?.getLineColor || l.fillColorConfig;
-        const palName = colorCfg?.colors || 'Magenta';
-        const colors = getPaletteColors(palName, 5) || ['#666'];
-        const midColor = colors[Math.floor(colors.length / 2)];
-        tab.innerHTML = `<span class="tab-dot" style="background:${midColor}"></span>${l.name}`;
-        tab.onclick = () => { activeLayerIdx = i; buildDebugTabs(); updateFormFromLayer(i); };
-        container.appendChild(tab);
-      });
-    }
-    
-    function updateFormFromLayer(idx) {
-      const layer = LAYERS_DATA[idx];
-      if (!layer) return;
-      const hex = layer.hexLayer || {};
-      const colorCfg = hex.getFillColor || hex.getLineColor || {};
-      const viewCfg = layer.config?.initialViewState || {};
-      
-      const attrs = getNumericAttrs(idx);
-      const attrSelect = document.getElementById('cfg-attr');
-      if (attrSelect) {
-        attrSelect.innerHTML = attrs.map(a => `<option value="${a}">${a}</option>`).join('');
-        attrSelect.value = colorCfg.attr || attrs[0] || '';
+    function toggleDebugPanel() {
+      const panel = document.getElementById('debug-panel');
+      const toggle = document.getElementById('debug-toggle');
+      if (panel.classList.contains('collapsed')) {
+        panel.classList.remove('collapsed');
+        toggle.innerHTML = '&#x2039;';  // ‹ collapse arrow (left)
+      } else {
+        panel.classList.add('collapsed');
+        toggle.innerHTML = '&#x203a;';  // › expand arrow (right)
       }
-      
-      document.getElementById('cfg-palette').value = colorCfg.colors || 'Magenta';
-        document.getElementById('cfg-domain-min').value = colorCfg.domain?.[0] ?? 0;
-        document.getElementById('cfg-domain-max').value = colorCfg.domain?.[1] ?? 100;
-      document.getElementById('cfg-filled').checked = hex.filled !== false;
-      document.getElementById('cfg-extruded').checked = hex.extruded === true;
-      document.getElementById('cfg-elev-scale').value = hex.elevationScale || 1;
-      document.getElementById('cfg-longitude').value = viewCfg.longitude || '';
-      document.getElementById('cfg-latitude').value = viewCfg.latitude || '';
-      document.getElementById('cfg-zoom').value = viewCfg.zoom || '';
-      document.getElementById('cfg-pitch').value = viewCfg.pitch || 0;
-      document.getElementById('cfg-bearing').value = viewCfg.bearing || 0;
-      
+    }
+    
+    // Debug panel - update view state from map
+    function syncDebugFromMap() {
+      const center = map.getCenter();
+      document.getElementById('dbg-lng').value = center.lng.toFixed(4);
+      document.getElementById('dbg-lat').value = center.lat.toFixed(4);
+      document.getElementById('dbg-zoom').value = map.getZoom().toFixed(1);
+      document.getElementById('dbg-pitch').value = Math.round(map.getPitch());
+      document.getElementById('dbg-bearing').value = Math.round(map.getBearing());
       updateConfigOutput();
     }
     
-    function applyViewToMap(viewCfg) {
-      if (viewCfg.longitude && viewCfg.latitude) map.setCenter([viewCfg.longitude, viewCfg.latitude]);
-      if (viewCfg.zoom) map.setZoom(viewCfg.zoom);
-      if (viewCfg.pitch != null) map.setPitch(viewCfg.pitch);
-      if (viewCfg.bearing != null) map.setBearing(viewCfg.bearing);
-    }
-    
-    function buildConfigFromForm() {
-      const isFilled = document.getElementById('cfg-filled').checked;
-      const colorConfig = {
-        '@@function': 'colorContinuous',
-        attr: document.getElementById('cfg-attr').value,
-        colors: document.getElementById('cfg-palette').value,
-        domain: [parseFloat(document.getElementById('cfg-domain-min').value) || 0, parseFloat(document.getElementById('cfg-domain-max').value) || 100],
-        steps: 7
-      };
-      const view = {};
-      const lng = parseFloat(document.getElementById('cfg-longitude').value);
-      const lat = parseFloat(document.getElementById('cfg-latitude').value);
-      const zm = parseFloat(document.getElementById('cfg-zoom').value);
-      const pt = parseFloat(document.getElementById('cfg-pitch').value);
-      const br = parseFloat(document.getElementById('cfg-bearing').value);
-      if (!isNaN(lng)) view.longitude = lng;
-      if (!isNaN(lat)) view.latitude = lat;
-      if (!isNaN(zm)) view.zoom = zm;
-      if (!isNaN(pt)) view.pitch = pt;
-      if (!isNaN(br)) view.bearing = br;
-      const hex = {
-        filled: isFilled,
-        extruded: document.getElementById('cfg-extruded').checked,
-        elevationScale: parseFloat(document.getElementById('cfg-elev-scale').value) || 1,
-      };
-      if (isFilled) hex.getFillColor = colorConfig;
-      else hex.getLineColor = colorConfig;
-      const cfg = { hexLayer: hex };
-      if (Object.keys(view).length) cfg.initialViewState = view;
-      return cfg;
-    }
-    
-    function toPython(value, indent = 4, level = 0) {
-      const pad = ' '.repeat(indent * level);
-      const padNext = ' '.repeat(indent * (level + 1));
-      if (value === null) return 'None';
-      if (typeof value === 'boolean') return value ? 'True' : 'False';
-      if (typeof value === 'number') return String(value);
-      if (typeof value === 'string') return JSON.stringify(value);
-      if (Array.isArray(value)) return !value.length ? '[]' : '[' + value.map(v => toPython(v, indent, level)).join(', ') + ']';
-      if (typeof value === 'object') {
-        const keys = Object.keys(value);
-        if (!keys.length) return '{}';
-        return '{\n' + keys.map(key => padNext + JSON.stringify(key) + ': ' + toPython(value[key], indent, level + 1)).join(',\n') + '\n' + pad + '}';
+    // Populate attribute dropdown from data
+    function populateAttrDropdown() {
+      const select = document.getElementById('dbg-attr');
+      if (!select) return;
+      
+      const attrs = new Set();
+      
+      // For tile layers, get attrs from cached tile data
+      Object.values(TILE_DATA_STORE || {}).forEach(layerTiles => {
+        Object.values(layerTiles || {}).forEach(tileData => {
+          (tileData || []).forEach(d => {
+            Object.keys(d?.properties || d || {}).forEach(k => {
+              if (k !== 'hex' && k !== 'h3' && k !== 'properties') {
+                const val = d?.properties?.[k] ?? d?.[k];
+                if (typeof val === 'number') attrs.add(k);
+              }
+            });
+          });
+        });
+      });
+      
+      // Also check static layer data
+      LAYERS_DATA.forEach(l => {
+        const data = l.data || (l.geojson?.features?.map(f => f.properties) || []);
+        data.forEach(d => {
+          Object.keys(d || {}).forEach(k => {
+            if (k !== 'hex' && k !== 'h3' && typeof d[k] === 'number') attrs.add(k);
+          });
+        });
+      });
+      
+      if (attrs.size === 0) attrs.add('metric');
+      select.innerHTML = [...attrs].sort().map(a => `<option value="${a}">${a}</option>`).join('');
+      
+      // Set initial value from first layer's config
+      const firstLayer = LAYERS_DATA[0];
+      if (firstLayer) {
+        const cfg = firstLayer.hexLayer || firstLayer.vectorLayer || {};
+        const colorCfg = cfg.getFillColor || {};
+        if (colorCfg.attr) {
+          select.value = colorCfg.attr;
+          debugState.attr = colorCfg.attr;
+        }
+        if (colorCfg.colors) {
+          document.getElementById('dbg-palette').value = colorCfg.colors;
+          debugState.palette = colorCfg.colors;
+        }
+        if (colorCfg.domain) {
+          const minVal = Math.min(...colorCfg.domain);
+          const maxVal = Math.max(...colorCfg.domain);
+          document.getElementById('dbg-domain-min').value = minVal;
+          document.getElementById('dbg-domain-max').value = maxVal;
+          debugState.domainMin = minVal;
+          debugState.domainMax = maxVal;
+        }
+        if (colorCfg.steps) {
+          document.getElementById('dbg-steps').value = colorCfg.steps;
+          debugState.steps = colorCfg.steps;
+        }
+        
+        document.getElementById('dbg-filled').checked = cfg.filled !== false;
+        document.getElementById('dbg-extruded').checked = cfg.extruded === true;
+        document.getElementById('dbg-opacity').value = cfg.opacity || 0.8;
+        debugState.filled = cfg.filled !== false;
+        debugState.extruded = cfg.extruded === true;
+        debugState.opacity = cfg.opacity || 0.8;
       }
-      return 'None';
     }
     
+    // Generate config output
     function updateConfigOutput() {
-      const cfg = buildConfigFromForm();
-      const output = document.getElementById('dbg-config');
-      if (output) output.value = 'config = ' + toPython(cfg);
+      const output = document.getElementById('dbg-output');
+      if (!output) return;
+      
+      const config = {
+        initialViewState: {
+          longitude: parseFloat(document.getElementById('dbg-lng').value) || 0,
+          latitude: parseFloat(document.getElementById('dbg-lat').value) || 0,
+          zoom: parseFloat(document.getElementById('dbg-zoom').value) || 8,
+          pitch: parseInt(document.getElementById('dbg-pitch').value) || 0,
+          bearing: parseInt(document.getElementById('dbg-bearing').value) || 0
+        },
+        hexLayer: {
+          filled: debugState.filled,
+          extruded: debugState.extruded,
+          opacity: debugState.opacity,
+          getFillColor: {
+            '@@function': 'colorContinuous',
+            attr: debugState.attr,
+            domain: [debugState.domainMin, debugState.domainMax],
+            colors: debugState.palette,
+            steps: debugState.steps
+          }
+        }
+      };
+      
+      // Python-style output
+      const toPython = (obj, indent = 0) => {
+        const pad = '  '.repeat(indent);
+        if (obj === null) return 'None';
+        if (obj === true) return 'True';
+        if (obj === false) return 'False';
+        if (typeof obj === 'string') return `"${obj}"`;
+        if (typeof obj === 'number') return String(obj);
+        if (Array.isArray(obj)) return `[${obj.map(v => toPython(v, 0)).join(', ')}]`;
+        if (typeof obj === 'object') {
+          const entries = Object.entries(obj).map(([k, v]) => `${pad}  "${k}": ${toPython(v, indent + 1)}`);
+          return `{\n${entries.join(',\n')}\n${pad}}`;
+        }
+        return String(obj);
+      };
+      
+      output.value = `config = ${toPython(config)}`;
     }
     
-    function applyDebugConfig() {
-      const layer = LAYERS_DATA[activeLayerIdx];
-      if (!layer || layer.layerType === 'vector') return;
-      const builtConfig = buildConfigFromForm();
-      const newHex = builtConfig.hexLayer;
-      const newView = builtConfig.initialViewState || {};
-      layer.hexLayer = { ...layer.hexLayer, ...newHex };
-      layer.config.hexLayer = layer.hexLayer;
-      if (Object.keys(newView).length) {
-        layer.config.initialViewState = newView;
-        applyViewToMap(newView);
+    // Apply debug changes to map view
+    function applyViewChanges() {
+      const lng = parseFloat(document.getElementById('dbg-lng').value);
+      const lat = parseFloat(document.getElementById('dbg-lat').value);
+      const zoom = parseFloat(document.getElementById('dbg-zoom').value);
+      const pitch = parseInt(document.getElementById('dbg-pitch').value);
+      const bearing = parseInt(document.getElementById('dbg-bearing').value);
+      
+      if (!isNaN(lng) && !isNaN(lat)) {
+        map.easeTo({ center: [lng, lat], zoom, pitch, bearing, duration: 300 });
       }
-      if (layer.isTileLayer) {
-        {% if has_tile_layers %}rebuildDeckOverlay();{% endif %}
-      } else {
-        layersReady = false;
-        tryInit();
-      }
-      updateLegend();
-      updateLayerPanel();
-      buildDebugTabs();
+      updateConfigOutput();
     }
     
-    let applyTimer;
-    function scheduleApply() {
-      clearTimeout(applyTimer);
-      applyTimer = setTimeout(() => { applyDebugConfig(); updateConfigOutput(); }, 150);
-    }
-    
-    document.querySelectorAll('#debug-panel [data-cfg-input]').forEach(el => {
-      el.addEventListener('input', scheduleApply);
-      el.addEventListener('change', scheduleApply);
-    });
-    const attrSelectEl = document.getElementById('cfg-attr');
-    if (attrSelectEl) {
-      attrSelectEl.addEventListener('change', (e) => {
-        const domain = autoDomainForAttr(activeLayerIdx, e.target.value);
-        if (domain) {
-          document.getElementById('cfg-domain-min').value = domain[0];
-          document.getElementById('cfg-domain-max').value = domain[1];
+    // Apply layer style changes live
+    function applyLayerChanges() {
+      // Read current values
+      debugState.attr = document.getElementById('dbg-attr').value;
+      debugState.palette = document.getElementById('dbg-palette').value;
+      debugState.domainMin = parseFloat(document.getElementById('dbg-domain-min').value) || 0;
+      debugState.domainMax = parseFloat(document.getElementById('dbg-domain-max').value) || 100;
+      debugState.steps = parseInt(document.getElementById('dbg-steps').value) || 7;
+      debugState.filled = document.getElementById('dbg-filled').checked;
+      debugState.extruded = document.getElementById('dbg-extruded').checked;
+      debugState.opacity = parseFloat(document.getElementById('dbg-opacity').value) || 0.8;
+      
+      // Update config output
+      updateConfigOutput();
+      
+      // Update LAYERS_DATA with new config
+      LAYERS_DATA.forEach(l => {
+        if (l.hexLayer) {
+          l.hexLayer.filled = debugState.filled;
+          l.hexLayer.extruded = debugState.extruded;
+          l.hexLayer.opacity = debugState.opacity;
+          l.hexLayer.getFillColor = {
+            '@@function': 'colorContinuous',
+            attr: debugState.attr,
+            domain: [debugState.domainMin, debugState.domainMax],
+            colors: debugState.palette,
+            steps: debugState.steps
+          };
         }
       });
+      
+      // For tile layers: rebuild Deck.gl overlay
+      {% if has_tile_layers %}
+      if (typeof rebuildDeckOverlay === 'function') {
+        rebuildDeckOverlay();
+      }
+      {% endif %}
+      
+      // For static Mapbox layers: update paint properties
+      LAYERS_DATA.forEach(l => {
+        if (l.isTileLayer) return;
+        
+        const fillLayerId = `${l.id}-fill`;
+        const extrusionLayerId = `${l.id}-extrusion`;
+        
+        // Build new color expression
+        const colorExpr = buildColorExpr({
+          '@@function': 'colorContinuous',
+          attr: debugState.attr,
+          domain: [debugState.domainMin, debugState.domainMax],
+          colors: debugState.palette,
+          steps: debugState.steps
+        }, l.data || []);
+        
+        try {
+          // Handle extruded vs flat
+          if (debugState.extruded) {
+            // Remove flat fill if exists, add extrusion
+            if (map.getLayer(fillLayerId)) {
+              map.setLayoutProperty(fillLayerId, 'visibility', 'none');
+            }
+            if (!map.getLayer(extrusionLayerId) && map.getSource(l.id)) {
+              map.addLayer({
+                id: extrusionLayerId,
+                type: 'fill-extrusion',
+                source: l.id,
+                paint: {
+                  'fill-extrusion-color': colorExpr || 'rgba(0,144,255,0.7)',
+                  'fill-extrusion-height': ['*', ['get', debugState.attr], 1],
+                  'fill-extrusion-base': 0,
+                  'fill-extrusion-opacity': debugState.opacity
+                }
+              });
+            } else if (map.getLayer(extrusionLayerId)) {
+              map.setLayoutProperty(extrusionLayerId, 'visibility', 'visible');
+              map.setPaintProperty(extrusionLayerId, 'fill-extrusion-color', colorExpr || 'rgba(0,144,255,0.7)');
+              map.setPaintProperty(extrusionLayerId, 'fill-extrusion-opacity', debugState.opacity);
+            }
+          } else {
+            // Show flat fill, hide extrusion
+            if (map.getLayer(extrusionLayerId)) {
+              map.setLayoutProperty(extrusionLayerId, 'visibility', 'none');
+            }
+            if (map.getLayer(fillLayerId)) {
+              map.setLayoutProperty(fillLayerId, 'visibility', debugState.filled ? 'visible' : 'none');
+              if (colorExpr) map.setPaintProperty(fillLayerId, 'fill-color', colorExpr);
+              map.setPaintProperty(fillLayerId, 'fill-opacity', debugState.opacity);
+            }
+          }
+        } catch(e) {
+          console.warn('[Debug] Error updating layer:', l.id, e);
+        }
+      });
+      
+      // Update legend
+      if (typeof updateLegend === 'function') updateLegend();
     }
-    map.on('load', () => { setTimeout(() => { buildDebugTabs(); updateFormFromLayer(0); }, 100); });
+    
+    // Debounced apply for smooth slider experience
+    function scheduleLayerUpdate() {
+      clearTimeout(debugApplyTimeout);
+      debugApplyTimeout = setTimeout(applyLayerChanges, 100);
+    }
+    
+    // Initialize debug panel
+    map.on('load', () => {
+      if (!DEBUG_MODE) return;
+      
+      syncDebugFromMap();
+      
+      // Delay populating attrs until some tile data loads
+      setTimeout(populateAttrDropdown, 500);
+      setTimeout(populateAttrDropdown, 2000);
+      
+      // Sync on map move
+      map.on('moveend', syncDebugFromMap);
+      
+      // Bind view inputs
+      ['dbg-lng', 'dbg-lat', 'dbg-zoom', 'dbg-pitch', 'dbg-bearing'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', applyViewChanges);
+      });
+      
+      // Bind layer style inputs - apply live changes
+      ['dbg-attr', 'dbg-palette', 'dbg-domain-min', 'dbg-domain-max', 'dbg-steps'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', scheduleLayerUpdate);
+        document.getElementById(id)?.addEventListener('input', scheduleLayerUpdate);
+      });
+      
+      ['dbg-filled', 'dbg-extruded'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', applyLayerChanges);
+      });
+      
+      document.getElementById('dbg-opacity')?.addEventListener('input', scheduleLayerUpdate);
+      document.getElementById('dbg-opacity')?.addEventListener('change', applyLayerChanges);
+    });
     {% endif %}
   </script>
 </body>
@@ -2432,13 +2200,36 @@ def deckgl_layers(
         has_custom_view=has_custom_view,
         has_tile_layers=has_tile_layers,
         highlight_on_click=highlight_on_click,
-        debug=debug,
         palettes=sorted(KNOWN_CARTOCOLOR_PALETTES),
         on_click=on_click or {},
+        debug=debug,
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
     return common.html_to_obj(html)
+
+
+def deckgl_map(
+    gdf,
+    config: typing.Union[dict, str, None] = None,
+    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
+    basemap: str = "dark",
+):
+
+    layers = [
+        {
+            "type": "vector",
+            "data": gdf,
+            "config": config,
+            "name": "Layer 1",
+        }
+    ]
+
+    return deckgl_layers(
+        layers=layers,
+        mapbox_token=mapbox_token,
+        basemap=basemap,
+    )
 
 
 
@@ -3437,6 +3228,27 @@ DEFAULT_POLYGON_CONFIG = {
 }
 
 
+def _normalize_pydeck_config(default_cfg: dict, config: typing.Union[dict, str, None]):
+    """
+    Merge a user config (dict or JSON string) with a default pydeck config.
+    - None / \"\"  -> just a shallow copy of default_cfg
+    - str         -> JSON-decoded and merged over defaults
+    - dict        -> merged over defaults
+    """
+    cfg = default_cfg.copy()
+    if config is None or config == "":
+        return cfg
+    if isinstance(config, str):
+        try:
+            cfg.update(json.loads(config))
+        except Exception:
+            # If JSON is invalid, fall back to defaults silently
+            return cfg
+    else:
+        cfg.update(config)
+    return cfg
+
+
 def pydeck_point(gdf, config=None):
     """
     Pydeck based maps. Use this to render HTML interactive maps from data.
@@ -3446,14 +3258,7 @@ def pydeck_point(gdf, config=None):
         "fill_color": '[255, 100 + cnt, 0]' # dynamically sets the colors of the fill based on the `cnt` values col
     '
     """
-    if config is None or config == "":
-        cfg = DEFAULT_CONFIG.copy()
-    elif isinstance(config, str):
-        cfg = DEFAULT_CONFIG.copy()
-        cfg.update(json.loads(config))
-    else:
-        cfg = DEFAULT_CONFIG.copy()
-        cfg.update(config)
+    cfg = _normalize_pydeck_config(DEFAULT_CONFIG, config)
 
     if isinstance(gdf, dict):
         gdf = gpd.GeoDataFrame.from_features([gdf])
@@ -3525,10 +3330,7 @@ def pydeck_hex(df=None, config: typing.Union[dict, str, None] = None):
     import h3
     import json
 
-    if config is None or config == "":
-        config = DEFAULT_H3_CONFIG
-    elif isinstance(config, str):
-        config = json.loads(config)
+    config = _normalize_pydeck_config(DEFAULT_H3_CONFIG, config)
 
     if df is None:
         H3_HEX_DATA = "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/sf.h3cells.json"
@@ -3596,14 +3398,7 @@ def pydeck_polygon(df, config=None):
         "fill_color": '[255, 100 + cnt, 0]' # dynamically sets the colors of the fill based on the `cnt` values col
     '
     """
-    if config is None or config == "":
-        cfg = DEFAULT_POLYGON_CONFIG.copy()
-    elif isinstance(config, str):
-        cfg = DEFAULT_POLYGON_CONFIG.copy()
-        cfg.update(json.loads(config))
-    else:
-        cfg = DEFAULT_POLYGON_CONFIG.copy()
-        cfg.update(config)
+    cfg = _normalize_pydeck_config(DEFAULT_POLYGON_CONFIG, config)
 
     if "geometry" not in df.columns or len(df) == 0:
         raise ValueError("GeoDataFrame must include a non-empty 'geometry' column")
