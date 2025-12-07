@@ -1582,7 +1582,7 @@ def read_tiff_safe(bounds, path, chip_len, max_pixel=10**8, colormap="plasma", r
         print(f'Zoom in more - pixels: {int(n_pixel):,} > max: {max_pixel:,}')
         return tiff_meta.clip(bbox)
     import numpy as np
-    arr = read_tiff(bbox, path, output_shape=(chip_len, chip_len), resampling='nearest')
+    arr = read_tiff(bbox, path, output_shape=(chip_len, chip_len), resampling='nearest', cache_max_age=0)
     if colormap:
         arr =  np.asarray(arr)
         if tiff_meta['colormap'][0]:
