@@ -22,6 +22,7 @@ def read_h3_dataset(
     bounds: list | None = None,
     res: int | None = None,
     value: int | None = None,
+    columns: list | None = None,
 ):
     """
     Read a spatial subset of an H3 Parquet dataset.
@@ -55,7 +56,7 @@ def read_h3_dataset(
         df = read_overview(path, bounds, res, value)
         return df
 
-    df = read_dataset(path, bounds, res, value)
+    df = read_dataset(path, bounds, res, value, columns=columns)
     return df
 
 
@@ -131,7 +132,7 @@ def read_overview(path, bounds, res, value):
     return df
 
 
-def read_dataset(path, bounds, res, value, base_res=7):
+def read_dataset(path, bounds, res, value, base_res=7, columns=None):
     import pandas as pd
     import shapely
 
@@ -139,7 +140,13 @@ def read_dataset(path, bounds, res, value, base_res=7):
 
     # Get data and filter based on value and hex_bounds
     dataset = common.get_dataset_from_table(path, bounds)
-    df = dataset.to_table().to_pandas()
+    if columns is None:
+        # by defaultm, don't materialize those columns
+        columns = dataset.schema.names
+        for col in ["source_url", "res"]:
+            if col in columns:
+                columns.remove(col)
+    df = dataset.to_table(columns=columns).to_pandas()
 
     data_res = h3.get_resolution(df["hex"].iloc[0])
     if res > data_res:
