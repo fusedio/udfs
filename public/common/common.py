@@ -3413,6 +3413,18 @@ def get_utm_epsg(geometry):
     utm_zone = int((geometry.centroid.x + 180) / 6) + 1
     return 32600 + utm_zone if geometry.centroid.y >= 0 else 32700 + utm_zone  # 326XX for Northern Hemisphere, 327XX for Southern
 
+def get_area(bounds, unit='km2'):
+    gdf = to_gdf(bounds)
+    gdf = add_utm_area(gdf)
+    total_area_sqm = gdf['utm_area_sqm'].sum()
+    if unit == 'km2':
+        return total_area_sqm / 1_000_000
+    elif unit == 'm2':
+        return total_area_sqm
+    elif unit == 'ha':
+        return total_area_sqm / 10_000
+    else:
+        raise ValueError(f"Unsupported unit: {unit}. Use 'km2', 'm2', or 'ha'")
 
 def add_utm_area(gdf, utm_col='utm_epsg', utm_area_col='utm_area_sqm'):
     import geopandas as gpd
