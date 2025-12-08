@@ -2809,7 +2809,7 @@ def duckdb_connect(verbose=False, home_directory='/tmp/duckdb/'):
         
         INSTALL spatial;
         """)
-    install(home_directory)
+    install(home_directory, cache_verbose=verbose)
     con = duckdb.connect()
     con.sql(
     f"""SET home_directory='{home_directory}';
