@@ -1,0 +1,79 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "GBA_heights_WFS",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "GBA_heights_WFS",
+            "fused:slug": "GBA_heights_WFS",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 10,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": true,
+                "pickable": true,
+                "extruded": true,
+                "wireframe": false,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getElevation": "@@=properties.height*5",
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "height",
+                  "domain": [
+                    10,
+                    0
+                  ],
+                  "steps": 20,
+                  "colors": "OrYel",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "height",
+                  "domain": [
+                    30,
+                    0
+                  ],
+                  "steps": 20,
+                  "colors": "OrYel",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                }
+              }
+            },
+            "fused:udfType": "vector_tile"
+          },
+          "source": "GBA_heights_WFS.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
