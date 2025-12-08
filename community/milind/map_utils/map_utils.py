@@ -387,7 +387,7 @@ def deckgl_layers(
             line_color_config = {}
             line_color_attr = None
             
-            if isinstance(line_color_raw, dict) and line_color_raw.get("@@function") == "colorContinuous":
+            if isinstance(line_color_raw, dict) and line_color_raw.get("@@function") in ("colorContinuous", "colorCategories"):
                 line_color_config = line_color_raw
                 line_color_attr = line_color_raw.get("attr")
             elif isinstance(line_color_raw, (list, tuple)) and len(line_color_raw) >= 3:
@@ -549,6 +549,35 @@ def deckgl_layers(
     .legend-layer .legend-cat-label { color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
     .legend-layer .legend-cat-more { font-size: 10px; color: #888; font-style: italic; margin-top: 2px; }
     
+    /* Tile Loading Indicator */
+    #tile-loader {
+      position: fixed;
+      bottom: 12px;
+      right: 12px;
+      background: rgba(26, 26, 26, 0.9);
+      border: 1px solid #424242;
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-family: Inter, 'SF Pro Display', 'Segoe UI', sans-serif;
+      font-size: 11px;
+      color: #aaa;
+      z-index: 90;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    #tile-loader.visible { display: flex; }
+    #tile-loader .loader-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-top-color: #E8FF59;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
     /* Debug Panel - Minimal */
     #debug-panel { position: fixed; left: 0; top: 0; width: 280px; height: 100%; background: rgba(24,24,24,0.98); border-right: 1px solid #333; transform: translateX(0); transition: transform 0.2s ease; z-index: 199; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     #debug-panel.collapsed { transform: translateX(-100%); }
@@ -581,6 +610,14 @@ def deckgl_layers(
   
   <!-- Legend -->
   <div id="color-legend" class="color-legend" style="display:none;"></div>
+  
+  <!-- Tile Loading Indicator -->
+  {% if has_tile_layers %}
+  <div id="tile-loader">
+    <div class="loader-spinner"></div>
+    <span id="loader-text">Loading tiles...</span>
+  </div>
+  {% endif %}
 
   {% if debug %}
   <!-- Debug Panel -->
@@ -776,6 +813,30 @@ def deckgl_layers(
     const HAS_TILE_LAYERS = LAYERS_DATA.some(l => l.layerType === 'hex' && l.isTileLayer);
     const TILE_CACHE = new Map();
     const TILE_DATA_STORE = {};  // Track loaded tile data per layer for autoDomain
+    
+    // Tile loading indicator
+    let tilesCurrentlyLoading = 0;
+    let loaderHideTimeout = null;
+    
+    function updateTileLoader(delta) {
+      tilesCurrentlyLoading = Math.max(0, tilesCurrentlyLoading + delta);
+      const loader = document.getElementById('tile-loader');
+      const loaderText = document.getElementById('loader-text');
+      if (!loader) return;
+      
+      if (tilesCurrentlyLoading > 0) {
+        clearTimeout(loaderHideTimeout);
+        loader.classList.add('visible');
+        loaderText.textContent = tilesCurrentlyLoading === 1 
+          ? 'Loading tile...' 
+          : `Loading ${tilesCurrentlyLoading} tiles...`;
+      } else {
+        // Small delay before hiding to prevent flicker
+        loaderHideTimeout = setTimeout(() => {
+          loader.classList.remove('visible');
+        }, 300);
+      }
+    }
 
     // ========== Map Setup ==========
     mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -872,11 +933,17 @@ def deckgl_layers(
       };
       
       // First pass: count total values and collect tile refs
+      // Only use tiles within 1 zoom level of current view to avoid mixing aggregation levels
+      const currentZoom = Math.round(map.getZoom());
       let totalCount = 0;
       const viewportTiles = [];
       
       for (const [tileKey, data] of Object.entries(tileData)) {
         const [z, x, y] = tileKey.split('/').map(Number);
+        
+        // Skip tiles from different zoom levels to avoid double-counting
+        if (Math.abs(z - currentZoom) > 1) continue;
+        
         const tileBounds = tileToBounds(x, y, z);
         
         if (boundsIntersect(tileBounds, viewportBounds)) {
@@ -1001,9 +1068,14 @@ def deckgl_layers(
       if (!TILE_DATA_STORE[layerDef.id]) {
         TILE_DATA_STORE[layerDef.id] = {};
       }
+      
+      // Include domain in layer ID to force sublayer recreation when domain changes
+      // This prevents visible tile boundaries due to different domains per tile
+      const dynamicDomain = rawHexLayer.getFillColor?._dynamicDomain;
+      const domainHash = dynamicDomain ? `${dynamicDomain[0].toFixed(2)}-${dynamicDomain[1].toFixed(2)}` : 'default';
 
       const layerProps = {
-        id: `${layerDef.id}-tiles`,
+        id: `${layerDef.id}-tiles-${domainHash}`,
         data: tileUrl,
         tileSize: tileCfg.tileSize ?? 256,
         minZoom: tileCfg.minZoom ?? 0,
@@ -1025,17 +1097,18 @@ def deckgl_layers(
             return cachedData;
           }
           
-          // Track loading for autoDomain
+          // Track loading for autoDomain and loader UI
           if (hasAutoDomain) autoDomainTilesLoading++;
+          updateTileLoader(1);
           
           try {
             const res = await fetch(url, { signal });
             if (!res.ok) {
               if (hasAutoDomain) {
                 autoDomainTilesLoading--;
-                // Check if all tiles loaded
                 setTimeout(scheduleAutoDomainUpdate, 100);
               }
+              updateTileLoader(-1);
               return [];
             }
             let text = await res.text();
@@ -1048,15 +1121,16 @@ def deckgl_layers(
             // Track tile loaded for autoDomain
             if (hasAutoDomain) {
               autoDomainTilesLoading--;
-              // Check if all tiles loaded (debounce to batch updates)
               setTimeout(scheduleAutoDomainUpdate, 100);
             }
+            updateTileLoader(-1);
             return normalized;
           } catch (e) {
             if (hasAutoDomain) {
               autoDomainTilesLoading--;
               setTimeout(scheduleAutoDomainUpdate, 100);
             }
+            updateTileLoader(-1);
             return TILE_CACHE.get(cacheKey) || [];
           }
         },
@@ -1385,9 +1459,17 @@ def deckgl_layers(
           const cfg = l.hexLayer || {};
           colorCfg = (cfg.filled === false && cfg.getLineColor) ? cfg.getLineColor : cfg.getFillColor;
         } else if (l.layerType === 'vector') {
-          colorCfg = l.fillColorConfig;
+          // Prefer line color config if fill doesn't have a color function, or if not filled/transparent
+          const hasFillFunc = l.fillColorConfig?.['@@function'];
+          const hasLineFunc = l.lineColorConfig?.['@@function'];
           
-          // Show simple line legend for stroke-only vector layers
+          if (hasLineFunc && (!hasFillFunc || !l.isFilled || l.opacity === 0)) {
+            colorCfg = l.lineColorConfig;
+          } else {
+            colorCfg = l.fillColorConfig;
+          }
+          
+          // Show simple line legend for stroke-only vector layers with static color
           if (!colorCfg?.['@@function'] && l.lineColorRgba && !l.isFilled) {
             html += `
               <div class="legend-layer">
@@ -1557,42 +1639,88 @@ def deckgl_layers(
         });
       });
       
-      map.on('mousemove', (e) => { 
+      // Unified tooltip handler that respects layer order from LAYERS_DATA
+      // First layer in LAYERS_DATA = topmost on map
+      map.on('mousemove', (e) => {
+        let bestFeature = null;
+        let bestLayerDef = null;
+        let bestLayerIndex = Infinity;
+        
+        // Check static Mapbox layers
         const queryIds = allQueryableLayers.map(x => x.layerId).filter(id => map.getLayer(id));
-        if (!queryIds.length) return;
-        
-        const features = map.queryRenderedFeatures(e.point, { layers: queryIds });
-        if (!features?.length) {
-          tt.style.display = 'none';
-          map.getCanvas().style.cursor = '';
-          return;
-        }
-        
-        let topFeature = null;
-        let topLayerDef = null;
-        for (const f of features) {
-          const match = allQueryableLayers.find(x => x.layerId === f.layer.id);
-          if (match && layerVisibility[match.layerDef.id]) {
-            topFeature = f;
-            topLayerDef = match.layerDef;
-            break;
+        if (queryIds.length) {
+          const features = map.queryRenderedFeatures(e.point, { layers: queryIds });
+          for (const f of features) {
+            const match = allQueryableLayers.find(x => x.layerId === f.layer.id);
+            if (match && layerVisibility[match.layerDef.id]) {
+              const layerIndex = LAYERS_DATA.findIndex(l => l.id === match.layerDef.id);
+              if (layerIndex !== -1 && layerIndex < bestLayerIndex) {
+                bestLayerIndex = layerIndex;
+                bestFeature = { type: 'mapbox', feature: f, layerDef: match.layerDef };
+              }
+              break; // Mapbox already returns in z-order, take first visible
+            }
           }
         }
         
-        if (!topFeature || !topLayerDef) {
+        {% if has_tile_layers %}
+        // Check Deck.gl tile layers
+        if (deckOverlay) {
+          const info = deckOverlay.pickObject({ x: e.point.x, y: e.point.y, radius: 4 });
+          if (info?.object) {
+            const layerId = info.layer?.id?.split('-tiles-')[0];
+            const layerDef = LAYERS_DATA.find(l => l.id === layerId || info.layer?.id?.startsWith(l.id));
+            if (layerDef && layerVisibility[layerDef.id]) {
+              const layerIndex = LAYERS_DATA.findIndex(l => l.id === layerDef.id);
+              if (layerIndex !== -1 && layerIndex < bestLayerIndex) {
+                bestLayerIndex = layerIndex;
+                bestFeature = { type: 'deck', object: info.object, layerDef };
+              }
+            }
+          }
+        }
+        {% endif %}
+        
+        // No feature found
+        if (!bestFeature) {
           tt.style.display = 'none';
           map.getCanvas().style.cursor = '';
           return;
         }
-
+        
         map.getCanvas().style.cursor = 'pointer';
-        const p = topFeature.properties;
-        const cols = topLayerDef.tooltipColumns || [];
-        const lines = cols.length 
-          ? cols.map(k => p[k] != null ? `<span class="tt-row"><span class="tt-key">${k}</span><span class="tt-val">${typeof p[k]==='number'?p[k].toFixed(2):p[k]}</span></span>` : '').filter(Boolean) 
-          : (p.hex ? [`<span class="tt-row"><span class="tt-key">hex</span><span class="tt-val">${p.hex.slice(0,12)}...</span></span>`] : Object.keys(p).slice(0, 5).map(k => `<span class="tt-row"><span class="tt-key">${k}</span><span class="tt-val">${p[k]}</span></span>`));
+        const layerDef = bestFeature.layerDef;
+        const cols = layerDef.tooltipColumns || [];
+        let lines = [];
+        
+        if (bestFeature.type === 'mapbox') {
+          const p = bestFeature.feature.properties;
+          lines = cols.length 
+            ? cols.map(k => p[k] != null ? `<span class="tt-row"><span class="tt-key">${k}</span><span class="tt-val">${typeof p[k]==='number'?p[k].toFixed(2):p[k]}</span></span>` : '').filter(Boolean) 
+            : (p.hex ? [`<span class="tt-row"><span class="tt-key">hex</span><span class="tt-val">${p.hex.slice(0,12)}...</span></span>`] : Object.keys(p).slice(0, 5).map(k => `<span class="tt-row"><span class="tt-key">${k}</span><span class="tt-val">${p[k]}</span></span>`));
+        } else {
+          // Deck.gl tile layer
+          const obj = bestFeature.object;
+          const p = obj?.properties || obj || {};
+          const colorAttr = layerDef.hexLayer?.getFillColor?.attr || 'metric';
+          const hexVal = p.hex || obj.hex;
+          if (hexVal) lines.push(`<span class="tt-row"><span class="tt-key">hex</span><span class="tt-val">${String(hexVal).slice(0, 12)}...</span></span>`);
+          
+          if (cols.length) {
+            cols.forEach(col => {
+              const val = p[col] ?? obj[col];
+              if (val !== undefined && val !== null) {
+                lines.push(`<span class="tt-row"><span class="tt-key">${col}</span><span class="tt-val">${typeof val === 'number' ? val.toFixed(2) : val}</span></span>`);
+              }
+            });
+          } else if (p[colorAttr] != null || obj[colorAttr] != null) {
+            const val = p[colorAttr] ?? obj[colorAttr];
+            lines.push(`<span class="tt-row"><span class="tt-key">${colorAttr}</span><span class="tt-val">${Number(val).toFixed(2)}</span></span>`);
+          }
+        }
+        
         if (lines.length) { 
-          tt.innerHTML = `<strong class="tt-title">${topLayerDef.name}</strong>` + lines.join(''); 
+          tt.innerHTML = `<strong class="tt-title">${layerDef.name}</strong>` + lines.join(''); 
           tt.style.left = `${e.point.x+10}px`; 
           tt.style.top = `${e.point.y+10}px`; 
           tt.style.display = 'block';
@@ -1605,50 +1733,6 @@ def deckgl_layers(
         map.getCanvas().style.cursor = '';
         tt.style.display = 'none'; 
       });
-
-      {% if has_tile_layers %}
-      map.on('mousemove', (e) => { 
-        if (!deckOverlay) return;
-        const info = deckOverlay.pickObject({ x: e.point.x, y: e.point.y, radius: 4 });
-        if (info?.object) {
-          const layerId = info.layer?.id?.split('-tiles-')[0];
-          const layerDef = LAYERS_DATA.find(l => l.id === layerId || info.layer?.id?.startsWith(l.id));
-          if (layerDef && layerVisibility[layerDef.id]) {
-            map.getCanvas().style.cursor = 'pointer';
-            const obj = info.object;
-            const p = obj?.properties || obj || {};
-            const cols = layerDef.tooltipColumns || [];
-            const colorAttr = layerDef.hexLayer?.getFillColor?.attr || 'metric';
-            const hexVal = p.hex || obj.hex;
-            const lines = hexVal ? [`<span class="tt-row"><span class="tt-key">hex</span><span class="tt-val">${String(hexVal).slice(0, 12)}...</span></span>`] : [];
-            
-            if (cols.length) {
-              cols.forEach(col => {
-                const val = p[col] ?? obj[col];
-                if (val !== undefined && val !== null) {
-                  lines.push(`<span class="tt-row"><span class="tt-key">${col}</span><span class="tt-val">${typeof val === 'number' ? val.toFixed(2) : val}</span></span>`);
-                }
-              });
-            } else if (p[colorAttr] != null || obj[colorAttr] != null) {
-              const val = p[colorAttr] ?? obj[colorAttr];
-              lines.push(`<span class="tt-row"><span class="tt-key">${colorAttr}</span><span class="tt-val">${Number(val).toFixed(2)}</span></span>`);
-            }
-            
-            if (lines.length) {
-              tt.innerHTML = `<strong class="tt-title">${layerDef.name}</strong>` + lines.join('');
-              tt.style.left = `${e.point.x + 10}px`;
-              tt.style.top = `${e.point.y + 10}px`;
-              tt.style.display = 'block';
-            }
-            return;
-          }
-        }
-        if (!map.queryRenderedFeatures(e.point).length) {
-          tt.style.display = 'none';
-          map.getCanvas().style.cursor = '';
-        }
-      });
-      {% endif %}
     }
 
     map.on('load', tryInit);
