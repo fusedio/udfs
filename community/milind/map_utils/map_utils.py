@@ -359,9 +359,10 @@ def deckgl_layers(
                 except Exception:
                     pass
                 
-                # Sanitize properties using shared utility
-                for feat in geojson_obj.get("features", []):
+                # Add unique index to each feature for unclipped geometry lookup on click
+                for idx, feat in enumerate(geojson_obj.get("features", [])):
                     feat["properties"] = {k: _sanitize_geojson_value(v) for k, v in (feat.get("properties") or {}).items()}
+                    feat["properties"]["_fused_idx"] = idx
             
             # Extract color config - only if layer is filled
             fill_color_config = {}
@@ -1754,7 +1755,22 @@ def deckgl_layers(
         } catch(e) { return null; }
       }
       
-      function highlight(feature) {
+      // Find original unclipped geometry using _fused_idx
+      function findOriginalFeature(clickedFeature, layerId) {
+        const layerDef = LAYERS_DATA.find(l => layerId.startsWith(l.id));
+        if (!layerDef) return null;
+        
+        const originalGeoJSON = layerGeoJSONs[layerDef.id];
+        if (!originalGeoJSON?.features?.length) return null;
+        
+        const idx = clickedFeature.properties?._fused_idx;
+        if (idx != null && originalGeoJSON.features[idx]) {
+          return originalGeoJSON.features[idx];
+        }
+        return null;
+      }
+      
+      function highlight(feature, layerId = null) {
         let geojson = { type: 'FeatureCollection', features: [] };
         
         if (feature) {
@@ -1770,9 +1786,22 @@ def deckgl_layers(
                 b.push(b[0]);
                 geojson.features.push({ type:'Feature', geometry:{ type:'Polygon', coordinates:[b] }, properties: props });
               }
-      } catch(e) {}
+            } catch(e) {}
           }
-          // Otherwise use the feature's actual geometry (for vectors)
+          // For vectors: try to find original unclipped geometry
+          else if (layerId) {
+            const originalFeature = findOriginalFeature(feature, layerId);
+            if (originalFeature?.geometry) {
+              geojson.features.push({ 
+                type: 'Feature', 
+                geometry: originalFeature.geometry, 
+                properties: props 
+              });
+            } else if (feature.geometry) {
+              // Fallback to clicked geometry if original not found
+              geojson.features.push({ type:'Feature', geometry: feature.geometry, properties: props });
+            }
+          }
           else if (feature.geometry) {
             geojson.features.push({ type:'Feature', geometry: feature.geometry, properties: props });
           }
@@ -1811,7 +1840,8 @@ def deckgl_layers(
           try { feats = map.queryRenderedFeatures(e.point, { layers: queryLayers }) || []; } catch(err) {}
           
           if (feats.length > 0) {
-            highlight(feats[0]);
+            const clickedLayerId = feats[0].layer?.id || '';
+            highlight(feats[0], clickedLayerId);
           } else if (typeof deckOverlay !== 'undefined') {
             const info = deckOverlay?.pickObject?.({ x:e.point.x, y:e.point.y, radius:4 });
             if (info?.object) {
