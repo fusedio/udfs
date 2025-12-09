@@ -279,6 +279,7 @@ def deckgl_layers(
     # Process each layer
     processed_layers = []
     has_tile_layers = False
+    has_mvt_layers = False
     
     for i, layer_def in enumerate(layers):
         layer_type = layer_def.get("type", "hex").lower()
@@ -350,23 +351,37 @@ def deckgl_layers(
             
             if is_mvt:
                 # MVT vector tile layer
+                has_mvt_layers = True
                 source_layer = layer_def.get("source_layer", "udf")
                 
-                # Extract styling
-                fill_color = "#FFF5CC"
+                # Extract styling with dynamic coloring support
                 fill_opacity = vector_layer.get("opacity", 0.8)
-                line_color = "#FFFFFF"
                 line_width = vector_layer.get("lineWidthMinPixels") or vector_layer.get("getLineWidth", 1)
+                is_filled = vector_layer.get("filled", True)
                 
-                fill_color_raw = vector_layer.get("getFillColor")
-                if isinstance(fill_color_raw, (list, tuple)) and len(fill_color_raw) >= 3:
+                # Process fill color (supports colorContinuous, colorCategories, hasProp, arrays, and static)
+                fill_color_raw = vector_layer.get("getFillColor", [255, 245, 204])
+                fill_color = "#FFF5CC"
+                fill_color_config = None
+                if isinstance(fill_color_raw, dict) and fill_color_raw.get("@@function") in ("colorContinuous", "colorCategories", "hasProp"):
+                    fill_color_config = fill_color_raw
+                elif isinstance(fill_color_raw, (list, tuple)) and len(fill_color_raw) >= 3:
                     r, g, b = int(fill_color_raw[0]), int(fill_color_raw[1]), int(fill_color_raw[2])
                     fill_color = f"rgb({r},{g},{b})"
+                elif isinstance(fill_color_raw, str):
+                    fill_color = fill_color_raw
                 
-                line_color_raw = vector_layer.get("getLineColor")
-                if isinstance(line_color_raw, (list, tuple)) and len(line_color_raw) >= 3:
+                # Process line color (supports colorContinuous, colorCategories, hasProp, arrays, and static)
+                line_color_raw = vector_layer.get("getLineColor", [255, 255, 255])
+                line_color = "#FFFFFF"
+                line_color_config = None
+                if isinstance(line_color_raw, dict) and line_color_raw.get("@@function") in ("colorContinuous", "colorCategories", "hasProp"):
+                    line_color_config = line_color_raw
+                elif isinstance(line_color_raw, (list, tuple)) and len(line_color_raw) >= 3:
                     r, g, b = int(line_color_raw[0]), int(line_color_raw[1]), int(line_color_raw[2])
                     line_color = f"rgb({r},{g},{b})"
+                elif isinstance(line_color_raw, str):
+                    line_color = line_color_raw
                 
                 # Extrusion settings
                 is_extruded = vector_layer.get("extruded", False)
@@ -378,6 +393,9 @@ def deckgl_layers(
                 minzoom = vector_layer.get("minzoom", 0)
                 maxzoom = vector_layer.get("maxzoom", 22)
                 
+                # Tooltip columns
+                tooltip_cols = layer_def.get("tooltip_columns", [])
+                
                 processed_layers.append({
                     "id": f"layer-{i}",
                     "name": name,
@@ -388,14 +406,18 @@ def deckgl_layers(
                     "minzoom": minzoom,
                     "maxzoom": maxzoom,
                     "fillColor": fill_color,
+                    "fillColorConfig": fill_color_config,
                     "fillOpacity": fill_opacity,
+                    "isFilled": is_filled,
                     "lineColor": line_color,
+                    "lineColorConfig": line_color_config,
                     "lineWidth": line_width,
                     "isExtruded": is_extruded,
                     "extrusionOpacity": extrusion_opacity,
                     "heightProperty": height_property,
                     "heightMultiplier": height_multiplier,
                     "colorScale": color_scale,
+                    "tooltipColumns": tooltip_cols,
                     "visible": True,
                 })
                 continue  # Skip to next layer
@@ -669,7 +691,7 @@ def deckgl_layers(
   <div id="color-legend" class="color-legend" style="display:none;"></div>
   
   <!-- Tile Loading Indicator -->
-  {% if has_tile_layers %}
+  {% if has_tile_layers or has_mvt_layers %}
   <div id="tile-loader">
     <div class="loader-spinner"></div>
     <span id="loader-text">Loading tiles...</span>
@@ -1321,9 +1343,9 @@ def deckgl_layers(
         if (l.layerType === 'mvt') {
           // Handled below in the mvt section
         } else {
-          const geojson = layerGeoJSONs[l.id];
-          if (!geojson || !geojson.features?.length) return;
-          map.addSource(l.id, { type: 'geojson', data: geojson });
+        const geojson = layerGeoJSONs[l.id];
+        if (!geojson || !geojson.features?.length) return;
+        map.addSource(l.id, { type: 'geojson', data: geojson });
         }
         
         if (l.layerType === 'hex') {
@@ -1440,13 +1462,21 @@ def deckgl_layers(
             maxzoom: l.maxzoom || 22,
           });
           
+          // Build dynamic color expressions if configured
+          const fillColorExpr = l.fillColorConfig?.['@@function'] 
+            ? buildColorExpr(l.fillColorConfig, [])  // MVT has no static data, buildColorExpr uses property accessors
+            : (l.fillColor || '#FFF5CC');
+          const lineColorExpr = l.lineColorConfig?.['@@function']
+            ? buildColorExpr(l.lineColorConfig, [])
+            : (l.lineColor || '#FFFFFF');
+          
           if (l.isExtruded) {
             // 3D extruded layer
             const heightExpr = l.heightProperty
               ? ['*', ['coalesce', ['get', l.heightProperty], ['get', 'h'], 10], l.heightMultiplier || 1]
               : 10;
             
-            let colorExpr = l.fillColor || '#FFF5CC';
+            let colorExpr = fillColorExpr;
             if (l.colorScale && Array.isArray(l.colorScale) && l.colorScale.length > 0) {
               colorExpr = ['interpolate', ['linear'], ['coalesce', ['get', l.heightProperty], ['get', 'h'], 10]];
               l.colorScale.forEach(s => { colorExpr.push(s.height); colorExpr.push(s.color); });
@@ -1467,19 +1497,21 @@ def deckgl_layers(
               layout: { 'visibility': visible ? 'visible' : 'none' }
             });
           } else {
-            // Flat fill layer
-            map.addLayer({
-              id: `${l.id}-fill`,
-              type: 'fill',
-              source: l.id,
-              'source-layer': l.sourceLayer || 'udf',
-              minzoom: l.minzoom || 0,
-              paint: {
-                'fill-color': l.fillColor || '#FFF5CC',
-                'fill-opacity': l.fillOpacity || 0.8,
-              },
-              layout: { 'visibility': visible ? 'visible' : 'none' }
-            });
+            // Flat fill layer (if filled)
+            if (l.isFilled !== false) {
+              map.addLayer({
+                id: `${l.id}-fill`,
+                type: 'fill',
+                source: l.id,
+                'source-layer': l.sourceLayer || 'udf',
+                minzoom: l.minzoom || 0,
+                paint: {
+                  'fill-color': fillColorExpr,
+                  'fill-opacity': l.fillOpacity || 0.8,
+                },
+                layout: { 'visibility': visible ? 'visible' : 'none' }
+              });
+            }
             
             // Outline layer
             if (l.lineWidth > 0) {
@@ -1490,7 +1522,7 @@ def deckgl_layers(
                 'source-layer': l.sourceLayer || 'udf',
                 minzoom: l.minzoom || 0,
                 paint: {
-                  'line-color': l.lineColor || '#FFFFFF',
+                  'line-color': lineColorExpr,
                   'line-width': l.lineWidth || 1,
                 },
                 layout: { 'visibility': visible ? 'visible' : 'none' }
@@ -1595,7 +1627,7 @@ def deckgl_layers(
           if (hasLineFunc && (!hasFillFunc || !l.isFilled || l.opacity === 0)) {
             colorCfg = l.lineColorConfig;
           } else {
-            colorCfg = l.fillColorConfig;
+          colorCfg = l.fillColorConfig;
           }
           
           // Show simple line legend for stroke-only vector layers with static color
@@ -1762,6 +1794,14 @@ def deckgl_layers(
           layerIds.push(`${l.id}-outline`);
         } else if (l.layerType === 'vector') {
           layerIds.push(`${l.id}-fill`, `${l.id}-outline`, `${l.id}-circle`, `${l.id}-line`);
+        } else if (l.layerType === 'mvt') {
+          // MVT layers - add fill, outline, and extrusion layer IDs
+          if (l.isExtruded) {
+            layerIds.push(`${l.id}-extrusion`);
+          } else {
+            layerIds.push(`${l.id}-fill`);
+          }
+          layerIds.push(`${l.id}-outline`);
         }
         layerIds.forEach(layerId => {
           allQueryableLayers.push({ layerId, layerDef: l });
@@ -1770,7 +1810,7 @@ def deckgl_layers(
       
       // Unified tooltip handler that respects layer order from LAYERS_DATA
       // First layer in LAYERS_DATA = topmost on map
-      map.on('mousemove', (e) => {
+      map.on('mousemove', (e) => { 
         let bestFeature = null;
         let bestLayerDef = null;
         let bestLayerIndex = Infinity;
@@ -1778,10 +1818,10 @@ def deckgl_layers(
         // Check static Mapbox layers
         const queryIds = allQueryableLayers.map(x => x.layerId).filter(id => map.getLayer(id));
         if (queryIds.length) {
-          const features = map.queryRenderedFeatures(e.point, { layers: queryIds });
-          for (const f of features) {
-            const match = allQueryableLayers.find(x => x.layerId === f.layer.id);
-            if (match && layerVisibility[match.layerDef.id]) {
+        const features = map.queryRenderedFeatures(e.point, { layers: queryIds });
+        for (const f of features) {
+          const match = allQueryableLayers.find(x => x.layerId === f.layer.id);
+          if (match && layerVisibility[match.layerDef.id]) {
               const layerIndex = LAYERS_DATA.findIndex(l => l.id === match.layerDef.id);
               if (layerIndex !== -1 && layerIndex < bestLayerIndex) {
                 bestLayerIndex = layerIndex;
@@ -1791,15 +1831,15 @@ def deckgl_layers(
             }
           }
         }
-        
-        {% if has_tile_layers %}
+
+      {% if has_tile_layers %}
         // Check Deck.gl tile layers
         if (deckOverlay) {
-          const info = deckOverlay.pickObject({ x: e.point.x, y: e.point.y, radius: 4 });
-          if (info?.object) {
-            const layerId = info.layer?.id?.split('-tiles-')[0];
-            const layerDef = LAYERS_DATA.find(l => l.id === layerId || info.layer?.id?.startsWith(l.id));
-            if (layerDef && layerVisibility[layerDef.id]) {
+        const info = deckOverlay.pickObject({ x: e.point.x, y: e.point.y, radius: 4 });
+        if (info?.object) {
+          const layerId = info.layer?.id?.split('-tiles-')[0];
+          const layerDef = LAYERS_DATA.find(l => l.id === layerId || info.layer?.id?.startsWith(l.id));
+          if (layerDef && layerVisibility[layerDef.id]) {
               const layerIndex = LAYERS_DATA.findIndex(l => l.id === layerDef.id);
               if (layerIndex !== -1 && layerIndex < bestLayerIndex) {
                 bestLayerIndex = layerIndex;
@@ -1817,9 +1857,9 @@ def deckgl_layers(
           return;
         }
         
-        map.getCanvas().style.cursor = 'pointer';
+            map.getCanvas().style.cursor = 'pointer';
         const layerDef = bestFeature.layerDef;
-        const cols = layerDef.tooltipColumns || [];
+            const cols = layerDef.tooltipColumns || [];
         let lines = [];
         
         if (bestFeature.type === 'mapbox') {
@@ -1831,28 +1871,28 @@ def deckgl_layers(
           // Deck.gl tile layer
           const obj = bestFeature.object;
           const p = obj?.properties || obj || {};
-          const colorAttr = layerDef.hexLayer?.getFillColor?.attr || 'metric';
-          const hexVal = p.hex || obj.hex;
+            const colorAttr = layerDef.hexLayer?.getFillColor?.attr || 'metric';
+            const hexVal = p.hex || obj.hex;
           if (hexVal) lines.push(`<span class="tt-row"><span class="tt-key">hex</span><span class="tt-val">${String(hexVal).slice(0, 12)}...</span></span>`);
-          
-          if (cols.length) {
-            cols.forEach(col => {
-              const val = p[col] ?? obj[col];
-              if (val !== undefined && val !== null) {
-                lines.push(`<span class="tt-row"><span class="tt-key">${col}</span><span class="tt-val">${typeof val === 'number' ? val.toFixed(2) : val}</span></span>`);
-              }
-            });
-          } else if (p[colorAttr] != null || obj[colorAttr] != null) {
-            const val = p[colorAttr] ?? obj[colorAttr];
-            lines.push(`<span class="tt-row"><span class="tt-key">${colorAttr}</span><span class="tt-val">${Number(val).toFixed(2)}</span></span>`);
+            
+            if (cols.length) {
+              cols.forEach(col => {
+                const val = p[col] ?? obj[col];
+                if (val !== undefined && val !== null) {
+                  lines.push(`<span class="tt-row"><span class="tt-key">${col}</span><span class="tt-val">${typeof val === 'number' ? val.toFixed(2) : val}</span></span>`);
+                }
+              });
+            } else if (p[colorAttr] != null || obj[colorAttr] != null) {
+              const val = p[colorAttr] ?? obj[colorAttr];
+              lines.push(`<span class="tt-row"><span class="tt-key">${colorAttr}</span><span class="tt-val">${Number(val).toFixed(2)}</span></span>`);
           }
-        }
-        
-        if (lines.length) { 
-          tt.innerHTML = `<strong class="tt-title">${layerDef.name}</strong>` + lines.join(''); 
+            }
+            
+            if (lines.length) {
+              tt.innerHTML = `<strong class="tt-title">${layerDef.name}</strong>` + lines.join('');
           tt.style.left = `${e.point.x+10}px`; 
           tt.style.top = `${e.point.y+10}px`; 
-          tt.style.display = 'block';
+              tt.style.display = 'block';
         } else {
           tt.style.display = 'none';
         }
@@ -1868,6 +1908,40 @@ def deckgl_layers(
     map.on('load', () => { [100, 500, 1000].forEach(t => setTimeout(() => map.resize(), t)); });
     window.addEventListener('resize', () => map.resize());
     document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => map.resize(), 100); });
+    
+    {% if has_mvt_layers %}
+    // MVT tile loading indicator
+    const mvtSources = new Set(LAYERS_DATA.filter(l => l.layerType === 'mvt').map(l => l.id));
+    let mvtLoading = new Set();
+    
+    map.on('sourcedataloading', (e) => {
+      if (mvtSources.has(e.sourceId) && e.tile) {
+        const key = `${e.sourceId}-${e.tile.tileID?.canonical?.key || ''}`;
+        if (!mvtLoading.has(key)) {
+          mvtLoading.add(key);
+          updateTileLoader(1);
+        }
+      }
+    });
+    
+    map.on('sourcedata', (e) => {
+      if (mvtSources.has(e.sourceId) && e.tile && e.isSourceLoaded) {
+        const key = `${e.sourceId}-${e.tile.tileID?.canonical?.key || ''}`;
+        if (mvtLoading.has(key)) {
+          mvtLoading.delete(key);
+          updateTileLoader(-1);
+        }
+      }
+    });
+    
+    // Also track full source loading state
+    map.on('idle', () => {
+      if (mvtLoading.size > 0) {
+        mvtLoading.clear();
+        updateTileLoader(-tilesCurrentlyLoading);
+      }
+    });
+    {% endif %}
     
     {% if highlight_on_click %}
     // Click-to-highlight (hex and vector)
@@ -1914,7 +1988,7 @@ def deckgl_layers(
                 b.push(b[0]);
                 geojson.features.push({ type:'Feature', geometry:{ type:'Polygon', coordinates:[b] }, properties: props });
               }
-            } catch(e) {}
+      } catch(e) {}
           }
           // For vectors: try to find original unclipped geometry
           else if (layerId) {
@@ -2468,6 +2542,7 @@ def deckgl_layers(
         bearing=bearing,
         has_custom_view=has_custom_view,
         has_tile_layers=has_tile_layers,
+        has_mvt_layers=has_mvt_layers,
         highlight_on_click=highlight_on_click,
         palettes=sorted(KNOWN_CARTOCOLOR_PALETTES),
         on_click=on_click or {},
