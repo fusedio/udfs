@@ -13,9 +13,13 @@ def udf(
     from shapely.geometry import box
     import time
     
+    # Helper to return valid empty GeoDataFrame
+    def empty_gdf():
+        return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
+    
     @fused.cache
     def fetch_wfs_small(bbox, layer, max_feat):
-        """Fetch s mall number of WFS features with retry"""
+        """Fetch small number of WFS features with retry"""
         url = "https://tubvsig-so2sat-vm1.srv.mwn.de/geoserver/ows"
         
         params = {
@@ -35,25 +39,28 @@ def udf(
                 
                 if response.status_code != 200:
                     print(f"Attempt {attempt+1}: Status {response.status_code}")
-                    time.sleep(2 ** attempt)  # Exponential backoff
+                    time.sleep(2 ** attempt)
                     continue
                 
-                # Parse JSON directly
                 import json
                 data = json.loads(response.text)
+                
+                # Handle empty features array
+                if not data.get('features'):
+                    print("No features returned from WFS")
+                    return empty_gdf()
+                
                 gdf = gpd.GeoDataFrame.from_features(data['features'], crs='EPSG:4326')
                 
                 print(f"Success! Fetched {len(gdf)} features")
-                print(f"Columns: {list(gdf.columns)}")
-                print(gdf.head().T)
-                
                 return gdf
                 
             except Exception as e:
                 print(f"Attempt {attempt+1} error: {str(e)[:150]}")
                 time.sleep(2 ** attempt)
         
-        return gpd.GeoDataFrame()
+        # FIX 1: Return empty GDF with CRS
+        return empty_gdf()
     
     @fused.cache
     def fetch_wms_styled(bbox, layer, width=256, height=256):
@@ -93,22 +100,26 @@ def udf(
             return np.zeros((4, height, width), dtype=np.uint8)
     
     if bounds is None:
-        return "Zoom to an area to load data"
+        # FIX: Return valid empty GDF instead of string for tile endpoints
+        return empty_gdf()
     
     if use_wms:
-        # Use WMS for faster raster display
         arr = fetch_wms_styled(bounds, layer_name)
         return arr, bounds
     else:
-        # Use WFS for vector data with attributes
         gdf = fetch_wfs_small(bounds, layer_name, max_features)
         
         if len(gdf) == 0:
-            print(f"No features. Server may be overloaded. Try: max_features={max_features//2} or use_wms=True")
-            return gpd.GeoDataFrame()
+            print(f"No features. Server may be overloaded.")
+            # FIX 2: Return empty GDF with CRS
+            return empty_gdf()
         
         bound_geom = box(*bounds)
         gdf = gdf[gdf.geometry.intersects(bound_geom)]
+        
+        # FIX 3: Handle case where filtering removes all features
+        if len(gdf) == 0:
+            return empty_gdf()
         
         print(f"{len(gdf)} buildings in view")
         return gdf
