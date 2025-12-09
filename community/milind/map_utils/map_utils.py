@@ -343,8 +343,64 @@ def deckgl_layers(
             # Process vector layer (similar to deckgl_map)
             merged_config = _load_deckgl_config(config, DEFAULT_DECK_CONFIG)
             vector_layer = merged_config.get("vectorLayer", {})
+            tile_url = layer_def.get("tile_url")
             
-            # Convert GeoDataFrame to GeoJSON
+            # Check if this is an MVT tile layer (auto-detect from tile_url)
+            is_mvt = tile_url is not None and "mvt" in tile_url.lower()
+            
+            if is_mvt:
+                # MVT vector tile layer
+                source_layer = layer_def.get("source_layer", "udf")
+                
+                # Extract styling
+                fill_color = "#FFF5CC"
+                fill_opacity = vector_layer.get("opacity", 0.8)
+                line_color = "#FFFFFF"
+                line_width = vector_layer.get("lineWidthMinPixels") or vector_layer.get("getLineWidth", 1)
+                
+                fill_color_raw = vector_layer.get("getFillColor")
+                if isinstance(fill_color_raw, (list, tuple)) and len(fill_color_raw) >= 3:
+                    r, g, b = int(fill_color_raw[0]), int(fill_color_raw[1]), int(fill_color_raw[2])
+                    fill_color = f"rgb({r},{g},{b})"
+                
+                line_color_raw = vector_layer.get("getLineColor")
+                if isinstance(line_color_raw, (list, tuple)) and len(line_color_raw) >= 3:
+                    r, g, b = int(line_color_raw[0]), int(line_color_raw[1]), int(line_color_raw[2])
+                    line_color = f"rgb({r},{g},{b})"
+                
+                # Extrusion settings
+                is_extruded = vector_layer.get("extruded", False)
+                height_property = vector_layer.get("heightProperty", "height")
+                height_multiplier = vector_layer.get("heightMultiplier", 1)
+                extrusion_opacity = vector_layer.get("extrusionOpacity", 0.9)
+                color_scale = vector_layer.get("colorScale")
+                
+                minzoom = vector_layer.get("minzoom", 0)
+                maxzoom = vector_layer.get("maxzoom", 22)
+                
+                processed_layers.append({
+                    "id": f"layer-{i}",
+                    "name": name,
+                    "layerType": "mvt",
+                    "tileUrl": tile_url,
+                    "sourceLayer": source_layer,
+                    "config": merged_config,
+                    "minzoom": minzoom,
+                    "maxzoom": maxzoom,
+                    "fillColor": fill_color,
+                    "fillOpacity": fill_opacity,
+                    "lineColor": line_color,
+                    "lineWidth": line_width,
+                    "isExtruded": is_extruded,
+                    "extrusionOpacity": extrusion_opacity,
+                    "heightProperty": height_property,
+                    "heightMultiplier": height_multiplier,
+                    "colorScale": color_scale,
+                    "visible": True,
+                })
+                continue  # Skip to next layer
+            
+            # Standard GeoJSON vector layer
             geojson_obj = {"type": "FeatureCollection", "features": []}
             if df is not None and hasattr(df, "to_json"):
                 # Reproject to EPSG:4326 if needed
@@ -1257,13 +1313,18 @@ def deckgl_layers(
       // Add layers in reverse menu order so top of menu renders on top of map
       const renderOrder = [...LAYERS_DATA].reverse();
       renderOrder.forEach((l) => {
-        if (l.layerType === 'hex' && l.isTileLayer) return;  // Skip tile layers - handled by Deck.gl
+        if (l.layerType === 'hex' && l.isTileLayer) return;  // Skip hex tile layers - handled by Deck.gl
         
-        const geojson = layerGeoJSONs[l.id];
-        if (!geojson || !geojson.features?.length) return;
-        
-        map.addSource(l.id, { type: 'geojson', data: geojson });
         const visible = layerVisibility[l.id];
+        
+        // MVT layers create their own source, skip GeoJSON check
+        if (l.layerType === 'mvt') {
+          // Handled below in the mvt section
+        } else {
+          const geojson = layerGeoJSONs[l.id];
+          if (!geojson || !geojson.features?.length) return;
+          map.addSource(l.id, { type: 'geojson', data: geojson });
+        }
         
         if (l.layerType === 'hex') {
           // Hex layer rendering
@@ -1315,7 +1376,7 @@ def deckgl_layers(
           
           // Detect geometry types
           let hasPoly = false, hasPoint = false, hasLine = false;
-          for (const f of geojson.features || []) {
+          for (const f of l.geojson?.features || []) {
             const t = f.geometry?.type;
             if (t === 'Point' || t === 'MultiPoint') hasPoint = true;
             if (t === 'Polygon' || t === 'MultiPolygon') hasPoly = true;
@@ -1370,6 +1431,72 @@ def deckgl_layers(
               layout: { 'visibility': visible ? 'visible' : 'none' }
             });
           }
+        } else if (l.layerType === 'mvt') {
+          // MVT (Mapbox Vector Tile) layer rendering
+          map.addSource(l.id, {
+            type: 'vector',
+            tiles: [l.tileUrl],
+            minzoom: l.minzoom || 0,
+            maxzoom: l.maxzoom || 22,
+          });
+          
+          if (l.isExtruded) {
+            // 3D extruded layer
+            const heightExpr = l.heightProperty
+              ? ['*', ['coalesce', ['get', l.heightProperty], ['get', 'h'], 10], l.heightMultiplier || 1]
+              : 10;
+            
+            let colorExpr = l.fillColor || '#FFF5CC';
+            if (l.colorScale && Array.isArray(l.colorScale) && l.colorScale.length > 0) {
+              colorExpr = ['interpolate', ['linear'], ['coalesce', ['get', l.heightProperty], ['get', 'h'], 10]];
+              l.colorScale.forEach(s => { colorExpr.push(s.height); colorExpr.push(s.color); });
+            }
+            
+            map.addLayer({
+              id: `${l.id}-extrusion`,
+              type: 'fill-extrusion',
+              source: l.id,
+              'source-layer': l.sourceLayer || 'udf',
+              minzoom: l.minzoom || 0,
+              paint: {
+                'fill-extrusion-color': colorExpr,
+                'fill-extrusion-height': heightExpr,
+                'fill-extrusion-base': 0,
+                'fill-extrusion-opacity': l.extrusionOpacity || 0.9,
+              },
+              layout: { 'visibility': visible ? 'visible' : 'none' }
+            });
+          } else {
+            // Flat fill layer
+            map.addLayer({
+              id: `${l.id}-fill`,
+              type: 'fill',
+              source: l.id,
+              'source-layer': l.sourceLayer || 'udf',
+              minzoom: l.minzoom || 0,
+              paint: {
+                'fill-color': l.fillColor || '#FFF5CC',
+                'fill-opacity': l.fillOpacity || 0.8,
+              },
+              layout: { 'visibility': visible ? 'visible' : 'none' }
+            });
+            
+            // Outline layer
+            if (l.lineWidth > 0) {
+              map.addLayer({
+                id: `${l.id}-outline`,
+                type: 'line',
+                source: l.id,
+                'source-layer': l.sourceLayer || 'udf',
+                minzoom: l.minzoom || 0,
+                paint: {
+                  'line-color': l.lineColor || '#FFFFFF',
+                  'line-width': l.lineWidth || 1,
+                },
+                layout: { 'visibility': visible ? 'visible' : 'none' }
+              });
+            }
+          }
         }
       });
 
@@ -1388,6 +1515,7 @@ def deckgl_layers(
         rebuildDeckOverlay();
         {% endif %}
       } else {
+        // Handle MVT and regular layers
         [`${layerId}-fill`, `${layerId}-extrusion`, `${layerId}-outline`, `${layerId}-circle`, `${layerId}-line`].forEach(id => {
           try { 
             if(map.getLayer(id)) {
