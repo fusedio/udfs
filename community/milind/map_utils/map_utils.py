@@ -2935,7 +2935,7 @@ def enable_map_broadcast(html_input, channel: str = "fused-bus", dataset: str = 
     return injected_html
 
 
-def enable_location_listener(html_input, channel: str = "fused-bus"):
+def enable_location_listener(html_input, channel: str = "fused-bus", zoom_offset: float = 0, padding: int = 50, max_zoom: int = 18):
     """
     Inject location listener into any Mapbox GL map HTML.
     
@@ -2945,13 +2945,19 @@ def enable_location_listener(html_input, channel: str = "fused-bus"):
     Args:
         html_input: HTML string or response object containing a Mapbox GL map
         channel: BroadcastChannel name (must match location_selector's channel)
+        zoom_offset: Extra zoom levels to add after fitBounds (e.g., 0.5 for tighter fit)
+        padding: Padding in pixels around bounds (smaller = tighter fit)
+        max_zoom: Maximum zoom level allowed
     
     Returns:
         Modified HTML with location listener capability
     
     Usage:
         html = deckgl_hex(df, config)
+        # Default fit
         map_with_listener = enable_location_listener(html, channel="fused-bus")
+        # Tighter fit (zoom in 0.5 more)
+        map_with_listener = enable_location_listener(html, zoom_offset=0.5, padding=20)
         return map_with_listener
     """
     html_string, response_mode = _normalize_html_input(html_input)
@@ -2962,6 +2968,9 @@ def enable_location_listener(html_input, channel: str = "fused-bus"):
   if (typeof map === 'undefined') return;
   
   const CHANNEL = {json.dumps(channel)};
+  const ZOOM_OFFSET = {zoom_offset};
+  const PADDING = {padding};
+  const MAX_ZOOM = {max_zoom};
   const componentId = 'map-location-listener-' + Math.random().toString(36).substr(2, 9);
   
   // Setup BroadcastChannel
@@ -2982,17 +2991,26 @@ def enable_location_listener(html_input, channel: str = "fused-bus"):
         if (loc.bounds && Array.isArray(loc.bounds) && loc.bounds.length === 4) {{
           const [west, south, east, north] = loc.bounds;
           
-          // Fit map to bounds
+          // Fit map to bounds with optional zoom offset
+          if (ZOOM_OFFSET > 0) {{
+            // First fit bounds, then zoom in a bit more
+            map.once('moveend', () => {{
+              const currentZoom = map.getZoom();
+              const targetZoom = Math.min(currentZoom + ZOOM_OFFSET, MAX_ZOOM);
+              map.easeTo({{ zoom: targetZoom, duration: 300 }});
+            }});
+          }}
+          
           map.fitBounds(
             [[west, south], [east, north]],
             {{
-              padding: 50,
-              duration: 1000,
-              maxZoom: 15
+              padding: PADDING,
+              duration: 800,
+              maxZoom: MAX_ZOOM
             }}
           );
           
-          console.log('[map_location_listener] Panned to:', loc.name, loc.bounds);
+          console.log('[map_location_listener] Panned to:', loc.name, loc.bounds, 'zoom_offset:', ZOOM_OFFSET);
         }}
       }}
     }} catch (e) {{
