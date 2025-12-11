@@ -2596,15 +2596,17 @@ def deckgl_raster(
     bounds,  # [west, south, east, north]
     config: dict = None,
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
+    basemap: str = "dark",
 ):
     """
-    Render a georeferenced raster image using Deck.gl BitmapLayer.
+    Render a georeferenced raster image using Mapbox GL's native image source.
     
     Args:
         image_data: numpy array (H, W, 3 or 4) or image URL string
         bounds: [west, south, east, north] geographic bounds
         config: Optional dict with initialViewState and rasterLayer config
         mapbox_token: Mapbox access token
+        basemap: 'dark', 'satellite', 'light', or 'streets'
     
     Returns:
         HTML object for rendering
@@ -2616,6 +2618,15 @@ def deckgl_raster(
     from io import BytesIO
     from copy import deepcopy
     
+    # Basemap styles
+    basemap_styles = {
+        "dark": "mapbox://styles/mapbox/dark-v11",
+        "satellite": "mapbox://styles/mapbox/satellite-streets-v12",
+        "light": "mapbox://styles/mapbox/light-v11",
+        "streets": "mapbox://styles/mapbox/streets-v12"
+    }
+    style_url = basemap_styles.get(basemap.lower(), basemap_styles["dark"])
+    
     # Default config
     DEFAULT_RASTER_CONFIG = {
         "initialViewState": {
@@ -2626,8 +2637,7 @@ def deckgl_raster(
             "bearing": 0
         },
         "rasterLayer": {
-            "opacity": 1.0,
-            "tintColor": [255, 255, 255]
+            "opacity": 1.0
         }
     }
     
@@ -2719,7 +2729,15 @@ def deckgl_raster(
     # Get raster layer config
     raster_config = config.get('rasterLayer', {})
     opacity = raster_config.get('opacity', 1.0)
-    tint_color = raster_config.get('tintColor', [255, 255, 255])
+    
+    # Convert bounds to Mapbox image source coordinates format
+    # [top-left, top-right, bottom-right, bottom-left]
+    coordinates = [
+        [west, north],   # top-left
+        [east, north],   # top-right
+        [east, south],   # bottom-right
+        [west, south],   # bottom-left
+    ]
     
     html = Template(r"""
 <!DOCTYPE html>
@@ -2729,59 +2747,37 @@ def deckgl_raster(
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no"/>
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet"/>
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
-  <script src="https://unpkg.com/deck.gl@9.2.2/dist.min.js"></script>
-  <style>
-    html,body{margin:0;height:100%;background:#000}
-    #map{position:absolute;inset:0}
-  </style>
+  <style>html,body{margin:0;height:100%}#map{position:absolute;inset:0}</style>
 </head>
 <body>
 <div id="map"></div>
 <script>
-const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
-const IMAGE_URL = {{ image_url | tojson }};
-const BOUNDS = {{ bounds | tojson }};
-const OPACITY = {{ opacity | tojson }};
-const TINT_COLOR = {{ tint_color | tojson }};
-
-mapboxgl.accessToken = MAPBOX_TOKEN;
+mapboxgl.accessToken = {{ mapbox_token | tojson }};
 const map = new mapboxgl.Map({
   container: 'map',
-  style: 'mapbox://styles/mapbox/dark-v11',
+  style: {{ style_url | tojson }},
   center: [{{ center_lng }}, {{ center_lat }}],
   zoom: {{ zoom }},
   pitch: {{ pitch }},
-  bearing: {{ bearing }}
+  bearing: {{ bearing }},
+  projection: 'mercator'
 });
 
-const layer = new deck.BitmapLayer({
-  id: 'raster-layer',
-  bounds: BOUNDS,
-  image: IMAGE_URL,
-  opacity: OPACITY,
-  tintColor: TINT_COLOR,
-  pickable: false
-});
-
-const overlay = new deck.MapboxOverlay({
-  interleaved: false,
-  layers: [layer]
-});
-
-map.addControl(overlay);
-
-// Fit map to raster bounds on load
 map.on('load', () => {
-  const [west, south, east, north] = BOUNDS;
-  map.fitBounds(
-    [[west, south], [east, north]],
-    {
-      padding: 20,
-      pitch: {{ pitch }},
-      bearing: {{ bearing }},
-      duration: 1000
-    }
-  );
+  map.addSource('raster-image', {
+    type: 'image',
+    url: {{ image_url | tojson }},
+    coordinates: {{ coordinates | tojson }}
+  });
+  
+  map.addLayer({
+    id: 'raster-layer',
+    type: 'raster',
+    source: 'raster-image',
+    paint: { 'raster-opacity': {{ opacity }} }
+  });
+  
+  map.fitBounds([[{{ west }}, {{ south }}], [{{ east }}, {{ north }}]], { padding: 20, duration: 500 });
 });
 </script>
 </body>
@@ -2789,14 +2785,18 @@ map.on('load', () => {
 """).render(
         mapbox_token=mapbox_token,
         image_url=image_url,
-        bounds=bounds,
+        coordinates=coordinates,
+        style_url=style_url,
         opacity=opacity,
-        tint_color=tint_color,
         center_lng=center_lng,
         center_lat=center_lat,
         zoom=zoom,
         pitch=pitch,
         bearing=bearing,
+        west=west,
+        south=south,
+        east=east,
+        north=north,
     )
 
     common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
