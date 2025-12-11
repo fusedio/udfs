@@ -2592,24 +2592,33 @@ def deckgl_map(
 
 
 def deckgl_raster(
-    image_data,  # numpy array or image URL string
-    bounds,  # [west, south, east, north]
+    image_data=None,  # numpy array or image URL string
+    bounds=None,  # [west, south, east, north]
+    tile_url: str = None,  # XYZ tile URL with {z}/{x}/{y}
     config: dict = None,
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     basemap: str = "dark",
 ):
     """
-    Render a georeferenced raster image using Mapbox GL's native image source.
+    Render raster data on a map - either a static image or XYZ tiles.
     
     Args:
-        image_data: numpy array (H, W, 3 or 4) or image URL string
-        bounds: [west, south, east, north] geographic bounds
+        image_data: numpy array (H, W, 3 or 4) or image URL string (for static image)
+        bounds: [west, south, east, north] geographic bounds (for static image)
+        tile_url: XYZ tile URL with {z}/{x}/{y} placeholders (for tiled raster)
         config: Optional dict with initialViewState and rasterLayer config
         mapbox_token: Mapbox access token
         basemap: 'dark', 'satellite', 'light', or 'streets'
     
     Returns:
         HTML object for rendering
+    
+    Examples:
+        # Static image
+        deckgl_raster(image_array, bounds=[-122.5, 37.7, -122.3, 37.9])
+        
+        # Tiled raster
+        deckgl_raster(tile_url="https://udf.ai/my_udf/run/tiles/{z}/{x}/{y}?dtype_out_raster=png")
     """
     from jinja2 import Template
     import json
@@ -2627,7 +2636,80 @@ def deckgl_raster(
     }
     style_url = basemap_styles.get(basemap.lower(), basemap_styles["dark"])
     
-    # Default config
+    # Handle tiled raster mode
+    if tile_url is not None:
+        from jinja2 import Template
+        
+        # Get view settings from config
+        view = (config or {}).get("initialViewState", {})
+        center = [view.get("longitude", 0), view.get("latitude", 0)]
+        zoom = view.get("zoom", 2)
+        
+        html = Template(r"""
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no"/>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet"/>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
+  <style>html,body{margin:0;height:100%}#map{position:absolute;inset:0}</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+mapboxgl.accessToken = {{ mapbox_token | tojson }};
+const map = new mapboxgl.Map({
+  container: 'map',
+  style: {{ style_url | tojson }},
+  center: {{ center | tojson }},
+  zoom: {{ zoom }},
+  projection: 'mercator'
+});
+
+map.on('load', () => {
+  console.log('[raster] Adding source with URL:', {{ tile_url | tojson }});
+  map.addSource('raster-tiles', {
+    type: 'raster',
+    tiles: [{{ tile_url | tojson }}],
+    tileSize: 256
+  });
+  
+  map.addLayer({
+    id: 'raster-tiles-layer',
+    type: 'raster',
+    source: 'raster-tiles'
+  });
+});
+
+map.on('error', (e) => {
+  console.error('[raster] Map error:', e.error?.message || e.error || e);
+  if (e.tile) console.error('[raster] Failed tile:', e.tile.tileID?.canonical);
+  if (e.source) console.error('[raster] Source:', e.sourceId);
+});
+
+map.on('sourcedataloading', (e) => {
+  if (e.sourceId === 'raster-tiles') console.log('[raster] Loading tiles...');
+});
+
+map.on('sourcedata', (e) => {
+  if (e.sourceId === 'raster-tiles' && e.isSourceLoaded) console.log('[raster] Tiles loaded!');
+});
+</script>
+</body>
+</html>
+""").render(
+            mapbox_token=mapbox_token,
+            tile_url=tile_url,
+            style_url=style_url,
+            center=center,
+            zoom=zoom,
+        )
+        
+        common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
+        return common.html_to_obj(html)
+    
+    # Default config for static image mode
     DEFAULT_RASTER_CONFIG = {
         "initialViewState": {
             "longitude": None,
