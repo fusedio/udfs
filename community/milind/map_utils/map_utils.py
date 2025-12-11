@@ -730,6 +730,10 @@ def deckgl_layers(
         <label class="debug-checkbox"><input type="checkbox" id="dbg-filled" checked /> Filled</label>
         <label class="debug-checkbox"><input type="checkbox" id="dbg-extruded" /> Extruded</label>
         <div class="debug-row" style="margin-top:6px;">
+          <span class="debug-label">Height Scale</span>
+          <input type="number" class="debug-input" id="dbg-height-scale" step="0.1" min="0.1" max="1000" value="1" />
+        </div>
+        <div class="debug-row" style="margin-top:6px;">
           <span class="debug-label">Opacity</span>
           <input type="number" class="debug-input" id="dbg-opacity" step="0.1" min="0" max="1" value="0.8" />
         </div>
@@ -2240,6 +2244,7 @@ def deckgl_layers(
       steps: 7,
       filled: true,
       extruded: false,
+      heightScale: 1,
       opacity: 0.8
     };
     
@@ -2351,6 +2356,7 @@ def deckgl_layers(
         hexLayer: {
           filled: debugState.filled,
           extruded: debugState.extruded,
+          ...(debugState.extruded ? { elevationScale: debugState.heightScale } : {}),
           opacity: debugState.opacity,
           getFillColor: {
             '@@function': 'colorContinuous',
@@ -2405,6 +2411,7 @@ def deckgl_layers(
       debugState.steps = parseInt(document.getElementById('dbg-steps').value) || 7;
       debugState.filled = document.getElementById('dbg-filled').checked;
       debugState.extruded = document.getElementById('dbg-extruded').checked;
+      debugState.heightScale = parseFloat(document.getElementById('dbg-height-scale').value) || 1;
       debugState.opacity = parseFloat(document.getElementById('dbg-opacity').value) || 0.8;
       
       // Update config output
@@ -2463,7 +2470,7 @@ def deckgl_layers(
                 source: l.id,
                 paint: {
                   'fill-extrusion-color': colorExpr || 'rgba(0,144,255,0.7)',
-                  'fill-extrusion-height': ['*', ['get', debugState.attr], 1],
+                  'fill-extrusion-height': ['*', ['get', debugState.attr], debugState.heightScale],
                   'fill-extrusion-base': 0,
                   'fill-extrusion-opacity': debugState.opacity
                 }
@@ -2471,6 +2478,7 @@ def deckgl_layers(
             } else if (map.getLayer(extrusionLayerId)) {
               map.setLayoutProperty(extrusionLayerId, 'visibility', 'visible');
               map.setPaintProperty(extrusionLayerId, 'fill-extrusion-color', colorExpr || 'rgba(0,144,255,0.7)');
+              map.setPaintProperty(extrusionLayerId, 'fill-extrusion-height', ['*', ['get', debugState.attr], debugState.heightScale]);
               map.setPaintProperty(extrusionLayerId, 'fill-extrusion-opacity', debugState.opacity);
             }
           } else {
@@ -2529,6 +2537,9 @@ def deckgl_layers(
       
       document.getElementById('dbg-opacity')?.addEventListener('input', scheduleLayerUpdate);
       document.getElementById('dbg-opacity')?.addEventListener('change', applyLayerChanges);
+      
+      document.getElementById('dbg-height-scale')?.addEventListener('input', scheduleLayerUpdate);
+      document.getElementById('dbg-height-scale')?.addEventListener('change', applyLayerChanges);
     });
     {% endif %}
   </script>
@@ -3020,9 +3031,9 @@ def enable_location_listener(html_input, channel: str = "fused-bus", zoom_offset
           }}
           
           try {{
-            map.fitBounds(
-              [[west, south], [east, north]],
-              {{
+          map.fitBounds(
+            [[west, south], [east, north]],
+            {{
                 padding: adaptivePadding,
                 duration: 800,
                 maxZoom: MAX_ZOOM
