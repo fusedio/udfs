@@ -697,6 +697,10 @@ def deckgl_layers(
     .debug-color-label { font-size: 10px; color: #666; font-family: 'SF Mono', Consolas, monospace; }
     .debug-copy-btn { float: right; background: #333; border: none; color: #888; font-size: 9px; padding: 2px 6px; border-radius: 3px; cursor: pointer; }
     .debug-copy-btn:hover { background: #444; color: #bbb; }
+    .debug-checklist { display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow: auto; padding: 2px 0; }
+    .debug-check { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #bbb; }
+    .debug-check input { width: 14px; height: 14px; accent-color: #666; }
+    .debug-check code { font-family: 'SF Mono', Consolas, monospace; font-size: 10px; color: #aaa; }
     .debug-output { width: 100%; min-height: 120px; resize: vertical; background: #111; color: #aaa; border: 1px solid #333; border-radius: 4px; padding: 8px; font-family: 'SF Mono', Consolas, monospace; font-size: 10px; line-height: 1.4; }
   </style>
 </head>
@@ -880,6 +884,12 @@ def deckgl_layers(
           <span class="debug-label">Elev. Scale</span>
           <input type="number" class="debug-input" id="dbg-height-scale" step="1" min="0" max="100000" value="10" />
         </div>
+      </div>
+
+      <!-- Tooltip -->
+      <div class="debug-section" id="tooltip-section">
+        <div class="debug-section-title">Tooltip Columns</div>
+        <div id="dbg-tooltip-cols" class="debug-checklist"></div>
       </div>
       
       <!-- Config Output -->
@@ -1931,7 +1941,7 @@ def deckgl_layers(
           } else {
             layerIds.push(`${l.id}-fill`);
           }
-          layerIds.push(`${l.id}-outline`);
+          if (cfg.stroked !== false) layerIds.push(`${l.id}-outline`);
         } else if (l.layerType === 'vector') {
           layerIds.push(`${l.id}-fill`, `${l.id}-outline`, `${l.id}-circle`, `${l.id}-line`);
         } else if (l.layerType === 'mvt') {
@@ -2004,9 +2014,19 @@ def deckgl_layers(
         
         if (bestFeature.type === 'mapbox') {
           const p = bestFeature.feature.properties;
-          lines = cols.length 
-            ? cols.map(k => p[k] != null ? `<span class="tt-row"><span class="tt-key">${k}</span><span class="tt-val">${typeof p[k]==='number'?p[k].toFixed(2):p[k]}</span></span>` : '').filter(Boolean) 
-            : (p.hex ? [`<span class="tt-row"><span class="tt-key">hex</span><span class="tt-val">${p.hex.slice(0,12)}...</span></span>`] : Object.keys(p).slice(0, 5).map(k => `<span class="tt-row"><span class="tt-key">${k}</span><span class="tt-val">${p[k]}</span></span>`));
+          if (p?.hex) {
+            lines.push(`<span class="tt-row"><span class="tt-key">hex</span><span class="tt-val">${String(p.hex).slice(0,12)}...</span></span>`);
+          }
+          if (cols.length) {
+            cols.forEach(k => {
+              if (k === 'hex') return;
+              if (p?.[k] == null) return;
+              const v = p[k];
+              lines.push(`<span class="tt-row"><span class="tt-key">${k}</span><span class="tt-val">${typeof v==='number'?v.toFixed(2):v}</span></span>`);
+            });
+          } else if (!lines.length) {
+            lines = Object.keys(p || {}).slice(0, 5).map(k => `<span class="tt-row"><span class="tt-key">${k}</span><span class="tt-val">${p[k]}</span></span>`);
+          }
         } else {
           // Deck.gl tile layer
           const obj = bestFeature.object;
@@ -2017,6 +2037,7 @@ def deckgl_layers(
             
             if (cols.length) {
               cols.forEach(col => {
+                if (col === 'hex') return;
                 const val = p[col] ?? obj[col];
                 if (val !== undefined && val !== null) {
                   lines.push(`<span class="tt-row"><span class="tt-key">${col}</span><span class="tt-val">${typeof val === 'number' ? val.toFixed(2) : val}</span></span>`);
@@ -2344,7 +2365,10 @@ def deckgl_layers(
       
       // Elevation
       heightAttr: 'metric',
-      elevationScale: 10
+      elevationScale: 10,
+
+      // Tooltip
+      tooltipColumns: []
     };
     
     function toggleDebugPanel() {
@@ -2527,6 +2551,7 @@ def deckgl_layers(
     // Populate all attribute dropdowns
     function populateAttrDropdown() {
       const attrs = new Set();
+      const tooltipKeys = new Set();
       
       // For tile layers, get attrs from cached tile data
       Object.values(TILE_DATA_STORE || {}).forEach(layerTiles => {
@@ -2536,6 +2561,7 @@ def deckgl_layers(
               if (k !== 'hex' && k !== 'h3' && k !== 'properties') {
                 const val = d?.properties?.[k] ?? d?.[k];
                 if (typeof val === 'number') attrs.add(k);
+                tooltipKeys.add(k);
               }
             });
           });
@@ -2548,6 +2574,7 @@ def deckgl_layers(
         data.forEach(d => {
           Object.keys(d || {}).forEach(k => {
             if (k !== 'hex' && k !== 'h3' && typeof d[k] === 'number') attrs.add(k);
+            if (k !== 'hex' && k !== 'h3') tooltipKeys.add(k);
           });
         });
       });
@@ -2677,6 +2704,32 @@ def deckgl_layers(
         updateSectionVisibility();
         updateFillFnOptions();
         updateLineFnOptions();
+
+        // Tooltip columns UI
+        const tooltipContainer = document.getElementById('dbg-tooltip-cols');
+        if (tooltipContainer) {
+          const initialCols = (cfg.tooltipColumns || cfg.tooltipAttrs || firstLayer.tooltipColumns || []).filter(Boolean);
+          const allCols = [...tooltipKeys]
+            .filter(k => k && !['geometry', '_fused_idx', 'properties'].includes(k))
+            .sort();
+
+          debugState.tooltipColumns = initialCols.length ? initialCols : allCols.slice(0, 6);
+          tooltipContainer.innerHTML = allCols.map(k => {
+            const checked = debugState.tooltipColumns.includes(k) ? 'checked' : '';
+            return `<label class="debug-check"><input type="checkbox" data-tooltip-col="${k}" ${checked} /><code>${k}</code></label>`;
+          }).join('');
+
+          tooltipContainer.querySelectorAll('input[type="checkbox"][data-tooltip-col]').forEach(cb => {
+            cb.addEventListener('change', scheduleLayerUpdate);
+          });
+
+          // Apply initial tooltip selection immediately (so tooltips work before the user edits anything)
+          LAYERS_DATA.forEach(l => {
+            l.tooltipColumns = debugState.tooltipColumns;
+            if (l.hexLayer) l.hexLayer.tooltipColumns = debugState.tooltipColumns;
+            if (l.vectorLayer) l.vectorLayer.tooltipColumns = debugState.tooltipColumns;
+          });
+        }
       }
     }
     
@@ -2741,7 +2794,8 @@ def deckgl_layers(
           ...(debugState.extruded ? { 
             elevationScale: debugState.elevationScale,
             getElevation: `@@=properties.${debugState.heightAttr}`
-          } : {})
+          } : {}),
+          ...(debugState.tooltipColumns?.length ? { tooltipColumns: debugState.tooltipColumns } : {})
         }
       };
       
@@ -2819,6 +2873,13 @@ def deckgl_layers(
       // Elevation
       debugState.heightAttr = getVal('dbg-height-attr', debugState.fillAttr);
       debugState.elevationScale = getNum('dbg-height-scale', 10);
+
+      // Tooltip columns (multi-select)
+      const tooltipCols = [];
+      document.querySelectorAll('#dbg-tooltip-cols input[type="checkbox"][data-tooltip-col]').forEach(cb => {
+        if (cb.checked) tooltipCols.push(cb.getAttribute('data-tooltip-col'));
+      });
+      debugState.tooltipColumns = tooltipCols;
       
       // Update section visibility
       updateSectionVisibility();
@@ -2866,6 +2927,9 @@ def deckgl_layers(
       
       // Update LAYERS_DATA with new config
       LAYERS_DATA.forEach(l => {
+        // Tooltip reads `layerDef.tooltipColumns` (top-level), so keep it in sync for ALL layer types.
+        l.tooltipColumns = debugState.tooltipColumns;
+
         if (l.hexLayer) {
           l.hexLayer.pickable = debugState.pickable;
           l.hexLayer.filled = debugState.filled;
@@ -2877,6 +2941,7 @@ def deckgl_layers(
           l.hexLayer.getLineColor = lineColorCfg;
           l.hexLayer.lineWidthMinPixels = debugState.lineWidth;
           l.hexLayer.elevationScale = debugState.elevationScale;
+          l.hexLayer.tooltipColumns = debugState.tooltipColumns;
         }
 
         // Also apply to vector layers (so debug panel works even when the layer is GeoJSON/vector)
@@ -2887,6 +2952,7 @@ def deckgl_layers(
           l.vectorLayer.getFillColor = fillColorCfg;
           l.vectorLayer.getLineColor = lineColorCfg;
           l.vectorLayer.lineWidthMinPixels = debugState.lineWidth;
+          l.vectorLayer.tooltipColumns = debugState.tooltipColumns;
         }
 
         // Keep processed vector fields in sync (used by addAllLayers())
@@ -2895,6 +2961,7 @@ def deckgl_layers(
           l.isStroked = debugState.stroked;
         l.opacity = debugState.opacity;
           l.lineWidth = debugState.lineWidth;
+          l.tooltipColumns = debugState.tooltipColumns;
 
           if (fillColorCfg && typeof fillColorCfg === 'object' && !Array.isArray(fillColorCfg) && fillColorCfg['@@function']) {
             l.fillColorConfig = fillColorCfg;
