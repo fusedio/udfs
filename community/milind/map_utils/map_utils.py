@@ -655,11 +655,13 @@ def deckgl_layers(
     @keyframes spin { to { transform: rotate(360deg); } }
     
     /* Debug Panel - Minimal */
-    #debug-panel { position: fixed; left: 0; top: 0; width: 280px; height: 100%; background: rgba(24,24,24,0.98); border-right: 1px solid #333; transform: translateX(0); transition: transform 0.2s ease; z-index: 199; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    #debug-shell { position: fixed; left: 0; top: 0; height: 100%; z-index: 200; --debug-panel-w: 280px; }
+    #debug-panel { position: fixed; left: 0; top: 0; width: 280px; min-width: 240px; max-width: 520px; height: 100%; background: rgba(24,24,24,0.98); border-right: 1px solid #333; transform: translateX(0); transition: transform 0.2s ease; z-index: 199; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow: hidden; }
     #debug-panel, #debug-panel * { box-sizing: border-box; }
+    #debug-resize-handle { position: absolute; top: 0; right: 0; width: 8px; height: 100%; cursor: col-resize; background: transparent; }
+    #debug-resize-handle:hover { background: rgba(255,255,255,0.05); }
     #debug-panel.collapsed { transform: translateX(-100%); }
-    #debug-toggle { position: fixed; top: 12px; width: 24px; height: 48px; background: rgba(30,30,30,0.9); border: 1px solid #333; border-left: none; border-radius: 0 6px 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #888; font-size: 14px; z-index: 200; transition: left 0.2s ease, background 0.15s, color 0.15s; left: 280px; }
-    #debug-panel.collapsed + #debug-toggle { left: 0; }
+    #debug-toggle { position: fixed; top: 12px; width: 24px; height: 48px; background: rgba(30,30,30,0.9); border: 1px solid #333; border-left: none; border-radius: 0 6px 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #888; font-size: 14px; z-index: 200; transition: background 0.15s, color 0.15s; left: var(--debug-panel-w, 280px); }
     #debug-toggle:hover { background: rgba(50,50,50,0.95); color: #ccc; }
     #debug-content { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
     .debug-section { background: rgba(40,40,40,0.6); border: 1px solid #333; border-radius: 6px; padding: 10px; }
@@ -726,6 +728,7 @@ def deckgl_layers(
 
   {% if debug %}
   <!-- Debug Panel -->
+  <div id="debug-shell">
   <div id="debug-panel">
     <div id="debug-content">
       <!-- View State -->
@@ -898,8 +901,10 @@ def deckgl_layers(
         <textarea id="dbg-output" class="debug-output" readonly></textarea>
       </div>
     </div>
+    <div id="debug-resize-handle" title="Drag to resize"></div>
   </div>
   <div id="debug-toggle" onclick="toggleDebugPanel()">&#x2039;</div>
+  </div>
   {% endif %}
 
   <script>
@@ -2381,6 +2386,21 @@ def deckgl_layers(
         panel.classList.add('collapsed');
         toggle.innerHTML = '&#x203a;';
       }
+      // Keep toggle pinned to the panel edge
+      updateDebugTogglePosition();
+    }
+
+    function updateDebugTogglePosition() {
+      const panel = document.getElementById('debug-panel');
+      const toggle = document.getElementById('debug-toggle');
+      const shell = document.getElementById('debug-shell');
+      if (!panel || !toggle) return;
+      if (panel.classList.contains('collapsed')) {
+        if (shell) shell.style.setProperty('--debug-panel-w', '0px');
+      } else {
+        const w = panel.getBoundingClientRect().width;
+        if (shell) shell.style.setProperty('--debug-panel-w', `${w}px`);
+      }
     }
     
     // Toggle section visibility based on checkboxes
@@ -3075,6 +3095,42 @@ def deckgl_layers(
       updateSectionVisibility();
       updateFillFnOptions();
       updateLineFnOptions();
+
+      // Resizable debug panel (right-edge grab handle)
+      updateDebugTogglePosition();
+      const panel = document.getElementById('debug-panel');
+      const handle = document.getElementById('debug-resize-handle');
+      if (panel && handle) {
+        const minW = 240;
+        const maxW = 520;
+        let dragging = false;
+        let startX = 0;
+        let startW = 0;
+
+        const onMove = (e) => {
+          if (!dragging) return;
+          const dx = e.clientX - startX;
+          const next = Math.max(minW, Math.min(maxW, startW + dx));
+          panel.style.width = `${next}px`;
+          updateDebugTogglePosition();
+        };
+        const onUp = () => {
+          if (!dragging) return;
+          dragging = false;
+          document.body.style.userSelect = '';
+          window.removeEventListener('mousemove', onMove);
+          window.removeEventListener('mouseup', onUp);
+        };
+        handle.addEventListener('mousedown', (e) => {
+          if (panel.classList.contains('collapsed')) return;
+          dragging = true;
+          startX = e.clientX;
+          startW = panel.getBoundingClientRect().width;
+          document.body.style.userSelect = 'none';
+          window.addEventListener('mousemove', onMove);
+          window.addEventListener('mouseup', onUp);
+        });
+      }
     });
     {% endif %}
   </script>
