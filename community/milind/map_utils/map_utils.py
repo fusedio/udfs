@@ -388,7 +388,6 @@ def deckgl_layers(
                 height_property = vector_layer.get("heightProperty", "height")
                 height_multiplier = vector_layer.get("heightMultiplier", 1)
                 extrusion_opacity = vector_layer.get("extrusionOpacity", 0.9)
-                color_scale = vector_layer.get("colorScale")
                 
                 minzoom = vector_layer.get("minzoom", 0)
                 maxzoom = vector_layer.get("maxzoom", 22)
@@ -416,7 +415,6 @@ def deckgl_layers(
                     "extrusionOpacity": extrusion_opacity,
                     "heightProperty": height_property,
                     "heightMultiplier": height_multiplier,
-                    "colorScale": color_scale,
                     "tooltipColumns": tooltip_cols,
                     "visible": True,
                 })
@@ -669,8 +667,9 @@ def deckgl_layers(
     .debug-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
     .debug-row:last-child { margin-bottom: 0; }
     .debug-label { font-size: 11px; color: #999; min-width: 70px; }
-    .debug-input { flex: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; }
+    .debug-input { flex: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; -moz-appearance: textfield; }
     .debug-input:focus { border-color: #555; }
+    .debug-input::-webkit-outer-spin-button, .debug-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .debug-select { flex: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; cursor: pointer; }
     .debug-select:focus { border-color: #555; }
     .debug-checkbox { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #999; cursor: pointer; }
@@ -1483,12 +1482,6 @@ def deckgl_layers(
               ? ['*', ['coalesce', ['get', l.heightProperty], ['get', 'h'], 10], l.heightMultiplier || 1]
               : 10;
             
-            let colorExpr = fillColorExpr;
-            if (l.colorScale && Array.isArray(l.colorScale) && l.colorScale.length > 0) {
-              colorExpr = ['interpolate', ['linear'], ['coalesce', ['get', l.heightProperty], ['get', 'h'], 10]];
-              l.colorScale.forEach(s => { colorExpr.push(s.height); colorExpr.push(s.color); });
-            }
-            
             map.addLayer({
               id: `${l.id}-extrusion`,
               type: 'fill-extrusion',
@@ -1496,7 +1489,7 @@ def deckgl_layers(
               'source-layer': l.sourceLayer || 'udf',
               minzoom: l.minzoom || 0,
               paint: {
-                'fill-extrusion-color': colorExpr,
+                'fill-extrusion-color': fillColorExpr,
                 'fill-extrusion-height': heightExpr,
                 'fill-extrusion-base': 0,
                 'fill-extrusion-opacity': l.extrusionOpacity || 0.9,
@@ -1912,57 +1905,15 @@ def deckgl_layers(
     }
 
     map.on('load', tryInit);
-    map.on('load', () => { [100, 500, 1000].forEach(t => setTimeout(() => map.resize(), t)); });
+    map.on('load', () => setTimeout(() => map.resize(), 200));
     window.addEventListener('resize', () => map.resize());
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => map.resize(), 100); });
-    
-    {% if has_mvt_layers %}
-    // MVT tile loading indicator
-    const mvtSources = new Set(LAYERS_DATA.filter(l => l.layerType === 'mvt').map(l => l.id));
-    let mvtLoading = new Set();
-    
-    map.on('sourcedataloading', (e) => {
-      if (mvtSources.has(e.sourceId) && e.tile) {
-        const key = `${e.sourceId}-${e.tile.tileID?.canonical?.key || ''}`;
-        if (!mvtLoading.has(key)) {
-          mvtLoading.add(key);
-          updateTileLoader(1);
-        }
-      }
-    });
-    
-    map.on('sourcedata', (e) => {
-      if (mvtSources.has(e.sourceId) && e.tile && e.isSourceLoaded) {
-        const key = `${e.sourceId}-${e.tile.tileID?.canonical?.key || ''}`;
-        if (mvtLoading.has(key)) {
-          mvtLoading.delete(key);
-          updateTileLoader(-1);
-        }
-      }
-    });
-    
-    // Also track full source loading state
-    map.on('idle', () => {
-      if (mvtLoading.size > 0) {
-        mvtLoading.clear();
-        updateTileLoader(-tilesCurrentlyLoading);
-      }
-    });
-    {% endif %}
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) map.resize(); });
     
     {% if highlight_on_click %}
     // Click-to-highlight (hex and vector)
     (function() {
       const HL_FILL = 'rgba(255,255,0,0.3)', HL_LINE = 'rgba(255,255,0,1)', HL_LW = 3;
       let selected = null, added = false;
-      
-      function toH3(hex) {
-        if (!hex) return null;
-        try {
-          if (typeof hex === 'string') return /^\d+$/.test(hex) ? BigInt(hex).toString(16) : hex.toLowerCase();
-          return BigInt(Math.trunc(hex)).toString(16);
-        } catch(e) { return null; }
-      }
       
       // Find original unclipped geometry using _fused_idx
       function findOriginalFeature(clickedFeature, layerId) {
@@ -2029,14 +1980,13 @@ def deckgl_layers(
       
       function getLayers() {
         const layers = [];
-        if (typeof LAYERS_DATA !== 'undefined') LAYERS_DATA.forEach(l => {
+        LAYERS_DATA.forEach(l => {
           if (l.isTileLayer) return;
           const ids = l.layerType === 'vector' 
             ? [`${l.id}-fill`, `${l.id}-circle`, `${l.id}-line`]
             : [l.hexLayer?.extruded ? `${l.id}-extrusion` : `${l.id}-fill`];
           ids.forEach(id => { try { if (map.getLayer(id)) layers.push(id); } catch(e){} });
         });
-        ['gdf-fill','gdf-circle','hex-fill'].forEach(id => { try { if (map.getLayer(id)) layers.push(id); } catch(e){} });
         return layers;
       }
       
@@ -2147,15 +2097,6 @@ def deckgl_layers(
             }
           });
         }
-        
-        // Fallback: legacy single-layer IDs
-        ['gdf-fill', 'gdf-circle', 'hex-fill'].forEach(id => {
-          try {
-            if (map.getLayer(id) && !layerIds.includes(id)) {
-              layerIds.push(id);
-            }
-          } catch(e) {}
-        });
         
         return layerIds;
       }
