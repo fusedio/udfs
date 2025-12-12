@@ -162,7 +162,7 @@ def udf(
     config["initialViewState"] = view_state
 
     layers = [{"type": "vector", "data": gdf, "config": config, "name": "Sample Points"}]
-    return deckgl_layers(layers=layers)
+    return deckgl_layers(layers=layers, debug=True)
 
 
 
@@ -660,7 +660,7 @@ def deckgl_layers(
     /* Debug Panel - Minimal */
     #debug-panel { position: fixed; left: 0; top: 0; width: 280px; height: 100%; background: rgba(24,24,24,0.98); border-right: 1px solid #333; transform: translateX(0); transition: transform 0.2s ease; z-index: 199; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     #debug-panel.collapsed { transform: translateX(-100%); }
-    #debug-toggle { position: fixed; top: 50%; width: 24px; height: 48px; background: rgba(30,30,30,0.9); border: 1px solid #333; border-left: none; border-radius: 0 6px 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #888; font-size: 14px; z-index: 200; transition: left 0.2s ease, background 0.15s, color 0.15s; transform: translateY(-50%); left: 280px; }
+    #debug-toggle { position: fixed; top: 12px; width: 24px; height: 48px; background: rgba(30,30,30,0.9); border: 1px solid #333; border-left: none; border-radius: 0 6px 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #888; font-size: 14px; z-index: 200; transition: left 0.2s ease, background 0.15s, color 0.15s; left: 280px; }
     #debug-panel.collapsed + #debug-toggle { left: 0; }
     #debug-toggle:hover { background: rgba(50,50,50,0.95); color: #ccc; }
     #debug-content { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
@@ -2261,7 +2261,10 @@ def deckgl_layers(
     }
     
     // Debug panel - update view state from map
+    let debugUpdatingMap = false;  // Flag to prevent feedback loop
+    
     function syncDebugFromMap() {
+      if (debugUpdatingMap) return;  // Skip if we're the ones moving the map
       const center = map.getCenter();
       document.getElementById('dbg-lng').value = center.lng.toFixed(4);
       document.getElementById('dbg-lat').value = center.lat.toFixed(4);
@@ -2309,15 +2312,25 @@ def deckgl_layers(
       const firstLayer = LAYERS_DATA[0];
       if (firstLayer) {
         const cfg = firstLayer.hexLayer || firstLayer.vectorLayer || {};
-        const colorCfg = cfg.getFillColor || {};
-        if (colorCfg.attr) {
+        const colorCfg = cfg.getFillColor || firstLayer.fillColorConfig || {};
+        
+        // Set attr from config or use first available numeric attr
+        if (colorCfg.attr && [...attrs].includes(colorCfg.attr)) {
           select.value = colorCfg.attr;
           debugState.attr = colorCfg.attr;
+        } else if (attrs.size > 0) {
+          const firstAttr = [...attrs].sort()[0];
+          select.value = firstAttr;
+          debugState.attr = firstAttr;
         }
+        
         if (colorCfg.colors) {
           document.getElementById('dbg-palette').value = colorCfg.colors;
           debugState.palette = colorCfg.colors;
         }
+        
+        // Auto-detect domain from data if not specified
+        const layerData = firstLayer.data || (firstLayer.geojson?.features?.map(f => f.properties) || []);
         if (colorCfg.domain) {
           const minVal = Math.min(...colorCfg.domain);
           const maxVal = Math.max(...colorCfg.domain);
@@ -2325,6 +2338,17 @@ def deckgl_layers(
           document.getElementById('dbg-domain-max').value = maxVal;
           debugState.domainMin = minVal;
           debugState.domainMax = maxVal;
+        } else if (layerData.length > 0 && debugState.attr) {
+          // Auto-compute domain from data
+          const vals = layerData.map(d => d[debugState.attr]).filter(v => typeof v === 'number' && isFinite(v));
+          if (vals.length > 0) {
+            const minVal = Math.min(...vals);
+            const maxVal = Math.max(...vals);
+            document.getElementById('dbg-domain-min').value = minVal.toFixed(1);
+            document.getElementById('dbg-domain-max').value = maxVal.toFixed(1);
+          debugState.domainMin = minVal;
+          debugState.domainMax = maxVal;
+          }
         }
         if (colorCfg.steps) {
           document.getElementById('dbg-steps').value = colorCfg.steps;
@@ -2392,11 +2416,15 @@ def deckgl_layers(
       const lng = parseFloat(document.getElementById('dbg-lng').value);
       const lat = parseFloat(document.getElementById('dbg-lat').value);
       const zoom = parseFloat(document.getElementById('dbg-zoom').value);
-      const pitch = parseInt(document.getElementById('dbg-pitch').value);
-      const bearing = parseInt(document.getElementById('dbg-bearing').value);
+      const pitch = parseInt(document.getElementById('dbg-pitch').value) || 0;
+      const bearing = parseInt(document.getElementById('dbg-bearing').value) || 0;
       
-      if (!isNaN(lng) && !isNaN(lat)) {
-        map.easeTo({ center: [lng, lat], zoom, pitch, bearing, duration: 300 });
+      if (!isNaN(lng) && !isNaN(lat) && !isNaN(zoom)) {
+        // Set flag to prevent syncDebugFromMap from overwriting our inputs
+        debugUpdatingMap = true;
+        map.jumpTo({ center: [lng, lat], zoom, pitch, bearing });
+        // Clear flag after a short delay
+        setTimeout(() => { debugUpdatingMap = false; }, 100);
       }
       updateConfigOutput();
     }
@@ -2417,20 +2445,30 @@ def deckgl_layers(
       // Update config output
       updateConfigOutput();
       
-      // Update LAYERS_DATA with new config
+      // Update LAYERS_DATA with new config (hex and vector layers)
       LAYERS_DATA.forEach(l => {
-        if (l.hexLayer) {
-          l.hexLayer.filled = debugState.filled;
-          l.hexLayer.extruded = debugState.extruded;
-          l.hexLayer.opacity = debugState.opacity;
-          l.hexLayer.getFillColor = {
+        const colorCfg = {
             '@@function': 'colorContinuous',
             attr: debugState.attr,
             domain: [debugState.domainMin, debugState.domainMax],
             colors: debugState.palette,
             steps: debugState.steps
           };
+        
+        if (l.hexLayer) {
+          l.hexLayer.filled = debugState.filled;
+          l.hexLayer.extruded = debugState.extruded;
+          l.hexLayer.opacity = debugState.opacity;
+          l.hexLayer.getFillColor = colorCfg;
         }
+        if (l.vectorLayer) {
+          l.vectorLayer.filled = debugState.filled;
+          l.vectorLayer.opacity = debugState.opacity;
+          l.vectorLayer.getFillColor = colorCfg;
+        }
+        // Also update the processed layer's fill config
+        l.fillColorConfig = colorCfg;
+        l.opacity = debugState.opacity;
       });
       
       // For tile layers: rebuild Deck.gl overlay
@@ -2445,7 +2483,11 @@ def deckgl_layers(
         if (l.isTileLayer) return;
         
         const fillLayerId = `${l.id}-fill`;
+        const circleLayerId = `${l.id}-circle`;
         const extrusionLayerId = `${l.id}-extrusion`;
+        
+        // Get data for color expression - handle both hex and vector layers
+        const layerData = l.data || (l.geojson?.features?.map(f => f.properties) || []);
         
         // Build new color expression
         const colorExpr = buildColorExpr({
@@ -2454,12 +2496,12 @@ def deckgl_layers(
           domain: [debugState.domainMin, debugState.domainMax],
           colors: debugState.palette,
           steps: debugState.steps
-        }, l.data || []);
+        }, layerData);
         
         try {
           // Handle extruded vs flat
-          if (debugState.extruded) {
-            // Remove flat fill if exists, add extrusion
+          if (debugState.extruded && l.layerType !== 'vector') {
+            // Extrusion only for hex layers
             if (map.getLayer(fillLayerId)) {
               map.setLayoutProperty(fillLayerId, 'visibility', 'none');
             }
@@ -2482,14 +2524,22 @@ def deckgl_layers(
               map.setPaintProperty(extrusionLayerId, 'fill-extrusion-opacity', debugState.opacity);
             }
           } else {
-            // Show flat fill, hide extrusion
+            // Flat layers (fill, circle)
             if (map.getLayer(extrusionLayerId)) {
               map.setLayoutProperty(extrusionLayerId, 'visibility', 'none');
             }
+            
+            // Update fill layer (polygons)
             if (map.getLayer(fillLayerId)) {
               map.setLayoutProperty(fillLayerId, 'visibility', debugState.filled ? 'visible' : 'none');
               if (colorExpr) map.setPaintProperty(fillLayerId, 'fill-color', colorExpr);
               map.setPaintProperty(fillLayerId, 'fill-opacity', debugState.opacity);
+            }
+            
+            // Update circle layer (points) - for vector layers
+            if (map.getLayer(circleLayerId)) {
+              if (colorExpr) map.setPaintProperty(circleLayerId, 'circle-color', colorExpr);
+              map.setPaintProperty(circleLayerId, 'circle-opacity', debugState.opacity);
             }
           }
         } catch(e) {
@@ -2520,8 +2570,14 @@ def deckgl_layers(
       // Sync on map move
       map.on('moveend', syncDebugFromMap);
       
-      // Bind view inputs
+      // Bind view inputs - instant feedback on input
+      let viewUpdateTimeout = null;
+      function scheduleViewUpdate() {
+        clearTimeout(viewUpdateTimeout);
+        viewUpdateTimeout = setTimeout(applyViewChanges, 50);
+      }
       ['dbg-lng', 'dbg-lat', 'dbg-zoom', 'dbg-pitch', 'dbg-bearing'].forEach(id => {
+        document.getElementById(id)?.addEventListener('input', scheduleViewUpdate);
         document.getElementById(id)?.addEventListener('change', applyViewChanges);
       });
       
