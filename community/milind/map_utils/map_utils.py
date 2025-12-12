@@ -750,11 +750,6 @@ def deckgl_layers(
           <input type="range" class="debug-slider" id="dbg-opacity-slider" min="0" max="1" step="0.05" value="1" />
           <input type="number" class="debug-input debug-input-sm" id="dbg-opacity" step="0.1" min="0" max="1" value="1" />
         </div>
-        <div class="debug-row">
-          <span class="debug-label">Coverage</span>
-          <input type="range" class="debug-slider" id="dbg-coverage-slider" min="0" max="1" step="0.05" value="0.9" />
-          <input type="number" class="debug-input debug-input-sm" id="dbg-coverage" step="0.1" min="0" max="1" value="0.9" />
-      </div>
       </div>
       
       <!-- Fill Color -->
@@ -2464,13 +2459,11 @@ def deckgl_layers(
         debugState.stroked = (cfg.stroked ?? firstLayer.isStroked) !== false;
         debugState.extruded = cfg.extruded === true;
         
-        // Opacity & coverage
+        // Opacity
         setInput('dbg-opacity', cfg.opacity ?? firstLayer.opacity ?? 1);
         setInput('dbg-opacity-slider', cfg.opacity ?? firstLayer.opacity ?? 1);
-        setInput('dbg-coverage', cfg.coverage ?? 0.9);
-        setInput('dbg-coverage-slider', cfg.coverage ?? 0.9);
         debugState.opacity = cfg.opacity ?? firstLayer.opacity ?? 1;
-        debugState.coverage = cfg.coverage ?? 0.9;
+        // coverage control removed from debug UI (still supported via JSON config)
         
         // Fill color
         if (fillCfg['@@function']) {
@@ -2612,7 +2605,7 @@ def deckgl_layers(
           stroked: debugState.stroked,
           extruded: debugState.extruded,
           opacity: debugState.opacity,
-          coverage: debugState.coverage,
+          // coverage omitted from debug output (still supported via JSON config)
           ...(debugState.filled ? { getFillColor } : {}),
           ...(debugState.stroked ? { getLineColor, lineWidthMinPixels: debugState.lineWidth } : {}),
           ...(debugState.extruded ? { 
@@ -2672,7 +2665,7 @@ def deckgl_layers(
       debugState.stroked = getChecked('dbg-stroked');
       debugState.extruded = getChecked('dbg-extruded');
       debugState.opacity = getNum('dbg-opacity', 1);
-      debugState.coverage = getNum('dbg-coverage', 0.9);
+      // coverage control removed from debug UI (still supported via JSON config)
       
       // Fill color
       debugState.fillFn = getVal('dbg-fill-fn', 'colorContinuous');
@@ -2840,8 +2833,8 @@ def deckgl_layers(
         document.getElementById(id)?.addEventListener('change', applyLayerChanges);
       });
       
-      // Bind opacity and coverage inputs directly
-      ['dbg-opacity', 'dbg-coverage'].forEach(id => {
+      // Bind opacity input directly
+      ['dbg-opacity'].forEach(id => {
         document.getElementById(id)?.addEventListener('change', scheduleLayerUpdate);
         document.getElementById(id)?.addEventListener('input', scheduleLayerUpdate);
       });
@@ -2870,7 +2863,6 @@ def deckgl_layers(
       
       // Sync sliders with inputs
       syncSliderInput('dbg-opacity-slider', 'dbg-opacity');
-      syncSliderInput('dbg-coverage-slider', 'dbg-coverage');
       syncSliderInput('dbg-line-width-slider', 'dbg-line-width');
       
       // Sync color pickers with labels
