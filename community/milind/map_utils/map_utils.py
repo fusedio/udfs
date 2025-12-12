@@ -1966,98 +1966,99 @@ def deckgl_layers(
       // Unified tooltip handler that respects layer order from LAYERS_DATA
       // First layer in LAYERS_DATA = topmost on map
       map.on('mousemove', (e) => { 
-        let bestFeature = null;
-        let bestLayerDef = null;
+        let best = null;
         let bestLayerIndex = Infinity;
         
-        // Check static Mapbox layers
-        const queryIds = allQueryableLayers.map(x => x.layerId).filter(id => map.getLayer(id));
+        // 1) Mapbox layers
+        const queryIds = allQueryableLayers
+          .map(x => x.layerId)
+          .filter(id => map.getLayer(id));
         if (queryIds.length) {
         const features = map.queryRenderedFeatures(e.point, { layers: queryIds });
         for (const f of features) {
           const match = allQueryableLayers.find(x => x.layerId === f.layer.id);
-          if (match && layerVisibility[match.layerDef.id]) {
-              const layerIndex = LAYERS_DATA.findIndex(l => l.id === match.layerDef.id);
-              if (layerIndex !== -1 && layerIndex < bestLayerIndex) {
-                bestLayerIndex = layerIndex;
-                bestFeature = { type: 'mapbox', feature: f, layerDef: match.layerDef };
-              }
-              break; // Mapbox already returns in z-order, take first visible
+            if (!match) continue;
+            if (!layerVisibility[match.layerDef.id]) continue;
+
+            const idx = LAYERS_DATA.findIndex(l => l.id === match.layerDef.id);
+            if (idx !== -1 && idx < bestLayerIndex) {
+              bestLayerIndex = idx;
+              best = { type: 'mapbox', feature: f, layerDef: match.layerDef };
             }
+            break; // queryRenderedFeatures returns in z-order; take first visible
           }
         }
 
       {% if has_tile_layers %}
-        // Check Deck.gl tile layers
+        // 2) Deck.gl tile layers
         if (deckOverlay) {
         const info = deckOverlay.pickObject({ x: e.point.x, y: e.point.y, radius: 4 });
         if (info?.object) {
-          const layerId = info.layer?.id?.split('-tiles-')[0];
-          const layerDef = LAYERS_DATA.find(l => l.id === layerId || info.layer?.id?.startsWith(l.id));
+            const baseLayerId = info.layer?.id?.split('-tiles-')[0];
+            const layerDef = LAYERS_DATA.find(l => l.id === baseLayerId || info.layer?.id?.startsWith(l.id));
           if (layerDef && layerVisibility[layerDef.id]) {
-              const layerIndex = LAYERS_DATA.findIndex(l => l.id === layerDef.id);
-              if (layerIndex !== -1 && layerIndex < bestLayerIndex) {
-                bestLayerIndex = layerIndex;
-                bestFeature = { type: 'deck', object: info.object, layerDef };
+              const idx = LAYERS_DATA.findIndex(l => l.id === layerDef.id);
+              if (idx !== -1 && idx < bestLayerIndex) {
+                bestLayerIndex = idx;
+                best = { type: 'deck', object: info.object, layerDef };
               }
             }
           }
         }
         {% endif %}
         
-        // No feature found
-        if (!bestFeature) {
+        if (!best) {
           tt.style.display = 'none';
           map.getCanvas().style.cursor = '';
           return;
         }
         
             map.getCanvas().style.cursor = 'pointer';
-        const layerDef = bestFeature.layerDef;
+        const layerDef = best.layerDef;
             const cols = layerDef.tooltipColumns || [];
         let lines = [];
         
-        if (bestFeature.type === 'mapbox') {
-          const p = bestFeature.feature.properties;
-          if (p?.hex) {
+        if (best.type === 'mapbox') {
+          const p = best.feature?.properties || {};
+          if (p.hex != null) {
             lines.push(`<span class="tt-row"><span class="tt-key">hex</span><span class="tt-val">${String(p.hex).slice(0,12)}...</span></span>`);
           }
           if (cols.length) {
             cols.forEach(k => {
               if (k === 'hex') return;
-              if (p?.[k] == null) return;
               const v = p[k];
-              lines.push(`<span class="tt-row"><span class="tt-key">${k}</span><span class="tt-val">${typeof v==='number'?v.toFixed(2):v}</span></span>`);
+              if (v == null) return;
+              lines.push(`<span class="tt-row"><span class="tt-key">${k}</span><span class="tt-val">${typeof v === 'number' ? v.toFixed(2) : v}</span></span>`);
             });
           } else if (!lines.length) {
-            lines = Object.keys(p || {}).slice(0, 5).map(k => `<span class="tt-row"><span class="tt-key">${k}</span><span class="tt-val">${p[k]}</span></span>`);
+            lines = Object.keys(p).slice(0, 5).map(k => `<span class="tt-row"><span class="tt-key">${k}</span><span class="tt-val">${p[k]}</span></span>`);
           }
         } else {
           // Deck.gl tile layer
-          const obj = bestFeature.object;
+          const obj = best.object;
           const p = obj?.properties || obj || {};
             const colorAttr = layerDef.hexLayer?.getFillColor?.attr || 'metric';
-            const hexVal = p.hex || obj.hex;
-          if (hexVal) lines.push(`<span class="tt-row"><span class="tt-key">hex</span><span class="tt-val">${String(hexVal).slice(0, 12)}...</span></span>`);
-            
+          const hexVal = p.hex ?? obj?.hex;
+          if (hexVal != null) {
+            lines.push(`<span class="tt-row"><span class="tt-key">hex</span><span class="tt-val">${String(hexVal).slice(0, 12)}...</span></span>`);
+          }
             if (cols.length) {
               cols.forEach(col => {
-                if (col === 'hex') return;
-                const val = p[col] ?? obj[col];
-                if (val !== undefined && val !== null) {
-                  lines.push(`<span class="tt-row"><span class="tt-key">${col}</span><span class="tt-val">${typeof val === 'number' ? val.toFixed(2) : val}</span></span>`);
-                }
-              });
-            } else if (p[colorAttr] != null || obj[colorAttr] != null) {
-              const val = p[colorAttr] ?? obj[colorAttr];
+              if (col === 'hex') return;
+              const val = p[col] ?? obj?.[col];
+              if (val == null) return;
+              lines.push(`<span class="tt-row"><span class="tt-key">${col}</span><span class="tt-val">${typeof val === 'number' ? Number(val).toFixed(2) : val}</span></span>`);
+            });
+          } else if (p[colorAttr] != null || obj?.[colorAttr] != null) {
+            const val = p[colorAttr] ?? obj?.[colorAttr];
               lines.push(`<span class="tt-row"><span class="tt-key">${colorAttr}</span><span class="tt-val">${Number(val).toFixed(2)}</span></span>`);
           }
             }
             
             if (lines.length) {
               tt.innerHTML = `<strong class="tt-title">${layerDef.name}</strong>` + lines.join('');
-          tt.style.left = `${e.point.x+10}px`; 
-          tt.style.top = `${e.point.y+10}px`; 
+          tt.style.left = `${e.point.x + 10}px`;
+          tt.style.top = `${e.point.y + 10}px`;
               tt.style.display = 'block';
         } else {
           tt.style.display = 'none';
@@ -2949,7 +2950,7 @@ def deckgl_layers(
       LAYERS_DATA.forEach(l => {
         // Tooltip reads `layerDef.tooltipColumns` (top-level), so keep it in sync for ALL layer types.
         l.tooltipColumns = debugState.tooltipColumns;
-
+        
         if (l.hexLayer) {
           l.hexLayer.pickable = debugState.pickable;
           l.hexLayer.filled = debugState.filled;
