@@ -656,6 +656,7 @@ def deckgl_layers(
     
     /* Debug Panel - Minimal */
     #debug-panel { position: fixed; left: 0; top: 0; width: 280px; height: 100%; background: rgba(24,24,24,0.98); border-right: 1px solid #333; transform: translateX(0); transition: transform 0.2s ease; z-index: 199; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    #debug-panel, #debug-panel * { box-sizing: border-box; }
     #debug-panel.collapsed { transform: translateX(-100%); }
     #debug-toggle { position: fixed; top: 12px; width: 24px; height: 48px; background: rgba(30,30,30,0.9); border: 1px solid #333; border-left: none; border-radius: 0 6px 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #888; font-size: 14px; z-index: 200; transition: left 0.2s ease, background 0.15s, color 0.15s; left: 280px; }
     #debug-panel.collapsed + #debug-toggle { left: 0; }
@@ -663,30 +664,31 @@ def deckgl_layers(
     #debug-content { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
     .debug-section { background: rgba(40,40,40,0.6); border: 1px solid #333; border-radius: 6px; padding: 10px; }
     .debug-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #666; margin-bottom: 8px; }
-    .debug-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .debug-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: nowrap; }
     .debug-row:last-child { margin-bottom: 0; }
-    .debug-label { font-size: 11px; color: #999; min-width: 70px; }
-    .debug-input { flex: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; -moz-appearance: textfield; }
+    /* Make single-field rows align perfectly */
+    .debug-label { font-size: 11px; color: #999; width: 84px; flex: 0 0 84px; }
+    .debug-input { flex: 1 1 auto; min-width: 0; width: auto; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; -moz-appearance: textfield; }
     .debug-input:focus { border-color: #555; }
     .debug-input::-webkit-outer-spin-button, .debug-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    .debug-input-sm { flex: 0 0 50px; min-width: 50px; text-align: center; }
-    .debug-select { flex: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; cursor: pointer; }
+    .debug-input-sm { flex: 0 0 56px; width: 56px; min-width: 56px; text-align: center; }
+    .debug-select { flex: 1 1 auto; min-width: 0; width: auto; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; cursor: pointer; }
     .debug-select:focus { border-color: #555; }
     .pal-hidden { display: none; }
-    .pal-dd { flex: 1; position: relative; }
-    .pal-trigger { width: 100%; display: grid; grid-template-columns: 1fr 90px; align-items: center; gap: 10px; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; color: #ddd; font-size: 11px; cursor: pointer; }
+    .pal-dd { flex: 1 1 auto; min-width: 0; position: relative; }
+    .pal-trigger { width: 100%; display: grid; grid-template-columns: 1fr 72px; align-items: center; gap: 10px; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; color: #ddd; font-size: 11px; cursor: pointer; }
     .pal-trigger:hover { border-color: #444; }
     .pal-name { color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pal-swatch { width: 90px; height: 12px; border-radius: 3px; border: 1px solid #333; background: linear-gradient(90deg, #555, #999); }
+    .pal-swatch { width: 72px; height: 12px; border-radius: 3px; border: 1px solid #333; background: linear-gradient(90deg, #555, #999); }
     .pal-menu { position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: #111; border: 1px solid #333; border-radius: 6px; max-height: 220px; overflow: auto; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
-    .pal-item { display: grid; grid-template-columns: 1fr 90px; align-items: center; gap: 10px; padding: 8px 10px; cursor: pointer; }
+    .pal-item { display: grid; grid-template-columns: 1fr 72px; align-items: center; gap: 10px; padding: 8px 10px; cursor: pointer; }
     .pal-item:hover { background: rgba(255,255,255,0.06); }
     .pal-item-name { font-size: 11px; color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pal-item-swatch { width: 90px; height: 12px; border-radius: 3px; border: 1px solid #333; }
+    .pal-item-swatch { width: 72px; height: 12px; border-radius: 3px; border: 1px solid #333; }
     .debug-toggles { display: flex; flex-wrap: wrap; gap: 8px 12px; }
     .debug-checkbox { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #999; cursor: pointer; }
     .debug-checkbox input { width: 14px; height: 14px; cursor: pointer; accent-color: #666; }
-    .debug-slider { flex: 1; height: 4px; background: #333; border-radius: 2px; -webkit-appearance: none; cursor: pointer; }
+    .debug-slider { flex: 1 1 auto; min-width: 0; height: 4px; background: #333; border-radius: 2px; -webkit-appearance: none; cursor: pointer; }
     .debug-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #888; border-radius: 50%; cursor: pointer; }
     .debug-slider::-webkit-slider-thumb:hover { background: #aaa; }
     .debug-color { width: 28px; height: 28px; border: 1px solid #333; border-radius: 4px; cursor: pointer; padding: 0; background: none; }
@@ -2432,6 +2434,14 @@ def deckgl_layers(
         if (dispatch) sel.dispatchEvent(new Event('change', { bubbles: true }));
       };
 
+      const syncFromSelect = () => {
+        // Don't override config-driven values; just reflect whatever the select currently has.
+        const v = sel.value || (sel.options?.[0]?.value || '');
+        if (!sel.value && v) sel.value = v;
+        nameEl.textContent = v || 'Palette';
+        if (v) renderSwatch(v);
+      };
+
       // Build menu items from select options
       const buildMenu = () => {
         const opts = Array.from(sel.options || []);
@@ -2457,13 +2467,16 @@ def deckgl_layers(
 
       // Sync UI when select changes (e.g. populateAttrDropdown)
       sel.addEventListener('change', () => {
-        const v = sel.value;
-        nameEl.textContent = v || 'Palette';
-        if (v) renderSwatch(v);
+        syncFromSelect();
+      });
+
+      // Manual sync hook (when code sets sel.value without firing change)
+      sel.addEventListener('pal:sync', () => {
+        syncFromSelect();
       });
 
       // Init current
-      setValue(sel.value || (sel.options?.[0]?.value || ''), false);
+      syncFromSelect();
 
       trigger.addEventListener('click', (e) => {
         e.preventDefault();
@@ -2590,9 +2603,12 @@ def deckgl_layers(
           setInput('dbg-attr', first);
           debugState.fillAttr = first;
         }
+        // Ensure palette UI shows something even if config didn't set colors
+        document.getElementById('dbg-palette')?.dispatchEvent(new Event('pal:sync'));
         if (fillCfg.colors) {
           setInput('dbg-palette', fillCfg.colors);
           debugState.fillPalette = fillCfg.colors;
+          document.getElementById('dbg-palette')?.dispatchEvent(new Event('pal:sync'));
         }
         if (fillCfg.domain) {
           setInput('dbg-domain-min', Math.min(...fillCfg.domain));
@@ -2634,6 +2650,7 @@ def deckgl_layers(
           if (lineCfg.colors) {
             setInput('dbg-line-palette', lineCfg.colors);
             debugState.linePalette = lineCfg.colors;
+            document.getElementById('dbg-line-palette')?.dispatchEvent(new Event('pal:sync'));
           }
           if (lineCfg.domain) {
             setInput('dbg-line-domain-min', Math.min(...lineCfg.domain));
@@ -2642,6 +2659,7 @@ def deckgl_layers(
             debugState.lineDomainMax = Math.max(...lineCfg.domain);
           }
         }
+        document.getElementById('dbg-line-palette')?.dispatchEvent(new Event('pal:sync'));
         
         // Line width (hex: lineWidthMinPixels; vector processed: lineWidth)
         const lw = cfg.lineWidthMinPixels ?? firstLayer.lineWidth ?? 1;
