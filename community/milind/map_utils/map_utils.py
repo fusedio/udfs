@@ -670,11 +670,22 @@ def deckgl_layers(
     .debug-input { flex: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; -moz-appearance: textfield; }
     .debug-input:focus { border-color: #555; }
     .debug-input::-webkit-outer-spin-button, .debug-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .debug-input-sm { flex: 0 0 50px; min-width: 50px; text-align: center; }
     .debug-select { flex: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; cursor: pointer; }
     .debug-select:focus { border-color: #555; }
+    .debug-toggles { display: flex; flex-wrap: wrap; gap: 8px 12px; }
     .debug-checkbox { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #999; cursor: pointer; }
     .debug-checkbox input { width: 14px; height: 14px; cursor: pointer; accent-color: #666; }
-    .debug-output { width: 100%; min-height: 100px; resize: vertical; background: #111; color: #aaa; border: 1px solid #333; border-radius: 4px; padding: 8px; font-family: 'SF Mono', Consolas, monospace; font-size: 10px; line-height: 1.4; }
+    .debug-slider { flex: 1; height: 4px; background: #333; border-radius: 2px; -webkit-appearance: none; cursor: pointer; }
+    .debug-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #888; border-radius: 50%; cursor: pointer; }
+    .debug-slider::-webkit-slider-thumb:hover { background: #aaa; }
+    .debug-color { width: 28px; height: 28px; border: 1px solid #333; border-radius: 4px; cursor: pointer; padding: 0; background: none; }
+    .debug-color::-webkit-color-swatch-wrapper { padding: 2px; }
+    .debug-color::-webkit-color-swatch { border-radius: 2px; border: none; }
+    .debug-color-label { font-size: 10px; color: #666; font-family: 'SF Mono', Consolas, monospace; }
+    .debug-copy-btn { float: right; background: #333; border: none; color: #888; font-size: 9px; padding: 2px 6px; border-radius: 3px; cursor: pointer; }
+    .debug-copy-btn:hover { background: #444; color: #bbb; }
+    .debug-output { width: 100%; min-height: 120px; resize: vertical; background: #111; color: #aaa; border: 1px solid #333; border-radius: 4px; padding: 8px; font-family: 'SF Mono', Consolas, monospace; font-size: 10px; line-height: 1.4; }
   </style>
 </head>
 <body>
@@ -701,8 +712,9 @@ def deckgl_layers(
   <!-- Debug Panel -->
   <div id="debug-panel">
     <div id="debug-content">
+      <!-- View State -->
       <div class="debug-section">
-        <div class="debug-section-title">View</div>
+        <div class="debug-section-title">View State</div>
         <div class="debug-row">
           <span class="debug-label">Longitude</span>
           <input type="number" class="debug-input" id="dbg-lng" step="0.0001" />
@@ -724,21 +736,40 @@ def deckgl_layers(
           <input type="number" class="debug-input" id="dbg-bearing" step="1" />
         </div>
       </div>
+      
+      <!-- Hex Layer Settings -->
       <div class="debug-section">
-        <div class="debug-section-title">Layer</div>
+        <div class="debug-section-title">Hex Layer</div>
+        <div class="debug-toggles">
+          <label class="debug-checkbox"><input type="checkbox" id="dbg-pickable" checked /> Pickable</label>
         <label class="debug-checkbox"><input type="checkbox" id="dbg-filled" checked /> Filled</label>
+          <label class="debug-checkbox"><input type="checkbox" id="dbg-stroked" checked /> Stroked</label>
         <label class="debug-checkbox"><input type="checkbox" id="dbg-extruded" /> Extruded</label>
-        <div class="debug-row" style="margin-top:6px;">
-          <span class="debug-label">Height Scale</span>
-          <input type="number" class="debug-input" id="dbg-height-scale" step="0.1" min="0.1" max="1000" value="1" />
         </div>
-        <div class="debug-row" style="margin-top:6px;">
+        <div class="debug-row" style="margin-top:8px;">
           <span class="debug-label">Opacity</span>
-          <input type="number" class="debug-input" id="dbg-opacity" step="0.1" min="0" max="1" value="0.8" />
+          <input type="range" class="debug-slider" id="dbg-opacity-slider" min="0" max="1" step="0.05" value="1" />
+          <input type="number" class="debug-input debug-input-sm" id="dbg-opacity" step="0.1" min="0" max="1" value="1" />
         </div>
+        <div class="debug-row">
+          <span class="debug-label">Coverage</span>
+          <input type="range" class="debug-slider" id="dbg-coverage-slider" min="0" max="1" step="0.05" value="0.9" />
+          <input type="number" class="debug-input debug-input-sm" id="dbg-coverage" step="0.1" min="0" max="1" value="0.9" />
       </div>
-      <div class="debug-section">
+      </div>
+      
+      <!-- Fill Color -->
+      <div class="debug-section" id="fill-color-section">
         <div class="debug-section-title">Fill Color</div>
+        <div class="debug-row">
+          <span class="debug-label">Function</span>
+          <select class="debug-select" id="dbg-fill-fn">
+            <option value="colorContinuous">colorContinuous</option>
+            <option value="colorCategories">colorCategories</option>
+            <option value="static">Static Color</option>
+          </select>
+        </div>
+        <div id="fill-fn-options">
         <div class="debug-row">
           <span class="debug-label">Attribute</span>
           <select class="debug-select" id="dbg-attr"></select>
@@ -750,20 +781,90 @@ def deckgl_layers(
           </select>
         </div>
         <div class="debug-row">
-          <span class="debug-label">Domain Min</span>
-          <input type="number" class="debug-input" id="dbg-domain-min" step="0.1" />
+            <span class="debug-label">Domain</span>
+            <input type="number" class="debug-input debug-input-sm" id="dbg-domain-min" step="0.1" placeholder="min" />
+            <span style="color:#666;">–</span>
+            <input type="number" class="debug-input debug-input-sm" id="dbg-domain-max" step="0.1" placeholder="max" />
         </div>
         <div class="debug-row">
-          <span class="debug-label">Domain Max</span>
-          <input type="number" class="debug-input" id="dbg-domain-max" step="0.1" />
+            <span class="debug-label">Steps</span>
+            <input type="number" class="debug-input debug-input-sm" id="dbg-steps" step="1" min="2" max="20" value="7" />
         </div>
         <div class="debug-row">
-          <span class="debug-label">Steps</span>
-          <input type="number" class="debug-input" id="dbg-steps" step="1" min="2" max="20" value="7" />
+            <span class="debug-label">Null Color</span>
+            <input type="color" class="debug-color" id="dbg-null-color" value="#b8b8b8" />
+            <span class="debug-color-label" id="dbg-null-color-label">#b8b8b8</span>
         </div>
       </div>
+        <div id="fill-static-options" style="display:none;">
+          <div class="debug-row">
+            <span class="debug-label">Color</span>
+            <input type="color" class="debug-color" id="dbg-fill-static" value="#0090ff" />
+            <span class="debug-color-label" id="dbg-fill-static-label">#0090ff</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Line Color (when stroked) -->
+      <div class="debug-section" id="line-color-section">
+        <div class="debug-section-title">Line Color</div>
+        <div class="debug-row">
+          <span class="debug-label">Function</span>
+          <select class="debug-select" id="dbg-line-fn">
+            <option value="colorContinuous">colorContinuous</option>
+            <option value="colorCategories">colorCategories</option>
+            <option value="static" selected>Static Color</option>
+          </select>
+        </div>
+        <div id="line-fn-options" style="display:none;">
+          <div class="debug-row">
+            <span class="debug-label">Attribute</span>
+            <select class="debug-select" id="dbg-line-attr"></select>
+          </div>
+          <div class="debug-row">
+            <span class="debug-label">Palette</span>
+            <select class="debug-select" id="dbg-line-palette">
+              {% for pal in palettes %}<option value="{{ pal }}">{{ pal }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="debug-row">
+            <span class="debug-label">Domain</span>
+            <input type="number" class="debug-input debug-input-sm" id="dbg-line-domain-min" step="0.1" placeholder="min" />
+            <span style="color:#666;">–</span>
+            <input type="number" class="debug-input debug-input-sm" id="dbg-line-domain-max" step="0.1" placeholder="max" />
+          </div>
+        </div>
+        <div id="line-static-options">
+          <div class="debug-row">
+            <span class="debug-label">Color</span>
+            <input type="color" class="debug-color" id="dbg-line-static" value="#ffffff" />
+            <span class="debug-color-label" id="dbg-line-static-label">#ffffff</span>
+          </div>
+        </div>
+        <div class="debug-row">
+          <span class="debug-label">Line Width</span>
+          <input type="range" class="debug-slider" id="dbg-line-width-slider" min="0" max="5" step="0.5" value="1" />
+          <input type="number" class="debug-input debug-input-sm" id="dbg-line-width" step="0.5" min="0" max="10" value="1" />
+        </div>
+      </div>
+      
+      <!-- Elevation (when extruded) -->
+      <div class="debug-section" id="elevation-section" style="display:none;">
+        <div class="debug-section-title">Elevation</div>
+        <div class="debug-row">
+          <span class="debug-label">Height Attr</span>
+          <select class="debug-select" id="dbg-height-attr"></select>
+        </div>
+        <div class="debug-row">
+          <span class="debug-label">Elev. Scale</span>
+          <input type="range" class="debug-slider" id="dbg-elev-scale-slider" min="1" max="100" step="1" value="10" />
+          <input type="number" class="debug-input debug-input-sm" id="dbg-height-scale" step="1" min="1" max="1000" value="10" />
+        </div>
+      </div>
+      
+      <!-- Config Output -->
       <div class="debug-section">
-        <div class="debug-section-title">Config Output</div>
+        <div class="debug-section-title">Config Output <button class="debug-copy-btn" onclick="copyConfigOutput()">Copy</button></div>
         <textarea id="dbg-output" class="debug-output" readonly></textarea>
       </div>
     </div>
@@ -1105,6 +1206,9 @@ def deckgl_layers(
       const out = {};
       for (const [k, v] of Object.entries(config || {})) {
         if (k === '@@type') continue;
+        // Skip non-deck.gl properties
+        if (['pickable', 'filled', 'stroked', 'extruded', 'opacity', 'coverage', 'lineWidthMinPixels', 'elevationScale'].includes(k)) continue;
+        
         if (v && typeof v === 'object' && !Array.isArray(v)) {
           if (v['@@function'] === 'colorContinuous') {
             // For autoDomain: use stored dynamic domain if calculated, otherwise use config default
@@ -1115,9 +1219,21 @@ def deckgl_layers(
               if (layerData?.hexLayer?.getFillColor?._dynamicDomain) {
                 domainToUse = layerData.hexLayer.getFillColor._dynamicDomain;
               }
-              // If no calculated domain yet, use config default (tiles will render with default)
             }
             out[k] = colorContinuous(processColorContinuousCfg(v, domainToUse));
+          } else if (v['@@function'] === 'colorCategories') {
+            // colorCategories - create accessor function
+            const { attr, categories, colors, nullColor } = v;
+            out[k] = (obj) => {
+              const val = obj?.properties?.[attr] ?? obj?.[attr];
+              if (val == null) return nullColor || [184, 184, 184];
+              const idx = categories?.indexOf(val);
+              if (idx >= 0 && colors?.[idx]) {
+                const c = colors[idx];
+                return Array.isArray(c) ? c : [128, 128, 128];
+              }
+              return nullColor || [184, 184, 184];
+            };
           } else {
             out[k] = v;
           }
@@ -1129,6 +1245,9 @@ def deckgl_layers(
               return fn(obj);
             } catch (e) { return null; }
           };
+        } else if (Array.isArray(v) && (k === 'getFillColor' || k === 'getLineColor')) {
+          // Static color array - return as-is for Deck.gl
+          out[k] = v;
         } else {
           out[k] = v;
         }
@@ -1145,6 +1264,10 @@ def deckgl_layers(
       const layerOpacity = (typeof rawHexLayer.opacity === 'number') ? rawHexLayer.opacity : 0.8;
       const isExtruded = rawHexLayer.extruded === true;
       const elevationScale = rawHexLayer.elevationScale || 1;
+      const coverage = (typeof rawHexLayer.coverage === 'number') ? rawHexLayer.coverage : 0.9;
+      const lineWidth = rawHexLayer.lineWidthMinPixels || 1;
+      const isStroked = rawHexLayer.stroked !== false;
+      const isFilled = rawHexLayer.filled !== false;
 
       // Check if this layer has autoDomain enabled
       const hasAutoDomain = rawHexLayer.getFillColor?.autoDomain === true;
@@ -1226,16 +1349,17 @@ def deckgl_layers(
             return new H3HexagonLayer({
               id: `${props.id}-h3`,
               data,
-              pickable: true,
-              stroked: false,
-              filled: true,
+              getHexagon: d => d.hex,
+              ...hexCfg,
+              // Explicit overrides (must come AFTER hexCfg spread)
+              pickable: rawHexLayer.pickable !== false,
+              stroked: isStroked,
+              filled: isFilled,
               extruded: isExtruded,
               elevationScale: elevationScale,
-              coverage: 0.9,
-              lineWidthMinPixels: 1,
-              opacity: layerOpacity,
-              getHexagon: d => d.hex,
-              ...hexCfg
+              coverage: coverage,
+              lineWidthMinPixels: lineWidth,
+              opacity: layerOpacity
             });
           }
           return null;
@@ -1290,12 +1414,21 @@ def deckgl_layers(
         .reverse()
         .map(l => buildTileLayer(l, bottomMostLayerId));
       
-      if (!deckOverlay) {
+      // Minimal + reliable: always recreate the overlay
+      if (deckOverlay) {
+        try {
+          map.removeControl(deckOverlay);
+          deckOverlay.finalize?.();
+        } catch (e) {}
+        deckOverlay = null;
+      }
+
         deckOverlay = new MapboxOverlay({
           interleaved: true,
           layers: deckLayers
         });
         map.addControl(deckOverlay);
+
         if (bottomMostLayerId) {
           const moveOverlay = () => {
             const overlayLayerId = deckOverlay?._mapboxLayer?.id;
@@ -1305,9 +1438,6 @@ def deckgl_layers(
           };
           setTimeout(moveOverlay, 0);
           map.once('idle', moveOverlay);
-        }
-      } else {
-        deckOverlay.setProps({ layers: deckLayers });
       }
     }
     
@@ -2176,17 +2306,38 @@ def deckgl_layers(
     const DEBUG_MODE = true;
     let debugApplyTimeout = null;
     
-    // Current debug state for live updates
+    // Current debug state for hex layer
     const debugState = {
-      attr: 'metric',
-      palette: 'TealGrn',
-      domainMin: 0,
-      domainMax: 100,
-      steps: 7,
+      // Layer toggles
+      pickable: true,
       filled: true,
+      stroked: true,
       extruded: false,
-      heightScale: 1,
-      opacity: 0.8
+      opacity: 1,
+      coverage: 0.9,
+      
+      // Fill color
+      fillFn: 'colorContinuous',
+      fillAttr: 'metric',
+      fillPalette: 'TealGrn',
+      fillDomainMin: 0,
+      fillDomainMax: 100,
+      fillSteps: 7,
+      fillNullColor: '#b8b8b8',
+      fillStaticColor: '#0090ff',
+      
+      // Line color
+      lineFn: 'static',
+      lineAttr: 'metric',
+      linePalette: 'TealGrn',
+      lineDomainMin: 0,
+      lineDomainMax: 100,
+      lineStaticColor: '#ffffff',
+      lineWidth: 1,
+      
+      // Elevation
+      heightAttr: 'metric',
+      elevationScale: 10
     };
     
     function toggleDebugPanel() {
@@ -2194,10 +2345,63 @@ def deckgl_layers(
       const toggle = document.getElementById('debug-toggle');
       if (panel.classList.contains('collapsed')) {
         panel.classList.remove('collapsed');
-        toggle.innerHTML = '&#x2039;';  // ‹ collapse arrow (left)
+        toggle.innerHTML = '&#x2039;';
       } else {
         panel.classList.add('collapsed');
-        toggle.innerHTML = '&#x203a;';  // › expand arrow (right)
+        toggle.innerHTML = '&#x203a;';
+      }
+    }
+    
+    // Toggle section visibility based on checkboxes
+    function updateSectionVisibility() {
+      const stroked = document.getElementById('dbg-stroked')?.checked;
+      const extruded = document.getElementById('dbg-extruded')?.checked;
+      const filled = document.getElementById('dbg-filled')?.checked;
+      
+      document.getElementById('line-color-section').style.display = stroked ? 'block' : 'none';
+      document.getElementById('elevation-section').style.display = extruded ? 'block' : 'none';
+      document.getElementById('fill-color-section').style.display = filled ? 'block' : 'none';
+    }
+    
+    // Toggle fill/line function options
+    function updateFillFnOptions() {
+      const fn = document.getElementById('dbg-fill-fn')?.value;
+      document.getElementById('fill-fn-options').style.display = fn !== 'static' ? 'block' : 'none';
+      document.getElementById('fill-static-options').style.display = fn === 'static' ? 'block' : 'none';
+    }
+    
+    function updateLineFnOptions() {
+      const fn = document.getElementById('dbg-line-fn')?.value;
+      document.getElementById('line-fn-options').style.display = fn !== 'static' ? 'block' : 'none';
+      document.getElementById('line-static-options').style.display = fn === 'static' ? 'block' : 'none';
+    }
+    
+    // Sync slider and input
+    function syncSliderInput(sliderId, inputId) {
+      const slider = document.getElementById(sliderId);
+      const input = document.getElementById(inputId);
+      if (slider && input) {
+        slider.addEventListener('input', () => { input.value = slider.value; scheduleLayerUpdate(); });
+        input.addEventListener('change', () => { slider.value = input.value; scheduleLayerUpdate(); });
+      }
+    }
+    
+    // Update color label when color picker changes
+    function syncColorLabel(colorId, labelId) {
+      const color = document.getElementById(colorId);
+      const label = document.getElementById(labelId);
+      if (color && label) {
+        color.addEventListener('input', () => { label.textContent = color.value; scheduleLayerUpdate(); });
+      }
+    }
+    
+    // Copy config to clipboard
+    function copyConfigOutput() {
+      const output = document.getElementById('dbg-output');
+      if (output) {
+        navigator.clipboard.writeText(output.value);
+        const btn = document.querySelector('.debug-copy-btn');
+        if (btn) { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 1500); }
       }
     }
     
@@ -2215,11 +2419,8 @@ def deckgl_layers(
       updateConfigOutput();
     }
     
-    // Populate attribute dropdown from data
+    // Populate all attribute dropdowns
     function populateAttrDropdown() {
-      const select = document.getElementById('dbg-attr');
-      if (!select) return;
-      
       const attrs = new Set();
       
       // For tile layers, get attrs from cached tile data
@@ -2247,68 +2448,171 @@ def deckgl_layers(
       });
       
       if (attrs.size === 0) attrs.add('metric');
-      select.innerHTML = [...attrs].sort().map(a => `<option value="${a}">${a}</option>`).join('');
+      const attrOptions = [...attrs].sort().map(a => `<option value="${a}">${a}</option>`).join('');
       
-      // Set initial value from first layer's config
-      const firstLayer = LAYERS_DATA[0];
+      // Populate all attribute dropdowns
+      ['dbg-attr', 'dbg-height-attr', 'dbg-line-attr'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = attrOptions;
+      });
+      
+      // Initialize from first hex layer's config (fallback to vector if no hex present)
+      const firstLayer = LAYERS_DATA.find(l => l.layerType === 'hex') || LAYERS_DATA.find(l => l.layerType === 'vector') || LAYERS_DATA[0];
       if (firstLayer) {
         const cfg = firstLayer.hexLayer || firstLayer.vectorLayer || {};
-        const colorCfg = cfg.getFillColor || firstLayer.fillColorConfig || {};
-        
-        // Set attr from config or use first available numeric attr
-        if (colorCfg.attr && [...attrs].includes(colorCfg.attr)) {
-          select.value = colorCfg.attr;
-          debugState.attr = colorCfg.attr;
-        } else if (attrs.size > 0) {
-          const firstAttr = [...attrs].sort()[0];
-          select.value = firstAttr;
-          debugState.attr = firstAttr;
-        }
-        
-        if (colorCfg.colors) {
-          document.getElementById('dbg-palette').value = colorCfg.colors;
-          debugState.palette = colorCfg.colors;
-        }
-        
-        // Auto-detect domain from data if not specified
+        const fillCfg = cfg.getFillColor || firstLayer.fillColorConfig || {};
+        const lineCfg = cfg.getLineColor || firstLayer.lineColorConfig || {};
         const layerData = firstLayer.data || (firstLayer.geojson?.features?.map(f => f.properties) || []);
-        if (colorCfg.domain) {
-          const minVal = Math.min(...colorCfg.domain);
-          const maxVal = Math.max(...colorCfg.domain);
-          document.getElementById('dbg-domain-min').value = minVal;
-          document.getElementById('dbg-domain-max').value = maxVal;
-          debugState.domainMin = minVal;
-          debugState.domainMax = maxVal;
-        } else if (layerData.length > 0 && debugState.attr) {
-          // Auto-compute domain from data
-          const vals = layerData.map(d => d[debugState.attr]).filter(v => typeof v === 'number' && isFinite(v));
+        
+        // Layer toggles
+        const setCheckbox = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
+        const setInput = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+        
+        setCheckbox('dbg-pickable', cfg.pickable !== false);
+        setCheckbox('dbg-filled', cfg.filled !== false);
+        // Vector uses `stroked`, hex uses `stroked` too; processed vector also has `isStroked`
+        setCheckbox('dbg-stroked', (cfg.stroked ?? firstLayer.isStroked) !== false);
+        setCheckbox('dbg-extruded', cfg.extruded === true);
+        
+        debugState.pickable = cfg.pickable !== false;
+        debugState.filled = cfg.filled !== false;
+        debugState.stroked = (cfg.stroked ?? firstLayer.isStroked) !== false;
+        debugState.extruded = cfg.extruded === true;
+        
+        // Opacity & coverage
+        setInput('dbg-opacity', cfg.opacity ?? firstLayer.opacity ?? 1);
+        setInput('dbg-opacity-slider', cfg.opacity ?? firstLayer.opacity ?? 1);
+        setInput('dbg-coverage', cfg.coverage ?? 0.9);
+        setInput('dbg-coverage-slider', cfg.coverage ?? 0.9);
+        debugState.opacity = cfg.opacity ?? firstLayer.opacity ?? 1;
+        debugState.coverage = cfg.coverage ?? 0.9;
+        
+        // Fill color
+        if (fillCfg['@@function']) {
+          setInput('dbg-fill-fn', fillCfg['@@function']);
+          debugState.fillFn = fillCfg['@@function'];
+        }
+        if (fillCfg.attr) {
+          setInput('dbg-attr', fillCfg.attr);
+          debugState.fillAttr = fillCfg.attr;
+        } else if (attrs.size > 0) {
+          const first = [...attrs].sort()[0];
+          setInput('dbg-attr', first);
+          debugState.fillAttr = first;
+        }
+        if (fillCfg.colors) {
+          setInput('dbg-palette', fillCfg.colors);
+          debugState.fillPalette = fillCfg.colors;
+        }
+        if (fillCfg.domain) {
+          setInput('dbg-domain-min', Math.min(...fillCfg.domain));
+          setInput('dbg-domain-max', Math.max(...fillCfg.domain));
+          debugState.fillDomainMin = Math.min(...fillCfg.domain);
+          debugState.fillDomainMax = Math.max(...fillCfg.domain);
+        } else if (layerData.length > 0 && debugState.fillAttr) {
+          const vals = layerData.map(d => d[debugState.fillAttr]).filter(v => typeof v === 'number' && isFinite(v));
           if (vals.length > 0) {
-            const minVal = Math.min(...vals);
-            const maxVal = Math.max(...vals);
-            document.getElementById('dbg-domain-min').value = minVal.toFixed(1);
-            document.getElementById('dbg-domain-max').value = maxVal.toFixed(1);
-          debugState.domainMin = minVal;
-          debugState.domainMax = maxVal;
+            setInput('dbg-domain-min', Math.min(...vals).toFixed(1));
+            setInput('dbg-domain-max', Math.max(...vals).toFixed(1));
+            debugState.fillDomainMin = Math.min(...vals);
+            debugState.fillDomainMax = Math.max(...vals);
           }
         }
-        if (colorCfg.steps) {
-          document.getElementById('dbg-steps').value = colorCfg.steps;
-          debugState.steps = colorCfg.steps;
+        if (fillCfg.steps) {
+          setInput('dbg-steps', fillCfg.steps);
+          debugState.fillSteps = fillCfg.steps;
         }
         
-        document.getElementById('dbg-filled').checked = cfg.filled !== false;
-        document.getElementById('dbg-extruded').checked = cfg.extruded === true;
-        document.getElementById('dbg-opacity').value = cfg.opacity || 0.8;
-        debugState.filled = cfg.filled !== false;
-        debugState.extruded = cfg.extruded === true;
-        debugState.opacity = cfg.opacity || 0.8;
+        // Line color
+        if (Array.isArray(lineCfg) && lineCfg.length >= 3) {
+          debugState.lineFn = 'static';
+          setInput('dbg-line-fn', 'static');
+          // Convert RGB array to hex
+          const r = lineCfg[0], g = lineCfg[1], b = lineCfg[2];
+          const hex = '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+          setInput('dbg-line-static', hex);
+          debugState.lineStaticColor = hex;
+          const label = document.getElementById('dbg-line-static-label');
+          if (label) label.textContent = hex;
+        } else if (lineCfg && lineCfg['@@function']) {
+          setInput('dbg-line-fn', lineCfg['@@function']);
+          debugState.lineFn = lineCfg['@@function'];
+          if (lineCfg.attr) {
+            setInput('dbg-line-attr', lineCfg.attr);
+            debugState.lineAttr = lineCfg.attr;
+          }
+          if (lineCfg.colors) {
+            setInput('dbg-line-palette', lineCfg.colors);
+            debugState.linePalette = lineCfg.colors;
+          }
+          if (lineCfg.domain) {
+            setInput('dbg-line-domain-min', Math.min(...lineCfg.domain));
+            setInput('dbg-line-domain-max', Math.max(...lineCfg.domain));
+            debugState.lineDomainMin = Math.min(...lineCfg.domain);
+            debugState.lineDomainMax = Math.max(...lineCfg.domain);
+          }
+        }
+        
+        // Line width (hex: lineWidthMinPixels; vector processed: lineWidth)
+        const lw = cfg.lineWidthMinPixels ?? firstLayer.lineWidth ?? 1;
+        setInput('dbg-line-width', lw);
+        setInput('dbg-line-width-slider', lw);
+        debugState.lineWidth = lw;
+        
+        // Elevation
+        setInput('dbg-height-attr', debugState.fillAttr);
+        setInput('dbg-height-scale', cfg.elevationScale ?? 10);
+        setInput('dbg-elev-scale-slider', cfg.elevationScale ?? 10);
+        debugState.heightAttr = debugState.fillAttr;
+        debugState.elevationScale = cfg.elevationScale ?? 10;
+        
+        // Update visibility
+        updateSectionVisibility();
+        updateFillFnOptions();
+        updateLineFnOptions();
       }
+    }
+    
+    // Helper: hex color to RGB array
+    function hexToRgb(hex) {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return [r, g, b];
     }
     
     // Generate config output
     function updateConfigOutput() {
       const output = document.getElementById('dbg-output');
       if (!output) return;
+      
+      // Build getFillColor
+      let getFillColor;
+      if (debugState.fillFn === 'static') {
+        getFillColor = hexToRgb(debugState.fillStaticColor);
+      } else {
+        getFillColor = {
+          '@@function': debugState.fillFn,
+          attr: debugState.fillAttr,
+          domain: [debugState.fillDomainMin, debugState.fillDomainMax],
+          colors: debugState.fillPalette,
+          steps: debugState.fillSteps,
+          nullColor: hexToRgb(debugState.fillNullColor)
+        };
+      }
+      
+      // Build getLineColor
+      let getLineColor;
+      if (debugState.lineFn === 'static') {
+        getLineColor = hexToRgb(debugState.lineStaticColor);
+      } else {
+        getLineColor = {
+          '@@function': debugState.lineFn,
+          attr: debugState.lineAttr,
+          domain: [debugState.lineDomainMin, debugState.lineDomainMax],
+          colors: debugState.linePalette
+        };
+      }
       
       const config = {
         initialViewState: {
@@ -2319,17 +2623,18 @@ def deckgl_layers(
           bearing: parseInt(document.getElementById('dbg-bearing').value) || 0
         },
         hexLayer: {
+          pickable: debugState.pickable,
           filled: debugState.filled,
+          stroked: debugState.stroked,
           extruded: debugState.extruded,
-          ...(debugState.extruded ? { elevationScale: debugState.heightScale } : {}),
           opacity: debugState.opacity,
-          getFillColor: {
-            '@@function': 'colorContinuous',
-            attr: debugState.attr,
-            domain: [debugState.domainMin, debugState.domainMax],
-            colors: debugState.palette,
-            steps: debugState.steps
-          }
+          coverage: debugState.coverage,
+          ...(debugState.filled ? { getFillColor } : {}),
+          ...(debugState.stroked ? { getLineColor, lineWidthMinPixels: debugState.lineWidth } : {}),
+          ...(debugState.extruded ? { 
+            elevationScale: debugState.elevationScale,
+            getElevation: `@@=properties.${debugState.heightAttr}`
+          } : {})
         }
       };
       
@@ -2340,7 +2645,7 @@ def deckgl_layers(
         if (obj === true) return 'True';
         if (obj === false) return 'False';
         if (typeof obj === 'string') return `"${obj}"`;
-        if (typeof obj === 'number') return String(obj);
+        if (typeof obj === 'number') return Number.isInteger(obj) ? String(obj) : obj.toFixed(2);
         if (Array.isArray(obj)) return `[${obj.map(v => toPython(v, 0)).join(', ')}]`;
         if (typeof obj === 'object') {
           const entries = Object.entries(obj).map(([k, v]) => `${pad}  "${k}": ${toPython(v, indent + 1)}`);
@@ -2372,123 +2677,148 @@ def deckgl_layers(
     
     // Apply layer style changes live
     function applyLayerChanges() {
-      // Read current values
-      debugState.attr = document.getElementById('dbg-attr').value;
-      debugState.palette = document.getElementById('dbg-palette').value;
-      debugState.domainMin = parseFloat(document.getElementById('dbg-domain-min').value) || 0;
-      debugState.domainMax = parseFloat(document.getElementById('dbg-domain-max').value) || 100;
-      debugState.steps = parseInt(document.getElementById('dbg-steps').value) || 7;
-      debugState.filled = document.getElementById('dbg-filled').checked;
-      debugState.extruded = document.getElementById('dbg-extruded').checked;
-      debugState.heightScale = parseFloat(document.getElementById('dbg-height-scale').value) || 1;
-      debugState.opacity = parseFloat(document.getElementById('dbg-opacity').value) || 0.8;
+      // Read all current values from form
+      const getVal = (id, def) => document.getElementById(id)?.value ?? def;
+      const getChecked = (id) => document.getElementById(id)?.checked ?? false;
+      const getNum = (id, def) => parseFloat(getVal(id, def)) || def;
+      
+      // Layer toggles
+      debugState.pickable = getChecked('dbg-pickable');
+      debugState.filled = getChecked('dbg-filled');
+      debugState.stroked = getChecked('dbg-stroked');
+      debugState.extruded = getChecked('dbg-extruded');
+      debugState.opacity = getNum('dbg-opacity', 1);
+      debugState.coverage = getNum('dbg-coverage', 0.9);
+      
+      // Fill color
+      debugState.fillFn = getVal('dbg-fill-fn', 'colorContinuous');
+      debugState.fillAttr = getVal('dbg-attr', 'metric');
+      debugState.fillPalette = getVal('dbg-palette', 'TealGrn');
+      debugState.fillDomainMin = getNum('dbg-domain-min', 0);
+      debugState.fillDomainMax = getNum('dbg-domain-max', 100);
+      debugState.fillSteps = parseInt(getVal('dbg-steps', 7)) || 7;
+      debugState.fillNullColor = getVal('dbg-null-color', '#b8b8b8');
+      debugState.fillStaticColor = getVal('dbg-fill-static', '#0090ff');
+      
+      // Line color
+      debugState.lineFn = getVal('dbg-line-fn', 'static');
+      debugState.lineAttr = getVal('dbg-line-attr', 'metric');
+      debugState.linePalette = getVal('dbg-line-palette', 'TealGrn');
+      debugState.lineDomainMin = getNum('dbg-line-domain-min', 0);
+      debugState.lineDomainMax = getNum('dbg-line-domain-max', 100);
+      debugState.lineStaticColor = getVal('dbg-line-static', '#ffffff');
+      debugState.lineWidth = getNum('dbg-line-width', 1);
+      
+      // Elevation
+      debugState.heightAttr = getVal('dbg-height-attr', debugState.fillAttr);
+      debugState.elevationScale = getNum('dbg-height-scale', 10);
+      
+      // Update section visibility
+      updateSectionVisibility();
+      updateFillFnOptions();
+      updateLineFnOptions();
       
       // Update config output
       updateConfigOutput();
       
-      // Update LAYERS_DATA with new config (hex and vector layers)
+      // Build fill color config
+      let fillColorCfg;
+      if (debugState.fillFn === 'static') {
+        fillColorCfg = hexToRgb(debugState.fillStaticColor);
+      } else {
+        fillColorCfg = {
+          '@@function': debugState.fillFn,
+          attr: debugState.fillAttr,
+          domain: [debugState.fillDomainMin, debugState.fillDomainMax],
+          colors: debugState.fillPalette,
+          steps: debugState.fillSteps,
+          nullColor: hexToRgb(debugState.fillNullColor)
+        };
+      }
+      
+      // Build line color config
+      let lineColorCfg;
+      if (debugState.lineFn === 'static') {
+        lineColorCfg = hexToRgb(debugState.lineStaticColor);
+      } else {
+        lineColorCfg = {
+          '@@function': debugState.lineFn,
+          attr: debugState.lineAttr,
+          domain: [debugState.lineDomainMin, debugState.lineDomainMax],
+          colors: debugState.linePalette
+        };
+      }
+
+      // Helper: rgb array -> rgba string
+      const rgbToRgba = (rgb, a = 1) => {
+        if (!Array.isArray(rgb) || rgb.length < 3) return null;
+        const r = parseInt(rgb[0]), g = parseInt(rgb[1]), b = parseInt(rgb[2]);
+        const alpha = (typeof a === 'number' && isFinite(a)) ? Math.max(0, Math.min(1, a)) : 1;
+        return `rgba(${r},${g},${b},${alpha})`;
+      };
+      
+      // Update LAYERS_DATA with new config
       LAYERS_DATA.forEach(l => {
-        const colorCfg = {
-            '@@function': 'colorContinuous',
-            attr: debugState.attr,
-            domain: [debugState.domainMin, debugState.domainMax],
-            colors: debugState.palette,
-            steps: debugState.steps
-          };
-        
         if (l.hexLayer) {
+          l.hexLayer.pickable = debugState.pickable;
           l.hexLayer.filled = debugState.filled;
+          l.hexLayer.stroked = debugState.stroked;
           l.hexLayer.extruded = debugState.extruded;
           l.hexLayer.opacity = debugState.opacity;
-          l.hexLayer.getFillColor = colorCfg;
+          l.hexLayer.coverage = debugState.coverage;
+          l.hexLayer.getFillColor = fillColorCfg;
+          l.hexLayer.getLineColor = lineColorCfg;
+          l.hexLayer.lineWidthMinPixels = debugState.lineWidth;
+          l.hexLayer.elevationScale = debugState.elevationScale;
         }
+
+        // Also apply to vector layers (so debug panel works even when the layer is GeoJSON/vector)
         if (l.vectorLayer) {
           l.vectorLayer.filled = debugState.filled;
+          l.vectorLayer.stroked = debugState.stroked;
           l.vectorLayer.opacity = debugState.opacity;
-          l.vectorLayer.getFillColor = colorCfg;
+          l.vectorLayer.getFillColor = fillColorCfg;
+          l.vectorLayer.getLineColor = lineColorCfg;
+          l.vectorLayer.lineWidthMinPixels = debugState.lineWidth;
         }
-        // Also update the processed layer's fill config
-        l.fillColorConfig = colorCfg;
+
+        // Keep processed vector fields in sync (used by addAllLayers())
+        if (l.layerType === 'vector') {
+          l.isFilled = debugState.filled;
+          l.isStroked = debugState.stroked;
         l.opacity = debugState.opacity;
-      });
-      
-      // For tile layers: rebuild Deck.gl overlay
-      {% if has_tile_layers %}
-      if (typeof rebuildDeckOverlay === 'function') {
-        rebuildDeckOverlay();
-      }
-      {% endif %}
-      
-      // For static Mapbox layers: update paint properties
-      LAYERS_DATA.forEach(l => {
-        if (l.isTileLayer) return;
-        
-        const fillLayerId = `${l.id}-fill`;
-        const circleLayerId = `${l.id}-circle`;
-        const extrusionLayerId = `${l.id}-extrusion`;
-        
-        // Get data for color expression - handle both hex and vector layers
-        const layerData = l.data || (l.geojson?.features?.map(f => f.properties) || []);
-        
-        // Build new color expression
-        const colorExpr = buildColorExpr({
-          '@@function': 'colorContinuous',
-          attr: debugState.attr,
-          domain: [debugState.domainMin, debugState.domainMax],
-          colors: debugState.palette,
-          steps: debugState.steps
-        }, layerData);
-        
-        try {
-          // Handle extruded vs flat
-          if (debugState.extruded && l.layerType !== 'vector') {
-            // Extrusion only for hex layers
-            if (map.getLayer(fillLayerId)) {
-              map.setLayoutProperty(fillLayerId, 'visibility', 'none');
-            }
-            if (!map.getLayer(extrusionLayerId) && map.getSource(l.id)) {
-              map.addLayer({
-                id: extrusionLayerId,
-                type: 'fill-extrusion',
-                source: l.id,
-                paint: {
-                  'fill-extrusion-color': colorExpr || 'rgba(0,144,255,0.7)',
-                  'fill-extrusion-height': ['*', ['get', debugState.attr], debugState.heightScale],
-                  'fill-extrusion-base': 0,
-                  'fill-extrusion-opacity': debugState.opacity
-                }
-              });
-            } else if (map.getLayer(extrusionLayerId)) {
-              map.setLayoutProperty(extrusionLayerId, 'visibility', 'visible');
-              map.setPaintProperty(extrusionLayerId, 'fill-extrusion-color', colorExpr || 'rgba(0,144,255,0.7)');
-              map.setPaintProperty(extrusionLayerId, 'fill-extrusion-height', ['*', ['get', debugState.attr], debugState.heightScale]);
-              map.setPaintProperty(extrusionLayerId, 'fill-extrusion-opacity', debugState.opacity);
+          l.lineWidth = debugState.lineWidth;
+
+          if (fillColorCfg && typeof fillColorCfg === 'object' && !Array.isArray(fillColorCfg) && fillColorCfg['@@function']) {
+            l.fillColorConfig = fillColorCfg;
+            l.fillColorRgba = null;
+          } else {
+            l.fillColorConfig = {};
+            l.fillColorRgba = rgbToRgba(fillColorCfg, debugState.opacity);
+          }
+
+          if (lineColorCfg && typeof lineColorCfg === 'object' && !Array.isArray(lineColorCfg) && lineColorCfg['@@function']) {
+            l.lineColorConfig = lineColorCfg;
+            l.lineColorRgba = null;
+          } else {
+            l.lineColorConfig = {};
+            l.lineColorRgba = rgbToRgba(lineColorCfg, 1);
             }
           } else {
-            // Flat layers (fill, circle)
-            if (map.getLayer(extrusionLayerId)) {
-              map.setLayoutProperty(extrusionLayerId, 'visibility', 'none');
-            }
-            
-            // Update fill layer (polygons)
-            if (map.getLayer(fillLayerId)) {
-              map.setLayoutProperty(fillLayerId, 'visibility', debugState.filled ? 'visible' : 'none');
-              if (colorExpr) map.setPaintProperty(fillLayerId, 'fill-color', colorExpr);
-              map.setPaintProperty(fillLayerId, 'fill-opacity', debugState.opacity);
-            }
-            
-            // Update circle layer (points) - for vector layers
-            if (map.getLayer(circleLayerId)) {
-              if (colorExpr) map.setPaintProperty(circleLayerId, 'circle-color', colorExpr);
-              map.setPaintProperty(circleLayerId, 'circle-opacity', debugState.opacity);
-            }
-          }
-        } catch(e) {
-          console.warn('[Debug] Error updating layer:', l.id, e);
+          // For hex layers (static or tile), legend uses these too
+          l.fillColorConfig = fillColorCfg;
+          l.lineColorConfig = lineColorCfg;
+          l.opacity = debugState.opacity;
         }
       });
       
-      // Update legend
+      // Re-render: Deck tile layers (if present) + all Mapbox layers
+      if (typeof rebuildDeckOverlay === 'function' && HAS_TILE_LAYERS) {
+        rebuildDeckOverlay();
+      }
+      if (typeof addAllLayers === 'function') {
+        addAllLayers();
+      }
       if (typeof updateLegend === 'function') updateLegend();
     }
     
@@ -2511,7 +2841,7 @@ def deckgl_layers(
       // Sync on map move
       map.on('moveend', syncDebugFromMap);
       
-      // Bind view inputs - instant feedback on input
+      // Bind view inputs
       let viewUpdateTimeout = null;
       function scheduleViewUpdate() {
         clearTimeout(viewUpdateTimeout);
@@ -2522,21 +2852,54 @@ def deckgl_layers(
         document.getElementById(id)?.addEventListener('change', applyViewChanges);
       });
       
-      // Bind layer style inputs - apply live changes
-      ['dbg-attr', 'dbg-palette', 'dbg-domain-min', 'dbg-domain-max', 'dbg-steps'].forEach(id => {
+      // Bind layer toggles
+      ['dbg-pickable', 'dbg-filled', 'dbg-stroked', 'dbg-extruded'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', applyLayerChanges);
+      });
+      
+      // Bind opacity and coverage inputs directly
+      ['dbg-opacity', 'dbg-coverage'].forEach(id => {
         document.getElementById(id)?.addEventListener('change', scheduleLayerUpdate);
         document.getElementById(id)?.addEventListener('input', scheduleLayerUpdate);
       });
       
-      ['dbg-filled', 'dbg-extruded'].forEach(id => {
-        document.getElementById(id)?.addEventListener('change', applyLayerChanges);
+      // Bind function type selectors
+      document.getElementById('dbg-fill-fn')?.addEventListener('change', () => { updateFillFnOptions(); scheduleLayerUpdate(); });
+      document.getElementById('dbg-line-fn')?.addEventListener('change', () => { updateLineFnOptions(); scheduleLayerUpdate(); });
+      
+      // Bind fill color inputs
+      ['dbg-attr', 'dbg-palette', 'dbg-domain-min', 'dbg-domain-max', 'dbg-steps', 'dbg-null-color', 'dbg-fill-static'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', scheduleLayerUpdate);
+        document.getElementById(id)?.addEventListener('input', scheduleLayerUpdate);
       });
       
-      document.getElementById('dbg-opacity')?.addEventListener('input', scheduleLayerUpdate);
-      document.getElementById('dbg-opacity')?.addEventListener('change', applyLayerChanges);
+      // Bind line color inputs
+      ['dbg-line-attr', 'dbg-line-palette', 'dbg-line-domain-min', 'dbg-line-domain-max', 'dbg-line-static', 'dbg-line-width'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', scheduleLayerUpdate);
+        document.getElementById(id)?.addEventListener('input', scheduleLayerUpdate);
+      });
       
-      document.getElementById('dbg-height-scale')?.addEventListener('input', scheduleLayerUpdate);
-      document.getElementById('dbg-height-scale')?.addEventListener('change', applyLayerChanges);
+      // Bind elevation inputs
+      ['dbg-height-attr', 'dbg-height-scale'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', scheduleLayerUpdate);
+        document.getElementById(id)?.addEventListener('input', scheduleLayerUpdate);
+      });
+      
+      // Sync sliders with inputs
+      syncSliderInput('dbg-opacity-slider', 'dbg-opacity');
+      syncSliderInput('dbg-coverage-slider', 'dbg-coverage');
+      syncSliderInput('dbg-line-width-slider', 'dbg-line-width');
+      syncSliderInput('dbg-elev-scale-slider', 'dbg-height-scale');
+      
+      // Sync color pickers with labels
+      syncColorLabel('dbg-null-color', 'dbg-null-color-label');
+      syncColorLabel('dbg-fill-static', 'dbg-fill-static-label');
+      syncColorLabel('dbg-line-static', 'dbg-line-static-label');
+      
+      // Initialize section visibility
+      updateSectionVisibility();
+      updateFillFnOptions();
+      updateLineFnOptions();
     });
     {% endif %}
   </script>
@@ -3921,4 +4284,5 @@ def pydeck_polygon(df, config=None):
         tooltip={"text": tooltip_template},
     )
 
+    return deck.to_html(as_string=True)
     return deck.to_html(as_string=True)
