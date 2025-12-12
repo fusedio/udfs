@@ -113,7 +113,6 @@ VALID_HEX_LAYER_PROPS = {
     "tooltipAttrs",
     "tooltipColumns",
     "transitions",
-    "updateTriggers",
     "upperPercentile",
     "visible",
     "wireframe",
@@ -857,8 +856,7 @@ def deckgl_layers(
         </div>
         <div class="debug-row">
           <span class="debug-label">Elev. Scale</span>
-          <input type="range" class="debug-slider" id="dbg-elev-scale-slider" min="1" max="100" step="1" value="10" />
-          <input type="number" class="debug-input debug-input-sm" id="dbg-height-scale" step="1" min="1" max="1000" value="10" />
+          <input type="number" class="debug-input" id="dbg-height-scale" step="1" min="0" max="100000" value="10" />
         </div>
       </div>
       
@@ -1044,25 +1042,12 @@ def deckgl_layers(
     const H3HexagonLayer = deck.H3HexagonLayer || (deck.GeoLayers && deck.GeoLayers.H3HexagonLayer);
     const { colorContinuous } = deck.carto;
 
-    function toH3String(hex) {
-      try {
-        if (hex == null) return null;
-        if (typeof hex === 'string') {
-          const s = hex.startsWith('0x') ? hex.slice(2) : hex;
-          return (/^\d+$/.test(s) ? BigInt(s).toString(16) : s.toLowerCase());
-        }
-        if (typeof hex === 'number') return BigInt(Math.trunc(hex)).toString(16);
-        if (typeof hex === 'bigint') return hex.toString(16);
-      } catch (_) {}
-      return null;
-    }
-
     function normalizeTileData(raw) {
       const arr = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : (Array.isArray(raw?.features) ? raw.features : []));
       const rows = arr.map(d => d?.properties ? { ...d.properties } : { ...d });
       return rows.map(p => {
         const hexRaw = p.hex ?? p.h3 ?? p.index ?? p.id;
-        const hex = toH3String(hexRaw);
+        const hex = toH3(hexRaw);
         if (!hex) return null;
         const props = { ...p, hex };
         return { ...props, properties: { ...props } };
@@ -1516,6 +1501,8 @@ def deckgl_layers(
               });
             }
           }
+          // Only add outline if stroked is enabled (fixes "unchecking Strokes doesn't remove strokes")
+          if (cfg.stroked !== false) {
           map.addLayer({ 
             id: `${l.id}-outline`, 
             type: 'line', 
@@ -1523,6 +1510,7 @@ def deckgl_layers(
             paint: { 'line-color': lineColor, 'line-width': cfg.lineWidthMinPixels || 0.5 },
             layout: { 'visibility': visible ? 'visible' : 'none' }
           });
+          }
           
         } else if (l.layerType === 'vector') {
           // Vector layer rendering
@@ -2290,20 +2278,17 @@ def deckgl_layers(
         }
         
         broadcast(message);
-        console.log('[ClickBroadcast] Feature clicked:', message);
       }
       
       // Initialize click handler when map is ready
       map.on('load', () => {
         map.on('click', handleClick);
-        console.log('[ClickBroadcast] Initialized on channel:', CHANNEL);
       });
     })();
     {% endif %}
     
     {% if debug %}
     // Debug Panel functionality
-    const DEBUG_MODE = true;
     let debugApplyTimeout = null;
     
     // Current debug state for hex layer
@@ -2562,7 +2547,6 @@ def deckgl_layers(
         // Elevation
         setInput('dbg-height-attr', debugState.fillAttr);
         setInput('dbg-height-scale', cfg.elevationScale ?? 10);
-        setInput('dbg-elev-scale-slider', cfg.elevationScale ?? 10);
         debugState.heightAttr = debugState.fillAttr;
         debugState.elevationScale = cfg.elevationScale ?? 10;
         
@@ -2830,7 +2814,6 @@ def deckgl_layers(
     
     // Initialize debug panel
     map.on('load', () => {
-      if (!DEBUG_MODE) return;
       
       syncDebugFromMap();
       
@@ -2889,7 +2872,6 @@ def deckgl_layers(
       syncSliderInput('dbg-opacity-slider', 'dbg-opacity');
       syncSliderInput('dbg-coverage-slider', 'dbg-coverage');
       syncSliderInput('dbg-line-width-slider', 'dbg-line-width');
-      syncSliderInput('dbg-elev-scale-slider', 'dbg-height-scale');
       
       // Sync color pickers with labels
       syncColorLabel('dbg-null-color', 'dbg-null-color-label');
@@ -3028,7 +3010,6 @@ const map = new mapboxgl.Map({
 });
 
 map.on('load', () => {
-  console.log('[raster] Adding source with URL:', {{ tile_url | tojson }});
   map.addSource('raster-tiles', {
     type: 'raster',
     tiles: [{{ tile_url | tojson }}],
@@ -3048,13 +3029,6 @@ map.on('error', (e) => {
   if (e.source) console.error('[raster] Source:', e.sourceId);
 });
 
-map.on('sourcedataloading', (e) => {
-  if (e.sourceId === 'raster-tiles') console.log('[raster] Loading tiles...');
-});
-
-map.on('sourcedata', (e) => {
-  if (e.sourceId === 'raster-tiles' && e.isSourceLoaded) console.log('[raster] Tiles loaded!');
-});
 </script>
 </body>
 </html>
@@ -3372,7 +3346,6 @@ def enable_map_broadcast(html_input, channel: str = "fused-bus", dataset: str = 
     }});
   }}, 200);
   
-  console.log('[map_broadcast] Initialized on channel:', CHANNEL);
 }})();
 </script>
 """
@@ -3481,7 +3454,6 @@ def enable_location_listener(html_input, channel: str = "fused-bus", zoom_offset
                 maxZoom: MAX_ZOOM
               }}
             );
-            console.log('[map_location_listener] Panned to:', loc.name, loc.bounds, 'padding:', adaptivePadding);
           }} catch (fitError) {{
             console.warn('[map_location_listener] fitBounds failed, using flyTo fallback:', fitError);
             // Fallback: just fly to center
@@ -3504,7 +3476,6 @@ def enable_location_listener(html_input, channel: str = "fused-bus", zoom_offset
   // Also listen via postMessage
   window.addEventListener('message', (ev) => handleLocationChange(ev.data));
   
-  console.log('[map_location_listener] Initialized on channel:', CHANNEL);
 }})();
 </script>
 """
@@ -3619,7 +3590,6 @@ def enable_hex_click_broadcast(
     }};
     
     busSend(message);
-    console.log('[hex_click_broadcast] Clicked hex:', hexId, propsToSend);
   }});
   
   // Also handle clicks on Deck.gl tile layers if present
@@ -3651,12 +3621,10 @@ def enable_hex_click_broadcast(
         }};
         
         busSend(message);
-        console.log('[hex_click_broadcast] Clicked tile hex:', hexId, propsToSend);
       }}
     }});
   }}
   
-  console.log('[hex_click_broadcast] Initialized on channel:', CHANNEL);
 }})();
 </script>
 """
