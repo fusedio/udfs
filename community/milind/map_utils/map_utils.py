@@ -672,6 +672,17 @@ def deckgl_layers(
     .debug-input-sm { flex: 0 0 50px; min-width: 50px; text-align: center; }
     .debug-select { flex: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; cursor: pointer; }
     .debug-select:focus { border-color: #555; }
+    .pal-hidden { display: none; }
+    .pal-dd { flex: 1; position: relative; }
+    .pal-trigger { width: 100%; display: grid; grid-template-columns: 1fr 90px; align-items: center; gap: 10px; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; color: #ddd; font-size: 11px; cursor: pointer; }
+    .pal-trigger:hover { border-color: #444; }
+    .pal-name { color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pal-swatch { width: 90px; height: 12px; border-radius: 3px; border: 1px solid #333; background: linear-gradient(90deg, #555, #999); }
+    .pal-menu { position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: #111; border: 1px solid #333; border-radius: 6px; max-height: 220px; overflow: auto; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+    .pal-item { display: grid; grid-template-columns: 1fr 90px; align-items: center; gap: 10px; padding: 8px 10px; cursor: pointer; }
+    .pal-item:hover { background: rgba(255,255,255,0.06); }
+    .pal-item-name { font-size: 11px; color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pal-item-swatch { width: 90px; height: 12px; border-radius: 3px; border: 1px solid #333; }
     .debug-toggles { display: flex; flex-wrap: wrap; gap: 8px 12px; }
     .debug-checkbox { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #999; cursor: pointer; }
     .debug-checkbox input { width: 14px; height: 14px; cursor: pointer; accent-color: #666; }
@@ -770,9 +781,16 @@ def deckgl_layers(
         </div>
         <div class="debug-row">
           <span class="debug-label">Palette</span>
-          <select class="debug-select" id="dbg-palette">
+          <select class="debug-select pal-hidden" id="dbg-palette">
             {% for pal in palettes %}<option value="{{ pal }}">{{ pal }}</option>{% endfor %}
           </select>
+          <div class="pal-dd" id="dbg-palette-dd">
+            <button type="button" class="pal-trigger" id="dbg-palette-trigger">
+              <span class="pal-name" id="dbg-palette-name">Palette</span>
+              <span class="pal-swatch" id="dbg-palette-swatch"></span>
+            </button>
+            <div class="pal-menu" id="dbg-palette-menu" style="display:none;"></div>
+        </div>
         </div>
         <div class="debug-row">
             <span class="debug-label">Domain</span>
@@ -781,14 +799,14 @@ def deckgl_layers(
             <input type="number" class="debug-input debug-input-sm" id="dbg-domain-max" step="0.1" placeholder="max" />
         </div>
         <div class="debug-row">
-            <span class="debug-label">Steps</span>
+          <span class="debug-label">Steps</span>
             <input type="number" class="debug-input debug-input-sm" id="dbg-steps" step="1" min="2" max="20" value="7" />
         </div>
         <div class="debug-row">
             <span class="debug-label">Null Color</span>
             <input type="color" class="debug-color" id="dbg-null-color" value="#b8b8b8" />
             <span class="debug-color-label" id="dbg-null-color-label">#b8b8b8</span>
-        </div>
+      </div>
       </div>
         <div id="fill-static-options" style="display:none;">
           <div class="debug-row">
@@ -817,9 +835,16 @@ def deckgl_layers(
           </div>
           <div class="debug-row">
             <span class="debug-label">Palette</span>
-            <select class="debug-select" id="dbg-line-palette">
+            <select class="debug-select pal-hidden" id="dbg-line-palette">
               {% for pal in palettes %}<option value="{{ pal }}">{{ pal }}</option>{% endfor %}
             </select>
+            <div class="pal-dd" id="dbg-line-palette-dd">
+              <button type="button" class="pal-trigger" id="dbg-line-palette-trigger">
+                <span class="pal-name" id="dbg-line-palette-name">Palette</span>
+                <span class="pal-swatch" id="dbg-line-palette-swatch"></span>
+              </button>
+              <div class="pal-menu" id="dbg-line-palette-menu" style="display:none;"></div>
+            </div>
           </div>
           <div class="debug-row">
             <span class="debug-label">Domain</span>
@@ -2374,6 +2399,93 @@ def deckgl_layers(
         color.addEventListener('input', () => { label.textContent = color.value; scheduleLayerUpdate(); });
       }
     }
+
+    // Minimal custom palette dropdown: uses a hidden <select> as the source of truth.
+    function initPaletteDropdown(selectId, triggerId, menuId, nameId, swatchId) {
+      const sel = document.getElementById(selectId);
+      const trigger = document.getElementById(triggerId);
+      const menu = document.getElementById(menuId);
+      const nameEl = document.getElementById(nameId);
+      const swatchEl = document.getElementById(swatchId);
+      if (!sel || !trigger || !menu || !nameEl || !swatchEl) return;
+
+      const stopsToGradient = (cols) => {
+        if (!cols || !cols.length) return 'linear-gradient(90deg, #555, #999)';
+        const n = cols.length;
+        const stops = cols.map((c, i) => `${c} ${(i / Math.max(1, n - 1)) * 100}%`);
+        return `linear-gradient(90deg, ${stops.join(', ')})`;
+      };
+
+      const renderSwatch = (paletteName) => {
+        const cols = getPaletteColors(paletteName, 7) || getPaletteColors(paletteName, 9) || null;
+        swatchEl.style.background = stopsToGradient(cols);
+      };
+
+      const close = () => { menu.style.display = 'none'; trigger.setAttribute('aria-expanded', 'false'); };
+      const open = () => { menu.style.display = 'block'; trigger.setAttribute('aria-expanded', 'true'); };
+      const isOpen = () => menu.style.display !== 'none';
+
+      const setValue = (val, dispatch = true) => {
+        sel.value = val;
+        nameEl.textContent = val;
+        renderSwatch(val);
+        if (dispatch) sel.dispatchEvent(new Event('change', { bubbles: true }));
+      };
+
+      // Build menu items from select options
+      const buildMenu = () => {
+        const opts = Array.from(sel.options || []);
+        menu.innerHTML = opts.map(o => {
+          const v = o.value;
+          return `
+            <div class="pal-item" data-value="${v}">
+              <span class="pal-item-name">${v}</span>
+              <span class="pal-item-swatch" data-swatch="${v}"></span>
+            </div>
+          `;
+        }).join('');
+
+        // Fill swatches after insertion
+        menu.querySelectorAll('[data-swatch]').forEach(el => {
+          const v = el.getAttribute('data-swatch');
+          const cols = getPaletteColors(v, 7) || getPaletteColors(v, 9) || null;
+          el.style.background = stopsToGradient(cols);
+        });
+      };
+
+      buildMenu();
+
+      // Sync UI when select changes (e.g. populateAttrDropdown)
+      sel.addEventListener('change', () => {
+        const v = sel.value;
+        nameEl.textContent = v || 'Palette';
+        if (v) renderSwatch(v);
+      });
+
+      // Init current
+      setValue(sel.value || (sel.options?.[0]?.value || ''), false);
+
+      trigger.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isOpen()) close();
+        else open();
+      });
+
+      menu.addEventListener('click', (e) => {
+        const item = e.target?.closest?.('.pal-item');
+        if (!item) return;
+        const v = item.getAttribute('data-value');
+        if (v) setValue(v, true);
+        close();
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!isOpen()) return;
+        const within = trigger.contains(e.target) || menu.contains(e.target);
+        if (!within) close();
+      });
+    }
     
     // Copy config to clipboard
     function copyConfigOutput() {
@@ -2869,6 +2981,10 @@ def deckgl_layers(
       syncColorLabel('dbg-null-color', 'dbg-null-color-label');
       syncColorLabel('dbg-fill-static', 'dbg-fill-static-label');
       syncColorLabel('dbg-line-static', 'dbg-line-static-label');
+
+      // Custom palette dropdowns (with previews)
+      initPaletteDropdown('dbg-palette', 'dbg-palette-trigger', 'dbg-palette-menu', 'dbg-palette-name', 'dbg-palette-swatch');
+      initPaletteDropdown('dbg-line-palette', 'dbg-line-palette-trigger', 'dbg-line-palette-menu', 'dbg-line-palette-name', 'dbg-line-palette-swatch');
       
       // Initialize section visibility
       updateSectionVisibility();
