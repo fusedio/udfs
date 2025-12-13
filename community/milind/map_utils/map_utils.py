@@ -536,7 +536,7 @@ def deckgl_layers(
     html, body { margin:0; height:100%; width:100%; display:flex; overflow:hidden; }
     #map { flex:1; height:100%; }
     #tooltip { position:absolute; pointer-events:none; background:rgba(15,15,15,0.95); color:#fff; padding:10px 14px; border-radius:6px; font-size:12px; display:none; z-index:6; max-width:320px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 4px 16px rgba(0,0,0,0.4); font-family:Inter,'SF Pro Display','Segoe UI',sans-serif; }
-    #tooltip .tt-title { display:block; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.15); font-size:11px; letter-spacing:0.3px; text-transform:uppercase; color:#E8FF59; }
+    #tooltip .tt-title { display:block; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.15); font-size:11px; letter-spacing:0.3px; text-transform:uppercase; color: rgba(255,255,255,0.72); }
     #tooltip .tt-row { display:flex; justify-content:space-between; padding:3px 0; gap:12px; }
     #tooltip .tt-key { color:rgba(255,255,255,0.6); font-size:11px; }
     #tooltip .tt-val { color:#fff; font-weight:500; text-align:right; max-width:180px; word-break:break-word; }
@@ -659,9 +659,10 @@ def deckgl_layers(
     #debug-panel { position: fixed; left: 0; top: 0; width: 280px; min-width: 240px; max-width: 520px; height: 100%; background: rgba(24,24,24,0.98); border-right: 1px solid #333; transform: translateX(0); transition: transform 0.2s ease; z-index: 199; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow: hidden; }
     #debug-panel, #debug-panel * { box-sizing: border-box; }
     #debug-resize-handle { position: absolute; top: 0; right: 0; width: 8px; height: 100%; cursor: col-resize; background: transparent; }
-    #debug-resize-handle:hover { background: rgba(255,255,255,0.05); }
+    /* Use the old tooltip accent only when hovering the resize handle */
+    #debug-resize-handle:hover { background: linear-gradient(to left, rgba(232,255,89,0.95) 0 2px, rgba(255,255,255,0.04) 2px 100%); }
     #debug-panel.collapsed { transform: translateX(-100%); }
-    #debug-toggle { position: fixed; top: 12px; width: 24px; height: 48px; background: rgba(30,30,30,0.9); border: 1px solid #333; border-left: none; border-radius: 0 6px 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #888; font-size: 14px; z-index: 200; transition: background 0.15s, color 0.15s; left: var(--debug-panel-w, 280px); }
+    #debug-toggle { position: fixed; top: 12px; width: 24px; height: 24px; background: rgba(30,30,30,0.9); border: 1px solid #333; border-left: none; border-radius: 0 6px 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #888; font-size: 14px; z-index: 200; transition: background 0.15s, color 0.15s; left: var(--debug-panel-w, 280px); }
     #debug-toggle:hover { background: rgba(50,50,50,0.95); color: #ccc; }
     #debug-content { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
     .debug-section { background: rgba(40,40,40,0.6); border: 1px solid #333; border-radius: 6px; padding: 10px; }
@@ -677,16 +678,19 @@ def deckgl_layers(
     .debug-select { flex: 1 1 auto; min-width: 0; width: auto; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; cursor: pointer; }
     .debug-select:focus { border-color: #555; }
     .pal-hidden { display: none; }
-    .pal-dd { flex: 1 1 auto; min-width: 0; position: relative; }
-    .pal-trigger { width: 100%; display: grid; grid-template-columns: 1fr 72px; align-items: center; gap: 10px; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; color: #ddd; font-size: 11px; cursor: pointer; }
+    .pal-dd { flex: 0 0 auto; position: relative; }
+    .pal-trigger { width: auto; display: flex; align-items: center; justify-content: center; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 6px; color: #ddd; font-size: 11px; cursor: pointer; }
     .pal-trigger:hover { border-color: #444; }
-    .pal-name { color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pal-swatch { width: 72px; height: 12px; border-radius: 3px; border: 1px solid #333; background: linear-gradient(90deg, #555, #999); }
-    .pal-menu { position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: #111; border: 1px solid #333; border-radius: 6px; max-height: 220px; overflow: auto; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
-    .pal-item { display: grid; grid-template-columns: 1fr 72px; align-items: center; gap: 10px; padding: 8px 10px; cursor: pointer; }
+    /* Trigger should be swatch-only; name is exposed via hover tooltip (title) */
+    .pal-name { display: none; }
+    .pal-swatch { width: 96px; height: 12px; border-radius: 3px; border: 1px solid #333; background: linear-gradient(90deg, #555, #999); }
+    /* Palette menu: swatch-only, keep it tight (no empty leading space) */
+    .pal-menu { position: absolute; left: 0; right: auto; top: calc(100% + 6px); background: #111; border: 1px solid #333; border-radius: 6px; max-height: 220px; overflow: auto; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.5); width: 116px; }
+    /* Palette menu items: swatch-only (name via hover tooltip) */
+    .pal-item { display: flex; align-items: center; justify-content: center; padding: 6px; cursor: pointer; }
     .pal-item:hover { background: rgba(255,255,255,0.06); }
-    .pal-item-name { font-size: 11px; color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pal-item-swatch { width: 72px; height: 12px; border-radius: 3px; border: 1px solid #333; }
+    .pal-item-name { display: none; }
+    .pal-item-swatch { width: 96px; height: 12px; border-radius: 3px; border: 1px solid #333; }
     .debug-toggles { display: flex; flex-wrap: wrap; gap: 8px 12px; }
     .debug-checkbox { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #999; cursor: pointer; }
     .debug-checkbox input { width: 14px; height: 14px; cursor: pointer; accent-color: #666; }
@@ -731,31 +735,6 @@ def deckgl_layers(
   <div id="debug-shell">
   <div id="debug-panel">
     <div id="debug-content">
-      <!-- View State -->
-      <div class="debug-section">
-        <div class="debug-section-title">View State</div>
-        <div class="debug-row">
-          <span class="debug-label">Longitude</span>
-          <input type="number" class="debug-input" id="dbg-lng" step="0.0001" />
-        </div>
-        <div class="debug-row">
-          <span class="debug-label">Latitude</span>
-          <input type="number" class="debug-input" id="dbg-lat" step="0.0001" />
-        </div>
-        <div class="debug-row">
-          <span class="debug-label">Zoom</span>
-          <input type="number" class="debug-input" id="dbg-zoom" step="0.1" min="0" max="22" />
-        </div>
-        <div class="debug-row">
-          <span class="debug-label">Pitch</span>
-          <input type="number" class="debug-input" id="dbg-pitch" step="1" min="0" max="85" />
-        </div>
-        <div class="debug-row">
-          <span class="debug-label">Bearing</span>
-          <input type="number" class="debug-input" id="dbg-bearing" step="1" />
-        </div>
-      </div>
-      
       <!-- Hex Layer Settings -->
       <div class="debug-section">
         <div class="debug-section-title">Hex Layer</div>
@@ -794,7 +773,7 @@ def deckgl_layers(
             {% for pal in palettes %}<option value="{{ pal }}">{{ pal }}</option>{% endfor %}
           </select>
           <div class="pal-dd" id="dbg-palette-dd">
-            <button type="button" class="pal-trigger" id="dbg-palette-trigger">
+            <button type="button" class="pal-trigger" id="dbg-palette-trigger" title="Palette">
               <span class="pal-name" id="dbg-palette-name">Palette</span>
               <span class="pal-swatch" id="dbg-palette-swatch"></span>
             </button>
@@ -848,7 +827,7 @@ def deckgl_layers(
               {% for pal in palettes %}<option value="{{ pal }}">{{ pal }}</option>{% endfor %}
             </select>
             <div class="pal-dd" id="dbg-line-palette-dd">
-              <button type="button" class="pal-trigger" id="dbg-line-palette-trigger">
+              <button type="button" class="pal-trigger" id="dbg-line-palette-trigger" title="Palette">
                 <span class="pal-name" id="dbg-line-palette-name">Palette</span>
                 <span class="pal-swatch" id="dbg-line-palette-swatch"></span>
               </button>
@@ -893,6 +872,31 @@ def deckgl_layers(
       <div class="debug-section" id="tooltip-section">
         <div class="debug-section-title">Tooltip Columns</div>
         <div id="dbg-tooltip-cols" class="debug-checklist"></div>
+      </div>
+
+      <!-- View State -->
+      <div class="debug-section">
+        <div class="debug-section-title">View State</div>
+        <div class="debug-row">
+          <span class="debug-label">Longitude</span>
+          <input type="number" class="debug-input" id="dbg-lng" step="0.0001" />
+        </div>
+        <div class="debug-row">
+          <span class="debug-label">Latitude</span>
+          <input type="number" class="debug-input" id="dbg-lat" step="0.0001" />
+        </div>
+        <div class="debug-row">
+          <span class="debug-label">Zoom</span>
+          <input type="number" class="debug-input" id="dbg-zoom" step="0.1" min="0" max="22" />
+        </div>
+        <div class="debug-row">
+          <span class="debug-label">Pitch</span>
+          <input type="number" class="debug-input" id="dbg-pitch" step="1" min="0" max="85" />
+        </div>
+        <div class="debug-row">
+          <span class="debug-label">Bearing</span>
+          <input type="number" class="debug-input" id="dbg-bearing" step="1" />
+        </div>
       </div>
       
       <!-- Config Output -->
@@ -1068,7 +1072,9 @@ def deckgl_layers(
       zoom: {{ zoom }}, 
       pitch: {{ pitch }}, 
       bearing: {{ bearing }}, 
-      projection: 'mercator' 
+      projection: 'mercator',
+      // Use Mapbox defaults: right-drag (or Ctrl+drag) to rotate/pitch
+      pitchWithRotate: true
     });
 
     // Deck.gl overlay for tile layers
@@ -1514,6 +1520,16 @@ def deckgl_layers(
           const layerOpacity = (typeof cfg.opacity === 'number' && isFinite(cfg.opacity)) ? Math.max(0, Math.min(1, cfg.opacity)) : 0.8;
           
           if (cfg.extruded) {
+            // If stroked is enabled, add outline FIRST so it doesn't sit on top of the 3D extrusion.
+            if (cfg.stroked !== false) {
+              map.addLayer({ 
+                id: `${l.id}-outline`, 
+                type: 'line', 
+                source: l.id, 
+                paint: { 'line-color': lineColor, 'line-width': cfg.lineWidthMinPixels || 0.5 },
+                layout: { 'visibility': visible ? 'visible' : 'none' }
+              });
+            }
             const elev = cfg.elevationScale || 1;
             map.addLayer({ 
               id: `${l.id}-extrusion`, 
@@ -1537,16 +1553,16 @@ def deckgl_layers(
                 layout: { 'visibility': visible ? 'visible' : 'none' }
               });
             }
-          }
-          // Only add outline if stroked is enabled (fixes "unchecking Strokes doesn't remove strokes")
-          if (cfg.stroked !== false) {
-          map.addLayer({ 
-            id: `${l.id}-outline`, 
-            type: 'line', 
-            source: l.id, 
-            paint: { 'line-color': lineColor, 'line-width': cfg.lineWidthMinPixels || 0.5 },
-            layout: { 'visibility': visible ? 'visible' : 'none' }
-          });
+            // Flat mode: outline should be on top of fill
+            if (cfg.stroked !== false) {
+              map.addLayer({ 
+                id: `${l.id}-outline`, 
+                type: 'line', 
+                source: l.id, 
+                paint: { 'line-color': lineColor, 'line-width': cfg.lineWidthMinPixels || 0.5 },
+                layout: { 'visibility': visible ? 'visible' : 'none' }
+              });
+            }
           }
           
         } else if (l.layerType === 'vector') {
@@ -2484,6 +2500,8 @@ def deckgl_layers(
         const v = sel.value || (sel.options?.[0]?.value || '');
         if (!sel.value && v) sel.value = v;
         nameEl.textContent = v || 'Palette';
+        trigger.title = v || 'Palette';
+        trigger.setAttribute('aria-label', v || 'Palette');
         if (v) renderSwatch(v);
       };
 
@@ -2492,9 +2510,9 @@ def deckgl_layers(
         const opts = Array.from(sel.options || []);
         menu.innerHTML = opts.map(o => {
           const v = o.value;
+          // Swatch-only item; palette name shown via hover tooltip (title)
           return `
-            <div class="pal-item" data-value="${v}">
-              <span class="pal-item-name">${v}</span>
+            <div class="pal-item" data-value="${v}" title="${v}" aria-label="${v}">
               <span class="pal-item-swatch" data-swatch="${v}"></span>
             </div>
           `;
