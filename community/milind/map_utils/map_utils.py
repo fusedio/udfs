@@ -1322,26 +1322,33 @@ def deckgl_layers(
       try {
         updateSqlStatus('running...');
         const res = await duckConn.query(sqlText);
+        const hexColumns = new Set(['hex', 'h3', 'index', 'id']);
         const rows = res.toArray().map(row => {
           // Convert Arrow row to plain object, handling BigInt
           const obj = {};
           for (const key of Object.keys(row)) {
             let val = row[key];
-            // Convert BigInt to string to avoid serialization issues
             if (typeof val === 'bigint') {
-              val = val.toString(16); // hex string for H3 IDs
+              // Only convert hex columns to hex string, others to number
+              if (hexColumns.has(key.toLowerCase())) {
+                val = val.toString(16);
+              } else {
+                // Convert to number if safe, otherwise string
+                val = Number(val);
+              }
             }
             obj[key] = val;
           }
           return obj;
         });
         
-        // Normalize hex IDs
+        // Normalize hex IDs using toH3 (handles various formats)
         const features = rows.map(p => {
           const rawHex = p.hex ?? p.h3 ?? p.index ?? p.id;
           const hex = toH3(rawHex);
           if (!hex) return null;
-          return { ...p, hex, properties: { ...p, hex } };
+          const props = { ...p, hex };
+          return { ...props, properties: props };
         }).filter(Boolean);
         
         updateSqlStatus(`${features.length.toLocaleString()} rows`);
