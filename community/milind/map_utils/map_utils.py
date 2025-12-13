@@ -1295,6 +1295,9 @@ def deckgl_layers(
           const firstSqlLayer = LAYERS_DATA.find(l => l.sql);
           sqlInput.value = firstSqlLayer?.sql || 'SELECT * FROM data';
         }
+        
+        // Run the initial SQL query to apply the filter
+        await runSqlQuery();
       } catch (e) {
         console.error('DuckDB init error:', e);
         updateSqlStatus('init error');
