@@ -136,6 +136,12 @@ def url_to_qr(url, title='Scan me 🥹', logo_url='https://www.fused.io/favicon.
     '''
     return html
 
+def get_udf_token(udf_name='my_udf', as_url=False):
+    udf = fused.load(udf_name)
+    if as_url:
+        return udf.get_access_tokens()[0].get_file_url()
+    else:
+        return udf.get_access_tokens()[0].token
 
 def new_file_tracker(path='s3://fused-asset/data/', exclude_hidden_files=True, status_filename='_status'):
     import pandas as pd
