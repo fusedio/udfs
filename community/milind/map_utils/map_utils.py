@@ -562,21 +562,33 @@ def deckgl_layers(
       background: rgba(26, 26, 26, 0.95);
       border: 1px solid #424242;
       border-radius: 8px;
-      padding: 8px 10px;
+      padding: 0; /* no padding so gutter is flush */
       font-family: Inter, 'SF Pro Display', 'Segoe UI', sans-serif;
       color: #f5f5f5;
       min-width: 160px;
       z-index: 100;
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      overflow: hidden; /* clip gutter to rounded corners */
     }
     .layer-item {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 6px 0;
+      padding: 8px 10px 8px 16px; /* text padding; gutter overlaps left 6px */
       border-bottom: 1px solid #333;
+      position: relative;
     }
     .layer-item:last-child { border-bottom: none; }
+    /* Palette gradient gutter on the left edge - fully flush */
+    .layer-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 6px;
+      background: var(--layer-strip, rgba(255,255,255,0.22));
+    }
     .layer-item .layer-eye {
       width: 18px;
       height: 18px;
@@ -588,15 +600,10 @@ def deckgl_layers(
       font-size: 14px;
       transition: color 0.15s;
       user-select: none;
+      margin-left: auto; /* push eye to the far right */
     }
     .layer-item .layer-eye:hover { color: #fff; }
     .layer-item.disabled .layer-eye { color: #555; }
-    .layer-item .layer-color {
-      width: 12px;
-      height: 12px;
-      border-radius: 3px;
-      border: 1px solid rgba(255,255,255,0.15);
-    }
     .layer-item .layer-name {
       flex: 1;
       font-size: 12px;
@@ -612,22 +619,22 @@ def deckgl_layers(
       position: fixed;
       right: 12px;
       bottom: 12px;
-      background: rgba(15,15,15,0.9); 
-      color: #fff;
-      padding: 8px; 
-      border-radius: 4px;
+      background: rgba(26, 26, 26, 0.95);
+      border: 1px solid #424242;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: Inter, 'SF Pro Display', 'Segoe UI', sans-serif;
+      color: #f5f5f5;
       font-size: 11px;
       z-index: 10;
       min-width: 140px;
-      border: 1px solid rgba(255,255,255,0.1); 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
     /* Mapbox scale (bottom-left) */
     .legend-layer { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
     .legend-layer:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
-    .legend-layer .legend-title { margin-bottom: 6px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
-    .legend-layer .legend-title .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
-    .legend-layer .legend-title .legend-line { width: 20px; height: 3px; border-radius: 1px; }
+    .legend-layer .legend-title { margin-bottom: 6px; font-weight: 500; }
     .legend-layer .legend-gradient { height: 10px; border-radius: 2px; margin-bottom: 4px; border: 1px solid rgba(255,255,255,0.2); }
     .legend-layer .legend-labels { display: flex; justify-content: space-between; font-size: 10px; color: #ccc; }
     .legend-layer .legend-categories { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; max-height: 440px; overflow-y: scroll; padding-right: 4px; }
@@ -829,7 +836,6 @@ def deckgl_layers(
       <div class="debug-section">
         <div class="debug-section-title">Hex Layer</div>
         <div class="debug-toggles">
-          <label class="debug-checkbox"><input type="checkbox" id="dbg-pickable" checked /> Pickable</label>
         <label class="debug-checkbox"><input type="checkbox" id="dbg-filled" checked /> Filled</label>
           <label class="debug-checkbox"><input type="checkbox" id="dbg-stroked" checked /> Stroked</label>
         <label class="debug-checkbox"><input type="checkbox" id="dbg-extruded" /> Extruded</label>
@@ -1561,7 +1567,7 @@ def deckgl_layers(
               getHexagon: d => d.hex,
               ...hexCfg,
               // Explicit overrides (must come AFTER hexCfg spread)
-              pickable: rawHexLayer.pickable !== false,
+              pickable: true,
               stroked: isStroked,
               filled: isFilled,
               extruded: isExtruded,
@@ -2036,24 +2042,39 @@ def deckgl_layers(
       
       list.innerHTML = LAYERS_DATA.map(l => {
         const visible = layerVisibility[l.id];
-        let colorPreview = '#0090ff';
+        let stripBg = '#0090ff';
+
+        const toGradient = (cols) => {
+          if (!cols || !cols.length) return null;
+          if (cols.length === 1) return cols[0];
+          const stops = cols.map((c, i) => `${c} ${(i / (cols.length - 1)) * 100}%`).join(', ');
+          return `linear-gradient(to bottom, ${stops})`;
+        };
         
         if (l.layerType === 'hex') {
           const cfg = l.hexLayer || {};
           const colorCfg = (cfg.filled === false && cfg.getLineColor) ? cfg.getLineColor : cfg.getFillColor;
           if (Array.isArray(colorCfg)) {
-            colorPreview = toRgba(colorCfg, 1) || colorPreview;
+            stripBg = toRgba(colorCfg, 1) || stripBg;
           } else if (colorCfg?.['@@function'] === 'colorContinuous' || colorCfg?.['@@function'] === 'colorCategories') {
             const paletteName = colorCfg.colors || (colorCfg['@@function'] === 'colorCategories' ? 'Bold' : 'TealGrn');
             const cols = getPaletteColors(paletteName, colorCfg.steps || 7);
-            if (cols && cols.length) colorPreview = cols[Math.floor(cols.length / 2)];
+            stripBg = toGradient(cols) || stripBg;
           }
         } else if (l.layerType === 'vector') {
-          if (l.lineColorRgba && !l.isFilled) colorPreview = l.lineColorRgba;
-          else if (l.fillColorRgba) colorPreview = l.fillColorRgba;
-          else if (l.fillColorConfig?.colors) {
-            const cols = getPaletteColors(l.fillColorConfig.colors, 7);
-            if (cols && cols.length) colorPreview = cols[Math.floor(cols.length / 2)];
+          // Prefer line config when stroke-only / fully transparent fill
+          const hasFillFunc = l.fillColorConfig?.['@@function'];
+          const hasLineFunc = l.lineColorConfig?.['@@function'];
+          const useLine = hasLineFunc && (!hasFillFunc || !l.isFilled || l.opacity === 0);
+          const cfg = useLine ? l.lineColorConfig : l.fillColorConfig;
+
+          if (!cfg?.['@@function']) {
+            if (useLine && l.lineColorRgba) stripBg = l.lineColorRgba;
+            else if (l.fillColorRgba) stripBg = l.fillColorRgba;
+            else if (l.lineColorRgba) stripBg = l.lineColorRgba;
+          } else if (cfg?.colors) {
+            const cols = getPaletteColors(cfg.colors, cfg.steps || 7);
+            stripBg = toGradient(cols) || stripBg;
           }
         }
         
@@ -2061,10 +2082,9 @@ def deckgl_layers(
           ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>'
           : '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>';
         return `
-          <div class="layer-item ${visible ? '' : 'disabled'}" data-layer-id="${l.id}">
-            <span class="layer-eye" onclick="toggleLayerVisibility('${l.id}', ${!visible})">${eyeIcon}</span>
-            <div class="layer-color" style="background:${colorPreview};"></div>
+          <div class="layer-item ${visible ? '' : 'disabled'}" data-layer-id="${l.id}" style="--layer-strip: ${stripBg};">
             <span class="layer-name">${l.name}</span>
+            <span class="layer-eye" onclick="toggleLayerVisibility('${l.id}', ${!visible})">${eyeIcon}</span>
           </div>
         `;
       }).join('');
@@ -2103,10 +2123,7 @@ def deckgl_layers(
           if (!colorCfg?.['@@function'] && l.lineColorRgba && !l.isFilled) {
             html += `
               <div class="legend-layer">
-                <div class="legend-title">
-                  <span class="legend-line" style="background:${l.lineColorRgba};"></span>
-                  ${l.name}
-                </div>
+                <div class="legend-title">${l.name}</div>
               </div>
             `;
             return;
@@ -2137,10 +2154,7 @@ def deckgl_layers(
           
           html += `
             <div class="legend-layer">
-              <div class="legend-title">
-                <span class="legend-dot" style="background:${cols[0]};"></span>
-                ${l.name}: ${titleAttr}
-              </div>
+              <div class="legend-title">${l.name}: ${titleAttr}</div>
               <div class="legend-categories">
                 ${catPairs.map((cat, i) => `
                   <div class="legend-cat-item">
@@ -2170,14 +2184,10 @@ def deckgl_layers(
         if (isReversed) cols = [...cols].reverse();
         
         const gradient = `linear-gradient(to right, ${cols.map((c, i) => `${c} ${i / (cols.length - 1) * 100}%`).join(', ')})`;
-        const dotColor = cols[Math.floor(cols.length / 2)];
         
         html += `
           <div class="legend-layer">
-            <div class="legend-title">
-              <span class="legend-dot" style="background:${dotColor};"></span>
-              ${l.name}: ${colorCfg.attr}
-            </div>
+            <div class="legend-title">${l.name}: ${colorCfg.attr}</div>
             <div class="legend-gradient" style="background:${gradient};"></div>
             <div class="legend-labels">
               <span>${d0.toFixed(1)}</span>
@@ -2937,13 +2947,13 @@ def deckgl_layers(
         const setCheckbox = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
         const setInput = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
         
-        setCheckbox('dbg-pickable', cfg.pickable !== false);
         setCheckbox('dbg-filled', cfg.filled !== false);
         // Vector uses `stroked`, hex uses `stroked` too; processed vector also has `isStroked`
         setCheckbox('dbg-stroked', (cfg.stroked ?? firstLayer.isStroked) !== false);
         setCheckbox('dbg-extruded', cfg.extruded === true);
         
-        debugState.pickable = cfg.pickable !== false;
+        // Pickable is always-on (debug UI removed)
+        debugState.pickable = true;
         debugState.filled = cfg.filled !== false;
         debugState.stroked = (cfg.stroked ?? firstLayer.isStroked) !== false;
         debugState.extruded = cfg.extruded === true;
@@ -3175,7 +3185,6 @@ def deckgl_layers(
           bearing: parseInt(document.getElementById('dbg-bearing').value) || 0
         },
         hexLayer: {
-          pickable: debugState.pickable,
           filled: debugState.filled,
           stroked: debugState.stroked,
           extruded: debugState.extruded,
@@ -3271,6 +3280,7 @@ def deckgl_layers(
           if (typeof addAllLayers === 'function') addAllLayers();
           if (typeof rebuildQueryableLayers === 'function') rebuildQueryableLayers();
           if (typeof updateLegend === 'function') updateLegend();
+          if (typeof updateLayerPanel === 'function') updateLayerPanel();
           syncDebugFromMap();
           updateConfigOutput();
         });
@@ -3290,8 +3300,8 @@ def deckgl_layers(
         return Number.isFinite(v) ? v : def;
       };
       
-      // Layer toggles
-      debugState.pickable = getChecked('dbg-pickable');
+      // Layer toggles (pickable is always-on)
+      debugState.pickable = true;
       debugState.filled = getChecked('dbg-filled');
       debugState.stroked = getChecked('dbg-stroked');
       debugState.extruded = getChecked('dbg-extruded');
@@ -3378,7 +3388,7 @@ def deckgl_layers(
         l.tooltipColumns = debugState.tooltipColumns;
         
         if (l.hexLayer) {
-          l.hexLayer.pickable = debugState.pickable;
+          l.hexLayer.pickable = true;
           l.hexLayer.filled = debugState.filled;
           l.hexLayer.stroked = debugState.stroked;
           l.hexLayer.extruded = debugState.extruded;
@@ -3455,6 +3465,7 @@ def deckgl_layers(
 
       lastDebugStructure = currStructure;
       if (typeof updateLegend === 'function') updateLegend();
+      if (typeof updateLayerPanel === 'function') updateLayerPanel();
     }
     
     // Debounced apply for smooth slider experience
@@ -3492,7 +3503,7 @@ def deckgl_layers(
       });
       
       // Bind layer toggles
-      ['dbg-pickable', 'dbg-filled', 'dbg-stroked', 'dbg-extruded'].forEach(id => {
+      ['dbg-filled', 'dbg-stroked', 'dbg-extruded'].forEach(id => {
         document.getElementById(id)?.addEventListener('change', applyLayerChanges);
       });
       
