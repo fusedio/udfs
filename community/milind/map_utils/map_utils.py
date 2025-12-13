@@ -1499,20 +1499,23 @@ def deckgl_layers(
         .reverse()
         .map(l => buildTileLayer(l, bottomMostLayerId));
       
-      // Minimal + reliable: always recreate the overlay
+      // Fast-path: update overlay in-place to avoid flicker during rapid edits
       if (deckOverlay) {
         try {
-          map.removeControl(deckOverlay);
-          deckOverlay.finalize?.();
-        } catch (e) {}
-        deckOverlay = null;
+          deckOverlay.setProps({ layers: deckLayers });
+        } catch (e) {
+          // Fallback: recreate if anything goes wrong
+          try { map.removeControl(deckOverlay); deckOverlay.finalize?.(); } catch (e2) {}
+          deckOverlay = null;
+        }
       }
-
+      if (!deckOverlay) {
         deckOverlay = new MapboxOverlay({
           interleaved: true,
           layers: deckLayers
         });
         map.addControl(deckOverlay);
+      }
 
         if (bottomMostLayerId) {
           const moveOverlay = () => {
@@ -1544,6 +1547,120 @@ def deckgl_layers(
     {% endif %}
 
     // ========== Add All Layers ==========
+    // Fast in-place updates (no remove/re-add) to reduce flicker while typing/dragging controls.
+    // Falls back to addAllLayers() if a required layer doesn't exist.
+    function updateMapboxLayersFast() {
+      let ok = true;
+      const safePaint = (layerId, key, val) => {
+        try { if (map.getLayer(layerId)) map.setPaintProperty(layerId, key, val); else ok = false; } catch (e) { ok = false; }
+      };
+      const safeLayout = (layerId, key, val) => {
+        try { if (map.getLayer(layerId)) map.setLayoutProperty(layerId, key, val); else ok = false; } catch (e) { ok = false; }
+      };
+      const safeRemove = (layerId) => { try { if (map.getLayer(layerId)) map.removeLayer(layerId); } catch (e) {} };
+
+      // Match addAllLayers() ordering logic, but only update what's already there.
+      const renderOrder = [...LAYERS_DATA].reverse();
+      renderOrder.forEach((l) => {
+        if (l.layerType === 'hex' && l.isTileLayer) return; // Deck handles tile layers
+
+        const visible = layerVisibility[l.id];
+        const vis = visible ? 'visible' : 'none';
+
+        if (l.layerType === 'mvt') {
+          // MVT style updates are not currently driven by the debug form; skip.
+          return;
+        }
+
+        // If source missing, we can't update safely.
+        if (!map.getSource(l.id)) { ok = false; return; }
+
+        if (l.layerType === 'hex') {
+          const cfg = l.hexLayer || {};
+          const fillColor = Array.isArray(cfg.getFillColor) ? toRgba(cfg.getFillColor, 0.8) : buildColorExpr(cfg.getFillColor, l.data) || 'rgba(0,144,255,0.7)';
+          const lineColor = cfg.getLineColor ? (Array.isArray(cfg.getLineColor) ? toRgba(cfg.getLineColor, 1) : buildColorExpr(cfg.getLineColor, l.data)) : 'rgba(255,255,255,0.3)';
+          const layerOpacity = (typeof cfg.opacity === 'number' && isFinite(cfg.opacity)) ? Math.max(0, Math.min(1, cfg.opacity)) : 0.8;
+          const lineW = cfg.lineWidthMinPixels || 0.5;
+
+          if (cfg.extruded) {
+            // Outline existence is structural; remove if disabled, otherwise update if present.
+            if (cfg.stroked === false) {
+              safeRemove(`${l.id}-outline`);
+            } else {
+              safePaint(`${l.id}-outline`, 'line-color', lineColor);
+              safePaint(`${l.id}-outline`, 'line-width', lineW);
+              safeLayout(`${l.id}-outline`, 'visibility', vis);
+            }
+            const elev = cfg.elevationScale || 1;
+            safePaint(`${l.id}-extrusion`, 'fill-extrusion-color', fillColor);
+            safePaint(`${l.id}-extrusion`, 'fill-extrusion-height', cfg.getFillColor?.attr ? ['*', ['get', cfg.getFillColor.attr], elev] : 100);
+            safePaint(`${l.id}-extrusion`, 'fill-extrusion-opacity', layerOpacity);
+            safeLayout(`${l.id}-extrusion`, 'visibility', vis);
+          } else {
+            if (cfg.filled === false) {
+              safeRemove(`${l.id}-fill`);
+            } else {
+              safePaint(`${l.id}-fill`, 'fill-color', fillColor);
+              safePaint(`${l.id}-fill`, 'fill-opacity', layerOpacity);
+              safeLayout(`${l.id}-fill`, 'visibility', vis);
+            }
+            if (cfg.stroked === false) {
+              safeRemove(`${l.id}-outline`);
+            } else {
+              safePaint(`${l.id}-outline`, 'line-color', lineColor);
+              safePaint(`${l.id}-outline`, 'line-width', lineW);
+              safeLayout(`${l.id}-outline`, 'visibility', vis);
+            }
+            // Ensure extrusion layer doesn't linger
+            safeRemove(`${l.id}-extrusion`);
+          }
+          return;
+        }
+
+        if (l.layerType === 'vector') {
+          const vecData = l.geojson?.features?.map(f => f.properties) || [];
+          const fillColorExpr = l.fillColorConfig?.['@@function'] ? buildColorExpr(l.fillColorConfig, vecData) : (l.fillColorRgba || 'rgba(0,144,255,0.6)');
+          const lineColorExpr = l.lineColorConfig?.['@@function'] ? buildColorExpr(l.lineColorConfig, vecData) : (l.lineColorRgba || 'rgba(100,100,100,0.8)');
+          const lineW = (typeof l.lineWidth === 'number' && isFinite(l.lineWidth)) ? l.lineWidth : 1;
+          const layerOpacity = (typeof l.opacity === 'number' && isFinite(l.opacity)) ? Math.max(0, Math.min(1, l.opacity)) : 0.8;
+
+          // Only update layers if they exist; don't try to infer geometry type here.
+          if (l.isFilled === false) {
+            safeRemove(`${l.id}-fill`);
+          } else {
+            if (map.getLayer(`${l.id}-fill`)) {
+              safePaint(`${l.id}-fill`, 'fill-color', fillColorExpr);
+              safePaint(`${l.id}-fill`, 'fill-opacity', layerOpacity);
+              safeLayout(`${l.id}-fill`, 'visibility', vis);
+            }
+          }
+          if (l.isStroked === false) {
+            safeRemove(`${l.id}-outline`);
+            safeRemove(`${l.id}-line`);
+          } else {
+            if (map.getLayer(`${l.id}-outline`)) {
+              safePaint(`${l.id}-outline`, 'line-color', lineColorExpr);
+              safePaint(`${l.id}-outline`, 'line-width', lineW);
+              safeLayout(`${l.id}-outline`, 'visibility', vis);
+            }
+            if (map.getLayer(`${l.id}-line`)) {
+              safePaint(`${l.id}-line`, 'line-color', lineColorExpr);
+              safePaint(`${l.id}-line`, 'line-width', lineW);
+              safeLayout(`${l.id}-line`, 'visibility', vis);
+            }
+          }
+          if (map.getLayer(`${l.id}-circle`)) {
+            // Keep points consistent with fill settings
+            safePaint(`${l.id}-circle`, 'circle-color', fillColorExpr);
+            safeLayout(`${l.id}-circle`, 'visibility', vis);
+          }
+          return;
+        }
+      });
+
+      return ok;
+    }
+
     function addAllLayers() {
       // Remove existing layers
       LAYERS_DATA.forEach(l => {
@@ -2986,6 +3103,7 @@ def deckgl_layers(
     }
     
     // Apply layer style changes live
+    let lastDebugStructure = null;
     function applyLayerChanges() {
       // Read all current values from form
       const getVal = (id, def) => document.getElementById(id)?.value ?? def;
@@ -3135,20 +3253,38 @@ def deckgl_layers(
         }
       });
       
-      // Re-render: Deck tile layers (if present) + all Mapbox layers
+      // Structural toggles require rebuilding Mapbox layers; numeric/style edits can update in-place.
+      const currStructure = { filled: !!debugState.filled, stroked: !!debugState.stroked, extruded: !!debugState.extruded };
+      const structuralChanged = !lastDebugStructure ||
+        lastDebugStructure.filled !== currStructure.filled ||
+        lastDebugStructure.stroked !== currStructure.stroked ||
+        lastDebugStructure.extruded !== currStructure.extruded;
+
+      // Re-render: Deck tile layers (if present)
       if (typeof rebuildDeckOverlay === 'function' && HAS_TILE_LAYERS) {
         rebuildDeckOverlay();
       }
-      if (typeof addAllLayers === 'function') {
+
+      // Mapbox: update in-place when possible to avoid flicker
+      if (!structuralChanged && typeof updateMapboxLayersFast === 'function') {
+        const ok = updateMapboxLayersFast();
+        if (!ok && typeof addAllLayers === 'function') addAllLayers();
+      } else if (typeof addAllLayers === 'function') {
         addAllLayers();
       }
+
+      lastDebugStructure = currStructure;
       if (typeof updateLegend === 'function') updateLegend();
     }
     
     // Debounced apply for smooth slider experience
     function scheduleLayerUpdate() {
-      clearTimeout(debugApplyTimeout);
-      debugApplyTimeout = setTimeout(applyLayerChanges, 100);
+      // rAF throttle: reduces flicker and keeps updates responsive while typing quickly
+      if (debugApplyTimeout) return;
+      debugApplyTimeout = requestAnimationFrame(() => {
+        debugApplyTimeout = null;
+        applyLayerChanges();
+      });
     }
     
     // Initialize debug panel
