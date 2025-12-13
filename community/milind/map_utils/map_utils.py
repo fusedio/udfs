@@ -263,17 +263,30 @@ def deckgl_layers(
     """
     import math
     
-    # Basemap setup
+    # Basemap setup (config can override function arg)
     basemap_styles = {
         "dark": "mapbox://styles/mapbox/dark-v11",
         "satellite": "mapbox://styles/mapbox/satellite-streets-v12",
         "light": "mapbox://styles/mapbox/light-v11",
         "streets": "mapbox://styles/mapbox/streets-v12"
     }
-    style_url = basemap_styles.get(
-        {"sat": "satellite", "satellite-streets": "satellite"}.get((basemap or "dark").lower(), (basemap or "dark").lower()),
-        basemap or basemap_styles["dark"]
+    basemap_from_config = None
+    try:
+        if layers and isinstance(layers, list):
+            for ld in layers:
+                cfg0 = (ld or {}).get("config", {})
+                if isinstance(cfg0, dict) and cfg0.get("basemap"):
+                    basemap_from_config = cfg0.get("basemap")
+                    break
+    except Exception:
+        basemap_from_config = None
+
+    basemap_value = basemap_from_config or basemap or "dark"
+    basemap_key = {"sat": "satellite", "satellite-streets": "satellite"}.get(
+        (basemap_value or "dark").lower(),
+        (basemap_value or "dark").lower(),
     )
+    style_url = basemap_styles.get(basemap_key, basemap_value or basemap_styles["dark"])
 
     # Process each layer
     processed_layers = []
@@ -597,7 +610,7 @@ def deckgl_layers(
     /* Legend */
     .color-legend {
       position: fixed;
-      left: 12px;
+      right: 12px;
       bottom: 12px;
       background: rgba(15,15,15,0.9); 
       color: #fff;
@@ -608,6 +621,8 @@ def deckgl_layers(
       min-width: 140px;
       border: 1px solid rgba(255,255,255,0.1); 
     }
+
+    /* Mapbox scale (bottom-left) */
     .legend-layer { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
     .legend-layer:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
     .legend-layer .legend-title { margin-bottom: 6px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
@@ -704,19 +719,20 @@ def deckgl_layers(
     .debug-select { flex: 1 1 auto; min-width: 0; width: auto; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; cursor: pointer; }
     .debug-select:focus { border-color: #555; }
     .pal-hidden { display: none; }
-    .pal-dd { flex: 0 0 auto; position: relative; }
-    .pal-trigger { width: auto; display: flex; align-items: center; justify-content: center; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 6px; color: #ddd; font-size: 11px; cursor: pointer; }
+    /* Palette dropdown should take full row width like other selects */
+    .pal-dd { flex: 1 1 auto; min-width: 0; width: 100%; position: relative; }
+    .pal-trigger { width: 100%; display: flex; align-items: center; justify-content: flex-start; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 0; color: #ddd; font-size: 11px; cursor: pointer; }
     .pal-trigger:hover { border-color: #444; }
     /* Trigger should be swatch-only; name is exposed via hover tooltip (title) */
     .pal-name { display: none; }
-    .pal-swatch { width: 96px; height: 12px; border-radius: 3px; border: 1px solid #333; background: linear-gradient(90deg, #555, #999); }
+    .pal-swatch { width: 100%; height: 12px; border-radius: 3px; border: 1px solid #333; background: linear-gradient(90deg, #555, #999); }
     /* Palette menu: swatch-only, keep it tight (no empty leading space) */
-    .pal-menu { position: absolute; left: 0; right: auto; top: calc(100% + 6px); background: #111; border: 1px solid #333; border-radius: 6px; max-height: 220px; overflow: auto; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.5); width: 116px; }
+    .pal-menu { position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: #111; border: 1px solid #333; border-radius: 6px; max-height: 220px; overflow: auto; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.5); width: 100%; }
     /* Palette menu items: swatch-only (name via hover tooltip) */
-    .pal-item { display: flex; align-items: center; justify-content: center; padding: 6px; cursor: pointer; }
+    .pal-item { display: flex; align-items: center; justify-content: center; padding: 6px 0; cursor: pointer; }
     .pal-item:hover { background: rgba(255,255,255,0.06); }
     .pal-item-name { display: none; }
-    .pal-item-swatch { width: 96px; height: 12px; border-radius: 3px; border: 1px solid #333; }
+    .pal-item-swatch { width: 100%; height: 12px; border-radius: 3px; border: 1px solid #333; }
     .debug-toggles { display: flex; flex-wrap: wrap; gap: 8px 12px; }
     .debug-checkbox { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #999; cursor: pointer; }
     .debug-checkbox input { width: 14px; height: 14px; cursor: pointer; accent-color: #666; }
@@ -978,6 +994,10 @@ def deckgl_layers(
           <span class="debug-label">Bearing</span>
           <input type="number" class="debug-input" id="dbg-bearing" step="1" />
         </div>
+        <div class="debug-row">
+          <span class="debug-label">Basemap</span>
+          <select class="debug-select" id="dbg-basemap"></select>
+        </div>
       </div>
       
       <!-- Config Output -->
@@ -996,6 +1016,13 @@ def deckgl_layers(
     const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
     const LAYERS_DATA = {{ layers_data | tojson }};
     const HAS_CUSTOM_VIEW = {{ has_custom_view | tojson }};
+    const INITIAL_BASEMAP = {{ basemap | tojson }};
+    const BASEMAP_STYLES = {
+      dark: "mapbox://styles/mapbox/dark-v11",
+      satellite: "mapbox://styles/mapbox/satellite-streets-v12",
+      light: "mapbox://styles/mapbox/light-v11",
+      streets: "mapbox://styles/mapbox/streets-v12"
+    };
     
     // Track layer visibility
     const layerVisibility = {};
@@ -1154,9 +1181,82 @@ def deckgl_layers(
       pitch: {{ pitch }}, 
       bearing: {{ bearing }}, 
       projection: 'mercator',
-      // Use Mapbox defaults: right-drag (or Ctrl+drag) to rotate/pitch
+      // Keep pitch behavior enabled; we override the trackpad shortcut to Cmd+drag below.
       pitchWithRotate: true
     });
+
+    // Mapbox scale (km) in bottom-left
+    try { map.addControl(new mapboxgl.ScaleControl({ maxWidth: 110, unit: 'metric' }), 'bottom-left'); } catch (e) {}
+
+    // Cmd (⌘) + drag to rotate/pitch (trackpad-friendly "3D orbit").
+    // Also blocks Mapbox's default Ctrl+drag rotate so Cmd becomes the shortcut.
+    (function enableCmdDragOrbit() {
+      const canvas = map.getCanvasContainer?.() || map.getCanvas?.();
+      if (!canvas) return;
+      let active = false;
+      let startX = 0;
+      let startY = 0;
+      let startBearing = 0;
+      let startPitch = 0;
+      const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+      const PITCH_MIN = 0;
+      const PITCH_MAX = 85;
+      const SPEED_PITCH = 0.25;   // degrees per pixel
+      const SPEED_BEARING = 0.35; // degrees per pixel
+
+      function stop() {
+        if (!active) return;
+        active = false;
+        try { map.dragPan.enable(); } catch (e) {}
+        try { canvas.style.cursor = ''; } catch (e) {}
+        window.removeEventListener('pointermove', onMove, { passive: false });
+        window.removeEventListener('pointerup', onUp, { passive: false });
+        window.removeEventListener('pointercancel', onUp, { passive: false });
+      }
+
+      function onMove(e) {
+        if (!active) return;
+        if (!e.metaKey) return stop();
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        map.setBearing(startBearing + dx * SPEED_BEARING);
+        map.setPitch(clamp(startPitch - dy * SPEED_PITCH, PITCH_MIN, PITCH_MAX));
+        e.preventDefault();
+      }
+
+      function onUp(e) {
+        stop();
+        if (e) e.preventDefault();
+      }
+
+      function onDown(e) {
+        // Block Mapbox default ctrl+drag rotate
+        if (e.button === 0 && e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+        // Only left button + cmd key; ignore if already active
+        if (active) return;
+        if (e.button !== 0) return;
+        if (!e.metaKey) return;
+        active = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startBearing = map.getBearing();
+        startPitch = map.getPitch();
+        try { map.dragPan.disable(); } catch (e2) {}
+        try { canvas.style.cursor = 'grabbing'; } catch (e2) {}
+        window.addEventListener('pointermove', onMove, { passive: false });
+        window.addEventListener('pointerup', onUp, { passive: false });
+        window.addEventListener('pointercancel', onUp, { passive: false });
+        e.stopPropagation();
+        e.preventDefault();
+      }
+
+      // Use capture so we can block ctrl+drag before Mapbox handlers see it.
+      canvas.addEventListener('pointerdown', onDown, { passive: false, capture: true });
+    })();
 
     // Deck.gl overlay for tile layers
     let deckOverlay = null;
@@ -1604,7 +1704,7 @@ def deckgl_layers(
           const fillColor = Array.isArray(cfg.getFillColor) ? toRgba(cfg.getFillColor, 0.8) : buildColorExpr(cfg.getFillColor, l.data) || 'rgba(0,144,255,0.7)';
           const lineColor = cfg.getLineColor ? (Array.isArray(cfg.getLineColor) ? toRgba(cfg.getLineColor, 1) : buildColorExpr(cfg.getLineColor, l.data)) : 'rgba(255,255,255,0.3)';
           const layerOpacity = (typeof cfg.opacity === 'number' && isFinite(cfg.opacity)) ? Math.max(0, Math.min(1, cfg.opacity)) : 0.8;
-          const lineW = cfg.lineWidthMinPixels || 0.5;
+          const lineW = (typeof cfg.lineWidthMinPixels === 'number' && isFinite(cfg.lineWidthMinPixels)) ? cfg.lineWidthMinPixels : 0.5;
 
           if (cfg.extruded) {
             // Outline existence is structural; remove if disabled, otherwise update if present.
@@ -1724,7 +1824,7 @@ def deckgl_layers(
                 id: `${l.id}-outline`, 
                 type: 'line', 
                 source: l.id, 
-                paint: { 'line-color': lineColor, 'line-width': cfg.lineWidthMinPixels || 0.5 },
+                paint: { 'line-color': lineColor, 'line-width': (typeof cfg.lineWidthMinPixels === 'number' && isFinite(cfg.lineWidthMinPixels)) ? cfg.lineWidthMinPixels : 0.5 },
                 layout: { 'visibility': visible ? 'visible' : 'none' }
               });
             }
@@ -1757,7 +1857,7 @@ def deckgl_layers(
             id: `${l.id}-outline`, 
             type: 'line', 
             source: l.id, 
-            paint: { 'line-color': lineColor, 'line-width': cfg.lineWidthMinPixels || 0.5 },
+            paint: { 'line-color': lineColor, 'line-width': (typeof cfg.lineWidthMinPixels === 'number' && isFinite(cfg.lineWidthMinPixels)) ? cfg.lineWidthMinPixels : 0.5 },
             layout: { 'visibility': visible ? 'visible' : 'none' }
           });
             }
@@ -3064,7 +3164,9 @@ def deckgl_layers(
         };
       }
       
+      const basemapVal = document.getElementById('dbg-basemap')?.value || INITIAL_BASEMAP || 'dark';
       const config = {
+        basemap: basemapVal,
         initialViewState: {
           longitude: parseFloat(document.getElementById('dbg-lng').value) || 0,
           latitude: parseFloat(document.getElementById('dbg-lat').value) || 0,
@@ -3125,6 +3227,57 @@ def deckgl_layers(
       }
       updateConfigOutput();
     }
+
+    function initBasemapControl() {
+      const sel = document.getElementById('dbg-basemap');
+      if (!sel) return;
+      const known = [
+        { value: 'dark', label: 'Dark' },
+        { value: 'light', label: 'Light' },
+        { value: 'satellite', label: 'Satellite' },
+        { value: 'streets', label: 'Streets' }
+      ];
+      sel.innerHTML = '';
+      known.forEach(o => {
+        const opt = document.createElement('option');
+        opt.value = o.value;
+        opt.textContent = o.label;
+        sel.appendChild(opt);
+      });
+
+      // If initial basemap is custom (style URL), add it as a selectable option.
+      const initial = INITIAL_BASEMAP || 'dark';
+      if (!known.some(o => o.value === initial) && typeof initial === 'string' && initial) {
+        const opt = document.createElement('option');
+        opt.value = initial;
+        opt.textContent = 'Custom';
+        sel.appendChild(opt);
+      }
+      sel.value = initial;
+
+      const applyBasemapChange = () => {
+        const basemapVal = sel.value || 'dark';
+        const nextStyle = BASEMAP_STYLES[basemapVal] || basemapVal;
+        const view = {
+          center: map.getCenter(),
+          zoom: map.getZoom(),
+          pitch: map.getPitch(),
+          bearing: map.getBearing()
+        };
+        try { map.setStyle(nextStyle); } catch (e) { return; }
+        map.once('style.load', () => {
+          try { map.jumpTo(view); } catch (e) {}
+          if (typeof rebuildDeckOverlay === 'function' && HAS_TILE_LAYERS) rebuildDeckOverlay();
+          if (typeof addAllLayers === 'function') addAllLayers();
+          if (typeof rebuildQueryableLayers === 'function') rebuildQueryableLayers();
+          if (typeof updateLegend === 'function') updateLegend();
+          syncDebugFromMap();
+          updateConfigOutput();
+        });
+      };
+
+      sel.addEventListener('change', applyBasemapChange);
+    }
     
     // Apply layer style changes live
     let lastDebugStructure = null;
@@ -3132,7 +3285,10 @@ def deckgl_layers(
       // Read all current values from form
       const getVal = (id, def) => document.getElementById(id)?.value ?? def;
       const getChecked = (id) => document.getElementById(id)?.checked ?? false;
-      const getNum = (id, def) => parseFloat(getVal(id, def)) || def;
+      const getNum = (id, def) => {
+        const v = parseFloat(getVal(id, def));
+        return Number.isFinite(v) ? v : def;
+      };
       
       // Layer toggles
       debugState.pickable = getChecked('dbg-pickable');
@@ -3315,6 +3471,7 @@ def deckgl_layers(
     map.on('load', () => {
       
       syncDebugFromMap();
+      initBasemapControl();
       
       // Delay populating attrs until some tile data loads
       setTimeout(populateAttrDropdown, 500);
@@ -3435,6 +3592,7 @@ def deckgl_layers(
         mapbox_token=mapbox_token,
         layers_data=processed_layers,
         style_url=style_url,
+        basemap=basemap_value,
         center_lng=center_lng,
         center_lat=center_lat,
         zoom=zoom,
@@ -3449,7 +3607,7 @@ def deckgl_layers(
         debug=debug,
     )
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/bb3aa1b/public/common/")
     return common.html_to_obj(html)
 
 
@@ -3506,7 +3664,6 @@ def deckgl_raster(
         # Tiled raster
         deckgl_raster(tile_url="https://udf.ai/my_udf/run/tiles/{z}/{x}/{y}?dtype_out_raster=png")
     """
-    from jinja2 import Template
     import json
     import numpy as np
     import base64
@@ -3524,8 +3681,6 @@ def deckgl_raster(
     
     # Handle tiled raster mode
     if tile_url is not None:
-        from jinja2 import Template
-        
         # Get view settings from config
         view = (config or {}).get("initialViewState", {})
         center = [view.get("longitude", 0), view.get("latitude", 0)]
@@ -3584,7 +3739,7 @@ map.on('error', (e) => {
             zoom=zoom,
         )
         
-        common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
+        common = fused.load("https://github.com/fusedio/udfs/tree/bb3aa1b/public/common/")
         return common.html_to_obj(html)
     
     # Default config for static image mode
@@ -3759,7 +3914,7 @@ map.on('load', () => {
         north=north,
     )
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/bb3aa1b/public/common/")
     return common.html_to_obj(html)
 
 
@@ -3903,7 +4058,7 @@ def enable_map_broadcast(html_input, channel: str = "fused-bus", dataset: str = 
         injected_html = html_string + broadcast_script
 
     if response_mode:
-        common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
+        common = fused.load("https://github.com/fusedio/udfs/tree/bb3aa1b/public/common/")
         return common.html_to_obj(injected_html)
     return injected_html
 
@@ -4033,7 +4188,7 @@ def enable_location_listener(html_input, channel: str = "fused-bus", zoom_offset
         injected_html = html_string + listener_script
 
     if response_mode:
-        common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
+        common = fused.load("https://github.com/fusedio/udfs/tree/bb3aa1b/public/common/")
         return common.html_to_obj(injected_html)
     return injected_html
 
@@ -4182,7 +4337,7 @@ def enable_hex_click_broadcast(
         injected_html = html_string + click_script
 
     if response_mode:
-        common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
+        common = fused.load("https://github.com/fusedio/udfs/tree/bb3aa1b/public/common/")
         return common.html_to_obj(injected_html)
     return injected_html
 
@@ -4313,7 +4468,7 @@ def enable_map_sync(html_input, channel: str = "default"):
         injected_html = html_string + sync_script
 
     if response_mode:
-        common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
+        common = fused.load("https://github.com/fusedio/udfs/tree/bb3aa1b/public/common/")
         return common.html_to_obj(injected_html)
     return injected_html
 
