@@ -1004,12 +1004,7 @@ document.addEventListener('DOMContentLoaded', () => {{
       Number(bounds.getNorth())
     ];
     if (numbers.some(v => !Number.isFinite(v))) return null;
-    const zoom = Number(map.getZoom());
-    if (!Number.isFinite(zoom)) return null;
-    return {{
-      bounds: numbers.join(','),
-      zoom: zoom
-    }};
+    return numbers;
   }}
 
   function refresh() {{
