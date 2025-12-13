@@ -109,6 +109,7 @@ VALID_HEX_LAYER_PROPS = {
     "opacity",
     "parameters",
     "pickable",
+    "sql",
     "stroked",
     "tooltipAttrs",
     "tooltipColumns",
@@ -292,6 +293,7 @@ def deckgl_layers(
     processed_layers = []
     has_tile_layers = False
     has_mvt_layers = False
+    has_sql_layers = False
     
     for i, layer_def in enumerate(layers):
         layer_type = layer_def.get("type", "hex").lower()
@@ -317,26 +319,60 @@ def deckgl_layers(
             
             # Convert dataframe to records (for static layers)
             data_records = []
+            df_clean = None
             if not is_tile_layer and df is not None and hasattr(df, 'to_dict'):
+                import numpy as np
+                import json
+                
                 # Drop geometry column - hex layers use hex ID, not geometry
                 df_clean = df.drop(columns=['geometry'], errors='ignore') if hasattr(df, 'drop') else df
+                df_clean = df_clean.copy()
                 
-                # Vectorized hex ID conversion (faster than looping)
+                # Vectorized hex ID conversion FIRST (converts BigInt hex to string)
                 hex_col = next((c for c in ['hex', 'h3', 'index', 'id'] if c in df_clean.columns), None)
                 if hex_col:
                     def _to_hex_str(val):
                         if val is None: return None
                         try:
-                            if isinstance(val, (int, float)): return format(int(val), 'x')
+                            if isinstance(val, (int, float, np.integer)): return format(int(val), 'x')
                             if isinstance(val, str): return format(int(val), 'x') if val.isdigit() else val
                         except (ValueError, OverflowError): pass
-                        return None
-                    df_clean = df_clean.copy()
+                        return str(val) if val is not None else None
                     df_clean['hex'] = df_clean[hex_col].apply(_to_hex_str)
                 
-                data_records = df_clean.to_dict('records')
+                # Convert all int64/uint64 to regular Python types for JSON serialization
+                def _convert_value(val):
+                    if val is None or (isinstance(val, float) and np.isnan(val)):
+                        return None
+                    if isinstance(val, (np.integer, np.int64, np.uint64)):
+                        return int(val)
+                    if isinstance(val, np.floating):
+                        return float(val)
+                    return val
+                
+                # Convert to records and sanitize each value
+                raw_records = df_clean.to_dict('records')
+                data_records = [
+                    {k: _convert_value(v) for k, v in row.items()}
+                    for row in raw_records
+                ]
             
             tooltip_columns = _extract_tooltip_columns((config, merged_config, hex_layer))
+            
+            # Check for SQL query in hexLayer config
+            layer_sql = hex_layer.get("sql")
+            parquet_base64 = None
+            if layer_sql and not is_tile_layer and df_clean is not None:
+                has_sql_layers = True
+                # Serialize to Parquet for efficient DuckDB loading
+                import io
+                import base64
+                try:
+                    buf = io.BytesIO()
+                    df_clean.to_parquet(buf, index=False)
+                    parquet_base64 = base64.b64encode(buf.getvalue()).decode('ascii')
+                except Exception:
+                    parquet_base64 = None  # Fallback to JSON if Parquet fails
             
             processed_layers.append({
                 "id": f"layer-{i}",
@@ -350,6 +386,8 @@ def deckgl_layers(
                 "hexLayer": hex_layer,
                 "tooltipColumns": tooltip_columns,
                 "visible": True,
+                "sql": layer_sql if layer_sql and not is_tile_layer else None,
+                "parquetData": parquet_base64,
             })
             
         elif layer_type == "vector":
@@ -540,6 +578,13 @@ def deckgl_layers(
   <script src="https://unpkg.com/deck.gl@9.1.3/dist.min.js"></script>
   <script src="https://unpkg.com/@deck.gl/geo-layers@9.1.3/dist.min.js"></script>
   <script src="https://unpkg.com/@deck.gl/carto@9.1.3/dist.min.js"></script>
+  {% endif %}
+  {% if has_sql_layers %}
+  <script src="https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.1-dev132.0/dist/duckdb-wasm.js"></script>
+  <script type="module">
+    import * as duckdb_wasm from "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.1-dev132.0/+esm";
+    window.__DUCKDB_WASM = duckdb_wasm;
+  </script>
   {% endif %}
   <script type="module">
     import * as cartocolor from 'https://esm.sh/cartocolor@5.0.2';
@@ -1006,6 +1051,14 @@ def deckgl_layers(
         </div>
       </div>
       
+      {% if has_sql_layers %}
+      <!-- SQL Filter -->
+      <div class="debug-section" id="sql-section">
+        <div class="debug-section-title">SQL Filter <span id="sql-status" style="float:right;font-weight:normal;color:#888;"></span></div>
+        <textarea id="dbg-sql" class="debug-output" style="height:60px;font-family:monospace;font-size:11px;resize:vertical;" placeholder="SELECT * FROM data"></textarea>
+      </div>
+      {% endif %}
+      
       <!-- Config Output -->
       <div class="debug-section">
         <div class="debug-section-title">Config Output <button class="debug-copy-btn" onclick="copyConfigOutput()">Copy</button></div>
@@ -1023,6 +1076,7 @@ def deckgl_layers(
     const LAYERS_DATA = {{ layers_data | tojson }};
     const HAS_CUSTOM_VIEW = {{ has_custom_view | tojson }};
     const INITIAL_BASEMAP = {{ basemap | tojson }};
+    const HAS_SQL_LAYERS = {{ has_sql_layers | tojson }};
     const BASEMAP_STYLES = {
       dark: "mapbox://styles/mapbox/dark-v11",
       satellite: "mapbox://styles/mapbox/satellite-streets-v12",
@@ -1175,6 +1229,141 @@ def deckgl_layers(
           loader.classList.remove('visible');
         }, 300);
       }
+    }
+
+    // ========== DuckDB SQL Filtering ==========
+    let duckConn = null;
+    let duckDbReady = false;
+    const SQL_ORIGINAL_DATA = {}; // Store original data per layer for SQL queries
+    
+    async function initDuckDB() {
+      if (!HAS_SQL_LAYERS || !window.__DUCKDB_WASM) return;
+      
+      try {
+        updateSqlStatus('initializing...');
+        const duckmod = window.__DUCKDB_WASM;
+        const bundle = await duckmod.selectBundle(duckmod.getJsDelivrBundles());
+        const worker = new Worker(
+          URL.createObjectURL(
+            new Blob([await (await fetch(bundle.mainWorker)).text()], { type: 'application/javascript' })
+          )
+        );
+        const db = new duckmod.AsyncDuckDB(new duckmod.ConsoleLogger(), worker);
+        await db.instantiate(bundle.mainModule);
+        duckConn = await db.connect();
+        
+        // Try to load H3 extension
+        try { await duckConn.query("INSTALL h3 FROM community"); } catch (e) {}
+        try { await duckConn.query("LOAD h3"); } catch (e) {}
+        
+        // Register data tables for each SQL-enabled layer
+        for (const l of LAYERS_DATA) {
+          if (l.sql && l.data && l.data.length > 0) {
+            SQL_ORIGINAL_DATA[l.id] = l.data;
+            const tableName = l.id.replace(/-/g, '_'); // layer-0 -> layer_0
+            
+            // Prefer Parquet (faster, smaller), fallback to JSON
+            if (l.parquetData) {
+              // Decode base64 Parquet and register
+              const binaryString = atob(l.parquetData);
+              const bytes = new Uint8Array(binaryString.length);
+              for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+              }
+              await db.registerFileBuffer(`${tableName}.parquet`, bytes);
+              await duckConn.query(`CREATE OR REPLACE TABLE ${tableName} AS SELECT * FROM read_parquet('${tableName}.parquet')`);
+            } else {
+              // Fallback to JSON
+              const jsonData = JSON.stringify(l.data);
+              await db.registerFileText(`${tableName}.json`, jsonData);
+              await duckConn.query(`CREATE OR REPLACE TABLE ${tableName} AS SELECT * FROM read_json_auto('${tableName}.json')`);
+            }
+            
+            // Also create an alias 'data' for the first SQL layer
+            if (!duckDbReady) {
+              await duckConn.query(`CREATE OR REPLACE VIEW data AS SELECT * FROM ${tableName}`);
+            }
+          }
+        }
+        
+        duckDbReady = true;
+        updateSqlStatus('ready');
+        
+        // Initialize SQL input with first layer's SQL or default
+        const sqlInput = document.getElementById('dbg-sql');
+        if (sqlInput) {
+          const firstSqlLayer = LAYERS_DATA.find(l => l.sql);
+          sqlInput.value = firstSqlLayer?.sql || 'SELECT * FROM data';
+        }
+      } catch (e) {
+        console.error('DuckDB init error:', e);
+        updateSqlStatus('init error');
+      }
+    }
+    
+    function updateSqlStatus(text) {
+      const el = document.getElementById('sql-status');
+      if (el) el.textContent = text;
+    }
+    
+    async function runSqlQuery() {
+      if (!duckConn || !duckDbReady) {
+        updateSqlStatus('not ready');
+        return;
+      }
+      
+      const sqlInput = document.getElementById('dbg-sql');
+      const sqlText = (sqlInput?.value || 'SELECT * FROM data').trim();
+      if (!sqlText) return;
+      
+      try {
+        updateSqlStatus('running...');
+        const res = await duckConn.query(sqlText);
+        const rows = res.toArray().map(row => {
+          // Convert Arrow row to plain object, handling BigInt
+          const obj = {};
+          for (const key of Object.keys(row)) {
+            let val = row[key];
+            // Convert BigInt to string to avoid serialization issues
+            if (typeof val === 'bigint') {
+              val = val.toString(16); // hex string for H3 IDs
+            }
+            obj[key] = val;
+          }
+          return obj;
+        });
+        
+        // Normalize hex IDs
+        const features = rows.map(p => {
+          const rawHex = p.hex ?? p.h3 ?? p.index ?? p.id;
+          const hex = toH3(rawHex);
+          if (!hex) return null;
+          return { ...p, hex, properties: { ...p, hex } };
+        }).filter(Boolean);
+        
+        updateSqlStatus(`${features.length.toLocaleString()} rows`);
+        
+        // Update the first SQL-enabled layer with filtered data
+        const sqlLayer = LAYERS_DATA.find(l => l.sql);
+        if (sqlLayer) {
+          sqlLayer.data = features;
+          layerGeoJSONs[sqlLayer.id] = hexToGeoJSON(features);
+          addAllLayers();
+          if (typeof updateLegend === 'function') updateLegend();
+          if (typeof updateLayerPanel === 'function') updateLayerPanel();
+          if (typeof updateConfigOutput === 'function') updateConfigOutput();
+        }
+      } catch (e) {
+        console.error('SQL error:', e);
+        updateSqlStatus('error: ' + (e.message || 'query failed').substring(0, 30));
+      }
+    }
+    
+    // Debounced SQL execution
+    let sqlTypingTimer = null;
+    function scheduleSqlQuery() {
+      clearTimeout(sqlTypingTimer);
+      sqlTypingTimer = setTimeout(runSqlQuery, 500);
     }
 
     // ========== Map Setup ==========
@@ -3196,7 +3385,8 @@ def deckgl_layers(
             elevationScale: debugState.elevationScale,
             getElevation: `@@=properties.${debugState.heightAttr}`
           } : {}),
-          ...(debugState.tooltipColumns?.length ? { tooltipColumns: debugState.tooltipColumns } : {})
+          ...(debugState.tooltipColumns?.length ? { tooltipColumns: debugState.tooltipColumns } : {}),
+          ...(HAS_SQL_LAYERS && document.getElementById('dbg-sql')?.value ? { sql: document.getElementById('dbg-sql').value.trim() } : {})
         }
       };
       
@@ -3484,6 +3674,15 @@ def deckgl_layers(
       syncDebugFromMap();
       initBasemapControl();
       
+      // Initialize DuckDB for SQL filtering
+      if (HAS_SQL_LAYERS) {
+        initDuckDB();
+        const sqlInput = document.getElementById('dbg-sql');
+        if (sqlInput) {
+          sqlInput.addEventListener('input', scheduleSqlQuery);
+        }
+      }
+      
       // Delay populating attrs until some tile data loads
       setTimeout(populateAttrDropdown, 500);
       setTimeout(populateAttrDropdown, 2000);
@@ -3612,6 +3811,7 @@ def deckgl_layers(
         has_custom_view=has_custom_view,
         has_tile_layers=has_tile_layers,
         has_mvt_layers=has_mvt_layers,
+        has_sql_layers=has_sql_layers,
         highlight_on_click=highlight_on_click,
         palettes=sorted(KNOWN_CARTOCOLOR_PALETTES),
         on_click=on_click or {},
