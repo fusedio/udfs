@@ -665,16 +665,42 @@ def deckgl_layers(
     #debug-toggle { position: fixed; top: 12px; width: 24px; height: 24px; background: rgba(30,30,30,0.9); border: 1px solid #333; border-left: none; border-radius: 0 6px 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #888; font-size: 14px; z-index: 200; transition: background 0.15s, color 0.15s; left: var(--debug-panel-w, 280px); }
     #debug-toggle:hover { background: rgba(50,50,50,0.95); color: #ccc; }
     #debug-content { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+    /* Minimal grey scrollbars for debug panel + dropdown menus */
+    #debug-content { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.22) rgba(255,255,255,0.06); }
+    #debug-content::-webkit-scrollbar { width: 6px; }
+    #debug-content::-webkit-scrollbar-track { background: rgba(255,255,255,0.06); border-radius: 6px; }
+    #debug-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.22); border-radius: 6px; }
+    #debug-content::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.30); }
+
+    .pal-menu, .debug-checklist { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.22) rgba(255,255,255,0.06); }
+    .pal-menu::-webkit-scrollbar, .debug-checklist::-webkit-scrollbar { width: 6px; }
+    .pal-menu::-webkit-scrollbar-track, .debug-checklist::-webkit-scrollbar-track { background: rgba(255,255,255,0.06); border-radius: 6px; }
+    .pal-menu::-webkit-scrollbar-thumb, .debug-checklist::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.22); border-radius: 6px; }
+    .pal-menu::-webkit-scrollbar-thumb:hover, .debug-checklist::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.30); }
     .debug-section { background: rgba(40,40,40,0.6); border: 1px solid #333; border-radius: 6px; padding: 10px; }
     .debug-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #666; margin-bottom: 8px; }
     .debug-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: nowrap; }
     .debug-row:last-child { margin-bottom: 0; }
     /* Make single-field rows align perfectly */
     .debug-label { font-size: 11px; color: #999; width: 84px; flex: 0 0 84px; }
-    .debug-input { flex: 1 1 auto; min-width: 0; width: auto; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; -moz-appearance: textfield; }
+    /* Let the browser render native number steppers, but keep dark-mode + subtle */
+    #debug-panel { color-scheme: dark; }
+    .debug-input { flex: 1 1 auto; min-width: 0; width: auto; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; }
     .debug-input:focus { border-color: #555; }
-    .debug-input::-webkit-outer-spin-button, .debug-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .debug-input-sm { flex: 0 0 56px; width: 56px; min-width: 56px; text-align: center; }
+    /* Tighten right inset for native number steppers */
+    .debug-input[type="number"] { padding-right: 4px; }
+    /* Subtle native spin buttons (WebKit) — mostly visible on focus */
+    .debug-input[type="number"]::-webkit-inner-spin-button,
+    .debug-input[type="number"]::-webkit-outer-spin-button {
+      opacity: 0.18;
+      filter: grayscale(1) brightness(0.9);
+      margin: 0;
+    }
+    .debug-input[type="number"]:focus::-webkit-inner-spin-button,
+    .debug-input[type="number"]:focus::-webkit-outer-spin-button {
+      opacity: 0.45;
+    }
     .debug-select { flex: 1 1 auto; min-width: 0; width: auto; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; cursor: pointer; }
     .debug-select:focus { border-color: #555; }
     .pal-hidden { display: none; }
@@ -731,7 +757,6 @@ def deckgl_layers(
       margin-top: -4px;
       background: #888;
       border-radius: 50%;
-      border: 1px solid #333;
       cursor: pointer;
       position: relative;
       z-index: 3;
@@ -744,7 +769,6 @@ def deckgl_layers(
       height: 12px;
       background: #888;
       border-radius: 50%;
-      border: 1px solid #333;
       cursor: pointer;
     }
     .debug-color { width: 28px; height: 28px; border: 1px solid #333; border-radius: 4px; cursor: pointer; padding: 0; background: none; }
