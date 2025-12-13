@@ -697,6 +697,56 @@ def deckgl_layers(
     .debug-slider { flex: 1 1 auto; min-width: 0; height: 4px; background: #333; border-radius: 2px; -webkit-appearance: none; cursor: pointer; }
     .debug-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #888; border-radius: 50%; cursor: pointer; }
     .debug-slider::-webkit-slider-thumb:hover { background: #aaa; }
+    /* Dual-thumb range (two overlaid sliders) */
+    .debug-dual-range { position: relative; flex: 1 1 auto; min-width: 0; height: 18px; }
+    /* Single shared track so one range input's track can't cover the other's thumb */
+    .debug-dual-range::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 7px;
+      height: 4px;
+      background: #333;
+      border-radius: 2px;
+    }
+    .debug-dual-range input[type="range"] {
+      position: absolute;
+      left: 0;
+      top: 7px;
+      width: 100%;
+      height: 4px;
+      margin: 0;
+      background: transparent;
+      pointer-events: none;
+      -webkit-appearance: none;
+      z-index: 2;
+    }
+    .debug-dual-range input[type="range"]::-webkit-slider-runnable-track { height: 4px; background: transparent; border-radius: 2px; }
+    .debug-dual-range input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      pointer-events: auto;
+      width: 12px;
+      height: 12px;
+      margin-top: -4px;
+      background: #888;
+      border-radius: 50%;
+      border: 1px solid #333;
+      cursor: pointer;
+      position: relative;
+      z-index: 3;
+    }
+    .debug-dual-range input[type="range"]::-webkit-slider-thumb:hover { background: #aaa; }
+    .debug-dual-range input[type="range"]::-moz-range-track { height: 4px; background: transparent; border-radius: 2px; }
+    .debug-dual-range input[type="range"]::-moz-range-thumb {
+      pointer-events: auto;
+      width: 12px;
+      height: 12px;
+      background: #888;
+      border-radius: 50%;
+      border: 1px solid #333;
+      cursor: pointer;
+    }
     .debug-color { width: 28px; height: 28px; border: 1px solid #333; border-radius: 4px; cursor: pointer; padding: 0; background: none; }
     .debug-color::-webkit-color-swatch-wrapper { padding: 2px; }
     .debug-color::-webkit-color-swatch { border-radius: 2px; border: none; }
@@ -787,6 +837,13 @@ def deckgl_layers(
             <input type="number" class="debug-input debug-input-sm" id="dbg-domain-max" step="0.1" placeholder="max" />
         </div>
         <div class="debug-row">
+          <span class="debug-label"></span>
+          <div class="debug-dual-range" aria-label="Domain range">
+            <input type="range" class="debug-range-min" id="dbg-domain-range-min" min="0" max="100" step="0.1" value="0" />
+            <input type="range" class="debug-range-max" id="dbg-domain-range-max" min="0" max="100" step="0.1" value="100" />
+        </div>
+      </div>
+        <div class="debug-row">
           <span class="debug-label">Steps</span>
             <input type="number" class="debug-input debug-input-sm" id="dbg-steps" step="1" min="2" max="20" value="7" />
         </div>
@@ -794,7 +851,7 @@ def deckgl_layers(
             <span class="debug-label">Null Color</span>
             <input type="color" class="debug-color" id="dbg-null-color" value="#b8b8b8" />
             <span class="debug-color-label" id="dbg-null-color-label">#b8b8b8</span>
-      </div>
+        </div>
       </div>
         <div id="fill-static-options" style="display:none;">
           <div class="debug-row">
@@ -817,15 +874,15 @@ def deckgl_layers(
           </select>
         </div>
         <div id="line-fn-options" style="display:none;">
-          <div class="debug-row">
-            <span class="debug-label">Attribute</span>
+        <div class="debug-row">
+          <span class="debug-label">Attribute</span>
             <select class="debug-select" id="dbg-line-attr"></select>
-          </div>
-          <div class="debug-row">
-            <span class="debug-label">Palette</span>
+        </div>
+        <div class="debug-row">
+          <span class="debug-label">Palette</span>
             <select class="debug-select pal-hidden" id="dbg-line-palette">
-              {% for pal in palettes %}<option value="{{ pal }}">{{ pal }}</option>{% endfor %}
-            </select>
+            {% for pal in palettes %}<option value="{{ pal }}">{{ pal }}</option>{% endfor %}
+          </select>
             <div class="pal-dd" id="dbg-line-palette-dd">
               <button type="button" class="pal-trigger" id="dbg-line-palette-trigger" title="Palette">
                 <span class="pal-name" id="dbg-line-palette-name">Palette</span>
@@ -833,16 +890,16 @@ def deckgl_layers(
               </button>
               <div class="pal-menu" id="dbg-line-palette-menu" style="display:none;"></div>
             </div>
-          </div>
-          <div class="debug-row">
+        </div>
+        <div class="debug-row">
             <span class="debug-label">Domain</span>
             <input type="number" class="debug-input debug-input-sm" id="dbg-line-domain-min" step="0.1" placeholder="min" />
             <span style="color:#666;">–</span>
             <input type="number" class="debug-input debug-input-sm" id="dbg-line-domain-max" step="0.1" placeholder="max" />
-          </div>
+        </div>
         </div>
         <div id="line-static-options">
-          <div class="debug-row">
+        <div class="debug-row">
             <span class="debug-label">Color</span>
             <input type="color" class="debug-color" id="dbg-line-static" value="#ffffff" />
             <span class="debug-color-label" id="dbg-line-static-label">#ffffff</span>
@@ -1555,13 +1612,13 @@ def deckgl_layers(
             }
             // Flat mode: outline should be on top of fill
             if (cfg.stroked !== false) {
-              map.addLayer({ 
-                id: `${l.id}-outline`, 
-                type: 'line', 
-                source: l.id, 
-                paint: { 'line-color': lineColor, 'line-width': cfg.lineWidthMinPixels || 0.5 },
-                layout: { 'visibility': visible ? 'visible' : 'none' }
-              });
+          map.addLayer({ 
+            id: `${l.id}-outline`, 
+            type: 'line', 
+            source: l.id, 
+            paint: { 'line-color': lineColor, 'line-width': cfg.lineWidthMinPixels || 0.5 },
+            layout: { 'visibility': visible ? 'visible' : 'none' }
+          });
             }
           }
           
@@ -2677,17 +2734,25 @@ def deckgl_layers(
           document.getElementById('dbg-palette')?.dispatchEvent(new Event('pal:sync'));
         }
         if (fillCfg.domain) {
-          setInput('dbg-domain-min', Math.min(...fillCfg.domain));
-          setInput('dbg-domain-max', Math.max(...fillCfg.domain));
-          debugState.fillDomainMin = Math.min(...fillCfg.domain);
-          debugState.fillDomainMax = Math.max(...fillCfg.domain);
+          const dmin = Math.min(...fillCfg.domain);
+          const dmax = Math.max(...fillCfg.domain);
+          setInput('dbg-domain-min', dmin);
+          setInput('dbg-domain-max', dmax);
+          debugState.fillDomainMin = dmin;
+          debugState.fillDomainMax = dmax;
+          setDomainSliderBounds(dmin, dmax);
+          syncDomainSliderFromInputs();
         } else if (layerData.length > 0 && debugState.fillAttr) {
           const vals = layerData.map(d => d[debugState.fillAttr]).filter(v => typeof v === 'number' && isFinite(v));
           if (vals.length > 0) {
-            setInput('dbg-domain-min', Math.min(...vals).toFixed(1));
-            setInput('dbg-domain-max', Math.max(...vals).toFixed(1));
-            debugState.fillDomainMin = Math.min(...vals);
-            debugState.fillDomainMax = Math.max(...vals);
+            const dmin = Math.min(...vals);
+            const dmax = Math.max(...vals);
+            setInput('dbg-domain-min', dmin.toFixed(1));
+            setInput('dbg-domain-max', dmax.toFixed(1));
+            debugState.fillDomainMin = dmin;
+            debugState.fillDomainMax = dmax;
+            setDomainSliderBounds(dmin, dmax);
+            syncDomainSliderFromInputs();
           }
         }
         if (fillCfg.steps) {
@@ -2770,6 +2835,51 @@ def deckgl_layers(
           });
         }
       }
+    }
+
+    // Domain dual slider wiring (fill domain only)
+    function syncDomainSliderFromInputs() {
+      const minEl = document.getElementById('dbg-domain-min');
+      const maxEl = document.getElementById('dbg-domain-max');
+      const rMin = document.getElementById('dbg-domain-range-min');
+      const rMax = document.getElementById('dbg-domain-range-max');
+      if (!minEl || !maxEl || !rMin || !rMax) return;
+      const minV = parseFloat(minEl.value);
+      const maxV = parseFloat(maxEl.value);
+      if (Number.isFinite(minV)) rMin.value = String(minV);
+      if (Number.isFinite(maxV)) rMax.value = String(maxV);
+    }
+
+    function syncDomainInputsFromSlider() {
+      const minEl = document.getElementById('dbg-domain-min');
+      const maxEl = document.getElementById('dbg-domain-max');
+      const rMin = document.getElementById('dbg-domain-range-min');
+      const rMax = document.getElementById('dbg-domain-range-max');
+      if (!minEl || !maxEl || !rMin || !rMax) return;
+      let a = parseFloat(rMin.value);
+      let b = parseFloat(rMax.value);
+      if (!Number.isFinite(a) || !Number.isFinite(b)) return;
+      if (a > b) [a, b] = [b, a];
+      minEl.value = String(a);
+      maxEl.value = String(b);
+      // Keep thumbs ordered too
+      rMin.value = String(a);
+      rMax.value = String(b);
+    }
+
+    function setDomainSliderBounds(extMin, extMax) {
+      const rMin = document.getElementById('dbg-domain-range-min');
+      const rMax = document.getElementById('dbg-domain-range-max');
+      if (!rMin || !rMax) return;
+      const lo = Number.isFinite(extMin) ? extMin : 0;
+      const hi = Number.isFinite(extMax) ? extMax : 100;
+      rMin.min = String(lo);
+      rMin.max = String(hi);
+      rMax.min = String(lo);
+      rMax.max = String(hi);
+      // keep step aligned with numeric input step
+      rMin.step = '0.1';
+      rMax.step = '0.1';
     }
     
     // Helper: hex color to RGB array
@@ -3084,6 +3194,12 @@ def deckgl_layers(
         document.getElementById(id)?.addEventListener('change', scheduleLayerUpdate);
         document.getElementById(id)?.addEventListener('input', scheduleLayerUpdate);
       });
+      // Domain dual slider -> inputs
+      document.getElementById('dbg-domain-range-min')?.addEventListener('input', () => { syncDomainInputsFromSlider(); scheduleLayerUpdate(); });
+      document.getElementById('dbg-domain-range-max')?.addEventListener('input', () => { syncDomainInputsFromSlider(); scheduleLayerUpdate(); });
+      // Inputs -> domain dual slider
+      document.getElementById('dbg-domain-min')?.addEventListener('input', () => { syncDomainSliderFromInputs(); });
+      document.getElementById('dbg-domain-max')?.addEventListener('input', () => { syncDomainSliderFromInputs(); });
       
       // Bind line color inputs
       ['dbg-line-attr', 'dbg-line-palette', 'dbg-line-domain-min', 'dbg-line-domain-max', 'dbg-line-static', 'dbg-line-width'].forEach(id => {
