@@ -359,10 +359,10 @@ def deckgl_layers(
             
             tooltip_columns = _extract_tooltip_columns((config, merged_config, hex_layer))
             
-            # Check for SQL query in hexLayer config
-            layer_sql = hex_layer.get("sql")
+            # Always enable DuckDB for hex layers with data (SQL filtering always available)
+            layer_sql = hex_layer.get("sql", "SELECT * FROM data")  # Default SQL
             parquet_base64 = None
-            if layer_sql and not is_tile_layer and df_clean is not None:
+            if not is_tile_layer and df_clean is not None and len(data_records) > 0:
                 has_sql_layers = True
                 # Serialize to Parquet for efficient DuckDB loading
                 import io
@@ -386,7 +386,7 @@ def deckgl_layers(
                 "hexLayer": hex_layer,
                 "tooltipColumns": tooltip_columns,
                 "visible": True,
-                "sql": layer_sql if layer_sql and not is_tile_layer else None,
+                "sql": layer_sql if not is_tile_layer and len(data_records) > 0 else None,
                 "parquetData": parquet_base64,
             })
             
@@ -1234,7 +1234,6 @@ def deckgl_layers(
     // ========== DuckDB SQL Filtering ==========
     let duckConn = null;
     let duckDbReady = false;
-    const SQL_ORIGINAL_DATA = {}; // Store original data per layer for SQL queries
     
     async function initDuckDB() {
       if (!HAS_SQL_LAYERS || !window.__DUCKDB_WASM) return;
@@ -1259,7 +1258,6 @@ def deckgl_layers(
         // Register data tables for each SQL-enabled layer
         for (const l of LAYERS_DATA) {
           if (l.sql && l.data && l.data.length > 0) {
-            SQL_ORIGINAL_DATA[l.id] = l.data;
             const tableName = l.id.replace(/-/g, '_'); // layer-0 -> layer_0
             
             // Prefer Parquet (faster, smaller), fallback to JSON
@@ -1289,10 +1287,43 @@ def deckgl_layers(
         duckDbReady = true;
         updateSqlStatus('ready');
         
+        // Calculate initial domain min/max from full dataset
+        const firstSqlLayer = LAYERS_DATA.find(l => l.sql);
+        const colorAttr = firstSqlLayer?.hexLayer?.getFillColor?.attr || debugState?.fillAttr;
+        if (colorAttr) {
+          try {
+            const statsRes = await duckConn.query(`SELECT MIN("${colorAttr}") as min_val, MAX("${colorAttr}") as max_val FROM data`);
+            const statsRow = statsRes.toArray()[0];
+            if (statsRow) {
+              let minVal = statsRow.min_val;
+              let maxVal = statsRow.max_val;
+              // Handle BigInt
+              if (typeof minVal === 'bigint') minVal = Number(minVal);
+              if (typeof maxVal === 'bigint') maxVal = Number(maxVal);
+              
+              if (Number.isFinite(minVal) && Number.isFinite(maxVal)) {
+                const minInput = document.getElementById('dbg-domain-min');
+                const maxInput = document.getElementById('dbg-domain-max');
+                if (minInput) { minInput.value = minVal.toFixed(2); debugState.fillDomainMin = minVal; }
+                if (maxInput) { maxInput.value = maxVal.toFixed(2); debugState.fillDomainMax = maxVal; }
+                // Update dual slider bounds
+                if (typeof setDomainSliderBounds === 'function') setDomainSliderBounds(minVal, maxVal);
+                if (typeof syncDomainSliderFromInputs === 'function') syncDomainSliderFromInputs();
+                // Update layer config
+                if (firstSqlLayer?.hexLayer?.getFillColor?.domain) {
+                  firstSqlLayer.hexLayer.getFillColor.domain = [minVal, maxVal];
+                }
+                updateSqlStatus(`domain: ${minVal.toFixed(1)} - ${maxVal.toFixed(1)}`);
+              }
+            }
+          } catch (e) {
+            console.warn('Could not calculate domain:', e);
+          }
+        }
+        
         // Initialize SQL input with first layer's SQL or default
         const sqlInput = document.getElementById('dbg-sql');
         if (sqlInput) {
-          const firstSqlLayer = LAYERS_DATA.find(l => l.sql);
           sqlInput.value = firstSqlLayer?.sql || 'SELECT * FROM data';
         }
         
@@ -3140,7 +3171,6 @@ def deckgl_layers(
         const cfg = firstLayer.hexLayer || firstLayer.vectorLayer || {};
         const fillCfg = cfg.getFillColor || firstLayer.fillColorConfig || {};
         const lineCfg = cfg.getLineColor || firstLayer.lineColorConfig || {};
-        const layerData = firstLayer.data || (firstLayer.geojson?.features?.map(f => f.properties) || []);
         
         // Layer toggles
         const setCheckbox = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
@@ -3175,6 +3205,8 @@ def deckgl_layers(
           const first = [...attrs].sort()[0];
           setInput('dbg-attr', first);
           debugState.fillAttr = first;
+          // Trigger domain calculation for first attribute
+          document.getElementById('dbg-attr')?.dispatchEvent(new Event('change'));
         }
         // Ensure palette UI shows something even if config didn't set colors
         document.getElementById('dbg-palette')?.dispatchEvent(new Event('pal:sync'));
@@ -3192,19 +3224,8 @@ def deckgl_layers(
           debugState.fillDomainMax = dmax;
           setDomainSliderBounds(dmin, dmax);
           syncDomainSliderFromInputs();
-        } else if (layerData.length > 0 && debugState.fillAttr) {
-          const vals = layerData.map(d => d[debugState.fillAttr]).filter(v => typeof v === 'number' && isFinite(v));
-          if (vals.length > 0) {
-            const dmin = Math.min(...vals);
-            const dmax = Math.max(...vals);
-            setInput('dbg-domain-min', dmin.toFixed(1));
-            setInput('dbg-domain-max', dmax.toFixed(1));
-            debugState.fillDomainMin = dmin;
-            debugState.fillDomainMax = dmax;
-            setDomainSliderBounds(dmin, dmax);
-            syncDomainSliderFromInputs();
-          }
         }
+        // Domain will be calculated by DuckDB when attribute dropdown triggers change event
         if (fillCfg.steps) {
           setInput('dbg-steps', fillCfg.steps);
           debugState.fillSteps = fillCfg.steps;
@@ -3374,8 +3395,35 @@ def deckgl_layers(
       }
       
       const basemapVal = document.getElementById('dbg-basemap')?.value || INITIAL_BASEMAP || 'dark';
-      const config = {
-        basemap: basemapVal,
+      
+      // Get the first layer's name or default
+      const firstLayer = LAYERS_DATA[0];
+      const layerName = firstLayer?.name || 'Layer';
+      const layerType = firstLayer?.layerType || 'hex';
+      
+      // Build hexLayer config
+      const hexLayerConfig = {
+        filled: debugState.filled,
+        stroked: debugState.stroked,
+        extruded: debugState.extruded,
+        opacity: debugState.opacity,
+        ...(debugState.filled ? { getFillColor } : {}),
+        ...(debugState.stroked ? { getLineColor, lineWidthMinPixels: debugState.lineWidth } : {}),
+        ...(debugState.extruded ? { 
+          elevationScale: debugState.elevationScale,
+          getElevation: `@@=properties.${debugState.heightAttr}`
+        } : {}),
+        ...(debugState.tooltipColumns?.length ? { tooltipColumns: debugState.tooltipColumns } : {}),
+        ...(HAS_SQL_LAYERS && document.getElementById('dbg-sql')?.value ? { sql: document.getElementById('dbg-sql').value.trim() } : {})
+      };
+      
+      // Build full layer config
+      const fullConfig = {
+        name: layerName,
+        type: layerType,
+        data: 'df',  // placeholder for dataframe variable
+        config: {
+          basemap: basemapVal,
         initialViewState: {
           longitude: parseFloat(document.getElementById('dbg-lng').value) || 0,
           latitude: parseFloat(document.getElementById('dbg-lat').value) || 0,
@@ -3383,20 +3431,7 @@ def deckgl_layers(
           pitch: parseInt(document.getElementById('dbg-pitch').value) || 0,
           bearing: parseInt(document.getElementById('dbg-bearing').value) || 0
         },
-        hexLayer: {
-          filled: debugState.filled,
-          stroked: debugState.stroked,
-          extruded: debugState.extruded,
-          opacity: debugState.opacity,
-          // coverage omitted from debug output (still supported via JSON config)
-          ...(debugState.filled ? { getFillColor } : {}),
-          ...(debugState.stroked ? { getLineColor, lineWidthMinPixels: debugState.lineWidth } : {}),
-          ...(debugState.extruded ? { 
-            elevationScale: debugState.elevationScale,
-            getElevation: `@@=properties.${debugState.heightAttr}`
-          } : {}),
-          ...(debugState.tooltipColumns?.length ? { tooltipColumns: debugState.tooltipColumns } : {}),
-          ...(HAS_SQL_LAYERS && document.getElementById('dbg-sql')?.value ? { sql: document.getElementById('dbg-sql').value.trim() } : {})
+          hexLayer: hexLayerConfig
         }
       };
       
@@ -3406,7 +3441,11 @@ def deckgl_layers(
         if (obj === null) return 'None';
         if (obj === true) return 'True';
         if (obj === false) return 'False';
-        if (typeof obj === 'string') return `"${obj}"`;
+        if (typeof obj === 'string') {
+          // Special case: 'df' should not be quoted (it's a variable)
+          if (obj === 'df') return 'df';
+          return `"${obj}"`;
+        }
         if (typeof obj === 'number') return Number.isInteger(obj) ? String(obj) : obj.toFixed(2);
         if (Array.isArray(obj)) return `[${obj.map(v => toPython(v, 0)).join(', ')}]`;
         if (typeof obj === 'object') {
@@ -3416,7 +3455,7 @@ def deckgl_layers(
         return String(obj);
       };
       
-      output.value = `config = ${toPython(config)}`;
+      output.value = `config = [${toPython(fullConfig, 0)}]`;
     }
     
     // Apply debug changes to map view
@@ -3730,6 +3769,30 @@ def deckgl_layers(
       ['dbg-attr', 'dbg-palette', 'dbg-domain-min', 'dbg-domain-max', 'dbg-steps', 'dbg-null-color', 'dbg-fill-static'].forEach(id => {
         document.getElementById(id)?.addEventListener('change', scheduleLayerUpdate);
         document.getElementById(id)?.addEventListener('input', scheduleLayerUpdate);
+      });
+      
+      // Recalculate domain when attribute changes (uses DuckDB)
+      document.getElementById('dbg-attr')?.addEventListener('change', async () => {
+        const attr = document.getElementById('dbg-attr')?.value;
+        if (!attr || !duckDbReady || !duckConn) return;
+        
+        try {
+          const res = await duckConn.query(`SELECT MIN("${attr}") as min_val, MAX("${attr}") as max_val FROM data`);
+          const row = res.toArray()[0];
+          if (row) {
+            let minVal = row.min_val, maxVal = row.max_val;
+            if (typeof minVal === 'bigint') minVal = Number(minVal);
+            if (typeof maxVal === 'bigint') maxVal = Number(maxVal);
+            if (Number.isFinite(minVal) && Number.isFinite(maxVal)) {
+              const minInput = document.getElementById('dbg-domain-min');
+              const maxInput = document.getElementById('dbg-domain-max');
+              if (minInput) { minInput.value = minVal.toFixed(2); debugState.fillDomainMin = minVal; }
+              if (maxInput) { maxInput.value = maxVal.toFixed(2); debugState.fillDomainMax = maxVal; }
+              if (typeof setDomainSliderBounds === 'function') setDomainSliderBounds(minVal, maxVal);
+              if (typeof syncDomainSliderFromInputs === 'function') syncDomainSliderFromInputs();
+            }
+          }
+        } catch (e) { console.warn('Domain calc error:', e); }
       });
       // Domain dual slider -> inputs
       document.getElementById('dbg-domain-range-min')?.addEventListener('input', () => { syncDomainInputsFromSlider(); scheduleLayerUpdate(); });
