@@ -484,9 +484,9 @@ def deckgl_layers(
                 # 1) prefer GeoPandas to_json()
                 # 2) fallback to __geo_interface__ if to_json fails
                 if hasattr(df, "to_json"):
-                try:
-                    geojson_obj = json.loads(df.to_json())
-                except Exception:
+                    try:
+                        geojson_obj = json.loads(df.to_json())
+                    except Exception:
                         geojson_obj = {"type": "FeatureCollection", "features": []}
                 if (not geojson_obj.get("features")) and hasattr(df, "__geo_interface__"):
                     try:
@@ -494,7 +494,7 @@ def deckgl_layers(
                         if isinstance(gi, dict) and gi.get("type") == "FeatureCollection":
                             geojson_obj = gi
                     except Exception:
-                    pass
+                        pass
                 
                 # Add unique index to each feature for unclipped geometry lookup on click
                 for idx, feat in enumerate(geojson_obj.get("features", []) or []):
