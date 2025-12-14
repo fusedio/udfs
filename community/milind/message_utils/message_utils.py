@@ -956,6 +956,8 @@ def map_bounds(
 <meta charset="utf-8">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.2/mapbox-gl-geocoder.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.2/mapbox-gl-geocoder.min.js"></script>
 
 <style>
   html, body, #map {{ margin:0; height:100% }}
@@ -968,8 +970,44 @@ def map_bounds(
   #send:disabled {{
     opacity:0.6; cursor:not-allowed;
   }}
+  .mapboxgl-ctrl-geocoder {{
+    min-width:240px;
+    background:rgba(30,30,30,0.95);
+    color:#fff;
+    border:1px solid rgba(255,255,255,0.15);
+  }}
+  .mapboxgl-ctrl-geocoder input,
+  .mapboxgl-ctrl-geocoder input[type="text"],
+  .mapboxgl-ctrl-geocoder--input {{
+    color:#fff !important;
+    background:transparent;
+  }}
+  .mapboxgl-ctrl-geocoder input::placeholder {{
+    color:rgba(255,255,255,0.5);
+  }}
+  .mapboxgl-ctrl-geocoder--icon-search {{
+    fill:rgba(255,255,255,0.6);
+  }}
+  .mapboxgl-ctrl-geocoder--icon-close {{
+    fill:rgba(255,255,255,0.6);
+  }}
+  .mapboxgl-ctrl-geocoder--button {{
+    background:transparent;
+  }}
+  .mapboxgl-ctrl-geocoder .suggestions {{
+    background:rgba(30,30,30,0.95);
+    border:1px solid rgba(255,255,255,0.15);
+  }}
+  .mapboxgl-ctrl-geocoder .suggestions > li > a {{
+    color:#fff;
+  }}
+  .mapboxgl-ctrl-geocoder .suggestions > .active > a,
+  .mapboxgl-ctrl-geocoder .suggestions > li > a:hover {{
+    background:rgba(255,255,255,0.1);
+    color:#fff;
+  }}
   #toast {{
-    position:fixed; top:12px; left:50%; transform:translateX(-50%);
+    position:fixed; bottom:60px; left:50%; transform:translateX(-50%);
     background:rgba(30,30,30,0.95); color:#fff; padding:8px 14px;
     border-radius:6px; font:12px/1.4 system-ui,-apple-system,sans-serif;
     opacity:0; pointer-events:none; z-index:100;
@@ -1010,6 +1048,14 @@ document.addEventListener('DOMContentLoaded', () => {{
     dragRotate: false,
     pitchWithRotate: false
   }});
+
+  const geocoder = new MapboxGeocoder({{
+    accessToken: mapboxgl.accessToken,
+    mapboxgl: mapboxgl,
+    marker: false,
+    placeholder: 'Search location...'
+  }});
+  map.addControl(geocoder, 'top-left');
 
   const sendBtn = document.getElementById('send');
   sendBtn.textContent = BUTTON_LABEL;
