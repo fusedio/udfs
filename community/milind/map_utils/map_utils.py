@@ -28,7 +28,7 @@ DEFAULT_DECK_HEX_CONFIG = {
             "attr": "cnt",
             "domain": [5000, 0],
       "steps": 20,
-      "colors": "Magenta"
+      "colors": "ArmyRose"
     }
   } 
 }
@@ -45,7 +45,7 @@ DEFAULT_DECK_CONFIG = {
         "getFillColor": {
             "@@function": "colorContinuous",
             "attr": "house_age",
-            "colors": "TealGrn",
+            "colors": "ArmyRose",
             "domain": [0, 50],
             "steps": 7,
             "nullColor": [200, 200, 200, 180]
@@ -1195,7 +1195,7 @@ def deckgl_layers(
       const [d0, d1] = cfg.domain;
       const domainReversed = d0 > d1;
       const dom = domainReversed ? [d1, d0] : [d0, d1];
-      const steps = cfg.steps || 7, name = cfg.colors || 'TealGrn';
+      const steps = cfg.steps || 7, name = cfg.colors || 'ArmyRose';
       let cols = getPaletteColors(name, steps);
       if (!cols || !cols.length) {
         return ['interpolate', ['linear'], ['get', cfg.attr], dom[0], 'rgb(237,248,251)', dom[1], 'rgb(0,109,44)'];
@@ -1548,7 +1548,7 @@ def deckgl_layers(
         domain = Array.from({ length: steps }, (_, i) => min + stepSize * i);
       }
       if (cfg && cfg.reverse && Array.isArray(domain)) domain = [...domain].reverse();
-      return { attr: cfg.attr, domain, colors: cfg.colors || 'TealGrn', nullColor: cfg.nullColor || [184, 184, 184] };
+      return { attr: cfg.attr, domain, colors: cfg.colors || 'ArmyRose', nullColor: cfg.nullColor || [184, 184, 184] };
     }
 
     // Convert tile coordinates to geographic bounds
@@ -2314,7 +2314,7 @@ def deckgl_layers(
           if (Array.isArray(colorCfg)) {
             stripBg = toRgba(colorCfg, 1) || stripBg;
           } else if (colorCfg?.['@@function'] === 'colorContinuous' || colorCfg?.['@@function'] === 'colorCategories') {
-            const paletteName = colorCfg.colors || (colorCfg['@@function'] === 'colorCategories' ? 'Bold' : 'TealGrn');
+            const paletteName = colorCfg.colors || (colorCfg['@@function'] === 'colorCategories' ? 'Bold' : 'ArmyRose');
             let cols = getPaletteColors(paletteName, colorCfg.steps || 7);
             if (Array.isArray(cols) && colorCfg?.['@@function'] === 'colorContinuous') {
               const dom = colorCfg.domain;
@@ -2405,7 +2405,7 @@ def deckgl_layers(
         const fnType = colorCfg?.['@@function'];
         if (!fnType || !colorCfg?.attr) return;
         if (fnType !== 'colorContinuous' && fnType !== 'colorCategories') return;
-        const paletteName = colorCfg.colors || (fnType === 'colorCategories' ? 'Bold' : 'TealGrn');
+        const paletteName = colorCfg.colors || (fnType === 'colorCategories' ? 'Bold' : 'ArmyRose');
         
         // Handle categorical legend
         if (fnType === 'colorCategories') {
@@ -2950,7 +2950,7 @@ def deckgl_layers(
       // Fill color
       fillFn: 'colorContinuous',
       fillAttr: 'metric',
-      fillPalette: 'TealGrn',
+      fillPalette: 'ArmyRose',
       fillReverse: false,
       fillDomainMin: 0,
       fillDomainMax: 100,
@@ -2961,7 +2961,7 @@ def deckgl_layers(
       // Line color
       lineFn: 'static',
       lineAttr: 'metric',
-      linePalette: 'TealGrn',
+      linePalette: 'ArmyRose',
       lineDomainMin: 0,
       lineDomainMax: 100,
       lineStaticColor: '#ffffff',
@@ -3654,7 +3654,7 @@ def deckgl_layers(
       // Fill color
       debugState.fillFn = getVal('dbg-fill-fn', 'colorContinuous');
       debugState.fillAttr = getVal('dbg-attr', 'metric');
-      debugState.fillPalette = getVal('dbg-palette', 'TealGrn');
+      debugState.fillPalette = getVal('dbg-palette', 'ArmyRose');
       debugState.fillReverse = !!document.getElementById('dbg-reverse-colors')?.checked;
       debugState.fillDomainMin = getNum('dbg-domain-min', 0);
       debugState.fillDomainMax = getNum('dbg-domain-max', 100);
@@ -3665,7 +3665,7 @@ def deckgl_layers(
       // Line color
       debugState.lineFn = getVal('dbg-line-fn', 'static');
       debugState.lineAttr = getVal('dbg-line-attr', 'metric');
-      debugState.linePalette = getVal('dbg-line-palette', 'TealGrn');
+      debugState.linePalette = getVal('dbg-line-palette', 'ArmyRose');
       debugState.lineDomainMin = getNum('dbg-line-domain-min', 0);
       debugState.lineDomainMax = getNum('dbg-line-domain-max', 100);
       debugState.lineStaticColor = getVal('dbg-line-static', '#ffffff');
