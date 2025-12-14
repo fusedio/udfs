@@ -472,21 +472,32 @@ def deckgl_layers(
             
             # Standard GeoJSON vector layer
             geojson_obj = {"type": "FeatureCollection", "features": []}
-            if df is not None and hasattr(df, "to_json"):
+            if df is not None:
                 # Reproject to EPSG:4326 if needed
                 if hasattr(df, "crs") and df.crs and getattr(df.crs, "to_epsg", lambda: None)() != 4326:
                     try:
                         df = df.to_crs(epsg=4326)
                     except Exception:
                         pass
-                
-                try:
-                    geojson_obj = json.loads(df.to_json())
-                except Exception:
-                    pass
-                
+
+                # Robust GeoJSON conversion:
+                # 1) prefer GeoPandas to_json()
+                # 2) fallback to __geo_interface__ if to_json fails
+                if hasattr(df, "to_json"):
+                    try:
+                        geojson_obj = json.loads(df.to_json())
+                    except Exception:
+                        geojson_obj = {"type": "FeatureCollection", "features": []}
+                if (not geojson_obj.get("features")) and hasattr(df, "__geo_interface__"):
+                    try:
+                        gi = df.__geo_interface__
+                        if isinstance(gi, dict) and gi.get("type") == "FeatureCollection":
+                            geojson_obj = gi
+                    except Exception:
+                        pass
+
                 # Add unique index to each feature for unclipped geometry lookup on click
-                for idx, feat in enumerate(geojson_obj.get("features", [])):
+                for idx, feat in enumerate(geojson_obj.get("features", []) or []):
                     feat["properties"] = {k: _sanitize_geojson_value(v) for k, v in (feat.get("properties") or {}).items()}
                     feat["properties"]["_fused_idx"] = idx
             
@@ -2041,9 +2052,9 @@ def deckgl_layers(
         if (l.layerType === 'mvt') {
           // Handled below in the mvt section
         } else {
-        const geojson = layerGeoJSONs[l.id];
-        if (!geojson || !geojson.features?.length) return;
-        map.addSource(l.id, { type: 'geojson', data: geojson });
+          const geojson = layerGeoJSONs[l.id];
+          if (!geojson || !geojson.features?.length) return;
+          map.addSource(l.id, { type: 'geojson', data: geojson });
         }
         
         if (l.layerType === 'hex') {
@@ -2102,7 +2113,8 @@ def deckgl_layers(
         } else if (l.layerType === 'vector') {
           // Vector layer rendering
           const vecData = l.geojson?.features?.map(f => f.properties) || [];
-          const fillColorExpr = l.fillColorConfig?.['@@function'] ? buildColorExpr(l.fillColorConfig, vecData) : (l.fillColorRgba || 'rgba(0,144,255,0.6)');
+          const builtFillColor = l.fillColorConfig?.['@@function'] ? buildColorExpr(l.fillColorConfig, vecData) : null;
+          const fillColorExpr = builtFillColor || l.fillColorRgba || 'rgba(0,144,255,0.6)';
           const lineColorExpr = l.lineColorConfig?.['@@function'] ? buildColorExpr(l.lineColorConfig, vecData) : (l.lineColorRgba || 'rgba(100,100,100,0.8)');
           const lineW = (typeof l.lineWidth === 'number' && isFinite(l.lineWidth)) ? l.lineWidth : 1;
           const layerOpacity = (typeof l.opacity === 'number' && isFinite(l.opacity)) ? Math.max(0, Math.min(1, l.opacity)) : 0.8;
@@ -3145,13 +3157,26 @@ def deckgl_layers(
         });
       });
       
-      // Also check static layer data
+      // Also check static layer data (hex and vector layers)
       LAYERS_DATA.forEach(l => {
-        const data = l.data || (l.geojson?.features?.map(f => f.properties) || []);
-        data.forEach(d => {
-          Object.keys(d || {}).forEach(k => {
-            if (k !== 'hex' && k !== 'h3' && typeof d[k] === 'number') attrs.add(k);
-            if (k !== 'hex' && k !== 'h3') tooltipKeys.add(k);
+        // For hex layers, use l.data; for vector layers, use geojson features
+        let records = [];
+        if (l.data && l.data.length > 0) {
+          records = l.data;
+        } else if (l.geojson?.features?.length > 0) {
+          records = l.geojson.features.map(f => f.properties || {});
+        }
+        
+        records.forEach(d => {
+          if (!d) return;
+          Object.keys(d).forEach(k => {
+            // Skip internal/geometry keys
+            if (['hex', 'h3', 'geometry', '_fused_idx', 'properties'].includes(k)) return;
+            const val = d[k];
+            // Add to attrs if it's a number
+            if (typeof val === 'number' && isFinite(val)) attrs.add(k);
+            // Add to tooltipKeys for all non-internal keys
+            tooltipKeys.add(k);
           });
         });
       });
@@ -3193,11 +3218,23 @@ def deckgl_layers(
         debugState.opacity = cfg.opacity ?? firstLayer.opacity ?? 1;
         // coverage control removed from debug UI (still supported via JSON config)
         
-        // Fill color
-        if (fillCfg['@@function']) {
+        // Fill color - detect static (array) vs function
+        if (Array.isArray(fillCfg) || (firstLayer.fillColorRgba && !fillCfg['@@function'])) {
+          // Static color
+          setInput('dbg-fill-fn', 'static');
+          debugState.fillFn = 'static';
+          // Convert array to hex for color picker
+          if (Array.isArray(fillCfg) && fillCfg.length >= 3) {
+            const hex = '#' + fillCfg.slice(0, 3).map(c => Math.round(c).toString(16).padStart(2, '0')).join('');
+            setInput('dbg-fill-static', hex);
+            debugState.fillStaticColor = hex;
+          }
+        } else if (fillCfg['@@function']) {
           setInput('dbg-fill-fn', fillCfg['@@function']);
           debugState.fillFn = fillCfg['@@function'];
         }
+        
+        // Set attribute from config or pick first available
         if (fillCfg.attr) {
           setInput('dbg-attr', fillCfg.attr);
           debugState.fillAttr = fillCfg.attr;
@@ -3205,9 +3242,12 @@ def deckgl_layers(
           const first = [...attrs].sort()[0];
           setInput('dbg-attr', first);
           debugState.fillAttr = first;
-          // Trigger domain calculation for first attribute
-          document.getElementById('dbg-attr')?.dispatchEvent(new Event('change'));
+          // Trigger domain calculation for first attribute (only if DuckDB available)
+          if (duckDbReady) {
+            document.getElementById('dbg-attr')?.dispatchEvent(new Event('change'));
+          }
         }
+        
         // Ensure palette UI shows something even if config didn't set colors
         document.getElementById('dbg-palette')?.dispatchEvent(new Event('pal:sync'));
         if (fillCfg.colors) {
