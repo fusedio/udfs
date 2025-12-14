@@ -3822,6 +3822,42 @@ def deckgl_layers(
         applyLayerChanges();
       });
     }
+
+    // Fast path for dragging the domain slider: update paint/overlay immediately,
+    // but skip legend/layer panel/config output until mouseup (change event).
+    function fastApplyDomainDrag() {
+      syncDomainInputsFromSlider();
+      const minV = parseFloat(document.getElementById('dbg-domain-min')?.value);
+      const maxV = parseFloat(document.getElementById('dbg-domain-max')?.value);
+      if (!Number.isFinite(minV) || !Number.isFinite(maxV)) return;
+
+      debugState.fillDomainMin = minV;
+      debugState.fillDomainMax = maxV;
+
+      // Update layer configs in-place so updateMapboxLayersFast/rebuildDeckOverlay pick them up
+      LAYERS_DATA.forEach(l => {
+        const cfg = l.hexLayer || l.vectorLayer;
+        if (cfg?.getFillColor && typeof cfg.getFillColor === 'object' && !Array.isArray(cfg.getFillColor)) {
+          if (cfg.getFillColor['@@function'] === 'colorContinuous') {
+            cfg.getFillColor.domain = [minV, maxV];
+          }
+        }
+        if (l.fillColorConfig && typeof l.fillColorConfig === 'object' && !Array.isArray(l.fillColorConfig)) {
+          if (l.fillColorConfig['@@function'] === 'colorContinuous') {
+            l.fillColorConfig.domain = [minV, maxV];
+          }
+        }
+      });
+
+      // Re-render quickly
+      if (typeof rebuildDeckOverlay === 'function' && HAS_TILE_LAYERS) rebuildDeckOverlay();
+      if (typeof updateMapboxLayersFast === 'function') {
+        const ok = updateMapboxLayersFast();
+        if (!ok && typeof addAllLayers === 'function') addAllLayers();
+      } else if (typeof addAllLayers === 'function') {
+        addAllLayers();
+      }
+    }
     
     // Initialize debug panel
     map.on('load', () => {
@@ -3901,8 +3937,11 @@ def deckgl_layers(
         } catch (e) { console.warn('Domain calc error:', e); }
       });
       // Domain dual slider -> inputs
-      document.getElementById('dbg-domain-range-min')?.addEventListener('input', () => { syncDomainInputsFromSlider(); scheduleLayerUpdate(); });
-      document.getElementById('dbg-domain-range-max')?.addEventListener('input', () => { syncDomainInputsFromSlider(); scheduleLayerUpdate(); });
+      document.getElementById('dbg-domain-range-min')?.addEventListener('input', fastApplyDomainDrag);
+      document.getElementById('dbg-domain-range-max')?.addEventListener('input', fastApplyDomainDrag);
+      // On mouseup, do the full update once (legend/gutter/config output)
+      document.getElementById('dbg-domain-range-min')?.addEventListener('change', scheduleLayerUpdate);
+      document.getElementById('dbg-domain-range-max')?.addEventListener('change', scheduleLayerUpdate);
       // Inputs -> domain dual slider
       document.getElementById('dbg-domain-min')?.addEventListener('input', () => { syncDomainSliderFromInputs(); });
       document.getElementById('dbg-domain-max')?.addEventListener('input', () => { syncDomainSliderFromInputs(); });
