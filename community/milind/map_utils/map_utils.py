@@ -479,14 +479,14 @@ def deckgl_layers(
                         df = df.to_crs(epsg=4326)
                     except Exception:
                         pass
-
+                
                 # Robust GeoJSON conversion:
                 # 1) prefer GeoPandas to_json()
                 # 2) fallback to __geo_interface__ if to_json fails
                 if hasattr(df, "to_json"):
-                    try:
-                        geojson_obj = json.loads(df.to_json())
-                    except Exception:
+                try:
+                    geojson_obj = json.loads(df.to_json())
+                except Exception:
                         geojson_obj = {"type": "FeatureCollection", "features": []}
                 if (not geojson_obj.get("features")) and hasattr(df, "__geo_interface__"):
                     try:
@@ -494,8 +494,8 @@ def deckgl_layers(
                         if isinstance(gi, dict) and gi.get("type") == "FeatureCollection":
                             geojson_obj = gi
                     except Exception:
-                        pass
-
+                    pass
+                
                 # Add unique index to each feature for unclipped geometry lookup on click
                 for idx, feat in enumerate(geojson_obj.get("features", []) or []):
                     feat["properties"] = {k: _sanitize_geojson_value(v) for k, v in (feat.get("properties") or {}).items()}
@@ -2052,9 +2052,9 @@ def deckgl_layers(
         if (l.layerType === 'mvt') {
           // Handled below in the mvt section
         } else {
-          const geojson = layerGeoJSONs[l.id];
-          if (!geojson || !geojson.features?.length) return;
-          map.addSource(l.id, { type: 'geojson', data: geojson });
+        const geojson = layerGeoJSONs[l.id];
+        if (!geojson || !geojson.features?.length) return;
+        map.addSource(l.id, { type: 'geojson', data: geojson });
         }
         
         if (l.layerType === 'hex') {
@@ -3436,42 +3436,67 @@ def deckgl_layers(
       
       const basemapVal = document.getElementById('dbg-basemap')?.value || INITIAL_BASEMAP || 'dark';
       
-      // Get the first layer's name or default
-      const firstLayer = LAYERS_DATA[0];
+      // Pick the first editable layer (hex/vector) for snippet generation
+      const firstLayer =
+        LAYERS_DATA.find(l => l.layerType === 'hex') ||
+        LAYERS_DATA.find(l => l.layerType === 'vector') ||
+        LAYERS_DATA[0];
       const layerName = firstLayer?.name || 'Layer';
-      const layerType = firstLayer?.layerType || 'hex';
-      
-      // Build hexLayer config
-      const hexLayerConfig = {
-        filled: debugState.filled,
-        stroked: debugState.stroked,
-        extruded: debugState.extruded,
-        opacity: debugState.opacity,
-        ...(debugState.filled ? { getFillColor } : {}),
-        ...(debugState.stroked ? { getLineColor, lineWidthMinPixels: debugState.lineWidth } : {}),
-        ...(debugState.extruded ? { 
-          elevationScale: debugState.elevationScale,
-          getElevation: `@@=properties.${debugState.heightAttr}`
-        } : {}),
-        ...(debugState.tooltipColumns?.length ? { tooltipColumns: debugState.tooltipColumns } : {}),
-        ...(HAS_SQL_LAYERS && document.getElementById('dbg-sql')?.value ? { sql: document.getElementById('dbg-sql').value.trim() } : {})
-      };
-      
-      // Build full layer config
-      const fullConfig = {
-        name: layerName,
-        type: layerType,
-        data: 'df',  // placeholder for dataframe variable
-        config: {
-          basemap: basemapVal,
+      const layerKind = firstLayer?.layerType || 'hex';
+      const layerType = (layerKind === 'vector') ? 'vector' : 'hex';
+
+      const commonConfig = {
+        basemap: basemapVal,
         initialViewState: {
           longitude: parseFloat(document.getElementById('dbg-lng').value) || 0,
           latitude: parseFloat(document.getElementById('dbg-lat').value) || 0,
           zoom: parseFloat(document.getElementById('dbg-zoom').value) || 8,
           pitch: parseInt(document.getElementById('dbg-pitch').value) || 0,
           bearing: parseInt(document.getElementById('dbg-bearing').value) || 0
-        },
-          hexLayer: hexLayerConfig
+        }
+      };
+
+      let layerStyleBlock = {};
+      if (layerKind === 'vector') {
+        const vecType = firstLayer?.vectorLayer?.['@@type'] || 'GeoJsonLayer';
+        layerStyleBlock = {
+          vectorLayer: {
+            '@@type': vecType,
+            filled: debugState.filled,
+            stroked: debugState.stroked,
+            opacity: debugState.opacity,
+            ...(debugState.filled ? { getFillColor } : {}),
+            ...(debugState.stroked ? { getLineColor, lineWidthMinPixels: debugState.lineWidth } : {}),
+            ...(debugState.tooltipColumns?.length ? { tooltipColumns: debugState.tooltipColumns } : {}),
+          }
+        };
+      } else {
+        layerStyleBlock = {
+        hexLayer: {
+          filled: debugState.filled,
+            stroked: debugState.stroked,
+          extruded: debugState.extruded,
+          opacity: debugState.opacity,
+            ...(debugState.filled ? { getFillColor } : {}),
+            ...(debugState.stroked ? { getLineColor, lineWidthMinPixels: debugState.lineWidth } : {}),
+            ...(debugState.extruded ? { 
+              elevationScale: debugState.elevationScale,
+              getElevation: `@@=properties.${debugState.heightAttr}`
+            } : {}),
+            ...(debugState.tooltipColumns?.length ? { tooltipColumns: debugState.tooltipColumns } : {}),
+            ...(HAS_SQL_LAYERS && document.getElementById('dbg-sql')?.value ? { sql: document.getElementById('dbg-sql').value.trim() } : {})
+          }
+        };
+      }
+
+      // Build full layer config
+      const fullConfig = {
+        name: layerName,
+        type: layerType,
+        data: 'df',  // placeholder for dataframe variable
+        config: {
+          ...commonConfig,
+          ...layerStyleBlock
         }
       };
       
