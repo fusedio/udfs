@@ -488,6 +488,7 @@ def deckgl_layers(
                         geojson_obj = json.loads(df.to_json())
                     except Exception:
                         geojson_obj = {"type": "FeatureCollection", "features": []}
+
                 if (not geojson_obj.get("features")) and hasattr(df, "__geo_interface__"):
                     try:
                         gi = df.__geo_interface__
@@ -950,8 +951,8 @@ def deckgl_layers(
           <div class="debug-dual-range" aria-label="Domain range">
             <input type="range" class="debug-range-min" id="dbg-domain-range-min" min="0" max="100" step="0.1" value="0" />
             <input type="range" class="debug-range-max" id="dbg-domain-range-max" min="0" max="100" step="0.1" value="100" />
-        </div>
       </div>
+        </div>
         <div class="debug-row">
           <span class="debug-label">Steps</span>
             <input type="number" class="debug-input debug-input-sm" id="dbg-steps" step="1" min="2" max="20" value="7" />
@@ -960,7 +961,7 @@ def deckgl_layers(
             <span class="debug-label">Null Color</span>
             <input type="color" class="debug-color" id="dbg-null-color" value="#b8b8b8" />
             <span class="debug-color-label" id="dbg-null-color-label">#b8b8b8</span>
-        </div>
+      </div>
       </div>
         <div id="fill-static-options" style="display:none;">
           <div class="debug-row">
@@ -1312,7 +1313,7 @@ def deckgl_layers(
         duckDbReady = true;
         updateSqlStatus('ready');
         
-        // Calculate initial domain min/max from full dataset
+        // Calculate slider extent (min/max) from full dataset
         const firstSqlLayer = LAYERS_DATA.find(l => l.sql);
         const colorAttr = firstSqlLayer?.hexLayer?.getFillColor?.attr || debugState?.fillAttr;
         if (colorAttr) {
@@ -1327,18 +1328,29 @@ def deckgl_layers(
               if (typeof maxVal === 'bigint') maxVal = Number(maxVal);
               
               if (Number.isFinite(minVal) && Number.isFinite(maxVal)) {
-                const minInput = document.getElementById('dbg-domain-min');
-                const maxInput = document.getElementById('dbg-domain-max');
-                if (minInput) { minInput.value = minVal.toFixed(2); debugState.fillDomainMin = minVal; }
-                if (maxInput) { maxInput.value = maxVal.toFixed(2); debugState.fillDomainMax = maxVal; }
-                // Update dual slider bounds
+                // Set slider min/max (extent) once
                 if (typeof setDomainSliderBounds === 'function') setDomainSliderBounds(minVal, maxVal);
-                if (typeof syncDomainSliderFromInputs === 'function') syncDomainSliderFromInputs();
-                // Update layer config
-                if (firstSqlLayer?.hexLayer?.getFillColor?.domain) {
-                  firstSqlLayer.hexLayer.getFillColor.domain = [minVal, maxVal];
+
+                // If the user already provided a domain in config, DO NOT override it here.
+                // Otherwise, initialize the selected domain to the full extent.
+                const cfgDomain = firstSqlLayer?.hexLayer?.getFillColor?.domain;
+                const hasUserDomain = Array.isArray(cfgDomain) && cfgDomain.length >= 2;
+
+                if (!hasUserDomain) {
+                  const minInput = document.getElementById('dbg-domain-min');
+                  const maxInput = document.getElementById('dbg-domain-max');
+                  if (minInput) { minInput.value = minVal.toFixed(2); debugState.fillDomainMin = minVal; }
+                  if (maxInput) { maxInput.value = maxVal.toFixed(2); debugState.fillDomainMax = maxVal; }
+                  if (typeof syncDomainSliderFromInputs === 'function') syncDomainSliderFromInputs();
+                  if (firstSqlLayer?.hexLayer?.getFillColor) {
+                    firstSqlLayer.hexLayer.getFillColor.domain = [minVal, maxVal];
+                  }
+                } else {
+                  // Just ensure thumbs reflect the user's config domain
+                  if (typeof syncDomainSliderFromInputs === 'function') syncDomainSliderFromInputs();
                 }
-                updateSqlStatus(`domain: ${minVal.toFixed(1)} - ${maxVal.toFixed(1)}`);
+
+                updateSqlStatus(`extent: ${minVal.toFixed(1)} - ${maxVal.toFixed(1)}`);
               }
             }
           } catch (e) {
@@ -3300,7 +3312,7 @@ def deckgl_layers(
           setInput('dbg-domain-max', dmax);
           debugState.fillDomainMin = dmin;
           debugState.fillDomainMax = dmax;
-          setDomainSliderBounds(dmin, dmax);
+          // IMPORTANT: don't override slider min/max (extent). Only move thumbs to the config's domain.
           syncDomainSliderFromInputs();
         }
         // Domain will be calculated by DuckDB when attribute dropdown triggers change event
@@ -3926,10 +3938,7 @@ def deckgl_layers(
             if (typeof minVal === 'bigint') minVal = Number(minVal);
             if (typeof maxVal === 'bigint') maxVal = Number(maxVal);
             if (Number.isFinite(minVal) && Number.isFinite(maxVal)) {
-              const minInput = document.getElementById('dbg-domain-min');
-              const maxInput = document.getElementById('dbg-domain-max');
-              if (minInput) { minInput.value = minVal.toFixed(2); debugState.fillDomainMin = minVal; }
-              if (maxInput) { maxInput.value = maxVal.toFixed(2); debugState.fillDomainMax = maxVal; }
+              // Update slider extent only; don't override the user's selected domain.
               if (typeof setDomainSliderBounds === 'function') setDomainSliderBounds(minVal, maxVal);
               if (typeof syncDomainSliderFromInputs === 'function') syncDomainSliderFromInputs();
             }
