@@ -55,7 +55,7 @@ DEFAULT_DECK_CONFIG = {
 }
 
 KNOWN_CARTOCOLOR_PALETTES = {
-    "Antique", "ArmyRose", "BluGrn", "BluYl", "Bold", "BrwnYl", "Burg", "BurgYl", 
+    "ArmyRose","Antique", "BluGrn", "BluYl", "Bold", "BrwnYl", "Burg", "BurgYl", 
     "DarkMint", "Earth", "Emrld", "Fall", "Geyser", "Magenta", "Mint", "OrYel", 
     "Pastel", "Peach", "PinkYl", "Prism", "Purp", "PurpOr", "RedOr", "Safe", 
     "Sunset", "SunsetDark", "Teal", "TealGrn", "TealRose", "Temps", "Tropic", 
@@ -933,6 +933,13 @@ def deckgl_layers(
         </div>
         </div>
         <div class="debug-row">
+          <span class="debug-label">Reverse</span>
+          <label class="debug-checkbox" style="margin-left:auto;">
+            <input type="checkbox" id="dbg-reverse-colors" />
+            Reverse colors
+          </label>
+        </div>
+        <div class="debug-row">
             <span class="debug-label">Domain</span>
             <input type="number" class="debug-input debug-input-sm" id="dbg-domain-min" step="0.1" placeholder="min" />
             <span style="color:#666;">–</span>
@@ -1185,13 +1192,20 @@ def deckgl_layers(
       
       // Handle colorContinuous
       if (cfg['@@function'] !== 'colorContinuous' || !cfg.domain?.length) return null;
-      const [d0, d1] = cfg.domain, rev = d0 > d1, dom = rev ? [d1, d0] : [d0, d1];
+      const [d0, d1] = cfg.domain;
+      const domainReversed = d0 > d1;
+      const dom = domainReversed ? [d1, d0] : [d0, d1];
       const steps = cfg.steps || 7, name = cfg.colors || 'TealGrn';
       let cols = getPaletteColors(name, steps);
       if (!cols || !cols.length) {
         return ['interpolate', ['linear'], ['get', cfg.attr], dom[0], 'rgb(237,248,251)', dom[1], 'rgb(0,109,44)'];
       }
-      if (rev) cols.reverse();
+      // Reverse logic:
+      // - domain reversed already flips direction
+      // - cfg.reverse toggles it
+      const wantsReverse = !!cfg.reverse;
+      const shouldReverse = domainReversed ? !wantsReverse : wantsReverse;
+      if (shouldReverse) cols.reverse();
       const expr = ['interpolate', ['linear'], ['get', cfg.attr]];
       cols.forEach((c, i) => { expr.push(dom[0] + (dom[1] - dom[0]) * i / (cols.length - 1)); expr.push(c); });
       return expr;
@@ -1533,6 +1547,7 @@ def deckgl_layers(
         const stepSize = (max - min) / (steps - 1);
         domain = Array.from({ length: steps }, (_, i) => min + stepSize * i);
       }
+      if (cfg && cfg.reverse && Array.isArray(domain)) domain = [...domain].reverse();
       return { attr: cfg.attr, domain, colors: cfg.colors || 'TealGrn', nullColor: cfg.nullColor || [184, 184, 184] };
     }
 
@@ -2300,7 +2315,14 @@ def deckgl_layers(
             stripBg = toRgba(colorCfg, 1) || stripBg;
           } else if (colorCfg?.['@@function'] === 'colorContinuous' || colorCfg?.['@@function'] === 'colorCategories') {
             const paletteName = colorCfg.colors || (colorCfg['@@function'] === 'colorCategories' ? 'Bold' : 'TealGrn');
-            const cols = getPaletteColors(paletteName, colorCfg.steps || 7);
+            let cols = getPaletteColors(paletteName, colorCfg.steps || 7);
+            if (Array.isArray(cols) && colorCfg?.['@@function'] === 'colorContinuous') {
+              const dom = colorCfg.domain;
+              const domainReversed = Array.isArray(dom) && dom.length >= 2 && dom[0] > dom[dom.length - 1];
+              const wantsReverse = !!colorCfg.reverse;
+              const shouldReverse = domainReversed ? !wantsReverse : wantsReverse;
+              if (shouldReverse) cols = [...cols].reverse();
+            }
             stripBg = toGradient(cols) || stripBg;
           }
         } else if (l.layerType === 'vector') {
@@ -2315,7 +2337,14 @@ def deckgl_layers(
             else if (l.fillColorRgba) stripBg = l.fillColorRgba;
             else if (l.lineColorRgba) stripBg = l.lineColorRgba;
           } else if (cfg?.colors) {
-            const cols = getPaletteColors(cfg.colors, cfg.steps || 7);
+            let cols = getPaletteColors(cfg.colors, cfg.steps || 7);
+            if (Array.isArray(cols) && cfg?.['@@function'] === 'colorContinuous') {
+              const dom = cfg.domain;
+              const domainReversed = Array.isArray(dom) && dom.length >= 2 && dom[0] > dom[dom.length - 1];
+              const wantsReverse = !!cfg.reverse;
+              const shouldReverse = domainReversed ? !wantsReverse : wantsReverse;
+              if (shouldReverse) cols = [...cols].reverse();
+            }
             stripBg = toGradient(cols) || stripBg;
           }
         }
@@ -2416,14 +2445,16 @@ def deckgl_layers(
         // Use dynamic domain if available (from autoDomain calculation)
         const domain = colorCfg._dynamicDomain || colorCfg.domain;
         const [d0, d1] = domain;
-        const isReversed = d0 > d1;
+        const domainReversed = d0 > d1;
         const steps = colorCfg.steps || 7;
         
         let cols = getPaletteColors(paletteName, steps);
         if (!cols || !cols.length) {
           cols = ['#e0f3db','#ccebc5','#a8ddb5','#7bccc4','#4eb3d3','#2b8cbe','#0868ac','#084081'];
         }
-        if (isReversed) cols = [...cols].reverse();
+        const wantsReverse = !!colorCfg.reverse;
+        const shouldReverse = domainReversed ? !wantsReverse : wantsReverse;
+        if (shouldReverse) cols = [...cols].reverse();
         
         const gradient = `linear-gradient(to right, ${cols.map((c, i) => `${c} ${i / (cols.length - 1) * 100}%`).join(', ')})`;
         
@@ -2920,6 +2951,7 @@ def deckgl_layers(
       fillFn: 'colorContinuous',
       fillAttr: 'metric',
       fillPalette: 'TealGrn',
+      fillReverse: false,
       fillDomainMin: 0,
       fillDomainMax: 100,
       fillSteps: 7,
@@ -3255,6 +3287,12 @@ def deckgl_layers(
           debugState.fillPalette = fillCfg.colors;
           document.getElementById('dbg-palette')?.dispatchEvent(new Event('pal:sync'));
         }
+        // Reverse colors (from config.reverse or reversed domain order)
+        const reverseFromDomain = Array.isArray(fillCfg.domain) && fillCfg.domain.length >= 2 && fillCfg.domain[0] > fillCfg.domain[fillCfg.domain.length - 1];
+        const reverseVal = (fillCfg.reverse === true) || reverseFromDomain;
+        const revEl = document.getElementById('dbg-reverse-colors');
+        if (revEl) revEl.checked = reverseVal;
+        debugState.fillReverse = reverseVal;
         if (fillCfg.domain) {
           const dmin = Math.min(...fillCfg.domain);
           const dmax = Math.max(...fillCfg.domain);
@@ -3416,6 +3454,7 @@ def deckgl_layers(
           attr: debugState.fillAttr,
           domain: [debugState.fillDomainMin, debugState.fillDomainMax],
           colors: debugState.fillPalette,
+          ...(debugState.fillReverse ? { reverse: true } : {}),
           steps: debugState.fillSteps,
           nullColor: hexToRgb(debugState.fillNullColor)
         };
@@ -3616,6 +3655,7 @@ def deckgl_layers(
       debugState.fillFn = getVal('dbg-fill-fn', 'colorContinuous');
       debugState.fillAttr = getVal('dbg-attr', 'metric');
       debugState.fillPalette = getVal('dbg-palette', 'TealGrn');
+      debugState.fillReverse = !!document.getElementById('dbg-reverse-colors')?.checked;
       debugState.fillDomainMin = getNum('dbg-domain-min', 0);
       debugState.fillDomainMax = getNum('dbg-domain-max', 100);
       debugState.fillSteps = parseInt(getVal('dbg-steps', 7)) || 7;
@@ -3660,6 +3700,7 @@ def deckgl_layers(
           attr: debugState.fillAttr,
           domain: [debugState.fillDomainMin, debugState.fillDomainMax],
           colors: debugState.fillPalette,
+          ...(debugState.fillReverse ? { reverse: true } : {}),
           steps: debugState.fillSteps,
           nullColor: hexToRgb(debugState.fillNullColor)
         };
@@ -3831,7 +3872,7 @@ def deckgl_layers(
       document.getElementById('dbg-line-fn')?.addEventListener('change', () => { updateLineFnOptions(); scheduleLayerUpdate(); });
       
       // Bind fill color inputs
-      ['dbg-attr', 'dbg-palette', 'dbg-domain-min', 'dbg-domain-max', 'dbg-steps', 'dbg-null-color', 'dbg-fill-static'].forEach(id => {
+      ['dbg-attr', 'dbg-palette', 'dbg-reverse-colors', 'dbg-domain-min', 'dbg-domain-max', 'dbg-steps', 'dbg-null-color', 'dbg-fill-static'].forEach(id => {
         document.getElementById(id)?.addEventListener('change', scheduleLayerUpdate);
         document.getElementById(id)?.addEventListener('input', scheduleLayerUpdate);
       });
@@ -3951,7 +3992,7 @@ def deckgl_layers(
         has_mvt_layers=has_mvt_layers,
         has_sql_layers=has_sql_layers,
         highlight_on_click=highlight_on_click,
-        palettes=sorted(KNOWN_CARTOCOLOR_PALETTES),
+        palettes=(["ArmyRose"] + sorted([p for p in KNOWN_CARTOCOLOR_PALETTES if p != "ArmyRose"])),
         on_click=on_click or {},
         debug=debug,
     )
