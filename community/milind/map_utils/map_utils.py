@@ -480,7 +480,7 @@ def deckgl_layers(
                     except Exception:
                         pass
                 
-                # Robust GeoJSON conversion:
+                # Robust GeoJSON conversion (fixed):
                 # 1) prefer GeoPandas to_json()
                 # 2) fallback to __geo_interface__ if to_json fails
                 if hasattr(df, "to_json"):
@@ -921,6 +921,13 @@ def deckgl_layers(
           <select class="debug-select" id="dbg-attr"></select>
         </div>
         <div class="debug-row">
+          <span class="debug-label">Reverse</span>
+          <label class="debug-checkbox" style="margin-left:auto;">
+            <input type="checkbox" id="dbg-reverse-colors" />
+            Reverse colors
+          </label>
+        </div>
+        <div class="debug-row">
           <span class="debug-label">Palette</span>
           <select class="debug-select pal-hidden" id="dbg-palette">
             {% for pal in palettes %}<option value="{{ pal }}">{{ pal }}</option>{% endfor %}
@@ -932,13 +939,6 @@ def deckgl_layers(
             </button>
             <div class="pal-menu" id="dbg-palette-menu" style="display:none;"></div>
         </div>
-        </div>
-        <div class="debug-row">
-          <span class="debug-label">Reverse</span>
-          <label class="debug-checkbox" style="margin-left:auto;">
-            <input type="checkbox" id="dbg-reverse-colors" />
-            Reverse colors
-          </label>
         </div>
         <div class="debug-row">
             <span class="debug-label">Domain</span>
@@ -3065,6 +3065,8 @@ def deckgl_layers(
       const nameEl = document.getElementById(nameId);
       const swatchEl = document.getElementById(swatchId);
       if (!sel || !trigger || !menu || !nameEl || !swatchEl) return;
+      const reverseEl = document.getElementById('dbg-reverse-colors');
+      const shouldReverse = () => (selectId === 'dbg-palette') && !!reverseEl?.checked;
 
       const stopsToGradient = (cols) => {
         if (!cols || !cols.length) return 'linear-gradient(90deg, #555, #999)';
@@ -3074,7 +3076,8 @@ def deckgl_layers(
       };
 
       const renderSwatch = (paletteName) => {
-        const cols = getPaletteColors(paletteName, 7) || getPaletteColors(paletteName, 9) || null;
+        const cols0 = getPaletteColors(paletteName, 7) || getPaletteColors(paletteName, 9) || null;
+        const cols = (cols0 && shouldReverse()) ? [...cols0].reverse() : cols0;
         swatchEl.style.background = stopsToGradient(cols);
       };
 
@@ -3115,7 +3118,8 @@ def deckgl_layers(
         // Fill swatches after insertion
         menu.querySelectorAll('[data-swatch]').forEach(el => {
           const v = el.getAttribute('data-swatch');
-          const cols = getPaletteColors(v, 7) || getPaletteColors(v, 9) || null;
+          const cols0 = getPaletteColors(v, 7) || getPaletteColors(v, 9) || null;
+          const cols = (cols0 && shouldReverse()) ? [...cols0].reverse() : cols0;
           el.style.background = stopsToGradient(cols);
         });
       };
@@ -3134,6 +3138,14 @@ def deckgl_layers(
 
       // Init current
       syncFromSelect();
+      
+      // If the fill reverse checkbox changes, update palette previews too (trigger + menu).
+      if (selectId === 'dbg-palette' && reverseEl) {
+        reverseEl.addEventListener('change', () => {
+          buildMenu();
+          syncFromSelect();
+        });
+      }
 
       trigger.addEventListener('click', (e) => {
         e.preventDefault();
