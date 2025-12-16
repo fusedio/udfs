@@ -3045,7 +3045,7 @@ def deckgl_layers(
 
       // Tooltip
       tooltipColumns: [],
-      tooltipColumnsUserSet: false
+      tooltipAllColumns: [],
     };
     
     function toggleDebugPanel() {
@@ -3291,6 +3291,12 @@ def deckgl_layers(
       
       if (attrs.size === 0) attrs.add('metric');
       const attrOptions = [...attrs].sort().map(a => `<option value="${a}">${a}</option>`).join('');
+
+      // Persist "all possible tooltip columns" for snippet generation.
+      // This avoids referencing `tooltipKeys` outside this function's scope.
+      debugState.tooltipAllColumns = [...tooltipKeys]
+        .filter(k => k && !['geometry', '_fused_idx', 'properties'].includes(k))
+        .sort();
       
       // Populate all attribute dropdowns
       ['dbg-attr', 'dbg-height-attr', 'dbg-line-attr'].forEach(id => {
@@ -3447,7 +3453,6 @@ def deckgl_layers(
 
           // Default = select all columns, unless explicitly provided by config.
           debugState.tooltipColumns = initialCols.length ? initialCols : allCols;
-          debugState.tooltipColumnsUserSet = initialCols.length > 0;
           tooltipContainer.innerHTML = allCols.map(k => {
             const checked = debugState.tooltipColumns.includes(k) ? 'checked' : '';
             return `<label class="debug-check"><input type="checkbox" data-tooltip-col="${k}" ${checked} /><code>${k}</code></label>`;
@@ -3455,7 +3460,6 @@ def deckgl_layers(
 
           tooltipContainer.querySelectorAll('input[type="checkbox"][data-tooltip-col]').forEach(cb => {
             cb.addEventListener('change', () => {
-              debugState.tooltipColumnsUserSet = true;
               scheduleLayerUpdate();
             });
           });
@@ -3649,6 +3653,19 @@ def deckgl_layers(
       }
 
       let layerStyleBlock = {};
+      // Tooltip columns: default behavior is "all columns". Only emit tooltipColumns if user selected a subset.
+      // Use `debugState.tooltipAllColumns` (populated in populateAttrDropdown) so this can't break if the UI isn't mounted yet.
+      const allTooltipCols = Array.isArray(debugState.tooltipAllColumns) ? debugState.tooltipAllColumns : [];
+      const tooltipAllSelected =
+        allTooltipCols.length > 0 &&
+        Array.isArray(debugState.tooltipColumns) &&
+        debugState.tooltipColumns.length === allTooltipCols.length &&
+        allTooltipCols.every(k => debugState.tooltipColumns.includes(k));
+      const shouldIncludeTooltipColumns =
+        Array.isArray(debugState.tooltipColumns) &&
+        debugState.tooltipColumns.length > 0 &&
+        !tooltipAllSelected;
+
       if (layerKind === 'vector') {
         const vecType = firstLayer?.vectorLayer?.['@@type'] || 'GeoJsonLayer';
         const baseVec = DEFAULT_VECTOR_CONFIG?.vectorLayer || {};
@@ -3659,7 +3676,7 @@ def deckgl_layers(
           opacity: debugState.opacity,
           ...(debugState.filled ? { getFillColor } : {}),
           ...(debugState.stroked ? { getLineColor, lineWidthMinPixels: debugState.lineWidth } : {}),
-          ...(debugState.tooltipColumnsUserSet && debugState.tooltipColumns?.length ? { tooltipColumns: debugState.tooltipColumns } : {}),
+          ...(shouldIncludeTooltipColumns ? { tooltipColumns: debugState.tooltipColumns } : {}),
         };
         const vecOut = stripDefaults(vecCandidate, baseVec);
         layerStyleBlock = Object.keys(vecOut).length ? { vectorLayer: vecOut } : {};
@@ -3677,7 +3694,7 @@ def deckgl_layers(
             elevationScale: debugState.elevationScale,
             getElevation: `@@=properties.${debugState.heightAttr}`
           } : {}),
-          ...(debugState.tooltipColumnsUserSet && debugState.tooltipColumns?.length ? { tooltipColumns: debugState.tooltipColumns } : {}),
+          ...(shouldIncludeTooltipColumns ? { tooltipColumns: debugState.tooltipColumns } : {}),
           ...(sqlVal ? { sql: sqlVal } : {}),
         };
         const hexOut = stripDefaults(hexCandidate, baseHex);
