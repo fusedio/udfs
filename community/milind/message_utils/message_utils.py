@@ -963,12 +963,25 @@ def map_bounds(
   html, body, #map {{ margin:0; height:100% }}
   #map {{ position:fixed; inset:0 }}
   #send {{
-    position:fixed; right:10px; bottom:10px; z-index:10;
+    position:fixed; right:10px; bottom:40px; z-index:10;
     padding:10px 14px; background:#fff; border:1px solid #999; border-radius:6px;
-    font:14px/1.2 system-ui,-apple-system, Segoe UI, Roboto, Helvetica, Arial; cursor:pointer;
+    font:14px/1.2 system-ui,-apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    cursor:pointer;
+    transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+    box-shadow:0 4px 10px rgba(0,0,0,0.15);
   }}
   #send:disabled {{
     opacity:0.6; cursor:not-allowed;
+  }}
+  #send:not(:disabled):hover {{
+    background:#f3f4f6;
+    border-color:#6b7280;
+    transform:translateY(-1px);
+    box-shadow:0 6px 16px rgba(0,0,0,0.22), 0 0 0 3px rgba(255,255,255,0.18);
+  }}
+  #send:not(:disabled):active {{
+    background:#e4e4e4;
+    transform:translateY(0);
   }}
   .mapboxgl-ctrl-geocoder {{
     min-width:240px;
@@ -1006,31 +1019,37 @@ def map_bounds(
     background:rgba(255,255,255,0.1);
     color:#fff;
   }}
+  /* Full-width top banner for sent bounds */
   #toast {{
-    position:fixed; bottom:60px; left:50%; transform:translateX(-50%);
-    background:rgba(30,30,30,0.95); color:#fff; padding:8px 14px;
-    border-radius:6px; font:12px/1.4 system-ui,-apple-system,sans-serif;
+    position:fixed; top:0; left:0; right:0;
+    background:rgba(18,18,18,0.92); color:#fff;
+    padding:7px 12px;
+    padding-right:56px; /* leave room for search icon */
+    border-bottom:1px solid rgba(255,255,255,0.12);
     opacity:0; pointer-events:none; z-index:100;
-    transition:opacity 0.2s ease; max-width:90vw;
+    transition:opacity 0.2s ease;
   }}
   #toast.show {{ opacity:1; pointer-events:auto; }}
   #toast-content {{
-    font-family:'SF Mono',Consolas,monospace; font-size:11px;
-    user-select:all; word-break:break-all; display:block;
+    font-family:'SF Mono',Consolas,monospace; font-size:12px;
+    user-select:all; cursor:text;
+    white-space:nowrap;
+    overflow-x:auto; overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+    display:block;
   }}
-  #toast-hint {{
-    font-size:9px; color:rgba(255,255,255,0.5); margin-top:4px;
-    text-transform:uppercase; letter-spacing:0.5px;
+
+  /* Keep the search icon accessible without pushing it down */
+  .mapboxgl-ctrl-top-right {{
+    top:15px !important;
+    right:6px !important;
+    z-index:110;
   }}
-  #toast-timer {{
-    position:absolute; bottom:0; left:0; height:2px;
-    background:rgba(255,255,255,0.8); width:100%; border-radius:0 0 6px 6px;
-  }}
-  @keyframes shrink {{ from {{ width:100%; }} to {{ width:0%; }} }}
 </style>
 
 <div id="map"></div>
-<div id="toast"><span id="toast-content"></span><div id="toast-hint">click to select</div><div id="toast-timer"></div></div>
+<div id="toast"><span id="toast-content"></span></div>
 <button id="send" disabled></button>
 
 <script>
@@ -1053,9 +1072,10 @@ document.addEventListener('DOMContentLoaded', () => {{
     accessToken: mapboxgl.accessToken,
     mapboxgl: mapboxgl,
     marker: false,
+    collapsed: true,
     placeholder: 'Search location...'
   }});
-  map.addControl(geocoder, 'top-left');
+  map.addControl(geocoder, 'top-right');
 
   const sendBtn = document.getElementById('send');
   sendBtn.textContent = BUTTON_LABEL;
@@ -1087,17 +1107,13 @@ document.addEventListener('DOMContentLoaded', () => {{
 
   const toast = document.getElementById('toast');
   const toastContent = document.getElementById('toast-content');
-  const timer = document.getElementById('toast-timer');
   let toastTimeout = null;
 
   function showToast(content) {{
     if (toastTimeout) clearTimeout(toastTimeout);
     toast.classList.remove('show');
-    timer.style.animation = 'none';
-    void timer.offsetWidth;
     toastContent.textContent = JSON.stringify(content);
     toast.classList.add('show');
-    timer.style.animation = 'shrink 7s linear forwards';
     toastTimeout = setTimeout(() => toast.classList.remove('show'), 7000);
   }}
 
