@@ -3050,7 +3050,8 @@ def deckgl_layers(
       elevationScale: 10,
 
       // Tooltip
-      tooltipColumns: []
+      tooltipColumns: [],
+      tooltipColumnsUserSet: false
     };
     
     function toggleDebugPanel() {
@@ -3467,14 +3468,19 @@ def deckgl_layers(
             .filter(k => k && !['geometry', '_fused_idx', 'properties'].includes(k))
             .sort();
 
-          debugState.tooltipColumns = initialCols.length ? initialCols : allCols.slice(0, 6);
+          // Default = select all columns, unless explicitly provided by config.
+          debugState.tooltipColumns = initialCols.length ? initialCols : allCols;
+          debugState.tooltipColumnsUserSet = initialCols.length > 0;
           tooltipContainer.innerHTML = allCols.map(k => {
             const checked = debugState.tooltipColumns.includes(k) ? 'checked' : '';
             return `<label class="debug-check"><input type="checkbox" data-tooltip-col="${k}" ${checked} /><code>${k}</code></label>`;
           }).join('');
 
           tooltipContainer.querySelectorAll('input[type="checkbox"][data-tooltip-col]').forEach(cb => {
-            cb.addEventListener('change', scheduleLayerUpdate);
+            cb.addEventListener('change', () => {
+              debugState.tooltipColumnsUserSet = true;
+              scheduleLayerUpdate();
+            });
           });
 
           // Apply initial tooltip selection immediately (so tooltips work before the user edits anything)
@@ -3659,7 +3665,7 @@ def deckgl_layers(
           opacity: debugState.opacity,
           ...(debugState.filled ? { getFillColor } : {}),
           ...(debugState.stroked ? { getLineColor, lineWidthMinPixels: debugState.lineWidth } : {}),
-          ...(debugState.tooltipColumns?.length ? { tooltipColumns: debugState.tooltipColumns } : {}),
+          ...(debugState.tooltipColumnsUserSet && debugState.tooltipColumns?.length ? { tooltipColumns: debugState.tooltipColumns } : {}),
         };
         const vecOut = stripDefaults(vecCandidate, baseVec);
         layerStyleBlock = Object.keys(vecOut).length ? { vectorLayer: vecOut } : {};
@@ -3677,7 +3683,7 @@ def deckgl_layers(
             elevationScale: debugState.elevationScale,
             getElevation: `@@=properties.${debugState.heightAttr}`
           } : {}),
-          ...(debugState.tooltipColumns?.length ? { tooltipColumns: debugState.tooltipColumns } : {}),
+          ...(debugState.tooltipColumnsUserSet && debugState.tooltipColumns?.length ? { tooltipColumns: debugState.tooltipColumns } : {}),
           ...(sqlVal ? { sql: sqlVal } : {}),
         };
         const hexOut = stripDefaults(hexCandidate, baseHex);
@@ -4042,9 +4048,20 @@ def deckgl_layers(
       setTimeout(populateAttrDropdown, 500);
       setTimeout(populateAttrDropdown, 2000);
       
-      // Sync on map move; only count as "user moved" when Mapbox provides an originalEvent.
-      // This prevents initialViewState from appearing on initial load/initial camera set.
-      map.on('moveend', (e) => syncDebugFromMap(!!(e && e.originalEvent)));
+      // Sync on map move:
+      // Only count as "user moved" after a real user interaction on the map canvas
+      // (pointer/wheel). This avoids programmatic camera changes (auto-fit, jumpTo, etc.)
+      // from polluting the snippet with initialViewState.
+      let userMapInteracted = false;
+      try {
+        const canvas = map.getCanvas();
+        if (canvas) {
+          canvas.addEventListener('pointerdown', () => { userMapInteracted = true; }, { passive: true });
+          canvas.addEventListener('wheel', () => { userMapInteracted = true; }, { passive: true });
+          canvas.addEventListener('touchstart', () => { userMapInteracted = true; }, { passive: true });
+        }
+      } catch (e) {}
+      map.on('moveend', () => syncDebugFromMap(userMapInteracted));
       
       // Bind view inputs
       let viewUpdateTimeout = null;
