@@ -936,6 +936,14 @@ def deckgl_layers(
   <div id="debug-shell">
   <div id="debug-panel">
     <div id="debug-content">
+      <!-- Editing Layer -->
+      <div class="debug-section">
+        <div class="debug-section-title">Editing Layer</div>
+        <div class="debug-row">
+          <span class="debug-label">Layer</span>
+          <select class="debug-select" id="dbg-layer-select"></select>
+        </div>
+      </div>
       <!-- Hex Layer Settings -->
       <div class="debug-section">
         <div class="debug-section-title">Hex Layer</div>
@@ -3047,6 +3055,45 @@ def deckgl_layers(
       tooltipColumns: [],
       tooltipAllColumns: [],
     };
+
+    // Active layer being edited in the debug panel (single set of controls, per-layer editing)
+    let activeDebugLayerId = null;
+
+    function getEditableLayers() {
+      // Hex layers include both static and tiled (Deck overlay) hex layers
+      return (Array.isArray(LAYERS_DATA) ? LAYERS_DATA : []).filter(l =>
+        l && (l.layerType === 'hex' || l.layerType === 'vector')
+      );
+    }
+
+    function getActiveLayerDef() {
+      const layers = getEditableLayers();
+      if (!layers.length) return null;
+      const found = layers.find(l => l.id === activeDebugLayerId);
+      return found || layers[0];
+    }
+
+    function initDebugLayerSelector() {
+      const sel = document.getElementById('dbg-layer-select');
+      if (!sel) return;
+      const layers = getEditableLayers();
+      sel.innerHTML = layers.map(l => {
+        const kind = l.layerType === 'vector' ? 'vector' : (l.isTileLayer ? 'hex (tile)' : 'hex');
+        const label = `${l.name || l.id} — ${kind}`;
+        return `<option value="${l.id}">${label}</option>`;
+      }).join('');
+      const initial = getActiveLayerDef();
+      activeDebugLayerId = initial?.id || null;
+      if (activeDebugLayerId) sel.value = activeDebugLayerId;
+      sel.addEventListener('change', () => {
+        activeDebugLayerId = sel.value;
+        populateAttrDropdown(); // re-hydrate UI from selected layer + its columns
+        updateSectionVisibility();
+        updateFillFnOptions();
+        updateLineFnOptions();
+        if (typeof updateConfigOutput === 'function') updateConfigOutput();
+      });
+    }
     
     function toggleDebugPanel() {
       const panel = document.getElementById('debug-panel');
@@ -3247,53 +3294,66 @@ def deckgl_layers(
     
     // Populate all attribute dropdowns
     function populateAttrDropdown() {
+      const layerDef = getActiveLayerDef();
+      if (!layerDef) return;
+
       const attrs = new Set();
       const tooltipKeys = new Set();
-      
-      // For tile layers, get attrs from cached tile data
-      Object.values(TILE_DATA_STORE || {}).forEach(layerTiles => {
+
+      // 1) Try to discover columns from the active layer's data
+      if (layerDef.layerType === 'hex' && layerDef.isTileLayer) {
+        // Tile hex layer: use cached tile data if available (autoDomain + attribute inference)
+        const layerTiles = (TILE_DATA_STORE || {})[layerDef.id] || {};
         Object.values(layerTiles || {}).forEach(tileData => {
           (tileData || []).forEach(d => {
-            Object.keys(d?.properties || d || {}).forEach(k => {
-              if (k !== 'hex' && k !== 'h3' && k !== 'properties') {
-                const val = d?.properties?.[k] ?? d?.[k];
-                if (typeof val === 'number') attrs.add(k);
-                tooltipKeys.add(k);
-              }
+            const obj = d?.properties || d || {};
+            Object.keys(obj).forEach(k => {
+              if (['hex', 'h3', 'geometry', '_fused_idx', 'properties'].includes(k)) return;
+              const val = obj[k];
+              if (typeof val === 'number' && isFinite(val)) attrs.add(k);
+              tooltipKeys.add(k);
             });
           });
         });
-      });
-      
-      // Also check static layer data (hex and vector layers)
-      LAYERS_DATA.forEach(l => {
-        // For hex layers, use l.data; for vector layers, use geojson features
-        let records = [];
-        if (l.data && l.data.length > 0) {
-          records = l.data;
-        } else if (l.geojson?.features?.length > 0) {
-          records = l.geojson.features.map(f => f.properties || {});
-        }
-        
-        records.forEach(d => {
-          if (!d) return;
-          Object.keys(d).forEach(k => {
-            // Skip internal/geometry keys
+      } else if (layerDef.layerType === 'hex') {
+        // Static hex layer: inspect row objects
+        (layerDef.data || []).forEach(d => {
+          const obj = d?.properties || d || {};
+          Object.keys(obj).forEach(k => {
             if (['hex', 'h3', 'geometry', '_fused_idx', 'properties'].includes(k)) return;
-            const val = d[k];
-            // Add to attrs if it's a number
+            const val = obj[k];
             if (typeof val === 'number' && isFinite(val)) attrs.add(k);
-            // Add to tooltipKeys for all non-internal keys
             tooltipKeys.add(k);
           });
         });
-      });
-      
+      } else if (layerDef.layerType === 'vector') {
+        // GeoJSON vector layer: inspect feature properties
+        (layerDef.geojson?.features || []).forEach(f => {
+          const obj = f?.properties || {};
+          Object.keys(obj).forEach(k => {
+            if (['geometry', '_fused_idx', 'properties'].includes(k)) return;
+            const val = obj[k];
+            if (typeof val === 'number' && isFinite(val)) attrs.add(k);
+            tooltipKeys.add(k);
+          });
+        });
+      }
+
+      // 2) Always include attrs referenced by current config, so the dropdown doesn't "lose" them
+      const cfg = layerDef.hexLayer || layerDef.vectorLayer || {};
+      const fillCfg = cfg.getFillColor || layerDef.fillColorConfig || {};
+      const lineCfg = cfg.getLineColor || layerDef.lineColorConfig || {};
+      const referenced = [
+        (fillCfg && typeof fillCfg === 'object') ? fillCfg.attr : null,
+        (lineCfg && typeof lineCfg === 'object') ? lineCfg.attr : null,
+        debugState.heightAttr
+      ].filter(Boolean);
+      referenced.forEach(a => attrs.add(a));
+
       if (attrs.size === 0) attrs.add('metric');
       const attrOptions = [...attrs].sort().map(a => `<option value="${a}">${a}</option>`).join('');
 
-      // Persist "all possible tooltip columns" for snippet generation.
-      // This avoids referencing `tooltipKeys` outside this function's scope.
+      // Persist "all possible tooltip columns" for snippet generation and UI defaults.
       debugState.tooltipAllColumns = [...tooltipKeys]
         .filter(k => k && !['geometry', '_fused_idx', 'properties'].includes(k))
         .sort();
@@ -3304,12 +3364,11 @@ def deckgl_layers(
         if (el) el.innerHTML = attrOptions;
       });
       
-      // Initialize from first hex layer's config (fallback to vector if no hex present)
-      const firstLayer = LAYERS_DATA.find(l => l.layerType === 'hex') || LAYERS_DATA.find(l => l.layerType === 'vector') || LAYERS_DATA[0];
-      if (firstLayer) {
-        const cfg = firstLayer.hexLayer || firstLayer.vectorLayer || {};
-        const fillCfg = cfg.getFillColor || firstLayer.fillColorConfig || {};
-        const lineCfg = cfg.getLineColor || firstLayer.lineColorConfig || {};
+      // Initialize from the selected layer's config
+      if (layerDef) {
+        const cfg = layerDef.hexLayer || layerDef.vectorLayer || {};
+        const fillCfg = cfg.getFillColor || layerDef.fillColorConfig || {};
+        const lineCfg = cfg.getLineColor || layerDef.lineColorConfig || {};
         
         // Layer toggles
         const setCheckbox = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
@@ -3317,23 +3376,23 @@ def deckgl_layers(
         
         setCheckbox('dbg-filled', cfg.filled !== false);
         // Vector uses `stroked`, hex uses `stroked` too; processed vector also has `isStroked`
-        setCheckbox('dbg-stroked', (cfg.stroked ?? firstLayer.isStroked) !== false);
+        setCheckbox('dbg-stroked', (cfg.stroked ?? layerDef.isStroked) !== false);
         setCheckbox('dbg-extruded', cfg.extruded === true);
         
         // Pickable is always-on (debug UI removed)
         debugState.pickable = true;
         debugState.filled = cfg.filled !== false;
-        debugState.stroked = (cfg.stroked ?? firstLayer.isStroked) !== false;
+        debugState.stroked = (cfg.stroked ?? layerDef.isStroked) !== false;
         debugState.extruded = cfg.extruded === true;
         
         // Opacity
-        setInput('dbg-opacity', cfg.opacity ?? firstLayer.opacity ?? 1);
-        setInput('dbg-opacity-slider', cfg.opacity ?? firstLayer.opacity ?? 1);
-        debugState.opacity = cfg.opacity ?? firstLayer.opacity ?? 1;
+        setInput('dbg-opacity', cfg.opacity ?? layerDef.opacity ?? 1);
+        setInput('dbg-opacity-slider', cfg.opacity ?? layerDef.opacity ?? 1);
+        debugState.opacity = cfg.opacity ?? layerDef.opacity ?? 1;
         // coverage control removed from debug UI (still supported via JSON config)
         
         // Fill color - detect static (array) vs function
-        if (Array.isArray(fillCfg) || (firstLayer.fillColorRgba && !fillCfg['@@function'])) {
+        if (Array.isArray(fillCfg) || (layerDef.fillColorRgba && !fillCfg['@@function'])) {
           // Static color
           setInput('dbg-fill-fn', 'static');
           debugState.fillFn = 'static';
@@ -3343,9 +3402,11 @@ def deckgl_layers(
             setInput('dbg-fill-static', hex);
             debugState.fillStaticColor = hex;
           }
-        } else if (fillCfg['@@function']) {
-          setInput('dbg-fill-fn', fillCfg['@@function']);
-          debugState.fillFn = fillCfg['@@function'];
+        } else {
+          // Function-based fill (default to colorContinuous)
+          const fn = (fillCfg && typeof fillCfg === 'object' && fillCfg['@@function']) ? fillCfg['@@function'] : 'colorContinuous';
+          setInput('dbg-fill-fn', fn);
+          debugState.fillFn = fn;
         }
         
         // Set attribute from config or pick first available
@@ -3362,39 +3423,55 @@ def deckgl_layers(
           }
         }
         
-        // Ensure palette UI shows something even if config didn't set colors
+        // Palette (always reset on layer switch to avoid leakage)
+        const pal = (fillCfg && typeof fillCfg === 'object' && fillCfg.colors) ? fillCfg.colors : 'ArmyRose';
+        setInput('dbg-palette', pal);
+        debugState.fillPalette = pal;
         document.getElementById('dbg-palette')?.dispatchEvent(new Event('pal:sync'));
-        if (fillCfg.colors) {
-          setInput('dbg-palette', fillCfg.colors);
-          debugState.fillPalette = fillCfg.colors;
-          document.getElementById('dbg-palette')?.dispatchEvent(new Event('pal:sync'));
-        }
-        // Reverse colors:
-        // - honor explicit config.reverse
-        // - infer from domain order ONLY when the domain came from the user's input config
-        const domainFromUser = !!firstLayer?.fillDomainFromUser;
+
+        // Reverse colors (always reset on layer switch)
+        const domainFromUser = !!layerDef?.fillDomainFromUser;
         const reverseFromDomain = domainFromUser && Array.isArray(fillCfg.domain) && fillCfg.domain.length >= 2 && fillCfg.domain[0] > fillCfg.domain[fillCfg.domain.length - 1];
-        const reverseVal = (fillCfg.reverse === true) || reverseFromDomain;
+        const reverseVal = (fillCfg && typeof fillCfg === 'object' && fillCfg.reverse === true) || reverseFromDomain;
         const revEl = document.getElementById('dbg-reverse-colors');
-        if (revEl) revEl.checked = reverseVal;
-        debugState.fillReverse = reverseVal;
-        if (domainFromUser && fillCfg.domain) {
+        if (revEl) revEl.checked = !!reverseVal;
+        debugState.fillReverse = !!reverseVal;
+        // Domain + Steps + Null color: always reset on layer switch (but don't change slider extent)
+        const rMin = document.getElementById('dbg-domain-range-min');
+        const rMax = document.getElementById('dbg-domain-range-max');
+        const extMin = rMin ? Number(rMin.min) : NaN;
+        const extMax = rMax ? Number(rMax.max) : NaN;
+
+        // If config has a domain, use it; otherwise default to current extent if available.
+        if (fillCfg && typeof fillCfg === 'object' && Array.isArray(fillCfg.domain) && fillCfg.domain.length >= 2) {
           const dmin = Math.min(...fillCfg.domain);
           const dmax = Math.max(...fillCfg.domain);
           setInput('dbg-domain-min', dmin);
           setInput('dbg-domain-max', dmax);
           debugState.fillDomainMin = dmin;
           debugState.fillDomainMax = dmax;
-          // IMPORTANT: don't override slider min/max (extent). Only move thumbs to the config's domain.
-          syncDomainSliderFromInputs();
+        } else if (Number.isFinite(extMin) && Number.isFinite(extMax)) {
+          setInput('dbg-domain-min', extMin);
+          setInput('dbg-domain-max', extMax);
+          debugState.fillDomainMin = extMin;
+          debugState.fillDomainMax = extMax;
         }
-        // Domain will be calculated by DuckDB when attribute dropdown triggers change event
-        if (fillCfg.steps) {
-          setInput('dbg-steps', fillCfg.steps);
-          debugState.fillSteps = fillCfg.steps;
-        }
+        // Move thumbs to match inputs (but do not recompute extent)
+        syncDomainSliderFromInputs();
+
+        const steps = (fillCfg && typeof fillCfg === 'object' && Number.isFinite(parseInt(fillCfg.steps))) ? parseInt(fillCfg.steps) : 7;
+        setInput('dbg-steps', steps);
+        debugState.fillSteps = steps;
+
+        const nullHex = (fillCfg && typeof fillCfg === 'object' && Array.isArray(fillCfg.nullColor) && fillCfg.nullColor.length >= 3)
+          ? ('#' + fillCfg.nullColor.slice(0,3).map(c => Math.round(c).toString(16).padStart(2,'0')).join(''))
+          : '#b8b8b8';
+        setInput('dbg-null-color', nullHex);
+        debugState.fillNullColor = nullHex;
+        const nullLabel = document.getElementById('dbg-null-color-label');
+        if (nullLabel) nullLabel.textContent = nullHex;
         
-        // Line color
+        // Line color (always reset on layer switch)
         if (Array.isArray(lineCfg) && lineCfg.length >= 3) {
           debugState.lineFn = 'static';
           setInput('dbg-line-fn', 'static');
@@ -3405,29 +3482,35 @@ def deckgl_layers(
           debugState.lineStaticColor = hex;
           const label = document.getElementById('dbg-line-static-label');
           if (label) label.textContent = hex;
-        } else if (lineCfg && lineCfg['@@function']) {
+        } else if (lineCfg && typeof lineCfg === 'object' && lineCfg['@@function']) {
           setInput('dbg-line-fn', lineCfg['@@function']);
           debugState.lineFn = lineCfg['@@function'];
           if (lineCfg.attr) {
             setInput('dbg-line-attr', lineCfg.attr);
             debugState.lineAttr = lineCfg.attr;
           }
-          if (lineCfg.colors) {
-            setInput('dbg-line-palette', lineCfg.colors);
-            debugState.linePalette = lineCfg.colors;
-            document.getElementById('dbg-line-palette')?.dispatchEvent(new Event('pal:sync'));
-          }
+          const lpal = lineCfg.colors || 'ArmyRose';
+          setInput('dbg-line-palette', lpal);
+          debugState.linePalette = lpal;
+          document.getElementById('dbg-line-palette')?.dispatchEvent(new Event('pal:sync'));
           if (lineCfg.domain) {
             setInput('dbg-line-domain-min', Math.min(...lineCfg.domain));
             setInput('dbg-line-domain-max', Math.max(...lineCfg.domain));
             debugState.lineDomainMin = Math.min(...lineCfg.domain);
             debugState.lineDomainMax = Math.max(...lineCfg.domain);
           }
+        } else {
+          // Default line = static white
+          debugState.lineFn = 'static';
+          setInput('dbg-line-fn', 'static');
+          const hex = '#ffffff';
+          setInput('dbg-line-static', hex);
+          debugState.lineStaticColor = hex;
         }
         document.getElementById('dbg-line-palette')?.dispatchEvent(new Event('pal:sync'));
         
         // Line width (hex: lineWidthMinPixels; vector processed: lineWidth)
-        const lw = cfg.lineWidthMinPixels ?? firstLayer.lineWidth ?? 1;
+        const lw = cfg.lineWidthMinPixels ?? layerDef.lineWidth ?? 1;
         setInput('dbg-line-width', lw);
         setInput('dbg-line-width-slider', lw);
         debugState.lineWidth = lw;
@@ -3446,10 +3529,12 @@ def deckgl_layers(
         // Tooltip columns UI
         const tooltipContainer = document.getElementById('dbg-tooltip-cols');
         if (tooltipContainer) {
-          const initialCols = (cfg.tooltipColumns || cfg.tooltipAttrs || firstLayer.tooltipColumns || []).filter(Boolean);
-          const allCols = [...tooltipKeys]
-            .filter(k => k && !['geometry', '_fused_idx', 'properties'].includes(k))
-            .sort();
+          const initialCols = (cfg.tooltipColumns || cfg.tooltipAttrs || layerDef.tooltipColumns || []).filter(Boolean);
+          // If we couldn't infer columns from data yet (common for tile layers before any tile loads),
+          // fall back to the configured tooltip columns so the checklist is still usable.
+          const inferredAll = Array.isArray(debugState.tooltipAllColumns) ? debugState.tooltipAllColumns : [];
+          const allCols = (inferredAll && inferredAll.length) ? inferredAll : initialCols;
+          debugState.tooltipAllColumns = allCols;
 
           // Default = select all columns, unless explicitly provided by config.
           debugState.tooltipColumns = initialCols.length ? initialCols : allCols;
@@ -3465,11 +3550,9 @@ def deckgl_layers(
           });
 
           // Apply initial tooltip selection immediately (so tooltips work before the user edits anything)
-          LAYERS_DATA.forEach(l => {
-            l.tooltipColumns = debugState.tooltipColumns;
-            if (l.hexLayer) l.hexLayer.tooltipColumns = debugState.tooltipColumns;
-            if (l.vectorLayer) l.vectorLayer.tooltipColumns = debugState.tooltipColumns;
-          });
+          layerDef.tooltipColumns = debugState.tooltipColumns;
+          if (layerDef.hexLayer) layerDef.hexLayer.tooltipColumns = debugState.tooltipColumns;
+          if (layerDef.vectorLayer) layerDef.vectorLayer.tooltipColumns = debugState.tooltipColumns;
         }
       }
     }
@@ -3575,12 +3658,12 @@ def deckgl_layers(
         return out;
       };
 
-      // Pick the first editable layer (hex/vector) for snippet generation.
+      // Use the active debug layer for snippet generation.
       // IMPORTANT: define this BEFORE any code references `firstLayer` to avoid TDZ errors.
-      const firstLayer =
-        LAYERS_DATA.find(l => l.layerType === 'hex') ||
-        LAYERS_DATA.find(l => l.layerType === 'vector') ||
-        LAYERS_DATA[0];
+      const firstLayer = getActiveLayerDef() ||
+        (LAYERS_DATA.find(l => l.layerType === 'hex') ||
+         LAYERS_DATA.find(l => l.layerType === 'vector') ||
+         LAYERS_DATA[0]);
       
       // Build getFillColor
       let getFillColor;
@@ -3905,66 +3988,66 @@ def deckgl_layers(
         return `rgba(${r},${g},${b},${alpha})`;
       };
       
-      // Update LAYERS_DATA with new config
-      LAYERS_DATA.forEach(l => {
-        // Tooltip reads `layerDef.tooltipColumns` (top-level), so keep it in sync for ALL layer types.
-        l.tooltipColumns = debugState.tooltipColumns;
-        
-        if (l.hexLayer) {
-          l.hexLayer.pickable = true;
-          l.hexLayer.filled = debugState.filled;
-          l.hexLayer.stroked = debugState.stroked;
-          l.hexLayer.extruded = debugState.extruded;
-          l.hexLayer.opacity = debugState.opacity;
-          l.hexLayer.coverage = debugState.coverage;
-          l.hexLayer.getFillColor = fillColorCfg;
-          l.hexLayer.getLineColor = lineColorCfg;
-          l.hexLayer.lineWidthMinPixels = debugState.lineWidth;
-          l.hexLayer.elevationScale = debugState.elevationScale;
-          l.hexLayer.tooltipColumns = debugState.tooltipColumns;
-        }
+      // Apply debug changes ONLY to the currently selected layer.
+      const l = getActiveLayerDef();
+      if (!l) return;
 
-        // Also apply to vector layers (so debug panel works even when the layer is GeoJSON/vector)
-        if (l.vectorLayer) {
-          l.vectorLayer.filled = debugState.filled;
-          l.vectorLayer.stroked = debugState.stroked;
-          l.vectorLayer.opacity = debugState.opacity;
-          l.vectorLayer.getFillColor = fillColorCfg;
-          l.vectorLayer.getLineColor = lineColorCfg;
-          l.vectorLayer.lineWidthMinPixels = debugState.lineWidth;
-          l.vectorLayer.tooltipColumns = debugState.tooltipColumns;
-        }
+      // Tooltip reads `layerDef.tooltipColumns` (top-level), so keep it in sync for the active layer.
+      l.tooltipColumns = debugState.tooltipColumns;
 
-        // Keep processed vector fields in sync (used by addAllLayers())
-        if (l.layerType === 'vector') {
-          l.isFilled = debugState.filled;
-          l.isStroked = debugState.stroked;
+      if (l.hexLayer) {
+        l.hexLayer.pickable = true;
+        l.hexLayer.filled = debugState.filled;
+        l.hexLayer.stroked = debugState.stroked;
+        l.hexLayer.extruded = debugState.extruded;
+        l.hexLayer.opacity = debugState.opacity;
+        l.hexLayer.coverage = debugState.coverage;
+        l.hexLayer.getFillColor = fillColorCfg;
+        l.hexLayer.getLineColor = lineColorCfg;
+        l.hexLayer.lineWidthMinPixels = debugState.lineWidth;
+        l.hexLayer.elevationScale = debugState.elevationScale;
+        l.hexLayer.tooltipColumns = debugState.tooltipColumns;
+      }
+
+      // Also apply to vector layers (GeoJSON/vector)
+      if (l.vectorLayer) {
+        l.vectorLayer.filled = debugState.filled;
+        l.vectorLayer.stroked = debugState.stroked;
+        l.vectorLayer.opacity = debugState.opacity;
+        l.vectorLayer.getFillColor = fillColorCfg;
+        l.vectorLayer.getLineColor = lineColorCfg;
+        l.vectorLayer.lineWidthMinPixels = debugState.lineWidth;
+        l.vectorLayer.tooltipColumns = debugState.tooltipColumns;
+      }
+
+      // Keep processed vector fields in sync (used by addAllLayers())
+      if (l.layerType === 'vector') {
+        l.isFilled = debugState.filled;
+        l.isStroked = debugState.stroked;
         l.opacity = debugState.opacity;
-          l.lineWidth = debugState.lineWidth;
-          l.tooltipColumns = debugState.tooltipColumns;
+        l.lineWidth = debugState.lineWidth;
 
-          if (fillColorCfg && typeof fillColorCfg === 'object' && !Array.isArray(fillColorCfg) && fillColorCfg['@@function']) {
-            l.fillColorConfig = fillColorCfg;
-            l.fillColorRgba = null;
-          } else {
-            l.fillColorConfig = {};
-            l.fillColorRgba = rgbToRgba(fillColorCfg, debugState.opacity);
-          }
-
-          if (lineColorCfg && typeof lineColorCfg === 'object' && !Array.isArray(lineColorCfg) && lineColorCfg['@@function']) {
-            l.lineColorConfig = lineColorCfg;
-            l.lineColorRgba = null;
-          } else {
-            l.lineColorConfig = {};
-            l.lineColorRgba = rgbToRgba(lineColorCfg, 1);
-            }
-          } else {
-          // For hex layers (static or tile), legend uses these too
+        if (fillColorCfg && typeof fillColorCfg === 'object' && !Array.isArray(fillColorCfg) && fillColorCfg['@@function']) {
           l.fillColorConfig = fillColorCfg;
-          l.lineColorConfig = lineColorCfg;
-          l.opacity = debugState.opacity;
+          l.fillColorRgba = null;
+        } else {
+          l.fillColorConfig = {};
+          l.fillColorRgba = rgbToRgba(fillColorCfg, debugState.opacity);
         }
-      });
+
+        if (lineColorCfg && typeof lineColorCfg === 'object' && !Array.isArray(lineColorCfg) && lineColorCfg['@@function']) {
+          l.lineColorConfig = lineColorCfg;
+          l.lineColorRgba = null;
+        } else {
+          l.lineColorConfig = {};
+          l.lineColorRgba = rgbToRgba(lineColorCfg, 1);
+        }
+      } else {
+        // For hex layers (static or tile), legend uses these too
+        l.fillColorConfig = fillColorCfg;
+        l.lineColorConfig = lineColorCfg;
+        l.opacity = debugState.opacity;
+      }
       
       // Structural toggles require rebuilding Mapbox layers; numeric/style edits can update in-place.
       const currStructure = { filled: !!debugState.filled, stroked: !!debugState.stroked, extruded: !!debugState.extruded };
@@ -4019,6 +4102,7 @@ def deckgl_layers(
       // Initial sync should NOT cause initialViewState to appear in snippet output.
       syncDebugFromMap(false);
       initBasemapControl();
+      initDebugLayerSelector();
       
       // Initialize DuckDB for SQL filtering
       if (HAS_SQL_LAYERS) {
