@@ -20,16 +20,19 @@ DEFAULT_DECK_HEX_CONFIG = {
   "hexLayer": {
     "@@type": "H3HexagonLayer",
         "filled": True,
+        "stroked": True,
         "pickable": True,
         "extruded": False,
+        "opacity": 1,
     "getHexagon": "@@=properties.hex",
     "getFillColor": {
       "@@function": "colorContinuous",
             "attr": "cnt",
-            "domain": [5000, 0],
       "steps": 20,
       "colors": "ArmyRose"
-    }
+    },
+        "getLineColor": [255, 255, 255],
+        "lineWidthMinPixels": 1
   } 
 }
 
@@ -301,9 +304,33 @@ def deckgl_layers(
         tile_url = layer_def.get("tile_url")
         config = layer_def.get("config", {})
         name = layer_def.get("name", f"Layer {i + 1}")
+
+        # Track whether the user explicitly provided a fill domain in the input config.
+        # (Merged defaults may include a domain, but we only want to treat it as "user set" when provided.)
+        user_config = {}
+        if isinstance(config, str):
+            try:
+                user_config = json.loads(config)
+            except Exception:
+                user_config = {}
+        elif isinstance(config, dict):
+            user_config = config
+        else:
+            user_config = {}
         
         if layer_type == "hex":
             # Process hex layer
+            fill_domain_from_user = False
+            try:
+                user_fill = (((user_config or {}).get("hexLayer") or {}).get("getFillColor") or {})
+                fill_domain_from_user = (
+                    isinstance(user_fill, dict)
+                    and isinstance(user_fill.get("domain"), (list, tuple))
+                    and len(user_fill.get("domain")) >= 2
+                )
+            except Exception:
+                fill_domain_from_user = False
+
             merged_config = _load_deckgl_config(config, DEFAULT_DECK_HEX_CONFIG)
             hex_layer = merged_config.get("hexLayer", {})
             tile_layer_config = merged_config.get("tileLayer", {})
@@ -384,6 +411,7 @@ def deckgl_layers(
                 "tileLayerConfig": tile_layer_config,
                 "config": merged_config,
                 "hexLayer": hex_layer,
+                "fillDomainFromUser": fill_domain_from_user,
                 "tooltipColumns": tooltip_columns,
                 "visible": True,
                 "sql": layer_sql if not is_tile_layer and len(data_records) > 0 else None,
@@ -392,6 +420,17 @@ def deckgl_layers(
             
         elif layer_type == "vector":
             # Process vector layer (similar to deckgl_map)
+            fill_domain_from_user = False
+            try:
+                user_fill = (((user_config or {}).get("vectorLayer") or {}).get("getFillColor") or {})
+                fill_domain_from_user = (
+                    isinstance(user_fill, dict)
+                    and isinstance(user_fill.get("domain"), (list, tuple))
+                    and len(user_fill.get("domain")) >= 2
+                )
+            except Exception:
+                fill_domain_from_user = False
+
             merged_config = _load_deckgl_config(config, DEFAULT_DECK_CONFIG)
             vector_layer = merged_config.get("vectorLayer", {})
             tile_url = layer_def.get("tile_url")
@@ -452,6 +491,7 @@ def deckgl_layers(
                     "tileUrl": tile_url,
                     "sourceLayer": source_layer,
                     "config": merged_config,
+                    "fillDomainFromUser": fill_domain_from_user,
                     "minzoom": minzoom,
                     "maxzoom": maxzoom,
                     "fillColor": fill_color,
@@ -544,6 +584,7 @@ def deckgl_layers(
                 "geojson": geojson_obj,
                 "config": merged_config,
                 "vectorLayer": vector_layer,
+                "fillDomainFromUser": fill_domain_from_user,
                 "fillColorConfig": fill_color_config,
                 "fillColorRgba": fill_color_rgba,
                 "colorAttr": color_attr,
@@ -634,6 +675,7 @@ def deckgl_layers(
       padding: 8px 10px 8px 16px; /* text padding; gutter overlaps left 6px */
       border-bottom: 1px solid #333;
       position: relative;
+      cursor: pointer;
     }
     .layer-item:last-child { border-bottom: none; }
     /* Palette gradient gutter on the left edge - fully flush */
@@ -1096,6 +1138,9 @@ def deckgl_layers(
     const HAS_CUSTOM_VIEW = {{ has_custom_view | tojson }};
     const INITIAL_BASEMAP = {{ basemap | tojson }};
     const HAS_SQL_LAYERS = {{ has_sql_layers | tojson }};
+    // Defaults used for minimal snippet generation (we emit only overrides vs these).
+    const DEFAULT_HEX_CONFIG = {{ default_hex_config | tojson }};
+    const DEFAULT_VECTOR_CONFIG = {{ default_vector_config | tojson }};
     const BASEMAP_STYLES = {
       dark: "mapbox://styles/mapbox/dark-v11",
       satellite: "mapbox://styles/mapbox/satellite-streets-v12",
@@ -1341,12 +1386,17 @@ def deckgl_layers(
                   const maxInput = document.getElementById('dbg-domain-max');
                   if (minInput) { minInput.value = minVal.toFixed(2); debugState.fillDomainMin = minVal; }
                   if (maxInput) { maxInput.value = maxVal.toFixed(2); debugState.fillDomainMax = maxVal; }
+                  // This is automatic initialization; don't treat as user-set.
+                  debugState.fillDomainUserSet = false;
                   if (typeof syncDomainSliderFromInputs === 'function') syncDomainSliderFromInputs();
                   if (firstSqlLayer?.hexLayer?.getFillColor) {
                     firstSqlLayer.hexLayer.getFillColor.domain = [minVal, maxVal];
                   }
+                  // Apply immediately so the map/styles/snippet reflect the computed extent without user interaction.
+                  if (typeof scheduleLayerUpdate === 'function') scheduleLayerUpdate();
                 } else {
                   // Just ensure thumbs reflect the user's config domain
+                  debugState.fillDomainUserSet = true;
                   if (typeof syncDomainSliderFromInputs === 'function') syncDomainSliderFromInputs();
                 }
 
@@ -2304,6 +2354,16 @@ def deckgl_layers(
       updateLayerPanel();
     };
 
+    // Clicking anywhere on the layer row toggles visibility (same as the eye icon).
+    // The eye icon itself stops propagation so we don't double-toggle.
+    window.onLayerItemClick = function(e, layerId) {
+      try {
+        if (e && e.target && e.target.closest && e.target.closest('.layer-eye')) return;
+      } catch (_) {}
+      const cur = !!layerVisibility[layerId];
+      toggleLayerVisibility(layerId, !cur);
+    };
+
     // ========== Layer Panel ==========
     function updateLayerPanel() {
       const list = document.getElementById('layer-list');
@@ -2365,9 +2425,9 @@ def deckgl_layers(
           ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>'
           : '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>';
         return `
-          <div class="layer-item ${visible ? '' : 'disabled'}" data-layer-id="${l.id}" style="--layer-strip: ${stripBg};">
+          <div class="layer-item ${visible ? '' : 'disabled'}" data-layer-id="${l.id}" style="--layer-strip: ${stripBg};" onclick="onLayerItemClick(event, '${l.id}')">
             <span class="layer-name">${l.name}</span>
-            <span class="layer-eye" onclick="toggleLayerVisibility('${l.id}', ${!visible})">${eyeIcon}</span>
+            <span class="layer-eye" onclick="event.stopPropagation(); toggleLayerVisibility('${l.id}', ${!visible})">${eyeIcon}</span>
           </div>
         `;
       }).join('');
@@ -2969,6 +3029,11 @@ def deckgl_layers(
       fillSteps: 7,
       fillNullColor: '#b8b8b8',
       fillStaticColor: '#0090ff',
+      // Track whether user explicitly set values (so snippet stays short)
+      fillDomainUserSet: false,
+      fillNullUserSet: false,
+      basemapUserSet: false,
+      viewUserSet: false,
       
       // Line color
       lineFn: 'static',
@@ -2978,6 +3043,7 @@ def deckgl_layers(
       lineDomainMax: 100,
       lineStaticColor: '#ffffff',
       lineWidth: 1,
+      lineDomainUserSet: false,
       
       // Elevation
       heightAttr: 'metric',
@@ -3182,8 +3248,9 @@ def deckgl_layers(
     // Debug panel - update view state from map
     let debugUpdatingMap = false;  // Flag to prevent feedback loop
     
-    function syncDebugFromMap() {
+    function syncDebugFromMap(markMoved = false) {
       if (debugUpdatingMap) return;  // Skip if we're the ones moving the map
+      if (markMoved) debugState.viewUserSet = true;
       const center = map.getCenter();
       document.getElementById('dbg-lng').value = center.lng.toFixed(4);
       document.getElementById('dbg-lat').value = center.lat.toFixed(4);
@@ -3311,21 +3378,30 @@ def deckgl_layers(
           debugState.fillPalette = fillCfg.colors;
           document.getElementById('dbg-palette')?.dispatchEvent(new Event('pal:sync'));
         }
-        // Reverse colors (from config.reverse or reversed domain order)
-        const reverseFromDomain = Array.isArray(fillCfg.domain) && fillCfg.domain.length >= 2 && fillCfg.domain[0] > fillCfg.domain[fillCfg.domain.length - 1];
+        // Reverse colors:
+        // - honor explicit config.reverse
+        // - infer from domain order ONLY when the domain came from the user's input config
+        const domainFromUser = !!firstLayer?.fillDomainFromUser;
+        const reverseFromDomain = domainFromUser && Array.isArray(fillCfg.domain) && fillCfg.domain.length >= 2 && fillCfg.domain[0] > fillCfg.domain[fillCfg.domain.length - 1];
         const reverseVal = (fillCfg.reverse === true) || reverseFromDomain;
         const revEl = document.getElementById('dbg-reverse-colors');
         if (revEl) revEl.checked = reverseVal;
         debugState.fillReverse = reverseVal;
-        if (fillCfg.domain) {
+        if (domainFromUser && fillCfg.domain) {
           const dmin = Math.min(...fillCfg.domain);
           const dmax = Math.max(...fillCfg.domain);
           setInput('dbg-domain-min', dmin);
           setInput('dbg-domain-max', dmax);
           debugState.fillDomainMin = dmin;
           debugState.fillDomainMax = dmax;
+          debugState.fillDomainUserSet = true;
           // IMPORTANT: don't override slider min/max (extent). Only move thumbs to the config's domain.
           syncDomainSliderFromInputs();
+        } else {
+          debugState.fillDomainUserSet = false;
+        }
+        if (fillCfg.nullColor) {
+          debugState.fillNullUserSet = true;
         }
         // Domain will be calculated by DuckDB when attribute dropdown triggers change event
         if (fillCfg.steps) {
@@ -3361,6 +3437,7 @@ def deckgl_layers(
             setInput('dbg-line-domain-max', Math.max(...lineCfg.domain));
             debugState.lineDomainMin = Math.min(...lineCfg.domain);
             debugState.lineDomainMax = Math.max(...lineCfg.domain);
+            debugState.lineDomainUserSet = true;
           }
         }
         document.getElementById('dbg-line-palette')?.dispatchEvent(new Event('pal:sync'));
@@ -3467,21 +3544,67 @@ def deckgl_layers(
     function updateConfigOutput() {
       const output = document.getElementById('dbg-output');
       if (!output) return;
+
+      // Deep equality + "strip defaults" helpers for minimal snippet output.
+      const deepEqual = (a, b) => {
+        if (a === b) return true;
+        if (a == null || b == null) return a === b;
+        if (Array.isArray(a) || Array.isArray(b)) {
+          if (!Array.isArray(a) || !Array.isArray(b)) return false;
+          if (a.length !== b.length) return false;
+          for (let i = 0; i < a.length; i++) if (!deepEqual(a[i], b[i])) return false;
+          return true;
+        }
+        if (typeof a === 'object' && typeof b === 'object') {
+          const ak = Object.keys(a);
+          const bk = Object.keys(b);
+          if (ak.length !== bk.length) return false;
+          for (const k of ak) {
+            if (!Object.prototype.hasOwnProperty.call(b, k)) return false;
+            if (!deepEqual(a[k], b[k])) return false;
+          }
+          return true;
+        }
+        return false;
+      };
+
+      const stripDefaults = (obj, defaults) => {
+        if (obj == null) return obj;
+        if (Array.isArray(obj)) return obj; // arrays replace defaults
+        if (typeof obj !== 'object') return obj;
+        const out = {};
+        for (const [k, v] of Object.entries(obj)) {
+          const d = defaults && typeof defaults === 'object' ? defaults[k] : undefined;
+          if (typeof v === 'object' && v !== null && !Array.isArray(v) && typeof d === 'object' && d !== null && !Array.isArray(d)) {
+            const nested = stripDefaults(v, d);
+            if (nested && typeof nested === 'object' && !Array.isArray(nested) && Object.keys(nested).length === 0) continue;
+            if (deepEqual(nested, d)) continue;
+            out[k] = nested;
+            continue;
+          }
+          if (d !== undefined && deepEqual(v, d)) continue;
+          if (v !== undefined) out[k] = v;
+        }
+        return out;
+      };
       
       // Build getFillColor
       let getFillColor;
       if (debugState.fillFn === 'static') {
         getFillColor = hexToRgb(debugState.fillStaticColor);
       } else {
-        getFillColor = {
+        // Build full object, then strip against defaults so we only keep overrides.
+        const baseFill = DEFAULT_HEX_CONFIG?.hexLayer?.getFillColor || DEFAULT_VECTOR_CONFIG?.vectorLayer?.getFillColor || {};
+        const fillObj = {
           '@@function': debugState.fillFn,
           attr: debugState.fillAttr,
-          domain: [debugState.fillDomainMin, debugState.fillDomainMax],
+          ...(debugState.fillDomainUserSet ? { domain: [debugState.fillDomainMin, debugState.fillDomainMax] } : {}),
           colors: debugState.fillPalette,
           ...(debugState.fillReverse ? { reverse: true } : {}),
           steps: debugState.fillSteps,
-          nullColor: hexToRgb(debugState.fillNullColor)
+          ...(debugState.fillNullUserSet ? { nullColor: hexToRgb(debugState.fillNullColor) } : {}),
         };
+        getFillColor = stripDefaults(fillObj, baseFill);
       }
       
       // Build getLineColor
@@ -3489,12 +3612,14 @@ def deckgl_layers(
       if (debugState.lineFn === 'static') {
         getLineColor = hexToRgb(debugState.lineStaticColor);
       } else {
-        getLineColor = {
+        const baseLine = DEFAULT_HEX_CONFIG?.hexLayer?.getLineColor || DEFAULT_VECTOR_CONFIG?.vectorLayer?.getLineColor || {};
+        const lineObj = {
           '@@function': debugState.lineFn,
           attr: debugState.lineAttr,
-          domain: [debugState.lineDomainMin, debugState.lineDomainMax],
-          colors: debugState.linePalette
+          ...(debugState.lineDomainUserSet ? { domain: [debugState.lineDomainMin, debugState.lineDomainMax] } : {}),
+          colors: debugState.linePalette,
         };
+        getLineColor = stripDefaults(lineObj, baseLine);
       }
       
       const basemapVal = document.getElementById('dbg-basemap')?.value || INITIAL_BASEMAP || 'dark';
@@ -3508,48 +3633,55 @@ def deckgl_layers(
       const layerKind = firstLayer?.layerType || 'hex';
       const layerType = (layerKind === 'vector') ? 'vector' : 'hex';
 
-      const commonConfig = {
-        basemap: basemapVal,
-        initialViewState: {
+      // Keep snippet short: only include view/basemap if user explicitly changed them.
+      const commonConfig = {};
+      if (debugState.viewUserSet) {
+        commonConfig.initialViewState = {
           longitude: parseFloat(document.getElementById('dbg-lng').value) || 0,
           latitude: parseFloat(document.getElementById('dbg-lat').value) || 0,
           zoom: parseFloat(document.getElementById('dbg-zoom').value) || 8,
           pitch: parseInt(document.getElementById('dbg-pitch').value) || 0,
           bearing: parseInt(document.getElementById('dbg-bearing').value) || 0
-        }
-      };
+        };
+      }
+      if (debugState.basemapUserSet && basemapVal && basemapVal !== (INITIAL_BASEMAP || 'dark')) {
+        commonConfig.basemap = basemapVal;
+      }
 
       let layerStyleBlock = {};
       if (layerKind === 'vector') {
         const vecType = firstLayer?.vectorLayer?.['@@type'] || 'GeoJsonLayer';
-        layerStyleBlock = {
-          vectorLayer: {
-            '@@type': vecType,
-            filled: debugState.filled,
-            stroked: debugState.stroked,
-            opacity: debugState.opacity,
-            ...(debugState.filled ? { getFillColor } : {}),
-            ...(debugState.stroked ? { getLineColor, lineWidthMinPixels: debugState.lineWidth } : {}),
-            ...(debugState.tooltipColumns?.length ? { tooltipColumns: debugState.tooltipColumns } : {}),
-          }
-        };
-      } else {
-        layerStyleBlock = {
-        hexLayer: {
+        const baseVec = DEFAULT_VECTOR_CONFIG?.vectorLayer || {};
+        const vecCandidate = {
+          '@@type': vecType,
           filled: debugState.filled,
-            stroked: debugState.stroked,
+          stroked: debugState.stroked,
+          opacity: debugState.opacity,
+          ...(debugState.filled ? { getFillColor } : {}),
+          ...(debugState.stroked ? { getLineColor, lineWidthMinPixels: debugState.lineWidth } : {}),
+          ...(debugState.tooltipColumns?.length ? { tooltipColumns: debugState.tooltipColumns } : {}),
+        };
+        const vecOut = stripDefaults(vecCandidate, baseVec);
+        layerStyleBlock = Object.keys(vecOut).length ? { vectorLayer: vecOut } : {};
+      } else {
+        const baseHex = DEFAULT_HEX_CONFIG?.hexLayer || {};
+        const sqlVal = (HAS_SQL_LAYERS && document.getElementById('dbg-sql')?.value) ? document.getElementById('dbg-sql').value.trim() : '';
+        const hexCandidate = {
+          filled: debugState.filled,
+          stroked: debugState.stroked,
           extruded: debugState.extruded,
           opacity: debugState.opacity,
-            ...(debugState.filled ? { getFillColor } : {}),
-            ...(debugState.stroked ? { getLineColor, lineWidthMinPixels: debugState.lineWidth } : {}),
-            ...(debugState.extruded ? { 
-              elevationScale: debugState.elevationScale,
-              getElevation: `@@=properties.${debugState.heightAttr}`
-            } : {}),
-            ...(debugState.tooltipColumns?.length ? { tooltipColumns: debugState.tooltipColumns } : {}),
-            ...(HAS_SQL_LAYERS && document.getElementById('dbg-sql')?.value ? { sql: document.getElementById('dbg-sql').value.trim() } : {})
-          }
+          ...(debugState.filled ? { getFillColor } : {}),
+          ...(debugState.stroked ? { getLineColor, lineWidthMinPixels: debugState.lineWidth } : {}),
+          ...(debugState.extruded ? { 
+            elevationScale: debugState.elevationScale,
+            getElevation: `@@=properties.${debugState.heightAttr}`
+          } : {}),
+          ...(debugState.tooltipColumns?.length ? { tooltipColumns: debugState.tooltipColumns } : {}),
+          ...(sqlVal ? { sql: sqlVal } : {}),
         };
+        const hexOut = stripDefaults(hexCandidate, baseHex);
+        layerStyleBlock = Object.keys(hexOut).length ? { hexLayer: hexOut } : {};
       }
 
       // Build full layer config
@@ -3562,6 +3694,9 @@ def deckgl_layers(
           ...layerStyleBlock
         }
       };
+      if (fullConfig.config && typeof fullConfig.config === 'object' && Object.keys(fullConfig.config).length === 0) {
+        delete fullConfig.config;
+      }
       
       // Python-style output
       const toPython = (obj, indent = 0) => {
@@ -3588,6 +3723,8 @@ def deckgl_layers(
     
     // Apply debug changes to map view
     function applyViewChanges() {
+      // User-driven camera update (counts as "map moved" for snippet purposes)
+      debugState.viewUserSet = true;
       const lng = parseFloat(document.getElementById('dbg-lng').value);
       const lat = parseFloat(document.getElementById('dbg-lat').value);
       const zoom = parseFloat(document.getElementById('dbg-zoom').value);
@@ -3632,6 +3769,7 @@ def deckgl_layers(
       sel.value = initial;
 
       const applyBasemapChange = () => {
+        debugState.basemapUserSet = true;
         const basemapVal = sel.value || 'dark';
         const nextStyle = BASEMAP_STYLES[basemapVal] || basemapVal;
         const view = {
@@ -3850,6 +3988,7 @@ def deckgl_layers(
     // Fast path for dragging the domain slider: update paint/overlay immediately,
     // but skip legend/layer panel/config output until mouseup (change event).
     function fastApplyDomainDrag() {
+      debugState.fillDomainUserSet = true;
       syncDomainInputsFromSlider();
       const minV = parseFloat(document.getElementById('dbg-domain-min')?.value);
       const maxV = parseFloat(document.getElementById('dbg-domain-max')?.value);
@@ -3886,7 +4025,8 @@ def deckgl_layers(
     // Initialize debug panel
     map.on('load', () => {
       
-      syncDebugFromMap();
+      // Initial sync should NOT cause initialViewState to appear in snippet output.
+      syncDebugFromMap(false);
       initBasemapControl();
       
       // Initialize DuckDB for SQL filtering
@@ -3902,8 +4042,9 @@ def deckgl_layers(
       setTimeout(populateAttrDropdown, 500);
       setTimeout(populateAttrDropdown, 2000);
       
-      // Sync on map move
-      map.on('moveend', syncDebugFromMap);
+      // Sync on map move; only count as "user moved" when Mapbox provides an originalEvent.
+      // This prevents initialViewState from appearing on initial load/initial camera set.
+      map.on('moveend', (e) => syncDebugFromMap(!!(e && e.originalEvent)));
       
       // Bind view inputs
       let viewUpdateTimeout = null;
@@ -3964,8 +4105,8 @@ def deckgl_layers(
       document.getElementById('dbg-domain-range-min')?.addEventListener('change', scheduleLayerUpdate);
       document.getElementById('dbg-domain-range-max')?.addEventListener('change', scheduleLayerUpdate);
       // Inputs -> domain dual slider
-      document.getElementById('dbg-domain-min')?.addEventListener('input', () => { syncDomainSliderFromInputs(); });
-      document.getElementById('dbg-domain-max')?.addEventListener('input', () => { syncDomainSliderFromInputs(); });
+      document.getElementById('dbg-domain-min')?.addEventListener('input', () => { debugState.fillDomainUserSet = true; syncDomainSliderFromInputs(); });
+      document.getElementById('dbg-domain-max')?.addEventListener('input', () => { debugState.fillDomainUserSet = true; syncDomainSliderFromInputs(); });
       
       // Bind line color inputs
       ['dbg-line-attr', 'dbg-line-palette', 'dbg-line-domain-min', 'dbg-line-domain-max', 'dbg-line-static', 'dbg-line-width'].forEach(id => {
@@ -4040,6 +4181,8 @@ def deckgl_layers(
 """).render(
         mapbox_token=mapbox_token,
         layers_data=processed_layers,
+        default_hex_config=DEFAULT_DECK_HEX_CONFIG,
+        default_vector_config=DEFAULT_DECK_CONFIG,
         style_url=style_url,
         basemap=basemap_value,
         center_lng=center_lng,
