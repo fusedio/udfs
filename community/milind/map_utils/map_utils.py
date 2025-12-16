@@ -29,7 +29,8 @@ DEFAULT_DECK_HEX_CONFIG = {
       "@@function": "colorContinuous",
             "attr": "cnt",
       "steps": 20,
-      "colors": "ArmyRose"
+      "colors": "ArmyRose",
+      "nullColor": [184, 184, 184]
     },
         "getLineColor": [255, 255, 255],
         "lineWidthMinPixels": 1
@@ -386,11 +387,10 @@ def deckgl_layers(
             
             tooltip_columns = _extract_tooltip_columns((config, merged_config, hex_layer))
             
-            # Always enable DuckDB for hex layers with data (SQL filtering always available)
-            layer_sql = hex_layer.get("sql", "SELECT * FROM data")  # Default SQL
+            # Enable DuckDB SQL only when we can serialize Parquet (known-good input path).
+            layer_sql = hex_layer.get("sql", "SELECT * FROM data")  # Default SQL (only used if parquetData exists)
             parquet_base64 = None
             if not is_tile_layer and df_clean is not None and len(data_records) > 0:
-                has_sql_layers = True
                 # Serialize to Parquet for efficient DuckDB loading
                 import io
                 import base64
@@ -399,7 +399,13 @@ def deckgl_layers(
                     df_clean.to_parquet(buf, index=False)
                     parquet_base64 = base64.b64encode(buf.getvalue()).decode('ascii')
                 except Exception:
-                    parquet_base64 = None  # Fallback to JSON if Parquet fails
+                    parquet_base64 = None
+                
+                if parquet_base64:
+                    has_sql_layers = True
+                else:
+                    # No fallback: skip SQL for this layer if Parquet serialization fails.
+                    layer_sql = None
             
             processed_layers.append({
                 "id": f"layer-{i}",
@@ -414,7 +420,7 @@ def deckgl_layers(
                 "fillDomainFromUser": fill_domain_from_user,
                 "tooltipColumns": tooltip_columns,
                 "visible": True,
-                "sql": layer_sql if not is_tile_layer and len(data_records) > 0 else None,
+                "sql": layer_sql if (not is_tile_layer and len(data_records) > 0 and parquet_base64) else None,
                 "parquetData": parquet_base64,
             })
             
@@ -897,8 +903,7 @@ def deckgl_layers(
     .debug-color::-webkit-color-swatch-wrapper { padding: 2px; }
     .debug-color::-webkit-color-swatch { border-radius: 2px; border: none; }
     .debug-color-label { font-size: 10px; color: #666; font-family: 'SF Mono', Consolas, monospace; }
-    .debug-copy-btn { float: right; background: #333; border: none; color: #888; font-size: 9px; padding: 2px 6px; border-radius: 3px; cursor: pointer; }
-    .debug-copy-btn:hover { background: #444; color: #bbb; }
+    /* Copy button removed (clipboard API is unreliable across some browsers/contexts) */
     .debug-checklist { display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow: auto; padding: 2px 0; }
     .debug-check { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #bbb; }
     .debug-check input { width: 14px; height: 14px; accent-color: #666; }
@@ -1122,7 +1127,7 @@ def deckgl_layers(
       
       <!-- Config Output -->
       <div class="debug-section">
-        <div class="debug-section-title">Config Output <button class="debug-copy-btn" onclick="copyConfigOutput()">Copy</button></div>
+        <div class="debug-section-title">Config Output</div>
         <textarea id="dbg-output" class="debug-output" readonly></textarea>
       </div>
     </div>
@@ -1331,7 +1336,7 @@ def deckgl_layers(
           if (l.sql && l.data && l.data.length > 0) {
             const tableName = l.id.replace(/-/g, '_'); // layer-0 -> layer_0
             
-            // Prefer Parquet (faster, smaller), fallback to JSON
+            // Prefer Parquet (faster, smaller). If missing, skip DuckDB load for this layer.
             if (l.parquetData) {
               // Decode base64 Parquet and register
               const binaryString = atob(l.parquetData);
@@ -1341,12 +1346,7 @@ def deckgl_layers(
               }
               await db.registerFileBuffer(`${tableName}.parquet`, bytes);
               await duckConn.query(`CREATE OR REPLACE TABLE ${tableName} AS SELECT * FROM read_parquet('${tableName}.parquet')`);
-            } else {
-              // Fallback to JSON
-              const jsonData = JSON.stringify(l.data);
-              await db.registerFileText(`${tableName}.json`, jsonData);
-              await duckConn.query(`CREATE OR REPLACE TABLE ${tableName} AS SELECT * FROM read_json_auto('${tableName}.json')`);
-            }
+            } else { continue; }
             
             // Also create an alias 'data' for the first SQL layer
             if (!duckDbReady) {
@@ -1386,8 +1386,7 @@ def deckgl_layers(
                   const maxInput = document.getElementById('dbg-domain-max');
                   if (minInput) { minInput.value = minVal.toFixed(2); debugState.fillDomainMin = minVal; }
                   if (maxInput) { maxInput.value = maxVal.toFixed(2); debugState.fillDomainMax = maxVal; }
-                  // This is automatic initialization; don't treat as user-set.
-                  debugState.fillDomainUserSet = false;
+                  // This is automatic initialization; keep snippet domain omitted unless user changes it.
                   if (typeof syncDomainSliderFromInputs === 'function') syncDomainSliderFromInputs();
                   if (firstSqlLayer?.hexLayer?.getFillColor) {
                     firstSqlLayer.hexLayer.getFillColor.domain = [minVal, maxVal];
@@ -1396,7 +1395,6 @@ def deckgl_layers(
                   if (typeof scheduleLayerUpdate === 'function') scheduleLayerUpdate();
                 } else {
                   // Just ensure thumbs reflect the user's config domain
-                  debugState.fillDomainUserSet = true;
                   if (typeof syncDomainSliderFromInputs === 'function') syncDomainSliderFromInputs();
                 }
 
@@ -3029,11 +3027,8 @@ def deckgl_layers(
       fillSteps: 7,
       fillNullColor: '#b8b8b8',
       fillStaticColor: '#0090ff',
-      // Track whether user explicitly set values (so snippet stays short)
-      fillDomainUserSet: false,
-      fillNullUserSet: false,
-      basemapUserSet: false,
-      viewUserSet: false,
+      // Only treat view as "user-set" after real user interaction on the map (pointer/wheel/touch)
+      userMapInteracted: false,
       
       // Line color
       lineFn: 'static',
@@ -3043,7 +3038,6 @@ def deckgl_layers(
       lineDomainMax: 100,
       lineStaticColor: '#ffffff',
       lineWidth: 1,
-      lineDomainUserSet: false,
       
       // Elevation
       heightAttr: 'metric',
@@ -3236,22 +3230,12 @@ def deckgl_layers(
       });
     }
     
-    // Copy config to clipboard
-    function copyConfigOutput() {
-      const output = document.getElementById('dbg-output');
-      if (output) {
-        navigator.clipboard.writeText(output.value);
-        const btn = document.querySelector('.debug-copy-btn');
-        if (btn) { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 1500); }
-      }
-    }
-    
     // Debug panel - update view state from map
     let debugUpdatingMap = false;  // Flag to prevent feedback loop
     
     function syncDebugFromMap(markMoved = false) {
       if (debugUpdatingMap) return;  // Skip if we're the ones moving the map
-      if (markMoved) debugState.viewUserSet = true;
+      if (markMoved) debugState.userMapInteracted = true;
       const center = map.getCenter();
       document.getElementById('dbg-lng').value = center.lng.toFixed(4);
       document.getElementById('dbg-lat').value = center.lat.toFixed(4);
@@ -3395,14 +3379,8 @@ def deckgl_layers(
           setInput('dbg-domain-max', dmax);
           debugState.fillDomainMin = dmin;
           debugState.fillDomainMax = dmax;
-          debugState.fillDomainUserSet = true;
           // IMPORTANT: don't override slider min/max (extent). Only move thumbs to the config's domain.
           syncDomainSliderFromInputs();
-        } else {
-          debugState.fillDomainUserSet = false;
-        }
-        if (fillCfg.nullColor) {
-          debugState.fillNullUserSet = true;
         }
         // Domain will be calculated by DuckDB when attribute dropdown triggers change event
         if (fillCfg.steps) {
@@ -3438,7 +3416,6 @@ def deckgl_layers(
             setInput('dbg-line-domain-max', Math.max(...lineCfg.domain));
             debugState.lineDomainMin = Math.min(...lineCfg.domain);
             debugState.lineDomainMax = Math.max(...lineCfg.domain);
-            debugState.lineDomainUserSet = true;
           }
         }
         document.getElementById('dbg-line-palette')?.dispatchEvent(new Event('pal:sync'));
@@ -3593,6 +3570,13 @@ def deckgl_layers(
         }
         return out;
       };
+
+      // Pick the first editable layer (hex/vector) for snippet generation.
+      // IMPORTANT: define this BEFORE any code references `firstLayer` to avoid TDZ errors.
+      const firstLayer =
+        LAYERS_DATA.find(l => l.layerType === 'hex') ||
+        LAYERS_DATA.find(l => l.layerType === 'vector') ||
+        LAYERS_DATA[0];
       
       // Build getFillColor
       let getFillColor;
@@ -3601,14 +3585,28 @@ def deckgl_layers(
       } else {
         // Build full object, then strip against defaults so we only keep overrides.
         const baseFill = DEFAULT_HEX_CONFIG?.hexLayer?.getFillColor || DEFAULT_VECTOR_CONFIG?.vectorLayer?.getFillColor || {};
+        const rMin = document.getElementById('dbg-domain-range-min');
+        const rMax = document.getElementById('dbg-domain-range-max');
+        const extentMin = rMin ? Number(rMin.min) : NaN;
+        const extentMax = rMax ? Number(rMax.max) : NaN;
+        const selectedMin = Number(debugState.fillDomainMin);
+        const selectedMax = Number(debugState.fillDomainMax);
+        const hasSql = !!firstLayer?.sql;
+        const domainFromUser = !!firstLayer?.fillDomainFromUser;
+        const shouldIncludeDomain =
+          domainFromUser ||
+          (!hasSql) || // non-SQL layers need a domain to colorContinuous
+          (Number.isFinite(extentMin) && Number.isFinite(extentMax) &&
+            (Math.abs(selectedMin - extentMin) > 1e-9 || Math.abs(selectedMax - extentMax) > 1e-9));
+
         const fillObj = {
           '@@function': debugState.fillFn,
           attr: debugState.fillAttr,
-          ...(debugState.fillDomainUserSet ? { domain: [debugState.fillDomainMin, debugState.fillDomainMax] } : {}),
+          ...(shouldIncludeDomain ? { domain: [debugState.fillDomainMin, debugState.fillDomainMax] } : {}),
           colors: debugState.fillPalette,
           ...(debugState.fillReverse ? { reverse: true } : {}),
           steps: debugState.fillSteps,
-          ...(debugState.fillNullUserSet ? { nullColor: hexToRgb(debugState.fillNullColor) } : {}),
+          nullColor: hexToRgb(debugState.fillNullColor),
         };
         getFillColor = stripDefaults(fillObj, baseFill);
       }
@@ -3622,7 +3620,8 @@ def deckgl_layers(
         const lineObj = {
           '@@function': debugState.lineFn,
           attr: debugState.lineAttr,
-          ...(debugState.lineDomainUserSet ? { domain: [debugState.lineDomainMin, debugState.lineDomainMax] } : {}),
+          // Domain is required for colorContinuous; include it when non-static functions are used.
+          ...(debugState.lineFn === 'colorContinuous' ? { domain: [debugState.lineDomainMin, debugState.lineDomainMax] } : {}),
           colors: debugState.linePalette,
         };
         getLineColor = stripDefaults(lineObj, baseLine);
@@ -3630,18 +3629,13 @@ def deckgl_layers(
       
       const basemapVal = document.getElementById('dbg-basemap')?.value || INITIAL_BASEMAP || 'dark';
       
-      // Pick the first editable layer (hex/vector) for snippet generation
-      const firstLayer =
-        LAYERS_DATA.find(l => l.layerType === 'hex') ||
-        LAYERS_DATA.find(l => l.layerType === 'vector') ||
-        LAYERS_DATA[0];
       const layerName = firstLayer?.name || 'Layer';
       const layerKind = firstLayer?.layerType || 'hex';
       const layerType = (layerKind === 'vector') ? 'vector' : 'hex';
 
-      // Keep snippet short: only include view/basemap if user explicitly changed them.
+      // Keep snippet short: only include view after real user interaction.
       const commonConfig = {};
-      if (debugState.viewUserSet) {
+      if (debugState.userMapInteracted) {
         commonConfig.initialViewState = {
           longitude: parseFloat(document.getElementById('dbg-lng').value) || 0,
           latitude: parseFloat(document.getElementById('dbg-lat').value) || 0,
@@ -3650,7 +3644,7 @@ def deckgl_layers(
           bearing: parseInt(document.getElementById('dbg-bearing').value) || 0
         };
       }
-      if (debugState.basemapUserSet && basemapVal && basemapVal !== (INITIAL_BASEMAP || 'dark')) {
+      if (basemapVal && basemapVal !== (INITIAL_BASEMAP || 'dark')) {
         commonConfig.basemap = basemapVal;
       }
 
@@ -3730,7 +3724,7 @@ def deckgl_layers(
     // Apply debug changes to map view
     function applyViewChanges() {
       // User-driven camera update (counts as "map moved" for snippet purposes)
-      debugState.viewUserSet = true;
+      debugState.userMapInteracted = true;
       const lng = parseFloat(document.getElementById('dbg-lng').value);
       const lat = parseFloat(document.getElementById('dbg-lat').value);
       const zoom = parseFloat(document.getElementById('dbg-zoom').value);
@@ -3775,7 +3769,6 @@ def deckgl_layers(
       sel.value = initial;
 
       const applyBasemapChange = () => {
-        debugState.basemapUserSet = true;
         const basemapVal = sel.value || 'dark';
         const nextStyle = BASEMAP_STYLES[basemapVal] || basemapVal;
         const view = {
@@ -3991,41 +3984,16 @@ def deckgl_layers(
       });
     }
 
-    // Fast path for dragging the domain slider: update paint/overlay immediately,
-    // but skip legend/layer panel/config output until mouseup (change event).
-    function fastApplyDomainDrag() {
-      debugState.fillDomainUserSet = true;
+    // Domain slider behavior (simplified):
+    // - while dragging: only update the input boxes (no map repaint)
+    // - on mouseup/touchend ("change"): apply the map update once
+    function onDomainSliderInput() {
       syncDomainInputsFromSlider();
-      const minV = parseFloat(document.getElementById('dbg-domain-min')?.value);
-      const maxV = parseFloat(document.getElementById('dbg-domain-max')?.value);
-      if (!Number.isFinite(minV) || !Number.isFinite(maxV)) return;
+    }
 
-      debugState.fillDomainMin = minV;
-      debugState.fillDomainMax = maxV;
-
-      // Update layer configs in-place so updateMapboxLayersFast/rebuildDeckOverlay pick them up
-      LAYERS_DATA.forEach(l => {
-        const cfg = l.hexLayer || l.vectorLayer;
-        if (cfg?.getFillColor && typeof cfg.getFillColor === 'object' && !Array.isArray(cfg.getFillColor)) {
-          if (cfg.getFillColor['@@function'] === 'colorContinuous') {
-            cfg.getFillColor.domain = [minV, maxV];
-          }
-        }
-        if (l.fillColorConfig && typeof l.fillColorConfig === 'object' && !Array.isArray(l.fillColorConfig)) {
-          if (l.fillColorConfig['@@function'] === 'colorContinuous') {
-            l.fillColorConfig.domain = [minV, maxV];
-          }
-        }
-      });
-
-      // Re-render quickly
-      if (typeof rebuildDeckOverlay === 'function' && HAS_TILE_LAYERS) rebuildDeckOverlay();
-      if (typeof updateMapboxLayersFast === 'function') {
-        const ok = updateMapboxLayersFast();
-        if (!ok && typeof addAllLayers === 'function') addAllLayers();
-      } else if (typeof addAllLayers === 'function') {
-        addAllLayers();
-      }
+    function onDomainSliderChange() {
+      syncDomainInputsFromSlider();
+      scheduleLayerUpdate();
     }
     
     // Initialize debug panel
@@ -4052,16 +4020,15 @@ def deckgl_layers(
       // Only count as "user moved" after a real user interaction on the map canvas
       // (pointer/wheel). This avoids programmatic camera changes (auto-fit, jumpTo, etc.)
       // from polluting the snippet with initialViewState.
-      let userMapInteracted = false;
       try {
         const canvas = map.getCanvas();
         if (canvas) {
-          canvas.addEventListener('pointerdown', () => { userMapInteracted = true; }, { passive: true });
-          canvas.addEventListener('wheel', () => { userMapInteracted = true; }, { passive: true });
-          canvas.addEventListener('touchstart', () => { userMapInteracted = true; }, { passive: true });
+          canvas.addEventListener('pointerdown', () => { debugState.userMapInteracted = true; }, { passive: true });
+          canvas.addEventListener('wheel', () => { debugState.userMapInteracted = true; }, { passive: true });
+          canvas.addEventListener('touchstart', () => { debugState.userMapInteracted = true; }, { passive: true });
         }
       } catch (e) {}
-      map.on('moveend', () => syncDebugFromMap(userMapInteracted));
+      map.on('moveend', () => syncDebugFromMap(!!debugState.userMapInteracted));
       
       // Bind view inputs
       let viewUpdateTimeout = null;
@@ -4115,15 +4082,15 @@ def deckgl_layers(
           }
         } catch (e) { console.warn('Domain calc error:', e); }
       });
-      // Domain dual slider -> inputs
-      document.getElementById('dbg-domain-range-min')?.addEventListener('input', fastApplyDomainDrag);
-      document.getElementById('dbg-domain-range-max')?.addEventListener('input', fastApplyDomainDrag);
-      // On mouseup, do the full update once (legend/gutter/config output)
-      document.getElementById('dbg-domain-range-min')?.addEventListener('change', scheduleLayerUpdate);
-      document.getElementById('dbg-domain-range-max')?.addEventListener('change', scheduleLayerUpdate);
+      // Domain dual slider -> inputs (no repaint while dragging)
+      document.getElementById('dbg-domain-range-min')?.addEventListener('input', onDomainSliderInput);
+      document.getElementById('dbg-domain-range-max')?.addEventListener('input', onDomainSliderInput);
+      // On mouseup/touchend, apply once
+      document.getElementById('dbg-domain-range-min')?.addEventListener('change', onDomainSliderChange);
+      document.getElementById('dbg-domain-range-max')?.addEventListener('change', onDomainSliderChange);
       // Inputs -> domain dual slider
-      document.getElementById('dbg-domain-min')?.addEventListener('input', () => { debugState.fillDomainUserSet = true; syncDomainSliderFromInputs(); });
-      document.getElementById('dbg-domain-max')?.addEventListener('input', () => { debugState.fillDomainUserSet = true; syncDomainSliderFromInputs(); });
+      document.getElementById('dbg-domain-min')?.addEventListener('input', () => { syncDomainSliderFromInputs(); });
+      document.getElementById('dbg-domain-max')?.addEventListener('input', () => { syncDomainSliderFromInputs(); });
       
       // Bind line color inputs
       ['dbg-line-attr', 'dbg-line-palette', 'dbg-line-domain-min', 'dbg-line-domain-max', 'dbg-line-static', 'dbg-line-width'].forEach(id => {
