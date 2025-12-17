@@ -313,6 +313,10 @@ def deckgl_layers(
         tile_url = layer_def.get("tile_url")
         config = layer_def.get("config", {})
         name = layer_def.get("name", f"Layer {i + 1}")
+        # Allow layers to start hidden on initial load (frontend `layerVisibility` is seeded from this).
+        # Accept a few common aliases for convenience.
+        visible = layer_def.get("visible", layer_def.get("isVisible", layer_def.get("show", True)))
+        visible = bool(visible)
 
         # Track whether the user explicitly provided a fill domain in the input config.
         # (Merged defaults may include a domain, but we only want to treat it as "user set" when provided.)
@@ -427,7 +431,7 @@ def deckgl_layers(
                 "hexLayer": hex_layer,
                 "fillDomainFromUser": fill_domain_from_user,
                 "tooltipColumns": tooltip_columns,
-                "visible": True,
+                "visible": visible,
                 "sql": layer_sql if (not is_tile_layer and len(data_records) > 0 and parquet_base64) else None,
                 "parquetData": parquet_base64,
             })
@@ -520,7 +524,7 @@ def deckgl_layers(
                     "heightProperty": height_property,
                     "heightMultiplier": height_multiplier,
                     "tooltipColumns": tooltip_cols,
-                    "visible": True,
+                    "visible": visible,
                 })
                 continue  # Skip to next layer
             
@@ -611,7 +615,7 @@ def deckgl_layers(
                 "isStroked": vector_layer.get("stroked", True),
                 "opacity": vector_layer.get("opacity", 0.8),
                 "tooltipColumns": tooltip_columns,
-                "visible": True,
+                "visible": visible,
             })
         elif layer_type == "raster":
             # Raster tile layer (Mapbox raster source/layer), rendered alongside other layers.
@@ -637,7 +641,7 @@ def deckgl_layers(
                 "config": merged_config,
                 "rasterLayer": raster_layer,
                 "opacity": opacity,
-                "visible": True,
+                "visible": visible,
             })
     
     # Auto-center from all layers' data
@@ -1653,6 +1657,15 @@ def deckgl_layers(
       return { attr: cfg.attr, domain, colors: cfg.colors || 'ArmyRose', nullColor: cfg.nullColor || [184, 184, 184] };
     }
 
+    // Small stable hash for Deck layer ids (keeps ids short but change-sensitive).
+    function hashString(str) {
+      const s = String(str ?? '');
+      let h = 5381;
+      for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
+      // Force unsigned 32-bit and base36 for compactness
+      return (h >>> 0).toString(36);
+    }
+
     // Convert tile coordinates to geographic bounds
     function tileToBounds(x, y, z) {
       const n = Math.PI - (2 * Math.PI * y) / Math.pow(2, z);
@@ -1854,9 +1867,25 @@ def deckgl_layers(
       // This prevents visible tile boundaries due to different domains per tile
       const dynamicDomain = rawHexLayer.getFillColor?._dynamicDomain;
       const domainHash = dynamicDomain ? `${dynamicDomain[0].toFixed(2)}-${dynamicDomain[1].toFixed(2)}` : 'default';
+      // Also include a style hash so palette/reverse/steps changes immediately refresh tile rendering
+      const fc = rawHexLayer.getFillColor || {};
+      const lc = rawHexLayer.getLineColor || {};
+      const styleKey = [
+        fc['@@function'] || '',
+        fc.attr || '',
+        fc.colors || '',
+        fc.reverse ? '1' : '0',
+        fc.steps ?? '',
+        lc['@@function'] || '',
+        lc.attr || '',
+        lc.colors || '',
+        lc.reverse ? '1' : '0',
+        lc.steps ?? ''
+      ].join('|');
+      const styleHash = hashString(styleKey);
 
       const layerProps = {
-        id: `${layerDef.id}-tiles-${domainHash}`,
+        id: `${layerDef.id}-tiles-${domainHash}-${styleHash}`,
         data: tileUrl,
         tileSize: tileCfg.tileSize ?? 256,
         minZoom: tileCfg.minZoom ?? 0,
@@ -1991,6 +2020,9 @@ def deckgl_layers(
       if (deckOverlay) {
         try {
           deckOverlay.setProps({ layers: deckLayers });
+          // Ensure Mapbox renders a new frame so Deck changes are visible immediately.
+          // Without this, updates can appear to "stick" until some other map event (e.g. layer toggle) triggers a repaint.
+          try { map.triggerRepaint(); } catch (e) {}
         } catch (e) {
           // Fallback: recreate if anything goes wrong
           try { map.removeControl(deckOverlay); deckOverlay.finalize?.(); } catch (e2) {}
@@ -2003,6 +2035,7 @@ def deckgl_layers(
           layers: deckLayers
         });
         map.addControl(deckOverlay);
+        try { map.triggerRepaint(); } catch (e) {}
       }
 
         if (bottomMostLayerId) {
