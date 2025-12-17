@@ -37,6 +37,14 @@ DEFAULT_DECK_HEX_CONFIG = {
   } 
 }
 
+# Minimal defaults for raster tile layers when used inside deckgl_layers().
+# (Separate from deckgl_raster(), which renders a standalone raster map.)
+DEFAULT_DECK_RASTER_CONFIG = {
+    "rasterLayer": {
+        "opacity": 1.0,
+    }
+}
+
 DEFAULT_DECK_CONFIG = {
     "initialViewState": {
         "zoom": 12
@@ -603,6 +611,32 @@ def deckgl_layers(
                 "isStroked": vector_layer.get("stroked", True),
                 "opacity": vector_layer.get("opacity", 0.8),
                 "tooltipColumns": tooltip_columns,
+                "visible": True,
+            })
+        elif layer_type == "raster":
+            # Raster tile layer (Mapbox raster source/layer), rendered alongside other layers.
+            # Only supports XYZ tiles via tile_url today.
+            if not tile_url:
+                raise ValueError('Raster layers require "tile_url" (XYZ template with {z}/{x}/{y}).')
+
+            merged_config = _load_deckgl_config(config, DEFAULT_DECK_RASTER_CONFIG)
+            raster_layer = (merged_config or {}).get("rasterLayer", {}) or {}
+            # Only keep supported props
+            try:
+                opacity = float(raster_layer.get("opacity", 1.0))
+            except Exception:
+                opacity = 1.0
+            opacity = max(0.0, min(1.0, opacity))
+            raster_layer = {"opacity": opacity}
+
+            processed_layers.append({
+                "id": f"layer-{i}",
+                "name": name,
+                "layerType": "raster",
+                "tileUrl": tile_url,
+                "config": merged_config,
+                "rasterLayer": raster_layer,
+                "opacity": opacity,
                 "visible": True,
             })
     
@@ -2029,6 +2063,15 @@ def deckgl_layers(
         // If source missing, we can't update safely.
         if (!map.getSource(l.id)) { ok = false; return; }
 
+        if (l.layerType === 'raster') {
+          const opacity = (typeof l.rasterLayer?.opacity === 'number' && isFinite(l.rasterLayer.opacity))
+            ? Math.max(0, Math.min(1, l.rasterLayer.opacity))
+            : (typeof l.opacity === 'number' && isFinite(l.opacity) ? Math.max(0, Math.min(1, l.opacity)) : 1);
+          safePaint(`${l.id}-raster`, 'raster-opacity', opacity);
+          safeLayout(`${l.id}-raster`, 'visibility', vis);
+          return;
+        }
+
         if (l.layerType === 'hex') {
           const cfg = l.hexLayer || {};
           const fillColor = Array.isArray(cfg.getFillColor) ? toRgba(cfg.getFillColor, 0.8) : buildColorExpr(cfg.getFillColor, l.data) || 'rgba(0,144,255,0.7)';
@@ -2118,7 +2161,7 @@ def deckgl_layers(
     function addAllLayers() {
       // Remove existing layers
       LAYERS_DATA.forEach(l => {
-        [`${l.id}-fill`, `${l.id}-extrusion`, `${l.id}-outline`, `${l.id}-circle`, `${l.id}-line`].forEach(id => { 
+        [`${l.id}-fill`, `${l.id}-extrusion`, `${l.id}-outline`, `${l.id}-circle`, `${l.id}-line`, `${l.id}-raster`].forEach(id => { 
           try { if(map.getLayer(id)) map.removeLayer(id); } catch(e){} 
         });
         try { if(map.getSource(l.id)) map.removeSource(l.id); } catch(e){}
@@ -2130,6 +2173,31 @@ def deckgl_layers(
         if (l.layerType === 'hex' && l.isTileLayer) return;  // Skip hex tile layers - handled by Deck.gl
         
         const visible = layerVisibility[l.id];
+
+        if (l.layerType === 'raster') {
+          // Raster tile layer (opacity only)
+          const tileUrl = l.tileUrl;
+          if (!tileUrl) return;
+          map.addSource(l.id, {
+            type: 'raster',
+            tiles: [tileUrl],
+            tileSize: 256,
+          });
+          const opacity = (typeof l.rasterLayer?.opacity === 'number' && isFinite(l.rasterLayer.opacity))
+            ? Math.max(0, Math.min(1, l.rasterLayer.opacity))
+            : (typeof l.opacity === 'number' && isFinite(l.opacity) ? Math.max(0, Math.min(1, l.opacity)) : 1);
+          map.addLayer({
+            id: `${l.id}-raster`,
+            type: 'raster',
+            source: l.id,
+            paint: {
+              'raster-opacity': opacity,
+              'raster-opacity-transition': { duration: 0, delay: 0 },
+            },
+            layout: { 'visibility': visible ? 'visible' : 'none' }
+          });
+          return;
+        }
         
         // MVT layers create their own source, skip GeoJSON check
         if (l.layerType === 'mvt') {
@@ -2348,7 +2416,7 @@ def deckgl_layers(
         {% endif %}
       } else {
         // Handle MVT and regular layers
-        [`${layerId}-fill`, `${layerId}-extrusion`, `${layerId}-outline`, `${layerId}-circle`, `${layerId}-line`].forEach(id => {
+        [`${layerId}-fill`, `${layerId}-extrusion`, `${layerId}-outline`, `${layerId}-circle`, `${layerId}-line`, `${layerId}-raster`].forEach(id => {
           try { 
             if(map.getLayer(id)) {
               map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
@@ -3060,9 +3128,9 @@ def deckgl_layers(
     let activeDebugLayerId = null;
 
     function getEditableLayers() {
-      // Hex layers include both static and tiled (Deck overlay) hex layers
+      // Editable layers in the debug UI (per-layer opacity + style). Raster is opacity-only.
       return (Array.isArray(LAYERS_DATA) ? LAYERS_DATA : []).filter(l =>
-        l && (l.layerType === 'hex' || l.layerType === 'vector')
+        l && (l.layerType === 'hex' || l.layerType === 'vector' || l.layerType === 'raster')
       );
     }
 
@@ -3078,7 +3146,10 @@ def deckgl_layers(
       if (!sel) return;
       const layers = getEditableLayers();
       sel.innerHTML = layers.map(l => {
-        const kind = l.layerType === 'vector' ? 'vector' : (l.isTileLayer ? 'hex (tile)' : 'hex');
+        const kind =
+          (l.layerType === 'raster') ? 'raster (tile)' :
+          (l.layerType === 'vector') ? 'vector' :
+          (l.isTileLayer ? 'hex (tile)' : 'hex');
         const label = `${l.name || l.id} — ${kind}`;
         return `<option value="${l.id}">${label}</option>`;
       }).join('');
@@ -3124,13 +3195,17 @@ def deckgl_layers(
     
     // Toggle section visibility based on checkboxes
     function updateSectionVisibility() {
+      const active = (typeof getActiveLayerDef === 'function') ? getActiveLayerDef() : null;
+      const isRaster = !!active && active.layerType === 'raster';
       const stroked = document.getElementById('dbg-stroked')?.checked;
       const extruded = document.getElementById('dbg-extruded')?.checked;
       const filled = document.getElementById('dbg-filled')?.checked;
       
-      document.getElementById('line-color-section').style.display = stroked ? 'block' : 'none';
-      document.getElementById('elevation-section').style.display = extruded ? 'block' : 'none';
-      document.getElementById('fill-color-section').style.display = filled ? 'block' : 'none';
+      document.getElementById('line-color-section').style.display = (!isRaster && stroked) ? 'block' : 'none';
+      document.getElementById('elevation-section').style.display = (!isRaster && extruded) ? 'block' : 'none';
+      document.getElementById('fill-color-section').style.display = (!isRaster && filled) ? 'block' : 'none';
+      const tooltipSec = document.getElementById('tooltip-section');
+      if (tooltipSec) tooltipSec.style.display = isRaster ? 'none' : 'block';
     }
     
     // Toggle fill/line function options
@@ -3296,6 +3371,38 @@ def deckgl_layers(
     function populateAttrDropdown() {
       const layerDef = getActiveLayerDef();
       if (!layerDef) return;
+
+      // Raster layers are opacity-only in the debug UI.
+      if (layerDef.layerType === 'raster') {
+        const setInput = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+        const setCheckbox = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
+
+        // Opacity from layer config
+        const cfg = layerDef.rasterLayer || (layerDef.config?.rasterLayer) || {};
+        const op = (typeof cfg.opacity === 'number' && isFinite(cfg.opacity)) ? cfg.opacity : (typeof layerDef.opacity === 'number' ? layerDef.opacity : 1);
+        const opacity = Math.max(0, Math.min(1, op));
+        setInput('dbg-opacity', opacity);
+        setInput('dbg-opacity-slider', opacity);
+        debugState.opacity = opacity;
+
+        // Disable geometry controls visually by unchecking
+        setCheckbox('dbg-filled', false);
+        setCheckbox('dbg-stroked', false);
+        setCheckbox('dbg-extruded', false);
+        debugState.filled = false;
+        debugState.stroked = false;
+        debugState.extruded = false;
+
+        // Clear tooltip UI
+        const tooltipContainer = document.getElementById('dbg-tooltip-cols');
+        if (tooltipContainer) tooltipContainer.innerHTML = '';
+        debugState.tooltipColumns = [];
+        debugState.tooltipAllColumns = [];
+
+        updateSectionVisibility();
+        if (typeof updateConfigOutput === 'function') updateConfigOutput();
+        return;
+      }
 
       const attrs = new Set();
       const tooltipKeys = new Set();
@@ -3749,6 +3856,41 @@ def deckgl_layers(
         debugState.tooltipColumns.length > 0 &&
         !tooltipAllSelected;
 
+      // Raster layers: opacity-only snippet
+      if (layerKind === 'raster') {
+        const baseRaster = { rasterLayer: { opacity: 1.0 } };
+        const rasterCandidate = { rasterLayer: { opacity: debugState.opacity } };
+        const rasterOut = stripDefaults(rasterCandidate, baseRaster);
+        const fullConfig = {
+          name: layerName,
+          type: 'raster',
+          tile_url: firstLayer?.tileUrl || '',
+          config: {
+            ...commonConfig,
+            ...(Object.keys(rasterOut).length ? rasterOut : {}),
+          }
+        };
+        if (fullConfig.config && typeof fullConfig.config === 'object' && Object.keys(fullConfig.config).length === 0) {
+          delete fullConfig.config;
+        }
+        const toPython = (obj, indent = 0) => {
+          const pad = '  '.repeat(indent);
+          if (obj === null) return 'None';
+          if (obj === true) return 'True';
+          if (obj === false) return 'False';
+          if (typeof obj === 'string') return `"${obj}"`;
+          if (typeof obj === 'number') return Number.isInteger(obj) ? String(obj) : obj.toFixed(2);
+          if (Array.isArray(obj)) return `[${obj.map(v => toPython(v, 0)).join(', ')}]`;
+          if (typeof obj === 'object') {
+            const entries = Object.entries(obj).map(([k, v]) => `${pad}  "${k}": ${toPython(v, indent + 1)}`);
+            return `{\n${entries.join(',\n')}\n${pad}}`;
+          }
+          return String(obj);
+        };
+        output.value = `config = [${toPython(fullConfig, 0)}]`;
+        return;
+      }
+
       if (layerKind === 'vector') {
         const vecType = firstLayer?.vectorLayer?.['@@type'] || 'GeoJsonLayer';
         const baseVec = DEFAULT_VECTOR_CONFIG?.vectorLayer || {};
@@ -3896,6 +4038,9 @@ def deckgl_layers(
     // Apply layer style changes live
     let lastDebugStructure = null;
     function applyLayerChanges() {
+      const active = (typeof getActiveLayerDef === 'function') ? getActiveLayerDef() : null;
+      if (!active) return;
+
       // Read all current values from form
       const getVal = (id, def) => document.getElementById(id)?.value ?? def;
       const getChecked = (id) => document.getElementById(id)?.checked ?? false;
@@ -3904,6 +4049,28 @@ def deckgl_layers(
         return Number.isFinite(v) ? v : def;
       };
       
+      // Raster layers are opacity-only
+      if (active.layerType === 'raster') {
+        debugState.opacity = getNum('dbg-opacity', 1);
+        active.opacity = debugState.opacity;
+        active.rasterLayer = { ...(active.rasterLayer || {}), opacity: debugState.opacity };
+
+        // Update config output
+        updateConfigOutput();
+
+        // Update Mapbox raster paint in-place if layer exists
+        try {
+          if (map.getLayer(`${active.id}-raster`)) {
+            map.setPaintProperty(`${active.id}-raster`, 'raster-opacity', debugState.opacity);
+            map.setLayoutProperty(`${active.id}-raster`, 'visibility', layerVisibility[active.id] ? 'visible' : 'none');
+          } else {
+            if (typeof addAllLayers === 'function') addAllLayers();
+          }
+        } catch (e) {}
+        if (typeof updateLayerPanel === 'function') updateLayerPanel();
+        return;
+      }
+
       // Layer toggles (pickable is always-on)
       debugState.pickable = true;
       debugState.filled = getChecked('dbg-filled');
@@ -3989,8 +4156,7 @@ def deckgl_layers(
       };
       
       // Apply debug changes ONLY to the currently selected layer.
-      const l = getActiveLayerDef();
-      if (!l) return;
+      const l = active;
 
       // Tooltip reads `layerDef.tooltipColumns` (top-level), so keep it in sync for the active layer.
       l.tooltipColumns = debugState.tooltipColumns;
