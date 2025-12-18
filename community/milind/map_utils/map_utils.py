@@ -217,6 +217,7 @@ def deckgl_layers(
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     basemap: str = "dark",
     theme: str = "dark",
+    screenshot_button: bool = True,
     highlight_on_click: bool = True,
     on_click: dict = None,
     debug: bool = False,
@@ -237,6 +238,7 @@ def deckgl_layers(
         mapbox_token: Mapbox access token.
         basemap: 'dark', 'satellite', or custom Mapbox style URL.
         theme: UI theme for map overlays + debug panel. One of: 'dark' (current default), 'light'.
+        screenshot_button: If True, show a small screenshot icon below the layers menu that downloads a PNG of the map canvas.
         on_click: Dict to configure click broadcasting. Keys:
             - "properties": List of property names to include (default: all)
             - "channel": BroadcastChannel name (default: "fused-bus")
@@ -668,6 +670,8 @@ def deckgl_layers(
     if theme not in ("dark", "light"):
         raise ValueError("deckgl_layers(theme=...) must be one of: 'dark', 'light'")
 
+    screenshot_button = bool(screenshot_button)
+
     html = Template(r"""
 <!DOCTYPE html>
 <html data-theme="{{ theme }}">
@@ -779,6 +783,34 @@ def deckgl_layers(
       box-shadow: 0 4px 12px var(--ui-shadow);
       overflow: hidden; /* clip gutter to rounded corners */
     }
+    /* Screenshot button - standalone Mapbox-style control */
+    #screenshot-btn {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      appearance: none;
+      border: 1px solid var(--ui-border-2);
+      background: var(--ui-float-bg);
+      color: var(--ui-muted);
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      z-index: 100;
+      box-shadow: 0 4px 12px var(--ui-shadow);
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    #screenshot-btn:hover { 
+      color: var(--ui-text); 
+      border-color: var(--ui-border-2); 
+      background: var(--ui-float-bg-2);
+    }
+    #screenshot-btn:active { transform: translateY(0.5px); }
+    #screenshot-btn svg { width: 16px; height: 16px; display: block; }
     .layer-item {
       display: flex;
       align-items: center;
@@ -1054,6 +1086,16 @@ def deckgl_layers(
   <div id="layer-panel">
     <div id="layer-list"></div>
   </div>
+  
+  {% if screenshot_button %}
+  <!-- Screenshot Button (Mapbox-style control) -->
+  <button id="screenshot-btn" title="Download screenshot" onclick="downloadScreenshot()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 8h3l1.2-2h7.6L17 8h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z"/>
+      <circle cx="12" cy="14" r="3.2"/>
+    </svg>
+  </button>
+  {% endif %}
   
   <!-- Legend -->
   <div id="color-legend" class="color-legend" style="display:none;"></div>
@@ -1646,8 +1688,29 @@ def deckgl_layers(
       bearing: {{ bearing }}, 
       projection: 'mercator',
       // Keep pitch behavior enabled; we override the trackpad shortcut to Cmd+drag below.
-      pitchWithRotate: true
+      pitchWithRotate: true{% if screenshot_button %},
+      // Needed for reliable canvas capture; may increase GPU memory usage.
+      preserveDrawingBuffer: true{% endif %}
     });
+
+    {% if screenshot_button %}
+    function downloadScreenshot() {
+      try {
+        const canvas = map.getCanvas();
+        const dataUrl = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        const ts = new Date().toISOString().replace(/[:.]/g, '-');
+        a.download = `map-screenshot-${ts}.png`;
+        a.href = dataUrl;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (e) {
+        console.error('Screenshot failed:', e);
+        alert('Screenshot blocked (likely due to CORS/tainted canvas from raster tiles). Try using only CORS-enabled layers/tiles.');
+      }
+    }
+    {% endif %}
 
     // Mapbox scale (km) in bottom-left
     try { map.addControl(new mapboxgl.ScaleControl({ maxWidth: 110, unit: 'metric' }), 'bottom-left'); } catch (e) {}
@@ -2635,6 +2698,16 @@ def deckgl_layers(
           </div>
         `;
       }).join('');
+      
+      // Position screenshot button below layer panel
+      {% if screenshot_button %}
+      const screenshotBtn = document.getElementById('screenshot-btn');
+      const layerPanel = document.getElementById('layer-panel');
+      if (screenshotBtn && layerPanel) {
+        const rect = layerPanel.getBoundingClientRect();
+        screenshotBtn.style.top = `${rect.bottom + 8}px`;
+      }
+      {% endif %}
     }
 
     // ========== Legend ==========
@@ -4567,6 +4640,7 @@ def deckgl_layers(
         style_url=style_url,
         basemap=basemap_value,
         theme=theme,
+        screenshot_button=screenshot_button,
         center_lng=center_lng,
         center_lat=center_lat,
         zoom=zoom,
