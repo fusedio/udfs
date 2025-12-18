@@ -56,13 +56,12 @@ DEFAULT_DECK_CONFIG = {
         "lineWidthMinPixels": 0,  # Default: no lines unless getLineColor is specified
         "getFillColor": {
             "@@function": "colorContinuous",
-            "attr": "house_age",
+            # No default "attr" - will be auto-discovered from data
             "colors": "ArmyRose",
-            "domain": [0, 50],
             "steps": 7,
             "nullColor": [200, 200, 200, 180]
-        },
-        "tooltipAttrs": ["house_age", "mrt_distance", "price"]
+        }
+        # No default tooltipAttrs - will show all available columns
   } 
 }
 
@@ -135,14 +134,13 @@ VALID_HEX_LAYER_PROPS = {
 def udf(
     config: typing.Union[dict, str, None] = None
 ):
-    """Example UDF using deckgl_map with DEFAULT_DECK_CONFIG."""
+    """Example UDF using deckgl_map with sample NYC data."""
     import geopandas as gpd
     import pandas as pd
     from shapely.geometry import Point
     import random
     
     # Create sample point data around New York City
-    # Fields match DEFAULT_DECK_CONFIG expectations
     data = []
     base_lat, base_lng = 40.7128, -74.0060
     
@@ -151,7 +149,7 @@ def udf(
         lng = base_lng + (i // 10 - 2) * 0.01
         data.append({
             'geometry': Point(lng, lat),
-            'house_age': (i % 50),  # 0-49 years, matches domain [0, 50]
+            'house_age': (i % 50),  # 0-49 years
             'mrt_distance': random.randint(100, 5000),  # meters
             'price': random.randint(200000, 800000),  # dollars
             'index': i
@@ -159,13 +157,21 @@ def udf(
     
     gdf = gpd.GeoDataFrame(data, crs='EPSG:4326')
     
-    # Use DEFAULT_DECK_CONFIG if none provided (for points/vectors)
+    # Explicit config for the sample data
     if config is None:
-        config = DEFAULT_DECK_CONFIG
+        config = {
+            "vectorLayer": {
+                "getFillColor": {
+                    "@@function": "colorContinuous",
+                    "attr": "house_age",
+                    "colors": "ArmyRose",
+                    "domain": [0, 50],
+                    "steps": 7,
+                },
+                "tooltipAttrs": ["house_age", "mrt_distance", "price"]
+            }
+        }
     
-    # Ensure the map centers on New York City
-    if config is None:
-        config = {}
     # Set initial view state to NYC coordinates if not already specified
     view_state = config.get("initialViewState", {})
     view_state.setdefault("longitude", -74.0060)
@@ -503,8 +509,14 @@ def deckgl_layers(
                 minzoom = vector_layer.get("minzoom", 0)
                 maxzoom = vector_layer.get("maxzoom", 22)
                 
-                # Tooltip columns
-                tooltip_cols = layer_def.get("tooltip_columns", [])
+                # Tooltip columns - check multiple sources (top-level and inside vectorLayer config)
+                tooltip_cols = (
+                    layer_def.get("tooltip_columns") or
+                    layer_def.get("tooltipColumns") or
+                    vector_layer.get("tooltipColumns") or
+                    vector_layer.get("tooltipAttrs") or
+                    []
+                )
                 
                 processed_layers.append({
                     "id": f"layer-{i}",
@@ -1434,7 +1446,9 @@ def deckgl_layers(
       const steps = cfg.steps || 7, name = cfg.colors || 'ArmyRose';
       let cols = getPaletteColors(name, steps);
       if (!cols || !cols.length) {
-        return ['interpolate', ['linear'], ['get', cfg.attr], dom[0], 'rgb(237,248,251)', dom[1], 'rgb(0,109,44)'];
+        // Cast to number to avoid Mapbox expression errors when properties are strings.
+        const input = ['to-number', ['get', cfg.attr], dom[0]];
+        return ['interpolate', ['linear'], input, dom[0], 'rgb(237,248,251)', dom[1], 'rgb(0,109,44)'];
       }
       // Reverse logic:
       // - domain reversed already flips direction
@@ -1442,7 +1456,10 @@ def deckgl_layers(
       const wantsReverse = !!cfg.reverse;
       const shouldReverse = domainReversed ? !wantsReverse : wantsReverse;
       if (shouldReverse) cols.reverse();
-      const expr = ['interpolate', ['linear'], ['get', cfg.attr]];
+      // Cast to number to avoid Mapbox expression errors when properties are strings.
+      // Default to dom[0] if missing/unparseable so layer still renders.
+      const input = ['to-number', ['get', cfg.attr], dom[0]];
+      const expr = ['interpolate', ['linear'], input];
       cols.forEach((c, i) => { expr.push(dom[0] + (dom[1] - dom[0]) * i / (cols.length - 1)); expr.push(c); });
       return expr;
     }
@@ -3649,7 +3666,8 @@ def deckgl_layers(
         });
       }
 
-      // 2) Always include attrs referenced by current config, so the dropdown doesn't "lose" them
+      // 2) Include attrs referenced by current config, but for vector layers only if they exist in actual data
+      //    (prevents DEFAULT_DECK_CONFIG fallback attrs like "house_age" from appearing)
       const cfg = layerDef.hexLayer || layerDef.vectorLayer || {};
       const fillCfg = cfg.getFillColor || layerDef.fillColorConfig || {};
       const lineCfg = cfg.getLineColor || layerDef.lineColorConfig || {};
@@ -3658,7 +3676,14 @@ def deckgl_layers(
         (lineCfg && typeof lineCfg === 'object') ? lineCfg.attr : null,
         debugState.heightAttr
       ].filter(Boolean);
-      referenced.forEach(a => attrs.add(a));
+      
+      // For vector/MVT layers: only use attrs discovered from actual data (no phantom defaults)
+      // For hex layers: add all referenced attrs (tile data may load later)
+      if (layerDef.layerType === 'vector' || layerDef.layerType === 'mvt') {
+        // Vector/MVT: attrs from GeoJSON/tile scan are enough; don't add default fallbacks
+      } else {
+        referenced.forEach(a => attrs.add(a));
+      }
 
       if (attrs.size === 0) attrs.add('metric');
       const attrOptions = [...attrs].sort().map(a => `<option value="${a}">${a}</option>`).join('');
@@ -3720,17 +3745,39 @@ def deckgl_layers(
         }
         
         // Set attribute from config or pick first available
-        if (fillCfg.attr) {
-          setInput('dbg-attr', fillCfg.attr);
-          debugState.fillAttr = fillCfg.attr;
+        // For vector layers: prefer attrs from actual data over DEFAULT_DECK_CONFIG fallback
+        let chosenAttr = null;
+        if (fillCfg.attr && attrs.has(fillCfg.attr)) {
+          // Config attr exists in actual data
+          chosenAttr = fillCfg.attr;
+        } else if (fillCfg.attr && layerDef.layerType !== 'vector') {
+          // Non-vector: trust config even if attr not in discovered set
+          chosenAttr = fillCfg.attr;
         } else if (attrs.size > 0) {
-          const first = [...attrs].sort()[0];
-          setInput('dbg-attr', first);
-          debugState.fillAttr = first;
-          // Trigger domain calculation for first attribute (only if DuckDB available)
-          if (duckDbReady) {
-            document.getElementById('dbg-attr')?.dispatchEvent(new Event('change'));
+          // Pick first available from actual data
+          chosenAttr = [...attrs].sort()[0];
+        }
+        if (chosenAttr) {
+          setInput('dbg-attr', chosenAttr);
+          debugState.fillAttr = chosenAttr;
+        }
+        
+        // Calculate domain: vector layers use GeoJSON scan, hex layers use DuckDB
+        if (layerDef.layerType === 'vector' && chosenAttr) {
+          const vDom = calcVectorDomain(layerDef, chosenAttr);
+          if (vDom) {
+            setDomainSliderBounds(vDom.min, vDom.max);
+            // Only set inputs if no user-provided domain in config
+            if (!fillCfg.domain || !Array.isArray(fillCfg.domain) || fillCfg.domain.length < 2) {
+              setInput('dbg-domain-min', vDom.min.toFixed(2));
+              setInput('dbg-domain-max', vDom.max.toFixed(2));
+              debugState.fillDomainMin = vDom.min;
+              debugState.fillDomainMax = vDom.max;
+            }
           }
+        } else if (duckDbReady && chosenAttr) {
+          // Hex layer: trigger DuckDB domain calculation
+          document.getElementById('dbg-attr')?.dispatchEvent(new Event('change'));
         }
         
         // Palette (always reset on layer switch to avoid leakage)
@@ -3865,6 +3912,28 @@ def deckgl_layers(
           if (layerDef.vectorLayer) layerDef.vectorLayer.tooltipColumns = debugState.tooltipColumns;
         }
       }
+    }
+
+    // Calculate domain from vector layer GeoJSON data (no DuckDB needed)
+    function calcVectorDomain(layerDef, attr) {
+      if (!layerDef || !attr) return null;
+      let minVal = Infinity, maxVal = -Infinity;
+      const features = layerDef.geojson?.features || [];
+      features.forEach(f => {
+        const val = f?.properties?.[attr];
+        if (typeof val === 'number' && Number.isFinite(val)) {
+          if (val < minVal) minVal = val;
+          if (val > maxVal) maxVal = val;
+        } else if (typeof val === 'string') {
+          const n = parseFloat(val);
+          if (Number.isFinite(n)) {
+            if (n < minVal) minVal = n;
+            if (n > maxVal) maxVal = n;
+          }
+        }
+      });
+      if (!Number.isFinite(minVal) || !Number.isFinite(maxVal)) return null;
+      return { min: minVal, max: maxVal };
     }
 
     // Domain dual slider wiring (fill domain only)
@@ -4325,7 +4394,16 @@ def deckgl_layers(
       let fillColorCfg;
       if (debugState.fillFn === 'static') {
         fillColorCfg = hexToRgb(debugState.fillStaticColor);
+      } else if (debugState.fillFn === 'colorCategories') {
+        // colorCategories: don't use numeric domain, let buildColorExpr auto-detect categories
+        fillColorCfg = {
+          '@@function': 'colorCategories',
+          attr: debugState.fillAttr,
+          colors: debugState.fillPalette,
+          nullColor: hexToRgb(debugState.fillNullColor)
+        };
       } else {
+        // colorContinuous: use numeric domain
         fillColorCfg = {
           '@@function': debugState.fillFn,
           attr: debugState.fillAttr,
@@ -4341,7 +4419,15 @@ def deckgl_layers(
       let lineColorCfg;
       if (debugState.lineFn === 'static') {
         lineColorCfg = hexToRgb(debugState.lineStaticColor);
+      } else if (debugState.lineFn === 'colorCategories') {
+        // colorCategories: don't use numeric domain, let buildColorExpr auto-detect categories
+        lineColorCfg = {
+          '@@function': 'colorCategories',
+          attr: debugState.lineAttr,
+          colors: debugState.linePalette
+        };
       } else {
+        // colorContinuous: use numeric domain
         lineColorCfg = {
           '@@function': debugState.lineFn,
           attr: debugState.lineAttr,
@@ -4532,11 +4618,30 @@ def deckgl_layers(
         document.getElementById(id)?.addEventListener('input', scheduleLayerUpdate);
       });
       
-      // Recalculate domain when attribute changes (uses DuckDB)
+      // Recalculate domain when attribute changes (DuckDB for hex, GeoJSON scan for vector)
       document.getElementById('dbg-attr')?.addEventListener('change', async () => {
         const attr = document.getElementById('dbg-attr')?.value;
-        if (!attr || !duckDbReady || !duckConn) return;
+        if (!attr) return;
         
+        const layerDef = (typeof getActiveLayerDef === 'function') ? getActiveLayerDef() : null;
+        
+        // Vector layers: calculate domain from GeoJSON directly
+        if (layerDef && layerDef.layerType === 'vector') {
+          const vDom = calcVectorDomain(layerDef, attr);
+          if (vDom) {
+            if (typeof setDomainSliderBounds === 'function') setDomainSliderBounds(vDom.min, vDom.max);
+            // Update inputs
+            const minInput = document.getElementById('dbg-domain-min');
+            const maxInput = document.getElementById('dbg-domain-max');
+            if (minInput) { minInput.value = vDom.min.toFixed(2); debugState.fillDomainMin = vDom.min; }
+            if (maxInput) { maxInput.value = vDom.max.toFixed(2); debugState.fillDomainMax = vDom.max; }
+            if (typeof syncDomainSliderFromInputs === 'function') syncDomainSliderFromInputs();
+          }
+          return;
+        }
+        
+        // Hex layers: use DuckDB
+        if (!duckDbReady || !duckConn) return;
         try {
           const res = await duckConn.query(`SELECT MIN("${attr}") as min_val, MAX("${attr}") as max_val FROM data`);
           const row = res.toArray()[0];
