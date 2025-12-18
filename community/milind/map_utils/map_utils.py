@@ -2326,8 +2326,12 @@ def deckgl_layers(
 
         if (l.layerType === 'vector') {
           const vecData = l.geojson?.features?.map(f => f.properties) || [];
-          const fillColorExpr = l.fillColorConfig?.['@@function'] ? buildColorExpr(l.fillColorConfig, vecData) : (l.fillColorRgba || 'rgba(0,144,255,0.6)');
-          const lineColorExpr = l.lineColorConfig?.['@@function'] ? buildColorExpr(l.lineColorConfig, vecData) : (l.lineColorRgba || 'rgba(100,100,100,0.8)');
+          // Fill color: build expression, fall back to static RGBA if buildColorExpr returns null
+          const builtFillColor = l.fillColorConfig?.['@@function'] ? buildColorExpr(l.fillColorConfig, vecData) : null;
+          const fillColorExpr = builtFillColor || l.fillColorRgba || 'rgba(0,144,255,0.6)';
+          // Line color: build expression, fall back to static RGBA if buildColorExpr returns null
+          const builtLineColor = l.lineColorConfig?.['@@function'] ? buildColorExpr(l.lineColorConfig, vecData) : null;
+          const lineColorExpr = builtLineColor || l.lineColorRgba || 'rgba(100,100,100,0.8)';
           const lineW = (typeof l.lineWidth === 'number' && isFinite(l.lineWidth)) ? l.lineWidth : 1;
           const layerOpacity = (typeof l.opacity === 'number' && isFinite(l.opacity)) ? Math.max(0, Math.min(1, l.opacity)) : 0.8;
 
@@ -2476,7 +2480,9 @@ def deckgl_layers(
           const vecData = l.geojson?.features?.map(f => f.properties) || [];
           const builtFillColor = l.fillColorConfig?.['@@function'] ? buildColorExpr(l.fillColorConfig, vecData) : null;
           const fillColorExpr = builtFillColor || l.fillColorRgba || 'rgba(0,144,255,0.6)';
-          const lineColorExpr = l.lineColorConfig?.['@@function'] ? buildColorExpr(l.lineColorConfig, vecData) : (l.lineColorRgba || 'rgba(100,100,100,0.8)');
+          // Line color: build expression, fall back to static RGBA if buildColorExpr returns null
+          const builtLineColor = l.lineColorConfig?.['@@function'] ? buildColorExpr(l.lineColorConfig, vecData) : null;
+          const lineColorExpr = builtLineColor || l.lineColorRgba || 'rgba(100,100,100,0.8)';
           const lineW = (typeof l.lineWidth === 'number' && isFinite(l.lineWidth)) ? l.lineWidth : 1;
           const layerOpacity = (typeof l.opacity === 'number' && isFinite(l.opacity)) ? Math.max(0, Math.min(1, l.opacity)) : 0.8;
           
@@ -3850,11 +3856,20 @@ def deckgl_layers(
           setInput('dbg-line-palette', lpal);
           debugState.linePalette = lpal;
           document.getElementById('dbg-line-palette')?.dispatchEvent(new Event('pal:sync'));
-          if (lineCfg.domain) {
+          if (lineCfg.domain && Array.isArray(lineCfg.domain) && lineCfg.domain.length >= 2) {
             setInput('dbg-line-domain-min', Math.min(...lineCfg.domain));
             setInput('dbg-line-domain-max', Math.max(...lineCfg.domain));
             debugState.lineDomainMin = Math.min(...lineCfg.domain);
             debugState.lineDomainMax = Math.max(...lineCfg.domain);
+          } else if (layerDef.layerType === 'vector' && lineCfg.attr) {
+            // No domain in config: calculate from vector data
+            const vDom = calcVectorDomain(layerDef, lineCfg.attr);
+            if (vDom) {
+              setInput('dbg-line-domain-min', vDom.min.toFixed(2));
+              setInput('dbg-line-domain-max', vDom.max.toFixed(2));
+              debugState.lineDomainMin = vDom.min;
+              debugState.lineDomainMax = vDom.max;
+            }
           }
         } else {
           // Default line = static white
@@ -4671,6 +4686,26 @@ def deckgl_layers(
       ['dbg-line-attr', 'dbg-line-palette', 'dbg-line-domain-min', 'dbg-line-domain-max', 'dbg-line-static', 'dbg-line-width'].forEach(id => {
         document.getElementById(id)?.addEventListener('change', scheduleLayerUpdate);
         document.getElementById(id)?.addEventListener('input', scheduleLayerUpdate);
+      });
+      
+      // Recalculate line domain when line attribute changes (for vector layers)
+      document.getElementById('dbg-line-attr')?.addEventListener('change', () => {
+        const attr = document.getElementById('dbg-line-attr')?.value;
+        if (!attr) return;
+        
+        const layerDef = (typeof getActiveLayerDef === 'function') ? getActiveLayerDef() : null;
+        
+        // Vector layers: calculate domain from GeoJSON directly
+        if (layerDef && layerDef.layerType === 'vector') {
+          const vDom = calcVectorDomain(layerDef, attr);
+          if (vDom) {
+            // Update line domain inputs
+            const minInput = document.getElementById('dbg-line-domain-min');
+            const maxInput = document.getElementById('dbg-line-domain-max');
+            if (minInput) { minInput.value = vDom.min.toFixed(2); debugState.lineDomainMin = vDom.min; }
+            if (maxInput) { maxInput.value = vDom.max.toFixed(2); debugState.lineDomainMax = vDom.max; }
+          }
+        }
       });
       
       // Bind elevation inputs
