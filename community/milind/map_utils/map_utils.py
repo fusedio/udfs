@@ -861,7 +861,7 @@ def deckgl_layers(
     #tile-loader {
       position: fixed;
       bottom: 12px;
-      right: 12px;
+      left: 12px;
       background: var(--ui-float-bg-2);
       border: 1px solid var(--ui-border-2);
       border-radius: 6px;
