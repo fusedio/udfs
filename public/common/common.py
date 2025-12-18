@@ -428,6 +428,11 @@ def bounds_to_hex(bounds=[-180, -90, 180, 90], res=3, hex_col="hex"):
         """).df()
     return df
 
+def bounds_to_res(bounds=[-180, -90, 180, 90], offset=0):
+    zoom = get_tiles(bounds).z
+    return  min(int(3+zoom/1.5)+offset,15)
+    
+
 @fused.cache
 def estimate_h3_res(geom=[-180, -90, 180, 90], n_cells=1000):
     """Calculate H3 resolution based on area and desired number of cells."""
