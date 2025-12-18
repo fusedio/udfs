@@ -2066,7 +2066,7 @@ def deckgl_layers(
         data: tileUrl,
         tileSize: tileCfg.tileSize ?? 256,
         minZoom: tileCfg.minZoom ?? 0,
-        maxZoom: tileCfg.maxZoom ?? 12,
+        maxZoom: tileCfg.maxZoom ?? 19,
         pickable: true,
         visible: visible,
         maxRequests: 6,
@@ -2209,6 +2209,7 @@ def deckgl_layers(
       if (!deckOverlay) {
         deckOverlay = new MapboxOverlay({
           interleaved: true,
+          useDevicePixels: true,  // Proper scaling for iframes and high-DPI displays
           layers: deckLayers
         });
         map.addControl(deckOverlay);
@@ -3042,8 +3043,25 @@ def deckgl_layers(
 
     map.on('load', tryInit);
     map.on('load', () => setTimeout(() => map.resize(), 200));
-    window.addEventListener('resize', () => map.resize());
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) map.resize(); });
+    window.addEventListener('resize', () => {
+      map.resize();
+      // Force Deck.gl overlay to re-render at new size
+      {% if has_tile_layers %}
+      if (deckOverlay) {
+        try { map.triggerRepaint(); } catch (e) {}
+      }
+      {% endif %}
+    });
+    document.addEventListener('visibilitychange', () => { 
+      if (!document.hidden) {
+        map.resize();
+        {% if has_tile_layers %}
+        if (deckOverlay) {
+          try { map.triggerRepaint(); } catch (e) {}
+        }
+        {% endif %}
+      }
+    });
     
     {% if highlight_on_click %}
     // Click-to-highlight (hex and vector)
