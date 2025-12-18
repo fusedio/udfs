@@ -216,6 +216,7 @@ def deckgl_layers(
     layers: list,
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     basemap: str = "dark",
+    theme: str = "dark",
     highlight_on_click: bool = True,
     on_click: dict = None,
     debug: bool = False,
@@ -235,6 +236,7 @@ def deckgl_layers(
             - "name": Display name for layer toggle (optional)
         mapbox_token: Mapbox access token.
         basemap: 'dark', 'satellite', or custom Mapbox style URL.
+        theme: UI theme for map overlays + debug panel. One of: 'dark' (current default), 'light'.
         on_click: Dict to configure click broadcasting. Keys:
             - "properties": List of property names to include (default: all)
             - "channel": BroadcastChannel name (default: "fused-bus")
@@ -662,9 +664,13 @@ def deckgl_layers(
     pitch = ivs.get('pitch', 0)
     bearing = ivs.get('bearing', 0)
 
+    theme = (theme or "dark").lower().strip()
+    if theme not in ("dark", "light"):
+        raise ValueError("deckgl_layers(theme=...) must be one of: 'dark', 'light'")
+
     html = Template(r"""
 <!DOCTYPE html>
-<html>
+<html data-theme="{{ theme }}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -688,28 +694,89 @@ def deckgl_layers(
     window.cartocolor = cartocolor;
   </script>
   <style>
+    /* Theme tokens (light mode requested colors: bg #FFFFFF, elements #7C9BB6, categories #496883) */
+    :root{
+      --ui-bg: #0b0d10;
+      --ui-panel-bg: rgba(24,24,24,0.98);
+      --ui-float-bg: rgba(26,26,26,0.95);
+      --ui-float-bg-2: rgba(26,26,26,0.90);
+      --ui-surface: rgba(40,40,40,0.60);
+      --ui-border: #333;
+      --ui-border-2: #424242;
+      --ui-text: #f5f5f5;
+      --ui-text-2: #ddd;
+      --ui-muted: #aaa;
+      --ui-muted-2: #999;
+      --ui-muted-3: #666;
+      --ui-shadow: rgba(0,0,0,0.30);
+      --ui-shadow-2: rgba(0,0,0,0.50);
+      --ui-accent: #E8FF59; /* existing accent in dark mode */
+      --ui-elements: #E8FF59;
+      --ui-category: #888;
+      --ui-scroll-track: rgba(255,255,255,0.06);
+      --ui-scroll-thumb: rgba(255,255,255,0.22);
+      --ui-scroll-thumb-hover: rgba(255,255,255,0.30);
+      --ui-input-bg: #1a1a1a;
+      --ui-output-bg: #111;
+      --ui-tooltip-bg: rgba(15,15,15,0.95);
+      --ui-tooltip-border: rgba(255,255,255,0.10);
+      --ui-tooltip-title: rgba(255,255,255,0.72);
+      --ui-tooltip-key: rgba(255,255,255,0.60);
+      --ui-tooltip-val: #fff;
+    }
+    html[data-theme="light"]{
+      --ui-bg: #FFFFFF;
+      --ui-panel-bg: rgba(255,255,255,0.98);
+      --ui-float-bg: rgba(255,255,255,0.95);
+      --ui-float-bg-2: rgba(255,255,255,0.92);
+      --ui-surface: rgba(124,155,182,0.10);
+      --ui-border: rgba(124,155,182,0.55);
+      --ui-border-2: rgba(124,155,182,0.75);
+      --ui-text: #23313b;
+      --ui-text-2: #23313b;
+      --ui-muted: rgba(73,104,131,0.85);
+      --ui-muted-2: rgba(73,104,131,0.75);
+      --ui-muted-3: rgba(73,104,131,0.95);
+      --ui-shadow: rgba(73,104,131,0.16);
+      --ui-shadow-2: rgba(73,104,131,0.24);
+      --ui-accent: #7C9BB6;
+      --ui-elements: #7C9BB6;
+      --ui-category: #496883;
+      --ui-scroll-track: rgba(124,155,182,0.12);
+      --ui-scroll-thumb: rgba(73,104,131,0.30);
+      --ui-scroll-thumb-hover: rgba(73,104,131,0.42);
+      --ui-input-bg: rgba(255,255,255,0.98);
+      --ui-output-bg: rgba(255,255,255,0.98);
+      --ui-tooltip-bg: rgba(255,255,255,0.98);
+      --ui-tooltip-border: rgba(124,155,182,0.55);
+      --ui-tooltip-title: rgba(73,104,131,0.95);
+      --ui-tooltip-key: rgba(73,104,131,0.90);
+      --ui-tooltip-val: #23313b;
+    }
+
     html, body { margin:0; height:100%; width:100%; display:flex; overflow:hidden; }
     #map { flex:1; height:100%; }
-    #tooltip { position:absolute; pointer-events:none; background:rgba(15,15,15,0.95); color:#fff; padding:10px 14px; border-radius:6px; font-size:12px; display:none; z-index:6; max-width:320px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 4px 16px rgba(0,0,0,0.4); font-family:Inter,'SF Pro Display','Segoe UI',sans-serif; }
-    #tooltip .tt-title { display:block; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.15); font-size:11px; letter-spacing:0.3px; text-transform:uppercase; color: rgba(255,255,255,0.72); }
+    body { background: var(--ui-bg); }
+    #tooltip { position:absolute; pointer-events:none; background:var(--ui-tooltip-bg); color:var(--ui-text); padding:10px 14px; border-radius:6px; font-size:12px; display:none; z-index:6; max-width:320px; border:1px solid var(--ui-tooltip-border); box-shadow:0 4px 16px rgba(0,0,0,0.25); font-family:Inter,'SF Pro Display','Segoe UI',sans-serif; }
+    #tooltip .tt-title { display:block; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.15); font-size:11px; letter-spacing:0.3px; text-transform:uppercase; color: var(--ui-tooltip-title); }
     #tooltip .tt-row { display:flex; justify-content:space-between; padding:3px 0; gap:12px; }
-    #tooltip .tt-key { color:rgba(255,255,255,0.6); font-size:11px; }
-    #tooltip .tt-val { color:#fff; font-weight:500; text-align:right; max-width:180px; word-break:break-word; }
+    #tooltip .tt-key { color:var(--ui-tooltip-key); font-size:11px; }
+    #tooltip .tt-val { color:var(--ui-tooltip-val); font-weight:500; text-align:right; max-width:180px; word-break:break-word; }
     
     /* Layer Toggle Panel */
     #layer-panel {
       position: fixed;
       top: 12px;
       right: 12px;
-      background: rgba(26, 26, 26, 0.95);
-      border: 1px solid #424242;
+      background: var(--ui-float-bg);
+      border: 1px solid var(--ui-border-2);
       border-radius: 8px;
       padding: 0; /* no padding so gutter is flush */
       font-family: Inter, 'SF Pro Display', 'Segoe UI', sans-serif;
-      color: #f5f5f5;
+      color: var(--ui-text);
       min-width: 160px;
       z-index: 100;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 12px var(--ui-shadow);
       overflow: hidden; /* clip gutter to rounded corners */
     }
     .layer-item {
@@ -717,7 +784,7 @@ def deckgl_layers(
       align-items: center;
       gap: 8px;
       padding: 8px 10px 8px 16px; /* text padding; gutter overlaps left 6px */
-      border-bottom: 1px solid #333;
+      border-bottom: 1px solid var(--ui-border);
       position: relative;
       cursor: pointer;
     }
@@ -739,21 +806,21 @@ def deckgl_layers(
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #aaa;
+      color: var(--ui-muted);
       font-size: 14px;
       transition: color 0.15s;
       user-select: none;
       margin-left: auto; /* push eye to the far right */
     }
-    .layer-item .layer-eye:hover { color: #fff; }
-    .layer-item.disabled .layer-eye { color: #555; }
+    .layer-item .layer-eye:hover { color: var(--ui-text); }
+    .layer-item.disabled .layer-eye { color: rgba(73,104,131,0.45); }
     .layer-item .layer-name {
       flex: 1;
       font-size: 12px;
-      color: #ccc;
+      color: var(--ui-text-2);
       transition: color 0.15s;
     }
-    .layer-item.disabled .layer-name { color: #555; }
+    .layer-item.disabled .layer-name { color: rgba(73,104,131,0.55); }
     .legend-layer { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
     .legend-layer:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; letter-spacing: 0.3px; }
     
@@ -762,16 +829,16 @@ def deckgl_layers(
       position: fixed;
       right: 12px;
       bottom: 12px;
-      background: rgba(26, 26, 26, 0.95);
-      border: 1px solid #424242;
+      background: var(--ui-float-bg);
+      border: 1px solid var(--ui-border-2);
       border-radius: 8px;
       padding: 8px 10px;
       font-family: Inter, 'SF Pro Display', 'Segoe UI', sans-serif;
-      color: #f5f5f5;
+      color: var(--ui-text);
       font-size: 11px;
       z-index: 10;
       min-width: 140px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 12px var(--ui-shadow);
     }
 
     /* Mapbox scale (bottom-left) */
@@ -779,24 +846,24 @@ def deckgl_layers(
     .legend-layer:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
     .legend-layer .legend-title { margin-bottom: 6px; font-weight: 500; }
     .legend-layer .legend-gradient { height: 10px; border-radius: 2px; margin-bottom: 4px; border: 1px solid rgba(255,255,255,0.2); }
-    .legend-layer .legend-labels { display: flex; justify-content: space-between; font-size: 10px; color: #ccc; }
+    .legend-layer .legend-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--ui-muted); }
     .legend-layer .legend-categories { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; max-height: 440px; overflow-y: scroll; padding-right: 4px; }
     .legend-layer .legend-categories::-webkit-scrollbar { width: 4px; }
-    .legend-layer .legend-categories::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 2px; }
-    .legend-layer .legend-categories::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
-    .legend-layer .legend-categories::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+    .legend-layer .legend-categories::-webkit-scrollbar-track { background: var(--ui-scroll-track); border-radius: 2px; }
+    .legend-layer .legend-categories::-webkit-scrollbar-thumb { background: var(--ui-scroll-thumb); border-radius: 2px; }
+    .legend-layer .legend-categories::-webkit-scrollbar-thumb:hover { background: var(--ui-scroll-thumb-hover); }
     .legend-layer .legend-cat-item { display: flex; align-items: center; gap: 8px; font-size: 11px; flex-shrink: 0; }
     .legend-layer .legend-cat-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.2); flex-shrink: 0; }
-    .legend-layer .legend-cat-label { color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
-    .legend-layer .legend-cat-more { font-size: 10px; color: #888; font-style: italic; margin-top: 2px; }
+    .legend-layer .legend-cat-label { color: var(--ui-category); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+    .legend-layer .legend-cat-more { font-size: 10px; color: var(--ui-muted); font-style: italic; margin-top: 2px; }
     
     /* Tile Loading Indicator */
     #tile-loader {
       position: fixed;
       bottom: 12px;
       right: 12px;
-      background: rgba(26, 26, 26, 0.9);
-      border: 1px solid #424242;
+      background: var(--ui-float-bg-2);
+      border: 1px solid var(--ui-border-2);
       border-radius: 6px;
       padding: 8px 12px;
       display: none;
@@ -804,16 +871,16 @@ def deckgl_layers(
       gap: 8px;
       font-family: Inter, 'SF Pro Display', 'Segoe UI', sans-serif;
       font-size: 11px;
-      color: #aaa;
+      color: var(--ui-muted);
       z-index: 90;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 8px var(--ui-shadow);
     }
     #tile-loader.visible { display: flex; }
     #tile-loader .loader-spinner {
       width: 14px;
       height: 14px;
       border: 2px solid rgba(255,255,255,0.1);
-      border-top-color: #E8FF59;
+      border-top-color: var(--ui-elements);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
@@ -821,37 +888,38 @@ def deckgl_layers(
     
     /* Debug Panel - Minimal */
     #debug-shell { position: fixed; left: 0; top: 0; height: 100%; z-index: 200; --debug-panel-w: 280px; }
-    #debug-panel { position: fixed; left: 0; top: 0; width: 280px; min-width: 240px; max-width: 520px; height: 100%; background: rgba(24,24,24,0.98); border-right: 1px solid #333; transform: translateX(0); transition: transform 0.2s ease; z-index: 199; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow: hidden; }
+    #debug-panel { position: fixed; left: 0; top: 0; width: 280px; min-width: 240px; max-width: 520px; height: 100%; background: var(--ui-panel-bg); border-right: 1px solid var(--ui-border); transform: translateX(0); transition: transform 0.2s ease; z-index: 199; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow: hidden; }
     #debug-panel, #debug-panel * { box-sizing: border-box; }
     #debug-resize-handle { position: absolute; top: 0; right: 0; width: 8px; height: 100%; cursor: col-resize; background: transparent; }
     /* Use the old tooltip accent only when hovering the resize handle */
     #debug-resize-handle:hover { background: linear-gradient(to left, rgba(232,255,89,0.95) 0 2px, rgba(255,255,255,0.04) 2px 100%); }
     #debug-panel.collapsed { transform: translateX(-100%); }
-    #debug-toggle { position: fixed; top: 12px; width: 24px; height: 24px; background: rgba(30,30,30,0.9); border: 1px solid #333; border-left: none; border-radius: 0 6px 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #888; font-size: 14px; z-index: 200; transition: background 0.15s, color 0.15s; left: var(--debug-panel-w, 280px); }
-    #debug-toggle:hover { background: rgba(50,50,50,0.95); color: #ccc; }
+    #debug-toggle { position: fixed; top: 12px; width: 24px; height: 24px; background: var(--ui-float-bg-2); border: 1px solid var(--ui-border); border-left: none; border-radius: 0 6px 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--ui-muted); font-size: 14px; z-index: 200; transition: background 0.15s, color 0.15s; left: var(--debug-panel-w, 280px); }
+    #debug-toggle:hover { background: var(--ui-float-bg); color: var(--ui-text); }
     #debug-content { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
     /* Minimal grey scrollbars for debug panel + dropdown menus */
-    #debug-content { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.22) rgba(255,255,255,0.06); }
+    #debug-content { scrollbar-width: thin; scrollbar-color: var(--ui-scroll-thumb) var(--ui-scroll-track); }
     #debug-content::-webkit-scrollbar { width: 6px; }
-    #debug-content::-webkit-scrollbar-track { background: rgba(255,255,255,0.06); border-radius: 6px; }
-    #debug-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.22); border-radius: 6px; }
-    #debug-content::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.30); }
+    #debug-content::-webkit-scrollbar-track { background: var(--ui-scroll-track); border-radius: 6px; }
+    #debug-content::-webkit-scrollbar-thumb { background: var(--ui-scroll-thumb); border-radius: 6px; }
+    #debug-content::-webkit-scrollbar-thumb:hover { background: var(--ui-scroll-thumb-hover); }
 
-    .pal-menu, .debug-checklist { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.22) rgba(255,255,255,0.06); }
+    .pal-menu, .debug-checklist { scrollbar-width: thin; scrollbar-color: var(--ui-scroll-thumb) var(--ui-scroll-track); }
     .pal-menu::-webkit-scrollbar, .debug-checklist::-webkit-scrollbar { width: 6px; }
-    .pal-menu::-webkit-scrollbar-track, .debug-checklist::-webkit-scrollbar-track { background: rgba(255,255,255,0.06); border-radius: 6px; }
-    .pal-menu::-webkit-scrollbar-thumb, .debug-checklist::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.22); border-radius: 6px; }
-    .pal-menu::-webkit-scrollbar-thumb:hover, .debug-checklist::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.30); }
-    .debug-section { background: rgba(40,40,40,0.6); border: 1px solid #333; border-radius: 6px; padding: 10px; }
-    .debug-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #666; margin-bottom: 8px; }
+    .pal-menu::-webkit-scrollbar-track, .debug-checklist::-webkit-scrollbar-track { background: var(--ui-scroll-track); border-radius: 6px; }
+    .pal-menu::-webkit-scrollbar-thumb, .debug-checklist::-webkit-scrollbar-thumb { background: var(--ui-scroll-thumb); border-radius: 6px; }
+    .pal-menu::-webkit-scrollbar-thumb:hover, .debug-checklist::-webkit-scrollbar-thumb:hover { background: var(--ui-scroll-thumb-hover); }
+    .debug-section { background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: 6px; padding: 10px; }
+    .debug-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ui-category); margin-bottom: 8px; }
     .debug-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: nowrap; }
     .debug-row:last-child { margin-bottom: 0; }
     /* Make single-field rows align perfectly */
-    .debug-label { font-size: 11px; color: #999; width: 84px; flex: 0 0 84px; }
+    .debug-label { font-size: 11px; color: var(--ui-muted-2); width: 84px; flex: 0 0 84px; }
     /* Let the browser render native number steppers, but keep dark-mode + subtle */
-    #debug-panel { color-scheme: dark; }
-    .debug-input { flex: 1 1 auto; min-width: 0; width: auto; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; }
-    .debug-input:focus { border-color: #555; }
+    html[data-theme="dark"] #debug-panel { color-scheme: dark; }
+    html[data-theme="light"] #debug-panel { color-scheme: light; }
+    .debug-input { flex: 1 1 auto; min-width: 0; width: auto; background: var(--ui-input-bg); border: 1px solid var(--ui-border); border-radius: 4px; padding: 5px 8px; font-size: 11px; color: var(--ui-text-2); outline: none; }
+    .debug-input:focus { border-color: var(--ui-border-2); }
     .debug-input-sm { flex: 0 0 56px; width: 56px; min-width: 56px; text-align: center; }
     /* Tighten right inset for native number steppers */
     .debug-input[type="number"] { padding-right: 4px; }
@@ -866,29 +934,34 @@ def deckgl_layers(
     .debug-input[type="number"]:focus::-webkit-outer-spin-button {
       opacity: 0.45;
     }
-    .debug-select { flex: 1 1 auto; min-width: 0; width: auto; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #ddd; outline: none; cursor: pointer; }
-    .debug-select:focus { border-color: #555; }
+    .debug-select { flex: 1 1 auto; min-width: 0; width: auto; background: var(--ui-input-bg); border: 1px solid var(--ui-border); border-radius: 4px; padding: 5px 8px; font-size: 11px; color: var(--ui-text-2); outline: none; cursor: pointer; }
+    .debug-select:focus { border-color: var(--ui-border-2); }
     .pal-hidden { display: none; }
     /* Palette dropdown should take full row width like other selects */
     .pal-dd { flex: 1 1 auto; min-width: 0; width: 100%; position: relative; }
-    .pal-trigger { width: 100%; display: flex; align-items: center; justify-content: flex-start; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 0; color: #ddd; font-size: 11px; cursor: pointer; }
-    .pal-trigger:hover { border-color: #444; }
+    .pal-trigger { width: 100%; display: flex; align-items: center; justify-content: flex-start; background: var(--ui-input-bg); border: 1px solid var(--ui-border); border-radius: 4px; padding: 0; color: var(--ui-text-2); font-size: 11px; cursor: pointer; }
+    .pal-trigger:hover { border-color: var(--ui-border-2); }
     /* Trigger should be swatch-only; name is exposed via hover tooltip (title) */
     .pal-name { display: none; }
-    .pal-swatch { width: 100%; height: 12px; border-radius: 3px; border: 1px solid #333; background: linear-gradient(90deg, #555, #999); }
+    .pal-swatch { width: 100%; height: 12px; border-radius: 3px; border: 1px solid var(--ui-border); background: linear-gradient(90deg, #555, #999); }
     /* Palette menu: swatch-only, keep it tight (no empty leading space) */
-    .pal-menu { position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: #111; border: 1px solid #333; border-radius: 6px; max-height: 220px; overflow: auto; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.5); width: 100%; }
+    .pal-menu { position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: var(--ui-output-bg); border: 1px solid var(--ui-border); border-radius: 6px; max-height: 220px; overflow: auto; z-index: 9999; box-shadow: 0 8px 24px var(--ui-shadow-2); width: 100%; }
     /* Palette menu items: swatch-only (name via hover tooltip) */
     .pal-item { display: flex; align-items: center; justify-content: center; padding: 6px 0; cursor: pointer; }
-    .pal-item:hover { background: rgba(255,255,255,0.06); }
+    .pal-item:hover { background: rgba(124,155,182,0.14); }
     .pal-item-name { display: none; }
-    .pal-item-swatch { width: 100%; height: 12px; border-radius: 3px; border: 1px solid #333; }
+    .pal-item-swatch { width: 100%; height: 12px; border-radius: 3px; border: 1px solid var(--ui-border); }
     .debug-toggles { display: flex; flex-wrap: wrap; gap: 8px 12px; }
-    .debug-checkbox { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #999; cursor: pointer; }
-    .debug-checkbox input { width: 14px; height: 14px; cursor: pointer; accent-color: #666; }
-    .debug-slider { flex: 1 1 auto; min-width: 0; height: 4px; background: #333; border-radius: 2px; -webkit-appearance: none; cursor: pointer; }
-    .debug-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #888; border-radius: 50%; cursor: pointer; }
-    .debug-slider::-webkit-slider-thumb:hover { background: #aaa; }
+    .debug-checkbox { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ui-muted-2); cursor: pointer; }
+    /* Keep dark mode checkbox styling unchanged; light mode uses theme color */
+    html[data-theme="dark"] .debug-checkbox input { width: 14px; height: 14px; cursor: pointer; accent-color: #666; }
+    html[data-theme="light"] .debug-checkbox input { width: 14px; height: 14px; cursor: pointer; accent-color: var(--ui-elements); }
+    .debug-slider { flex: 1 1 auto; min-width: 0; height: 4px; background: var(--ui-border); border-radius: 2px; -webkit-appearance: none; cursor: pointer; }
+    /* Keep dark mode slider thumbs unchanged; light mode uses theme accents */
+    html[data-theme="dark"] .debug-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #888; border-radius: 50%; cursor: pointer; }
+    html[data-theme="dark"] .debug-slider::-webkit-slider-thumb:hover { background: #aaa; }
+    html[data-theme="light"] .debug-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: var(--ui-elements); border-radius: 50%; cursor: pointer; }
+    html[data-theme="light"] .debug-slider::-webkit-slider-thumb:hover { background: var(--ui-accent); }
     /* Dual-thumb range (two overlaid sliders) */
     .debug-dual-range { position: relative; flex: 1 1 auto; min-width: 0; height: 18px; }
     /* Single shared track so one range input's track can't cover the other's thumb */
@@ -899,7 +972,7 @@ def deckgl_layers(
       right: 0;
       top: 7px;
       height: 4px;
-      background: #333;
+      background: var(--ui-border);
       border-radius: 2px;
     }
     .debug-dual-range input[type="range"] {
@@ -915,7 +988,8 @@ def deckgl_layers(
       z-index: 2;
     }
     .debug-dual-range input[type="range"]::-webkit-slider-runnable-track { height: 4px; background: transparent; border-radius: 2px; }
-    .debug-dual-range input[type="range"]::-webkit-slider-thumb {
+    /* Dual-thumb range (domain sliders) */
+    html[data-theme="dark"] .debug-dual-range input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
       pointer-events: auto;
       width: 12px;
@@ -927,9 +1001,22 @@ def deckgl_layers(
       position: relative;
       z-index: 3;
     }
-    .debug-dual-range input[type="range"]::-webkit-slider-thumb:hover { background: #aaa; }
+    html[data-theme="dark"] .debug-dual-range input[type="range"]::-webkit-slider-thumb:hover { background: #aaa; }
+    html[data-theme="light"] .debug-dual-range input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      pointer-events: auto;
+      width: 12px;
+      height: 12px;
+      margin-top: -4px;
+      background: var(--ui-elements);
+      border-radius: 50%;
+      cursor: pointer;
+      position: relative;
+      z-index: 3;
+    }
+    html[data-theme="light"] .debug-dual-range input[type="range"]::-webkit-slider-thumb:hover { background: var(--ui-accent); }
     .debug-dual-range input[type="range"]::-moz-range-track { height: 4px; background: transparent; border-radius: 2px; }
-    .debug-dual-range input[type="range"]::-moz-range-thumb {
+    html[data-theme="dark"] .debug-dual-range input[type="range"]::-moz-range-thumb {
       pointer-events: auto;
       width: 12px;
       height: 12px;
@@ -937,16 +1024,26 @@ def deckgl_layers(
       border-radius: 50%;
       cursor: pointer;
     }
-    .debug-color { width: 28px; height: 28px; border: 1px solid #333; border-radius: 4px; cursor: pointer; padding: 0; background: none; }
+    html[data-theme="light"] .debug-dual-range input[type="range"]::-moz-range-thumb {
+      pointer-events: auto;
+      width: 12px;
+      height: 12px;
+      background: var(--ui-elements);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    .debug-color { width: 28px; height: 28px; border: 1px solid var(--ui-border); border-radius: 4px; cursor: pointer; padding: 0; background: none; }
     .debug-color::-webkit-color-swatch-wrapper { padding: 2px; }
     .debug-color::-webkit-color-swatch { border-radius: 2px; border: none; }
-    .debug-color-label { font-size: 10px; color: #666; font-family: 'SF Mono', Consolas, monospace; }
+    .debug-color-label { font-size: 10px; color: var(--ui-category); font-family: 'SF Mono', Consolas, monospace; }
     /* Copy button removed (clipboard API is unreliable across some browsers/contexts) */
     .debug-checklist { display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow: auto; padding: 2px 0; }
-    .debug-check { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #bbb; }
-    .debug-check input { width: 14px; height: 14px; accent-color: #666; }
-    .debug-check code { font-family: 'SF Mono', Consolas, monospace; font-size: 10px; color: #aaa; }
-    .debug-output { width: 100%; min-height: 120px; resize: vertical; background: #111; color: #aaa; border: 1px solid #333; border-radius: 4px; padding: 8px; font-family: 'SF Mono', Consolas, monospace; font-size: 10px; line-height: 1.4; }
+    .debug-check { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--ui-text-2); }
+    /* Same for tooltip-columns checklist */
+    html[data-theme="dark"] .debug-check input { width: 14px; height: 14px; accent-color: #666; }
+    html[data-theme="light"] .debug-check input { width: 14px; height: 14px; accent-color: var(--ui-elements); }
+    .debug-check code { font-family: 'SF Mono', Consolas, monospace; font-size: 10px; color: var(--ui-muted); }
+    .debug-output { width: 100%; min-height: 120px; resize: vertical; background: var(--ui-output-bg); color: var(--ui-muted); border: 1px solid var(--ui-border); border-radius: 4px; padding: 8px; font-family: 'SF Mono', Consolas, monospace; font-size: 10px; line-height: 1.4; }
   </style>
 </head>
 <body>
@@ -4469,6 +4566,7 @@ def deckgl_layers(
         default_vector_config=DEFAULT_DECK_CONFIG,
         style_url=style_url,
         basemap=basemap_value,
+        theme=theme,
         center_lng=center_lng,
         center_lat=center_lat,
         zoom=zoom,
