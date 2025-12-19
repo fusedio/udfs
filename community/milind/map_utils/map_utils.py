@@ -1459,8 +1459,10 @@ def deckgl_layers(
         const name = cfg.colors || 'Bold';
         const cols = getPaletteColors(name, Math.max(catPairs.length, 3)) || ['#7F3C8D','#11A579','#3969AC','#F2B701','#E73F74','#80BA5A','#E68310','#008695','#CF1C90','#f97b72'];
         const fallback = cfg.nullColor ? `rgb(${cfg.nullColor.slice(0,3).join(',')})` : 'rgba(128,128,128,0.5)';
-        const expr = ['match', ['get', cfg.attr]];
-        catPairs.forEach((cat, i) => { expr.push(cat.value); expr.push(cols[i % cols.length]); });
+        // IMPORTANT: Mapbox match branch labels cannot be floats.
+        // To support numeric-but-non-integer categories, match on stringified values.
+        const expr = ['match', ['to-string', ['get', cfg.attr]]];
+        catPairs.forEach((cat, i) => { expr.push(String(cat.value)); expr.push(cols[i % cols.length]); });
         expr.push(fallback);
         // Store detected categories back for legend (with labels)
         cfg._detectedCategories = catPairs;
@@ -1512,6 +1514,8 @@ def deckgl_layers(
 
     const HAS_TILE_LAYERS = LAYERS_DATA.some(l => l.layerType === 'hex' && l.isTileLayer);
     const TILE_CACHE = new Map();
+    // Deduplicate in-flight tile requests (so rebuilds / rapid UI edits don't refetch the same tile).
+    const TILE_INFLIGHT = new Map();
     const TILE_DATA_STORE = {};  // Track loaded tile data per layer for autoDomain
     
     // Tile loading indicator
@@ -2110,12 +2114,15 @@ def deckgl_layers(
         maxZoom: tileCfg.maxZoom ?? 19,
         pickable: true,
         visible: visible,
-        maxRequests: 6,
+        // Parallelism for tile fetching. Can be overridden via config["tileLayer"]["maxRequests"].
+        // Keep the default moderate to avoid overwhelming the tile endpoint.
+        maxRequests: tileCfg.maxRequests ?? 10,
         refinementStrategy: 'best-available',
         getTileData: async ({ index, signal }) => {
           const { x, y, z } = index;
           const url = tileUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
-          const cacheKey = `${tileUrl}|${z}|${x}|${y}`;
+          // Cache by fully-resolved URL (avoids subtle key mismatches if the template changes).
+          const cacheKey = url;
           const tileKey = `${z}/${x}/${y}`;
           
           // Return cached data immediately
@@ -2124,43 +2131,59 @@ def deckgl_layers(
             TILE_DATA_STORE[layerDef.id][tileKey] = cachedData;
             return cachedData;
           }
+
+          // Deduplicate in-flight requests for the same tile.
+          if (TILE_INFLIGHT.has(cacheKey)) {
+            try {
+              const data = await TILE_INFLIGHT.get(cacheKey);
+              if (data) TILE_DATA_STORE[layerDef.id][tileKey] = data;
+              return data || [];
+            } catch (e) {
+              return TILE_CACHE.get(cacheKey) || [];
+            }
+          }
           
           // Track loading for autoDomain and loader UI
           if (hasAutoDomain) autoDomainTilesLoading++;
           updateTileLoader(1);
           
-          try {
-            const res = await fetch(url, { signal });
-            if (!res.ok) {
+          const p = (async () => {
+            try {
+              const res = await fetch(url, { signal });
+              if (signal?.aborted) return null;
+              if (!res.ok) return [];
+
+              // IMPORTANT: H3 indexes are often > 2^53 and will lose precision if parsed as JS numbers.
+              // We must coerce known id fields to strings *before* JSON.parse.
+              let text = await res.text();
+              if (signal?.aborted) return null;
+              text = text.replace(
+                /\"(hex|h3|index|id)\"\s*:\s*(\d+)/gi,
+                (_m, k, d) => `"${k}":"${d}"`
+              );
+              const data = JSON.parse(text);
+
+              const normalized = normalizeTileData(data);
+              TILE_CACHE.set(cacheKey, normalized);
+              return normalized;
+            } catch (e) {
+              // Abort is expected during pan/zoom.
+              if (signal?.aborted) return null;
+              return TILE_CACHE.get(cacheKey) || [];
+            } finally {
+              TILE_INFLIGHT.delete(cacheKey);
               if (hasAutoDomain) {
                 autoDomainTilesLoading--;
                 setTimeout(scheduleAutoDomainUpdate, 100);
               }
               updateTileLoader(-1);
-              return [];
             }
-            let text = await res.text();
-            text = text.replace(/\"(hex|h3|index)\"\s*:\s*(\d+)/gi, (_m, k, d) => `"${k}":"${d}"`);
-            const data = JSON.parse(text);
-            const normalized = normalizeTileData(data);
-            TILE_CACHE.set(cacheKey, normalized);
-            TILE_DATA_STORE[layerDef.id][tileKey] = normalized;
-            
-            // Track tile loaded for autoDomain
-            if (hasAutoDomain) {
-              autoDomainTilesLoading--;
-              setTimeout(scheduleAutoDomainUpdate, 100);
-            }
-            updateTileLoader(-1);
-            return normalized;
-          } catch (e) {
-            if (hasAutoDomain) {
-              autoDomainTilesLoading--;
-              setTimeout(scheduleAutoDomainUpdate, 100);
-            }
-            updateTileLoader(-1);
-            return TILE_CACHE.get(cacheKey) || [];
-          }
+          })();
+
+          TILE_INFLIGHT.set(cacheKey, p);
+          const normalized = await p;
+          if (normalized) TILE_DATA_STORE[layerDef.id][tileKey] = normalized;
+          return normalized || [];
         },
         renderSubLayers: (props) => {
           const data = props.data || [];
@@ -2595,11 +2618,12 @@ def deckgl_layers(
           });
           
           // Build dynamic color expressions if configured
+          // NOTE: buildColorExpr can return null (e.g. missing domain); always fall back to static colors.
           const fillColorExpr = l.fillColorConfig?.['@@function'] 
-            ? buildColorExpr(l.fillColorConfig, [])  // MVT has no static data, buildColorExpr uses property accessors
+            ? (buildColorExpr(l.fillColorConfig, []) || (l.fillColor || '#FFF5CC'))  // MVT has no static data, buildColorExpr uses property accessors
             : (l.fillColor || '#FFF5CC');
           const lineColorExpr = l.lineColorConfig?.['@@function']
-            ? buildColorExpr(l.lineColorConfig, [])
+            ? (buildColorExpr(l.lineColorConfig, []) || (l.lineColor || '#FFFFFF'))
             : (l.lineColor || '#FFFFFF');
           
           if (l.isExtruded) {
