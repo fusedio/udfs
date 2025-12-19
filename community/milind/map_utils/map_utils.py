@@ -2072,21 +2072,33 @@ def deckgl_layers(
       // Include domain in layer ID to force sublayer recreation when domain changes
       // This prevents visible tile boundaries due to different domains per tile
       const dynamicDomain = rawHexLayer.getFillColor?._dynamicDomain;
-      const domainHash = dynamicDomain ? `${dynamicDomain[0].toFixed(2)}-${dynamicDomain[1].toFixed(2)}` : 'default';
+      // IMPORTANT: also include the user-selected domain (from debug inputs) so changes apply immediately,
+      // even before any tile reloads.
+      const domainForHash =
+        (Array.isArray(dynamicDomain) && dynamicDomain.length >= 2) ? dynamicDomain :
+        (Array.isArray(rawHexLayer.getFillColor?.domain) && rawHexLayer.getFillColor.domain.length >= 2) ? rawHexLayer.getFillColor.domain :
+        null;
+      const domainHash = domainForHash
+        ? `${Number(domainForHash[0]).toFixed(2)}-${Number(domainForHash[1]).toFixed(2)}`
+        : 'default';
       // Also include a style hash so palette/reverse/steps changes immediately refresh tile rendering
       const fc = rawHexLayer.getFillColor || {};
       const lc = rawHexLayer.getLineColor || {};
+      const fcDom = Array.isArray(fc.domain) && fc.domain.length >= 2 ? `${Number(fc.domain[0]).toFixed(2)}-${Number(fc.domain[1]).toFixed(2)}` : '';
+      const lcDom = Array.isArray(lc.domain) && lc.domain.length >= 2 ? `${Number(lc.domain[0]).toFixed(2)}-${Number(lc.domain[1]).toFixed(2)}` : '';
       const styleKey = [
         fc['@@function'] || '',
         fc.attr || '',
         fc.colors || '',
         fc.reverse ? '1' : '0',
         fc.steps ?? '',
+        fcDom,
         lc['@@function'] || '',
         lc.attr || '',
         lc.colors || '',
         lc.reverse ? '1' : '0',
-        lc.steps ?? ''
+        lc.steps ?? '',
+        lcDom
       ].join('|');
       const styleHash = hashString(styleKey);
 
