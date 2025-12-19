@@ -222,6 +222,7 @@ def deckgl_layers(
     layers: list,
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     basemap: str = "dark",
+    initialViewState: typing.Optional[dict] = None,
     theme: str = "dark",
     screenshot_button: bool = True,
     highlight_on_click: bool = True,
@@ -243,6 +244,8 @@ def deckgl_layers(
             - "name": Display name for layer toggle (optional)
         mapbox_token: Mapbox access token.
         basemap: 'dark', 'satellite', or custom Mapbox style URL.
+        initialViewState: Optional dict like {"longitude":..., "latitude":..., "zoom":..., "pitch":..., "bearing":...}.
+            If provided, overrides any initialViewState in the first layer config.
         theme: UI theme for map overlays + debug panel. One of: 'dark' (current default), 'light'.
         screenshot_button: If True, show a small screenshot icon below the layers menu that downloads a PNG of the map canvas.
         on_click: Dict to configure click broadcasting. Keys:
@@ -285,6 +288,26 @@ def deckgl_layers(
         HTML object for rendering in Fused Workbench
     """
     import math
+
+    # Apply global initial view state (if provided).
+    # deckgl_layers historically reads view state from the FIRST layer's config,
+    # so we inject/override it there.
+    if initialViewState is not None and layers and isinstance(layers, list):
+        try:
+            first = layers[0] or {}
+            cfg0 = first.get("config", {})
+            if isinstance(cfg0, str):
+                try:
+                    cfg0 = json.loads(cfg0)
+                except Exception:
+                    cfg0 = {}
+            if not isinstance(cfg0, dict):
+                cfg0 = {}
+            cfg0["initialViewState"] = initialViewState
+            first["config"] = cfg0
+            layers[0] = first
+        except Exception:
+            pass
     
     # Basemap setup (config can override function arg)
     basemap_styles = {
@@ -1322,9 +1345,15 @@ def deckgl_layers(
       </div>
       {% endif %}
       
-      <!-- Config Output -->
+      <!-- Initial ViewState Output -->
       <div class="debug-section">
-        <div class="debug-section-title">Config Output</div>
+        <div class="debug-section-title">Initial ViewState</div>
+        <textarea id="dbg-view-output" class="debug-output" readonly></textarea>
+      </div>
+      
+      <!-- Layer Config Output -->
+      <div class="debug-section">
+        <div class="debug-section-title">Layer Config</div>
         <textarea id="dbg-output" class="debug-output" readonly></textarea>
       </div>
     </div>
@@ -2793,12 +2822,12 @@ def deckgl_layers(
             cols = ['#7F3C8D','#11A579','#3969AC','#F2B701','#E73F74','#80BA5A','#E68310','#008695','#CF1C90','#f97b72'];
           }
           
-          // Use labelAttr name in title if available
-          const titleAttr = colorCfg.labelAttr || colorCfg.attr;
+          // Keep legend title clean: just the layer name (no ": <attr>").
+          const legendTitle = `${l.name}`;
           
           html += `
             <div class="legend-layer">
-              <div class="legend-title">${l.name}: ${titleAttr}</div>
+              <div class="legend-title">${legendTitle}</div>
               <div class="legend-categories">
                 ${catPairs.map((cat, i) => `
                   <div class="legend-cat-item">
@@ -2833,7 +2862,7 @@ def deckgl_layers(
         
         html += `
           <div class="legend-layer">
-            <div class="legend-title">${l.name}: ${colorCfg.attr}</div>
+            <div class="legend-title">${l.name}</div>
             <div class="legend-gradient" style="background:${gradient};"></div>
             <div class="legend-labels">
               <span>${d0.toFixed(1)}</span>
@@ -4025,6 +4054,7 @@ def deckgl_layers(
     // Generate config output
     function updateConfigOutput() {
       const output = document.getElementById('dbg-output');
+      const viewOutput = document.getElementById('dbg-view-output');
       if (!output) return;
 
       // Deep equality + "strip defaults" helpers for minimal snippet output.
@@ -4082,32 +4112,18 @@ def deckgl_layers(
       if (debugState.fillFn === 'static') {
         getFillColor = hexToRgb(debugState.fillStaticColor);
       } else {
-        // Build full object, then strip against defaults so we only keep overrides.
-        const baseFill = DEFAULT_HEX_CONFIG?.hexLayer?.getFillColor || DEFAULT_VECTOR_CONFIG?.vectorLayer?.getFillColor || {};
-        const rMin = document.getElementById('dbg-domain-range-min');
-        const rMax = document.getElementById('dbg-domain-range-max');
-        const extentMin = rMin ? Number(rMin.min) : NaN;
-        const extentMax = rMax ? Number(rMax.max) : NaN;
-        const selectedMin = Number(debugState.fillDomainMin);
-        const selectedMax = Number(debugState.fillDomainMax);
-        const hasSql = !!firstLayer?.sql;
-        const domainFromUser = !!firstLayer?.fillDomainFromUser;
-        const shouldIncludeDomain =
-          domainFromUser ||
-          (!hasSql) || // non-SQL layers need a domain to colorContinuous
-          (Number.isFinite(extentMin) && Number.isFinite(extentMax) &&
-            (Math.abs(selectedMin - extentMin) > 1e-9 || Math.abs(selectedMax - extentMax) > 1e-9));
-
         const fillObj = {
           '@@function': debugState.fillFn,
           attr: debugState.fillAttr,
-          ...(shouldIncludeDomain ? { domain: [debugState.fillDomainMin, debugState.fillDomainMax] } : {}),
+          ...(debugState.fillFn === 'colorContinuous' ? { domain: [debugState.fillDomainMin, debugState.fillDomainMax] } : {}),
+          ...(debugState.fillFn === 'colorContinuous' && (firstLayer?.isTileLayer || firstLayer?.tileUrl) ? { autoDomain: true } : {}),
           colors: debugState.fillPalette,
           ...(debugState.fillReverse ? { reverse: true } : {}),
           steps: debugState.fillSteps,
           nullColor: hexToRgb(debugState.fillNullColor),
         };
-        getFillColor = stripDefaults(fillObj, baseFill);
+        // Do NOT strip defaults here: users want a copy/paste-ready config object.
+        getFillColor = fillObj;
       }
       
       // Build getLineColor
@@ -4115,15 +4131,16 @@ def deckgl_layers(
       if (debugState.lineFn === 'static') {
         getLineColor = hexToRgb(debugState.lineStaticColor);
       } else {
-        const baseLine = DEFAULT_HEX_CONFIG?.hexLayer?.getLineColor || DEFAULT_VECTOR_CONFIG?.vectorLayer?.getLineColor || {};
         const lineObj = {
           '@@function': debugState.lineFn,
           attr: debugState.lineAttr,
           // Domain is required for colorContinuous; include it when non-static functions are used.
           ...(debugState.lineFn === 'colorContinuous' ? { domain: [debugState.lineDomainMin, debugState.lineDomainMax] } : {}),
+          ...(debugState.lineFn === 'colorContinuous' && (firstLayer?.isTileLayer || firstLayer?.tileUrl) ? { autoDomain: true } : {}),
           colors: debugState.linePalette,
         };
-        getLineColor = stripDefaults(lineObj, baseLine);
+        // Do NOT strip defaults here: users want a copy/paste-ready config object.
+        getLineColor = lineObj;
       }
       
       const basemapVal = document.getElementById('dbg-basemap')?.value || INITIAL_BASEMAP || 'dark';
@@ -4161,23 +4178,20 @@ def deckgl_layers(
         debugState.tooltipColumns.length > 0 &&
         !tooltipAllSelected;
 
-      // Raster layers: opacity-only snippet
+      // Raster layers: per-layer config dict (no wrapper list)
       if (layerKind === 'raster') {
-        const baseRaster = { rasterLayer: { opacity: 1.0 } };
-        const rasterCandidate = { rasterLayer: { opacity: debugState.opacity } };
-        const rasterOut = stripDefaults(rasterCandidate, baseRaster);
-        const fullConfig = {
-          name: layerName,
-          type: 'raster',
-          tile_url: firstLayer?.tileUrl || '',
-          config: {
-            ...commonConfig,
-            ...(Object.keys(rasterOut).length ? rasterOut : {}),
-          }
+        const makePythonVarName = (name) => {
+          const raw = String(name || 'layer').toLowerCase();
+          const cleaned = raw
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+/, '')
+            .replace(/_+$/, '');
+          const base = cleaned || 'layer';
+          const safe = (/^[0-9]/.test(base)) ? `layer_${base}` : base;
+          return `config_${safe}`;
         };
-        if (fullConfig.config && typeof fullConfig.config === 'object' && Object.keys(fullConfig.config).length === 0) {
-          delete fullConfig.config;
-        }
+
+        const flatConfig = { rasterLayer: { opacity: debugState.opacity } };
         const toPython = (obj, indent = 0) => {
           const pad = '  '.repeat(indent);
           if (obj === null) return 'None';
@@ -4192,57 +4206,87 @@ def deckgl_layers(
           }
           return String(obj);
         };
-        output.value = `config = [${toPython(fullConfig, 0)}]`;
+        const varName = makePythonVarName(layerName);
+        output.value = `${varName} = ${toPython(flatConfig, 0)}`;
+
+        // Put initialViewState in its own textbox (requested).
+        if (viewOutput) {
+          if (debugState.userMapInteracted && commonConfig.initialViewState) {
+            viewOutput.value = `initialViewState = ${toPython(commonConfig.initialViewState, 0)}`;
+          } else {
+            viewOutput.value = '';
+          }
+        }
         return;
       }
 
-      if (layerKind === 'vector') {
-        const vecType = firstLayer?.vectorLayer?.['@@type'] || 'GeoJsonLayer';
-        const baseVec = DEFAULT_VECTOR_CONFIG?.vectorLayer || {};
-        const vecCandidate = {
+      // Build the config object at the "per-layer config dict" level.
+      // Goal: emit `config_<layername> = { hexLayer: {...}, tileLayer: {...} }` (or vectorLayer),
+      // not the outer wrapper list.
+      const flatConfig = {};
+
+      const makePythonVarName = (name) => {
+        const raw = String(name || 'layer').toLowerCase();
+        const cleaned = raw
+          .replace(/[^a-z0-9]+/g, '_')
+          .replace(/^_+/, '')
+          .replace(/_+$/, '');
+        const base = cleaned || 'layer';
+        const safe = (/^[0-9]/.test(base)) ? `layer_${base}` : base;
+        return `config_${safe}`;
+      };
+
+      if (layerKind === 'vector' || layerKind === 'mvt') {
+        const vecType = firstLayer?.vectorLayer?.['@@type'] || firstLayer?.config?.vectorLayer?.['@@type'] || 'GeoJsonLayer';
+        flatConfig.vectorLayer = {
           '@@type': vecType,
           filled: debugState.filled,
           stroked: debugState.stroked,
+          pickable: true,
           opacity: debugState.opacity,
           ...(debugState.filled ? { getFillColor } : {}),
-          ...(debugState.stroked ? { getLineColor, lineWidthMinPixels: debugState.lineWidth } : {}),
+          ...((debugState.stroked || debugState.lineFn !== 'static')
+            ? { getLineColor, ...(debugState.stroked ? { lineWidthMinPixels: debugState.lineWidth } : {}) }
+            : {}),
           ...(shouldIncludeTooltipColumns ? { tooltipColumns: debugState.tooltipColumns } : {}),
         };
-        const vecOut = stripDefaults(vecCandidate, baseVec);
-        layerStyleBlock = Object.keys(vecOut).length ? { vectorLayer: vecOut } : {};
+      } else if (layerKind === 'raster') {
+        // Keep raster as a plain config dict too (no wrapper list).
+        flatConfig.rasterLayer = { opacity: debugState.opacity };
       } else {
-        const baseHex = DEFAULT_HEX_CONFIG?.hexLayer || {};
+        // hex layer
+        const hexType = firstLayer?.hexLayer?.['@@type'] || firstLayer?.config?.hexLayer?.['@@type'] || 'H3HexagonLayer';
         const sqlVal = (HAS_SQL_LAYERS && document.getElementById('dbg-sql')?.value) ? document.getElementById('dbg-sql').value.trim() : '';
-        const hexCandidate = {
+        flatConfig.hexLayer = {
+          '@@type': hexType,
           filled: debugState.filled,
           stroked: debugState.stroked,
-          extruded: debugState.extruded,
+          pickable: true,
           opacity: debugState.opacity,
           ...(debugState.filled ? { getFillColor } : {}),
-          ...(debugState.stroked ? { getLineColor, lineWidthMinPixels: debugState.lineWidth } : {}),
+          ...((debugState.stroked || debugState.lineFn !== 'static')
+            ? { getLineColor, ...(debugState.stroked ? { lineWidthMinPixels: debugState.lineWidth } : {}) }
+            : {}),
           ...(debugState.extruded ? { 
+            extruded: true,
             elevationScale: debugState.elevationScale,
             getElevation: `@@=properties.${debugState.heightAttr}`
           } : {}),
-          ...(shouldIncludeTooltipColumns ? { tooltipColumns: debugState.tooltipColumns } : {}),
+          getHexagon: '@@=properties.hex',
+          // Match the common hex config convention: tooltipAttrs instead of tooltipColumns
+          ...(Array.isArray(debugState.tooltipColumns) && debugState.tooltipColumns.length ? { tooltipAttrs: debugState.tooltipColumns } : {}),
           ...(sqlVal ? { sql: sqlVal } : {}),
         };
-        const hexOut = stripDefaults(hexCandidate, baseHex);
-        layerStyleBlock = Object.keys(hexOut).length ? { hexLayer: hexOut } : {};
-      }
 
-      // Build full layer config
-      const fullConfig = {
-        name: layerName,
-        type: layerType,
-        data: 'df',  // placeholder for dataframe variable
-        config: {
-          ...commonConfig,
-          ...layerStyleBlock
+        // Include tileLayer only for tile-backed hex layers (or when explicitly configured).
+        const isTile = !!firstLayer?.isTileLayer || !!firstLayer?.tileUrl;
+        const tl = firstLayer?.tileLayerConfig || firstLayer?.config?.tileLayer || {};
+        if (isTile || (tl && typeof tl === 'object' && Object.keys(tl).length)) {
+          flatConfig.tileLayer = {
+            minZoom: (tl.minZoom ?? 0),
+            maxZoom: (tl.maxZoom ?? 19),
+          };
         }
-      };
-      if (fullConfig.config && typeof fullConfig.config === 'object' && Object.keys(fullConfig.config).length === 0) {
-        delete fullConfig.config;
       }
       
       // Python-style output
@@ -4251,11 +4295,7 @@ def deckgl_layers(
         if (obj === null) return 'None';
         if (obj === true) return 'True';
         if (obj === false) return 'False';
-        if (typeof obj === 'string') {
-          // Special case: 'df' should not be quoted (it's a variable)
-          if (obj === 'df') return 'df';
-          return `"${obj}"`;
-        }
+        if (typeof obj === 'string') return `"${obj}"`;
         if (typeof obj === 'number') return Number.isInteger(obj) ? String(obj) : obj.toFixed(2);
         if (Array.isArray(obj)) return `[${obj.map(v => toPython(v, 0)).join(', ')}]`;
         if (typeof obj === 'object') {
@@ -4265,7 +4305,17 @@ def deckgl_layers(
         return String(obj);
       };
       
-      output.value = `config = [${toPython(fullConfig, 0)}]`;
+      const varName = makePythonVarName(layerName);
+      output.value = `${varName} = ${toPython(flatConfig, 0)}`;
+
+      // Put initialViewState in its own textbox (requested).
+      if (viewOutput) {
+        if (debugState.userMapInteracted && commonConfig.initialViewState) {
+          viewOutput.value = `initialViewState = ${toPython(commonConfig.initialViewState, 0)}`;
+        } else {
+          viewOutput.value = '';
+        }
+      }
     }
     
     // Apply debug changes to map view
