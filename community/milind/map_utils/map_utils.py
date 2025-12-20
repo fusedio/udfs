@@ -1901,9 +1901,14 @@ def deckgl_layers(
       return !(a.east < b.west || a.west > b.east || a.north < b.south || a.south > b.north);
     }
     
-    // AutoDomain: calculate domain from visible tiles (only when zoom >= 10)
+    // AutoDomain: calculate domain from visible tiles (fast + simple)
     const AUTO_DOMAIN_MAX_SAMPLES = 5000;
     const AUTO_DOMAIN_MIN_ZOOM = 10;
+    const AUTO_DOMAIN_MIN_COUNT = 30;
+    const AUTO_DOMAIN_PCT_LOW = 0.02;
+    const AUTO_DOMAIN_PCT_HIGH = 0.98;
+    const AUTO_DOMAIN_ZOOM_TOLERANCE = 1;
+    const AUTO_DOMAIN_REBUILD_REL_TOL = 0.05;
     
     function calculateDomainFromTiles(layerId, attr) {
       // Only calculate when zoomed in enough
@@ -1922,7 +1927,7 @@ def deckgl_layers(
       };
       
       // First pass: count total values and collect tile refs
-      // Only use tiles within 1 zoom level of current view to avoid mixing aggregation levels
+      // Only use tiles within a zoom tolerance of the current view to avoid mixing aggregation levels
       const currentZoom = Math.round(map.getZoom());
       let totalCount = 0;
       const viewportTiles = [];
@@ -1931,7 +1936,7 @@ def deckgl_layers(
         const [z, x, y] = tileKey.split('/').map(Number);
         
         // Skip tiles from different zoom levels to avoid double-counting
-        if (Math.abs(z - currentZoom) > 1) continue;
+        if (Math.abs(z - currentZoom) > AUTO_DOMAIN_ZOOM_TOLERANCE) continue;
         
         const tileBounds = tileToBounds(x, y, z);
         
@@ -1941,22 +1946,27 @@ def deckgl_layers(
         }
       }
       
-      if (totalCount < 10) return null;
+      if (totalCount < AUTO_DOMAIN_MIN_COUNT) return null;
       
-      // Calculate sampling rate to keep under MAX_SAMPLES
-      const sampleRate = Math.min(1, AUTO_DOMAIN_MAX_SAMPLES / totalCount);
+      // Deterministic sampling to keep under maxSamples (avoid random jitter across runs)
+      const stride = Math.max(1, Math.floor(totalCount / AUTO_DOMAIN_MAX_SAMPLES));
       const values = [];
       
-      // Collect values with sampling
+      // Collect values with deterministic stride sampling (stable)
+      let seen = 0;
       for (const data of viewportTiles) {
         for (const item of data) {
-          // Sample: skip items based on sample rate
-          if (sampleRate < 1 && Math.random() > sampleRate) continue;
-          
-          const val = item?.[attr] ?? item?.properties?.[attr];
-          if (typeof val === 'number' && isFinite(val)) {
-            values.push(val);
+          seen++;
+          if (stride > 1 && (seen % stride) !== 0) continue;
+
+          const raw = item?.[attr] ?? item?.properties?.[attr];
+          let v = null;
+          if (typeof raw === 'number') v = raw;
+          else if (typeof raw === 'string') {
+            const n = parseFloat(raw);
+            v = Number.isFinite(n) ? n : null;
           }
+          if (typeof v === 'number' && Number.isFinite(v)) values.push(v);
           
           // Hard cap just in case
           if (values.length >= AUTO_DOMAIN_MAX_SAMPLES) break;
@@ -1964,14 +1974,22 @@ def deckgl_layers(
         if (values.length >= AUTO_DOMAIN_MAX_SAMPLES) break;
       }
       
-      if (values.length < 10) return null;
+      if (values.length < AUTO_DOMAIN_MIN_COUNT) return null;
       
-      // Sort sampled values and use percentiles (2nd-98th)
+      // Sort sampled values and use percentiles
       values.sort((a, b) => a - b);
-      const p2 = Math.floor(values.length * 0.02);
-      const p98 = Math.floor(values.length * 0.98);
-      const minVal = values[p2];
-      const maxVal = values[Math.min(p98, values.length - 1)];
+      const loIdx = Math.max(0, Math.min(values.length - 1, Math.floor(values.length * AUTO_DOMAIN_PCT_LOW)));
+      const hiIdx = Math.max(0, Math.min(values.length - 1, Math.floor(values.length * AUTO_DOMAIN_PCT_HIGH)));
+      let minVal = values[loIdx];
+      let maxVal = values[Math.max(hiIdx, loIdx)];
+
+      // Add a tiny padding so values near the edge don't clamp due to rounding.
+      const span = maxVal - minVal;
+      if (Number.isFinite(span) && span > 0) {
+        const pad = span * 0.01; // 1% padding
+        minVal -= pad;
+        maxVal += pad;
+      }
       
       if (minVal >= maxVal) return [minVal - 1, maxVal + 1];
       return [minVal, maxVal];
@@ -1986,12 +2004,16 @@ def deckgl_layers(
       let needsRebuild = false;
       LAYERS_DATA.forEach(l => {
         if (l.isTileLayer && l.hexLayer?.getFillColor?.autoDomain) {
-          const newDomain = calculateDomainFromTiles(l.id, l.hexLayer.getFillColor.attr);
+          const fc = l.hexLayer.getFillColor;
+          const newDomain = calculateDomainFromTiles(l.id, fc.attr);
           if (newDomain) {
             const old = l.hexLayer.getFillColor._dynamicDomain;
-            // Only rebuild if domain changed >5%
-            if (!old || Math.abs(newDomain[0] - old[0]) / (old[1] - old[0] || 1) > 0.05 ||
-                        Math.abs(newDomain[1] - old[1]) / (old[1] - old[0] || 1) > 0.05) {
+            // Only rebuild if domain changed enough to matter
+            const denom = (old && (old[1] - old[0])) ? (old[1] - old[0]) : 1;
+            const changedEnough = !old ||
+              (Math.abs(newDomain[0] - old[0]) / denom > AUTO_DOMAIN_REBUILD_REL_TOL) ||
+              (Math.abs(newDomain[1] - old[1]) / denom > AUTO_DOMAIN_REBUILD_REL_TOL);
+            if (changedEnough) {
               l.hexLayer.getFillColor._dynamicDomain = newDomain;
               needsRebuild = true;
             }
@@ -5389,12 +5411,23 @@ def enable_map_broadcast(html_input, channel: str = "fused-bus", dataset: str = 
     return injected_html
 
 
-def enable_location_listener(html_input, channel: str = "fused-bus", zoom_offset: float = 0, padding: int = 50, max_zoom: int = 18):
+def enable_location_listener(
+    html_input,
+    channel: str = "fused-bus",
+    zoom_offset: float = 0,
+    padding: int = 50,
+    max_zoom: int = 18,
+    id_fields: list = None,
+):
     """
     Inject location listener into any Mapbox GL map HTML.
     
     When a location_selector broadcasts a location change, this map will
     automatically pan/zoom to fit the specified bounds.
+
+    Also supports "feature_click" messages (e.g. from scatter plots) that include
+    a `bounds: [west, south, east, north]` or `location.bounds`. When received,
+    the map will fit to bounds and highlight the matching feature if possible.
     
     Args:
         html_input: HTML string or response object containing a Mapbox GL map
@@ -5402,6 +5435,8 @@ def enable_location_listener(html_input, channel: str = "fused-bus", zoom_offset
         zoom_offset: Extra zoom levels to add after fitBounds (e.g., 0.5 for tighter fit)
         padding: Padding in pixels around bounds (smaller = tighter fit)
         max_zoom: Maximum zoom level allowed
+        id_fields: Optional list of property names to use to find a feature to highlight
+            in vector layers (e.g. ["Field Name", "FIELD_NAME"]).
     
     Returns:
         Modified HTML with location listener capability
@@ -5416,6 +5451,8 @@ def enable_location_listener(html_input, channel: str = "fused-bus", zoom_offset
     """
     html_string, response_mode = _normalize_html_input(html_input)
     
+    id_fields_js = json.dumps(id_fields or ["Field Name", "FIELD_NAME", "field_name", "name"])
+
     listener_script = f"""
 <script>
 (function() {{
@@ -5425,30 +5462,121 @@ def enable_location_listener(html_input, channel: str = "fused-bus", zoom_offset
   const ZOOM_OFFSET = {zoom_offset};
   const PADDING = {padding};
   const MAX_ZOOM = {max_zoom};
+  const ID_FIELDS = {id_fields_js};
   const componentId = 'map-location-listener-' + Math.random().toString(36).substr(2, 9);
   
   // Setup BroadcastChannel
   let bc = null;
   try {{ if ('BroadcastChannel' in window) bc = new BroadcastChannel(CHANNEL); }} catch (e) {{}}
   
+  function getBoundsFromMessage(message) {{
+    try {{
+      // location_selector format
+      if (message?.type === 'location_change' && message.location?.bounds && Array.isArray(message.location.bounds)) {{
+        return message.location.bounds;
+      }}
+      // scatter/other widgets format
+      if (message?.bounds && Array.isArray(message.bounds)) return message.bounds;
+      if (message?.location?.bounds && Array.isArray(message.location.bounds)) return message.location.bounds;
+    }} catch (e) {{}}
+    return null;
+  }}
+
+  function getIdFromMessage(message) {{
+    const props = message?.properties || {{}};
+    for (const k of ID_FIELDS) {{
+      const v = props?.[k] ?? message?.[k];
+      if (v != null && String(v).trim() !== '') return v;
+    }}
+    return null;
+  }}
+
+  function ensureHighlightLayers() {{
+    try {{
+      if (map.getSource('feature-hl')) return true;
+      map.addSource('feature-hl', {{ type:'geojson', data: {{ type:'FeatureCollection', features: [] }} }});
+      map.addLayer({{ id:'feature-hl-fill', type:'fill', source:'feature-hl', paint:{{'fill-color':'rgba(255,255,0,0.3)','fill-opacity':1}} }});
+      map.addLayer({{ id:'feature-hl-line', type:'line', source:'feature-hl', paint:{{'line-color':'rgba(255,255,0,1)','line-width':3}} }});
+      return true;
+    }} catch (e) {{
+      return false;
+    }}
+  }}
+
+  function highlightFromMessage(message) {{
+    try {{
+      if (!ensureHighlightLayers()) return;
+
+      const idVal = getIdFromMessage(message);
+      let matchFeature = null;
+      // Try to find a matching feature in vector GeoJSON layers (unclipped originals if available).
+      try {{
+        if (typeof layerGeoJSONs !== 'undefined' && typeof LAYERS_DATA !== 'undefined') {{
+          const candidates = (LAYERS_DATA || []).filter(l => l.layerType === 'vector' && !l.isTileLayer);
+          for (const l of candidates) {{
+            const gj = layerGeoJSONs?.[l.id];
+            const feats = gj?.features || [];
+            if (!feats.length) continue;
+            if (idVal == null) continue;
+            for (const f of feats) {{
+              const p = f?.properties || {{}};
+              for (const k of ID_FIELDS) {{
+                if (p?.[k] != null && String(p[k]) === String(idVal)) {{
+                  matchFeature = f;
+                  break;
+                }}
+              }}
+              if (matchFeature) break;
+            }}
+            if (matchFeature) break;
+          }}
+        }}
+      }} catch (e) {{}}
+
+      // Fallback: bbox polygon highlight
+      if (!matchFeature) {{
+        const b = getBoundsFromMessage(message);
+        if (b && b.length === 4) {{
+          const [west, south, east, north] = b;
+          const ring = [[west, south], [east, south], [east, north], [west, north], [west, south]];
+          matchFeature = {{
+            type: 'Feature',
+            properties: message?.properties || {{}},
+            geometry: {{ type:'Polygon', coordinates:[ring] }}
+          }};
+        }}
+      }}
+
+      const geojson = matchFeature
+        ? {{ type:'FeatureCollection', features:[matchFeature] }}
+        : {{ type:'FeatureCollection', features:[] }};
+      try {{ map.getSource('feature-hl')?.setData(geojson); }} catch (e) {{}}
+    }} catch (e) {{}}
+  }}
+
   function handleLocationChange(message) {{
     try {{
       if (typeof message === 'string') {{
         try {{ message = JSON.parse(message); }} catch (_) {{ return; }}
       }}
       if (!message) return;
+
+      // Avoid reacting to our own messages
+      if (message.fromComponent && message.fromComponent === componentId) return;
+      if (message.source && String(message.source) === 'map') return;
       
-      // Handle location_change messages from location_selector
-      if (message.type === 'location_change' && message.location) {{
-        const loc = message.location;
-        
-        if (loc.bounds && Array.isArray(loc.bounds) && loc.bounds.length === 4) {{
-          const [west, south, east, north] = loc.bounds;
+      const bounds = getBoundsFromMessage(message);
+      const type = message.type || message.message_type;
+
+      // Handle location_change + feature_click (scatter plot) using bounds
+      if ((type === 'location_change' || type === 'feature_click' || type === 'hex_click') &&
+          bounds && Array.isArray(bounds) && bounds.length === 4) {{
+          const [west, south, east, north] = bounds;
           
           // Validate bounds are finite numbers
           if (!Number.isFinite(west) || !Number.isFinite(south) || 
               !Number.isFinite(east) || !Number.isFinite(north)) {{
-            console.warn('[map_location_listener] Invalid bounds (NaN/Infinity):', loc.bounds);
+            console.warn('[map_location_listener] Invalid bounds (NaN/Infinity):', bounds);
             return;
           }}
           
@@ -5460,6 +5588,11 @@ def enable_location_listener(html_input, channel: str = "fused-bus", zoom_offset
           // For very small areas (< 0.1 degrees ≈ 10km), cap padding at 30
           const adaptivePadding = minDim < 0.1 ? Math.min(PADDING, 30) : PADDING;
           
+          // Highlight the target feature if possible (vector match or bbox)
+          if (type === 'feature_click' || type === 'hex_click') {{
+            highlightFromMessage(message);
+          }}
+
           // Fit map to bounds with optional zoom offset
           if (ZOOM_OFFSET > 0) {{
             // First fit bounds, then zoom in a bit more
@@ -5486,7 +5619,6 @@ def enable_location_listener(html_input, channel: str = "fused-bus", zoom_offset
             const centerLat = (south + north) / 2;
             map.flyTo({{ center: [centerLng, centerLat], zoom: 14, duration: 800 }});
           }}
-        }}
       }}
     }} catch (e) {{
       console.warn('[map_location_listener] Error handling message:', e);
