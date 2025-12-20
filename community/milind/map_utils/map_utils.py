@@ -732,6 +732,13 @@ def deckgl_layers(
     import * as cartocolor from 'https://esm.sh/cartocolor@5.0.2';
     window.cartocolor = cartocolor;
   </script>
+  {% if has_tile_layers %}
+  <script type="module">
+    // Parquet decoding for fast hex tile payloads (matches Workbench approach).
+    import * as hyparquet from "https://cdn.jsdelivr.net/npm/hyparquet@1.23.3/+esm";
+    window.hyparquet = hyparquet;
+  </script>
+  {% endif %}
   <style>
     /* Theme tokens (light mode requested colors: bg #FFFFFF, elements #7C9BB6, categories #496883) */
     :root{
@@ -2153,15 +2160,41 @@ def deckgl_layers(
               if (signal?.aborted) return null;
               if (!res.ok) return [];
 
-              // IMPORTANT: H3 indexes are often > 2^53 and will lose precision if parsed as JS numbers.
-              // We must coerce known id fields to strings *before* JSON.parse.
-              let text = await res.text();
-              if (signal?.aborted) return null;
-              text = text.replace(
-                /\"(hex|h3|index|id)\"\s*:\s*(\d+)/gi,
-                (_m, k, d) => `"${k}":"${d}"`
-              );
-              const data = JSON.parse(text);
+              const ct = (res.headers.get('Content-Type') || '').toLowerCase();
+              let data;
+
+              // Fast path: Parquet tiles (application/octet-stream)
+              if (ct.includes('application/octet-stream') || ct.includes('application/parquet')) {
+                if (!window.hyparquet?.parquetMetadataAsync || !window.hyparquet?.parquetReadObjects) {
+                  console.error('[tiles] hyparquet not loaded; cannot decode parquet tile');
+                  return [];
+                }
+                const buf = await res.arrayBuffer();
+                if (signal?.aborted) return null;
+                const file = {
+                  byteLength: buf.byteLength,
+                  async slice(start, end) { return buf.slice(start, end); }
+                };
+                const metadata = await window.hyparquet.parquetMetadataAsync(file);
+                if (signal?.aborted) return null;
+                const rows = await window.hyparquet.parquetReadObjects({
+                  file,
+                  utf8: false,
+                  metadata
+                });
+                data = rows;
+              } else {
+                // JSON tiles
+                // IMPORTANT: H3 indexes are often > 2^53 and will lose precision if parsed as JS numbers.
+                // We must coerce known id fields to strings *before* JSON.parse.
+                let text = await res.text();
+                if (signal?.aborted) return null;
+                text = text.replace(
+                  /\"(hex|h3|index|id)\"\s*:\s*(\d+)/gi,
+                  (_m, k, d) => `"${k}":"${d}"`
+                );
+                data = JSON.parse(text);
+              }
 
               const normalized = normalizeTileData(data);
               TILE_CACHE.set(cacheKey, normalized);
