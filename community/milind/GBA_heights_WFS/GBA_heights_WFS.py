@@ -117,7 +117,7 @@ def udf(
         bound_geom = box(*bounds)
         gdf = gdf[gdf.geometry.intersects(bound_geom)]
         
-        # FIX 3: Handle case where filtering removes all features
+        # FIX 3: Handle case where filtering remves all features
         if len(gdf) == 0:
             return empty_gdf()
         
