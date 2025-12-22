@@ -2134,6 +2134,14 @@ def deckgl_layers(
       const fc0 = rawHexLayer.getFillColor || {};
       const hasDomain0 = Array.isArray(fc0.domain) && fc0.domain.length >= 2;
       const hasAutoDomain = (fc0.autoDomain === true) || (fc0['@@function'] === 'colorContinuous' && !hasDomain0);
+
+      // RGB tiles legend (e.g. Soil): refresh legend once tiles arrive.
+      const hasRgbLegend =
+        (typeof rawHexLayer.getFillColor === 'string') &&
+        rawHexLayer.getFillColor.startsWith('@@=') &&
+        (rawHexLayer.getFillColor.includes('properties.r') || rawHexLayer.getFillColor.includes('.r')) &&
+        (rawHexLayer.getFillColor.includes('properties.g') || rawHexLayer.getFillColor.includes('.g')) &&
+        (rawHexLayer.getFillColor.includes('properties.b') || rawHexLayer.getFillColor.includes('.b'));
       
       // Always initialize tile data store for debug panel attribute detection
       if (!TILE_DATA_STORE[layerDef.id]) {
@@ -2279,6 +2287,10 @@ def deckgl_layers(
           TILE_INFLIGHT.set(cacheKey, p);
           const normalized = await p;
           if (normalized) TILE_DATA_STORE[layerDef.id][tileKey] = normalized;
+          // For RGB-based categorical legends, redraw after tile load so the legend appears.
+          if (hasRgbLegend && visible) {
+            try { setTimeout(updateLegend, 0); } catch (e) {}
+          }
           return normalized || [];
         },
         renderSubLayers: (props) => {
@@ -2907,6 +2919,43 @@ def deckgl_layers(
         legend.style.display = 'none';
         return;
       }
+
+      // For RGB-colored tile hex layers (e.g. Soil), build a categorical legend by scanning
+      // currently loaded tile rows. This is intentionally lightweight: it only uses loaded tiles,
+      // caps categories, and avoids any server calls.
+      function getRgbCategoryLegend(layerId, attr = 'taxsubgrp', maxCats = 40) {
+        try {
+          const tileData = TILE_DATA_STORE?.[layerId];
+          if (!tileData) return null;
+          const entries = Object.values(tileData);
+          if (!entries.length) return null;
+
+          const seen = new Map(); // label -> [r,g,b]
+          for (let ti = 0; ti < entries.length; ti++) {
+            const rows = entries[ti] || [];
+            for (let i = 0; i < rows.length; i++) {
+              const r0 = rows[i];
+              const label = r0?.[attr] ?? r0?.properties?.[attr];
+              if (label == null || label === '' || label === 'null') continue;
+              const key = String(label);
+              if (seen.has(key)) continue;
+              const r = Number(r0?.r ?? r0?.properties?.r);
+              const g = Number(r0?.g ?? r0?.properties?.g);
+              const b = Number(r0?.b ?? r0?.properties?.b);
+              if (!Number.isFinite(r) || !Number.isFinite(g) || !Number.isFinite(b)) continue;
+              const clamp = (x) => Math.max(0, Math.min(255, Math.round(x)));
+              seen.set(key, [clamp(r), clamp(g), clamp(b)]);
+              if (seen.size >= maxCats) break;
+            }
+            if (seen.size >= maxCats) break;
+          }
+          if (!seen.size) return null;
+          const labels = [...seen.keys()].sort((a, b) => a.localeCompare(b));
+          return labels.map(lbl => ({ label: lbl, rgb: seen.get(lbl) }));
+        } catch (e) {
+          return null;
+        }
+      }
       
       let html = '';
       visibleLayers.forEach(l => {
@@ -2915,6 +2964,36 @@ def deckgl_layers(
         if (l.layerType === 'hex') {
           const cfg = l.hexLayer || {};
           colorCfg = (cfg.filled === false && cfg.getLineColor) ? cfg.getLineColor : cfg.getFillColor;
+
+          // Special-case: RGB soil-style tiles where getFillColor is an @@= accessor returning [r,g,b].
+          // Show legend by unique taxsubgrp values.
+          const isRgbFillAccessor = (typeof colorCfg === 'string') &&
+            colorCfg.startsWith('@@=') &&
+            (colorCfg.includes('properties.r') || colorCfg.includes('.r')) &&
+            (colorCfg.includes('properties.g') || colorCfg.includes('.g')) &&
+            (colorCfg.includes('properties.b') || colorCfg.includes('.b'));
+
+          if (l.isTileLayer && isRgbFillAccessor) {
+            const attr = (cfg.legendAttr || (Array.isArray(cfg.tooltipAttrs) && cfg.tooltipAttrs.includes('taxsubgrp') ? 'taxsubgrp' : 'taxsubgrp'));
+            const maxCats = Number.isFinite(cfg.legendMaxCategories) ? cfg.legendMaxCategories : 40;
+            const cats = getRgbCategoryLegend(l.id, attr, maxCats);
+            if (cats && cats.length) {
+              html += `
+                <div class="legend-layer">
+                  <div class="legend-title">${l.name}</div>
+                  <div class="legend-categories">
+                    ${cats.map((c) => `
+                      <div class="legend-cat-item">
+                        <div class="legend-cat-swatch" style="background:rgb(${c.rgb[0]},${c.rgb[1]},${c.rgb[2]});"></div>
+                        <span class="legend-cat-label" title="${c.label}">${c.label}</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              `;
+            }
+            return;
+          }
         } else if (l.layerType === 'vector') {
           // Prefer line color config if fill doesn't have a color function, or if not filled/transparent
           const hasFillFunc = l.fillColorConfig?.['@@function'];
