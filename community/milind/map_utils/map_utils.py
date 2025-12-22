@@ -1864,11 +1864,19 @@ def deckgl_layers(
 
     function processColorContinuousCfg(cfg, computedDomain = null) {
       let domain = computedDomain || cfg.domain;
-      if (domain && domain.length === 2) {
-        const [min, max] = domain;
-        const steps = cfg.steps ?? 20;
-        const stepSize = (max - min) / (steps - 1);
-        domain = Array.from({ length: steps }, (_, i) => min + stepSize * i);
+      // deck.carto.colorContinuous expects `domain` to be an array of numbers.
+      // If missing, use a safe placeholder until autoDomain computes a better one.
+      if (!Array.isArray(domain)) domain = [0, 1];
+      if (domain.length === 2) {
+        const min = Number(domain[0]);
+        const max = Number(domain[1]);
+        if (!Number.isFinite(min) || !Number.isFinite(max) || min === max) {
+          domain = [0, 1];
+        } else {
+          const steps = cfg.steps ?? 20;
+          const stepSize = (max - min) / (steps - 1);
+          domain = Array.from({ length: steps }, (_, i) => min + stepSize * i);
+        }
       }
       if (cfg && cfg.reverse && Array.isArray(domain)) domain = [...domain].reverse();
       return { attr: cfg.attr, domain, colors: cfg.colors || 'ArmyRose', nullColor: cfg.nullColor || [184, 184, 184] };
@@ -1958,7 +1966,7 @@ def deckgl_layers(
         for (const item of data) {
           seen++;
           if (stride > 1 && (seen % stride) !== 0) continue;
-
+          
           const raw = item?.[attr] ?? item?.properties?.[attr];
           let v = null;
           if (typeof raw === 'number') v = raw;
@@ -2003,8 +2011,10 @@ def deckgl_layers(
       
       let needsRebuild = false;
       LAYERS_DATA.forEach(l => {
-        if (l.isTileLayer && l.hexLayer?.getFillColor?.autoDomain) {
+        if (l.isTileLayer && l.hexLayer?.getFillColor && l.hexLayer.getFillColor['@@function'] === 'colorContinuous') {
           const fc = l.hexLayer.getFillColor;
+          const hasDomain = Array.isArray(fc.domain) && fc.domain.length >= 2;
+          if (!(fc.autoDomain === true || !hasDomain)) return;
           const newDomain = calculateDomainFromTiles(l.id, fc.attr);
           if (newDomain) {
             const old = l.hexLayer.getFillColor._dynamicDomain;
@@ -2036,15 +2046,24 @@ def deckgl_layers(
         
         if (v && typeof v === 'object' && !Array.isArray(v)) {
           if (v['@@function'] === 'colorContinuous') {
-            // For autoDomain: use stored dynamic domain if calculated, otherwise use config default
+            // If domain is omitted, treat it like autoDomain for tile layers.
+            const hasDomain = Array.isArray(v.domain) && v.domain.length >= 2;
+            const wantsAuto = (v.autoDomain === true) || !hasDomain;
+
             let domainToUse = null;
-            if (v.autoDomain === true && layerId) {
-              // Check if we already calculated a domain for this layer
+            if (wantsAuto && layerId) {
               const layerData = LAYERS_DATA.find(l => l.id === layerId);
               if (layerData?.hexLayer?.getFillColor?._dynamicDomain) {
                 domainToUse = layerData.hexLayer.getFillColor._dynamicDomain;
+              } else {
+                const maybe = calculateDomainFromTiles(layerId, v.attr);
+                if (maybe && layerData?.hexLayer?.getFillColor) {
+                  layerData.hexLayer.getFillColor._dynamicDomain = maybe;
+                  domainToUse = maybe;
+                }
               }
             }
+
             out[k] = colorContinuous(processColorContinuousCfg(v, domainToUse));
           } else if (v['@@function'] === 'colorCategories') {
             // colorCategories - create accessor function
@@ -2094,8 +2113,12 @@ def deckgl_layers(
       const isStroked = rawHexLayer.stroked !== false;
       const isFilled = rawHexLayer.filled !== false;
 
-      // Check if this layer has autoDomain enabled
-      const hasAutoDomain = rawHexLayer.getFillColor?.autoDomain === true;
+      // Check if this layer should autoDomain:
+      // - explicit autoDomain
+      // - OR missing domain for colorContinuous (so it "just works")
+      const fc0 = rawHexLayer.getFillColor || {};
+      const hasDomain0 = Array.isArray(fc0.domain) && fc0.domain.length >= 2;
+      const hasAutoDomain = (fc0.autoDomain === true) || (fc0['@@function'] === 'colorContinuous' && !hasDomain0);
       
       // Always initialize tile data store for debug panel attribute detection
       if (!TILE_DATA_STORE[layerDef.id]) {
@@ -2177,8 +2200,8 @@ def deckgl_layers(
           updateTileLoader(1);
           
           const p = (async () => {
-            try {
-              const res = await fetch(url, { signal });
+          try {
+            const res = await fetch(url, { signal });
               if (signal?.aborted) return null;
               if (!res.ok) return [];
 
@@ -2189,8 +2212,8 @@ def deckgl_layers(
               if (ct.includes('application/octet-stream') || ct.includes('application/parquet')) {
                 if (!window.hyparquet?.parquetMetadataAsync || !window.hyparquet?.parquetReadObjects) {
                   console.error('[tiles] hyparquet not loaded; cannot decode parquet tile');
-                  return [];
-                }
+              return [];
+            }
                 const buf = await res.arrayBuffer();
                 if (signal?.aborted) return null;
                 const file = {
@@ -2209,7 +2232,7 @@ def deckgl_layers(
                 // JSON tiles
                 // IMPORTANT: H3 indexes are often > 2^53 and will lose precision if parsed as JS numbers.
                 // We must coerce known id fields to strings *before* JSON.parse.
-                let text = await res.text();
+            let text = await res.text();
                 if (signal?.aborted) return null;
                 text = text.replace(
                   /\"(hex|h3|index|id)\"\s*:\s*(\d+)/gi,
@@ -2218,20 +2241,20 @@ def deckgl_layers(
                 data = JSON.parse(text);
               }
 
-              const normalized = normalizeTileData(data);
-              TILE_CACHE.set(cacheKey, normalized);
-              return normalized;
-            } catch (e) {
+            const normalized = normalizeTileData(data);
+            TILE_CACHE.set(cacheKey, normalized);
+            return normalized;
+          } catch (e) {
               // Abort is expected during pan/zoom.
               if (signal?.aborted) return null;
               return TILE_CACHE.get(cacheKey) || [];
             } finally {
               TILE_INFLIGHT.delete(cacheKey);
-              if (hasAutoDomain) {
-                autoDomainTilesLoading--;
-                setTimeout(scheduleAutoDomainUpdate, 100);
-              }
-              updateTileLoader(-1);
+            if (hasAutoDomain) {
+              autoDomainTilesLoading--;
+              setTimeout(scheduleAutoDomainUpdate, 100);
+            }
+            updateTileLoader(-1);
             }
           })();
 
@@ -2348,11 +2371,13 @@ def deckgl_layers(
     }
     
     // Auto-domain viewport listener: rebuild when viewport changes
-    const hasAutoDomainLayers = LAYERS_DATA.some(l => 
-      l.layerType === 'hex' && 
-      l.isTileLayer && 
-      l.hexLayer?.getFillColor?.autoDomain === true
-    );
+    // Also enable when domain is omitted for colorContinuous (auto behavior).
+    const hasAutoDomainLayers = LAYERS_DATA.some(l => {
+      if (!(l.layerType === 'hex' && l.isTileLayer)) return false;
+      const fc = l.hexLayer?.getFillColor || {};
+      const hasDomain = Array.isArray(fc.domain) && fc.domain.length >= 2;
+      return (fc['@@function'] === 'colorContinuous') && (fc.autoDomain === true || !hasDomain);
+    });
     
     if (hasAutoDomainLayers) {
       let autoDomainTimeout = null;
@@ -3185,6 +3210,8 @@ def deckgl_layers(
     
     {% if highlight_on_click %}
     // Click-to-highlight (hex and vector)
+    // Also exposes a small API so other widgets (scatter/hist/location listener)
+    // can reuse the same highlight implementation without duplicating logic.
     (function() {
       const HL_FILL = 'rgba(255,255,0,0.3)', HL_LINE = 'rgba(255,255,0,1)', HL_LW = 3;
       let selected = null, added = false;
@@ -3241,24 +3268,51 @@ def deckgl_layers(
           }
         }
         
+        // The highlight source/layers may already exist (e.g. created externally).
+        // If so, reuse them instead of trying to add again.
         if (!added) {
-          map.addSource('feature-hl', { type:'geojson', data:geojson });
-          map.addLayer({ id:'feature-hl-fill', type:'fill', source:'feature-hl', paint:{'fill-color':HL_FILL,'fill-opacity':1} });
-          map.addLayer({ id:'feature-hl-line', type:'line', source:'feature-hl', paint:{'line-color':HL_LINE,'line-width':HL_LW} });
-          added = true;
-        } else {
-          map.getSource('feature-hl').setData(geojson);
+          try {
+            if (map.getSource('feature-hl')) {
+              added = true;
+            }
+          } catch (e) {}
         }
+        if (!added) {
+          try { map.addSource('feature-hl', { type:'geojson', data:geojson }); } catch (e) {}
+          try {
+            if (!map.getLayer('feature-hl-fill')) {
+              map.addLayer({ id:'feature-hl-fill', type:'fill', source:'feature-hl', paint:{'fill-color':HL_FILL,'fill-opacity':1} });
+            }
+          } catch (e) {}
+          try {
+            if (!map.getLayer('feature-hl-line')) {
+              map.addLayer({ id:'feature-hl-line', type:'line', source:'feature-hl', paint:{'line-color':HL_LINE,'line-width':HL_LW} });
+            }
+          } catch (e) {}
+          added = true;
+        }
+        try { map.getSource('feature-hl')?.setData(geojson); } catch (e) {}
         selected = feature;
       }
+
+      // Expose for external callers (scatter/hist/location listener).
+      try {
+        window.__fusedHighlight = (feature, layerId = null) => {
+          try { highlight(feature, layerId); } catch (e) {}
+        };
+        window.__fusedHighlightClear = () => {
+          try { highlight(null); } catch (e) {}
+        };
+      } catch (e) {}
       
       function getLayers() {
         const layers = [];
         LAYERS_DATA.forEach(l => {
           if (l.isTileLayer) return;
+          // IMPORTANT: include outline layers so stroke-only polygons are clickable.
           const ids = l.layerType === 'vector' 
-            ? [`${l.id}-fill`, `${l.id}-circle`, `${l.id}-line`]
-            : [l.hexLayer?.extruded ? `${l.id}-extrusion` : `${l.id}-fill`];
+            ? [`${l.id}-fill`, `${l.id}-outline`, `${l.id}-circle`, `${l.id}-line`]
+            : [l.hexLayer?.extruded ? `${l.id}-extrusion` : `${l.id}-fill`, `${l.id}-outline`];
           ids.forEach(id => { try { if (map.getLayer(id)) layers.push(id); } catch(e){} });
         });
         return layers;
@@ -5452,7 +5506,7 @@ def enable_location_listener(
     html_string, response_mode = _normalize_html_input(html_input)
     
     id_fields_js = json.dumps(id_fields or ["Field Name", "FIELD_NAME", "field_name", "name"])
-
+    
     listener_script = f"""
 <script>
 (function() {{
@@ -5491,25 +5545,14 @@ def enable_location_listener(
     return null;
   }}
 
-  function ensureHighlightLayers() {{
-    try {{
-      if (map.getSource('feature-hl')) return true;
-      map.addSource('feature-hl', {{ type:'geojson', data: {{ type:'FeatureCollection', features: [] }} }});
-      map.addLayer({{ id:'feature-hl-fill', type:'fill', source:'feature-hl', paint:{{'fill-color':'rgba(255,255,0,0.3)','fill-opacity':1}} }});
-      map.addLayer({{ id:'feature-hl-line', type:'line', source:'feature-hl', paint:{{'line-color':'rgba(255,255,0,1)','line-width':3}} }});
-      return true;
-    }} catch (e) {{
-      return false;
-    }}
-  }}
-
   function highlightFromMessage(message) {{
+    // Reuse the map's native highlighter when available (preferred).
+    // Falls back to direct GeoJSON source updates only if highlight API isn't present.
     try {{
-      if (!ensureHighlightLayers()) return;
-
       const idVal = getIdFromMessage(message);
       let matchFeature = null;
-      // Try to find a matching feature in vector GeoJSON layers (unclipped originals if available).
+
+      // Try to find a matching feature in vector GeoJSON layers.
       try {{
         if (typeof layerGeoJSONs !== 'undefined' && typeof LAYERS_DATA !== 'undefined') {{
           const candidates = (LAYERS_DATA || []).filter(l => l.layerType === 'vector' && !l.isTileLayer);
@@ -5533,40 +5576,74 @@ def enable_location_listener(
         }}
       }} catch (e) {{}}
 
-      // Fallback: bbox polygon highlight
+      // If we didn't find a feature, fall back to:
+      // - hex boundary highlight if the message includes a hex id in properties
+      // - otherwise a bbox polygon highlight (if bounds exist)
       if (!matchFeature) {{
-        const b = getBoundsFromMessage(message);
-        if (b && b.length === 4) {{
-          const [west, south, east, north] = b;
-          const ring = [[west, south], [east, south], [east, north], [west, north], [west, south]];
-          matchFeature = {{
-            type: 'Feature',
-            properties: message?.properties || {{}},
-            geometry: {{ type:'Polygon', coordinates:[ring] }}
-          }};
+        const props = message?.properties || {{}};
+        const hexId = props.hex || props.h3 || props.index || props.id || null;
+        if (hexId) {{
+          matchFeature = {{ properties: props, geometry: null }};
+        }} else {{
+          const b = getBoundsFromMessage(message);
+          if (b && b.length === 4) {{
+            const [west, south, east, north] = b;
+            const ring = [[west, south], [east, south], [east, north], [west, north], [west, south]];
+            matchFeature = {{
+              type: 'Feature',
+              properties: props,
+              geometry: {{ type:'Polygon', coordinates:[ring] }}
+            }};
+          }}
         }}
       }}
 
-      const geojson = matchFeature
+      if (typeof window.__fusedHighlight === 'function') {{
+        window.__fusedHighlight(matchFeature, null);
+        return;
+      }}
+
+      // Fallback: if highlight API isn't present, update the source directly (best-effort).
+      try {{
+        if (!map.getSource('feature-hl')) {{
+          map.addSource('feature-hl', {{ type:'geojson', data: {{ type:'FeatureCollection', features: [] }} }});
+          map.addLayer({{ id:'feature-hl-fill', type:'fill', source:'feature-hl', paint:{{'fill-color':'rgba(255,255,0,0.3)','fill-opacity':1}} }});
+          map.addLayer({{ id:'feature-hl-line', type:'line', source:'feature-hl', paint:{{'line-color':'rgba(255,255,0,1)','line-width':3}} }});
+        }}
+      }} catch (e) {{}}
+
+      const geojson = (matchFeature && matchFeature.type === 'Feature')
         ? {{ type:'FeatureCollection', features:[matchFeature] }}
         : {{ type:'FeatureCollection', features:[] }};
       try {{ map.getSource('feature-hl')?.setData(geojson); }} catch (e) {{}}
     }} catch (e) {{}}
   }}
-
+  
   function handleLocationChange(message) {{
     try {{
       if (typeof message === 'string') {{
         try {{ message = JSON.parse(message); }} catch (_) {{ return; }}
       }}
       if (!message) return;
-
+      
       // Avoid reacting to our own messages
       if (message.fromComponent && message.fromComponent === componentId) return;
       if (message.source && String(message.source) === 'map') return;
       
       const bounds = getBoundsFromMessage(message);
       const type = message.type || message.message_type;
+
+      // Clear highlight on external deselect
+      if (type === 'clear_selection' || type === 'feature_deselect') {{
+        try {{
+          if (typeof window.__fusedHighlightClear === 'function') {{
+            window.__fusedHighlightClear();
+          }} else if (map.getSource('feature-hl')) {{
+            map.getSource('feature-hl').setData({{ type:'FeatureCollection', features: [] }});
+          }}
+        }} catch (e) {{}}
+        return;
+      }}
 
       // Handle location_change + feature_click (scatter plot) using bounds
       if ((type === 'location_change' || type === 'feature_click' || type === 'hex_click') &&
@@ -5592,7 +5669,7 @@ def enable_location_listener(
           if (type === 'feature_click' || type === 'hex_click') {{
             highlightFromMessage(message);
           }}
-
+          
           // Fit map to bounds with optional zoom offset
           if (ZOOM_OFFSET > 0) {{
             // First fit bounds, then zoom in a bit more
@@ -5618,7 +5695,7 @@ def enable_location_listener(
             const centerLng = (west + east) / 2;
             const centerLat = (south + north) / 2;
             map.flyTo({{ center: [centerLng, centerLat], zoom: 14, duration: 800 }});
-          }}
+        }}
       }}
     }} catch (e) {{
       console.warn('[map_location_listener] Error handling message:', e);
