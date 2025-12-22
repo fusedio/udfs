@@ -2961,11 +2961,18 @@ def deckgl_layers(
         }
         
         // Handle continuous legend
-        if (fnType !== 'colorContinuous' || !colorCfg.domain?.length) return;
+        if (fnType !== 'colorContinuous') return;
         
-        // Use dynamic domain if available (from autoDomain calculation)
-        const domain = colorCfg._dynamicDomain || colorCfg.domain;
-        const [d0, d1] = domain;
+        // Use dynamic domain if available (from autoDomain calculation).
+        // If domain is omitted (we treat that as autoDomain for tile layers), show a placeholder
+        // legend until the dynamic domain is computed.
+        const domain =
+          (Array.isArray(colorCfg._dynamicDomain) && colorCfg._dynamicDomain.length >= 2) ? colorCfg._dynamicDomain :
+          (Array.isArray(colorCfg.domain) && colorCfg.domain.length >= 2) ? colorCfg.domain :
+          [0, 1];
+        const d0 = Number(domain[0]);
+        const d1 = Number(domain[domain.length - 1]);
+        if (!Number.isFinite(d0) || !Number.isFinite(d1)) return;
         const domainReversed = d0 > d1;
         const steps = colorCfg.steps || 7;
         
