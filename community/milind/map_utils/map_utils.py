@@ -2086,7 +2086,22 @@ def deckgl_layers(
           out[k] = (obj) => {
             try {
               const fn = new Function('object', `const properties = object?.properties || object || {}; return (${code});`);
-              return fn(obj);
+              const res = fn(obj);
+              // Special-case color accessors: ensure [r,g,b,(a)] is numeric + valid.
+              if (k === 'getFillColor' || k === 'getLineColor') {
+                if (!Array.isArray(res) || res.length < 3) return [0, 0, 0];
+                const clamp255 = (x) => {
+                  const n = Number(x);
+                  if (!Number.isFinite(n)) return 0;
+                  return Math.max(0, Math.min(255, Math.round(n)));
+                };
+                const r = clamp255(res[0]);
+                const g = clamp255(res[1]);
+                const b = clamp255(res[2]);
+                if (res.length >= 4) return [r, g, b, clamp255(res[3])];
+                return [r, g, b];
+              }
+              return res;
             } catch (e) { return null; }
           };
         } else if (Array.isArray(v) && (k === 'getFillColor' || k === 'getLineColor')) {
