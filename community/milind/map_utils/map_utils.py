@@ -2164,6 +2164,9 @@ def deckgl_layers(
         tileSize: tileCfg.tileSize ?? 256,
         minZoom: tileCfg.minZoom ?? 0,
         maxZoom: tileCfg.maxZoom ?? 19,
+        // Use lower-zoom (larger) tiles for fewer requests (e.g. -1).
+        // Note: this trades detail for speed, but is great for large viewports.
+        zoomOffset: tileCfg.zoomOffset ?? 0,
         pickable: true,
         visible: visible,
         // Parallelism for tile fetching. Can be overridden via config["tileLayer"]["maxRequests"].
@@ -5657,13 +5660,12 @@ def enable_location_listener(
             return;
           }}
           
-          // Calculate adaptive padding - reduce if bounds are small
-          // to prevent NaN from oversized padding on small areas
-          const boundsWidth = Math.abs(east - west);
-          const boundsHeight = Math.abs(north - south);
-          const minDim = Math.min(boundsWidth, boundsHeight);
-          // For very small areas (< 0.1 degrees ≈ 10km), cap padding at 30
-          const adaptivePadding = minDim < 0.1 ? Math.min(PADDING, 30) : PADDING;
+          // Padding handling
+          // NOTE: previously we capped padding down to 30px for small bounds, which made
+          // fitBounds zoom in *more* than intended. Instead, honor the user-provided padding,
+          // but clamp it to a reasonable range to avoid pathological values.
+          const safePadding = Number.isFinite(PADDING) ? Math.max(0, Math.min(PADDING, 250)) : 50;
+          const adaptivePadding = safePadding;
           
           // Highlight the target feature if possible (vector match or bbox)
           if (type === 'feature_click' || type === 'hex_click') {{
