@@ -825,34 +825,11 @@ def deckgl_layers(
       box-shadow: 0 4px 12px var(--ui-shadow);
       overflow: hidden; /* clip gutter to rounded corners */
     }
-    /* Screenshot button - standalone Mapbox-style control */
-    #screenshot-btn {
-      position: fixed;
-      top: 12px;
-      right: 12px;
-      appearance: none;
-      border: 1px solid var(--ui-border-2);
-      background: var(--ui-float-bg);
-      color: var(--ui-muted);
-      border-radius: 8px;
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      padding: 0;
-      z-index: 100;
-      box-shadow: 0 4px 12px var(--ui-shadow);
-      transition: color 0.15s, border-color 0.15s, background 0.15s;
+
+    /* Bottom-left control padding (zoom/home + scale bar) */
+    .mapboxgl-ctrl-bottom-left .mapboxgl-ctrl {
+      margin: 0 0 20px 20px; /* add more corner padding */
     }
-    #screenshot-btn:hover { 
-      color: var(--ui-text); 
-      border-color: var(--ui-border-2); 
-      background: var(--ui-float-bg-2);
-    }
-    #screenshot-btn:active { transform: translateY(0.5px); }
-    #screenshot-btn svg { width: 16px; height: 16px; display: block; }
     .layer-item {
       display: flex;
       align-items: center;
@@ -1129,15 +1106,7 @@ def deckgl_layers(
     <div id="layer-list"></div>
   </div>
   
-  {% if screenshot_button %}
-  <!-- Screenshot Button (Mapbox-style control) -->
-  <button id="screenshot-btn" title="Download screenshot" onclick="downloadScreenshot()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M4 8h3l1.2-2h7.6L17 8h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z"/>
-      <circle cx="12" cy="14" r="3.2"/>
-    </svg>
-  </button>
-  {% endif %}
+  <!-- Screenshot button moved into bottom-left control group -->
   
   <!-- Legend -->
   <div id="color-legend" class="color-legend" style="display:none;"></div>
@@ -1788,6 +1757,23 @@ def deckgl_layers(
               return b;
             };
 
+            const mkSvgBtn = (svgHtml, title, onClick) => {
+              const b = document.createElement('button');
+              b.type = 'button';
+              b.title = title;
+              b.setAttribute('aria-label', title);
+              b.style.display = 'flex';
+              b.style.alignItems = 'center';
+              b.style.justifyContent = 'center';
+              b.innerHTML = svgHtml;
+              b.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                try { onClick(); } catch (_e) {}
+              });
+              return b;
+            };
+
             container.appendChild(mkBtn('+', 'Zoom in', () => map.zoomIn({ duration: 250 })));
             container.appendChild(mkBtn('−', 'Zoom out', () => map.zoomOut({ duration: 250 })));
             container.appendChild(mkBtn('⌂', 'Reset view', () => {
@@ -1801,6 +1787,20 @@ def deckgl_layers(
                 duration: 600
               });
             }));
+
+            {% if screenshot_button %}
+            // Screenshot button (below reset)
+            container.appendChild(mkSvgBtn(
+              `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block">
+                <path d="M4 8h3l1.2-2h7.6L17 8h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z"/>
+                <circle cx="12" cy="14" r="3.2"/>
+              </svg>`,
+              'Download screenshot',
+              () => {
+              try { downloadScreenshot(); } catch (e) {}
+              }
+            ));
+            {% endif %}
 
             this._container = container;
             return container;
@@ -2960,15 +2960,7 @@ def deckgl_layers(
         `;
       }).join('');
       
-      // Position screenshot button below layer panel
-      {% if screenshot_button %}
-      const screenshotBtn = document.getElementById('screenshot-btn');
-      const layerPanel = document.getElementById('layer-panel');
-      if (screenshotBtn && layerPanel) {
-        const rect = layerPanel.getBoundingClientRect();
-        screenshotBtn.style.top = `${rect.bottom + 8}px`;
-      }
-      {% endif %}
+      // Screenshot button now lives in bottom-left controls
     }
 
     // ========== Legend ==========
