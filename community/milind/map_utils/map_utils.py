@@ -1750,6 +1750,71 @@ def deckgl_layers(
       preserveDrawingBuffer: true{% endif %}
     });
 
+    // Mapbox scale (km) in bottom-left (placed BEFORE zoom controls so it stacks underneath)
+    try { map.addControl(new mapboxgl.ScaleControl({ maxWidth: 110, unit: 'metric' }), 'bottom-left'); } catch (e) {}
+
+    // Zoom controls + "home" (back to initial view)
+    const __FUSED_INITIAL_VIEW__ = {
+      center: [{{ center_lng }}, {{ center_lat }}],
+      zoom: {{ zoom }},
+      pitch: {{ pitch }},
+      bearing: {{ bearing }}
+    };
+    (function addZoomHomeControl() {
+      try {
+        class ZoomHomeControl {
+          onAdd(map) {
+            this._map = map;
+            const container = document.createElement('div');
+            container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
+
+            const mkBtn = (label, title, onClick) => {
+              const b = document.createElement('button');
+              b.type = 'button';
+              b.title = title;
+              b.setAttribute('aria-label', title);
+              b.style.fontSize = '16px';
+              b.style.lineHeight = '20px';
+              b.style.fontWeight = '600';
+              b.style.display = 'flex';
+              b.style.alignItems = 'center';
+              b.style.justifyContent = 'center';
+              b.textContent = label;
+              b.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                try { onClick(); } catch (_e) {}
+              });
+              return b;
+            };
+
+            container.appendChild(mkBtn('+', 'Zoom in', () => map.zoomIn({ duration: 250 })));
+            container.appendChild(mkBtn('−', 'Zoom out', () => map.zoomOut({ duration: 250 })));
+            container.appendChild(mkBtn('⌂', 'Reset view', () => {
+              const v = __FUSED_INITIAL_VIEW__ || {};
+              const c = Array.isArray(v.center) ? v.center : [0, 0];
+              map.easeTo({
+                center: c,
+                zoom: Number.isFinite(v.zoom) ? v.zoom : map.getZoom(),
+                pitch: Number.isFinite(v.pitch) ? v.pitch : map.getPitch(),
+                bearing: Number.isFinite(v.bearing) ? v.bearing : map.getBearing(),
+                duration: 600
+              });
+            }));
+
+            this._container = container;
+            return container;
+          }
+          onRemove() {
+            try { this._container?.parentNode?.removeChild(this._container); } catch (_e) {}
+            this._map = undefined;
+          }
+        }
+        // Place in bottom-left (user preference).
+        map.addControl(new ZoomHomeControl(), 'bottom-left');
+      } catch (e) {}
+    })();
+
     {% if screenshot_button %}
     function downloadScreenshot() {
       try {
@@ -1768,9 +1833,6 @@ def deckgl_layers(
       }
     }
     {% endif %}
-
-    // Mapbox scale (km) in bottom-left
-    try { map.addControl(new mapboxgl.ScaleControl({ maxWidth: 110, unit: 'metric' }), 'bottom-left'); } catch (e) {}
 
     // Cmd (⌘) + drag to rotate/pitch (trackpad-friendly "3D orbit").
     // Also blocks Mapbox's default Ctrl+drag rotate so Cmd becomes the shortcut.
