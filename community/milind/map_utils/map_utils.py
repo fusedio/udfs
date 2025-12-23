@@ -3373,6 +3373,31 @@ def deckgl_layers(
     (function() {
       const HL_FILL = 'rgba(255,255,0,0.3)', HL_LINE = 'rgba(255,255,0,1)', HL_LW = 3;
       let selected = null, added = false;
+
+      // Broadcast deselect so sibling widgets (scatter/hist) can clear highlights too.
+      // Keep this minimal + robust (BroadcastChannel + postMessage fanout).
+      const __CLEAR_CHANNEL__ = 'fused-bus';
+      let __clearBc__ = null;
+      try { if ('BroadcastChannel' in window) __clearBc__ = new BroadcastChannel(__CLEAR_CHANNEL__); } catch (e) {}
+      function __busSend__(obj) {
+        const msg = { ...obj, timestamp: Date.now(), source: obj?.source || 'map' };
+        const s = JSON.stringify(msg);
+        try { if (__clearBc__) __clearBc__.postMessage(msg); } catch (e) {}
+        try { window.parent.postMessage(s, '*'); } catch (e) {}
+        try { window.postMessage(s, '*'); } catch (e) {}
+        try { if (window.top && window.top !== window.parent) window.top.postMessage(s, '*'); } catch (e) {}
+        try {
+          if (window.top && window.top.frames) {
+            for (let i = 0; i < window.top.frames.length; i++) {
+              const f = window.top.frames[i];
+              if (f !== window) try { f.postMessage(s, '*'); } catch (e) {}
+            }
+          }
+        } catch (e) {}
+      }
+      function __broadcastClear__() {
+        __busSend__({ type: 'clear_selection', message_type: 'clear_selection', source: 'map' });
+      }
       
       // Find original unclipped geometry using _fused_idx
       function findOriginalFeature(clickedFeature, layerId) {
@@ -3493,9 +3518,11 @@ def deckgl_layers(
               highlight({ properties: info.object.properties || info.object, geometry: null });
             } else if (selected) {
               highlight(null);
+              __broadcastClear__();
             }
           } else if (selected) {
             highlight(null);
+            __broadcastClear__();
           }
         });
       });
