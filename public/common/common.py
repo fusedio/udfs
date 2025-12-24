@@ -1539,7 +1539,7 @@ def get_tiff_bounds(tiff_path):
         return bounds
 
 @fused.cache(cache_max_age='90d')
-def get_tiff_info(tiff_path, include_stats=False):
+def get_tiff_info(tiff_path, default_crs=None, include_stats=False):
     import rasterio
     from rasterio.env import Env
     from shapely.geometry import box
@@ -1578,11 +1578,16 @@ def get_tiff_info(tiff_path, include_stats=False):
                 'stats_std': [stats.std] if stats else [None],
                 'colormap': [colormap],
             }
-        
+        crs = src.crs
+        if crs is None:
+            if default_crs:
+                crs = default_crs
+            else:
+                raise ValueError('TIFF CRS is None. Please set default_crs. (e.g. default_crs="EPSG:3857")')
         gdf = gpd.GeoDataFrame(
             metadata,
             geometry=[geometry],
-            crs=src.crs
+            crs=crs
         )
         gdf['area']=gdf.area
     return gdf.to_crs(epsg=4326)
