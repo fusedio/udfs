@@ -1,0 +1,349 @@
+DEFAULT_CONFIG = r"""{
+  "tileLayer": {
+    "@@type": "TileLayer",
+    "minZoom": 0,
+    "maxZoom": 19,
+    "tileSize": 256,
+    "pickable": true
+  },
+  "hexLayer": {
+    "@@type": "H3HexagonLayer",
+    "stroked": false,
+    "filled": true,
+    "pickable": true,
+    "extruded": false,
+    "opacity": 1,
+    "coverage": 0.9,
+    "lineWidthMinPixels": 10,
+    "getHexagon": "@@=properties.hex",
+    "getFillColor": {
+      "@@function": "colorContinuous",
+      "attr": "cnt",
+      "domain": [
+        200,
+        0
+      ],
+      "colors": "OrYel",
+      "nullColor": [
+        184,
+        184,
+        184
+      ]
+    },
+    "getLineColor": [
+      200,
+      200,
+      200
+    ],
+    "getElevation": {
+      "@@function": "hasProp",
+      "property": "cnt",
+      "present": "@@=properties.cnt",
+      "absent": 1
+    },
+    "elevationScale": 2
+  }
+}"""
+
+@fused.udf(cache_max_age=0)
+def udf(
+    tile_url_template: str = "https://unstable.fused.io/server/v1/realtime-shared/fsh_6ju0yUv4047jwfQnP0yGE4/run/file?dtype_out_raster=png&dtype_out_vector=json",
+    config_json: str = DEFAULT_CONFIG,
+    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
+    center_lng: float = -98.5,
+    center_lat: float = 39.5,
+    zoom: float = 3
+):
+    from jinja2 import Template
+    
+    html = Template(r"""
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>H3 XYZ Workbench-style Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Mapbox GL -->
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+
+  <!-- Load h3-js FIRST, then deck.gl + geo-layers (+ carto for color ramps) -->
+  <script src="https://unpkg.com/h3-js@4.1.0/dist/h3-js.umd.js"></script>
+  <script src="https://unpkg.com/deck.gl@9.1.3/dist.min.js"></script>
+  <script src="https://unpkg.com/@deck.gl/geo-layers@9.1.3/dist.min.js"></script>
+  <script src="https://unpkg.com/@deck.gl/carto@9.1.3/dist.min.js"></script>
+
+  <style>
+    html, body, #map { margin: 0; height: 100%; width: 100%; }
+    #hud { position: absolute; top: 8px; left: 8px; z-index: 5; color: #fff; background: rgba(0,0,0,.65);
+           padding: 8px 12px; border-radius: 6px; font: 12px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+    #hud b { color: #4fc3f7; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="hud"><b>Tiles:</b> <span id="note">ready</span></div>
+
+  <script>
+    const MAPBOX_TOKEN = {{ mapbox_token | tojson }};
+    const STYLE_URL    = "mapbox://styles/mapbox/dark-v10";
+    const TPL          = {{ tile_url_template | tojson }};
+    const CONFIG       = JSON.parse({{ config_json | tojson }});
+
+    const { TileLayer, PolygonLayer, MapboxOverlay } = deck;
+    const H3HexagonLayer = deck.H3HexagonLayer || (deck.GeoLayers && deck.GeoLayers.H3HexagonLayer);
+    const { colorContinuous } = deck.carto;
+
+    const $note = () => document.getElementById('note');
+    function setNote(t){ const n=$note(); if(n) n.textContent=t; }
+
+    // ----- helpers for @@function / @@= support -----
+    function evalExpression(expr, object) {
+      if (typeof expr === 'string' && expr.startsWith('@@=')) {
+        const code = expr.slice(3);
+        try {
+          const fn = new Function('object', `
+            const properties = object?.properties || object || {};
+            return (${code});
+          `);
+          return fn(object);
+        } catch (e) { console.error('@@= eval error:', expr, e); return null; }
+      }
+      return expr;
+    }
+
+    function hasProp({ property, present, absent }) {
+      return (object) => {
+        const props = object?.properties || object || {};
+        if (property in props && props[property] !== null && props[property] !== undefined) {
+          return typeof present === 'function' ? present(object)
+               : (typeof present === 'string' && present.startsWith('@@=')) ? evalExpression(present, object)
+               : present;
+        }
+        return typeof absent === 'function' ? absent(object) : absent;
+      };
+    }
+
+    function processColorContinuous(cfg) {
+      // accept 2-element domain or full array
+      return {
+        attr: cfg.attr,
+        domain: cfg.domain,
+        colors: cfg.colors || 'TealGrn',
+        nullColor: cfg.nullColor || [184,184,184]
+      };
+    }
+
+    function parseHexLayerConfig(config) {
+      const out = {};
+      for (const [k, v] of Object.entries(config || {})) {
+        if (k === '@@type') continue;
+        if (v && typeof v === 'object' && !Array.isArray(v)) {
+          if (v['@@function'] === 'colorContinuous') {
+            out[k] = colorContinuous(processColorContinuous(v));
+          } else if (v['@@function'] === 'hasProp') {
+            out[k] = hasProp(v);
+          } else {
+            out[k] = v;
+          }
+        } else if (typeof v === 'string' && v.startsWith('@@=')) {
+          out[k] = (obj) => evalExpression(v, obj);
+        } else {
+          out[k] = v;
+        }
+      }
+      return out;
+    }
+
+    // ----- H3 ID safety (handles string/number/bigint/[hi,lo]) -----
+    function toH3String(hex) {
+      try {
+        if (hex == null) return null;
+        if (typeof hex === 'string') {
+          const s = hex.startsWith('0x') ? hex.slice(2) : hex;
+          // if decimal digits, convert to hex via BigInt
+          return (/^\d+$/.test(s) ? BigInt(s).toString(16) : s.toLowerCase());
+        }
+        if (typeof hex === 'number') return BigInt(Math.trunc(hex)).toString(16);
+        if (typeof hex === 'bigint') return hex.toString(16);
+        if (Array.isArray(hex) && hex.length === 2) {
+          const a = (BigInt(hex[0]) << 32n) | BigInt(hex[1]);
+          const b = (BigInt(hex[1]) << 32n) | BigInt(hex[0]);
+          const sa = a.toString(16), sb = b.toString(16);
+          if (h3.isValidCell?.(sa)) return sa;
+          if (h3.isValidCell?.(sb)) return sb;
+          return sa;
+        }
+      } catch(_) {}
+      return null;
+    }
+
+    // Normalize any tile JSON into data rows, and add both top-level + properties for compatibility
+    function normalize(raw){
+      const arr = Array.isArray(raw)
+        ? raw
+        : (Array.isArray(raw?.data) ? raw.data
+        : (Array.isArray(raw?.features) ? raw.features : []));
+      const rows = arr.map(d => d?.properties ? {...d.properties} : {...d});
+      return rows.map(p => {
+        const hexRaw = p.hex ?? p.h3 ?? p.index ?? p.id;
+        const metric = p.metric ?? p.value ?? p.count ?? p.pct ?? p.area ?? p.total ?? p.val;
+        const hex = toH3String(hexRaw);
+        if (!hex) return null;
+        const props = { ...p, hex, metric };
+        return { ...props, properties: { ...props } }; // both locations
+      }).filter(Boolean);
+    }
+
+    // Mapbox init
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+    const map = new mapboxgl.Map({ container:'map', style:STYLE_URL, center:[{{ center_lng }}, {{ center_lat }}], zoom: {{ zoom }} });
+
+    // Fetch & parse tile with big-int protection for "hex|h3|index"
+    async function getTileData({ index, signal }) {
+      const {x,y,z} = index;
+      const url = TPL.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+      try {
+        const res = await fetch(url, { cache:'no-cache', signal });
+        if (!res.ok) throw new Error(String(res.status));
+        let text = await res.text();
+        text = text.replace(/"(hex|h3|index)"\s*:\s*(\d+)/gi, (_m, k, d) => `"${k}":"${d}"`);
+        const data = JSON.parse(text);
+        const out = normalize(data);
+        setNote(`z${z} (${x},${y}) → ${out.length}`);
+        return out;
+      } catch (e) {
+        // silence aborts (happen on pan/zoom); show others
+        const s = String(e?.name||e);
+        if (!/Abort/i.test(s)) {
+          console.error('tile error', e);
+          setNote(`error z${z} (${x},${y})`);
+        }
+        return [];
+      }
+    }
+
+    // Build layers from CONFIG
+    const tileCfg = CONFIG.tileLayer || {};
+    const hexCfg  = parseHexLayerConfig(CONFIG.hexLayer || {});
+
+    const isTile = /\{z\}|\{x\}|\{y\}/.test(TPL);
+    const overlay = new MapboxOverlay({ interleaved: false, layers: [] });
+    map.addControl(overlay);
+
+    if (isTile) {
+      // XYZ Tile mode
+      overlay.setProps({
+        layers: [
+          new TileLayer({
+            id: 'hex-tiles',
+            data: TPL,
+            tileSize: tileCfg.tileSize ?? 256,
+            minZoom:   tileCfg.minZoom   ?? 0,
+            maxZoom:   tileCfg.maxZoom   ?? 19,
+            pickable:  tileCfg.pickable  ?? true,
+            getTileData,
+            renderSubLayers: (props) => {
+              const data = props.data || [];
+              if (!data.length) return null;
+
+              if (H3HexagonLayer) {
+                return new H3HexagonLayer({
+                  id: `${props.id}-h3`,
+                  data,
+                  pickable: true, stroked: false, filled: true, extruded: false,
+                  coverage: 0.9, lineWidthMinPixels: 1,
+                  getHexagon: d => d.hex,
+                  ...hexCfg
+                });
+              }
+
+              const polys = data.map(d => {
+                const ring = h3.cellToBoundary(d.hex, true).map(([lat,lng]) => [lng, lat]);
+                return { ...d, polygon: ring };
+              });
+              return new PolygonLayer({
+                id: `${props.id}-poly-fallback`,
+                data: polys,
+                pickable: true, stroked: true, filled: true, extruded: false,
+                getPolygon: d => d.polygon,
+                getFillColor: [184,184,184,220],
+                getLineColor: [200,200,200,255],
+                lineWidthMinPixels: 1
+              });
+            }
+          })
+        ]
+      });
+    } else {
+      // Single file mode
+      (async () => {
+        try {
+          const res = await fetch(TPL, { cache:'no-cache' });
+          if (!res.ok) throw new Error(String(res.status));
+          let text = await res.text();
+          // Quote large numeric ids before parse, handle scientific notation
+          const numPattern = /"(?:(?:hex)|(?:h3)|(?:index)|(?:id))"\s*:\s*(-?(?:\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?))/g;
+          text = text.replace(numPattern, (_m, numLit) => `"hex":"${String(numLit)}"`);
+          const data = JSON.parse(text);
+          const rows = normalize(data).map(r => {
+            // Map common aliases to metric
+            const m = r.metric ?? r.cnt ?? r.count ?? r.value;
+            return { ...r, metric: m };
+          });
+          setNote(`file → ${rows.length}`);
+
+          const layer = H3HexagonLayer
+            ? new H3HexagonLayer({
+                id: 'file-h3',
+                data: rows,
+                pickable: true, stroked: false, filled: true, extruded: false,
+                coverage: 0.9, lineWidthMinPixels: 1,
+                getHexagon: d => d.hex,
+                ...hexCfg
+              })
+            : new PolygonLayer({
+                id: 'file-poly-fallback',
+                data: rows.map(d => ({...d, polygon: h3.cellToBoundary(d.hex, true).map(([lat,lng])=>[lng,lat])})),
+                pickable: true, stroked: true, filled: true, extruded: false,
+                getPolygon: d => d.polygon,
+                getFillColor: [184,184,184,220],
+                getLineColor: [200,200,200,255],
+                lineWidthMinPixels: 1
+              });
+
+          overlay.setProps({ layers: [layer] });
+        } catch (e) {
+          console.error('file load error', e);
+          setNote('file load error');
+        }
+      })();
+    }
+
+    // HUD hover
+    map.on('mousemove', (e)=>{
+      const info = overlay.pickObject({x:e.point.x, y:e.point.y, radius:4});
+      if(info?.object){
+        map.getCanvas().style.cursor='pointer';
+        const p = info.object;
+        const val = p.metric;
+        setNote(`hex ${p.hex}${val!=null?` • ${Number(val).toFixed(2)}`:''}`);
+      } else {
+        map.getCanvas().style.cursor='';
+      }
+    });
+  </script>
+</body>
+</html>
+""").render(
+        tile_url_template=tile_url_template,
+        config_json=config_json,
+        mapbox_token=mapbox_token,
+        center_lng=center_lng,
+        center_lat=center_lat,
+        zoom=zoom,
+    )
+
+    common = fused.load("https://github.com/fusedio/udfs/tree/abf9c87/public/common/")
+    return common.html_to_obj(html)
