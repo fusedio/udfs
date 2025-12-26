@@ -2884,10 +2884,23 @@ def deckgl_layers(
 
     // Clicking anywhere on the layer row toggles visibility (same as the eye icon).
     // The eye icon itself stops propagation so we don't double-toggle.
+    // Also: when debug panel is enabled, clicking a layer row sets it as the active "Editing Layer".
+    window.selectDebugLayer = function(layerId) {
+      try {
+        const sel = document.getElementById('dbg-layer-select');
+        if (!sel) return;
+        if (sel.value !== layerId) {
+          sel.value = layerId;
+          // Trigger the existing change handler so all debug UI rehydrates.
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      } catch (_) {}
+    };
     window.onLayerItemClick = function(e, layerId) {
       try {
         if (e && e.target && e.target.closest && e.target.closest('.layer-eye')) return;
       } catch (_) {}
+      try { window.selectDebugLayer(layerId); } catch (_) {}
       const cur = !!layerVisibility[layerId];
       toggleLayerVisibility(layerId, !cur);
     };
@@ -2955,7 +2968,7 @@ def deckgl_layers(
         return `
           <div class="layer-item ${visible ? '' : 'disabled'}" data-layer-id="${l.id}" style="--layer-strip: ${stripBg};" onclick="onLayerItemClick(event, '${l.id}')">
             <span class="layer-name">${l.name}</span>
-            <span class="layer-eye" onclick="event.stopPropagation(); toggleLayerVisibility('${l.id}', ${!visible})">${eyeIcon}</span>
+            <span class="layer-eye" onclick="event.stopPropagation(); try{selectDebugLayer('${l.id}');}catch(e){} toggleLayerVisibility('${l.id}', ${!visible})">${eyeIcon}</span>
           </div>
         `;
       }).join('');
