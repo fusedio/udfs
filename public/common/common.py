@@ -2536,6 +2536,7 @@ def geo_samples(
         A GeoDataFrame with point geometry.
     """
     import geopandas as gpd
+    import pandas as pd
     import shapely
     import random
     points = [
