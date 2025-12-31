@@ -3473,6 +3473,33 @@ def add_utm_area(gdf, utm_col='utm_epsg', utm_area_col='utm_area_sqm'):
     gdf[utm_area_col] = gdf.index.map(areas_dict)
     return gdf
 
+async def fetch_async(
+    urls: list,
+    concurrency: int = 200,
+    timeout: int = 10,
+    headers: dict = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    },
+):
+    import asyncio
+    import httpx
+
+    # Limit concurrent connections to avoid pool exhaustion
+    semaphore = asyncio.Semaphore(min(concurrency, len(urls)))  # Process 200 URLs at a time
+
+    async def fetch(url, client, timeout):
+        async with semaphore:  # Limit concurrent requests
+            try:
+                resp = await client.get(url, timeout=timeout)
+                return resp.text
+            except Exception as e:
+                print(f"Error fetching {url}: {e}")
+                return None
+
+    limits = httpx.Limits(max_connections=200, max_keepalive_connections=100)
+    async with httpx.AsyncClient(headers=headers, limits=limits, timeout=timeout) as client:
+        results = await asyncio.gather(*(fetch(url, client, timeout) for url in urls))
+    return results
 
 def func_to_udf(func, cache_max_age='12h'):
     import fused
