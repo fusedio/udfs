@@ -37,8 +37,7 @@ def get_overture(
     import geopandas as gpd
     import pandas as pd
     from shapely.geometry import shape, box
-
-    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/6750f1f/public/common/")
 
     if release == "2024-02-15-alpha-0":
         if overture_type == "administrative_boundary":

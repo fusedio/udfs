@@ -117,7 +117,7 @@
                 ]
               }
             },
-            "fused:udfType": "vector_tile",
+            "fused:udfType": "vector_single",
             "fused:slug": "Overture_Maps_Example",
             "fused:name": "Overture_Maps_Example",
             "fused:defaultViewState": {
