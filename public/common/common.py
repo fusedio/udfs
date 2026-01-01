@@ -2092,6 +2092,7 @@ def to_gdf(
     cols_lonlat=None,
     col_geom="geometry",
     verbose=False,
+    return_wkt=False,
 ):
     """Convert input data into a GeoPandas GeoDataFrame."""
     import geopandas as gpd
@@ -2100,6 +2101,21 @@ def to_gdf(
     import pandas as pd
     import mercantile
     import numpy as np
+    # Handle string input (WKT format)
+    if isinstance(data, str):
+        if data[0]=='{':
+            import json
+            data = json.loads(data)
+        else:
+            try:
+                geometry = wkt.loads(data)
+                gdf = gpd.GeoDataFrame(geometry=[geometry], crs=crs or 4326)
+                if return_wkt:
+                    gdf["geometry"] = gdf.geometry.to_wkt()
+                return gdf
+            except Exception as e:
+                raise ValueError(f"Failed to parse string as WKT: {e}")
+                
     # Handle dictionary inputs
     if isinstance(data, dict):
         # Convert xyz dict to xyz array
@@ -2112,6 +2128,8 @@ def to_gdf(
         elif 'features' in data:
             try:
                 gdf = gpd.GeoDataFrame.from_features(data['features'], crs=crs or 4326)
+                if return_wkt:
+                    gdf["geometry"] = gdf.geometry.to_wkt()
                 return gdf
             except Exception as e:
                 raise ValueError(f"Failed to parse GeoJSON FeatureCollection: {e}")
@@ -2129,19 +2147,15 @@ def to_gdf(
                 geometry=[shapely.box(bounds.west, bounds.south, bounds.east, bounds.north)],
                 crs=4326
             )
+            if return_wkt:
+                gdf["geometry"] = gdf.geometry.to_wkt()
             return gdf[['x', 'y', 'z', 'geometry']]
          
-        elif len(data) == 4: # Handle the bounds case specifically        
-            return gpd.GeoDataFrame({}, geometry=[shapely.box(*data)], crs=crs or 4326)        
-    
-    # Handle string input (WKT format)
-    if isinstance(data, str):
-        try:
-            geometry = wkt.loads(data)
-            gdf = gpd.GeoDataFrame(geometry=[geometry], crs=crs or 4326)
-            return gdf
-        except Exception as e:
-            raise ValueError(f"Failed to parse string as WKT: {e}")
+        elif len(data) == 4: # Handle the bounds case specifically
+            gdf = gpd.GeoDataFrame({}, geometry=[shapely.box(*data)], crs=crs or 4326)
+            if return_wkt:
+                gdf["geometry"] = gdf.geometry.to_wkt()
+            return gdf        
     
     if cols_lonlat:
         if isinstance(data, pd.Series):
@@ -2156,6 +2170,8 @@ def to_gdf(
             )
         if crs:
             gdf = resolve_crs(gdf, crs, verbose=verbose)
+        if return_wkt:
+            gdf["geometry"] = gdf.geometry.to_wkt()
         return gdf
     if isinstance(data, gpd.GeoDataFrame):
         gdf = data
@@ -2163,6 +2179,8 @@ def to_gdf(
             gdf = resolve_crs(gdf, crs, verbose=verbose)
         elif gdf.crs is None:
             raise ValueError("Please provide crs. usually crs=4326.")
+        if return_wkt:
+            gdf["geometry"] = gdf.geometry.to_wkt()
         return gdf
     elif isinstance(data, gpd.GeoSeries):
         gdf = gpd.GeoDataFrame(data=data)
@@ -2170,6 +2188,8 @@ def to_gdf(
             gdf = resolve_crs(gdf, crs, verbose=verbose)
         elif gdf.crs is None:
             raise ValueError("Please provide crs. usually crs=4326.")
+        if return_wkt:
+            gdf["geometry"] = gdf.geometry.to_wkt()
         return gdf
     elif type(data) in (pd.DataFrame, pd.Series):
         if type(data) is pd.Series:
@@ -2203,6 +2223,8 @@ def to_gdf(
             # This is needed for Python 3.8 specifically, because otherwise creating the GeoDataFrame modifies the input DataFrame
             data = data.copy()
             gdf = df_to_gdf(data, cols_lonlat, verbose=verbose)
+        if return_wkt:
+            gdf["geometry"] = gdf.geometry.to_wkt()
         return gdf
     elif (
         isinstance(data, shapely.geometry.base.BaseGeometry)
@@ -2211,12 +2233,35 @@ def to_gdf(
     ):
         if not crs:
             raise ValueError("Please provide crs. usually crs=4326.")
-        return gpd.GeoDataFrame(geometry=[data], crs=crs)
+        gdf = gpd.GeoDataFrame(geometry=[data], crs=crs)
+        if return_wkt:
+            gdf["geometry"] = gdf.geometry.to_wkt()
+        return gdf
     else:
         raise ValueError(
             f"Cannot convert data of type {type(data)} to GeoDataFrame. Please pass a GeoDataFrame, GeoSeries, DataFrame, Series, or shapely geometry."
         )
+        
+def to_json(df, **kwargs):
+    import numpy as np
+    import geopandas as gpd
 
+    def _safe(x):
+        if isinstance(x, np.ndarray):
+            return x.tolist()
+        if isinstance(x, (list, tuple)):
+            return [_safe(v) for v in x]
+        if isinstance(x, dict):
+            return {k: _safe(v) for k, v in x.items()}
+        return x
+
+    geom = df.geometry.name if isinstance(df, gpd.GeoDataFrame) else None
+    df = df.copy()
+    for c in df.columns:
+        if c != geom:
+            df[c] = df[c].apply(_safe)
+
+    return df.to_json(**kwargs)
 
 def geo_buffer(
     data,
