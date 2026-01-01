@@ -2096,16 +2096,25 @@ def to_gdf(
     """Convert input data into a GeoPandas GeoDataFrame."""
     import geopandas as gpd
     import shapely
+    from shapely import wkt
     import pandas as pd
     import mercantile
     import numpy as np
-    # Convert xyz dict to xyz array
-    if isinstance(data, dict) and set(data.keys()) == {'x', 'y', 'z'}:
-        try:
-            data = [int(data['x']), int(data['y']), int(data['z'])]
-        except (ValueError, TypeError):
-            pass     
-            
+    # Handle dictionary inputs
+    if isinstance(data, dict):
+        # Convert xyz dict to xyz array
+        if set(data.keys()) == {'x', 'y', 'z'}:
+            try:
+                data = [int(data['x']), int(data['y']), int(data['z'])]
+            except (ValueError, TypeError):
+                pass
+        # Handle GeoJSON FeatureCollection
+        elif 'features' in data:
+            try:
+                gdf = gpd.GeoDataFrame.from_features(data['features'], crs=crs or 4326)
+                return gdf
+            except Exception as e:
+                raise ValueError(f"Failed to parse GeoJSON FeatureCollection: {e}")
     
     if data is None or (isinstance(data, (list, tuple, np.ndarray))):
         
@@ -2124,7 +2133,16 @@ def to_gdf(
          
         elif len(data) == 4: # Handle the bounds case specifically        
             return gpd.GeoDataFrame({}, geometry=[shapely.box(*data)], crs=crs or 4326)        
-        
+    
+    # Handle string input (WKT format)
+    if isinstance(data, str):
+        try:
+            geometry = wkt.loads(data)
+            gdf = gpd.GeoDataFrame(geometry=[geometry], crs=crs or 4326)
+            return gdf
+        except Exception as e:
+            raise ValueError(f"Failed to parse string as WKT: {e}")
+    
     if cols_lonlat:
         if isinstance(data, pd.Series):
             raise ValueError(
@@ -2198,6 +2216,7 @@ def to_gdf(
         raise ValueError(
             f"Cannot convert data of type {type(data)} to GeoDataFrame. Please pass a GeoDataFrame, GeoSeries, DataFrame, Series, or shapely geometry."
         )
+
 
 def geo_buffer(
     data,
