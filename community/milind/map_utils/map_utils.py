@@ -78,8 +78,8 @@ VALID_HEX_LAYER_PROPS = {
 # CDN URLs
 # ============================================================
 
-FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@7233066/dist/fusedmaps.umd.js"
-FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@7233066/dist/fusedmaps.css"
+FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@2004124/dist/fusedmaps.umd.js"
+FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@2004124/dist/fusedmaps.css"
 
 # ============================================================
 # Minimal HTML Template
@@ -243,9 +243,44 @@ def deckgl_layers(
         config = layer_def.get("config", {})
         name = layer_def.get("name", f"Layer {i + 1}")
         visible = layer_def.get("visible", True)
+        parquet_url = layer_def.get("parquetUrl") or layer_def.get("parquet_url")
+        sql = layer_def.get("sql")
+        data_ref = layer_def.get("data_ref") or layer_def.get("dataRef") or layer_def.get("data_var") or layer_def.get("dataVar")
+        
+        # Validate sources early so "missing data" doesn't silently render nothing.
+        if layer_type == "hex":
+            if not tile_url and parquet_url is None and df is None:
+                raise ValueError(
+                    f"Hex layer '{name}' is missing a source. Provide one of: "
+                    f"data=<DataFrame with 'hex'>, tile_url=<xyz template>, parquetUrl=<parquet endpoint>."
+                )
+        elif layer_type in ("vector", "mvt"):
+            # vector: either data (GeoDataFrame) or vector tiles
+            if layer_type == "vector" and tile_url and not source_layer:
+                raise ValueError(f"Vector tile layer '{name}' requires source_layer when tile_url is provided.")
+            if not tile_url and df is None:
+                raise ValueError(
+                    f"Vector layer '{name}' is missing a source. Provide one of: "
+                    f"data=<GeoDataFrame>, tile_url=<mvt tiles> (+ source_layer)."
+                )
+        elif layer_type == "raster":
+            if not tile_url and not image_url:
+                raise ValueError(
+                    f"Raster layer '{name}' is missing a source. Provide one of: "
+                    f"tile_url=<xyz tiles> OR image_url=<static image> (+ bounds=[w,s,e,n])."
+                )
+            if image_url and (bounds is None or len(bounds) != 4):
+                raise ValueError(f"Raster layer '{name}' with image_url requires bounds=[west,south,east,north].")
         
         if layer_type == "hex":
             processed = _process_hex_layer(i, df, tile_url, config, name, visible)
+            if processed and data_ref:
+                processed["dataRef"] = str(data_ref)
+            # Support SQL parquet-backed hex layers (non-tile) by passing through parquetUrl/sql.
+            if processed and not processed.get("isTileLayer") and parquet_url:
+                processed["parquetUrl"] = parquet_url
+                if sql is not None:
+                    processed["sql"] = sql
             if processed:
                 processed_layers.append(processed)
                 if processed.get("isTileLayer"):
@@ -261,6 +296,8 @@ def deckgl_layers(
                 processed = _process_mvt_layer(i, tile_url, source_layer, config, name, visible)
             else:
                 processed = _process_vector_layer(i, df, config, name, visible)
+            if processed and data_ref:
+                processed["dataRef"] = str(data_ref)
             if processed:
                 processed_layers.append(processed)
                 # Auto-center from polygons/points
