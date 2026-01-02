@@ -77,8 +77,8 @@ VALID_HEX_LAYER_PROPS = {
 # CDN URLs
 # ============================================================
 
-FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@ef06492/dist/fusedmaps.umd.js"
-FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@ef06492/dist/fusedmaps.css"
+FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@ab814cb/dist/fusedmaps.umd.js"
+FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@ab814cb/dist/fusedmaps.css"
 
 # ============================================================
 # Minimal HTML Template
@@ -235,6 +235,8 @@ def deckgl_layers(
         layer_type = layer_def.get("type", "hex").lower()
         df = layer_def.get("data")
         tile_url = layer_def.get("tile_url")
+        image_url = layer_def.get("image_url")
+        bounds = layer_def.get("bounds")
         config = layer_def.get("config", {})
         name = layer_def.get("name", f"Layer {i + 1}")
         visible = layer_def.get("visible", True)
@@ -258,7 +260,7 @@ def deckgl_layers(
                     auto_center = _compute_center_from_gdf(df)
         
         elif layer_type == "raster":
-            processed = _process_raster_layer(i, tile_url, config, name, visible)
+            processed = _process_raster_layer(i, tile_url, image_url, bounds, config, name, visible)
             if processed:
                 processed_layers.append(processed)
     
@@ -410,9 +412,50 @@ def deckgl_raster(
             basemap=basemap,
         )
     
-    # For static image, fall back to the original implementation
-    # (requires image encoding which fusedmaps doesn't handle yet)
-    raise NotImplementedError("Static image raster not yet supported in refactored version")
+    if image_data is None:
+        raise ValueError("Provide either tile_url or image_data (with bounds=[west, south, east, north])")
+    if bounds is None or len(bounds) != 4:
+        raise ValueError("Static raster requires bounds=[west, south, east, north]")
+
+    image_url = None
+    if isinstance(image_data, str):
+        image_url = image_data
+    else:
+        # Encode numpy array -> PNG data URL
+        import base64
+        import io
+        import numpy as np
+        from PIL import Image
+
+        arr = np.asarray(image_data)
+        # Common raster convention (rasterio): (bands, height, width). Convert to (height, width, bands).
+        if arr.ndim == 3 and arr.shape[0] in (1, 3, 4) and arr.shape[1] > 1 and arr.shape[2] > 1:
+            arr = np.transpose(arr, (1, 2, 0))
+
+        if arr.ndim == 2:
+            mode = "L"
+        elif arr.ndim == 3 and arr.shape[2] == 3:
+            mode = "RGB"
+        elif arr.ndim == 3 and arr.shape[2] == 4:
+            mode = "RGBA"
+        else:
+            raise ValueError(f"Unsupported image_data shape: {arr.shape} (expected HxW, HxWx3, or HxWx4)")
+
+        if arr.dtype != np.uint8:
+            arr = np.clip(arr, 0, 255).astype(np.uint8)
+
+        im = Image.fromarray(arr, mode=mode)
+        buf = io.BytesIO()
+        im.save(buf, format="PNG")
+        b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+        image_url = f"data:image/png;base64,{b64}"
+
+    layers = [{"type": "raster", "image_url": image_url, "bounds": list(bounds), "config": config, "name": "Raster"}]
+    return deckgl_layers(
+        layers=layers,
+        mapbox_token=mapbox_token,
+        basemap=basemap,
+    )
 
 
 # ============================================================
@@ -564,10 +607,10 @@ def _process_vector_layer(idx: int, df, config: dict, name: str, visible: bool) 
     }
 
 
-def _process_raster_layer(idx: int, tile_url: str, config: dict, name: str, visible: bool) -> dict:
+def _process_raster_layer(idx: int, tile_url: str, image_url, bounds, config: dict, name: str, visible: bool) -> dict:
     """Process a raster layer definition into FusedMaps format."""
     
-    if not tile_url:
+    if not tile_url and not image_url:
         return None
     
     config = config or {}
@@ -577,15 +620,20 @@ def _process_raster_layer(idx: int, tile_url: str, config: dict, name: str, visi
     opacity = float(raster_layer.get("opacity", 1.0))
     opacity = max(0.0, min(1.0, opacity))
     
-    return {
+    out = {
         "id": f"layer-{idx}",
         "name": name,
         "layerType": "raster",
-        "tileUrl": tile_url,
         "rasterLayer": {"opacity": opacity},
         "opacity": opacity,
         "visible": visible,
     }
+    if tile_url:
+        out["tileUrl"] = tile_url
+    if image_url:
+        out["imageUrl"] = image_url
+        out["imageBounds"] = list(bounds) if bounds is not None else None
+    return out
 
 
 # ============================================================
