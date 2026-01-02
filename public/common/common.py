@@ -550,18 +550,48 @@ def gdf_to_chunk(gdf, as_json=True, **kw):
         gdf_list = [group for _, group in gdf.groupby('index_fused')]
     return gdf_list
 
-def to_pickle(obj):
-    """Encode an object to a pickle byte stream and store in DataFrame."""
+def to_pickle(obj, as_df: bool = True):
+    """Encode an object to a pickle byte stream.
+    Args:
+        obj: Object to pickle
+        as_df: If True, return DataFrame with pickled data. If False, return base64-encoded pickle string.
+    
+    Returns:
+        DataFrame with 'data_type' and 'data_content' columns, or base64-encoded string
+    """
     import pickle
-    import pandas as pd
-    return pd.DataFrame(
-        {"data_type": [type(obj).__name__], "data_content": [pickle.dumps(obj)]}
-    )
+    pickled_data = pickle.dumps(obj)
+    
+    if as_df:
+        import pandas as pd
+        return pd.DataFrame(
+            {"data_type": [type(obj).__name__], "data_content": [pickled_data]}
+        )
+    else:
+        import base64
+        encoded_data = base64.b64encode(pickled_data).decode('utf-8')
+        return encoded_data
 
-def from_pickle(df):
+def from_pickle(data):
     """Decode an object from a DataFrame containing pickle byte stream."""
     import pickle
-    return pickle.loads(df["data_content"].iloc[0])
+    import base64
+    if isinstance(data, str):
+        data = base64.b64decode(data)
+        return pickle.loads(data)
+    else:
+        if len(data) == 1:
+            data_content = data["data_content"].iloc[0]
+            if isinstance(data_content, str):
+                data_content = base64.b64decode(data_content)
+            return pickle.loads(data_content)
+        else:
+            result_list = []
+            for data_content in data["data_content"]:
+                if isinstance(data_content, str):
+                    data_content = base64.b64decode(data_content)
+                result_list.append(pickle.loads(data_content))
+            return result_list
 
 def df_summary(df, description="", n_head=5, n_tail=5, n_sample=5, n_unique=100, add_details=True):
     val = description+"\n\n"
@@ -2263,6 +2293,50 @@ def to_json(df, **kwargs):
 
     return df.to_json(**kwargs)
 
+def split_gdf(gdf, n: int = None, zoom: int = None, clip: bool = False, return_type: str = "gdf"):
+    import geopandas as gpd
+    import pickle
+    import base64
+    
+    if n is not None and zoom is not None:
+        raise ValueError("Cannot specify both 'n' and 'zoom' parameters.")
+    if n is None and zoom is None:
+        raise ValueError("Must specify either 'n' or 'zoom' parameter.")
+    if return_type not in ["gdf", "json", "pickle"]:
+        raise ValueError("return_type must be one of: 'gdf', 'json', 'pickle'")
+    
+    original_columns = [col for col in gdf.columns if col != "geometry"]
+    
+    gdf_tiles = get_tiles(gdf.total_bounds, target_num_tiles=n, zoom=zoom).reset_index(drop=True)
+    gdf_tiles["tile_id"] = gdf_tiles.index
+
+    gdf = gdf.reset_index(drop=True)
+    gdf["_original_index"] = gdf.index
+    
+    joined = gpd.sjoin(gdf, gdf_tiles[["tile_id", "geometry"]], how="inner", predicate="intersects")
+    
+    if clip:
+        joined = joined.merge(gdf_tiles[["tile_id", "geometry"]], on="tile_id", suffixes=("", "_tile"))
+        joined["geometry"] = joined.geometry.intersection(joined.geometry_tile)
+        joined = joined[joined["geometry"].notna()].copy()
+        joined = joined[original_columns + ["geometry", "tile_id"]].copy()
+    else:
+        joined = joined.drop_duplicates(subset=["_original_index"], keep="first").copy()
+        joined = joined[original_columns + ["geometry", "tile_id"]].copy()
+    
+    grouped = joined.groupby("tile_id", group_keys=False)
+    gdf_list = [
+        gpd.GeoDataFrame(group.drop(columns=["tile_id"]), geometry="geometry", crs=gdf.crs)
+        for _, group in grouped
+        if len(group) > 0 and group["geometry"].notna().any()
+    ]    
+    if return_type == "json":
+        return [to_json(gdf) for gdf in gdf_list]
+    elif return_type == "pickle":
+        return [base64.b64encode(pickle.dumps(gdf)).decode('utf-8') for gdf in gdf_list]
+    else:  # return_type == "gdf"
+        return gdf_list
+    
 def geo_buffer(
     data,
     buffer_distance=1000,
