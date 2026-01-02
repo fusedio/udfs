@@ -6,6 +6,9 @@ import pandas as pd
 import geopandas as gpd
 from copy import deepcopy
 
+import fused
+
+
 
 # ============================================================
 # Default Configurations
@@ -74,8 +77,8 @@ VALID_HEX_LAYER_PROPS = {
 # CDN URLs
 # ============================================================
 
-FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@188d1d7/dist/fusedmaps.umd.js"
-FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@188d1d7/dist/fusedmaps.css"
+FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@264d5ca/dist/fusedmaps.umd.js"
+FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@264d5ca/dist/fusedmaps.css"
 
 # ============================================================
 # Minimal HTML Template
@@ -134,6 +137,7 @@ def udf(
     theme: str = "dark",
     n_points: int = 50,
     seed: int = 0,
+    debug: bool = True,
 ):
     """Example UDF using deckgl_map with DEFAULT_DECK_CONFIG."""
     import geopandas as gpd
@@ -174,6 +178,7 @@ def udf(
         basemap=basemap,
         theme=theme,
         initialViewState=view_state,
+        debug=debug,
     )
 
 
@@ -186,6 +191,7 @@ def deckgl_layers(
     theme: str = "dark",
     highlight_on_click: bool = True,
     on_click: dict = None,
+    debug: bool = False,
 ):
     """
     Render mixed hex and vector layers on a single interactive map.
@@ -280,6 +286,7 @@ def deckgl_layers(
         "initialViewState": view_state,
         "layers": processed_layers,
         "hasCustomView": has_custom_view,
+        "debug": bool(debug),
         "ui": {
             "legend": True,
             "layerPanel": True,
