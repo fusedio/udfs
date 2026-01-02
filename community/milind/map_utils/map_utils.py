@@ -6,6 +6,10 @@ import pandas as pd
 import geopandas as gpd
 from copy import deepcopy
 
+import fused
+
+
+
 # ============================================================
 # Default Configurations
 # ============================================================
@@ -23,6 +27,7 @@ DEFAULT_DECK_HEX_CONFIG = {
         "stroked": True,
         "pickable": True,
         "extruded": False,
+        "elevationScale": 1,
         "opacity": 1,
         "getHexagon": "@@=properties.hex",
         "getFillColor": {
@@ -64,7 +69,7 @@ DEFAULT_DECK_RASTER_CONFIG = {
 
 VALID_HEX_LAYER_PROPS = {
     "@@type", "filled", "stroked", "pickable", "extruded", "opacity",
-    "getFillColor", "getLineColor", "lineWidthMinPixels", "elevationScale",
+    "getFillColor", "getLineColor", "lineWidthMinPixels", "elevationScale", "elevationProperty",
     "getHexagon", "tooltipColumns", "tooltipAttrs", "coverage", "id",
     "visible", "data", "sql", "transitions", "highlightColor", "autoHighlight"
 }
@@ -73,8 +78,8 @@ VALID_HEX_LAYER_PROPS = {
 # CDN URLs
 # ============================================================
 
-FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@8706d0c/dist/fusedmaps.umd.js"
-FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@8706d0c/dist/fusedmaps.css"
+FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@f4087d3/dist/fusedmaps.umd.js"
+FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@f4087d3/dist/fusedmaps.css"
 
 # ============================================================
 # Minimal HTML Template
@@ -133,7 +138,7 @@ def udf(
     theme: str = "dark",
     n_points: int = 50,
     seed: int = 0,
-    debug: bool = True,
+    sidebar: typing.Optional[str] = None,  # None | "show" | "hide"
 ):
     """Example UDF using deckgl_map with DEFAULT_DECK_CONFIG."""
     import geopandas as gpd
@@ -174,7 +179,7 @@ def udf(
         basemap=basemap,
         theme=theme,
         initialViewState=view_state,
-        debug=debug,
+        sidebar=sidebar,
     )
 
 
@@ -187,7 +192,8 @@ def deckgl_layers(
     theme: str = "dark",
     highlight_on_click: bool = True,
     on_click: dict = None,
-    debug: bool = False,
+    sidebar: typing.Optional[str] = None,  # None | "show" | "hide"
+    debug: typing.Optional[bool] = None,  # deprecated alias for sidebar
 ):
     """
     Render mixed hex and vector layers on a single interactive map.
@@ -286,6 +292,19 @@ def deckgl_layers(
         }
         has_custom_view = False
     
+    # Sidebar behavior:
+    # - sidebar=None => don't mount at all (no toggle)
+    # - sidebar="show"|"hide" => mount and start open/closed
+    # Back-compat:
+    # - debug=True => sidebar="show"
+    # - debug=False => sidebar=None
+    if sidebar is None and debug is True:
+        sidebar = "show"
+    if sidebar is None and debug is False:
+        sidebar = None
+    if sidebar not in (None, "show", "hide"):
+        raise ValueError("sidebar must be one of: None, 'show', 'hide'")
+
     # Build config for FusedMaps
     fusedmaps_config = {
         "containerId": "map",
@@ -294,7 +313,6 @@ def deckgl_layers(
         "initialViewState": view_state,
         "layers": processed_layers,
         "hasCustomView": has_custom_view,
-        "debug": bool(debug),
         "ui": {
             "legend": True,
             "layerPanel": True,
@@ -303,6 +321,9 @@ def deckgl_layers(
         },
         "highlightOnClick": highlight_on_click,
     }
+
+    if sidebar is not None:
+        fusedmaps_config["sidebar"] = sidebar
     
     # Add messaging config if on_click specified
     if on_click:
@@ -347,6 +368,8 @@ def deckgl_hex(
     layers: list = None,
     highlight_on_click: bool = True,
     on_click: dict = None,
+    sidebar: typing.Optional[str] = None,
+    debug: typing.Optional[bool] = None,  # deprecated alias
 ):
     """
     Render H3 hexagon layer(s) on an interactive map.
@@ -369,6 +392,8 @@ def deckgl_hex(
         basemap=basemap,
         highlight_on_click=highlight_on_click,
         on_click=on_click,
+        sidebar=sidebar,
+        debug=debug,
     )
 
 
@@ -377,6 +402,8 @@ def deckgl_map(
     config: typing.Union[dict, str, None] = None,
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     basemap: str = "dark",
+    sidebar: typing.Optional[str] = None,
+    debug: typing.Optional[bool] = None,  # deprecated alias
 ):
     """
     Render a GeoDataFrame on an interactive map.
@@ -396,6 +423,8 @@ def deckgl_map(
         layers=layers,
         mapbox_token=mapbox_token,
         basemap=basemap,
+        sidebar=sidebar,
+        debug=debug,
     )
 
 
@@ -406,6 +435,8 @@ def deckgl_raster(
     config: dict = None,
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     basemap: str = "dark",
+    sidebar: typing.Optional[str] = None,
+    debug: typing.Optional[bool] = None,  # deprecated alias
 ):
     """
     Render raster data on a map - either a static image or XYZ tiles.
@@ -416,6 +447,8 @@ def deckgl_raster(
             layers=layers,
             mapbox_token=mapbox_token,
             basemap=basemap,
+            sidebar=sidebar,
+            debug=debug,
         )
     
     if image_data is None:
@@ -461,6 +494,8 @@ def deckgl_raster(
         layers=layers,
         mapbox_token=mapbox_token,
         basemap=basemap,
+        sidebar=sidebar,
+        debug=debug,
     )
 
 
