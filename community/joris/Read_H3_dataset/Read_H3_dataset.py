@@ -70,6 +70,7 @@ def list_available_overviews(path):
     available_overviews = [
         int(path.split("/")[-1].removeprefix("hex").removesuffix(".parquet"))
         for path in fused.api.list(path.strip("/") + "/overview/")
+        if 'overview/hex' in path # Added after new introduction of .fused dir in most ingested dir
     ]
     return available_overviews
 
