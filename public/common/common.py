@@ -2133,7 +2133,9 @@ def to_gdf(
     import numpy as np
     # Handle string input (WKT format)
     if isinstance(data, str):
-        if data[0]=='{':
+        if data.startswith(('/mount/', 's3://')):
+            return from_path(data)
+        elif data[0]=='{':
             import json
             data = json.loads(data)
         else:
@@ -2293,6 +2295,103 @@ def to_json(df, **kwargs):
 
     return df.to_json(**kwargs)
 
+
+def to_paths(obj_list, base_path: str = '/mount/tmp/', prefix: str = "obj", extension: str = ".pkl", cache: bool = True):
+    """Convert a list of objects to a list of file paths by saving each object."""
+    import pickle
+    import os
+    import tempfile
+    import hashlib
+    import uuid
+    
+    if base_path is None:
+        base_path = tempfile.mkdtemp()
+    
+    is_s3 = base_path.startswith('s3://')
+    
+    if is_s3:
+        import s3fs
+        fs = s3fs.S3FileSystem()
+        base_path = base_path.rstrip('/')
+    else:
+        os.makedirs(base_path, exist_ok=True)
+    
+    paths = []
+    for obj in obj_list:
+        pickled_data = pickle.dumps(obj)
+        
+        if cache:
+            import pandas as pd
+            import geopandas as gpd
+            
+            if isinstance(obj, (pd.DataFrame, gpd.GeoDataFrame)):
+                hash_obj = hashlib.sha256()
+                
+                for col in obj.columns:
+                    try:
+                        if col == 'geometry' and isinstance(obj, gpd.GeoDataFrame):
+                            continue
+                        else:
+                            hash_obj.update(obj[col].values.tobytes())
+                    except (AttributeError, TypeError, ValueError):
+                        hash_obj.update(str(obj[col].values).encode())
+                
+                try:
+                    hash_obj.update(obj.index.values.tobytes())
+                except (AttributeError, TypeError, ValueError):
+                    hash_obj.update(str(obj.index.values).encode())
+                
+                if isinstance(obj, gpd.GeoDataFrame):
+                    try:
+                        hash_obj.update(str(obj.geometry.area.sum()).encode())
+                    except (AttributeError, TypeError, ValueError):
+                        pass
+                
+                obj_hash = hash_obj.hexdigest()
+            else:
+                obj_hash = hashlib.sha256(pickled_data).hexdigest()
+            
+            filename = f"{prefix}_{obj_hash}{extension}"
+        else:
+            unique_id = str(uuid.uuid4())
+            filename = f"{prefix}_{unique_id}{extension}"
+        
+        if is_s3:
+            filepath = f"{base_path}/{filename}"
+            if cache and fs.exists(filepath):
+                pass
+            else:
+                with fs.open(filepath, 'wb') as f:
+                    f.write(pickled_data)
+        else:
+            filepath = os.path.join(base_path, filename)
+            if cache and os.path.exists(filepath):
+                pass
+            else:
+                with open(filepath, 'wb') as f:
+                    f.write(pickled_data)
+        
+        paths.append(filepath)
+    
+    return paths
+
+def from_path(path: str):
+    """Load an object from a file path."""
+    import pickle
+    
+    is_s3 = path.startswith('s3://')
+    
+    if is_s3:
+        import s3fs
+        fs = s3fs.S3FileSystem()
+        with fs.open(path, 'rb') as f:
+            obj = pickle.load(f)
+    else:
+        with open(path, 'rb') as f:
+            obj = pickle.load(f)
+    
+    return obj
+
 def split_gdf(gdf, n: int = None, zoom: int = None, clip: bool = False, return_type: str = "gdf"):
     import geopandas as gpd
     import pickle
@@ -2302,8 +2401,8 @@ def split_gdf(gdf, n: int = None, zoom: int = None, clip: bool = False, return_t
         raise ValueError("Cannot specify both 'n' and 'zoom' parameters.")
     if n is None and zoom is None:
         raise ValueError("Must specify either 'n' or 'zoom' parameter.")
-    if return_type not in ["gdf", "json", "pickle"]:
-        raise ValueError("return_type must be one of: 'gdf', 'json', 'pickle'")
+    if return_type not in ["gdf", "json", "pickle", "file"]:
+        raise ValueError("return_type must be one of: 'gdf', 'json', 'pickle', 'file'")
     
     original_columns = [col for col in gdf.columns if col != "geometry"]
     
@@ -2334,6 +2433,12 @@ def split_gdf(gdf, n: int = None, zoom: int = None, clip: bool = False, return_t
         return [to_json(gdf) for gdf in gdf_list]
     elif return_type == "pickle":
         return [base64.b64encode(pickle.dumps(gdf)).decode('utf-8') for gdf in gdf_list]
+    elif return_type == "file":
+        try:
+            return to_paths(gdf_list)
+        except Exception as e:
+            print(f"Falling back to return_type='json' due to error: {e}")
+            return [to_json(gdf) for gdf in gdf_list]            
     else:  # return_type == "gdf"
         return gdf_list
     
