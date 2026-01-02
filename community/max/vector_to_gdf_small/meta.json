@@ -60,7 +60,7 @@
                 "elevationScale": 10
               }
             },
-            "fused:udfType": "vector_single_none",
+            "fused:udfType": "vector_single",
             "fused:defaultViewState": {
               "enable": true,
               "latitude": 41.97318063762421,
