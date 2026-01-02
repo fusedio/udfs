@@ -2134,7 +2134,11 @@ def to_gdf(
     # Handle string input (WKT format)
     if isinstance(data, str):
         if data.startswith(('/mount/', 's3://')):
-            return from_path(data)
+            if data.endswith('.parquet'):
+                import geopandas as gpd
+                return gpd.read_parquet(data)
+            else:
+                return from_path(data)
         elif data[0]=='{':
             import json
             data = json.loads(data)
