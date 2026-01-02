@@ -4,13 +4,15 @@ def udf(
 ):
     """
     On the fly vector to hex (counting the number of vector in each hex at res 15)
+    
     NOTE: This is not meant for datasets larger than 100k vectors. 
+    This UDF should also only be run in Single (viewport) mode, not Tiled
     Reach out to Fused at info@fused.io for scaling to larger datasets or for any questions!
     """
     common = fused.load("https://github.com/fusedio/udfs/tree/208c30d/public/common/")
     res = common.bounds_to_res(bounds, offset=3)
     res = max(9, res)
-    print(res)
+    print(f'{res=}')
      
     gdf = get_data() # Replace with your own data. Using Overture Maps for example
 
@@ -47,7 +49,8 @@ def hexagonify_udf(geometry, res: int = 12):
 
 @fused.cache
 def get_data():
-    common = fused.load("common")
+    common = fused.load("https://github.com/fusedio/udfs/tree/208c30d/public/common/")
+    # Loads a small section of Corsica, France
     gdf = fused.get_chunk_from_table(
         "s3://us-west-2.opendata.source.coop/fused/overture/2025-12-17-0/theme=buildings/type=building/part=3", 10, 0
     )
