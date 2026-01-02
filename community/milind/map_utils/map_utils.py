@@ -6,10 +6,6 @@ import pandas as pd
 import geopandas as gpd
 from copy import deepcopy
 
-import fused
-
-
-
 # ============================================================
 # Default Configurations
 # ============================================================
@@ -77,8 +73,8 @@ VALID_HEX_LAYER_PROPS = {
 # CDN URLs
 # ============================================================
 
-FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@58632bc/dist/fusedmaps.umd.js"
-FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@58632bc/dist/fusedmaps.css"
+FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@8706d0c/dist/fusedmaps.umd.js"
+FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@8706d0c/dist/fusedmaps.css"
 
 # ============================================================
 # Minimal HTML Template
