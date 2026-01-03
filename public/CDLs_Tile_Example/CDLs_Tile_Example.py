@@ -41,6 +41,8 @@ def udf(
         elif format.lower()=='avif':
             return common.arr_to_bytes(colored_array, format='AVIF', lossless=True), bounds
         else: 
+            if format.lower() != 'png':
+                print(f"Warning: format={format} is ignored. Please pick from (png, jpg, jpeg, webp, avif)")
             return colored_array, bounds
     else:
         return array_int, bounds
