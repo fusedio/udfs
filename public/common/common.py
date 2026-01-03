@@ -827,8 +827,11 @@ def bytes_to_html(bytes, format='gif', width='100%', height='100%'):
 def arr_to_bytes(arr, format='png', **kwargs):
     """Convert a single image array to bytes for common image formats (png, jpg, etc.)."""
     if format.lower()=='avif': 
-        pip_install('pillow-avif-plugin')
-        import pillow_avif
+        try:
+            import pillow_avif
+        except:
+            pip_install('pillow-avif-plugin')
+            import pillow_avif
     import io
     import imageio
     import numpy as np
