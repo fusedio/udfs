@@ -35,11 +35,11 @@ def udf(
 
     if colored:
         if compresion.lower()in ('jpeg', 'jpg'): 
-            return common.arr_to_bytes(colored_array[:3], compresion='JPEG', quality=75), bounds
+            return common.arr_to_bytes(colored_array[:3], format='JPEG', quality=75), bounds
         elif compresion.lower()=='webp':
-            return common.arr_to_bytes(colored_array, compresion='WEBP', lossless=True), bounds
+            return common.arr_to_bytes(colored_array, format='WEBP', lossless=True), bounds
         elif compresion.lower()=='avif':
-            return common.arr_to_bytes(colored_array, compresion='AVIF', lossless=True), bounds
+            return common.arr_to_bytes(colored_array, format='AVIF', lossless=True), bounds
         else: 
             if compresion.lower() != 'png':
                 print(f"Warning: compresion={compresion} is ignored. Please pick from (png, jpg, jpeg, webp, avif)")
