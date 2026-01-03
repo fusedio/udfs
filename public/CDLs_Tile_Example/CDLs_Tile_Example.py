@@ -5,7 +5,7 @@ def udf(
     crop_type: str = "",
     chip_len: int = 256,
     colored: bool = True,
-    compresion: str='png',
+    image_format: str='png',
 ):
     import numpy as np
     
@@ -34,15 +34,15 @@ def udf(
     )
 
     if colored:
-        if compresion.lower()in ('jpeg', 'jpg'): 
+        if image_format.lower()in ('jpeg', 'jpg'): 
             return common.arr_to_bytes(colored_array[:3], format='JPEG', quality=75), bounds
-        elif compresion.lower()=='webp':
+        elif image_format.lower()=='webp':
             return common.arr_to_bytes(colored_array, format='WEBP', lossless=True), bounds
-        elif compresion.lower()=='avif':
+        elif image_format.lower()=='avif':
             return common.arr_to_bytes(colored_array, format='AVIF', lossless=True), bounds
         else: 
-            if compresion.lower() != 'png':
-                print(f"Warning: compresion={compresion} is ignored. Please pick from (png, jpg, jpeg, webp, avif)")
+            if image_format.lower() != 'png':
+                print(f"Warning: image_format={image_format} is ignored. Please pick from (png, jpg, jpeg, webp, avif)")
             return colored_array, bounds
     else:
         return array_int, bounds
