@@ -771,6 +771,7 @@ def url_to_bytes(url):
 style_template=' style="position:fixed; top:0; left:0; right:0; bottom:0; margin:auto; height:{height}; width:{width};object-fit:contain;"'
 
 def url_to_html(url, format='iframe', width='100%', height='100%'):
+    format=format.lower()
     style=style_template.format(width=width, height=height)
     if format == 'iframe':
         return f'<iframe src="{url}" {style}></iframe>'
@@ -784,6 +785,7 @@ def url_to_html(url, format='iframe', width='100%', height='100%'):
         raise ValueError(f"Unsupported format '{format}'. Supported formats are: iframe, image, video, audio")
 
 def bytes_to_html(bytes, format='gif', width='100%', height='100%'):
+    format=format.lower()
     style=style_template.format(width=width, height=height)
     import base64
     b64 = base64.b64encode(bytes).decode('utf-8')
@@ -806,7 +808,7 @@ def bytes_to_html(bytes, format='gif', width='100%', height='100%'):
     else:
         raise ValueError(f"Unsupported format '{format}'. Supported formats are: gif, png, jpg, jpeg, mp4, mp3, pdf.")
 
-def arr_to_bytes(arr, format='png'):
+def arr_to_bytes(arr, format='png', **kwargs):
     """Convert a single image array to bytes for common image formats (png, jpg, etc.)."""
     import io
     import imageio
@@ -818,15 +820,16 @@ def arr_to_bytes(arr, format='png'):
         arr = (arr * 255).astype(np.uint8) if arr.max() <= 1.0 else arr.astype(np.uint8)
     with io.BytesIO() as buffer:
         try:
-            imageio.imwrite(buffer, arr, format=format)
+            imageio.imwrite(buffer, arr, format=format, **kwargs)
         except Exception as e:
             raise ValueError(f"Failed to write image to bytes with format '{format}': {e}")
         buffer.seek(0)
+        print(f"Buffer size: {len(buffer.getvalue())} bytes")
         return buffer.read()
     
-def arr_to_html(arr, format='png'):
+def arr_to_html(arr, format='png', **kwargs):
     """Convert an array to an HTML representation."""
-    img_bytes = arr_to_bytes(arr, format=format)
+    img_bytes = arr_to_bytes(arr, format=format, **kwargs)
     return bytes_to_html(img_bytes, format=format)
 
 def frames_to_bytes(frames, format, fps):
