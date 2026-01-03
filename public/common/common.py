@@ -37,7 +37,7 @@ def mutex(filename, wait=1, verbose=False):
         f.close()
         os.unlink(filename)
 
-def pip_install(package="numpy", path="/tmp/uv_packages", verbose=False):
+def pip_install(package="numpy", path="/tmp/uv_packages", verbose=False, test_import=True):
     import subprocess
     import sys
 
@@ -49,7 +49,23 @@ def pip_install(package="numpy", path="/tmp/uv_packages", verbose=False):
         if verbose:
             print(f"{result.stdout}{result.stderr}")
     sys.path.insert(0, path)
-    
+    if test_import:
+        package_name = package.split("==")[0].split(">=")[0].split("<=")[0].split(">")[0].split("<")[0].strip()
+        import_names = [package_name, package_name.replace("-", "_"), package_name.replace("-", "")]
+        imported = False
+        
+        for import_name in import_names:
+            try:
+                __import__(import_name)
+                print(f"test_import=True: {import_name} imported successfully.")
+                imported = True
+                break
+            except ImportError:
+                continue
+        
+        if not imported:
+            print(f"Warning: Could not import {package_name} directly (tried: {', '.join(import_names)}). Package may still be functional as a plugin or extension.")
+        
         
 def url_to_qr(url, title='Scan me 🥹', logo_url='https://www.fused.io/favicon.ico'):
     """
