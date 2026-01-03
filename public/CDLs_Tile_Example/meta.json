@@ -48,7 +48,7 @@
                 ]
               }
             },
-            "fused:udfType": "vector_single",
+            "fused:udfType": "vector_tile",
             "fused:slug": "CDLs_Tile_Example",
             "fused:name": "CDLs_Tile_Example",
             "fused:defaultParameters": [
