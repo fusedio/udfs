@@ -5,10 +5,11 @@ def udf(
     crop_type: str = "",
     chip_len: int = 256,
     colored: bool = True,
+    format: str='png',
 ):
     import numpy as np
     
-    common = fused.load("https://github.com/fusedio/udfs/tree/4d1fe05/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/5b11e17/public/common/")
     tile = common.get_tiles(bounds, clip=True)
 
     input_tiff_path = f"s3://fused-asset/data/cdls/{year}_30m_cdls.tif"
@@ -33,7 +34,14 @@ def udf(
     )
 
     if colored:
-        return colored_array, bounds
+        if format.lower()in ('jpeg', 'jpg'): 
+            return common.arr_to_bytes(colored_array[:3], format='JPEG', quality=75), bounds
+        elif format.lower()=='webp':
+            return common.arr_to_bytes(colored_array, format='WEBP', lossless=True), bounds
+        elif format.lower()=='avif':
+            return common.arr_to_bytes(colored_array, format='AVIF', lossless=True), bounds
+        else: 
+            return colored_array, bounds
     else:
         return array_int, bounds
 
@@ -98,7 +106,7 @@ def crop_counts(arr):
     df.columns = ["crop_type", "color", "n_pixel"]
     df = df.sort_values("n_pixel", ascending=False)
     return df.dropna()
-
+ 
 def crop_stats(df, n=100):
     stats = (
         df.groupby("data")
