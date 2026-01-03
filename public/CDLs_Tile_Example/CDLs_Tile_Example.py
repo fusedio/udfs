@@ -34,9 +34,9 @@ def udf(
     )
 
     if colored:
-        if image_format.lower()in ('jpeg', 'jpg'): 
+        if image_format.lower()in ('jpeg', 'jpg'): # best lossy compression
             return common.arr_to_bytes(colored_array[:3], format='JPEG', quality=75), bounds
-        elif image_format.lower()=='webp':
+        elif image_format.lower()=='webp': # best lossless compression
             return common.arr_to_bytes(colored_array, format='WEBP', lossless=True), bounds
         elif image_format.lower()=='avif':
             return common.arr_to_bytes(colored_array, format='AVIF', lossless=True), bounds
