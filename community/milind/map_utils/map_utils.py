@@ -78,8 +78,8 @@ VALID_HEX_LAYER_PROPS = {
 # CDN URLs
 # ============================================================
 
-FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@c776b29/dist/fusedmaps.umd.js"
-FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@c776b29/dist/fusedmaps.css"
+FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@9e63e7a/dist/fusedmaps.umd.js"
+FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@9e63e7a/dist/fusedmaps.css"
 
 # ============================================================
 # Minimal HTML Template
