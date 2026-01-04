@@ -5,6 +5,7 @@ def udf(
     theme: str = None,
     overture_type: str = None,
     use_columns: list = None,
+    min_zoom: int = None,
 
 ):
     gdf = get_overture(
@@ -13,6 +14,7 @@ def udf(
         theme=theme,
         overture_type=overture_type,
         use_columns=use_columns,
+        min_zoom=min_zoom,
     )
     return gdf
 
