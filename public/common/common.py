@@ -219,6 +219,21 @@ def get_jobs_status(jobs, wait=True, sleep_seconds=3):
         print(f'\r{df.status.value_counts().to_dict()} | elapsed time: {datetime.now() - s}', end='', flush=True)
     return df
 
+def s3_upload(path, s3_path=None):
+    import s3fs
+    fs = s3fs.S3FileSystem()
+    if not s3_path:
+        s3_path = s3_tmp_path(path, folder=None)
+    fs.put(path, s3_path)
+    return s3_path
+
+def s3_download(s3_path):
+    import s3fs
+    fs = s3fs.S3FileSystem()
+    local_path = f"/tmp/{s3_path.replace(':', '').replace('/', '_')}"
+    fs.get(s3_path, local_path)
+    return local_path
+
 def s3_copy(src_path, dst_path):
     import s3fs
     fs = s3fs.S3FileSystem()
