@@ -78,8 +78,8 @@ VALID_HEX_LAYER_PROPS = {
 # CDN URLs
 # ============================================================
 
-FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@cef9fec/dist/fusedmaps.umd.js"
-FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@cef9fec/dist/fusedmaps.css"
+FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@26b571a/dist/fusedmaps.umd.js"
+FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@26b571a/dist/fusedmaps.css"
 
 # ============================================================
 # Minimal HTML Template
@@ -331,7 +331,7 @@ def deckgl_layers(
             if pmtiles_path and not pmtiles_url:
                 pmtiles_url = fused.api.sign_url(pmtiles_path)
             
-            processed = _process_pmtiles_layer(i, pmtiles_url, source_layer, config, name, visible, minzoom=minzoom, maxzoom=maxzoom)
+            processed = _process_pmtiles_layer(i, pmtiles_url, pmtiles_path, source_layer, config, name, visible, minzoom=minzoom, maxzoom=maxzoom)
             if processed:
                 processed_layers.append(processed)
     
@@ -870,6 +870,7 @@ def _process_raster_layer(idx: int, tile_url: str, image_url, bounds, config: di
 def _process_pmtiles_layer(
     idx: int,
     pmtiles_url: str,
+    pmtiles_path: str,
     source_layer: str,
     config: dict,
     name: str,
@@ -942,6 +943,7 @@ def _process_pmtiles_layer(
         "name": name,
         "layerType": "pmtiles",
         "pmtilesUrl": pmtiles_url,
+        "pmtilesPath": pmtiles_path,
         "sourceLayer": source_layer,
         "excludeSourceLayers": exclude_source_layers,
         "minzoom": int(minzoom) if minzoom is not None else None,
