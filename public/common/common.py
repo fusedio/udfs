@@ -3838,14 +3838,14 @@ def to_pmtiles(gdf, zooms: list, output_path=None, args='--force -r1', verbose=T
     else:
         return output_path
 
-def pmtile_metadata(pmtile_path: str, key: str = "description"):
+def pmtiles_metadata(path: str, key: str = "description"):
     import pandas as pd
     import json
     from shapely.geometry import Point
     from pmtiles.reader import deserialize_header
     import fsspec, json, gzip
 
-    with fsspec.filesystem("s3").open(pmtile_path, "rb") as f:
+    with fsspec.filesystem("s3").open(path, "rb") as f:
         header_bytes = f.read(127)
         header = deserialize_header(header_bytes)
 
@@ -3862,7 +3862,7 @@ def pmtile_metadata(pmtile_path: str, key: str = "description"):
     return result_text
 
 
-def read_pmtile(bounds, pmtile_path: str):
+def read_pmtiles(bounds, path: str):
     x, y, z = get_tiles(bounds)[["x", "y", "z"]].iloc[0]
     from pmtiles.reader import Reader
     from shapely.geometry import Point
@@ -3871,7 +3871,7 @@ def read_pmtile(bounds, pmtile_path: str):
     from pmtiles.reader import deserialize_header
     import fsspec, json, gzip
 
-    with fsspec.filesystem("s3").open(pmtile_path, "rb") as f:
+    with fsspec.filesystem("s3").open(path, "rb") as f:
         file_data = f.read()
 
     header = deserialize_header(file_data[0:127])
