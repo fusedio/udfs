@@ -78,8 +78,8 @@ VALID_HEX_LAYER_PROPS = {
 # CDN URLs
 # ============================================================
 
-FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@9e63e7a/dist/fusedmaps.umd.js"
-FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@9e63e7a/dist/fusedmaps.css"
+FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@cef9fec/dist/fusedmaps.umd.js"
+FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@cef9fec/dist/fusedmaps.css"
 
 # ============================================================
 # Minimal HTML Template
@@ -324,12 +324,14 @@ def deckgl_layers(
         elif layer_type == "pmtiles":
             pmtiles_url = layer_def.get("pmtiles_url") or layer_def.get("pmtilesUrl")
             pmtiles_path = layer_def.get("pmtiles_path") or layer_def.get("pmtilesPath")
+            minzoom = layer_def.get("minzoom") if layer_def.get("minzoom") is not None else layer_def.get("minZoom")
+            maxzoom = layer_def.get("maxzoom") if layer_def.get("maxzoom") is not None else layer_def.get("maxZoom")
             
             # Sign S3 path if needed
             if pmtiles_path and not pmtiles_url:
                 pmtiles_url = fused.api.sign_url(pmtiles_path)
             
-            processed = _process_pmtiles_layer(i, pmtiles_url, source_layer, config, name, visible)
+            processed = _process_pmtiles_layer(i, pmtiles_url, source_layer, config, name, visible, minzoom=minzoom, maxzoom=maxzoom)
             if processed:
                 processed_layers.append(processed)
     
@@ -865,7 +867,16 @@ def _process_raster_layer(idx: int, tile_url: str, image_url, bounds, config: di
     return out
 
 
-def _process_pmtiles_layer(idx: int, pmtiles_url: str, source_layer: str, config: dict, name: str, visible: bool) -> dict:
+def _process_pmtiles_layer(
+    idx: int,
+    pmtiles_url: str,
+    source_layer: str,
+    config: dict,
+    name: str,
+    visible: bool,
+    minzoom: int = None,
+    maxzoom: int = None,
+) -> dict:
     """Process a PMTiles layer definition into FusedMaps format."""
     if not pmtiles_url:
         return None
@@ -880,6 +891,22 @@ def _process_pmtiles_layer(idx: int, pmtiles_url: str, source_layer: str, config
 
     merged_config = _deep_merge_dict(deepcopy(DEFAULT_DECK_CONFIG), config)
     vector_layer = merged_config.get("vectorLayer", {}) or {}
+    exclude_source_layers = vector_layer.get("exclude_source_layers") or vector_layer.get("excludeSourceLayers") or config.get("exclude_source_layers") or config.get("excludeSourceLayers") or []
+    if exclude_source_layers is None:
+        exclude_source_layers = []
+    if isinstance(exclude_source_layers, str):
+        exclude_source_layers = [exclude_source_layers]
+    exclude_source_layers = [str(x) for x in exclude_source_layers if str(x).strip()]
+
+    render_points = vector_layer.get("renderPoints")
+    if render_points is None:
+        render_points = vector_layer.get("render_points")
+    render_lines = vector_layer.get("renderLines")
+    if render_lines is None:
+        render_lines = vector_layer.get("render_lines")
+    render_polygons = vector_layer.get("renderPolygons")
+    if render_polygons is None:
+        render_polygons = vector_layer.get("render_polygons")
 
     # Extract fill color config
     fill_color_config = None
@@ -916,12 +943,18 @@ def _process_pmtiles_layer(idx: int, pmtiles_url: str, source_layer: str, config
         "layerType": "pmtiles",
         "pmtilesUrl": pmtiles_url,
         "sourceLayer": source_layer,
+        "excludeSourceLayers": exclude_source_layers,
+        "minzoom": int(minzoom) if minzoom is not None else None,
+        "maxzoom": int(maxzoom) if maxzoom is not None else None,
         "fillColorConfig": fill_color_config,
         "lineColorConfig": line_color_config,
         "fillOpacity": opacity,
         "lineWidth": line_width,
         "pointRadiusMinPixels": point_radius,
         "vectorLayer": vector_layer,
+        "renderPoints": render_points,
+        "renderLines": render_lines,
+        "renderPolygons": render_polygons,
         "tooltipColumns": tooltip_columns,
         "visible": visible,
         "isFilled": is_filled,
