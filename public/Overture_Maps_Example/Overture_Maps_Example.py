@@ -5,7 +5,7 @@ def udf(
     theme: str = None,
     overture_type: str = None,
     use_columns: list = None,
-    min_zoom: int =None,
+    min_zoom: int = None,
 
 ):
     gdf = get_overture(
