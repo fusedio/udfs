@@ -256,6 +256,7 @@ def get_s3_size(file_path):
 
 def s3_tmp_path(path, folder="tmp/new", user_env="fused"):
     import re
+    import uuid
 
     base_tmp_path = f"s3://fused-users/{user_env}/fused-tmp"
     fname = path.split("/")[-1]
@@ -265,6 +266,8 @@ def s3_tmp_path(path, folder="tmp/new", user_env="fused"):
         fname=''
     cleaned = re.sub(r"[^a-zA-Z0-9/]", "", path)  # remove non-alphanumeric except /
     cleaned = cleaned.replace("/", "")  # flatten path
+    if folder is None:
+        folder = f"tmp/{uuid.uuid4()}"
     folder = folder.strip("/")
     parts = [base_tmp_path, folder]
     print(cleaned)
