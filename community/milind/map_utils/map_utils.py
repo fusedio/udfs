@@ -78,8 +78,8 @@ VALID_HEX_LAYER_PROPS = {
 # CDN URLs
 # ============================================================
 
-FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@7da5b69/dist/fusedmaps.umd.js"
-FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@7da5b69/dist/fusedmaps.css"
+FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@c776b29/dist/fusedmaps.umd.js"
+FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@c776b29/dist/fusedmaps.css"
 
 # ============================================================
 # Minimal HTML Template
@@ -271,6 +271,14 @@ def deckgl_layers(
                 )
             if image_url and (bounds is None or len(bounds) != 4):
                 raise ValueError(f"Raster layer '{name}' with image_url requires bounds=[west,south,east,north].")
+        elif layer_type == "pmtiles":
+            pmtiles_url = layer_def.get("pmtiles_url") or layer_def.get("pmtilesUrl")
+            pmtiles_path = layer_def.get("pmtiles_path") or layer_def.get("pmtilesPath")
+            if not pmtiles_url and not pmtiles_path:
+                raise ValueError(
+                    f"PMTiles layer '{name}' is missing a source. Provide one of: "
+                    f"pmtiles_url=<signed URL> OR pmtiles_path=<s3://...> (will be signed automatically)."
+                )
         
         if layer_type == "hex":
             processed = _process_hex_layer(i, df, tile_url, config, name, visible)
@@ -310,6 +318,18 @@ def deckgl_layers(
                 processed_layers.append(processed)
         elif layer_type == "mvt":
             processed = _process_mvt_layer(i, tile_url, source_layer, config, name, visible)
+            if processed:
+                processed_layers.append(processed)
+        
+        elif layer_type == "pmtiles":
+            pmtiles_url = layer_def.get("pmtiles_url") or layer_def.get("pmtilesUrl")
+            pmtiles_path = layer_def.get("pmtiles_path") or layer_def.get("pmtilesPath")
+            
+            # Sign S3 path if needed
+            if pmtiles_path and not pmtiles_url:
+                pmtiles_url = fused.api.sign_url(pmtiles_path)
+            
+            processed = _process_pmtiles_layer(i, pmtiles_url, source_layer, config, name, visible)
             if processed:
                 processed_layers.append(processed)
     
@@ -455,6 +475,63 @@ def deckgl_map(
             "name": "Layer 1",
         }
     ]
+    
+    return deckgl_layers(
+        layers=layers,
+        mapbox_token=mapbox_token,
+        basemap=basemap,
+        sidebar=sidebar,
+        debug=debug,
+    )
+
+
+def deckgl_pmtiles(
+    pmtiles_path: str = None,
+    pmtiles_url: str = None,
+    source_layer: str = None,
+    config: dict = None,
+    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
+    basemap: str = "dark",
+    sidebar: typing.Optional[str] = None,
+    debug: typing.Optional[bool] = None,  # deprecated alias
+):
+    """
+    Render PMTiles vector data on an interactive map.
+    
+    Args:
+        pmtiles_path: S3 path to PMTiles file (will be signed automatically)
+        pmtiles_url: Pre-signed URL to PMTiles file
+        source_layer: Name of the source layer in the PMTiles (auto-detected if not provided)
+        config: Layer styling config (same as vectorLayer config)
+        mapbox_token: Mapbox access token
+        basemap: 'dark', 'satellite', 'light', or 'streets'
+        sidebar: 'show', 'hide', or None (no sidebar)
+    
+    Example:
+        return deckgl_pmtiles(
+            pmtiles_path="s3://my-bucket/data.pmtiles",
+            config={
+                "vectorLayer": {
+                    "getFillColor": {
+                        "attr": "value",
+                        "domain": [0, 100],
+                        "colors": "Viridis"
+                    }
+                }
+            }
+        )
+    """
+    if not pmtiles_path and not pmtiles_url:
+        raise ValueError("Provide either pmtiles_path (s3://...) or pmtiles_url (signed URL)")
+    
+    layers = [{
+        "type": "pmtiles",
+        "pmtiles_path": pmtiles_path,
+        "pmtiles_url": pmtiles_url,
+        "source_layer": source_layer,
+        "config": config,
+        "name": "PMTiles Layer",
+    }]
     
     return deckgl_layers(
         layers=layers,
@@ -786,6 +863,70 @@ def _process_raster_layer(idx: int, tile_url: str, image_url, bounds, config: di
         out["imageUrl"] = image_url
         out["imageBounds"] = list(bounds) if bounds is not None else None
     return out
+
+
+def _process_pmtiles_layer(idx: int, pmtiles_url: str, source_layer: str, config: dict, name: str, visible: bool) -> dict:
+    """Process a PMTiles layer definition into FusedMaps format."""
+    if not pmtiles_url:
+        return None
+
+    # Parse config
+    if isinstance(config, str):
+        try:
+            config = json.loads(config)
+        except:
+            config = {}
+    config = config or {}
+
+    merged_config = _deep_merge_dict(deepcopy(DEFAULT_DECK_CONFIG), config)
+    vector_layer = merged_config.get("vectorLayer", {}) or {}
+
+    # Extract fill color config
+    fill_color_config = None
+    fill_color_raw = vector_layer.get("getFillColor")
+    if isinstance(fill_color_raw, dict) and fill_color_raw.get("@@function"):
+        fill_color_config = fill_color_raw
+    elif isinstance(fill_color_raw, dict) and fill_color_raw.get("attr"):
+        # Support shorthand: {"attr": "value", "domain": [...], "colors": "..."}
+        fill_color_config = {"@@function": "colorContinuous", **fill_color_raw}
+
+    # Extract line color config
+    line_color_config = None
+    line_color_raw = vector_layer.get("getLineColor")
+    if isinstance(line_color_raw, dict) and line_color_raw.get("@@function"):
+        line_color_config = line_color_raw
+    elif isinstance(line_color_raw, (list, tuple)) and len(line_color_raw) >= 3:
+        r, g, b = int(line_color_raw[0]), int(line_color_raw[1]), int(line_color_raw[2])
+        a = (line_color_raw[3] / 255.0) if len(line_color_raw) > 3 else 1.0
+        line_color_config = f"rgba({r},{g},{b},{a})"
+
+    opacity = float(vector_layer.get("opacity", 0.8))
+    line_width = vector_layer.get("lineWidthMinPixels") or vector_layer.get("getLineWidth", 1)
+    point_radius = vector_layer.get("pointRadiusMinPixels") or vector_layer.get("pointRadius", 4)
+    
+    # Extract filled/stroked booleans (default to True if not specified)
+    is_filled = vector_layer.get("filled", True)
+    is_stroked = vector_layer.get("stroked", True)
+
+    tooltip_columns = _extract_tooltip_columns(config, vector_layer)
+
+    return {
+        "id": f"layer-{idx}",
+        "name": name,
+        "layerType": "pmtiles",
+        "pmtilesUrl": pmtiles_url,
+        "sourceLayer": source_layer,
+        "fillColorConfig": fill_color_config,
+        "lineColorConfig": line_color_config,
+        "fillOpacity": opacity,
+        "lineWidth": line_width,
+        "pointRadiusMinPixels": point_radius,
+        "vectorLayer": vector_layer,
+        "tooltipColumns": tooltip_columns,
+        "visible": visible,
+        "isFilled": is_filled,
+        "isStroked": is_stroked,
+    }
 
 
 # ============================================================
