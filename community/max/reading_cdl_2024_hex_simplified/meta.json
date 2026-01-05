@@ -1,0 +1,55 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "reading_cdl_2024_hex_simplified",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "reading_cdl_2024_hex_simplified",
+            "fused:slug": "reading_cdl_2024_hex_simplified",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "hexLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "extruded": false,
+                "opacity": 1,
+                "coverage": 0.9,
+                "lineWidthMinPixels": 1,
+                "getHexagon": "@@=properties.hex",
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "pct",
+                  "domain": [
+                    0,
+                    100
+                  ],
+                  "steps": 20,
+                  "colors": "DarkMint"
+                }
+              }
+            },
+            "fused:udfType": "vector_tile"
+          },
+          "source": "reading_cdl_2024_hex_simplified.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
