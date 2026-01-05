@@ -78,8 +78,21 @@ VALID_HEX_LAYER_PROPS = {
 # CDN URLs
 # ============================================================
 
-FUSEDMAPS_CDN_JS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@759d6ff/dist/fusedmaps.umd.js"
-FUSEDMAPS_CDN_CSS = "https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@759d6ff/dist/fusedmaps.css"
+# NOTE: Pin to a specific commit for reproducibility.
+# You can override this per-run via `deckgl_layers(..., fusedmaps_ref=...)`.
+#
+# - main ref: 6cd78d5 (LayerStore + in-place updates)
+# - drawing ref: a7f1569 (feature/drawing-layer)
+FUSEDMAPS_CDN_REF_DEFAULT = "be4948d"
+FUSEDMAPS_CDN_JS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.umd.js"
+FUSEDMAPS_CDN_CSS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.css"
+
+def _fusedmaps_cdn_urls(ref: typing.Optional[str] = None) -> tuple[str, str]:
+    """Return (js_url, css_url) for a given fusedmaps git ref (commit/tag/branch)."""
+    ref = (ref or FUSEDMAPS_CDN_REF_DEFAULT).strip()
+    js_url = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{ref}/dist/fusedmaps.umd.js"
+    css_url = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{ref}/dist/fusedmaps.css"
+    return js_url, css_url
 
 # ============================================================
 # Minimal HTML Template
@@ -193,7 +206,9 @@ def deckgl_layers(
     highlight_on_click: bool = True,
     on_click: dict = None,
     sidebar: typing.Optional[str] = None,  # None | "show" | "hide"
+    drawing: typing.Optional[dict] = None,
     debug: typing.Optional[bool] = None,  # deprecated alias for sidebar
+    fusedmaps_ref: typing.Optional[str] = None,  # override CDN ref (commit/tag/branch)
 ):
     """
     Render mixed hex and vector layers on a single interactive map.
@@ -214,6 +229,7 @@ def deckgl_layers(
         theme: UI theme ('dark' or 'light').
         highlight_on_click: Enable click-to-highlight.
         on_click: Click broadcast config.
+        drawing: Optional fusedmaps drawing config (experimental).
     
     Returns:
         HTML object for rendering in Fused Workbench
@@ -381,6 +397,9 @@ def deckgl_layers(
         "highlightOnClick": highlight_on_click,
     }
 
+    if drawing is not None:
+        fusedmaps_config["drawing"] = drawing
+
     if sidebar is not None:
         fusedmaps_config["sidebar"] = sidebar
     
@@ -406,9 +425,11 @@ def deckgl_layers(
 """
 
     # Generate HTML
+    js_url, css_url = _fusedmaps_cdn_urls(fusedmaps_ref)
+
     html = MINIMAL_TEMPLATE.format(
-        css_url=FUSEDMAPS_CDN_CSS,
-        js_url=FUSEDMAPS_CDN_JS,
+        css_url=css_url,
+        js_url=js_url,
         config_json=json.dumps(fusedmaps_config),
         extra_scripts=extra_scripts
     )
