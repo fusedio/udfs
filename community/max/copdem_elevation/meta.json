@@ -1,0 +1,55 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "copdem_elevation",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "copdem_elevation",
+            "fused:slug": "copdem_elevation",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "hexLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "extruded": false,
+                "opacity": 1,
+                "coverage": 0.9,
+                "lineWidthMinPixels": 1,
+                "getHexagon": "@@=properties.hex",
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "data_avg",
+                  "domain": [
+                    0,
+                    1000
+                  ],
+                  "steps": 20,
+                  "colors": "Earth"
+                }
+              }
+            },
+            "fused:udfType": "vector_tile"
+          },
+          "source": "copdem_elevation.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
