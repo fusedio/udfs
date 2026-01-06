@@ -227,10 +227,11 @@ def s3_upload(path, s3_path=None):
     fs.put(path, s3_path)
     return s3_path
 
-def s3_download(s3_path):
+def s3_download(s3_path, local_path=None):
     import s3fs
     fs = s3fs.S3FileSystem()
-    local_path = f"/tmp/{s3_path.replace(':', '').replace('/', '_')}"
+    if not local_path:
+        local_path = f"/tmp/{s3_path.replace(':', '').replace('/', '_').replace(' ', '_')}"        
     fs.get(s3_path, local_path)
     return local_path
 
