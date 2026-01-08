@@ -2471,32 +2471,6 @@ def parse_date(date_str: str, is_end: bool = False):
 
     return dt
 
-    
-def split_datetime(start: str, end: str, n: int = 10):
-    """
-    Split start/end dates into n chunks, returning list of (start_iso, end_iso) strings.
-    """
-    from datetime import timedelta
-    start_dt = parse_date(start, is_end=False)
-    end_dt = parse_date(end, is_end=True)
-    
-    total_seconds = (end_dt - start_dt).total_seconds()
-    chunk_seconds = total_seconds / n
-    
-    chunks = []
-    for i in range(n):
-        chunk_start = start_dt + timedelta(seconds=i * chunk_seconds)
-        chunk_end = start_dt + timedelta(seconds=(i + 1) * chunk_seconds)
-        if i < n - 1:
-            chunk_end = chunk_end - timedelta(milliseconds=1000)
-        
-        chunks.append((
-            chunk_start.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            chunk_end.strftime("%Y-%m-%dT%H:%M:%SZ")
-        ))
-    
-    return chunks
-
 
 def split_datetime(start_date: str, end_date: str, n: int = 10, gap_milliseconds:int = 1000):
     """
