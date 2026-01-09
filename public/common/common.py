@@ -292,22 +292,9 @@ def s3_tmp_path(path, folder="tmp/new", user_env="fused"):
     s3_path = "/".join(parts) + "/"
     return s3_path + fname
 
+
 def file_exists(path, verbose=True):
-    """
-    Check if a file exists based on the path type:
-    - Local file system
-    - S3 path (starting with 's3:')
-    - HTTP/HTTPS URL
-    
-    Args:
-        path: Path to check
-        verbose: Whether to print status messages
-    
-    Returns:
-        bool: True if file exists, False otherwise
-    """
     import os
-    
     # Handle S3 paths
     if path.startswith('s3:'):
         try:
@@ -320,6 +307,24 @@ def file_exists(path, verbose=True):
         except ImportError:
             if verbose:
                 print("s3fs package not installed. Please install with 'pip install s3fs'")
+            return False
+    
+    # Handle Google Cloud Storage paths
+    elif path.startswith('gs:'):
+        try:
+            import gcsfs
+            fs = gcsfs.GCSFileSystem()
+            exists = fs.exists(path)
+            if verbose and exists:
+                print(f'{path=} exists on GCS.')
+            return exists
+        except ImportError:
+            if verbose:
+                print("gcsfs package not installed. Please install with 'pip install gcsfs'")
+            return False
+        except Exception as e:
+            if verbose:
+                print(f"Error checking GCS path {path}: {str(e)}")
             return False
     
     # Handle HTTP/HTTPS URLs
@@ -342,7 +347,7 @@ def file_exists(path, verbose=True):
         if verbose and exists:
             print(f'{path=} exists locally.')
         return exists
-
+        
 def encode_metadata_fused(fused_metadata):
     import pandas as pd
     import base64
