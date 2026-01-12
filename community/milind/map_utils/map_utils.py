@@ -82,8 +82,8 @@ VALID_TILE_PROPS = {
 # NOTE: Pin to a specific commit for reproducibility.
 # You can override this per-run via `deckgl_layers(..., fusedmaps_ref=...)`.
 #
-# - main ref: bac63bc (fix: extract_schema error handling)
-FUSEDMAPS_CDN_REF_DEFAULT = "bac63bc"
+# - main ref: 873464e (basemap switcher below zoom)
+FUSEDMAPS_CDN_REF_DEFAULT = "2e04f7b"
 FUSEDMAPS_CDN_JS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.umd.js"
 FUSEDMAPS_CDN_CSS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.css"
 
@@ -446,7 +446,7 @@ def deckgl_layers(
             "legend": True,
             "layerPanel": True,
             "tooltip": True,
-            "theme": theme
+            "theme": theme,
         },
         "highlightOnClick": highlight_on_click,
     }
