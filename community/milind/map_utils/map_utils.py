@@ -82,8 +82,8 @@ VALID_TILE_PROPS = {
 # NOTE: Pin to a specific commit for reproducibility.
 # You can override this per-run via `deckgl_layers(..., fusedmaps_ref=...)`.
 #
-# - main ref: 873464e (basemap switcher below zoom)
-FUSEDMAPS_CDN_REF_DEFAULT = "d9908ec"
+# - main ref: d1083cd (click broadcast for feature click events)
+FUSEDMAPS_CDN_REF_DEFAULT = "d1083cd"
 FUSEDMAPS_CDN_JS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.umd.js"
 FUSEDMAPS_CDN_CSS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.css"
 
@@ -221,6 +221,7 @@ def deckgl_layers(
     theme: str = "dark",
     highlight_on_click: bool = True,
     on_click: dict = None,
+    map_broadcast: typing.Optional[dict] = None,  # Viewport broadcast config: {"channel": "fused-bus", "dataset": "all"}
     sidebar: typing.Optional[str] = None,  # None | "show" | "hide"
     debug: typing.Optional[bool] = None,  # deprecated alias for sidebar
     fusedmaps_ref: typing.Optional[str] = None,  # override CDN ref (commit/tag/branch)
@@ -254,7 +255,9 @@ def deckgl_layers(
         initialViewState: Optional view state override.
         theme: UI theme ('dark' or 'light').
         highlight_on_click: Enable click-to-highlight.
-        on_click: Click broadcast config.
+        on_click: Click broadcast config (sends feature clicks to other components).
+        map_broadcast: Viewport broadcast config (sends map bounds to other components).
+            Example: {"channel": "fused-bus", "dataset": "all"}
         
         # Custom injection (extend without modifying FusedMaps package):
         custom_head: HTML to inject in <head> (e.g., external scripts, stylesheets).
@@ -489,14 +492,21 @@ def deckgl_layers(
         if ai_context:
             fusedmaps_config["aiContext"] = ai_context
 
-    # Add messaging config if on_click specified
-    if on_click:
-        fusedmaps_config["messaging"] = {
-            "clickBroadcast": {
-                "enabled": True,
-                **on_click
-            }
+    # Add messaging config for broadcast/click events
+    messaging_config = {}
+    if map_broadcast:
+        messaging_config["broadcast"] = {
+            "enabled": True,
+            "channel": map_broadcast.get("channel", "fused-bus"),
+            "dataset": map_broadcast.get("dataset", "all")
         }
+    if on_click:
+        messaging_config["clickBroadcast"] = {
+            "enabled": True,
+            **on_click
+        }
+    if messaging_config:
+        fusedmaps_config["messaging"] = messaging_config
     
     # Extra scripts needed for hex tile layers (Deck.gl + hyparquet)
     extra_scripts = ""
@@ -538,12 +548,13 @@ def deckgl_hex(
     layers: list = None,
     highlight_on_click: bool = True,
     on_click: dict = None,
+    map_broadcast: typing.Optional[dict] = None,
     sidebar: typing.Optional[str] = None,
     debug: typing.Optional[bool] = None,  # deprecated alias
 ):
     """
     Render H3 hexagon layer(s) on an interactive map.
-    
+
     Convenience wrapper around deckgl_layers() for hex-only use cases.
     """
     if layers is None:
@@ -555,13 +566,14 @@ def deckgl_hex(
             raise ValueError("Provide df, tile_url, or layers parameter")
     else:
         layers = [{"type": "hex", **layer_def} for layer_def in layers]
-    
+
     return deckgl_layers(
         layers=layers,
         mapbox_token=mapbox_token,
         basemap=basemap,
         highlight_on_click=highlight_on_click,
         on_click=on_click,
+        map_broadcast=map_broadcast,
         sidebar=sidebar,
         debug=debug,
     )
@@ -772,8 +784,11 @@ def _process_hex_layer(idx: int, df, tile_url: str, config: dict, name: str, vis
 
         data_records = _sanitize_records(df_clean.to_dict('records'))
 
-    # Extract tooltip columns
+    # Extract tooltip columns (check legacy hexLayer too)
+    legacy_hex = config.get("hexLayer") or {}
     tooltip = _extract_tooltip_columns_new(config, style)
+    if not tooltip:
+        tooltip = legacy_hex.get("tooltipAttrs") or legacy_hex.get("tooltipColumns") or []
 
     result = {
         "id": f"layer-{idx}",
@@ -786,6 +801,7 @@ def _process_hex_layer(idx: int, df, tile_url: str, config: dict, name: str, vis
         result["data"] = data_records
     if tile_url:
         result["tileUrl"] = tile_url
+        result["isTileLayer"] = True
     if style:
         result["style"] = style
     if tile_opts:
@@ -841,7 +857,11 @@ def _process_vector_layer(idx: int, df, config: dict, name: str, visible: bool) 
         feat["properties"] = {k: _sanitize_value(v) for k, v in (feat.get("properties") or {}).items()}
         feat["properties"]["_fused_idx"] = idx_f
 
+    # Extract tooltip columns (check legacy vectorLayer too)
+    legacy_vec = config.get("vectorLayer") or {}
     tooltip = _extract_tooltip_columns_new(config, style)
+    if not tooltip:
+        tooltip = legacy_vec.get("tooltipColumns") or legacy_vec.get("tooltipAttrs") or []
 
     result = {
         "id": f"layer-{idx}",
@@ -1305,6 +1325,22 @@ def enable_map_broadcast(html_input, channel: str = "fused-bus", dataset: str = 
 def enable_map_sync(html_input, channel: str = "default"):
     """
     Note: In the refactored version, sync is enabled via config.
+    This function is kept for API compatibility but just returns the input.
+    """
+    return html_input
+
+
+def enable_location_listener(html_input, zoom_offset: int = 0, padding: int = 40, max_zoom: int = 16):
+    """
+    Note: In the refactored version, location listening is handled internally.
+    This function is kept for API compatibility but just returns the input.
+    """
+    return html_input
+
+
+def enable_hex_click_broadcast(html_input, channel: str = "fused-bus"):
+    """
+    Note: In the refactored version, click broadcasting is handled via config.
     This function is kept for API compatibility but just returns the input.
     """
     return html_input
