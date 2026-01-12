@@ -11,67 +11,68 @@ import fused
 
 
 # ============================================================
-# Default Configurations
+# Default Configurations (New Clean Format)
 # ============================================================
 
-DEFAULT_DECK_HEX_CONFIG = {
-    "initialViewState": {
-        "longitude": None,
-        "latitude": None,
-        "zoom": 8,
-        "pitch": 0,
-        "bearing": 0
+DEFAULT_HEX_STYLE = {
+    "fillColor": {
+        "type": "continuous",
+        "attr": "cnt",
+        "palette": "ArmyRose",
+        "steps": 20,
+        "nullColor": [184, 184, 184]
     },
-    "hexLayer": {
-        "filled": True,
-        "stroked": True,
-        "pickable": True,
-        "extruded": False,
-        "elevationScale": 1,
-        "opacity": 1,
-        "getHexagon": "@@=properties.hex",
-        "getFillColor": {
-            "@@function": "colorContinuous",
-            "attr": "cnt",
-            "steps": 20,
-            "colors": "ArmyRose",
-            "nullColor": [184, 184, 184]
-        },
-        "getLineColor": [255, 255, 255],
-        "lineWidthMinPixels": 1
-    }
+    "lineColor": [255, 255, 255],
+    "opacity": 1,
+    "filled": True,
+    "stroked": True,
+    "extruded": False,
+    "elevationScale": 1,
+    "lineWidth": 1
+}
+
+DEFAULT_VECTOR_STYLE = {
+    "fillColor": {
+        "type": "continuous",
+        "attr": "house_age",
+        "palette": "ArmyRose",
+        "domain": [0, 50],
+        "steps": 7,
+        "nullColor": [200, 200, 200, 180]
+    },
+    "opacity": 0.8,
+    "filled": True,
+    "stroked": True,
+    "pointRadius": 10,
+    "lineWidth": 0
+}
+
+DEFAULT_RASTER_STYLE = {
+    "opacity": 1.0
+}
+
+# Legacy defaults (for backwards compatibility during transition)
+DEFAULT_DECK_HEX_CONFIG = {
+    "style": DEFAULT_HEX_STYLE
 }
 
 DEFAULT_DECK_CONFIG = {
-    "initialViewState": {
-        "zoom": 12
-    },
-    "vectorLayer": {
-        "pointRadiusMinPixels": 10,
-        "pickable": True,
-        "lineWidthMinPixels": 0,
-        "getFillColor": {
-            "@@function": "colorContinuous",
-            "attr": "house_age",
-            "domain": [0, 50],
-            "colors": "ArmyRose",
-            "steps": 7,
-            "nullColor": [200, 200, 200, 180]
-        }
-    }
+    "style": DEFAULT_VECTOR_STYLE
 }
 
 DEFAULT_DECK_RASTER_CONFIG = {
-    "rasterLayer": {
-        "opacity": 1.0,
-    }
+    "style": DEFAULT_RASTER_STYLE
 }
 
-VALID_HEX_LAYER_PROPS = {
-    "@@type", "filled", "stroked", "pickable", "extruded", "opacity",
-    "getFillColor", "getLineColor", "lineWidthMinPixels", "elevationScale", "elevationProperty",
-    "getHexagon", "tooltipColumns", "tooltipAttrs", "coverage", "id",
-    "visible", "data", "sql", "transitions", "highlightColor", "autoHighlight"
+# Valid style properties for the new format
+VALID_STYLE_PROPS = {
+    "fillColor", "lineColor", "opacity", "filled", "stroked",
+    "extruded", "elevationAttr", "elevationScale", "lineWidth", "pointRadius"
+}
+
+# Valid tile options
+VALID_TILE_PROPS = {
+    "minZoom", "maxZoom", "zoomOffset", "tileSize", "maxRequests"
 }
 
 # ============================================================
@@ -81,9 +82,8 @@ VALID_HEX_LAYER_PROPS = {
 # NOTE: Pin to a specific commit for reproducibility.
 # You can override this per-run via `deckgl_layers(..., fusedmaps_ref=...)`.
 #
-# - main ref: 6cd78d5 (LayerStore + in-place updates)
-# - drawing ref: a7f1569 (feature/drawing-layer)
-FUSEDMAPS_CDN_REF_DEFAULT = "6cd78d5"
+# - main ref: bac63bc (fix: extract_schema error handling)
+FUSEDMAPS_CDN_REF_DEFAULT = "bac63bc"
 FUSEDMAPS_CDN_JS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.umd.js"
 FUSEDMAPS_CDN_CSS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.css"
 
@@ -124,22 +124,28 @@ MINIMAL_TEMPLATE = """<!DOCTYPE html>
   <div id="map"></div>
   {custom_body}
   <script>
-    // Wait for cartocolor to load, then initialize
-    function waitForCartocolor(callback) {{
-      if (window.cartocolor) {{
-        callback();
-      }} else {{
-        setTimeout(() => waitForCartocolor(callback), 50);
+    // Initialize even if cartocolor fails to load (network/csp issues).
+    // If cartocolor loads later, palettes will start working for subsequent style updates.
+    function waitForCartocolor(callback, tries) {{
+      tries = Number.isFinite(tries) ? tries : 0;
+      if (window.cartocolor) return callback();
+      // ~2s timeout, then proceed with a safe fallback.
+      if (tries >= 40) {{
+        try {{ window.cartocolor = window.cartocolor || {{}}; }} catch (e) {{}}
+        return callback();
       }}
+      setTimeout(() => waitForCartocolor(callback, tries + 1), 50);
     }}
-    
+
     waitForCartocolor(() => {{
       const config = {config_json};
-      const instance = FusedMaps.init(config);
-      const map = instance.map;
+      // IMPORTANT: avoid naming collisions with user-injected `on_init` code.
+      // (Users often write: `const instance = window.__fusedMapsInstance;`)
+      const __fm_instance = FusedMaps.init(config);
+      const __fm_map = __fm_instance.map;
       // Expose globally for custom scripts
-      window.__fusedMapsInstance = instance;
-      window.__fusedMapsMap = map;
+      window.__fusedMapsInstance = __fm_instance;
+      window.__fusedMapsMap = __fm_map;
       
       // User-provided on_init callback
       {on_init}
@@ -216,9 +222,12 @@ def deckgl_layers(
     highlight_on_click: bool = True,
     on_click: dict = None,
     sidebar: typing.Optional[str] = None,  # None | "show" | "hide"
-    drawing: typing.Optional[dict] = None,
     debug: typing.Optional[bool] = None,  # deprecated alias for sidebar
     fusedmaps_ref: typing.Optional[str] = None,  # override CDN ref (commit/tag/branch)
+    # --- AI Configuration ---
+    ai_udf_url: typing.Optional[str] = None,  # URL to AI UDF that converts prompts to SQL
+    ai_schema: typing.Optional[str] = None,  # Schema string to pass to AI UDF (auto-extracted if not provided)
+    ai_context: typing.Optional[str] = None,  # Custom domain context for AI (e.g., CDL crop codes)
     # --- Custom injection for extending without modifying FusedMaps package ---
     custom_head: str = "",  # HTML to inject in <head> (scripts, stylesheets)
     custom_css: str = "",   # CSS rules to inject in <style>
@@ -244,7 +253,6 @@ def deckgl_layers(
         theme: UI theme ('dark' or 'light').
         highlight_on_click: Enable click-to-highlight.
         on_click: Click broadcast config.
-        drawing: Optional fusedmaps drawing config (experimental).
         
         # Custom injection (extend without modifying FusedMaps package):
         custom_head: HTML to inject in <head> (e.g., external scripts, stylesheets).
@@ -343,6 +351,10 @@ def deckgl_layers(
                 processed["parquetUrl"] = parquet_url
                 if sql is not None:
                     processed["sql"] = sql
+            # Tooltip from layer_def takes precedence
+            tooltip_from_def = layer_def.get("tooltip") or layer_def.get("tooltipColumns")
+            if processed and tooltip_from_def:
+                processed["tooltip"] = list(tooltip_from_def)
             if processed:
                 processed_layers.append(processed)
                 if processed.get("isTileLayer"):
@@ -360,6 +372,10 @@ def deckgl_layers(
                 processed = _process_vector_layer(i, df, config, name, visible)
             if processed and data_ref:
                 processed["dataRef"] = str(data_ref)
+            # Tooltip from layer_def takes precedence
+            tooltip_from_def = layer_def.get("tooltip") or layer_def.get("tooltipColumns")
+            if processed and tooltip_from_def:
+                processed["tooltip"] = list(tooltip_from_def)
             if processed:
                 processed_layers.append(processed)
                 # Auto-center from polygons/points
@@ -435,12 +451,30 @@ def deckgl_layers(
         "highlightOnClick": highlight_on_click,
     }
 
-    if drawing is not None:
-        fusedmaps_config["drawing"] = drawing
-
     if sidebar is not None:
         fusedmaps_config["sidebar"] = sidebar
-    
+
+    # AI UDF URL (backend prompt-to-SQL)
+    if ai_udf_url:
+        fusedmaps_config["aiUdfUrl"] = ai_udf_url
+
+        # Auto-extract schema from first DuckDB hex layer if not provided
+        extracted_schema = ai_schema
+        if not extracted_schema:
+            for layer in processed_layers:
+                parquet_url = layer.get("parquetUrl")
+                if layer.get("layerType") == "hex" and parquet_url:
+                    try:
+                        extracted_schema = extract_schema(parquet_url)
+                    except:
+                        pass
+                    break
+
+        if extracted_schema and not extracted_schema.startswith("Error"):
+            fusedmaps_config["aiSchema"] = extracted_schema
+        if ai_context:
+            fusedmaps_config["aiContext"] = ai_context
+
     # Add messaging config if on_click specified
     if on_click:
         fusedmaps_config["messaging"] = {
@@ -683,8 +717,8 @@ def deckgl_raster(
 # ============================================================
 
 def _process_hex_layer(idx: int, df, tile_url: str, config: dict, name: str, visible: bool) -> dict:
-    """Process a hex layer definition into FusedMaps format."""
-    
+    """Process a hex layer definition into FusedMaps new format."""
+
     # Parse config
     if isinstance(config, str):
         try:
@@ -692,61 +726,68 @@ def _process_hex_layer(idx: int, df, tile_url: str, config: dict, name: str, vis
         except:
             config = {}
     config = config or {}
-    
+
+    # Support both new format (style key) and legacy format (hexLayer key)
+    style = config.get("style") or {}
+    tile_opts = config.get("tile") or {}
+
+    # Legacy support: extract from hexLayer if present
+    if "hexLayer" in config:
+        legacy = config["hexLayer"]
+        style = _deep_merge_dict(_convert_legacy_style(legacy), style)
+
     # Merge with defaults
-    merged_config = _deep_merge_dict(deepcopy(DEFAULT_DECK_HEX_CONFIG), config)
-    hex_layer = merged_config.get("hexLayer", {})
-    
-    # Clean invalid props
-    for key in list(hex_layer.keys()):
-        if key not in VALID_HEX_LAYER_PROPS:
-            hex_layer.pop(key, None)
-    
+    style = _deep_merge_dict(deepcopy(DEFAULT_HEX_STYLE), style)
+
     is_tile_layer = tile_url is not None
 
-    # Tile layer config pass-through (for Deck.gl TileLayer options)
-    tile_layer_config = None
-    if is_tile_layer and isinstance(config, dict):
-        tile_layer_config = config.get("tileLayerConfig") or config.get("tileLayer") or None
-    
+    # Extract tile options from legacy tileLayerConfig if present
+    if is_tile_layer:
+        legacy_tile = config.get("tileLayerConfig") or config.get("tileLayer") or {}
+        tile_opts = _deep_merge_dict(legacy_tile, tile_opts)
+
     # Process data
     data_records = []
     if not is_tile_layer and df is not None and hasattr(df, 'to_dict'):
-        # Drop geometry column
         df_clean = df.drop(columns=['geometry'], errors='ignore') if hasattr(df, 'drop') else df
         df_clean = df_clean.copy()
-        
-        # Convert hex IDs to string format
+
         hex_col = next((c for c in ['hex', 'h3', 'index', 'id'] if c in df_clean.columns), None)
         if hex_col:
             df_clean['hex'] = df_clean[hex_col].apply(_to_hex_str)
-        
-        # Convert to records
+
         data_records = _sanitize_records(df_clean.to_dict('records'))
-    
+
     # Extract tooltip columns
-    tooltip_columns = _extract_tooltip_columns(config, hex_layer)
-    
-    return {
+    tooltip = _extract_tooltip_columns_new(config, style)
+
+    result = {
         "id": f"layer-{idx}",
         "name": name,
         "layerType": "hex",
-        "data": data_records,
-        "tileUrl": tile_url,
-        "isTileLayer": is_tile_layer,
-        "tileLayerConfig": tile_layer_config,
-        "hexLayer": hex_layer,
-        "tooltipColumns": tooltip_columns,
         "visible": visible,
     }
 
+    if data_records:
+        result["data"] = data_records
+    if tile_url:
+        result["tileUrl"] = tile_url
+    if style:
+        result["style"] = style
+    if tile_opts:
+        result["tile"] = tile_opts
+    if tooltip:
+        result["tooltip"] = tooltip
+
+    return result
+
 
 def _process_vector_layer(idx: int, df, config: dict, name: str, visible: bool) -> dict:
-    """Process a vector layer definition into FusedMaps format."""
-    
+    """Process a vector layer definition into FusedMaps new format."""
+
     if df is None:
         return None
-    
+
     # Parse config
     if isinstance(config, str):
         try:
@@ -754,18 +795,25 @@ def _process_vector_layer(idx: int, df, config: dict, name: str, visible: bool) 
         except:
             config = {}
     config = config or {}
-    
+
+    # Support both new format (style key) and legacy format (vectorLayer key)
+    style = config.get("style") or {}
+
+    # Legacy support: extract from vectorLayer if present
+    if "vectorLayer" in config:
+        legacy = config["vectorLayer"]
+        style = _deep_merge_dict(_convert_legacy_style(legacy), style)
+
     # Merge with defaults
-    merged_config = _deep_merge_dict(deepcopy(DEFAULT_DECK_CONFIG), config)
-    vector_layer = merged_config.get("vectorLayer", {})
-    
+    style = _deep_merge_dict(deepcopy(DEFAULT_VECTOR_STYLE), style)
+
     # Reproject to EPSG:4326 if needed
     if hasattr(df, "crs") and df.crs and getattr(df.crs, "to_epsg", lambda: None)() != 4326:
         try:
             df = df.to_crs(epsg=4326)
         except:
             pass
-    
+
     # Convert to GeoJSON
     geojson_obj = {"type": "FeatureCollection", "features": []}
     if hasattr(df, "to_json"):
@@ -773,61 +821,31 @@ def _process_vector_layer(idx: int, df, config: dict, name: str, visible: bool) 
             geojson_obj = json.loads(df.to_json())
         except:
             pass
-    
+
     # Sanitize properties and add index
     for idx_f, feat in enumerate(geojson_obj.get("features", [])):
         feat["properties"] = {k: _sanitize_value(v) for k, v in (feat.get("properties") or {}).items()}
         feat["properties"]["_fused_idx"] = idx_f
-    
-    # Extract color config
-    fill_color_config = None
-    fill_color_rgba = None
-    is_filled = vector_layer.get("filled", True)
-    
-    if is_filled:
-        fill_color_raw = vector_layer.get("getFillColor")
-        if isinstance(fill_color_raw, dict) and fill_color_raw.get("@@function"):
-            fill_color_config = fill_color_raw
-        elif isinstance(fill_color_raw, (list, tuple)) and len(fill_color_raw) >= 3:
-            r, g, b = int(fill_color_raw[0]), int(fill_color_raw[1]), int(fill_color_raw[2])
-            a = fill_color_raw[3] / 255.0 if len(fill_color_raw) > 3 else 0.6
-            fill_color_rgba = f"rgba({r},{g},{b},{a})"
-    
-    # Line color
-    line_color_raw = vector_layer.get("getLineColor")
-    line_color_rgba = None
-    line_color_config = None
-    
-    if isinstance(line_color_raw, dict) and line_color_raw.get("@@function"):
-        line_color_config = line_color_raw
-    elif isinstance(line_color_raw, (list, tuple)) and len(line_color_raw) >= 3:
-        r, g, b = int(line_color_raw[0]), int(line_color_raw[1]), int(line_color_raw[2])
-        a = line_color_raw[3] / 255.0 if len(line_color_raw) > 3 else 1.0
-        line_color_rgba = f"rgba({r},{g},{b},{a})"
-    
-    tooltip_columns = _extract_tooltip_columns(config, vector_layer)
-    
-    return {
+
+    tooltip = _extract_tooltip_columns_new(config, style)
+
+    result = {
         "id": f"layer-{idx}",
         "name": name,
         "layerType": "vector",
-        "geojson": geojson_obj,
-        "vectorLayer": vector_layer,
-        "fillColorConfig": fill_color_config,
-        "fillColorRgba": fill_color_rgba,
-        "lineColorConfig": line_color_config,
-        "lineColorRgba": line_color_rgba,
-        "lineWidth": vector_layer.get("lineWidthMinPixels") or vector_layer.get("getLineWidth", 1),
-        "pointRadius": vector_layer.get("pointRadiusMinPixels") or vector_layer.get("pointRadius", 6),
-        "isFilled": is_filled,
-        "isStroked": vector_layer.get("stroked", True),
-        "opacity": vector_layer.get("opacity", 0.8),
-        "tooltipColumns": tooltip_columns,
         "visible": visible,
+        "geojson": geojson_obj,
     }
 
+    if style:
+        result["style"] = style
+    if tooltip:
+        result["tooltip"] = tooltip
+
+    return result
+
 def _process_mvt_layer(idx: int, tile_url: str, source_layer: str, config: dict, name: str, visible: bool) -> dict:
-    """Process a vector tile (MVT) layer definition into FusedMaps format."""
+    """Process a vector tile (MVT) layer definition into FusedMaps new format."""
     if not tile_url:
         return None
 
@@ -839,95 +857,73 @@ def _process_mvt_layer(idx: int, tile_url: str, source_layer: str, config: dict,
             config = {}
     config = config or {}
 
-    merged_config = _deep_merge_dict(deepcopy(DEFAULT_DECK_CONFIG), config)
-    vector_layer = merged_config.get("vectorLayer", {}) or {}
+    # Support both new format (style key) and legacy format (vectorLayer key)
+    style = config.get("style") or {}
+    tile_opts = config.get("tile") or {}
 
-    # Extract fill/line configs from the vectorLayer config (same schema used for GeoJSON vector layer styling)
-    fill_color_config = None
-    fill_color = None
-    fill_opacity = float(vector_layer.get("opacity", 0.8))
-    fill_opacity = max(0.0, min(1.0, fill_opacity))
+    # Legacy support
+    if "vectorLayer" in config:
+        legacy = config["vectorLayer"]
+        style = _deep_merge_dict(_convert_legacy_style(legacy), style)
 
-    fill_color_raw = vector_layer.get("getFillColor")
-    if isinstance(fill_color_raw, dict) and fill_color_raw.get("@@function"):
-        fill_color_config = fill_color_raw
-    elif isinstance(fill_color_raw, (list, tuple)) and len(fill_color_raw) >= 3:
-        # Convert [r,g,b,(a)] to rgba string
-        r, g, b = int(fill_color_raw[0]), int(fill_color_raw[1]), int(fill_color_raw[2])
-        a = (fill_color_raw[3] / 255.0) if len(fill_color_raw) > 3 else 0.8
-        fill_color = f"rgba({r},{g},{b},{a})"
-    elif isinstance(fill_color_raw, str):
-        fill_color = fill_color_raw
+    # Merge with defaults
+    style = _deep_merge_dict(deepcopy(DEFAULT_VECTOR_STYLE), style)
 
-    line_color_config = None
-    line_color = None
-    line_color_raw = vector_layer.get("getLineColor")
-    if isinstance(line_color_raw, dict) and line_color_raw.get("@@function"):
-        line_color_config = line_color_raw
-    elif isinstance(line_color_raw, (list, tuple)) and len(line_color_raw) >= 3:
-        r, g, b = int(line_color_raw[0]), int(line_color_raw[1]), int(line_color_raw[2])
-        a = (line_color_raw[3] / 255.0) if len(line_color_raw) > 3 else 1.0
-        line_color = f"rgba({r},{g},{b},{a})"
-    elif isinstance(line_color_raw, str):
-        line_color = line_color_raw
+    tooltip = _extract_tooltip_columns_new(config, style)
 
-    line_width = vector_layer.get("lineWidthMinPixels") or vector_layer.get("getLineWidth", 1)
-    try:
-        line_width = float(line_width)
-    except:
-        line_width = 1.0
-
-    tooltip_columns = _extract_tooltip_columns(config, vector_layer)
-
-    return {
+    result = {
         "id": f"layer-{idx}",
         "name": name,
         "layerType": "mvt",
+        "visible": visible,
         "tileUrl": tile_url,
         "sourceLayer": source_layer or "udf",
-        "fillColorConfig": fill_color_config,
-        "fillColor": fill_color,
-        "fillOpacity": fill_opacity,
-        "isFilled": vector_layer.get("filled", True),
-        "lineColorConfig": line_color_config,
-        "lineColor": line_color,
-        "lineWidth": line_width,
-        "isExtruded": vector_layer.get("extruded", False),
-        "extrusionOpacity": float(vector_layer.get("opacity", 0.9)),
-        "heightProperty": vector_layer.get("heightProperty") or "height",
-        "heightMultiplier": vector_layer.get("heightMultiplier") or 1,
-        "tooltipColumns": tooltip_columns,
-        "visible": visible,
     }
+
+    if style:
+        result["style"] = style
+    if tile_opts:
+        result["tile"] = tile_opts
+    if tooltip:
+        result["tooltip"] = tooltip
+
+    return result
 
 
 def _process_raster_layer(idx: int, tile_url: str, image_url, bounds, config: dict, name: str, visible: bool) -> dict:
-    """Process a raster layer definition into FusedMaps format."""
-    
+    """Process a raster layer definition into FusedMaps new format."""
+
     if not tile_url and not image_url:
         return None
-    
+
     config = config or {}
-    merged_config = _deep_merge_dict(deepcopy(DEFAULT_DECK_RASTER_CONFIG), config)
-    raster_layer = merged_config.get("rasterLayer", {})
-    
-    opacity = float(raster_layer.get("opacity", 1.0))
+
+    # Extract opacity from config
+    opacity = 1.0
+    if "style" in config:
+        opacity = float(config["style"].get("opacity", 1.0))
+    elif "rasterLayer" in config:
+        opacity = float(config["rasterLayer"].get("opacity", 1.0))
+    elif "opacity" in config:
+        opacity = float(config["opacity"])
+
     opacity = max(0.0, min(1.0, opacity))
-    
-    out = {
+
+    result = {
         "id": f"layer-{idx}",
         "name": name,
         "layerType": "raster",
-        "rasterLayer": {"opacity": opacity},
-        "opacity": opacity,
         "visible": visible,
+        "opacity": opacity,
     }
+
     if tile_url:
-        out["tileUrl"] = tile_url
+        result["tileUrl"] = tile_url
     if image_url:
-        out["imageUrl"] = image_url
-        out["imageBounds"] = list(bounds) if bounds is not None else None
-    return out
+        result["imageUrl"] = image_url
+        result["imageBounds"] = list(bounds) if bounds is not None else None
+
+    return result
 
 
 def _process_pmtiles_layer(
@@ -941,7 +937,7 @@ def _process_pmtiles_layer(
     minzoom: int = None,
     maxzoom: int = None,
 ) -> dict:
-    """Process a PMTiles layer definition into FusedMaps format."""
+    """Process a PMTiles layer definition into FusedMaps new format."""
     if not pmtiles_url:
         return None
 
@@ -953,83 +949,170 @@ def _process_pmtiles_layer(
             config = {}
     config = config or {}
 
-    merged_config = _deep_merge_dict(deepcopy(DEFAULT_DECK_CONFIG), config)
-    vector_layer = merged_config.get("vectorLayer", {}) or {}
-    exclude_source_layers = vector_layer.get("exclude_source_layers") or vector_layer.get("excludeSourceLayers") or config.get("exclude_source_layers") or config.get("excludeSourceLayers") or []
-    if exclude_source_layers is None:
-        exclude_source_layers = []
+    # Support both new format (style key) and legacy format (vectorLayer key)
+    style = config.get("style") or {}
+    tile_opts = config.get("tile") or {}
+
+    # Legacy support
+    if "vectorLayer" in config:
+        legacy = config["vectorLayer"]
+        style = _deep_merge_dict(_convert_legacy_style(legacy), style)
+
+    # Merge with defaults
+    style = _deep_merge_dict(deepcopy(DEFAULT_VECTOR_STYLE), style)
+
+    # Extract exclude_source_layers from config
+    exclude_source_layers = (
+        config.get("exclude_source_layers") or
+        config.get("excludeSourceLayers") or
+        []
+    )
     if isinstance(exclude_source_layers, str):
         exclude_source_layers = [exclude_source_layers]
     exclude_source_layers = [str(x) for x in exclude_source_layers if str(x).strip()]
 
-    render_points = vector_layer.get("renderPoints")
-    if render_points is None:
-        render_points = vector_layer.get("render_points")
-    render_lines = vector_layer.get("renderLines")
-    if render_lines is None:
-        render_lines = vector_layer.get("render_lines")
-    render_polygons = vector_layer.get("renderPolygons")
-    if render_polygons is None:
-        render_polygons = vector_layer.get("render_polygons")
+    # Extract render toggles
+    render_points = config.get("renderPoints") or config.get("render_points")
+    render_lines = config.get("renderLines") or config.get("render_lines")
+    render_polygons = config.get("renderPolygons") or config.get("render_polygons")
 
-    # Extract fill color config
-    fill_color_config = None
-    fill_color_raw = vector_layer.get("getFillColor")
-    if isinstance(fill_color_raw, dict) and fill_color_raw.get("@@function"):
-        fill_color_config = fill_color_raw
-    elif isinstance(fill_color_raw, dict) and fill_color_raw.get("attr"):
-        # Support shorthand: {"attr": "value", "domain": [...], "colors": "..."}
-        fill_color_config = {"@@function": "colorContinuous", **fill_color_raw}
+    # Build tile options
+    if minzoom is not None:
+        tile_opts["minZoom"] = int(minzoom)
+    if maxzoom is not None:
+        tile_opts["maxZoom"] = int(maxzoom)
 
-    # Extract line color config
-    line_color_config = None
-    line_color_raw = vector_layer.get("getLineColor")
-    if isinstance(line_color_raw, dict) and line_color_raw.get("@@function"):
-        line_color_config = line_color_raw
-    elif isinstance(line_color_raw, (list, tuple)) and len(line_color_raw) >= 3:
-        r, g, b = int(line_color_raw[0]), int(line_color_raw[1]), int(line_color_raw[2])
-        a = (line_color_raw[3] / 255.0) if len(line_color_raw) > 3 else 1.0
-        line_color_config = f"rgba({r},{g},{b},{a})"
+    tooltip = _extract_tooltip_columns_new(config, style)
 
-    opacity = float(vector_layer.get("opacity", 0.8))
-    line_width = vector_layer.get("lineWidthMinPixels") or vector_layer.get("getLineWidth", 1)
-    point_radius = vector_layer.get("pointRadiusMinPixels") or vector_layer.get("pointRadius", 4)
-    
-    # Extract filled/stroked booleans (default to True if not specified)
-    is_filled = vector_layer.get("filled", True)
-    is_stroked = vector_layer.get("stroked", True)
-
-    tooltip_columns = _extract_tooltip_columns(config, vector_layer)
-
-    return {
+    result = {
         "id": f"layer-{idx}",
         "name": name,
         "layerType": "pmtiles",
-        "pmtilesUrl": pmtiles_url,
-        "pmtilesPath": pmtiles_path,
-        "sourceLayer": source_layer,
-        "excludeSourceLayers": exclude_source_layers,
-        "minzoom": int(minzoom) if minzoom is not None else None,
-        "maxzoom": int(maxzoom) if maxzoom is not None else None,
-        "fillColorConfig": fill_color_config,
-        "lineColorConfig": line_color_config,
-        "fillOpacity": opacity,
-        "lineWidth": line_width,
-        "pointRadiusMinPixels": point_radius,
-        "vectorLayer": vector_layer,
-        "renderPoints": render_points,
-        "renderLines": render_lines,
-        "renderPolygons": render_polygons,
-        "tooltipColumns": tooltip_columns,
         "visible": visible,
-        "isFilled": is_filled,
-        "isStroked": is_stroked,
+        "pmtilesUrl": pmtiles_url,
     }
+
+    if pmtiles_path:
+        result["pmtilesPath"] = pmtiles_path
+    if source_layer:
+        result["sourceLayer"] = source_layer
+    if exclude_source_layers:
+        result["excludeSourceLayers"] = exclude_source_layers
+    if style:
+        result["style"] = style
+    if tile_opts:
+        result["tile"] = tile_opts
+    if tooltip:
+        result["tooltip"] = tooltip
+    if render_points is not None:
+        result["renderPoints"] = render_points
+    if render_lines is not None:
+        result["renderLines"] = render_lines
+    if render_polygons is not None:
+        result["renderPolygons"] = render_polygons
+
+    return result
 
 
 # ============================================================
 # Helper Functions
 # ============================================================
+
+def _convert_legacy_color(color_config) -> typing.Optional[dict]:
+    """Convert legacy @@function color config to new format."""
+    if not isinstance(color_config, dict):
+        return color_config  # Pass through RGB arrays, strings
+
+    fn = color_config.get("@@function")
+    if fn == "colorContinuous":
+        return {
+            "type": "continuous",
+            "attr": color_config.get("attr"),
+            "palette": color_config.get("colors"),
+            "domain": color_config.get("domain"),
+            "steps": color_config.get("steps"),
+            "nullColor": color_config.get("nullColor"),
+            "reverse": color_config.get("reverse"),
+            "autoDomain": color_config.get("autoDomain"),
+        }
+    elif fn == "colorCategories":
+        return {
+            "type": "categorical",
+            "attr": color_config.get("attr"),
+            "palette": color_config.get("colors"),
+            "categories": color_config.get("categories"),
+            "labelAttr": color_config.get("labelAttr"),
+            "nullColor": color_config.get("nullColor"),
+        }
+    elif color_config.get("attr"):
+        # Shorthand: {"attr": "value", "domain": [...], "colors": "..."}
+        return {
+            "type": "continuous",
+            "attr": color_config.get("attr"),
+            "palette": color_config.get("colors"),
+            "domain": color_config.get("domain"),
+            "steps": color_config.get("steps"),
+            "nullColor": color_config.get("nullColor"),
+        }
+
+    return color_config
+
+
+def _convert_legacy_style(legacy: dict) -> dict:
+    """Convert legacy hexLayer/vectorLayer format to new style format."""
+    style = {}
+
+    # Color mappings
+    if "getFillColor" in legacy:
+        style["fillColor"] = _convert_legacy_color(legacy["getFillColor"])
+    if "getLineColor" in legacy:
+        style["lineColor"] = _convert_legacy_color(legacy["getLineColor"])
+
+    # Direct property mappings
+    if "opacity" in legacy:
+        style["opacity"] = legacy["opacity"]
+    if "filled" in legacy:
+        style["filled"] = legacy["filled"]
+    if "stroked" in legacy:
+        style["stroked"] = legacy["stroked"]
+    if "extruded" in legacy:
+        style["extruded"] = legacy["extruded"]
+
+    # Elevation
+    if "elevationProperty" in legacy:
+        style["elevationAttr"] = legacy["elevationProperty"]
+    if "elevationScale" in legacy:
+        style["elevationScale"] = legacy["elevationScale"]
+
+    # Line width
+    if "lineWidthMinPixels" in legacy:
+        style["lineWidth"] = legacy["lineWidthMinPixels"]
+    elif "getLineWidth" in legacy:
+        style["lineWidth"] = legacy["getLineWidth"]
+
+    # Point radius
+    if "pointRadiusMinPixels" in legacy:
+        style["pointRadius"] = legacy["pointRadiusMinPixels"]
+    elif "pointRadius" in legacy:
+        style["pointRadius"] = legacy["pointRadius"]
+
+    return style
+
+
+def _extract_tooltip_columns_new(config: dict, style: dict) -> list:
+    """Extract tooltip columns from config (new format)."""
+    sources = [
+        config.get("tooltip"),
+        config.get("tooltipColumns"),
+        config.get("tooltipAttrs"),
+        style.get("tooltipColumns") if style else None,
+        style.get("tooltipAttrs") if style else None,
+    ]
+    for src in sources:
+        if src:
+            return list(src)
+    return []
+
 
 def _deep_merge_dict(base: dict, extra: dict) -> dict:
     """Deep merge extra into base."""
@@ -1075,19 +1158,94 @@ def _sanitize_records(records: list) -> list:
     ]
 
 
-def _extract_tooltip_columns(config: dict, layer_config: dict) -> list:
-    """Extract tooltip columns from config."""
-    # Check multiple sources
-    sources = [
-        config.get("tooltipColumns"),
-        config.get("tooltipAttrs"),
-        layer_config.get("tooltipColumns"),
-        layer_config.get("tooltipAttrs"),
-    ]
-    for src in sources:
-        if src:
-            return list(src)
-    return []
+def extract_schema(parquet_url: str, table_name: str = "data") -> str:
+    """
+    Extract schema from a parquet file and return a formatted string for AI prompts.
+
+    Args:
+        parquet_url: URL to the parquet file
+        table_name: Name to use for the table in the schema description
+
+    Returns:
+        Formatted schema string for use in AI system prompts
+
+    Example:
+        >>> schema = extract_schema("https://example.com/data.parquet")
+        >>> print(schema)
+        Table: `data`
+        Columns:
+        - hex (VARCHAR): H3 hexagon ID - REQUIRED in all queries
+        - value (DOUBLE)
+        - category (VARCHAR)
+    """
+    import duckdb
+    
+    try:
+        con = duckdb.connect()
+        con.execute("INSTALL httpfs; LOAD httpfs;")
+        
+        # Explicitly use read_parquet instead of letting DuckDB infer the format
+        schema_df = con.execute(f"DESCRIBE SELECT * FROM read_parquet('{parquet_url}') LIMIT 1").df()
+        
+        lines = [f"Table: `{table_name}`", "Columns:"]
+        for _, row in schema_df.iterrows():
+            col_name = row['column_name']
+            col_type = row['column_type']
+            if col_name.lower() in ('hex', 'h3', 'h3_cell', 'h3_index'):
+                lines.append(f"- {col_name} ({col_type}): H3 hexagon ID - REQUIRED in all SELECT queries")
+            else:
+                lines.append(f"- {col_name} ({col_type})")
+        return "\n".join(lines)
+    except Exception as e:
+        raise ValueError(f"Could not extract schema from {parquet_url}: {e}")
+
+def build_sql_system_prompt(
+    schema: str,
+    table_name: str = "data",
+    custom_context: str = "",
+) -> str:
+    """
+    Build a system prompt for SQL generation with the given schema.
+
+    Args:
+        schema: Schema string (from extract_schema())
+        table_name: Table name used in queries
+        custom_context: Additional domain-specific context (e.g., CDL crop codes)
+
+    Returns:
+        Complete system prompt for AI SQL generation
+    """
+    return f"""You are a DuckDB SQL query generator for geospatial hex data.
+
+Convert natural language requests into valid DuckDB SELECT statements.
+
+## Schema
+{schema}
+
+{f"## Domain Context{chr(10)}{custom_context}" if custom_context else ""}
+
+## CRITICAL RULES
+1. ALWAYS include the hex/h3 column in SELECT (required for map rendering)
+2. Use `{table_name}` as the table name
+3. Return ONLY the SQL query - no explanations, no markdown, no code blocks
+4. For filtering, use WHERE clauses
+5. Keep queries focused on filtering/aggregating the spatial data
+
+## Example Queries
+
+Filter by value:
+SELECT * FROM {table_name} WHERE value > 50
+
+Top N results:
+SELECT * FROM {table_name} ORDER BY area DESC LIMIT 100
+
+Multiple conditions:
+SELECT * FROM {table_name} WHERE category = 'A' AND value > 10
+
+Aggregation (keep hex column):
+SELECT hex, SUM(area) as total_area FROM {table_name} GROUP BY hex
+
+Return ONLY the SQL query."""
 
 
 def _compute_center_from_hex(df) -> dict:
