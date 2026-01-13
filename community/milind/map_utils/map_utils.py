@@ -83,7 +83,7 @@ VALID_TILE_PROPS = {
 # You can override this per-run via `deckgl_layers(..., fusedmaps_ref=...)`.
 #
 # - main ref: 73faec4 (loading spinner for MVT/raster/PMTiles layers)
-FUSEDMAPS_CDN_REF_DEFAULT = "b4419d0"
+FUSEDMAPS_CDN_REF_DEFAULT = "4761f62"
 FUSEDMAPS_CDN_JS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.umd.js"
 FUSEDMAPS_CDN_CSS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.css"
 
