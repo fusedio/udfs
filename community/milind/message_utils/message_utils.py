@@ -4,9 +4,9 @@ from typing import Any
 common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/")
 
 @fused.udf(cache_max_age=0)
-def udf(parameter: str = "yay"):
+def udf(parameter: str = "name"):
     # html = button("Click me", parameter=parameter)
-    L = ['aasdasd','basdads','casdasd','dasdasd']
+    L = ['A','B','C','D']
     html = selectbox("This is a dropdown", parameter=parameter, options = L)
     return html
  
@@ -145,9 +145,11 @@ document.addEventListener('DOMContentLoaded', () => {{
   btn.addEventListener('click', () => {{
     if (btn.disabled) return;
     window.parent.postMessage({{
-      type: 'button',
-      payload: {{ value: VALUE, label: LABEL }},
-      origin: SENDER, parameter: PARAMETER, ts: Date.now()
+      type: 'param',
+      parameter: PARAMETER,
+      values: {{ value: VALUE, label: LABEL }},
+      origin: SENDER,
+      ts: Date.now()
     }}, '*');
   }});
 }});
@@ -349,10 +351,10 @@ document.addEventListener('DOMContentLoaded', () => {{
   function post(val) {{
     if (val === '') return;
     window.parent.postMessage({{
-      type: 'selectbox',
-      payload: {{ value: val }},
-      origin: SENDER,
+      type: 'param',
       parameter: PARAMETER,
+      values: val,
+      origin: SENDER,
       ts: Date.now()
     }}, '*');
   }}
@@ -646,10 +648,10 @@ document.addEventListener('DOMContentLoaded', () => {{
 
   function post(val) {{
     window.parent.postMessage({{
-      type: 'slider',
-      payload: {{ value: val }},
-      origin: SENDER,
+      type: Array.isArray(val) ? 'range' : 'param',
       parameter: PARAMETER,
+      values: val,
+      origin: SENDER,
       ts: Date.now()
     }}, '*');
   }}
@@ -926,10 +928,10 @@ document.addEventListener('DOMContentLoaded', () => {{
     const vars = collectVars();
     if (!vars) return;
     window.parent.postMessage({{
-      type: 'vars',
-      payload: {{ vars }},
-      origin: SENDER,
+      type: 'param',
       parameter: PARAMETER,
+      values: vars,
+      origin: SENDER,
       ts: Date.now()
     }}, '*');
   }});
@@ -1123,13 +1125,23 @@ document.addEventListener('DOMContentLoaded', () => {{
     if (!lastPayload) refresh();
     if (!lastPayload) return;
     window.parent.postMessage({{
-      type: 'map_bounds',
-      payload: lastPayload,
-      origin: SENDER,
+      type: 'param',
       parameter: PARAMETER,
+      values: {{
+        west: lastPayload[0],
+        south: lastPayload[1],
+        east: lastPayload[2],
+        north: lastPayload[3],
+      }},
+      origin: SENDER,
       ts: Date.now()
     }}, '*');
-    showToast(lastPayload);
+    showToast({{
+      west: lastPayload[0],
+      south: lastPayload[1],
+      east: lastPayload[2],
+      north: lastPayload[3],
+    }});
   }});
 }});
 </script>
@@ -1230,9 +1242,11 @@ document.addEventListener('DOMContentLoaded', () => {{
     const value = input.value.trim();
     if (!value) return;
     window.parent.postMessage({{
-      type: 'text_input',
-      payload: {{ value }},
-      origin: SENDER, parameter: PARAMETER, ts: Date.now()
+      type: 'param',
+      parameter: PARAMETER,
+      values: value,
+      origin: SENDER,
+      ts: Date.now()
     }}, '*');
   }});
 
@@ -1364,10 +1378,10 @@ document.addEventListener('DOMContentLoaded', () => {{
   
   function post(val) {{
     window.parent.postMessage({{
-      type: 'date_input',
-      payload: {{ value: val }},
-      origin: SENDER,
+      type: 'param',
       parameter: PARAMETER,
+      values: val,
+      origin: SENDER,
       ts: Date.now()
     }}, '*');
   }}
@@ -1595,10 +1609,10 @@ document.addEventListener('DOMContentLoaded', () => {{
     const query = editor.getValue().trim();
     if (!query) return;
     window.parent.postMessage({{
-      type: 'sql_input',
-      payload: {{ value: query }},
-      origin: SENDER,
+      type: 'param',
       parameter: PARAMETER,
+      values: query,
+      origin: SENDER,
       ts: Date.now()
     }}, '*');
   }}
