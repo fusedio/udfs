@@ -2349,13 +2349,15 @@ def to_json(df, **kwargs):
     return df.to_json(**kwargs)
 
 
-def to_paths(obj_list, base_path: str = '/mount/tmp/', prefix: str = "obj", extension: str = ".pkl", cache: bool = True):
-    """Convert a list of objects to a list of file paths by saving each object."""
+def to_paths(obj_list, base_path: str = '/mount/tmp/', prefix: str = "obj",
+                      extension: str = ".pkl", cache: bool = True, max_workers: int = 32):
+    """Convert a list of objects to a list of file paths by saving each object in parallel."""
     import pickle
     import os
     import tempfile
     import hashlib
     import uuid
+    from concurrent.futures import ThreadPoolExecutor, as_completed
     
     if base_path is None:
         base_path = tempfile.mkdtemp()
@@ -2368,11 +2370,11 @@ def to_paths(obj_list, base_path: str = '/mount/tmp/', prefix: str = "obj", exte
         base_path = base_path.rstrip('/')
     else:
         os.makedirs(base_path, exist_ok=True)
-    
-    paths = []
-    for obj in obj_list:
+
+    def save_obj(obj):
         pickled_data = pickle.dumps(obj)
         
+        # Compute filename
         if cache:
             import pandas as pd
             import geopandas as gpd
@@ -2384,8 +2386,7 @@ def to_paths(obj_list, base_path: str = '/mount/tmp/', prefix: str = "obj", exte
                     try:
                         if col == 'geometry' and isinstance(obj, gpd.GeoDataFrame):
                             continue
-                        else:
-                            hash_obj.update(obj[col].values.tobytes())
+                        hash_obj.update(obj[col].values.tobytes())
                     except (AttributeError, TypeError, ValueError):
                         hash_obj.update(str(obj[col].values).encode())
                 
@@ -2397,7 +2398,7 @@ def to_paths(obj_list, base_path: str = '/mount/tmp/', prefix: str = "obj", exte
                 if isinstance(obj, gpd.GeoDataFrame):
                     try:
                         hash_obj.update(str(obj.geometry.area.sum()).encode())
-                    except (AttributeError, TypeError, ValueError):
+                    except Exception:
                         pass
                 
                 obj_hash = hash_obj.hexdigest()
@@ -2409,22 +2410,27 @@ def to_paths(obj_list, base_path: str = '/mount/tmp/', prefix: str = "obj", exte
             unique_id = str(uuid.uuid4())
             filename = f"{prefix}_{unique_id}{extension}"
         
+        # Save object
         if is_s3:
             filepath = f"{base_path}/{filename}"
             if cache and fs.exists(filepath):
-                pass
-            else:
-                with fs.open(filepath, 'wb') as f:
-                    f.write(pickled_data)
+                return filepath
+            with fs.open(filepath, 'wb') as f:
+                f.write(pickled_data)
         else:
             filepath = os.path.join(base_path, filename)
             if cache and os.path.exists(filepath):
-                pass
-            else:
-                with open(filepath, 'wb') as f:
-                    f.write(pickled_data)
+                return filepath
+            with open(filepath, 'wb') as f:
+                f.write(pickled_data)
         
-        paths.append(filepath)
+        return filepath
+
+    paths = []
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(save_obj, obj) for obj in obj_list]
+        for future in as_completed(futures):
+            paths.append(future.result())
     
     return paths
 
