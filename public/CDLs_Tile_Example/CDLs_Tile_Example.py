@@ -5,10 +5,10 @@ def udf(
     crop_type: str = "",
     chip_len: int = 256,
     colored: bool = True,
-    image_format: str='png',
+    image_format: str = "png",
 ):
     import numpy as np
-    
+
     common = fused.load("https://github.com/fusedio/udfs/tree/5b11e17/public/common/")
     tile = common.get_tiles(bounds, clip=True)
 
@@ -21,7 +21,7 @@ def udf(
     else:
         print("no data")
         return None
-    
+
     array_int = filter_crops(array_int, crop_type, verbose=False)
 
     # Print out the top 20 classes
@@ -34,14 +34,14 @@ def udf(
     )
 
     if colored:
-        if image_format.lower()in ('jpeg', 'jpg'): # best lossy compression
-            return common.arr_to_bytes(colored_array[:3], format='JPEG', quality=75), bounds
-        elif image_format.lower()=='webp': # best lossless compression
-            return common.arr_to_bytes(colored_array, format='WEBP', lossless=True), bounds
-        elif image_format.lower()=='avif':
-            return common.arr_to_bytes(colored_array, format='AVIF', lossless=True), bounds
-        else: 
-            if image_format.lower() != 'png':
+        if image_format.lower() in ("jpeg", "jpg"):  # best lossy compression
+            return common.arr_to_bytes(colored_array[:3], format="JPEG", quality=75), bounds
+        elif image_format.lower() == "webp":  # best lossless compression
+            return common.arr_to_bytes(colored_array, format="WEBP", lossless=True), bounds
+        elif image_format.lower() == "avif":
+            return common.arr_to_bytes(colored_array, format="AVIF", lossless=True), bounds
+        else:
+            if image_format.lower() != "png":
                 print(f"Warning: image_format={image_format} is ignored. Please pick from (png, jpg, jpeg, webp, avif)")
             return colored_array, bounds
     else:
@@ -76,14 +76,15 @@ def int_to_crop(val):
 @fused.cache
 def crop_type_list(crop_type):
     try:
-        vals = [int(i) for i in crop_type.split(',')]
+        vals = [int(i) for i in crop_type.split(",")]
     except:
         vals = crop_to_int(crop_type, verbose=False)
     return vals
 
+
 def filter_crops(arr, crop_type, verbose=True):
     import numpy as np
-    
+
     values_to_keep = crop_type_list(crop_type)
     if len(values_to_keep) > 0:
         mask = np.isin(arr, values_to_keep, invert=True)
@@ -108,14 +109,15 @@ def crop_counts(arr):
     df.columns = ["crop_type", "color", "n_pixel"]
     df = df.sort_values("n_pixel", ascending=False)
     return df.dropna()
- 
+
+
 def crop_stats(df, n=100):
     stats = (
         df.groupby("data")
         .area.sum()
-        .map(lambda x: round(x * 0.000247105, 2)) #conveting m2 to acre
+        .map(lambda x: round(x * 0.000247105, 2))  # conveting m2 to acre
         .sort_values(ascending=False)
         .to_frame("area (Acre)")
     )
-    stats["name"] = stats.index.map(lambda x:int_to_crop(x, cache_verbose=False))
+    stats["name"] = stats.index.map(lambda x: int_to_crop(x, cache_verbose=False))
     return stats.head(n)
