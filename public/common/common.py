@@ -270,7 +270,7 @@ def get_s3_size(file_path):
     import fused
     return sum([i.size for i in fused.api.list(file_path, details=1) if i.size])/10**9
 
-def s3_tmp_path(path, folder="tmp/new", user_env="fused"):
+def s3_tmp_path(path, folder=None, user_env="fused"):
     import re
     import uuid
 
