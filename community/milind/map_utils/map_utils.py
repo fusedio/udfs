@@ -82,8 +82,8 @@ VALID_TILE_PROPS = {
 # NOTE: Pin to a specific commit for reproducibility.
 # You can override this per-run via `deckgl_layers(..., fusedmaps_ref=...)`.
 #
-# - main ref: f91f34d (fix: layer panel swatch for lineColorConfig)
-FUSEDMAPS_CDN_REF_DEFAULT = "f91f34d"
+# - ce208df: geometry filters for all PMTiles layers, removed render toggles
+FUSEDMAPS_CDN_REF_DEFAULT = "ce208df"
 FUSEDMAPS_CDN_JS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.umd.js"
 FUSEDMAPS_CDN_CSS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.css"
 
@@ -916,6 +916,11 @@ def _process_vector_layer(idx: int, df, config: dict, name: str, visible: bool) 
     if tooltip:
         result["tooltip"] = tooltip
 
+    # Pass through source options (tolerance, buffer, maxzoom) for geojson-vt control
+    source = config.get("source")
+    if source:
+        result["source"] = source
+
     return result
 
 def _process_mvt_layer(idx: int, tile_url: str, source_layer: str, config: dict, name: str, visible: bool) -> dict:
@@ -1045,11 +1050,6 @@ def _process_pmtiles_layer(
         exclude_source_layers = [exclude_source_layers]
     exclude_source_layers = [str(x) for x in exclude_source_layers if str(x).strip()]
 
-    # Extract render toggles
-    render_points = config.get("renderPoints") or config.get("render_points")
-    render_lines = config.get("renderLines") or config.get("render_lines")
-    render_polygons = config.get("renderPolygons") or config.get("render_polygons")
-
     # Build tile options
     if minzoom is not None:
         tile_opts["minZoom"] = int(minzoom)
@@ -1078,12 +1078,6 @@ def _process_pmtiles_layer(
         result["tile"] = tile_opts
     if tooltip:
         result["tooltip"] = tooltip
-    if render_points is not None:
-        result["renderPoints"] = render_points
-    if render_lines is not None:
-        result["renderLines"] = render_lines
-    if render_polygons is not None:
-        result["renderPolygons"] = render_polygons
 
     return result
 
