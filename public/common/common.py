@@ -3609,14 +3609,39 @@ def get_row_groups(key, value, file_path):
     df = con.query(f'select * from df where {value} between {key}_min and {key}_max').df()
     return df.row_group.values
 
+
 def read_row_groups(file_path, chunk_ids, columns=None):
     import pyarrow.parquet as pq   
     table=pq.ParquetFile(file_path)   
     if columns:
-        return table.read_row_groups(chunk_ids, columns=columns).to_pandas()   
+        df = table.read_row_groups(chunk_ids, columns=columns).to_pandas()  
     else: 
         print('available columns:', table.schema.names)
-        return table.read_row_groups(chunk_ids).to_pandas() 
+        df = table.read_row_groups(chunk_ids).to_pandas() 
+    if 'geometry' in df:
+        import geopandas as gpd
+        df = gpd.GeoDataFrame(df.drop(columns=['geometry']), geometry=gpd.GeoSeries.from_wkb(df.geometry))
+    return df
+
+
+def table_chunk_overlaps(gdf, table_path):
+    gdf = to_gdf(gdf)
+    df = fused.get_chunks_metadata(table_path).clip(gdf.total_bounds)[["file_id", "chunk_id", "geometry"]]
+    df = df.sjoin(gdf[['geometry']]).drop_duplicates(["file_id", "chunk_id"])
+    df['path']=table_path.strip('/')+'/'+df['file_id']+'.parquet'
+    return df.reset_index()[['path','chunk_id']]
+
+
+def read_table_chunks(df, columns=None):
+    import pandas as pd
+    import pyarrow.parquet as pq
+    from concurrent.futures import ThreadPoolExecutor
+    groups = df.groupby('path')['chunk_id'].apply(list).to_dict()
+    
+    with ThreadPoolExecutor(max_workers=32) as ex:
+        tables = list(ex.map(lambda item: read_row_groups(*item, columns=columns), groups.items()))
+    
+    return pd.concat(tables)
 
     
 def s3_to_https(path):
