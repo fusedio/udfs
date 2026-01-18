@@ -273,8 +273,7 @@ def get_s3_size(file_path):
 def s3_tmp_path(path, folder=None):
     import re
     import uuid
-    fd=fused.options.fd_prefix.strip('/')
-    base_tmp_path = f"{fd}/{fd.split('/')[-1]}-tmp"
+    base_tmp_path = fused.options.fd_prefix.strip('/')+"/fused-tmp"
     fname = path.split("/")[-1]
     if '.' in fname:
         path = "/".join(path.split("/")[:-1])
