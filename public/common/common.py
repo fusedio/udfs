@@ -270,11 +270,11 @@ def get_s3_size(file_path):
     import fused
     return sum([i.size for i in fused.api.list(file_path, details=1) if i.size])/10**9
 
-def s3_tmp_path(path, folder=None, user_env="fused"):
+def s3_tmp_path(path, folder=None):
     import re
     import uuid
-
-    base_tmp_path = f"s3://fused-users/{user_env}/fused-tmp"
+    fd=fused.options.fd_prefix.strip('/')
+    base_tmp_path = f"{fd}/{fd.split('/')[-1]}-tmp"
     fname = path.split("/")[-1]
     if '.' in fname:
         path = "/".join(path.split("/")[:-1])
