@@ -3623,7 +3623,7 @@ def read_row_groups(file_path, chunk_ids, columns=None):
         df = table.read_row_groups(chunk_ids).to_pandas() 
     if 'geometry' in df:
         import geopandas as gpd
-        df = gpd.GeoDataFrame(df.drop(columns=['geometry']), geometry=gpd.GeoSeries.from_wkb(df.geometry))
+        df = gpd.GeoDataFrame(df.drop(columns=['geometry']), geometry=gpd.GeoSeries.from_wkb(df.geometry), crs=4326)
     return df
 
 
