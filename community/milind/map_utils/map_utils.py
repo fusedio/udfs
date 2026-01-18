@@ -82,8 +82,8 @@ VALID_TILE_PROPS = {
 # NOTE: Pin to a specific commit for reproducibility.
 # You can override this per-run via `deckgl_layers(..., fusedmaps_ref=...)`.
 #
-# - ce208df: geometry filters for all PMTiles layers, removed render toggles
-FUSEDMAPS_CDN_REF_DEFAULT = "ce208df"
+# - f1dae78: cleanup, fix widget positioning for left-side panels
+FUSEDMAPS_CDN_REF_DEFAULT = "f1dae78"
 FUSEDMAPS_CDN_JS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.umd.js"
 FUSEDMAPS_CDN_CSS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.css"
 
@@ -786,12 +786,7 @@ def _process_hex_layer(idx: int, df, tile_url: str, config: dict, name: str, vis
     """Process a hex layer definition into FusedMaps new format."""
 
     # Parse config
-    if isinstance(config, str):
-        try:
-            config = json.loads(config)
-        except:
-            config = {}
-    config = config or {}
+    config = _parse_config(config)
 
     # Support both new format (style key) and legacy format (hexLayer key)
     style = config.get("style") or {}
@@ -859,12 +854,7 @@ def _process_vector_layer(idx: int, df, config: dict, name: str, visible: bool) 
         return None
 
     # Parse config
-    if isinstance(config, str):
-        try:
-            config = json.loads(config)
-        except:
-            config = {}
-    config = config or {}
+    config = _parse_config(config)
 
     # Support both new format (style key) and legacy format (vectorLayer key)
     style = config.get("style") or {}
@@ -929,12 +919,7 @@ def _process_mvt_layer(idx: int, tile_url: str, source_layer: str, config: dict,
         return None
 
     # Parse config
-    if isinstance(config, str):
-        try:
-            config = json.loads(config)
-        except:
-            config = {}
-    config = config or {}
+    config = _parse_config(config)
 
     # Support both new format (style key) and legacy format (vectorLayer key)
     style = config.get("style") or {}
@@ -1021,12 +1006,7 @@ def _process_pmtiles_layer(
         return None
 
     # Parse config
-    if isinstance(config, str):
-        try:
-            config = json.loads(config)
-        except:
-            config = {}
-    config = config or {}
+    config = _parse_config(config)
 
     # Support both new format (style key) and legacy format (vectorLayer key)
     style = config.get("style") or {}
@@ -1085,6 +1065,30 @@ def _process_pmtiles_layer(
 # ============================================================
 # Helper Functions
 # ============================================================
+
+def _parse_config(config: typing.Union[dict, str, None]) -> dict:
+    """
+    Parse and normalize a config parameter.
+
+    Handles:
+    - None -> empty dict
+    - JSON string -> parsed dict
+    - dict -> returned as-is
+    - Invalid JSON -> empty dict with warning
+    """
+    if config is None:
+        return {}
+    if isinstance(config, dict):
+        return config
+    if isinstance(config, str):
+        try:
+            return json.loads(config)
+        except json.JSONDecodeError:
+            import warnings
+            warnings.warn(f"Invalid JSON config string, using empty config: {config[:50]}...")
+            return {}
+    return {}
+
 
 def _convert_legacy_color(color_config) -> typing.Optional[dict]:
     """Convert legacy @@function color config to new format."""
@@ -1343,39 +1347,4 @@ def _compute_center_from_gdf(gdf) -> dict:
     return None
 
 
-# ============================================================
-# Messaging Functions (wrappers - messaging is built into fusedmaps)
-# ============================================================
-
-def enable_map_broadcast(html_input, channel: str = "fused-bus", dataset: str = "all"):
-    """
-    Note: In the refactored version, broadcasting is enabled via config.
-    This function is kept for API compatibility but just returns the input.
-    """
-    # Broadcasting is now handled by passing messaging config to deckgl_layers
-    return html_input
-
-
-def enable_map_sync(html_input, channel: str = "default"):
-    """
-    Note: In the refactored version, sync is enabled via config.
-    This function is kept for API compatibility but just returns the input.
-    """
-    return html_input
-
-
-def enable_location_listener(html_input, zoom_offset: int = 0, padding: int = 40, max_zoom: int = 16):
-    """
-    Note: In the refactored version, location listening is handled internally.
-    This function is kept for API compatibility but just returns the input.
-    """
-    return html_input
-
-
-def enable_hex_click_broadcast(html_input, channel: str = "fused-bus"):
-    """
-    Note: In the refactored version, click broadcasting is handled via config.
-    This function is kept for API compatibility but just returns the input.
-    """
-    return html_input
 
