@@ -2457,30 +2457,33 @@ def parse_date(date_str: str, is_end: bool = False):
     Parse a partial or full date string and return ISO8601 with UTC 'Z'.
     Handles year-only, year-month, and full dates.
     """
-    from datetime import timedelta
-    import pandas as pd
-
-    # Handle partial dates
-    if len(date_str) == 4:  # Year only
-        date_str = f"{date_str}-12-31" if is_end else f"{date_str}-01-01"
-    elif len(date_str) == 7:  # Year-month
-        y, m = date_str.split('-')
-        if is_end:
-            last_day = pd.Timestamp(f"{y}-{m}-01").days_in_month
-            date_str = f"{y}-{m}-{last_day:02d}"
-        else:
-            date_str = f"{y}-{m}-01"
-
-    # Parse with pandas (handles most formats automatically)
-    dt = pd.to_datetime(date_str, errors='coerce', utc=True)
-    if pd.isna(dt):
-        raise ValueError(f"Could not parse date: {date_str}")
-
-    # Set end_date-of-day if needed
-    if is_end and dt.hour == 0 and dt.minute == 0 and dt.second == 0:
-        dt = dt.replace(hour=23, minute=59, second=59)
-
-    return dt
+    if date_str:
+        from datetime import timedelta
+        import pandas as pd
+    
+        # Handle partial dates
+        if len(date_str) == 4:  # Year only
+            date_str = f"{date_str}-12-31" if is_end else f"{date_str}-01-01"
+        elif len(date_str) == 7:  # Year-month
+            y, m = date_str.split('-')
+            if is_end:
+                last_day = pd.Timestamp(f"{y}-{m}-01").days_in_month
+                date_str = f"{y}-{m}-{last_day:02d}"
+            else:
+                date_str = f"{y}-{m}-01"
+    
+        # Parse with pandas (handles most formats automatically)
+        dt = pd.to_datetime(date_str, errors='coerce', utc=True)
+        if pd.isna(dt):
+            raise ValueError(f"Could not parse date: {date_str}")
+    
+        # Set end_date-of-day if needed
+        if is_end and dt.hour == 0 and dt.minute == 0 and dt.second == 0:
+            dt = dt.replace(hour=23, minute=59, second=59)
+    
+        return dt
+    else:
+        return date_str
 
 
 def split_datetime(start_date: str, end_date: str, n: int = 10, gap_milliseconds:int = 1000):
