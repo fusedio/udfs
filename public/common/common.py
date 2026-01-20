@@ -280,7 +280,7 @@ def s3_tmp_path(path, folder=None):
     else:
         fname=''
     cleaned = re.sub(r"[^a-zA-Z0-9/]", "", path)  # remove non-alphanumeric except /
-    cleaned = cleaned.replace("/", "")  # flatten path
+    cleaned = cleaned.replace("/", "")
     if folder is None:
         folder = f"tmp/{uuid.uuid4()}"
     folder = folder.strip("/")
@@ -289,7 +289,7 @@ def s3_tmp_path(path, folder=None):
     if cleaned:
         parts.append(cleaned)
     s3_path = "/".join(parts) + "/"
-    return s3_path + fname
+    return s3_path + fname.replace(' ','_')
 
 
 def file_exists(path, verbose=True):
