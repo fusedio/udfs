@@ -376,6 +376,198 @@ document.addEventListener('DOMContentLoaded', () => {{
 
 
 
+# TOGGLE ----------------------------------------------------------------------
+def toggle(
+    label: str,
+    *,
+    value: int | bool = 0,  # 0/1 or False/True
+    parameter: str = "channel_toggle",
+    sender_id: str = "toggle_1",
+    auto_send_on_load: bool = True,
+    disabled: bool = False,
+    return_html: bool = False,
+):
+    """
+    Streamlit-style toggle (0/1) that posts a param message on change.
+    - values: 0 or 1
+    """
+    import json
+
+    initial = 1 if bool(value) else 0
+    INIT_JS = json.dumps(initial)
+    DISABLED_JS = "true" if disabled else "false"
+
+    html = f"""<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {{
+    --primary: #e8ff59;
+    --text: #f3f4f6;
+    --muted: rgba(255,255,255,0.72);
+    --border: rgba(255,255,255,0.18);
+    --track-off: rgba(255,255,255,0.14);
+    --track-on: rgba(232,255,89,0.25);
+  }}
+  * {{ box-sizing: border-box; }}
+  html, body {{
+    height: 100%;
+    margin: 0;
+    padding: 16px 18px;
+    background: transparent;
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }}
+  .label {{
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--muted);
+    line-height: 1.2;
+  }}
+  .label:empty {{ display: none; }}
+
+  input[type="checkbox"] {{
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 1px;
+    height: 1px;
+  }}
+
+  .switch {{
+    position: relative;
+    width: 52px;
+    height: 30px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--track-off);
+    transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+    flex: 0 0 auto;
+    cursor: pointer;
+    user-select: none;
+  }}
+  .knob {{
+    position: absolute;
+    top: 50%;
+    left: 3px;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: #fff;
+    transform: translate(0, -50%);
+    transition: transform 160ms ease, box-shadow 160ms ease;
+    box-shadow: 0 10px 18px rgba(0,0,0,0.26);
+  }}
+
+  .switch.on {{
+    background: var(--track-on);
+    border-color: rgba(232,255,89,0.45);
+    box-shadow: 0 0 0 2px rgba(232,255,89,0.12), 0 10px 24px rgba(0,0,0,0.18);
+  }}
+  .switch.on .knob {{
+    transform: translate(22px, -50%);
+    box-shadow: 0 12px 22px rgba(232,255,89,0.18), 0 10px 18px rgba(0,0,0,0.22);
+  }}
+
+  .switch:focus-visible {{
+    outline: 2px solid rgba(232,255,89,0.55);
+    outline-offset: 3px;
+  }}
+
+  .disabled {{
+    opacity: 0.55;
+    cursor: not-allowed;
+  }}
+
+  @media (max-width: 640px) {{
+    html, body {{ padding: 14px 16px; }}
+    .label {{ font-size: 12px; letter-spacing: 0.05em; }}
+  }}
+</style>
+</head>
+<body>
+  <div class="label" id="lbl">{label}</div>
+
+  <label class="switch" id="sw" role="switch" aria-checked="false" tabindex="0" aria-labelledby="lbl">
+    <span class="knob"></span>
+    <input id="cb" type="checkbox" />
+  </label>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {{
+  const PARAMETER = {json.dumps(parameter)};
+  const SENDER    = {json.dumps(sender_id)};
+  const INIT      = Number({INIT_JS}) || 0;
+  const AUTO      = {str(auto_send_on_load).lower()};
+  const DISABLED  = {DISABLED_JS};
+
+  const cb = document.getElementById('cb');
+  const sw = document.getElementById('sw');
+
+  function setOn(on) {{
+    const isOn = !!on;
+    cb.checked = isOn;
+    sw.classList.toggle('on', isOn);
+    sw.setAttribute('aria-checked', isOn ? 'true' : 'false');
+  }}
+
+  function post(val) {{
+    window.parent.postMessage({{
+      type: 'param',
+      parameter: PARAMETER,
+      values: Number(val) ? 1 : 0,
+      origin: SENDER,
+      ts: Date.now()
+    }}, '*');
+  }}
+
+  function commitFromUI() {{
+    setOn(cb.checked);
+    post(cb.checked ? 1 : 0);
+  }}
+
+  // init state
+  setOn(INIT === 1);
+
+  if (DISABLED) {{
+    cb.disabled = true;
+    sw.classList.add('disabled');
+    sw.setAttribute('tabindex', '-1');
+  }} else {{
+    sw.addEventListener('click', (e) => {{
+      e.preventDefault();
+      cb.checked = !cb.checked;
+      commitFromUI();
+    }});
+    sw.addEventListener('keydown', (e) => {{
+      if (e.key === 'Enter' || e.key === ' ') {{
+        e.preventDefault();
+        cb.checked = !cb.checked;
+        commitFromUI();
+      }}
+    }});
+    cb.addEventListener('change', commitFromUI);
+  }}
+
+  if (AUTO) {{
+    queueMicrotask(() => post(cb.checked ? 1 : 0));
+  }}
+}});
+</script>
+</body>
+</html>
+"""
+    return html if return_html else common.html_to_obj(html)
+
+
 # SLIDER ----------------------------------------------------------------------
 def slider(
     label: str = None,
