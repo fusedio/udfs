@@ -85,7 +85,9 @@ VALID_TILE_PROPS = {
 # - 2ba564b: add JSON Schema for config validation
 # - baf29a3: auto-detect string H3 columns and convert with h3_string_to_h3()
 # - e24eb3d: fix DESCRIBE-based type detection for H3 columns
-FUSEDMAPS_CDN_REF_DEFAULT = "e24eb3d"
+# - b53dfe0: expand idFields for feature matching and make configurable
+# - f4c0932: add minZoom/maxZoom parameters to lock map zoom range
+FUSEDMAPS_CDN_REF_DEFAULT = "f4c0932"
 FUSEDMAPS_CDN_JS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.umd.js"
 FUSEDMAPS_CDN_CSS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.css"
 FUSEDMAPS_SCHEMA_URL = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/fusedmaps.schema.json"
@@ -226,12 +228,15 @@ def deckgl_layers(
     highlight_on_click: bool = True,
     on_click: typing.Union[dict, bool, None] = None,  # Click broadcast config, False to disable
     map_broadcast: typing.Optional[dict] = None,  # Viewport broadcast config: {"channel": "fused-bus", "dataset": "all"}
-    location_listener: typing.Union[dict, bool, None] = None,  # Listen for feature clicks and fly to bounds: {"channel": "fused-bus"}, False to disable
+    location_listener: typing.Union[dict, bool, None] = None,  # Listen for feature clicks: {"channel": "fused-bus", "idFields": ["GEOID", "id"]}, False to disable
     sidebar: typing.Optional[str] = None,  # None | "show" | "hide"
     debug: typing.Optional[bool] = None,  # deprecated alias for sidebar
     fusedmaps_ref: typing.Optional[str] = None,  # override CDN ref (commit/tag/branch)
     # --- Widget positioning ---
     widgets: typing.Optional[dict] = None,  # Position/enable widgets: {"controls": "bottom-left", "legend": False, ...}
+    # --- Zoom constraints ---
+    min_zoom: typing.Optional[float] = None,  # Minimum zoom level (0-24), prevents zooming out beyond this
+    max_zoom: typing.Optional[float] = None,  # Maximum zoom level (0-24), prevents zooming in beyond this
     # --- AI Configuration ---
     ai_udf_url: typing.Optional[str] = None,  # URL to AI UDF that converts prompts to SQL
     ai_schema: typing.Optional[str] = None,  # Schema string to pass to AI UDF (auto-extracted if not provided)
@@ -493,6 +498,12 @@ def deckgl_layers(
         "highlightOnClick": highlight_on_click,
     }
 
+    # Add zoom constraints if provided
+    if min_zoom is not None:
+        fusedmaps_config["minZoom"] = float(min_zoom)
+    if max_zoom is not None:
+        fusedmaps_config["maxZoom"] = float(max_zoom)
+
     if sidebar is not None:
         fusedmaps_config["sidebar"] = sidebar
 
@@ -549,6 +560,9 @@ def deckgl_layers(
             "padding": loc_cfg.get("padding", 50),
             "maxZoom": loc_cfg.get("maxZoom", 18),
         }
+        # Pass custom idFields for feature matching if provided
+        if loc_cfg.get("idFields"):
+            messaging_config["locationListener"]["idFields"] = loc_cfg["idFields"]
     if messaging_config:
         fusedmaps_config["messaging"] = messaging_config
     
