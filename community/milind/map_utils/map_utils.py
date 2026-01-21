@@ -90,7 +90,9 @@ VALID_TILE_PROPS = {
 # - b279acc: fix categorical legend for MVT/PMTiles layers with new style format
 # - 6a50155: sidebar defaults to UI tab, SQL tab only shown for DuckDB layers
 # - dda385a: conditionally show Fill/Line Color sections based on checkboxes
-FUSEDMAPS_CDN_REF_DEFAULT = "dda385a"
+# - 1d0acf5: fix Filled checkbox toggle by always creating fill layer with opacity 0
+# - 5c90ffc: smooth color gradients for continuous colors (linear interpolation)
+FUSEDMAPS_CDN_REF_DEFAULT = "5c90ffc"
 FUSEDMAPS_CDN_JS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.umd.js"
 FUSEDMAPS_CDN_CSS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.css"
 FUSEDMAPS_SCHEMA_URL = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/fusedmaps.schema.json"
