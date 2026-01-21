@@ -347,6 +347,7 @@ def deckgl_layers(
         tile_url = layer_def.get("tile_url")
         source_layer = layer_def.get("source_layer") or layer_def.get("sourceLayer")
         image_url = layer_def.get("image_url")
+        image_data = layer_def.get("image_data")  # numpy array support for raster
         bounds = layer_def.get("bounds")
         config = layer_def.get("config", {})
         name = layer_def.get("name", f"Layer {i + 1}")
@@ -372,13 +373,13 @@ def deckgl_layers(
                     f"data=<GeoDataFrame>, tile_url=<mvt tiles> (+ source_layer)."
                 )
         elif layer_type == "raster":
-            if not tile_url and not image_url:
+            if not tile_url and not image_url and image_data is None:
                 raise ValueError(
                     f"Raster layer '{name}' is missing a source. Provide one of: "
-                    f"tile_url=<xyz tiles> OR image_url=<static image> (+ bounds=[w,s,e,n])."
+                    f"tile_url=<xyz tiles>, image_url=<static image>, OR image_data=<numpy array> (+ bounds=[w,s,e,n])."
                 )
-            if image_url and (bounds is None or len(bounds) != 4):
-                raise ValueError(f"Raster layer '{name}' with image_url requires bounds=[west,south,east,north].")
+            if (image_url or image_data is not None) and (bounds is None or len(bounds) != 4):
+                raise ValueError(f"Raster layer '{name}' with image_url/image_data requires bounds=[west,south,east,north].")
         elif layer_type == "pmtiles":
             pmtiles_url = layer_def.get("pmtiles_url") or layer_def.get("pmtilesUrl")
             pmtiles_path = layer_def.get("pmtiles_path") or layer_def.get("pmtilesPath")
@@ -429,7 +430,11 @@ def deckgl_layers(
                     auto_center = _compute_center_from_gdf(df)
         
         elif layer_type == "raster":
-            processed = _process_raster_layer(i, tile_url, image_url, bounds, config, name, visible)
+            # Convert image_data (numpy array) to base64 data URL if provided
+            raster_image_url = image_url
+            if image_data is not None and not image_url:
+                raster_image_url = _numpy_to_data_url(image_data)
+            processed = _process_raster_layer(i, tile_url, raster_image_url, bounds, config, name, visible)
             if processed:
                 processed_layers.append(processed)
         elif layer_type == "mvt":
@@ -1246,6 +1251,40 @@ def _sanitize_records(records: list) -> list:
         {k: _sanitize_value(v) for k, v in row.items()}
         for row in records
     ]
+
+
+def _numpy_to_data_url(image_data) -> str:
+    """Convert numpy array to base64 PNG data URL for raster layers."""
+    import base64
+    import io
+    from PIL import Image
+
+    arr = np.asarray(image_data)
+
+    # Common raster convention (rasterio): (bands, height, width). Convert to (height, width, bands).
+    if arr.ndim == 3 and arr.shape[0] in (1, 3, 4) and arr.shape[1] > 1 and arr.shape[2] > 1:
+        arr = np.transpose(arr, (1, 2, 0))
+
+    if arr.ndim == 2:
+        mode = "L"
+    elif arr.ndim == 3 and arr.shape[2] == 1:
+        arr = arr[:, :, 0]
+        mode = "L"
+    elif arr.ndim == 3 and arr.shape[2] == 3:
+        mode = "RGB"
+    elif arr.ndim == 3 and arr.shape[2] == 4:
+        mode = "RGBA"
+    else:
+        raise ValueError(f"Unsupported image_data shape: {arr.shape} (expected HxW, HxWx1, HxWx3, or HxWx4)")
+
+    if arr.dtype != np.uint8:
+        arr = np.clip(arr, 0, 255).astype(np.uint8)
+
+    im = Image.fromarray(arr, mode=mode)
+    buf = io.BytesIO()
+    im.save(buf, format="PNG")
+    b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+    return f"data:image/png;base64,{b64}"
 
 
 def extract_schema(parquet_url: str, table_name: str = "data") -> str:
