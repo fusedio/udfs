@@ -92,7 +92,9 @@ VALID_TILE_PROPS = {
 # - dda385a: conditionally show Fill/Line Color sections based on checkboxes
 # - 1d0acf5: fix Filled checkbox toggle by always creating fill layer with opacity 0
 # - 5c90ffc: smooth color gradients for continuous colors (linear interpolation)
-FUSEDMAPS_CDN_REF_DEFAULT = "5c90ffc"
+# - ab686b7: add collapsible layer groups to layer panel
+# - ea497b4: move group border to bottom of group content
+FUSEDMAPS_CDN_REF_DEFAULT = "ea497b4"
 FUSEDMAPS_CDN_JS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.umd.js"
 FUSEDMAPS_CDN_CSS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.css"
 FUSEDMAPS_SCHEMA_URL = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/fusedmaps.schema.json"
@@ -266,6 +268,7 @@ def deckgl_layers(
             - "tile_url": XYZ tile URL template (for hex tile layers)
             - "config": Layer config dict
             - "name": Display name for layer toggle (optional)
+            - "group": Group name for organizing layers in collapsible sections (optional)
         mapbox_token: Mapbox access token.
         basemap: 'dark', 'satellite', 'light', or 'streets'.
         initialViewState: Optional view state override.
@@ -361,6 +364,7 @@ def deckgl_layers(
         parquet_url = layer_def.get("parquetUrl") or layer_def.get("parquet_url")
         sql = layer_def.get("sql")
         data_ref = layer_def.get("data_ref") or layer_def.get("dataRef") or layer_def.get("data_var") or layer_def.get("dataVar")
+        group = layer_def.get("group")  # Optional group for layer organization
         
         # Validate sources early so "missing data" doesn't silently render nothing.
         if layer_type == "hex":
@@ -408,6 +412,9 @@ def deckgl_layers(
             tooltip_from_def = layer_def.get("tooltip") or layer_def.get("tooltipColumns")
             if processed and tooltip_from_def:
                 processed["tooltip"] = list(tooltip_from_def)
+            # Add group if specified
+            if processed and group:
+                processed["group"] = str(group)
             if processed:
                 processed_layers.append(processed)
                 if processed.get("isTileLayer"):
@@ -429,6 +436,9 @@ def deckgl_layers(
             tooltip_from_def = layer_def.get("tooltip") or layer_def.get("tooltipColumns")
             if processed and tooltip_from_def:
                 processed["tooltip"] = list(tooltip_from_def)
+            # Add group if specified
+            if processed and group:
+                processed["group"] = str(group)
             if processed:
                 processed_layers.append(processed)
                 # Auto-center from polygons/points
@@ -441,10 +451,16 @@ def deckgl_layers(
             if image_data is not None and not image_url:
                 raster_image_url = _numpy_to_data_url(image_data)
             processed = _process_raster_layer(i, tile_url, raster_image_url, bounds, config, name, visible)
+            # Add group if specified
+            if processed and group:
+                processed["group"] = str(group)
             if processed:
                 processed_layers.append(processed)
         elif layer_type == "mvt":
             processed = _process_mvt_layer(i, tile_url, source_layer, config, name, visible)
+            # Add group if specified
+            if processed and group:
+                processed["group"] = str(group)
             if processed:
                 processed_layers.append(processed)
         
@@ -453,12 +469,15 @@ def deckgl_layers(
             pmtiles_path = layer_def.get("pmtiles_path") or layer_def.get("pmtilesPath")
             minzoom = layer_def.get("minzoom") if layer_def.get("minzoom") is not None else layer_def.get("minZoom")
             maxzoom = layer_def.get("maxzoom") if layer_def.get("maxzoom") is not None else layer_def.get("maxZoom")
-            
+
             # Sign S3 path if needed
             if pmtiles_path and not pmtiles_url:
                 pmtiles_url = fused.api.sign_url(pmtiles_path)
-            
+
             processed = _process_pmtiles_layer(i, pmtiles_url, pmtiles_path, source_layer, config, name, visible, minzoom=minzoom, maxzoom=maxzoom)
+            # Add group if specified
+            if processed and group:
+                processed["group"] = str(group)
             if processed:
                 processed_layers.append(processed)
     
