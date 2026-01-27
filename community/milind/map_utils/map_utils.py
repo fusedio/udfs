@@ -94,7 +94,7 @@ VALID_TILE_PROPS = {
 # - 5c90ffc: smooth color gradients for continuous colors (linear interpolation)
 # - ab686b7: add collapsible layer groups to layer panel
 # - ea497b4: move group border to bottom of group content
-FUSEDMAPS_CDN_REF_DEFAULT = "ea497b4"
+FUSEDMAPS_CDN_REF_DEFAULT = "2f5aab9"
 FUSEDMAPS_CDN_JS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.umd.js"
 FUSEDMAPS_CDN_CSS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.css"
 FUSEDMAPS_SCHEMA_URL = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/fusedmaps.schema.json"
@@ -137,9 +137,6 @@ MINIMAL_TEMPLATE = """<!DOCTYPE html>
   <div id="map"></div>
   {custom_body}
   <script>
-    // User-provided pre_init script (runs BEFORE FusedMaps init - good for BroadcastChannel listeners)
-    {pre_init}
-
     // Initialize even if cartocolor fails to load (network/csp issues).
     // If cartocolor loads later, palettes will start working for subsequent style updates.
     function waitForCartocolor(callback, tries) {{
@@ -256,9 +253,7 @@ def deckgl_layers(
     custom_head: str = "",  # HTML to inject in <head> (scripts, stylesheets)
     custom_css: str = "",   # CSS rules to inject in <style>
     custom_body: str = "",  # HTML to inject in <body> (custom UI elements)
-    pre_init: str = "",     # JavaScript to run BEFORE FusedMaps.init() - good for BroadcastChannel listeners
     on_init: str = "",      # JavaScript to run after FusedMaps.init() - has access to `map` and `instance`
-    return_raw_html: bool = False,  # Return raw HTML string instead of html_to_obj (enables BroadcastChannel messaging)
 ):
     """
     Render mixed hex and vector layers on a single interactive map.
@@ -287,12 +282,9 @@ def deckgl_layers(
         custom_head: HTML to inject in <head> (e.g., external scripts, stylesheets).
         custom_css: CSS rules to inject (without <style> tags).
         custom_body: HTML to inject in <body> (e.g., custom UI containers).
-        pre_init: JavaScript code to run BEFORE FusedMaps.init(). Use this for:
-            - BroadcastChannel listeners (must be set up before async init)
-            - postMessage listeners for JSON UI integration
         on_init: JavaScript code to run after FusedMaps.init(). Has access to:
-            - `__fm_instance`: The FusedMaps instance (with .getLayers, .updateLayer, etc.)
-            - `__fm_map`: The Mapbox GL map instance
+            - `map`: The Mapbox GL map instance
+            - `instance`: The FusedMaps instance (with .store, .addLayer, etc.)
             - `config`: The FusedMaps config object
     
     Returns:
@@ -635,12 +627,12 @@ def deckgl_layers(
         custom_head=custom_head or "",
         custom_css=custom_css or "",
         custom_body=custom_body or "",
-        pre_init=pre_init or "",
         on_init=on_init or "",
     )
     
-    # Return raw HTML string (enables BroadcastChannel messaging for JSON UI components)
-    return html
+    # Return as HTML object
+    common = fused.load("https://github.com/fusedio/udfs/tree/bb3aa1b/public/common/")
+    return common.html_to_obj(html)
 
 
 def deckgl_hex(
