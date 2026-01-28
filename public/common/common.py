@@ -3159,16 +3159,16 @@ def get_chunk_slices_from_shape(array_shape, x_chunks, y_chunks, i):
 
     return x_slice, y_slice
 
-def arr_to_latlng(arr, bounds):
+def arr_to_latlng(arr, bounds, crs="EPSG:4326"):
     import numpy as np
     import pandas as pd
+    import pyproj
     from rasterio.transform import from_bounds
-    transform = from_bounds(*bounds, arr.shape[-1], arr.shape[-2])
-    x_list, y_list = shape_transform_to_xycoor(arr.shape[-2:], transform)
+    x_list, y_list = shape_transform_to_xycoor(arr.shape[-2:], from_bounds(*bounds, arr.shape[-1], arr.shape[-2]))
     X, Y = np.meshgrid(x_list, y_list)
-    df = pd.DataFrame(X.flatten(), columns=["lng"])
-    df["lat"] = Y.flatten()
-    df["data"] = arr.flatten()
+    df = pd.DataFrame({"lng": X.flatten(), "lat": Y.flatten(), "data": arr.flatten()})
+    if crs != "EPSG:4326":
+        df["lng"], df["lat"] = pyproj.Transformer.from_crs(crs, "EPSG:4326", always_xy=True).transform(df["lng"].values, df["lat"].values)
     return df
 
 # @fused.cache
