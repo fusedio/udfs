@@ -96,6 +96,8 @@
               "bearing": 0
             }
           },
+          "collection_id": "9bace69c-d6fe-4000-bb99-24a13acdbb5b",
+          "collection_name": "magenta_lion",
           "source": "common.py",
           "headers": []
         }
