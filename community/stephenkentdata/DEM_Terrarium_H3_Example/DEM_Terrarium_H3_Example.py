@@ -1,6 +1,6 @@
 @fused.udf
 def udf(bounds: fused.types.Bounds= None, 
-        res:int=11, 
+        res:int=None, 
         stats_type:str="mean",
         png:bool=False,
         color_scale:float=1
@@ -15,6 +15,7 @@ def udf(bounds: fused.types.Bounds= None,
     print(image_path)
 
 
+
     if tile.iloc[0].z < 10:
         print("Zoom in more to load DEM")
         return None 
@@ -25,9 +26,13 @@ def udf(bounds: fused.types.Bounds= None,
     if png:
         return common.arr_to_plasma(arr, min_max=(-1000,2000/color_scale**0.5), colormap='plasma')
     else:
+        if res is None:
+            res_offset = 0  # lower makes the hex finer
+            res = max(min(int(3 + z / 1.5), 12) - res_offset, 2)
+        print(res)
         # raster to vector using common Fused function
         df_latlng = common.arr_to_latlng(arr, bounds)
-
+      
         # Create H3 hexagons with DuckDB and numpy
         df = aggregate_df_hex(tile, df_latlng, res, latlng_cols=("lat", "lng"), stats_type=stats_type)
 

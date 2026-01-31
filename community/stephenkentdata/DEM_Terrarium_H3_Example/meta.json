@@ -33,8 +33,8 @@
                   "@@function": "colorContinuous",
                   "attr": "metric",
                   "domain": [
-                    15400,
-                    1262
+                    2800,
+                    162
                   ],
                   "steps": 50,
                   "colors": "BluYl",
