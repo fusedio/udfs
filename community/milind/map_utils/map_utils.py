@@ -11,7 +11,7 @@ import fused
 
 
 # ============================================================
-# Default Configurations (New Clean Format)
+# Default Configurations 
 # ============================================================
 
 DEFAULT_HEX_STYLE = {
