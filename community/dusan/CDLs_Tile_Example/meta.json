@@ -1,0 +1,110 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "CDLs_Tile_Example",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "hasProp",
+                  "property": "r",
+                  "present": "@@=[properties.r, properties.g, properties.b]",
+                  "absent": [
+                    255,
+                    0,
+                    255
+                  ]
+                },
+                "getFillColor": [
+                  255,
+                  0,
+                  0,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "vector_tile",
+            "fused:slug": "CDLs_Tile_Example",
+            "fused:name": "CDLs_Tile_Example",
+            "fused:defaultParameters": [
+              {
+                "parameter": "year",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "2015",
+                  "2016",
+                  "2017",
+                  "2018",
+                  "2019",
+                  "2020",
+                  "2021",
+                  "2022",
+                  "2023",
+                  "2024"
+                ]
+              },
+              {
+                "parameter": "crop_type",
+                "value": "",
+                "type": "string",
+                "suggestedValues": [
+                  "almond",
+                  "crop",
+                  "developed",
+                  "grass",
+                  "grape",
+                  "cherry",
+                  "water",
+                  "apple"
+                ]
+              },
+              {
+                "parameter": "colored",
+                "value": "",
+                "type": "boolean",
+                "suggestedValues": []
+              }
+            ],
+            "fused:defaultViewState": {
+              "enable": true,
+              "latitude": 37.87977092640186,
+              "longitude": -121.24227271927563,
+              "zoom": 9.474375639374612,
+              "pitch": 0,
+              "bearing": 0
+            }
+          },
+          "source": "CDLs_Tile_Example.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
