@@ -444,26 +444,31 @@ def bounds_to_file_chunk(bounds=[-180, -90, 180, 90], target_num_files=64, targe
     # print(df.chunk_id.value_counts())
     return df
 
-def bounds_to_hex(bounds=[-180, -90, 180, 90], res=3, hex_col="hex"):
+def bounds_to_hex(bounds=[-180, -90, 180, 90], res=3, hex_col="hex", add_latlng=False):
     bbox = get_tiles(bounds, 4) 
-    bbox.geometry=bbox.buffer((bounds[2]-bounds[0])/20)
+    bbox.geometry = bbox.buffer((bounds[2]-bounds[0])/20)
     df = bbox.to_wkt()
-    qr = f""" with t as (
-        SELECT unnest(h3_polygon_wkt_to_cells_experimental(geometry, 'center' , {res})) AS {hex_col}
+    
+    latlng_cols = f", h3_cell_to_lat({hex_col}) as lat, h3_cell_to_lng({hex_col}) as lng" if add_latlng else ""
+    group_by = "group by 1, 2, 3" if add_latlng else "group by 1"
+    
+    qr = f"""with t as (
+        SELECT unnest(h3_polygon_wkt_to_cells_experimental(geometry, 'center', {res})) AS {hex_col}
         FROM df)
-        select *,  from t
+        select {hex_col}{latlng_cols} from t
         where h3_cell_to_lng({hex_col}) between {bounds[0]} and {bounds[2]}
         and h3_cell_to_lat({hex_col}) between {bounds[1]} and {bounds[3]}
-        group by 1
-        """
+        {group_by}
+    """
     con = duckdb_connect()
     df = con.sql(qr).df()
-    # If the result is empty, use the centroid of the bounds instead
+    
     if df.empty:
-        centroid_lng = (bounds[0] + bounds[2]) / 2
         centroid_lat = (bounds[1] + bounds[3]) / 2
+        centroid_lng = (bounds[0] + bounds[2]) / 2
+        latlng_select = f", {centroid_lat} as lat, {centroid_lng} as lng" if add_latlng else ""
         df = con.sql(f"""
-            SELECT h3_latlng_to_cell({centroid_lat}, {centroid_lng}, {res}) AS {hex_col}
+            SELECT h3_latlng_to_cell({centroid_lat}, {centroid_lng}, {res}) AS {hex_col}{latlng_select}
         """).df()
     return df
 
