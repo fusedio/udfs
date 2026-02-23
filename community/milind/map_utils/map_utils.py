@@ -79,7 +79,26 @@ VALID_TILE_PROPS = {
 # CDN URLs
 # ============================================================
 
-FUSEDMAPS_CDN_REF_DEFAULT = "f7090a1"
+# NOTE: Pin to a specific commit for reproducibility.
+# You can override this per-run via `deckgl_layers(..., fusedmaps_ref=...)`.
+#
+# - 2ba564b: add JSON Schema for config validation
+# - baf29a3: auto-detect string H3 columns and convert with h3_string_to_h3()
+# - e24eb3d: fix DESCRIBE-based type detection for H3 columns
+# - b53dfe0: expand idFields for feature matching and make configurable
+# - f4c0932: add minZoom/maxZoom parameters to lock map zoom range
+# - b279acc: fix categorical legend for MVT/PMTiles layers with new style format
+# - 6a50155: sidebar defaults to UI tab, SQL tab only shown for DuckDB layers
+# - dda385a: conditionally show Fill/Line Color sections based on checkboxes
+# - 1d0acf5: fix Filled checkbox toggle by always creating fill layer with opacity 0
+# - 5c90ffc: smooth color gradients for continuous colors (linear interpolation)
+# - ab686b7: add collapsible layer groups to layer panel
+# - ea497b4: move group border to bottom of group content
+# - b51295c: fix location_change highlight by normalizing field name variants
+# - e295ed4: add multi-feature highlighting for farm selection (matchAll)
+# - 82e182c: default matchAll to true, expand name to Farm Name variants
+# - 07dd96f: add Farm Name to DEFAULT_ID_FIELDS for farm matching
+FUSEDMAPS_CDN_REF_DEFAULT = "d86a2da"
 FUSEDMAPS_CDN_JS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.umd.js"
 FUSEDMAPS_CDN_CSS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.css"
 FUSEDMAPS_SCHEMA_URL = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/fusedmaps.schema.json"
