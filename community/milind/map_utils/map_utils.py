@@ -98,7 +98,7 @@ VALID_TILE_PROPS = {
 # - e295ed4: add multi-feature highlighting for farm selection (matchAll)
 # - 82e182c: default matchAll to true, expand name to Farm Name variants
 # - 07dd96f: add Farm Name to DEFAULT_ID_FIELDS for farm matching
-FUSEDMAPS_CDN_REF_DEFAULT = "1756549"
+FUSEDMAPS_CDN_REF_DEFAULT = "bbac594"
 FUSEDMAPS_CDN_JS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.umd.js"
 FUSEDMAPS_CDN_CSS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.css"
 FUSEDMAPS_SCHEMA_URL = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/fusedmaps.schema.json"
@@ -371,6 +371,7 @@ def deckgl_layers(
         sql = layer_def.get("sql")
         data_ref = layer_def.get("data_ref") or layer_def.get("dataRef") or layer_def.get("data_var") or layer_def.get("dataVar")
         group = layer_def.get("group")  # Optional group for layer organization
+        custom_legend = layer_def.get("legend") or config.get("legend")
         
         # Validate sources early so "missing data" doesn't silently render nothing.
         if layer_type == "hex":
@@ -487,6 +488,14 @@ def deckgl_layers(
             if processed:
                 processed_layers.append(processed)
     
+    # Attach custom legend config to processed layers
+    for p in processed_layers:
+        layer_idx = int(p["id"].replace("layer-", "")) if p.get("id", "").startswith("layer-") else None
+        if layer_idx is not None and layer_idx < len(layers):
+            cl = layers[layer_idx].get("legend") or layers[layer_idx].get("config", {}).get("legend")
+            if cl:
+                p["customLegend"] = cl
+
     # Build initial view state
     if initialViewState:
         view_state = initialViewState
