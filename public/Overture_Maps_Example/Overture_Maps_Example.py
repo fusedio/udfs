@@ -1,28 +1,7 @@
 @fused.udf
 def udf(
     bounds: fused.types.Bounds = [-0.113, 51.503, -0.099, 51.513],
-    release: str = "2026-01-21-0",
-    theme: str = None,
-    overture_type: str = None,
-    use_columns: list = None,
-    min_zoom: int = None,
-
-):
-    gdf = get_overture(
-        bounds=bounds,
-        release=release,
-        theme=theme,
-        overture_type=overture_type,
-        use_columns=use_columns,
-        min_zoom=min_zoom,
-    )
-    return gdf
-
-
-
-def get_overture(
-    bounds: fused.types.Bounds = None,
-    release: str = "2026-01-21-0",
+    release: str = "2026-02-18-0",
     theme: str = None,
     overture_type: str = None,
     use_columns: list = None,
