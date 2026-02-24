@@ -83,7 +83,7 @@ VALID_TILE_PROPS = {
 # You can override this per-run via `deckgl_layers(..., fusedmaps_ref=...)`.
 #
 
-FUSEDMAPS_CDN_REF_DEFAULT = "1def2cf"
+FUSEDMAPS_CDN_REF_DEFAULT = "c0546cc"
 FUSEDMAPS_CDN_JS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.umd.js"
 FUSEDMAPS_CDN_CSS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.css"
 FUSEDMAPS_SCHEMA_URL = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/fusedmaps.schema.json"
@@ -477,8 +477,10 @@ def deckgl_layers(
     for p in processed_layers:
         layer_idx = int(p["id"].replace("layer-", "")) if p.get("id", "").startswith("layer-") else None
         if layer_idx is not None and layer_idx < len(layers):
-            cl = layers[layer_idx].get("legend") or layers[layer_idx].get("config", {}).get("legend")
-            if cl:
+            cl = layers[layer_idx].get("legend")
+            if cl is None:
+                cl = layers[layer_idx].get("config", {}).get("legend")
+            if cl is not None:
                 p["customLegend"] = cl
 
     # Build initial view state
