@@ -1,0 +1,46 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Soil_gSSURGO_hex_5",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "Soil_gSSURGO_hex_5",
+            "fused:slug": "Soil_gSSURGO_hex_5",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 1256
+              },
+              "hexLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "extruded": false,
+                "opacity": 1,
+                "coverage": 0.9,
+                "lineWidthMinPixels": 1,
+                "getHexagon": "@@=properties.hex",
+                "getFillColor": "@@=[properties.r,properties.g,properties.b]"
+              }
+            },
+            "fused:udfType": "vector_tile"
+          },
+          "source": "Soil_gSSURGO_hex_5.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
