@@ -1,14 +1,10 @@
-
 import json
 import typing
 import numpy as np
 import pandas as pd
-import geopandas as gpd
 from copy import deepcopy
 
 import fused
-
-
 
 # ============================================================
 # Default Configurations (New Clean Format)
@@ -51,29 +47,6 @@ DEFAULT_RASTER_STYLE = {
     "opacity": 1.0
 }
 
-# Legacy defaults (for backwards compatibility during transition)
-DEFAULT_DECK_HEX_CONFIG = {
-    "style": DEFAULT_HEX_STYLE
-}
-
-DEFAULT_DECK_CONFIG = {
-    "style": DEFAULT_VECTOR_STYLE
-}
-
-DEFAULT_DECK_RASTER_CONFIG = {
-    "style": DEFAULT_RASTER_STYLE
-}
-
-# Valid style properties for the new format
-VALID_STYLE_PROPS = {
-    "fillColor", "lineColor", "opacity", "filled", "stroked",
-    "extruded", "elevationAttr", "elevationScale", "lineWidth", "pointRadius"
-}
-
-# Valid tile options
-VALID_TILE_PROPS = {
-    "minZoom", "maxZoom", "zoomOffset", "tileSize", "maxRequests"
-}
 
 # ============================================================
 # CDN URLs
@@ -83,18 +56,14 @@ VALID_TILE_PROPS = {
 # You can override this per-run via `deckgl_layers(..., fusedmaps_ref=...)`.
 #
 
-FUSEDMAPS_CDN_REF_DEFAULT = "c0546cc"
-FUSEDMAPS_CDN_JS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.umd.js"
-FUSEDMAPS_CDN_CSS = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/dist/fusedmaps.css"
-FUSEDMAPS_SCHEMA_URL = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{FUSEDMAPS_CDN_REF_DEFAULT}/fusedmaps.schema.json"
+FUSEDMAPS_CDN_REF_DEFAULT = "dab467d"
 
-def _fusedmaps_cdn_urls(ref: typing.Optional[str] = None) -> tuple[str, str, str]:
-    """Return (js_url, css_url, schema_url) for a given fusedmaps git ref (commit/tag/branch)."""
+def _fusedmaps_cdn_urls(ref: typing.Optional[str] = None) -> tuple[str, str]:
+    """Return (js_url, css_url) for a given fusedmaps git ref (commit/tag/branch)."""
     ref = (ref or FUSEDMAPS_CDN_REF_DEFAULT).strip()
     js_url = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{ref}/dist/fusedmaps.umd.js"
     css_url = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{ref}/dist/fusedmaps.css"
-    schema_url = f"https://cdn.jsdelivr.net/gh/milind-soni/fusedmaps@{ref}/fusedmaps.schema.json"
-    return js_url, css_url, schema_url
+    return js_url, css_url
 
 # ============================================================
 # Minimal HTML Template
@@ -163,56 +132,15 @@ MINIMAL_TEMPLATE = """<!DOCTYPE html>
 
 @fused.udf(cache_max_age=0)
 def udf(
-    config: typing.Union[dict, str, None] = None,
-    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     basemap: str = "dark",
     theme: str = "dark",
-    n_points: int = 50,
-    seed: int = 0,
-    sidebar: typing.Optional[str] = None,  # None | "show" | "hide"
 ):
-    """Example UDF using deckgl_map with DEFAULT_DECK_CONFIG."""
-    import geopandas as gpd
-    from shapely.geometry import Point
-    import numpy as np
-    
-    # Create sample point data around New York City
-    # Fields match DEFAULT_DECK_CONFIG expectations
-    rng = np.random.default_rng(int(seed))
-    data = []
-    base_lat, base_lng = 40.7128, -74.0060
-    
-    for i in range(int(n_points)):
-        lat = base_lat + (i % 10 - 5) * 0.01
-        lng = base_lng + (i // 10 - 2) * 0.01
-        data.append({
-            'geometry': Point(lng, lat),
-            'house_age': (i % 50),  # 0-49 years, matches domain [0, 50]
-            'mrt_distance': int(rng.integers(100, 5000)),  # meters
-            'price': int(rng.integers(200_000, 800_000)),  # dollars
-            'index': i
-        })
-    
-    gdf = gpd.GeoDataFrame(data, crs='EPSG:4326')
-    
-    # Use DEFAULT_DECK_CONFIG if none provided (for points/vectors)
-    if config is None:
-        config = DEFAULT_DECK_CONFIG
-    
-    # IMPORTANT: `deckgl_layers()` reads initialViewState from its own argument,
-    # not from a per-layer config. Keep the per-layer config focused on vector styling.
-    view_state = {"longitude": -74.0060, "latitude": 40.7128, "zoom": 12, "pitch": 0, "bearing": 0}
-
-    layers = [{"type": "vector", "data": gdf, "config": config, "name": "Sample Points"}]
+    """Default UDF that renders an empty basemap."""
     return deckgl_layers(
-        layers=layers,
-        mapbox_token=mapbox_token,
+        layers=[],
         basemap=basemap,
         theme=theme,
-        initialViewState=view_state,
-        sidebar=sidebar,
     )
-
 
 
 def deckgl_layers(
@@ -619,7 +547,7 @@ def deckgl_layers(
 """
 
     # Generate HTML
-    js_url, css_url, _ = _fusedmaps_cdn_urls(fusedmaps_ref)
+    js_url, css_url = _fusedmaps_cdn_urls(fusedmaps_ref)
 
     html = MINIMAL_TEMPLATE.format(
         css_url=css_url,
@@ -1363,54 +1291,6 @@ def extract_schema(parquet_url: str, table_name: str = "data") -> str:
     except Exception as e:
         raise ValueError(f"Could not extract schema from {parquet_url}: {e}")
 
-def build_sql_system_prompt(
-    schema: str,
-    table_name: str = "data",
-    custom_context: str = "",
-) -> str:
-    """
-    Build a system prompt for SQL generation with the given schema.
-
-    Args:
-        schema: Schema string (from extract_schema())
-        table_name: Table name used in queries
-        custom_context: Additional domain-specific context (e.g., CDL crop codes)
-
-    Returns:
-        Complete system prompt for AI SQL generation
-    """
-    return f"""You are a DuckDB SQL query generator for geospatial hex data.
-
-Convert natural language requests into valid DuckDB SELECT statements.
-
-## Schema
-{schema}
-
-{f"## Domain Context{chr(10)}{custom_context}" if custom_context else ""}
-
-## CRITICAL RULES
-1. ALWAYS include the hex/h3 column in SELECT (required for map rendering)
-2. Use `{table_name}` as the table name
-3. Return ONLY the SQL query - no explanations, no markdown, no code blocks
-4. For filtering, use WHERE clauses
-5. Keep queries focused on filtering/aggregating the spatial data
-
-## Example Queries
-
-Filter by value:
-SELECT * FROM {table_name} WHERE value > 50
-
-Top N results:
-SELECT * FROM {table_name} ORDER BY area DESC LIMIT 100
-
-Multiple conditions:
-SELECT * FROM {table_name} WHERE category = 'A' AND value > 10
-
-Aggregation (keep hex column):
-SELECT hex, SUM(area) as total_area FROM {table_name} GROUP BY hex
-
-Return ONLY the SQL query."""
-
 
 def _compute_center_from_hex(df) -> dict:
     """Compute center from hex data."""
@@ -1437,6 +1317,3 @@ def _compute_center_from_gdf(gdf) -> dict:
     except:
         pass
     return None
-
-
-
