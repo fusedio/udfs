@@ -1,0 +1,28 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Video_File",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:description": "Read a Video file.\n\n<!-- fused:previewExt -->\nExtensions: `mp4` `mov` `avi` `mkv` `webm`",
+            "fused:udfType": "auto",
+            "fused:slug": "Video_File",
+            "fused:name": "Video_File",
+            "fused:id": null
+          },
+          "source": "Video_File.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
