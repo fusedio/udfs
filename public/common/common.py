@@ -1318,7 +1318,7 @@ def table_to_tile(
         ):  # switch to centroid for the last one zoom level before showing metadata
             df.geometry = df.geometry.centroid
         if clip:
-            return df.clip(bounds_gdf.geometry[0]).explode()
+            return df.clip(bbox.geometry[0]).explode()
         else:
             return df
     else:
