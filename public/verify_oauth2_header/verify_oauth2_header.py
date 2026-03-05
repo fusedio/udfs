@@ -1,6 +1,6 @@
-@fused.udf
+@fused.udf(cache_max_age=0)
 def udf(
-    token: str,
+    token: str = "Bearer token",
     allowed_issuer_hosts: list = [
         "auth0.com",
         "okta.com",
@@ -15,8 +15,10 @@ def udf(
     import httpx
     from urllib.parse import urlparse
 
-    # extract token
+    # extract token - expects "Bearer xxxx" format
     parts = token.split()
+    if len(parts) != 2 or parts[0] != "Bearer":
+        raise Exception("token must be in 'Bearer <token>' format")
     token = parts[1]
 
     # decode without verifying
