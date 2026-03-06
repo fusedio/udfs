@@ -2,7 +2,7 @@
 def udf(bounds: fused.types.Bounds = [-92.317,-64.329,116.124,79.475]):
 
     # Load pinned versions of utility functions.
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     zoom = common.estimate_zoom(bounds)
 
     file_path='s3://ookla-open-data/parquet/performance/type=mobile/year=2024/quarter=3/2024-07-01_performance_mobile_tiles.parquet'
@@ -10,7 +10,7 @@ def udf(bounds: fused.types.Bounds = [-92.317,-64.329,116.124,79.475]):
     @fused.cache
     def get_data(bounds, file_path, h3_size):
         con = common.duckdb_connect()
-
+ 
         # DuckDB query to:
         # 1. Convert lat/long to H3 cells
         # 2. Calculate average download speed per cell
