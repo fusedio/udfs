@@ -117,8 +117,8 @@ def get_overture(
 
     # Load Fused helper functions
     utils = fused.load(
-        "https://github.com/fusedio/udfs/tree/f8f0c0f/public/common/"
-    ).utils
+        "https://github.com/fusedio/udfs/tree/2a1b488/public/common/"
+    )
 
     if release == "2024-02-15-alpha-0":
         if overture_type == "administrative_boundary":

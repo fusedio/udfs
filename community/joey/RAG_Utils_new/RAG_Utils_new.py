@@ -179,8 +179,8 @@ def add_context(
   """
 
   common = fused.load(
-      "https://github.com/fusedio/udfs/tree/2528576/public/common/"
-  ).utils
+      "https://github.com/fusedio/udfs/tree/2a1b488/public/common/"
+  )
   enhanced_texts = common.run_pool(
       lambda text: enhance_text(
           text,
@@ -380,8 +380,8 @@ def add_embedding(
       DataFrame with embedding column added
   """
   common = fused.load(
-      "https://github.com/fusedio/udfs/tree/2528576/public/common/"
-  ).utils
+      "https://github.com/fusedio/udfs/tree/2a1b488/public/common/"
+  )
 
   # Set default model based on provider
   if embedding_model is None:
