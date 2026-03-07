@@ -52,7 +52,7 @@ def get_arr(
     
     common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
-    greenest_example = fused.load('https://github.com/fusedio/udfs/tree/a0af8a/community/sina/Satellite_Greenest_Pixel')
+    greenest_example = fused.load('https://github.com/fusedio/udfs/tree/507911c/community/sina/Satellite_Greenest_Pixel')
 
     stac_items = greenest_example.search_pc_catalog(
         bounds=bounds,
