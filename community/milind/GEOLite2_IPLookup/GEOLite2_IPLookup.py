@@ -3,7 +3,7 @@ def udf(ip: str = "115.117.126.142"):
     import duckdb, pandas as pd
     
     # Load your common helper
-    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     con = common.duckdb_connect(verbose=True)
     from shapely.geometry import Point
     import geopandas as gpd

@@ -7,7 +7,7 @@ def udf(
     min_ratio: float = 0,  # Filter by minimum percentage coverage
     res_offset: int = 0,   # Adjust resolution dynamically
 ):
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     
     # Convert natural language query to crop values using embeddings
     crop_value_list = common.query_to_params(query)
@@ -37,13 +37,13 @@ def udf(
 
 def bounds_to_res(bounds, res_offset=0, max_res=11, min_res=3):
     """Calculate optimal hex resolution based on geographic bounds"""
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     z = common.estimate_zoom(bounds)
     return max(min(int(3 + z / 1.5 - res_offset), max_res), min_res)
 
 def read_overview(hex_res, bounds, path):
     """Read overview data for lower resolutions"""
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     con = common.duckdb_connect()
     df = con.sql(f'select * from read_parquet("{path}_hex{hex_res}")').df()
     df["pct"] = 255 * df["area"] / df["area"].max()
@@ -57,7 +57,7 @@ def read_hex_table(hex_res, bounds, path, base_res=7):
     if hex_res <= base_res:
         return read_overview(hex_res, bounds, path)
     
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     con = common.duckdb_connect()
     bbox = common.to_gdf(bounds)
     df_meta = fused.get_chunks_metadata(path)

@@ -3,7 +3,7 @@ def udf(
     bounds: fused.types.Bounds=[-130, 25, -60, 50]
 ):
     # Loading the common Fused hex library to access pre-installed H3 library in DuckDB
-    common = fused.load("https://github.com/fusedio/udfs/tree/56ec615/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     con = common.duckdb_connect() 
 
     query = """

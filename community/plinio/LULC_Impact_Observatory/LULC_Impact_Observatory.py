@@ -5,7 +5,7 @@ def udf(bounds: fused.types.Bounds, lulc_type:str="wetland,water,crop", path: st
     import geopandas as gpd
 
     # Read tiff
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     tile = common.get_tiles(bounds, clip=True)
 
     arr_int, metadata= common.read_tiff(tile, path, output_shape=(256,256), return_colormap=True)

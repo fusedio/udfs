@@ -9,7 +9,7 @@ def udf(
     # Load pinned versions of utility functions.
     overture_maps = fused.load("https://github.com/fusedio/udfs/tree/38ff24d/public/Overture_Maps_Example/")
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     conn = common.duckdb_connect()
     if class_source=='Overture':
         metric = 'subtype' 

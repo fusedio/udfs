@@ -7,7 +7,7 @@ def udf(target_gdf = j, zoom: int=17):
     import geopandas as gpd
     import pandas as pd
     import json
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     # Convert to GeoDataFrame, if needed
     if isinstance(target_gdf, str):

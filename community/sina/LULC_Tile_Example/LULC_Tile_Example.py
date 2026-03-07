@@ -12,7 +12,7 @@ def udf(bounds: fused.types.Bounds = [-122.499,37.707,-122.381,37.808], year="20
         11: (227, 226, 195),  # Rangeland
     }
     # Load pinned versions of utility functions.
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     tile = common.get_tiles(bounds, clip=True)
     zoom = tile.iloc[0].z
 

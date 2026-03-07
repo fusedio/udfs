@@ -5,7 +5,7 @@ def udf(
     res_offset: int = 0, ## Lowering the offset makes the map load faster - set to 0 in canvas
     res = None):
     
-    common = fused.load("https://github.com/fusedio/udfs/tree/36f4e97/public/common/").utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     con = common.duckdb_connect()
     hex_reader = fused.load("https://github.com/fusedio/udfs/tree/8024b5c/community/joris/Read_H3_dataset/")
 

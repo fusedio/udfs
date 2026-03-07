@@ -10,7 +10,7 @@ def udf(
     import rasterio.features
     import rasterio.transform
     from scipy.ndimage import distance_transform_edt
-    common = fused.load("https://github.com/fusedio/udfs/tree/fbf5682/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     ingested_utilities_udf = fused.load('https://github.com/fusedio/udfs/tree/0858846/public/ingested_utilities/')
     power_lines = fused.run(ingested_utilities_udf, bounds=list(bounds), min_zoom=0, buffer_size_m=0)

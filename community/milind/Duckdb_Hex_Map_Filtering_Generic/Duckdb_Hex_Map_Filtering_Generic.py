@@ -1,4 +1,4 @@
-common = fused.load("https://github.com/fusedio/udfs/tree/f430c25/public/common/")
+common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
 DEFAULT_CONFIG = r"""{
   "tileLayer": {

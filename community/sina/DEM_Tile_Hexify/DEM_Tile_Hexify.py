@@ -3,7 +3,7 @@ def udf(bounds: fused.types.Bounds = [-90.691,-21.719,-21.300,75.897], stats_typ
     import pandas as pd
     import rioxarray
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     # convert bounds to tile
     tile = common.get_tiles(bounds, clip=True)
 
@@ -34,14 +34,14 @@ def udf(bounds: fused.types.Bounds = [-90.691,-21.719,-21.300,75.897], stats_typ
 
 
 def url_to_plasma(url, min_max=None, colormap='plasma'):
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     return common.arr_to_plasma(common.url_to_arr(url).squeeze(), min_max=min_max, colormap=colormap, reverse=False)
 
 
 @fused.cache
 def df_to_hex(df, res, latlng_cols=("lat", "lng")):  
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     qr = f"""
             SELECT h3_latlng_to_cell({latlng_cols[0]}, {latlng_cols[1]}, {res}) AS hex, ARRAY_AGG(data) as agg_data
             FROM df

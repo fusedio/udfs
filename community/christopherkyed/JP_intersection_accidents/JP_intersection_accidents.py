@@ -92,8 +92,8 @@ def udf(
 
 
 # Load Fused helper functions
-table_to_tile = fused.load("https://github.com/fusedio/udfs/tree/3569595/public/common/").utils.table_to_tile
-duckdb_connect = fused.load("https://github.com/fusedio/udfs/tree/3569595/public/common/").utils.duckdb_connect
+table_to_tile = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/").table_to_tile
+duckdb_connect = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/").duckdb_connect
 
 def get_overture(
     bbox: fused.types.TileGDF = None,

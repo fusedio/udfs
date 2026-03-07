@@ -4,7 +4,7 @@ def udf(
     res: int = 9
 ):
     # Load common utilities (includes duckdb helper)
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     con = common.duckdb_connect()
 
     qr = f"""

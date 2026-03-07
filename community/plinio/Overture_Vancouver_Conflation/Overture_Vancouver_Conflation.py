@@ -16,7 +16,7 @@ def udf():
 
     # 2. Determine chunks of Overture Table that intersect
     chunks_metadata = get_meta()
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     bounds = common.bounds_to_gdf(gdf_input.total_bounds)
     intersecting_chunks = chunks_metadata.sjoin(bounds, how='inner')

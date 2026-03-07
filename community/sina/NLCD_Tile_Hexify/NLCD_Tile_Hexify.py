@@ -4,7 +4,7 @@ def udf(bounds: fused.types.Bounds=[-121.673,37.561,-120.778,38.314], year: int=
     import pandas as pd
     
     nlcd_example_utils = fused.load('https://github.com/fusedio/udfs/blob/main/community/sina/NLCD_Tile_Example/')
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     # convert bounds to tile
     tile = common.get_tiles(bounds, clip=True)

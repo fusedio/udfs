@@ -14,7 +14,7 @@ def udf(engine='realtime', year: str = "2016", month: str = "07", period: str ="
         all_params = [{'geoid': geoid, 'year': year, 'crop_type': crop_type} for geoid in target_counties]
 
         # Load pinned versions of utility functions.
-        common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+        common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
         # Run UDF in parallel
         @fused.cache
@@ -54,7 +54,7 @@ def udf(crop_type ="corn", geoid: str = '19119', year: str = "2015", month: str 
     print(area)
 
     # Load pinned versions of utility functions.
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     # Get box around the geometry
     geom_bbox = common.geo_bbox(gdf)
@@ -75,7 +75,7 @@ def udf(crop_type ="corn", geoid: str = '19119', year: str = "2015", month: str 
     sif_resized = resize(img, (arr_crop.shape[0],arr_crop.shape[1]), anti_aliasing=True, preserve_range=True).astype('uint8')
 
     # Sif for entire county prior to corn mask
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     county_geom_mask = common.gdf_to_mask_arr(gdf, sif_resized.shape[-2:], first_n=1) 
     sif_resized_county = np.ma.masked_array(sif_resized, mask=county_geom_mask)
     # return sif_resized_county, geom_bbox.total_bounds

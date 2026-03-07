@@ -7,7 +7,7 @@ def udf(city='Paris', resolution=11):
     # set a resolution limit 
     if resolution > 11:resolution=11
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/364f5dd/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
         
     @fused.cache
     def get_city_data(city):

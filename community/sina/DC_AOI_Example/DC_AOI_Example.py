@@ -10,7 +10,7 @@ def udf(
 
 
     # Load pinned versions of utility functions.
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
  
     # Lad the geometry
     gdf = gpd.read_file('s3://fused-asset/data/tiger/TIGER_RD18/STATE/11_DISTRICT_OF_COLUMBIA/11/tl_rd22_11_tract.zip')
@@ -50,7 +50,7 @@ def get_arr(
     max_items=30
 ):
     
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     greenest_example = fused.load('https://github.com/fusedio/udfs/tree/a0af8a/community/sina/Satellite_Greenest_Pixel')
 
@@ -77,7 +77,7 @@ def get_arr(
     
 def rgbi_to_ndvi(arr_rgbi): 
     
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     ndvi = (arr_rgbi[-1] * 1.0 - arr_rgbi[-2] * 1.0) / (
         arr_rgbi[-1] * 1.0 + arr_rgbi[-2] * 1.0

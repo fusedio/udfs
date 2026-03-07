@@ -55,5 +55,5 @@ def udf(zoom:int=15, name='World'):
     # Removed the inserted "Hello {name}!" HTML string
     # html_str = html_str[:23] + f'Hello {name}!' + html_str[23:]
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/351515e/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     return common.html_to_obj(html_str)

@@ -114,5 +114,5 @@ def udf(
         source_layer=source_layer,
     )
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/351515e/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     return common.html_to_obj(html)

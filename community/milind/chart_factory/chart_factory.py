@@ -76,13 +76,13 @@ def udf(
         html_result = create_chart_html(chart_type, library, sample_data, params)
         
         # Load common utils for HTML object conversion
-        common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+        common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
         return common.html_to_obj(html_result)
         
     else:
         html_result = create_chart_html(chart_type, library, sample_data, params)
 
-        common = fused.load("https://github.com/fusedio/udfs/tree/1ed3d54/public/common/")
+        common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
         return common.html_to_obj(html_result)
 
 def create_chart_html(chart_type, library, data, params):

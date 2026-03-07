@@ -3,7 +3,7 @@ def udf(bounds: fused.types.Bounds= [-89.4859409525646,23.27628480644696,-73.603
     import pandas as pd
     import geopandas as gpd
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/fbf5682/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     zonal_stats_forest = fused.load("https://github.com/fusedio/udfs/blob/b603e45/community/plinio/Zonal_Stats_Forest_Obs/")
     tile = common.get_tiles(bounds, clip=True)
 

@@ -24,7 +24,7 @@ def udf(raster_path = 'https://s3.amazonaws.com/elevation-tiles-prod/geotiff/4/4
 
 @fused.cache
 def df_to_hex(df, res, latlng_cols=("lat", "lng")):
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     qr = f"""
             SELECT h3_latlng_to_cell({latlng_cols[0]}, {latlng_cols[1]}, {res}) AS hex, ARRAY_AGG(data) as agg_data
             FROM df

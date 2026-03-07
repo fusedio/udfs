@@ -1,4 +1,4 @@
-common = fused.load("https://github.com/fusedio/udfs/tree/b41216d/public/common/").utils
+common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 path = "s3://fused-users/fused/asset/CDL_h12k1p1/year=2024/"
 
 

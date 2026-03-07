@@ -9,7 +9,7 @@ def udf(
     import numpy as np
 
     # convert bounds to tile
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     tile = common.get_tiles(bounds, target_num_tiles=1)
     
     # Get the bounding box coordinates

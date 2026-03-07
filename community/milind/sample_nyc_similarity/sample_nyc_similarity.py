@@ -9,7 +9,7 @@ def udf(h3_res: int = 11, lat: float = 40.647395, lng: float = -73.788927):
     from shapely.geometry import Polygon
 
     # Load pinned versions of utility functions.
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     con = common.duckdb_connect()
 

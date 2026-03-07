@@ -7,7 +7,7 @@ def udf():
     """
     
     # Show the input UI
-    common = fused.load("https://github.com/fusedio/udfs/tree/fbf5682/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     
     # Print the URLs for debugging
     original_working_url = "https://unstable.fused.io/server/v1/realtime-shared/fsh_2cYag1UM0aM0c4HALo8Z3A/run/file"

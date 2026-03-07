@@ -7,7 +7,7 @@ def udf(
     height: int = 256,
 ):
     import numpy as np
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     z = common.estimate_zoom(bounds)
     print(f"Estimated zoom level: {z}")

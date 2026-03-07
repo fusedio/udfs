@@ -1,4 +1,4 @@
-common = fused.load("https://github.com/fusedio/udfs/blob/main/public/common/")
+common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 @fused.udf
 def udf(bounds: fused.types.Bounds = None):
     res = bounds_to_res(bounds)

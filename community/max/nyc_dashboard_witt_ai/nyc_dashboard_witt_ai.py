@@ -3,7 +3,7 @@ def udf(path: str = "s3://fused-sample/demo_data/nyc_taxi/yellow_tripdata_2025-0
     import duckdb
     import json
     
-    common = fused.load("https://github.com/fusedio/udfs/tree/6e8abb9/public/common/")    
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")    
     con = common.duckdb_connect()
     
     df = con.execute(f"""

@@ -5345,7 +5345,7 @@ def deckgl_layers(
         debug=debug,
     )
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/bb3aa1b/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     return common.html_to_obj(html)
 
 
@@ -5477,7 +5477,7 @@ map.on('error', (e) => {
             zoom=zoom,
         )
         
-        common = fused.load("https://github.com/fusedio/udfs/tree/bb3aa1b/public/common/")
+        common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
         return common.html_to_obj(html)
     
     # Default config for static image mode
@@ -5652,7 +5652,7 @@ map.on('load', () => {
         north=north,
     )
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/bb3aa1b/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     return common.html_to_obj(html)
 
 
@@ -5796,7 +5796,7 @@ def enable_map_broadcast(html_input, channel: str = "fused-bus", dataset: str = 
         injected_html = html_string + broadcast_script
 
     if response_mode:
-        common = fused.load("https://github.com/fusedio/udfs/tree/bb3aa1b/public/common/")
+        common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
         return common.html_to_obj(injected_html)
     return injected_html
 
@@ -6058,7 +6058,7 @@ def enable_location_listener(
         injected_html = html_string + listener_script
 
     if response_mode:
-        common = fused.load("https://github.com/fusedio/udfs/tree/bb3aa1b/public/common/")
+        common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
         return common.html_to_obj(injected_html)
     return injected_html
 
@@ -6207,7 +6207,7 @@ def enable_hex_click_broadcast(
         injected_html = html_string + click_script
 
     if response_mode:
-        common = fused.load("https://github.com/fusedio/udfs/tree/bb3aa1b/public/common/")
+        common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
         return common.html_to_obj(injected_html)
     return injected_html
 
@@ -6338,7 +6338,7 @@ def enable_map_sync(html_input, channel: str = "default"):
         injected_html = html_string + sync_script
 
     if response_mode:
-        common = fused.load("https://github.com/fusedio/udfs/tree/bb3aa1b/public/common/")
+        common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
         return common.html_to_obj(injected_html)
     return injected_html
 

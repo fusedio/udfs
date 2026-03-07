@@ -12,7 +12,7 @@ def udf(
     buffer_meters = 250,  # 100m buffer around the point
     chip_len=256
     
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     
     # Create a GeoDataFrame with the point
     point_geom = Point(lon, lat)

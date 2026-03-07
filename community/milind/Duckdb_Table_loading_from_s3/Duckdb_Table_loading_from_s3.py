@@ -1,4 +1,4 @@
-common = fused.load("https://github.com/fusedio/udfs/tree/6b98ee5/public/common/")
+common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
 @fused.udf(cache_max_age = 0)
 def udf(

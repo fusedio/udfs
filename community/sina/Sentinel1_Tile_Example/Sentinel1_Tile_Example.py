@@ -78,6 +78,6 @@ def udf(bounds: fused.types.Bounds = [4.65, 52.25, 4.85, 52.35], time_of_interes
     image=stacked_image.std(axis=0)
     print(image.shape)
     # return (image).astype('uint8'), bounds.total_bounds
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     return common.arr_to_plasma(image), bounds

@@ -5,7 +5,7 @@ def udf(bounds: fused.types.Bounds=[-49.108,-35.500,72.922,67.364]):
 
 
     # convert bounds to tile
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     tile = common.get_tiles(bounds, clip=True)
     zoom = tile.iloc[0].z
     
@@ -75,7 +75,7 @@ def run_query(bounds, pplant_table, resolution):
     
         """
         # Load pinned versions of utility functions.
-        common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+        common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
         # Connect to DuckDB
         con = common.duckdb_connect()
 

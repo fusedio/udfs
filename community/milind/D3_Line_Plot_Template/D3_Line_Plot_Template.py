@@ -6,7 +6,7 @@ def udf(url: str = "https://raw.githubusercontent.com/OpportunityInsights/Econom
     from jinja2 import Template
 
     # Load utilities for returning HTML objects
-    common = fused.load("https://github.com/fusedio/udfs/tree/fbf5682/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     @fused.cache
     def load_data(url):

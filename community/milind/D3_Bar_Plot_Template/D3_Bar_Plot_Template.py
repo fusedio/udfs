@@ -4,7 +4,7 @@ def udf():
     from jinja2 import Template
 
     # Load common utilities for returning HTML objects
-    common = fused.load("https://github.com/fusedio/udfs/tree/fbf5682/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     @fused.cache
     def fetch_starred_repos():

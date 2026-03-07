@@ -38,7 +38,7 @@ def udf(
     import os
     import sys
     if (bounds is not None) & (bbox_gpkg_path is None):
-        common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+        common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
         bounds_gdf = common.to_gdf(bounds)
         print(bounds_gdf)
         temp_bounds_gpkg_file_pth = fused.file_path(
