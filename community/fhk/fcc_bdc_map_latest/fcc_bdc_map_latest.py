@@ -40,8 +40,8 @@ def udf(
     # 10,11,12,20,30,40,41,42,43,50,60,70,90,0
     import json
     utils = fused.load(
-            "https://github.com/fusedio/udfs/tree/f8f0c0f/public/common/"
-        ).utils
+            "https://github.com/fusedio/udfs/tree/2a1b488/public/common/"
+        )
 
     unserved = json.loads(unserved)
     underserved = json.loads(underserved)

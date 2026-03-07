@@ -24,8 +24,8 @@ def udf(
     #    `table_to_tile` is a helper that converts a Fused table into a tile‑ready GeoDataFrame.
     # ------------------------------------------------------------------
     common = fused.load(
-        "https://github.com/fusedio/udfs/tree/b41216d/public/common/"
-    ).utils
+        "https://github.com/fusedio/udfs/tree/2a1b488/public/common/"
+    )
 
     # ------------------------------------------------------------------
     # 3️⃣  Normalise the input path.
