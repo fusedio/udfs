@@ -70,8 +70,8 @@ def tile_to_df(bounds, arr, return_geometry=False):
     if len(arr.shape)==2:
         arr = np.stack([arr])
     shape_transform_to_xycoor = fused.load(
-        "https://github.com/fusedio/udfs/tree/a1c01c6/public/common/"
-    ).utils.shape_transform_to_xycoor
+        "https://github.com/fusedio/udfs/tree/3991434/public/common/"
+    ).shape_transform_to_xycoor
     
     # calculate transform
     minx, miny, maxx, maxy = bounds.to_crs(3857).total_bounds
