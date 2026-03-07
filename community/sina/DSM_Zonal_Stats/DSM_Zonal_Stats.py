@@ -4,7 +4,7 @@ def udf(
 ):
     # Load pinned versions of utility functions.
     common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
-    dsm_jaxa = fused.load("https://github.com/fusedio/udfs/tree/c682e4e/community/sina/DSM_JAXA_Example/")
+    dsm_jaxa = fused.load("https://github.com/fusedio/udfs/tree/507911c/community/sina/DSM_JAXA_Example/")
 
     zoom = common.estimate_zoom(bounds)
 
