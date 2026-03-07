@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds= None, 
+def udf(bounds: fused.types.Bounds= [-78.775, 0.310, -78.770, 0.315], 
         res:int=11, 
         stats_type:str="mean",
         png:bool=False,
@@ -43,7 +43,9 @@ def load(image_path):
     # open the images and transform the RBB values to one elevation metric
     with s3fs.S3FileSystem().open(image_path) as f:
         im = iio.imread(f)
-        r, g, b = im[:, :, 0], im[:, :, 1], im[:, :, 2]
+        r = im[:, :, 0].astype('float32')
+        g = im[:, :, 1].astype('float32')
+        b = im[:, :, 2].astype('float32')
         elevation = (r * 256 + g + b / 256) - 32768
         return elevation
 
