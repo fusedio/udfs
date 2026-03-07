@@ -1,5 +1,5 @@
 @fused.udf
-def udf(bounds: fused.types.Bounds, preview: bool = False):
+def udf(bounds: fused.types.Bounds = [-122.4633, 37.7533, -122.4433, 37.7653], preview: bool = False):
     import imageio.v3 as iio
     import s3fs
     print(bounds)
@@ -32,9 +32,9 @@ def udf(bounds: fused.types.Bounds, preview: bool = False):
 
     # Load pinned versions of utility functions.
 
-    overture_maps = fused.load("https://github.com/fusedio/udfs/tree/38ff24d/public/Overture_Maps_Example")
+    overture_maps = fused.load("https://github.com/fusedio/udfs/tree/1762605/public/Overture_Maps_Example")
     # Load Overture Buildings
-    gdf_overture = overture_maps.get_overture(bounds=bounds)
+    gdf_overture = overture_maps(bounds=bounds)
 
     gdf_zonal = common.geom_stats(gdf_overture, arr[0, :, :])
     print(gdf_zonal.T)

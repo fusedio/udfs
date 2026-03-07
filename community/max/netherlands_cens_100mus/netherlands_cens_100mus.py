@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Bounds,                     # Bounding box for the tile request (provided by the client)
+    bounds: fused.types.Bounds = [4.35, 52.00, 4.40, 52.05],  # Default: The Hague / Leiden area, Netherlands
     path: str = "s3://fused-asset/data/netherlands_census/_sample",  # Default location of the CBS census dataset
     preview: bool = False                          # If True, only load geometry (useful for quick previews)
 ):
@@ -24,7 +24,7 @@ def udf(
     #    `table_to_tile` is a helper that converts a Fused table into a tile‑ready GeoDataFrame.
     # ------------------------------------------------------------------
     common = fused.load(
-        "https://github.com/fusedio/udfs/tree/2a1b488/public/common/"
+        "https://github.com/fusedio/udfs/tree/3991434/public/common/"
     )
 
     # ------------------------------------------------------------------

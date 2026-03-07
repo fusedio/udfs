@@ -1,7 +1,13 @@
 @fused.udf
 def udf(
-    bounds: fused.types.Tile, path: str, overture_type="place", clip: bool = False
+    bounds: fused.types.Bounds = [-75.175, 39.948, -75.155, 39.958],
+    path: str = "https://hub.arcgis.com/api/v3/datasets/ab9e89e1273f445bb265846c90b38a96_0/downloads/data?format=geojson&spatialRefId=4326&where=1%3D1",
+    overture_type="place",
+    clip: bool = False,
 ):
+    import geopandas as gpd
+    from shapely.geometry import box
+
     theme_type = {
         "building": "buildings",
         "segment": "transportation",
@@ -16,21 +22,32 @@ def udf(
         "division_area": "divisions",
         "division_boundary": "divisions",
     }
+    @fused.cache
+    def load_file(file_path):
+        if file_path.endswith(('.parquet', '.pq', '.gpq', '.geoparquet')):
+            return gpd.read_parquet(file_path)
+        else:
+            return gpd.read_file(file_path)
+
     try:
-        utils = fused.load(
-            "https://github.com/fusedio/udfs/tree/2ea46f3/public/common"
-        ).utils
-        gdf = utils.read_gdf_file(path).to_crs("EPSG:4326")
+        if path:
+            gdf = load_file(path).to_crs("EPSG:4326")
+            print(f"Loaded file: {len(gdf)} rows")
+        else:
+            gdf = gpd.GeoDataFrame(
+                {"name": ["Demo Area"]},
+                geometry=[box(*bounds)],
+                crs="EPSG:4326",
+            )
+            print("Using demo area polygon. Pass a 'path' to use your own data.")
     except Exception as e:
-        print("This file seems to not contain geometry.", str(e))
+        print("Could not read file:", str(e))
         return
-    overture_udf = fused.load('https://github.com/fusedio/udfs/tree/2ea46f3/public/Overture_Maps_Example/')
-    gdf_overture = fused.run(
-        overture_udf,
+    overture_udf = fused.load('https://github.com/fusedio/udfs/tree/1762605/public/Overture_Maps_Example/')
+    gdf_overture = overture_udf(
         theme=theme_type[overture_type],
         overture_type=overture_type,
         bounds=bounds,
-        engine='local'
     )
     if len(gdf_overture) == 0:
         print(
