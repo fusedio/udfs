@@ -48,8 +48,8 @@ def udf(
         
     # Load DuckDB connection helper (no caching)
     duckdb_connect = fused.load(
-        "https://github.com/fusedio/udfs/tree/3569595/public/common/"
-    ).utils.duckdb_connect
+        "https://github.com/fusedio/udfs/tree/3991434/public/common/"
+    ).duckdb_connect
 
     con = duckdb_connect()
     # Load H3 extension
