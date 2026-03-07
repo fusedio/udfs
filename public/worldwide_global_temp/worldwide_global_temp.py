@@ -12,8 +12,8 @@ def udf():
         for month in range(1, 13)
     ]
     files = [f for f in files if (int(f.split('/')[-1].split('-')[0]) < 2024 or int(f.split('/')[-1].split('-')[1].split('.')[0]) <= 8)]
-    
-    conn = duckdb.connect()
+         
+    conn = common.duckdb_connect()
     
     query = """
     SELECT 
@@ -152,4 +152,4 @@ def udf():
     </html>
     """
     
-    return common.html_to_obj(dashboard_html)
+    return dashboard_html
