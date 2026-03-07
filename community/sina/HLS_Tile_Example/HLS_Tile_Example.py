@@ -49,7 +49,7 @@ def udf(
 
         # Check authentication.
         cred = {"env": env, "username": username, "password": password}
-        aws_session = common.earth_session(cred=cred)
+        aws_session = common.create_aws_session(cred=cred)
 
         search = catalog.search(
             collections=[collection_id],
