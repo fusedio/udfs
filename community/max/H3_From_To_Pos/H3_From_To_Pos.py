@@ -1,4 +1,4 @@
-common = fused.load("https://github.com/fusedio/udfs/tree/351515e/public/common/")
+common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
 bounds = [-96.9705389218286,48.89962286159903,-96.87872570408243,48.93306667646431]
 @fused.udf
@@ -186,7 +186,7 @@ def get_chunk_bounds(hex_id, base_res=7, k_buffer=1):
 
 def read_hexfile_bounds(bounds:list  = [-84.62623688728367,38.24817244542944,-84.59976376273033,38.27050399126871]
                         , url: str = "/Users/sinakashuk/Desktop/_hex6", clip=True):
-    common = fused.load("https://github.com/fusedio/udfs/tree/beb4259/public/common/").utils
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     from io import BytesIO
     import geopandas as gpd
     import pandas as pd

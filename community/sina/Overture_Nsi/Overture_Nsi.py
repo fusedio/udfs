@@ -5,7 +5,7 @@ def udf(bounds: fused.types.Bounds = [-123.86438687695097,46.1795089730952,-123.
     import requests
 
     # convert bounds to tile
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     tile = common.get_tiles(bounds, clip=True)
 
     if common.estimate_zoom(bounds) < 10:

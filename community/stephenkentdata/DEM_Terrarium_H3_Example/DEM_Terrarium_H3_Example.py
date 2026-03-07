@@ -7,7 +7,7 @@ def udf(bounds: fused.types.Bounds= None,
 ):
 
     # Read tiles from S3 and return as image or H3
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     tile = common.get_tiles(bounds)
     print(tile)
     x, y, z = tile.iloc[0][["x", "y", "z"]]
@@ -49,7 +49,7 @@ def load(image_path):
 
 # @fused.cache
 def df_to_hex(tile, df, res, latlng_cols=("lat", "lng")):  
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     xmin, ymin, xmax, ymax = tile.geometry.iloc[0].bounds
     qr = f"""
         SELECT 

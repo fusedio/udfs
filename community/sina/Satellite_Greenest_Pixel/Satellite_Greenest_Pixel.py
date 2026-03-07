@@ -55,7 +55,7 @@ def udf(
     import pandas as pd
 
     # convert bounds to tile
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     tile = common.get_tiles(bounds, clip=True)
 
@@ -94,7 +94,7 @@ def run_pool_tiffs(bounds, df_tiffs, output_shape):
 
     @fused.cache
     def fn_read_tiff(tiff_url, bounds=bounds, output_shape=output_shape):
-        common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+        common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
         return common.read_tiff(bounds, tiff_url, output_shape=output_shape)
 
@@ -104,7 +104,7 @@ def run_pool_tiffs(bounds, df_tiffs, output_shape):
             tiff_list.append(df_tiffs[band].iloc[i])
 
     # Load pinned versions of utility functions.
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     arrs_tmp = common.run_pool(fn_read_tiff, tiff_list)
     arrs_out = np.stack(arrs_tmp)

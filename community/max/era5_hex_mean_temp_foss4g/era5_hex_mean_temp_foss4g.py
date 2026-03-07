@@ -4,7 +4,7 @@ def udf(month='2024-05',
 ):
     path = f's3://fused-asset/data/era5/t2m_daily_mean_v2_1000/month={month}/0.parquet'
     
-    common = fused.load("https://github.com/fusedio/udfs/tree/56ec615/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     con = common.duckdb_connect() 
 
     query = f"""

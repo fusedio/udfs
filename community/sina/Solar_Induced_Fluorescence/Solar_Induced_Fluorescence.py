@@ -4,7 +4,7 @@ def udf(bounds: fused.types.Bounds=[-143.184,7.090,-39.292,61.808], year: str = 
     import pandas as pd
 
     # convert bounds to tile
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     tile = common.get_tiles(bounds, clip=True)
     
     # Dynamically construct the path based on the year and month

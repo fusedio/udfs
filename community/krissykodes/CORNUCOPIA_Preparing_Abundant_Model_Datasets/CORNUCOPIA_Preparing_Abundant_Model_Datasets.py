@@ -13,7 +13,7 @@ def udf():
 
 
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     con = duckdb.connect()  
     
     @fused.cache

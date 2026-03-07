@@ -29,7 +29,7 @@ def udf(
   if len(chart) > 200_000:
     raise ValueError("chart config too large (max 200k chars)")
 
-  common = fused.load("https://github.com/fusedio/udfs/tree/main/public/common/")
+  common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
   html = f"""<!doctype html>
 <meta charset="utf-8" />

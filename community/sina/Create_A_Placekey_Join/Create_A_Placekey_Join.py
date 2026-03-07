@@ -9,7 +9,7 @@ def udf(bounds: fused.types.Bounds = [-122.438,37.774,-122.434,37.777],
     import shapely
 
     # convert bounds to tile
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     tile = common.get_tiles(bounds, clip=True)
 
     #get two placekey'd datasets; choose these based on what's available on the module tab
@@ -28,7 +28,7 @@ def placekey_df_validate(df):
 
 @fused.cache
 def get_placekeyd_dataset(bounds, name: str):
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     # pick one of these datasets!!
     datasets = set(['dc-healthy-corner-stores','home-health-agency-medicare-enrollments', 'home-infusion-therapy-provider-medicare-enrollments', 'hospice-medicare-enrollments', 'hospital-medicare-enrollments', 'national-downloadable-files-from-the-doctors-and-clinicians-data-section', 'skilled-nursing-facility-medicare-enrollments', 'rural-health-clinic-medicare-enrollments',
                    'national-provider-identifier', 'department-of-labor-wage-and-hour-compliance'])

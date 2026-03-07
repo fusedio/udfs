@@ -107,5 +107,5 @@ def udf(
         color_min=color_min, color_mid=color_mid, color_max=color_max,
         fill_opacity=fill_opacity, outline_color=outline_color,
     )
-    common = fused.load("https://github.com/fusedio/udfs/tree/351515e/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     return common.html_to_obj(html)

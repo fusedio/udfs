@@ -4,7 +4,7 @@ def udf(bounds: fused.types.Bounds = [-122.437,37.772,-122.404,37.799], h3_size:
 
     # Load pinned versions of utility functions.
     overture_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/Overture_Maps_Example/").utils
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     # convert bounds to tile
     tile = common.get_tiles(bounds, clip=True)

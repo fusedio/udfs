@@ -242,5 +242,5 @@ def udf(
     rendered = html_template.render(title=f"Life Expectancy – {year}", chart_html=chart_html)
 
     # Load common utilities and return the HTML object
-    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     return common.html_to_obj(rendered)

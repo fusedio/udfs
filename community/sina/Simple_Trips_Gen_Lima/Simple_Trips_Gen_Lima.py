@@ -16,7 +16,7 @@ def udf(
     import osmnx as ox
     import pandas as pd
     
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     # Process input parameters
     area_of_interest = aoi.total_bounds

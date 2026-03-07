@@ -121,5 +121,5 @@ def udf(
         max_pitch=max_pitch,
     )
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/351515e/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     return common.html_to_obj(html)

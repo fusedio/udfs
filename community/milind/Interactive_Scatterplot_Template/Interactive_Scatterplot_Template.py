@@ -11,7 +11,7 @@ def udf():
     from jinja2 import Template
 
     # Load common utilities - REQUIRED for HTML UDFs
-    common = fused.load("https://github.com/fusedio/udfs/tree/fbf5682/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     # -------------------------------------------------------------------------
     # DATA LOADING SECTION

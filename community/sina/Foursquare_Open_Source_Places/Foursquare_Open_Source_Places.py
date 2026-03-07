@@ -6,7 +6,7 @@ def udf(
     use_columns: list = ["geometry", "name", "fsq_category_ids"],
 ):
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     path = f"s3://us-west-2.opendata.source.coop/fused/fsq-os-places/{release}/places/"
     df = common.table_to_tile(

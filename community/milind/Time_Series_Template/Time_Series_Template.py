@@ -13,7 +13,7 @@ def udf(year: int = 2024):
     from datetime import datetime, timedelta
     
     # Load common utilities
-    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     
     @fused.cache
     def load_temperature_data(path):

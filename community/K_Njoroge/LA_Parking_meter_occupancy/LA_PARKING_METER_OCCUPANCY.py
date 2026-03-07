@@ -125,7 +125,7 @@ def get_overture(
     import geopandas as gpd
     from shapely.geometry import shape, box
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/6e8abb9/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     #if polygon is not None:
         #polygon = polygon.to_crs(epsg=32611)

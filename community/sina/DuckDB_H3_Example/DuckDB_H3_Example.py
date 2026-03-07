@@ -5,7 +5,7 @@ def udf(bounds: fused.types.Bounds = [-74.033,40.648,-73.788,40.846], resolution
     import shapely
     import geopandas as gpd
     
-    common = fused.load("https://github.com/fusedio/udfs/tree/fbf5682/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     con = common.duckdb_connect()
 
     @fused.cache

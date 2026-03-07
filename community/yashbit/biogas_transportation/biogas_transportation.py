@@ -6,7 +6,7 @@ def udf(bbox: fused.types.Tile = None, n=10):
     import pandas as pd
     import shapely
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
 
     """

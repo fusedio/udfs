@@ -3,7 +3,7 @@ def udf(bounds: fused.types.Bounds=[-121.673,37.561,-120.778,38.314], year:int=1
     import numpy as np
 
     # convert bounds to tile
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     tile = common.get_tiles(bounds, clip=True)
 
     
@@ -24,7 +24,7 @@ def udf(bounds: fused.types.Bounds=[-121.673,37.561,-120.778,38.314], year:int=1
 def get_data(bounds, year, land_type, chip_len):
         # source: https://www.mrlc.gov/downloads/sciweb1/shared/mrlc/data-bundles/Annual_NLCD_LndCov_{year}_CU_C1V0.tif
         path = f"s3://fused-asset/data/nlcd/Annual_NLCD_LndCov_{year}_CU_C1V0.tif"
-        common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+        common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
         tiff = common.read_tiff(bounds, path, output_shape=(chip_len, chip_len), return_colormap=True)
         if tiff is None:

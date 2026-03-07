@@ -3,7 +3,7 @@ def udf(bounds: fused.types.Bounds, preview: bool = False):
     import imageio.v3 as iio
     import s3fs
     print(bounds)
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     tiles = common.get_tiles(bounds)
     print(tiles)
     x, y, z = tiles.iloc[0][["x", "y", "z"]]

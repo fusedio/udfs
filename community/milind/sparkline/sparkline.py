@@ -9,7 +9,7 @@ def udf(url: str = "https://raw.githubusercontent.com/kkakey/dog_traits_AKC/refs
     - Aggregates all numeric columns (except the detected time column) by the time column (sum).
     - Returns an HTML table with one sparkline per numeric column.
     """
-    common = fused.load("https://github.com/fusedio/udfs/tree/fbf5682/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     import pandas as pd
     import numpy as np
     from html import escape

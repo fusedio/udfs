@@ -3,7 +3,7 @@ def udf():
     import duckdb
     
     # Load the common utilities module from Fused's UDF repository
-    common = fused.load("https://github.com/fusedio/udfs/tree/fbf5682/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     df = duckdb.query(f"""
         SELECT * 
         FROM 's3://fused-asset/misc/hex/CDL_h12k1p1/year=2024/overview/hex5.parquet'

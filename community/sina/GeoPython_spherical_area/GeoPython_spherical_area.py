@@ -5,7 +5,7 @@ def udf(bounds: fused.types.Bounds = [7.634,47.528,7.651,47.540]):
     sys.path.append(f"/mnt/cache/envs/geopython/lib/python3.11/site-packages")
 
     # convert bounds to tile
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     tile = common.get_tiles(bounds, clip=True)
 
     # loading the Overture building polygons for the current bounds
@@ -57,7 +57,7 @@ def get_overture(
     from shapely.geometry import shape, box
 
     # convert bounds to tile
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     tile = common.get_tiles(bounds)
 
     if release == "2024-02-15-alpha-0":

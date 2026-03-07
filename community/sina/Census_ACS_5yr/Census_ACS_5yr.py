@@ -9,7 +9,7 @@ def udf(
     import numpy as np
     
     # Load pinned versions of utility functions.
-    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     zoom = common.estimate_zoom(bounds)
 
     # different geometry details per zoom level
@@ -62,7 +62,7 @@ def acs_5yr_bounds(
         raise ValueError('The only available years are 2021 and 2022')
 
     # Load pinned versions of utility functions.
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     bounds = gpd.GeoDataFrame(geometry=[shapely.box(*bounds)], crs=4326)
     common.import_env()

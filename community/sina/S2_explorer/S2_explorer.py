@@ -18,7 +18,7 @@ def udf(
     from PIL import Image
 
     # Load pinned versions of utility functions.
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     zoom = common.estimate_zoom(bounds)
 
     # This is the line that caculates the resolution based on zoom. You can overide the resolution parameter by hard coding it.

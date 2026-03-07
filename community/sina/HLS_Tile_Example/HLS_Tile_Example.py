@@ -14,7 +14,7 @@ def udf(
     from pystac_client import Client
 
     # convert bounds to tile
-    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     tile = common.get_tiles(bounds, clip=True)  
 
     STAC_URL = "https://cmr.earthdata.nasa.gov/stac"

@@ -1,7 +1,7 @@
 @fused.udf
 def udf(count: int = 0):
     # Create duckdb connection
-    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     con = common.duckdb_connect()
 
     # Load and return 

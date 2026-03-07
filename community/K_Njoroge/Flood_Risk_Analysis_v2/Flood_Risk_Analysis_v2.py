@@ -1,6 +1,6 @@
 @fused.udf
 def udf(bounds, year="2022", water_buffer:float = 100):
-    common = fused.load("https://github.com/fusedio/udfs/tree/6e8abb9/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     if common.estimate_zoom(bounds) >= 5:
         
@@ -62,7 +62,7 @@ def get_lulc(bbox, year):
     import rasterio.features
     import shapely
     import geopandas as gpd
-    common = fused.load("https://github.com/fusedio/udfs/tree/6e8abb9/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     matching_items = bbox_stac_items(
         bbox.geometry[0], table="s3://fused-asset/lulc/io10m/"
@@ -99,7 +99,7 @@ def get_overture(
     import pandas as pd
     from shapely.geometry import box, shape
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/6e8abb9/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     if release == "2024-02-15-alpha-0":
         if overture_type == "administrative_boundary":

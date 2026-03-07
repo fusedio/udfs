@@ -69,7 +69,7 @@ def udf(
         print(
             "-- Note: when ingesting more than 20 files, the estimates are based on the first 20 files only"
         )
-    common = fused.load("https://github.com/fusedio/udfs/tree/642de66/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     metas = []
     for input_path in src_files[:20]:
         meta = common.get_tiff_info(input_path, cache_verbose=False)

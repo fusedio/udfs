@@ -2,7 +2,7 @@
 def udf(bounds: fused.types.Bounds = [-122.432,37.800,-122.430,37.802]):
     import geopandas as gpd
     # Load pinned versions of utility functions.
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     overture = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/Overture_Maps_Example/")
 
     # Convert bounds to tile

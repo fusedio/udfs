@@ -10,7 +10,7 @@ def udf(
   metric_channel: str = "hex-mcdonald",  # IMPORTANT: match hex_window.py's metric_channel
   sync_channel: str = "hist"
 ):
-  common = fused.load("https://github.com/fusedio/udfs/tree/351515e/public/common/")
+  common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
   themes = {
       'workbench': {

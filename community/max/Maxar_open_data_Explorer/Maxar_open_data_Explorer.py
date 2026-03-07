@@ -24,7 +24,7 @@ def udf(
     # Otherwise reading the GeoTiff
     else:
         print("Returning image")
-        common = fused.load("https://github.com/fusedio/udfs/tree/fbf5682/public/common/")  
+        common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")  
         tiles = common.get_tiles(bounds)
     
         arr = common.read_tiff(tiles, path, output_shape=(chip_len, chip_len))

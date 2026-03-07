@@ -13,7 +13,7 @@ def udf():
     """
     
     # REQUIRED for HTML UDFs
-    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     @fused.cache
     def load_data():

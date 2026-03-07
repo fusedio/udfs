@@ -13,7 +13,7 @@ def udf(
 
 
     # Load pinned versions of utility functions.
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     # 1. Get cell bounds for the cell
     gdf_cells = get_asset_dissolve(url=s3_file_path)
     gdf_cell = gdf_cells.iloc[cell_id : cell_id + 1]

@@ -2,7 +2,7 @@ import json, fused
 
 @fused.udf
 def udf(channel: str = "bounds-demo", sender_id: str = "my_udf"):
-    common = fused.load("https://github.com/fusedio/udfs/tree/351515e/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     html = map_html(channel, sender_id)
     return common.html_to_obj(html)
 

@@ -10,7 +10,7 @@ def udf(
     Returns: hex (H3 int), data (CDL value), area (m²), pct (0–100 int).
     """
     # DuckDB helper
-    common = fused.load("https://github.com/fusedio/udfs/tree/6b98ee5/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     con = common.duckdb_connect()
 
     # Choose backing parquet (only hex7 or hex8 are published)

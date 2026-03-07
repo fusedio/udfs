@@ -6,7 +6,7 @@ def udf(bounds: fused.types.Bounds=[-77.083,38.849,-76.969,38.938], time_of_inte
     import numpy as np
 
     # convert bounds to tile
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     tile = common.get_tiles(bounds, clip=True)
 

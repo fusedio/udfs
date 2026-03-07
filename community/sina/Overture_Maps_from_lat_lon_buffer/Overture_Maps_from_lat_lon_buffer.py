@@ -64,7 +64,7 @@ def get_overture(
     from shapely.geometry import shape, box
 
     # Load Fused helper functions
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     if release == "2024-02-15-alpha-0":
         if overture_type == "administrative_boundary":

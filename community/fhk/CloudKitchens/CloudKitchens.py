@@ -6,7 +6,7 @@ def udf(locations: pd.DataFrame = None, h3_res: int = 11, distance: int = 10):
     import geopandas as gpd
     import shapely
     from shapely.geometry import Polygon, MultiPolygon
-    common = fused.load("https://github.com/fusedio/udfs/tree/3670b6b/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     import duckdb
     con = common.duckdb_connect()
 

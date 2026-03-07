@@ -10,7 +10,7 @@ def udf():
     import duckdb
     from shapely.geometry import Polygon
     import numpy as np
-    common = fused.load("https://github.com/fusedio/udfs/tree/6e8abb9/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     con = duckdb.connect()
     h3_size=8
     

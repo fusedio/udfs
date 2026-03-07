@@ -8,7 +8,7 @@ def udf(
     import h3.api.basic_int as h3
     path = "s3://fused-asset/hex/cdls_v8/year=2024/"
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/6dd2c4e/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     hex_reader = fused.load("https://github.com/fusedio/udfs/tree/f2b3909/community/joris/Read_H3_dataset/")
     df = hex_reader.read_h3_dataset(path, bounds, res=res, value = data_value)
     print(df.T)

@@ -12,7 +12,7 @@ def udf():
     from jinja2 import Template
 
     # REQUIRED for HTML UDFs
-    common = fused.load("https://github.com/fusedio/udfs/tree/b672adc/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     # ALTAIR REQUIREMENT: Enable processing of larger datasets
     alt.data_transformers.enable("default", max_rows=None)

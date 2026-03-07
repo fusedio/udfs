@@ -9,7 +9,7 @@ def udf(path:str = f"s3://fused-asset/data/cdls/2022_30m_cdls.tif",
         fused_metadata:dict={}, 
         verbose:bool=True):
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     if not crs:
         crs='4326'
     ############ read_tiff (raw pixels) ########### 
@@ -91,7 +91,7 @@ def udf(path:str = f"s3://fused-asset/data/cdls/2022_30m_cdls.tif",
 
 def transform_to_gdf(transform, shape, crs):
     import rasterio
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     bounds = rasterio.transform.array_bounds(shape[-2], shape[-1], transform)
     return common.bounds_to_gdf(bounds, crs=crs)
 

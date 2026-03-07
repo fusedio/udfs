@@ -12,7 +12,7 @@ def udf(
     from pystac.extensions.eo import EOExtension as eo
 
     # convert bounds to tile
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     tile = common.get_tiles(bounds, clip=True)
 
     odc.stac.configure_s3_access(requester_pays=True)

@@ -561,7 +561,7 @@ def deckgl_layers(
     )
     
     # Return as HTML object
-    common = fused.load("https://github.com/fusedio/udfs/tree/bb3aa1b/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     return common.html_to_obj(html)
 
 

@@ -11,7 +11,7 @@ def udf():
     # -------------------------------------------------------------------------
 
     # Use the recommended `common` helper and import pandas for data loading.
-    common = fused.load("https://github.com/fusedio/udfs/tree/fbf5682/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     import pandas as pd
 
     # -------------------------------------------------------------------------

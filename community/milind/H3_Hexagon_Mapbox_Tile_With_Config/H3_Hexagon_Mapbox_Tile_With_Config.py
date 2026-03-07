@@ -306,5 +306,5 @@ def udf(
         zoom=zoom,
     )
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/abf9c87/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     return common.html_to_obj(html)

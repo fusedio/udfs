@@ -13,7 +13,7 @@ def udf(
     import pystac_client
     from pystac.extensions.eo import EOExtension as eo
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     # convert bounds to tile
 
     tile = common.get_tiles(bounds, clip=True)

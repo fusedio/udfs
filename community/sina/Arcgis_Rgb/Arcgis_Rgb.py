@@ -1,7 +1,7 @@
 @fused.udf
 def udf(bounds: fused.types.Bounds = [5.494,46.050,15.443,56.132]):
     # Load pinned versions of utility functions.
-    common = fused.load("https://github.com/fusedio/udfs/tree/364f5dd/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     bounds = common.get_tiles(bounds, clip=True)
     # Get the bounding box coordinates
     x, y, z = bounds[["x", "y", "z"]].iloc[0]

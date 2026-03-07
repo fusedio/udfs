@@ -11,7 +11,7 @@ def udf(
     except Exception:
         mapping = {}
 
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7fe87a/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     html = f"""<!doctype html>
 <meta charset="utf-8">
 <title>Receiver</title>

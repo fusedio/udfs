@@ -6,7 +6,7 @@ def udf(bounds: fused.types.Bounds=[-77.083,38.804,-76.969,38.983], time_of_inte
     import numpy as np
 
     # convert bounds to tile
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
     tile = common.get_tiles(bounds, clip=True)
 
     # find the tiles with intersecting geom
@@ -49,7 +49,7 @@ def udf(bounds: fused.types.Bounds=[-77.083,38.804,-76.969,38.983], time_of_inte
 
 
 def df_to_hex(df, data_cols=['data'], h3_size=9, hex_col='hex', latlng_col=['lat','lng'], ordered=False, return_avg_lalng=True):
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     agg_term = ', '.join([f'ARRAY_AGG({col}) as agg_{col}' for col in data_cols])
     if return_avg_lalng:
@@ -86,7 +86,7 @@ def tile_to_df(bounds, arr, return_geometry=False):
     df["lat"] = Y.flatten()
 
     # Load pinned versions of utility functions. 
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     # convert back to 4326
     df = common.to_gdf(df).set_crs(3857, allow_override=True).to_crs(bounds.crs)

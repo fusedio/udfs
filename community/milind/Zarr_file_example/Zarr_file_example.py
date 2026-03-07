@@ -8,7 +8,7 @@ def udf(bounds: fused.types.Bounds = None, layer: str = "ndvi", time: int = 2, t
     
 
     # Load utils
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     # Open dataset
     ds = xr.open_zarr("s3://fused-asset/data/seasfire_v3/")

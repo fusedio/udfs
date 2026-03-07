@@ -15,7 +15,7 @@ def udf(
     import json
     import h3
     
-    common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+    common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     bounds = common.bounds_to_gdf(bounds)
     z = common.estimate_zoom(bounds)
@@ -107,7 +107,7 @@ def ee_initialize(service_account_name="", key_path=""):
 
 
 def get_data(bbox, year, land_type, chip_len):
-        common = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/common/")
+        common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
         path= f"https://s3-us-west-2.amazonaws.com/mrlc/Annual_NLCD_LndCov_{year}_CU_C1V0.tif"
         arr_int, color_map = common.read_tiff(bbox, path, output_shape=(chip_len, chip_len), return_colormap=True)
