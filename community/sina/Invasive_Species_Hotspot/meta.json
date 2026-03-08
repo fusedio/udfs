@@ -162,19 +162,7 @@
               "zoom": 12.671829017615035,
               "pitch": 37.89589996191902,
               "bearing": -163.97661346157315
-            },
-            "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/blog-assets/liz2.png",
-            "fused:tags": [
-              {
-                "id": "overture",
-                "label": "overture"
-              },
-              {
-                "id": "coop",
-                "label": "coop"
-              }
-            ],
-            "fused:description": "# Invasive Species Hotspot\n\nMap key hotspots where Arundo donax is likely to spread based on built-environment factors derived from Overture Maps data.\n\nThis UDF runs a simple model to identify hotspots susceptible to Arundo. The model uses a weighted sum of several base Overture data classes:\n\n- Golf Courses\n- Bridges\n- Water bodies (rivers, streams, etc.)\n\nThe UDF performs the following steps:\n\n1. Create GeoDataFrames from the Overture maps dataset using get_overture\n2. Generate an H3 score based on buffers around each feature\n3. Aggregate the H3 scores to create a weighted sum\n\n"
+            }
           },
           "source": "Invasive_Species_Hotspot.py",
           "headers": []

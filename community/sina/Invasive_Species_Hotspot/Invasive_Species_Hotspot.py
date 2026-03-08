@@ -11,21 +11,21 @@ def udf(
     tile = common.get_tiles(bounds, clip=True)
 
 
-    overture_maps = fused.load("https://github.com/fusedio/udfs/tree/38ff24d/public/Overture_Maps_Example/") # Load pinned versions of utility functions.
+    overture_maps = fused.load("https://github.com/fusedio/udfs/tree/a9d31ec/public/Overture_Maps_Example/") # Load pinned versions of utility functions.
     
     # A. Bridges
-    gdf_bridges = overture_maps.get_overture(bounds=tile, overture_type='infrastructure')
+    gdf_bridges = overture_maps(bounds=tile, overture_type='infrastructure')
     gdf_bridges = gdf_bridges[gdf_bridges['subtype'] == 'bridge']
     
     # B. Water 
-    gdf_water = overture_maps.get_overture(bounds=tile,overture_type='water')
+    gdf_water = overture_maps(bounds=tile,overture_type='water')
     gdf_water = gdf_water[gdf_water['class'].isin(['river', 'stream', 'lagoon', 'pond', 'drain'])]
 
     # Keep only bridges that intersect non-oceanic water; (riparean) rivers
     gdf_bridges = gdf_bridges.sjoin(gdf_water[['geometry']], how='inner')
 
     # C. Golf Courses
-    gdf_golf = overture_maps.get_overture(bounds=tile,theme = 'base',overture_type = 'land_use')
+    gdf_golf = overture_maps(bounds=tile,theme = 'base',overture_type = 'land_use')
     gdf_golf = gdf_golf[gdf_golf['class'] == 'golf_course'].dissolve()
 
     # D. Strahler
