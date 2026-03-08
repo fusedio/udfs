@@ -2,7 +2,7 @@ common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/
 
 @fused.udf()
 def udf(
-    data_url: str = "https://staging.fused.io/server/v1/realtime-shared/fsh_603UJrHzEiwDvEaHJtW2lC/run/file?dtype_out_raster=png&dtype_out_vector=parquet",
+    data_url: str = "https://udf.ai/fsh_4i2c8hdQtoJi4542GQ7KPp/run?dtype_out_raster=png&dtype_out_vector=parquet",
     mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
     center_lng: float = 20.0,
     center_lat: float = 30.0,
