@@ -11,10 +11,10 @@ def udf(bounds: fused.types.Bounds = [-123.86438687695097,46.1795089730952,-123.
     if common.estimate_zoom(bounds) < 10:
         return None
 
-    overture_maps = fused.load("https://github.com/fusedio/udfs/tree/38ff24d/public/Overture_Maps_Example/")
+    overture_maps = fused.load("https://github.com/fusedio/udfs/tree/a9d31ec/public/Overture_Maps_Example/")
     
     # 1. Load Overture Buildings
-    gdf_overture = overture_maps.get_overture(bounds=tile)
+    gdf_overture = overture_maps(bounds=tile)
 
     if not join_with_nsi:
         gdf_overture['metric'] = gdf_overture['height']

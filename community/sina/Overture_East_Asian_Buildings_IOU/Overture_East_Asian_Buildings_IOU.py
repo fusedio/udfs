@@ -4,7 +4,7 @@ def udf(bounds: fused.types.Bounds = [121.460,31.228,121.463,31.231], res=14):
     import pandas as pd
 
     # Load pinned versions of utility functions.
-    overture_maps = fused.load("https://github.com/fusedio/udfs/tree/38ff24d/public/Overture_Maps_Example/")
+    overture_maps = fused.load("https://github.com/fusedio/udfs/tree/a9d31ec/public/Overture_Maps_Example/")
     common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     # convert bounds to tile
@@ -16,7 +16,7 @@ def udf(bounds: fused.types.Bounds = [121.460,31.228,121.463,31.231], res=14):
     print("Bulding Count EA: ", len(gdf_zenodo))
 
     # 2. Load Overture Buildings
-    gdf_overture = overture_maps.get_overture(bounds=tile)
+    gdf_overture = overture_maps(bounds=tile)
     print("Bulding Count Overture: ", len(gdf_overture))
 
     # 3. IOU

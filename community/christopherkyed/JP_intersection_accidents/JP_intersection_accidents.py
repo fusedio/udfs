@@ -9,7 +9,7 @@ def udf(
     import pandas as pd
 
     common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
-    overture_udf = fused.load("https://github.com/fusedio/udfs/tree/1762605/public/Overture_Maps_Example/")
+    overture_udf = fused.load("https://github.com/fusedio/udfs/tree/a9d31ec/public/Overture_Maps_Example/")
     zoom = common.bounds_to_zoom(bounds)
     print(f"Current zoom: {zoom}, min_zoom: {min_zoom}")
 

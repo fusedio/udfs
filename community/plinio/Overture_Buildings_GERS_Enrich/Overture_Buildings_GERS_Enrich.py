@@ -8,8 +8,8 @@ def udf(bounds: fused.types.Bounds=aoi):
     from shapely.geometry import box
 
     # 2. Load Overture Buildings that intersect the given bbox centroid
-    overture_maps = fused.load("https://github.com/fusedio/udfs/tree/38ff24d/public/Overture_Maps_Example/") # Load pinned versions of utility functions.
-    gdf = overture_maps.get_overture(bounds=bounds, overture_type='building', min_zoom=10)
+    overture_maps = fused.load("https://github.com/fusedio/udfs/tree/a9d31ec/public/Overture_Maps_Example/") # Load pinned versions of utility functions.
+    gdf = overture_maps(bounds=bounds, overture_type='building', min_zoom=10)
     # How many Overture buildings fall within the bbox centroid?
     print("Buildings in centroid: ", len(gdf))
     
