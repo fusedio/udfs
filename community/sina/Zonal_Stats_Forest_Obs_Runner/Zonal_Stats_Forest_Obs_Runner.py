@@ -39,7 +39,7 @@ def udf(
     # If the expected output file exists, skip execution
     from botocore.exceptions import NoCredentialsError
     try:
-        if _use_cached_output & len(s3fs_filesystem.ls(path_output)) > 0:
+        if _use_cached_output and len(s3fs_filesystem.ls(path_output)) > 0:
             print("File found. Using cached data.")
             return gpd.read_parquet(path_output)
     except FileNotFoundError:
@@ -48,7 +48,7 @@ def udf(
         print("AWS credentials not found. Please configure your AWS credentials and try again.", e)
 
     # Create gdf of the target cell
-    gdf_cell = gdf_cells[gdf_cells['ind'] == cell_id]
+    gdf_cell = gdf_cells[gdf_cells['ind'] == cell_id].reset_index(drop=True)
 
     # *Handle antimeridian by shifting, if needed
     translate = False
@@ -60,9 +60,12 @@ def udf(
     gdf_muni = common.table_to_tile(
         gdf_cell,
         table_muni_geoboundaries,
+        min_zoom=0,
         use_columns=["shapeID", "geometry"],
-        clip=True,
+        clip=False,
     )
+    # Clip manually (avoids bug in common.table_to_tile's clip path)
+    gdf_muni = gdf_muni.clip(gdf_cell.geometry.iloc[0]).explode()
 
     # *Shift back if antimeridian handling was used
     if translate:
@@ -78,20 +81,44 @@ def udf(
     # 4. Load tiff
     filename = gdf_cell[["url"]].iloc[0].values[0]
     tiff_url = f"s3://fused-asset/gfc2020/{filename}"
+
+    # 5. Get TIFF dataset - clip to muni bounds to reduce memory
+    import gc
     geom_bounds_muni = common.geo_bbox(gdf_muni).geometry[0]
 
-    # 5. Get TIFF dataset
-    da, _ = zonal_stats_forest.rio_clip_geom_from_url(geom_bounds_muni, tiff_url)
-    
-    # 6. Zonal stats
+    @fused.cache
+    def load_tiff_clipped(tiff_url, geom_wkt):
+        import xarray
+        from shapely import wkt
+        geom = wkt.loads(geom_wkt)
+        path = fused.download(tiff_url, tiff_url + ".tiff")
+        ds = xarray.open_dataset(path, engine="rasterio", lock=False)
+        da = ds.band_data
+        da_clipped, _ = rio_clip_geom(geom, da)
+        ds.close()
+        del ds
+        return da_clipped
+
+    try:
+        da = load_tiff_clipped(tiff_url, geom_bounds_muni.wkt)
+    except Exception as e:
+        print(f"Error loading TIFF: {e}")
+        da = -1
+
+    # 6. Zonal stats - process in chunks to reduce peak memory
     stats_dict={
         'mean': lambda masked_value: masked_value.data[masked_value.mask].mean(),
         'sum': lambda masked_value: masked_value.data[masked_value.mask].sum(),
         'count': lambda masked_value: masked_value.data[masked_value.mask].size,
         'size': lambda masked_value: masked_value.data.size,
     }
-  
-    df_pre_final = zonal_stats_forest.zonal_stats_df(gdf_muni=gdf_muni, da=da, tiff_url=tiff_url, stats_dict=stats_dict)
+
+    print(f"Processing {len(gdf_muni)} municipalities...")
+    df_pre_final = zonal_stats_df(gdf_muni=gdf_muni, da=da, tiff_url=tiff_url, stats_dict=stats_dict)
+    
+    # Free raster memory
+    del da
+    gc.collect()
 
     # 7. Structure final table
     df_final = pd.concat([gdf_muni.reset_index(drop=True), df_pre_final], axis=1)
@@ -227,10 +254,12 @@ def zonal_stats_df(gdf_muni, da, tiff_url, stats_dict):
     from rasterio.features import geometry_mask
     import numpy as np
     import pandas as pd
+    import gc
     stats_list = []
+    n_stats = len(stats_dict)
     for i in range(len(gdf_muni)):
         if isinstance(da, int):
-            stats_list.append([tiff_url, i]+ [[-1]*len(stats_dict)]) # Tagged error state: image loading broke
+            stats_list.append([tiff_url, i] + [-1]*n_stats)
             continue
  
         geom = gdf_muni.geometry.iloc[i]
@@ -238,7 +267,8 @@ def zonal_stats_df(gdf_muni, da, tiff_url, stats_dict):
             da_geom, value_geom = rio_clip_geom(geom, da)
 
             if da_geom.shape[-1] * da_geom.shape[-2] == 0:
-                stats_list.append([tiff_url, i]+ [[0]*len(stats_dict)]) # Tagged error state: da_geom has a zero dimension
+                del da_geom, value_geom
+                stats_list.append([tiff_url, i] + [0]*n_stats)
                 continue
 
             geom_mask = ~geometry_mask(
@@ -248,19 +278,28 @@ def zonal_stats_df(gdf_muni, da, tiff_url, stats_dict):
                 out_shape=da_geom.shape[-2:],
             )
 
-            # Calculate stats for mask area
+            # Free da_geom early - we only need value_geom and geom_mask now
+            del da_geom
+
             if geom_mask.any():
                 masked_value = np.ma.MaskedArray(data=value_geom, mask=[~geom_mask])
                 stats_calculations = [calc(masked_value) for calc in stats_dict.values()]
-                thearr = [tiff_url,i]+stats_calculations
-                stats_list.append(thearr)
+                stats_list.append([tiff_url, i] + stats_calculations)
+                del masked_value
             else:
-                stats_list.append([tiff_url, i]+ [[-2]*len(stats_dict)]) # Tagged error state: there's no mask area
-        except Exception as e:
-            print("Error: ", e)
-            return
+                stats_list.append([tiff_url, i] + [-2]*n_stats)
 
-    # 6. Structure final df
+            del value_geom, geom_mask
+            # Periodic GC to prevent memory buildup
+            if i % 50 == 0:
+                gc.collect()
+
+        except Exception as e:
+            print(f"Error on muni {i}: {e}")
+            stats_list.append([tiff_url, i] + [-3]*n_stats)
+            continue
+
+    gc.collect()
     df_pre_final = pd.DataFrame(
         stats_list,
         columns=[
@@ -270,7 +309,6 @@ def zonal_stats_df(gdf_muni, da, tiff_url, stats_dict):
             "stats_sum",
             "stats_count",
             "stats_size",
-            
         ],
     )
     return df_pre_final
