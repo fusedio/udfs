@@ -7,15 +7,15 @@ def udf(
     res_offset: int = -1  # lower makes the hex finer
 
 ): 
-    import ee
-    import xarray
     import numpy as np
     import pandas as pd
     import geopandas as gpd
-    import json
     import h3
     
     common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
+
+    if bounds is None:
+        bounds = [-122.5, 37.7, -122.3, 37.8]
 
     bounds = common.bounds_to_gdf(bounds)
     z = common.estimate_zoom(bounds)
@@ -24,21 +24,65 @@ def udf(
     if 'z' not in bounds.columns:
         bounds['z'] = 10
 
-    # Set your own creds
-    common.ee_initialize(service_account_name='fused-nyt-gee@fused-nyt.iam.gserviceaccount.com',key_path="/mnt/cache/geecreds.json")
-    geom = ee.Geometry.Rectangle(*bounds.total_bounds)
+    # JRC Global Surface Water COG URLs (no GEE needed)
+    # Hosted on Google Cloud Storage as Cloud-Optimized GeoTIFFs
+    gsw_layers = {
+        'transition': 'https://storage.googleapis.com/global-surface-water/downloads2021/transitions/transitions_{lon}_{lat}.tif',
+        'max_extent': 'https://storage.googleapis.com/global-surface-water/downloads2021/extent/extent_{lon}_{lat}.tif',
+        'occurrence': 'https://storage.googleapis.com/global-surface-water/downloads2021/occurrence/occurrence_{lon}_{lat}.tif',
+        'seasonality': 'https://storage.googleapis.com/global-surface-water/downloads2021/seasonality/seasonality_{lon}_{lat}.tif',
+        'recurrence': 'https://storage.googleapis.com/global-surface-water/downloads2021/recurrence/recurrence_{lon}_{lat}.tif',
+    }
+    
+    # Read from the global composite COG via Planetary Computer STAC
+    @fused.cache
+    def get_gsw_tiff(var, bounds_tuple, output_shape):
+        import planetary_computer
+        import pystac_client
 
-    # Surface water
-    ic_gsw = ee.ImageCollection(ee.Image('JRC/GSW1_4/GlobalSurfaceWater'))
-    ds = xarray.open_dataset(ic_gsw, engine='ee', geometry=geom,scale=1/2**max(0,z) )
-    ds_gsw = xarray.open_dataset(
-        ic_gsw,
-        engine='ee',
-        geometry=geom,
-        scale=1/2**max(0,z) 
-    ).max(dim='time')
-    print('vars', ds_gsw)
-    arr = ds_gsw[var].values.astype('uint8').T
+        catalog = pystac_client.Client.open(
+            "https://planetarycomputer.microsoft.com/api/stac/v1",
+            modifier=planetary_computer.sign_inplace,
+        )
+        items = catalog.search(
+            collections=["jrc-gsw"],
+            bbox=bounds_tuple,
+        ).item_collection()
+
+        if len(items) == 0:
+            print("No JRC GSW items found for this bbox")
+            return None
+
+        # Get the COG URL for the requested variable
+        item = items[0]
+        # Map user-facing var names to STAC asset keys
+        var_to_asset = {
+            'transition': 'transitions',
+            'max_extent': 'extent',
+            'occurrence': 'occurrence',
+            'seasonality': 'seasonality',
+            'recurrence': 'recurrence',
+            'change': 'change',
+        }
+        asset_key = var_to_asset.get(var, var)
+        if asset_key not in item.assets:
+            print(f"Variable '{var}' not found. Available: {list(item.assets.keys())}")
+            return None
+        
+        href = planetary_computer.sign(item.assets[asset_key]).href
+        return href
+
+    bounds_tuple = tuple(bounds.total_bounds)
+    href = get_gsw_tiff(var, bounds_tuple, (256, 256))
+    
+    if href is None:
+        print(f"Could not find JRC GSW data for var='{var}'")
+        return None
+    
+    print(f"Reading COG: {href[:80]}...")
+    arr = common.read_tiff(bounds, href, output_shape=(256, 256))
+    arr = arr.astype('uint8')
+    print(f"Array shape: {arr.shape}, unique values: {np.unique(arr)[:20]}")
     
     # Hexify
     res = max(min(int(3 + z / 1.5), 12) - res_offset, 2)
