@@ -5,25 +5,14 @@ def udf(
     bounds: fused.types.Bounds = [
         -125.82165127797666,21.313670812049978,-65.62955940309448,52.58604956417555
     ], # Default to global contentinal US (without Alaska)
-    value: int = None, # WorldCereal isn't categorical we want to keep all values 
+    value: int = 1, # CDL crop value (1=Corn, 111=Water, etc.)
     res: int = None, 
 ):
-    # Path to ingested H3 
-    path = "s3://fused-asset/hex/esa_world_cereal/tc-maize-second_maize_2020-10-17_2021-04-16_confidence/"
+    # Path to ingested H3 (CDL 2024 dataset - old ESA WorldCereal path no longer exists)
+    path = "s3://fused-asset/hex/cdls_v8/year=2024/"
 
     df = read_h3_dataset(path, bounds, res=res, value=value)
     print(df.T)
-
-    # This specific dataset represents confidence values, so we'll aggregate hex by the average confidence
-    con = common.duckdb_connect()
-    qr = f"""
-        SELECT hex, 
-            AVG(area) AS area, 
-            AVG(area) / (h3_cell_area(hex,'m^2')/100) as pct 
-        FROM df  
-        GROUP BY 1
-        """
-    df = con.sql(qr).df()
 
     return df
 
@@ -74,10 +63,12 @@ def bounds_to_res(bounds, res_offset=1, max_res=11, min_res=3):
 
 @fused.cache(cache_max_age="30m")
 def list_available_overviews(path):
-    available_overviews = [
-        int(path.split("/")[-1].removeprefix("hex").removesuffix(".parquet"))
-        for path in fused.api.list(path.strip("/") + "/overview/")
-    ]
+    available_overviews = []
+    for p in fused.api.list(path.strip("/") + "/overview/"):
+        fname = p.split("/")[-1]
+        num_str = fname.removeprefix("hex").removesuffix(".parquet")
+        if num_str.isdigit():
+            available_overviews.append(int(num_str))
     return available_overviews
 
 
