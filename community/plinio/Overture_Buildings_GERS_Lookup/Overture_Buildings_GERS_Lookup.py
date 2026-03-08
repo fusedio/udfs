@@ -14,9 +14,9 @@ def udf(gers_id: str='08b2a100d2cb6fff02000821de8bdff1'):
     bbox = gpd.GeoDataFrame({'h3_index': [h3_index], 'geometry': [bounds]})
 
     # 3. Load Overture Buildings
-    overture_maps = fused.load("https://github.com/fusedio/udfs/tree/38ff24d/public/Overture_Maps_Example/")
+    overture_maps = fused.load("https://github.com/fusedio/udfs/tree/a9d31ec/public/Overture_Maps_Example/")
     bounds_tuple = bbox.total_bounds  # [minx, miny, maxx, maxy]
-    gdf = overture_maps.get_overture(bounds=bounds_tuple, overture_type='building', min_zoom=10)
+    gdf = overture_maps(bounds=bounds_tuple, overture_type='building', min_zoom=10)
     
     print(f"Found {len(gdf)} buildings in H3 cell {h3_index}")
     

@@ -3,7 +3,7 @@ def udf(bounds: fused.types.Bounds = [-122.437,37.772,-122.404,37.799], h3_size:
     import h3
 
     # Load pinned versions of utility functions.
-    overture_utils = fused.load("https://github.com/fusedio/udfs/tree/2f41ae1/public/Overture_Maps_Example/").utils
+    overture_udf = fused.load("https://github.com/fusedio/udfs/tree/a9d31ec/public/Overture_Maps_Example/")
     common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
 
     # convert bounds to tile
@@ -21,7 +21,7 @@ def udf(bounds: fused.types.Bounds = [-122.437,37.772,-122.404,37.799], h3_size:
     print(f"H3 Resolution: {h3_size}")
 
     # 2. Load Overture Buildings
-    gdf = overture_utils.get_overture(bounds=bounds, min_zoom=10)
+    gdf = overture_udf(bounds=bounds, min_zoom=10)
     if len(gdf) < 1:
         return
 

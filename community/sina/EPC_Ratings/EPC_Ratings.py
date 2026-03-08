@@ -10,7 +10,7 @@ def udf(bounds: fused.types.Bounds = [-2.997,53.399,-2.975,53.412]):
     gdf = common.read_gdf_file(path).to_crs("EPSG:4326")
 
     # Load Overture data
-    udf = fused.load("https://github.com/fusedio/udfs/tree/38ff24d/public/Overture_Maps_Example/")
+    udf = fused.load("https://github.com/fusedio/udfs/tree/a9d31ec/public/Overture_Maps_Example/")
     gdf_overture = fused.run(
         udf,
         theme="buildings",

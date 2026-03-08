@@ -3,13 +3,13 @@ def udf(bounds: fused.types.Bounds = [-122.432,37.800,-122.430,37.802]):
     import geopandas as gpd
     # Load pinned versions of utility functions.
     common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
-    overture = fused.load("https://github.com/fusedio/udfs/tree/b7637ee/public/Overture_Maps_Example/")
+    overture = fused.load("https://github.com/fusedio/udfs/tree/a9d31ec/public/Overture_Maps_Example/")
 
     # Convert bounds to tile
     tile = common.get_tiles(bounds, clip=True)
 
     # 1. Load Overture Buildings
-    gdf_overture = overture.get_overture(bounds=bounds)
+    gdf_overture = overture(bounds=bounds)
 
     # 2. Load Oak Ridge Buildings
     gdf_oakridge = common.table_to_tile(

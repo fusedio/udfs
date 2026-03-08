@@ -32,7 +32,7 @@ def udf(bounds: fused.types.Bounds = [-122.4633, 37.7533, -122.4433, 37.7653], p
 
     # Load pinned versions of utility functions.
 
-    overture_maps = fused.load("https://github.com/fusedio/udfs/tree/1762605/public/Overture_Maps_Example")
+    overture_maps = fused.load("https://github.com/fusedio/udfs/tree/a9d31ec/public/Overture_Maps_Example")
     # Load Overture Buildings
     gdf_overture = overture_maps(bounds=bounds)
 
