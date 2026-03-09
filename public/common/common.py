@@ -347,7 +347,7 @@ def file_exists(path, verbose=True):
             print(f'{path=} exists locally.')
         return exists
 
-def df_to_hash(df, return_table=False):
+def df_to_hash(df, return_arrow=False):
     import hashlib 
     import pyarrow.parquet as pq 
     import pyarrow as pa 
@@ -363,14 +363,14 @@ def df_to_hash(df, return_table=False):
                 if buf is not None:
                     h.update(memoryview(buf))
     df_hash = h.hexdigest()  
-    if return_table:
+    if return_arrow:
         return df_hash, table
     else:
         return df_hash
 
 def df_to_s3(df, row_group_size=10_000, write_statistics=True, compression='zstd'):
     """Write df to S3 at a content-hashed path. Skips write if exists. Returns the S3 path."""
-    df_hash, table = df_to_hash(df, return_table=True)
+    df_hash, table = df_to_hash(df, return_arrow=True)
     path_out = s3_tmp_path(f'{df_hash}.parquet', folder='df_hash')
     # Skip write if file already exists    
     if file_exists(path_out, verbose=False): 
