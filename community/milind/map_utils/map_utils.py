@@ -56,7 +56,7 @@ DEFAULT_RASTER_STYLE = {
 # You can override this per-run via `deckgl_layers(..., fusedmaps_ref=...)`.
 #
 
-FUSEDMAPS_CDN_REF_DEFAULT = "0da49ca"
+FUSEDMAPS_CDN_REF_DEFAULT = "c849505"
 
 def _fusedmaps_cdn_urls(ref: typing.Optional[str] = None) -> tuple[str, str]:
     """Return (js_url, css_url) for a given fusedmaps git ref (commit/tag/branch)."""
@@ -145,7 +145,8 @@ def udf(
 
 def deckgl_layers(
     layers: list,
-    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
+    mapbox_token = fused.secrets["mapbox_token"],
+
     basemap: str = "dark",
     initialViewState: typing.Optional[dict] = None,
     theme: str = "dark",
@@ -155,7 +156,6 @@ def deckgl_layers(
     map_sync: typing.Union[dict, bool, None] = None,  # Sync viewports between maps: True or {"channel": "my-sync-channel"}
     location_listener: typing.Union[dict, bool, None] = None,  # Listen for feature clicks: {"channel": "fused-bus", "idFields": ["GEOID", "id"]}, False to disable
     sidebar: typing.Optional[str] = None,  # None | "show" | "hide"
-    debug: typing.Optional[bool] = None,  # deprecated alias for sidebar
     fusedmaps_ref: typing.Optional[str] = None,  # override CDN ref (commit/tag/branch)
     # --- Widget positioning ---
     widgets: typing.Optional[dict] = None,  # Position/enable widgets: {"controls": "bottom-left", "legend": False, ...}
@@ -267,7 +267,7 @@ def deckgl_layers(
     # Process each layer
     processed_layers = []
     auto_center = None
-    has_tile_layers = False
+    has_deck_hex = False
     
     for i, layer_def in enumerate(layers):
         layer_type = layer_def.get("type", "hex").lower()
@@ -329,16 +329,15 @@ def deckgl_layers(
                 if sql is not None:
                     processed["sql"] = sql
             # Tooltip from layer_def takes precedence
-            tooltip_from_def = layer_def.get("tooltip") or layer_def.get("tooltipColumns")
+            tooltip_from_def = layer_def.get("tooltip")
             if processed and tooltip_from_def:
                 processed["tooltip"] = list(tooltip_from_def)
-            # Add group if specified
             if processed and group:
                 processed["group"] = str(group)
             if processed:
                 processed_layers.append(processed)
-                if processed.get("isTileLayer"):
-                    has_tile_layers = True
+                if processed.get("isTileLayer") or processed.get("data"):
+                    has_deck_hex = True
                 # Auto-center from first layer with data
                 if auto_center is None and df is not None and len(df) > 0:
                     auto_center = _compute_center_from_hex(df)
@@ -353,10 +352,9 @@ def deckgl_layers(
             if processed and data_ref:
                 processed["dataRef"] = str(data_ref)
             # Tooltip from layer_def takes precedence
-            tooltip_from_def = layer_def.get("tooltip") or layer_def.get("tooltipColumns")
+            tooltip_from_def = layer_def.get("tooltip")
             if processed and tooltip_from_def:
                 processed["tooltip"] = list(tooltip_from_def)
-            # Add group if specified
             if processed and group:
                 processed["group"] = str(group)
             if processed:
@@ -427,16 +425,6 @@ def deckgl_layers(
         }
         has_custom_view = False
     
-    # Sidebar behavior:
-    # - sidebar=None => don't mount at all (no toggle)
-    # - sidebar="show"|"hide" => mount and start open/closed
-    # Back-compat:
-    # - debug=True => sidebar="show"
-    # - debug=False => sidebar=None
-    if sidebar is None and debug is True:
-        sidebar = "show"
-    if sidebar is None and debug is False:
-        sidebar = None
     if sidebar not in (None, "show", "hide"):
         raise ValueError("sidebar must be one of: None, 'show', 'hide'")
 
@@ -534,9 +522,9 @@ def deckgl_layers(
     if messaging_config:
         fusedmaps_config["messaging"] = messaging_config
     
-    # Extra scripts needed for hex tile layers (Deck.gl + hyparquet)
+    # Extra scripts needed for Deck.gl hex layers (tiled or inline data)
     extra_scripts = ""
-    if has_tile_layers:
+    if has_deck_hex:
         extra_scripts = """
   <script src="https://unpkg.com/deck.gl@9.1.3/dist.min.js"></script>
   <script src="https://unpkg.com/@deck.gl/geo-layers@9.1.3/dist.min.js"></script>
@@ -565,205 +553,6 @@ def deckgl_layers(
     return common.html_to_obj(html)
 
 
-def deckgl_hex(
-    df=None,
-    config=None,
-    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
-    basemap: str = "dark",
-    tile_url: str = None,
-    layers: list = None,
-    highlight_on_click: bool = True,
-    on_click: dict = None,
-    map_broadcast: typing.Optional[dict] = None,
-    sidebar: typing.Optional[str] = None,
-    debug: typing.Optional[bool] = None,  # deprecated alias
-):
-    """
-    Render H3 hexagon layer(s) on an interactive map.
-
-    Convenience wrapper around deckgl_layers() for hex-only use cases.
-    """
-    if layers is None:
-        if df is not None:
-            layers = [{"type": "hex", "data": df, "config": config, "name": "Layer 1"}]
-        elif tile_url is not None:
-            layers = [{"type": "hex", "tile_url": tile_url, "config": config, "name": "Tile Layer"}]
-        else:
-            raise ValueError("Provide df, tile_url, or layers parameter")
-    else:
-        layers = [{"type": "hex", **layer_def} for layer_def in layers]
-
-    return deckgl_layers(
-        layers=layers,
-        mapbox_token=mapbox_token,
-        basemap=basemap,
-        highlight_on_click=highlight_on_click,
-        on_click=on_click,
-        map_broadcast=map_broadcast,
-        sidebar=sidebar,
-        debug=debug,
-    )
-
-
-def deckgl_map(
-    gdf,
-    config: typing.Union[dict, str, None] = None,
-    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
-    basemap: str = "dark",
-    sidebar: typing.Optional[str] = None,
-    debug: typing.Optional[bool] = None,  # deprecated alias
-):
-    """
-    Render a GeoDataFrame on an interactive map.
-    
-    Convenience wrapper around deckgl_layers() for vector-only use cases.
-    """
-    layers = [
-        {
-            "type": "vector",
-            "data": gdf,
-            "config": config,
-            "name": "Layer 1",
-        }
-    ]
-    
-    return deckgl_layers(
-        layers=layers,
-        mapbox_token=mapbox_token,
-        basemap=basemap,
-        sidebar=sidebar,
-        debug=debug,
-    )
-
-
-def deckgl_pmtiles(
-    pmtiles_path: str = None,
-    pmtiles_url: str = None,
-    source_layer: str = None,
-    config: dict = None,
-    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
-    basemap: str = "dark",
-    sidebar: typing.Optional[str] = None,
-    debug: typing.Optional[bool] = None,  # deprecated alias
-):
-    """
-    Render PMTiles vector data on an interactive map.
-    
-    Args:
-        pmtiles_path: S3 path to PMTiles file (will be signed automatically)
-        pmtiles_url: Pre-signed URL to PMTiles file
-        source_layer: Name of the source layer in the PMTiles (auto-detected if not provided)
-        config: Layer styling config (same as vectorLayer config)
-        mapbox_token: Mapbox access token
-        basemap: 'dark', 'satellite', 'light', or 'streets'
-        sidebar: 'show', 'hide', or None (no sidebar)
-    
-    Example:
-        return deckgl_pmtiles(
-            pmtiles_path="s3://my-bucket/data.pmtiles",
-            config={
-                "vectorLayer": {
-                    "getFillColor": {
-                        "attr": "value",
-                        "domain": [0, 100],
-                        "colors": "Viridis"
-                    }
-                }
-            }
-        )
-    """
-    if not pmtiles_path and not pmtiles_url:
-        raise ValueError("Provide either pmtiles_path (s3://...) or pmtiles_url (signed URL)")
-    
-    layers = [{
-        "type": "pmtiles",
-        "pmtiles_path": pmtiles_path,
-        "pmtiles_url": pmtiles_url,
-        "source_layer": source_layer,
-        "config": config,
-        "name": "PMTiles Layer",
-    }]
-    
-    return deckgl_layers(
-        layers=layers,
-        mapbox_token=mapbox_token,
-        basemap=basemap,
-        sidebar=sidebar,
-        debug=debug,
-    )
-
-
-def deckgl_raster(
-    image_data=None,
-    bounds=None,
-    tile_url: str = None,
-    config: dict = None,
-    mapbox_token: str = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
-    basemap: str = "dark",
-    sidebar: typing.Optional[str] = None,
-    debug: typing.Optional[bool] = None,  # deprecated alias
-):
-    """
-    Render raster data on a map - either a static image or XYZ tiles.
-    """
-    if tile_url is not None:
-        layers = [{"type": "raster", "tile_url": tile_url, "config": config, "name": "Raster"}]
-        return deckgl_layers(
-            layers=layers,
-            mapbox_token=mapbox_token,
-            basemap=basemap,
-            sidebar=sidebar,
-            debug=debug,
-        )
-    
-    if image_data is None:
-        raise ValueError("Provide either tile_url or image_data (with bounds=[west, south, east, north])")
-    if bounds is None or len(bounds) != 4:
-        raise ValueError("Static raster requires bounds=[west, south, east, north]")
-
-    image_url = None
-    if isinstance(image_data, str):
-        image_url = image_data
-    else:
-        # Encode numpy array -> PNG data URL
-        import base64
-        import io
-        import numpy as np
-        from PIL import Image
-
-        arr = np.asarray(image_data)
-        # Common raster convention (rasterio): (bands, height, width). Convert to (height, width, bands).
-        if arr.ndim == 3 and arr.shape[0] in (1, 3, 4) and arr.shape[1] > 1 and arr.shape[2] > 1:
-            arr = np.transpose(arr, (1, 2, 0))
-
-        if arr.ndim == 2:
-            mode = "L"
-        elif arr.ndim == 3 and arr.shape[2] == 3:
-            mode = "RGB"
-        elif arr.ndim == 3 and arr.shape[2] == 4:
-            mode = "RGBA"
-        else:
-            raise ValueError(f"Unsupported image_data shape: {arr.shape} (expected HxW, HxWx3, or HxWx4)")
-
-        if arr.dtype != np.uint8:
-            arr = np.clip(arr, 0, 255).astype(np.uint8)
-
-        im = Image.fromarray(arr, mode=mode)
-        buf = io.BytesIO()
-        im.save(buf, format="PNG")
-        b64 = base64.b64encode(buf.getvalue()).decode("ascii")
-        image_url = f"data:image/png;base64,{b64}"
-
-    layers = [{"type": "raster", "image_url": image_url, "bounds": list(bounds), "config": config, "name": "Raster"}]
-    return deckgl_layers(
-        layers=layers,
-        mapbox_token=mapbox_token,
-        basemap=basemap,
-        sidebar=sidebar,
-        debug=debug,
-    )
-
-
 # ============================================================
 # Layer Processing Functions
 # ============================================================
@@ -774,24 +563,13 @@ def _process_hex_layer(idx: int, df, tile_url: str, config: dict, name: str, vis
     # Parse config
     config = _parse_config(config)
 
-    # Support both new format (style key) and legacy format (hexLayer key)
     style = config.get("style") or {}
     tile_opts = config.get("tile") or {}
-
-    # Legacy support: extract from hexLayer if present
-    if "hexLayer" in config:
-        legacy = config["hexLayer"]
-        style = _deep_merge_dict(_convert_legacy_style(legacy), style)
 
     # Merge with defaults
     style = _deep_merge_dict(deepcopy(DEFAULT_HEX_STYLE), style)
 
     is_tile_layer = tile_url is not None
-
-    # Extract tile options from legacy tileLayerConfig if present
-    if is_tile_layer:
-        legacy_tile = config.get("tileLayerConfig") or config.get("tileLayer") or {}
-        tile_opts = _deep_merge_dict(legacy_tile, tile_opts)
 
     # Process data
     data_records = []
@@ -805,11 +583,7 @@ def _process_hex_layer(idx: int, df, tile_url: str, config: dict, name: str, vis
 
         data_records = _sanitize_records(df_clean.to_dict('records'))
 
-    # Extract tooltip columns (check legacy hexLayer too)
-    legacy_hex = config.get("hexLayer") or {}
-    tooltip = _extract_tooltip_columns_new(config, style)
-    if not tooltip:
-        tooltip = legacy_hex.get("tooltipAttrs") or legacy_hex.get("tooltipColumns") or []
+    tooltip = _extract_tooltip_columns(config, style)
 
     result = {
         "id": f"layer-{idx}",
@@ -842,15 +616,7 @@ def _process_vector_layer(idx: int, df, config: dict, name: str, visible: bool) 
     # Parse config
     config = _parse_config(config)
 
-    # Support both new format (style key) and legacy format (vectorLayer key)
     style = config.get("style") or {}
-
-    # Legacy support: extract from vectorLayer if present
-    if "vectorLayer" in config:
-        legacy = config["vectorLayer"]
-        style = _deep_merge_dict(_convert_legacy_style(legacy), style)
-
-    # Merge with defaults
     style = _deep_merge_dict(deepcopy(DEFAULT_VECTOR_STYLE), style)
 
     # Reproject to EPSG:4326 if needed
@@ -873,11 +639,7 @@ def _process_vector_layer(idx: int, df, config: dict, name: str, visible: bool) 
         feat["properties"] = {k: _sanitize_value(v) for k, v in (feat.get("properties") or {}).items()}
         feat["properties"]["_fused_idx"] = idx_f
 
-    # Extract tooltip columns (check legacy vectorLayer too)
-    legacy_vec = config.get("vectorLayer") or {}
-    tooltip = _extract_tooltip_columns_new(config, style)
-    if not tooltip:
-        tooltip = legacy_vec.get("tooltipColumns") or legacy_vec.get("tooltipAttrs") or []
+    tooltip = _extract_tooltip_columns(config, style)
 
     result = {
         "id": f"layer-{idx}",
@@ -907,19 +669,11 @@ def _process_mvt_layer(idx: int, tile_url: str, source_layer: str, config: dict,
     # Parse config
     config = _parse_config(config)
 
-    # Support both new format (style key) and legacy format (vectorLayer key)
     style = config.get("style") or {}
     tile_opts = config.get("tile") or {}
-
-    # Legacy support
-    if "vectorLayer" in config:
-        legacy = config["vectorLayer"]
-        style = _deep_merge_dict(_convert_legacy_style(legacy), style)
-
-    # Merge with defaults
     style = _deep_merge_dict(deepcopy(DEFAULT_VECTOR_STYLE), style)
 
-    tooltip = _extract_tooltip_columns_new(config, style)
+    tooltip = _extract_tooltip_columns(config, style)
 
     result = {
         "id": f"layer-{idx}",
@@ -948,12 +702,9 @@ def _process_raster_layer(idx: int, tile_url: str, image_url, bounds, config: di
 
     config = config or {}
 
-    # Extract opacity from config
     opacity = 1.0
     if "style" in config:
         opacity = float(config["style"].get("opacity", 1.0))
-    elif "rasterLayer" in config:
-        opacity = float(config["rasterLayer"].get("opacity", 1.0))
     elif "opacity" in config:
         opacity = float(config["opacity"])
 
@@ -994,16 +745,8 @@ def _process_pmtiles_layer(
     # Parse config
     config = _parse_config(config)
 
-    # Support both new format (style key) and legacy format (vectorLayer key)
     style = config.get("style") or {}
     tile_opts = config.get("tile") or {}
-
-    # Legacy support
-    if "vectorLayer" in config:
-        legacy = config["vectorLayer"]
-        style = _deep_merge_dict(_convert_legacy_style(legacy), style)
-
-    # Merge with defaults
     style = _deep_merge_dict(deepcopy(DEFAULT_VECTOR_STYLE), style)
 
     # Extract exclude_source_layers from config
@@ -1022,7 +765,7 @@ def _process_pmtiles_layer(
     if maxzoom is not None:
         tile_opts["maxZoom"] = int(maxzoom)
 
-    tooltip = _extract_tooltip_columns_new(config, style)
+    tooltip = _extract_tooltip_columns(config, style)
 
     result = {
         "id": f"layer-{idx}",
@@ -1076,99 +819,11 @@ def _parse_config(config: typing.Union[dict, str, None]) -> dict:
     return {}
 
 
-def _convert_legacy_color(color_config) -> typing.Optional[dict]:
-    """Convert legacy @@function color config to new format."""
-    if not isinstance(color_config, dict):
-        return color_config  # Pass through RGB arrays, strings
-
-    fn = color_config.get("@@function")
-    if fn == "colorContinuous":
-        return {
-            "type": "continuous",
-            "attr": color_config.get("attr"),
-            "palette": color_config.get("colors"),
-            "domain": color_config.get("domain"),
-            "steps": color_config.get("steps"),
-            "nullColor": color_config.get("nullColor"),
-            "reverse": color_config.get("reverse"),
-            "autoDomain": color_config.get("autoDomain"),
-        }
-    elif fn == "colorCategories":
-        return {
-            "type": "categorical",
-            "attr": color_config.get("attr"),
-            "palette": color_config.get("colors"),
-            "categories": color_config.get("categories"),
-            "labelAttr": color_config.get("labelAttr"),
-            "nullColor": color_config.get("nullColor"),
-        }
-    elif color_config.get("attr"):
-        # Shorthand: {"attr": "value", "domain": [...], "colors": "..."}
-        return {
-            "type": "continuous",
-            "attr": color_config.get("attr"),
-            "palette": color_config.get("colors"),
-            "domain": color_config.get("domain"),
-            "steps": color_config.get("steps"),
-            "nullColor": color_config.get("nullColor"),
-        }
-
-    return color_config
-
-
-def _convert_legacy_style(legacy: dict) -> dict:
-    """Convert legacy hexLayer/vectorLayer format to new style format."""
-    style = {}
-
-    # Color mappings
-    if "getFillColor" in legacy:
-        style["fillColor"] = _convert_legacy_color(legacy["getFillColor"])
-    if "getLineColor" in legacy:
-        style["lineColor"] = _convert_legacy_color(legacy["getLineColor"])
-
-    # Direct property mappings
-    if "opacity" in legacy:
-        style["opacity"] = legacy["opacity"]
-    if "filled" in legacy:
-        style["filled"] = legacy["filled"]
-    if "stroked" in legacy:
-        style["stroked"] = legacy["stroked"]
-    if "extruded" in legacy:
-        style["extruded"] = legacy["extruded"]
-
-    # Elevation
-    if "elevationProperty" in legacy:
-        style["elevationAttr"] = legacy["elevationProperty"]
-    if "elevationScale" in legacy:
-        style["elevationScale"] = legacy["elevationScale"]
-
-    # Line width
-    if "lineWidthMinPixels" in legacy:
-        style["lineWidth"] = legacy["lineWidthMinPixels"]
-    elif "getLineWidth" in legacy:
-        style["lineWidth"] = legacy["getLineWidth"]
-
-    # Point radius
-    if "pointRadiusMinPixels" in legacy:
-        style["pointRadius"] = legacy["pointRadiusMinPixels"]
-    elif "pointRadius" in legacy:
-        style["pointRadius"] = legacy["pointRadius"]
-
-    return style
-
-
-def _extract_tooltip_columns_new(config: dict, style: dict) -> list:
-    """Extract tooltip columns from config (new format)."""
-    sources = [
-        config.get("tooltip"),
-        config.get("tooltipColumns"),
-        config.get("tooltipAttrs"),
-        style.get("tooltipColumns") if style else None,
-        style.get("tooltipAttrs") if style else None,
-    ]
-    for src in sources:
-        if src:
-            return list(src)
+def _extract_tooltip_columns(config: dict, style: dict) -> list:
+    """Extract tooltip columns from config."""
+    tt = config.get("tooltip")
+    if tt:
+        return list(tt)
     return []
 
 
