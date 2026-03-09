@@ -346,6 +346,35 @@ def file_exists(path, verbose=True):
         if verbose and exists:
             print(f'{path=} exists locally.')
         return exists
+
+def df_to_hash(df):
+    import hashlib 
+    import pyarrow.parquet as pq 
+    import pyarrow as pa 
+    # Hash raw Arrow buffers — pure PyArrow, deterministic, hashes actual values
+    table = pa.Table.from_pandas(df, preserve_index=False)
+    h = hashlib.sha256()
+    h.update(f"{table.num_rows}{table.column_names}".encode())
+    for col_name in table.column_names:
+        col = table.column(col_name)
+        h.update(f"{col_name}:{col.type}".encode())
+        for chunk in col.chunks:
+            for buf in chunk.buffers():
+                if buf is not None:
+                    h.update(memoryview(buf))
+    df_hash = h.hexdigest()  
+    return df_hash
+
+def df_to_s3(df, row_group_size=10_000, write_statistics=True, compression='zstd'):
+    """Write df to S3 at a content-hashed path. Skips write if exists. Returns the S3 path."""
+    df_hash = df_to_hash(df)
+    path_out = s3_tmp_path(f'{df_hash}.parquet', folder='df_hash')
+    # Skip write if file already exists    
+    if file_exists(path_out, verbose=False): 
+        print(f'File already exists, skipping write')
+        return path_out  
+    pq.write_table(table, path_out, row_group_size=row_group_size, compression=compression, write_statistics=write_statistics)
+    return path_out
         
 def encode_metadata_fused(fused_metadata):
     import pandas as pd
