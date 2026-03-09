@@ -367,15 +367,15 @@ def df_to_hash(df):
 
 def df_to_s3(df, row_group_size=10_000, write_statistics=True, compression='zstd'):
     """Write df to S3 at a content-hashed path. Skips write if exists. Returns the S3 path."""
-    import pyarrow.parquet as pq
-    import pyarrow as pa
-    table = pa.Table.from_pandas(df)
-    df_hash = df_to_hash(df)
     path_out = s3_tmp_path(f'{df_hash}.parquet', folder='df_hash')
     # Skip write if file already exists    
     if file_exists(path_out, verbose=False): 
         print(f'File already exists, skipping write')
         return path_out  
+    import pyarrow.parquet as pq
+    import pyarrow as pa
+    table = pa.Table.from_pandas(df)
+    df_hash = df_to_hash(df)
     pq.write_table(table, path_out, row_group_size=row_group_size, compression=compression, write_statistics=write_statistics)
     return path_out
         
