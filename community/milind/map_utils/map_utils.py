@@ -145,7 +145,7 @@ def udf(
 
 def deckgl_layers(
     layers: list,
-    mapbox_token = fused.secrets["mapbox_token"],
+    mapbox_token = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
 
     basemap: str = "dark",
     initialViewState: typing.Optional[dict] = None,
