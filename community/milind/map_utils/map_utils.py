@@ -11,13 +11,7 @@ import fused
 # ============================================================
 
 DEFAULT_HEX_STYLE = {
-    "fillColor": {
-        "type": "continuous",
-        "attr": "cnt",
-        "palette": "ArmyRose",
-        "steps": 20,
-        "nullColor": [184, 184, 184]
-    },
+    "fillColor": [0, 144, 255],
     "lineColor": [255, 255, 255],
     "opacity": 1,
     "filled": True,
@@ -28,14 +22,8 @@ DEFAULT_HEX_STYLE = {
 }
 
 DEFAULT_VECTOR_STYLE = {
-    "fillColor": {
-        "type": "continuous",
-        "attr": "house_age",
-        "palette": "ArmyRose",
-        "domain": [0, 50],
-        "steps": 7,
-        "nullColor": [200, 200, 200, 180]
-    },
+    "fillColor": [0, 144, 255],
+    "lineColor": [80, 80, 80],
     "opacity": 0.8,
     "filled": True,
     "stroked": True,
@@ -56,7 +44,7 @@ DEFAULT_RASTER_STYLE = {
 # You can override this per-run via `deckgl_layers(..., fusedmaps_ref=...)`.
 #
 
-FUSEDMAPS_CDN_REF_DEFAULT = "cd57d84"
+FUSEDMAPS_CDN_REF_DEFAULT = "92e5f97"
 
 def _fusedmaps_cdn_urls(ref: typing.Optional[str] = None) -> tuple[str, str]:
     """Return (js_url, css_url) for a given fusedmaps git ref (commit/tag/branch)."""
@@ -827,11 +815,15 @@ def _extract_tooltip_columns(config: dict, style: dict) -> list:
     return []
 
 
+_ATOMIC_STYLE_KEYS = {"fillColor", "lineColor"}
+
 def _deep_merge_dict(base: dict, extra: dict) -> dict:
-    """Deep merge extra into base."""
+    """Deep merge extra into base. fillColor/lineColor are replaced atomically."""
     result = deepcopy(base)
     for k, v in extra.items():
-        if k in result and isinstance(result[k], dict) and isinstance(v, dict):
+        if k in _ATOMIC_STYLE_KEYS:
+            result[k] = deepcopy(v)
+        elif k in result and isinstance(result[k], dict) and isinstance(v, dict):
             result[k] = _deep_merge_dict(result[k], v)
         else:
             result[k] = deepcopy(v)
