@@ -105,6 +105,10 @@ MINIMAL_TEMPLATE = """<!DOCTYPE html>
       // Expose globally for custom scripts
       window.__fusedMapsInstance = __fm_instance;
       window.__fusedMapsMap = __fm_map;
+
+      // Alias so user on_init code can reference `map` and `instance` as documented
+      const map = __fm_map;
+      const instance = __fm_instance;
       
       // User-provided on_init callback
       {on_init}
