@@ -35,6 +35,11 @@ def udf(
     import shapely
     from fused._h3.ingest import infer_defaults, _list_files
 
+    if isinstance(input_path, str) and "[" in input_path:
+        # argument parsing based on type annotations cannot handle `str | list[str]`
+        import json
+        input_path = json.loads(input_path)
+
     # Validate and preprocess input src path
     if isinstance(input_path, str):
         # single file or directory input
