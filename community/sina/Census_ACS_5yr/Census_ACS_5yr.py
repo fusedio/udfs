@@ -37,12 +37,14 @@ def udf(
         lambda x: (str(x.split("|")[0]) + str(x.split("|")[-1])) if "|" in x else x
     )
     print(gdf.columns)
-
+    
     # create a metric columns for the visualization
     if suffix == "centroid" or is_density == False:
         gdf["metric"] = gdf.iloc[:, 2] * scale_factor / 1000
     else:
         gdf["metric"] = np.sqrt(gdf.iloc[:, 2] / gdf.area) * scale_factor / 1000
+    cols = [c for c in gdf.columns if c != "geometry"] + ["geometry"]
+    gdf = gdf[cols]
     return gdf
 
 
