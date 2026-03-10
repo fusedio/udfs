@@ -82,7 +82,7 @@ def acs_5yr_bounds(
         bounds,
         table_path,
         use_columns=['GEOID','geometry'],
-        min_zoom=9,
+        min_zoom=0,
         clip = True
     )
     if len(gdf) > 0:
