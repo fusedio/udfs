@@ -1,6 +1,6 @@
 @fused.udf
 def udf(
-    input_path: str | list[str] = "s3://fused-asset/data/cdls/2024_30m_cdls.tif",
+    input_path="s3://fused-asset/data/cdls/2024_30m_cdls.tif",
     metrics: str | list[str] = "cnt",
     res: int | None = None,
     k_ring: int = 1,
