@@ -1,10 +1,17 @@
 import json
+import os
 import typing
 import numpy as np
 import pandas as pd
 from copy import deepcopy
 
 import fused
+
+_DEFAULT_MAPBOX_TOKEN = os.environ.get(
+    "MAPBOX_TOKEN",
+    "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ"
+    "1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
+)
 
 # ============================================================
 # Default Configurations (New Clean Format)
@@ -44,7 +51,7 @@ DEFAULT_RASTER_STYLE = {
 # You can override this per-run via `deckgl_layers(..., fusedmaps_ref=...)`.
 #
 
-FUSEDMAPS_CDN_REF_DEFAULT = "7eaed74"
+FUSEDMAPS_CDN_REF_DEFAULT = "a01fd69"
 
 def _fusedmaps_cdn_urls(ref: typing.Optional[str] = None) -> tuple[str, str]:
     """Return (js_url, css_url) for a given fusedmaps git ref (commit/tag/branch)."""
@@ -137,7 +144,7 @@ def udf(
 
 def deckgl_layers(
     layers: list,
-    mapbox_token = "pk.eyJ1IjoiaXNhYWNmdXNlZGxhYnMiLCJhIjoiY2xicGdwdHljMHQ1bzN4cWhtNThvbzdqcSJ9.73fb6zHMeO_c8eAXpZVNrA",
+    mapbox_token = _DEFAULT_MAPBOX_TOKEN,
 
     basemap: str = "dark",
     initialViewState: typing.Optional[dict] = None,
@@ -558,8 +565,9 @@ def _process_hex_layer(idx: int, df, tile_url: str, config: dict, name: str, vis
     style = config.get("style") or {}
     tile_opts = config.get("tile") or {}
 
-    # Merge with defaults
+    # Merge with defaults and normalize color configs
     style = _deep_merge_dict(deepcopy(DEFAULT_HEX_STYLE), style)
+    style = _normalize_style(style)
 
     is_tile_layer = tile_url is not None
 
@@ -610,6 +618,7 @@ def _process_vector_layer(idx: int, df, config: dict, name: str, visible: bool) 
 
     style = config.get("style") or {}
     style = _deep_merge_dict(deepcopy(DEFAULT_VECTOR_STYLE), style)
+    style = _normalize_style(style)
 
     # Reproject to EPSG:4326 if needed
     if hasattr(df, "crs") and df.crs and getattr(df.crs, "to_epsg", lambda: None)() != 4326:
@@ -664,6 +673,7 @@ def _process_mvt_layer(idx: int, tile_url: str, source_layer: str, config: dict,
     style = config.get("style") or {}
     tile_opts = config.get("tile") or {}
     style = _deep_merge_dict(deepcopy(DEFAULT_VECTOR_STYLE), style)
+    style = _normalize_style(style)
 
     tooltip = _extract_tooltip_columns(config, style)
 
@@ -740,6 +750,7 @@ def _process_pmtiles_layer(
     style = config.get("style") or {}
     tile_opts = config.get("tile") or {}
     style = _deep_merge_dict(deepcopy(DEFAULT_VECTOR_STYLE), style)
+    style = _normalize_style(style)
 
     # Extract exclude_source_layers from config
     exclude_source_layers = (
@@ -817,6 +828,46 @@ def _extract_tooltip_columns(config: dict, style: dict) -> list:
     if tt:
         return list(tt)
     return []
+
+
+def _normalize_color_config(color_cfg):
+    """Normalize a fillColor/lineColor config dict to the format expected by fusedmaps JS.
+
+    Handles:
+    - Adding ``type`` ('continuous' or 'categorical') when missing
+    - Renaming user-facing ``colors`` key to ``palette``
+    - Converting dict-style ``categories`` ({name: [r,g,b]}) to array format
+    """
+    if not isinstance(color_cfg, dict) or "attr" not in color_cfg:
+        return color_cfg
+
+    result = dict(color_cfg)
+
+    if "colors" in result and "palette" not in result:
+        result["palette"] = result.pop("colors")
+
+    cats = result.get("categories")
+    if isinstance(cats, dict):
+        result["categories"] = list(cats.keys())
+        if "palette" not in result:
+            result["palette"] = "Bold"
+
+    if "type" not in result:
+        if "categories" in result:
+            result["type"] = "categorical"
+        elif "domain" in result or "palette" in result:
+            result["type"] = "continuous"
+
+    return result
+
+
+def _normalize_style(style: dict) -> dict:
+    """Normalize fillColor/lineColor within a style dict."""
+    style = dict(style)
+    for key in ("fillColor", "lineColor"):
+        if key in style and isinstance(style[key], dict):
+            style[key] = _normalize_color_config(style[key])
+    return style
 
 
 _ATOMIC_STYLE_KEYS = {"fillColor", "lineColor"}
