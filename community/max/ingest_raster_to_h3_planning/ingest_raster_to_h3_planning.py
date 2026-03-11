@@ -291,26 +291,32 @@ Step 3: overview
   {overview_instance_msg}
 """)
 
-    return pd.Series(
-        {
-            "res": res,
-            "file_res": file_res,
-            "chunk_res": chunk_res,
-            "n_files": n_files,
-            "n_rowgroups_per_file": n_rowgroups_per_file,
-            "n_rows_per_file": round(n_hex_per_file * n_pixels_per_hex) if metrics == ["cnt"] else n_hex_per_file,
-            "n_hex_per_file": n_hex_per_file,
-            "extract_n_jobs": n_jobs,
-            "extract_max_gb": max_gb_extract,
-            "extract_recommended_instance": extract_instance_msg,
-            "partition_n_jobs": n_files,
-            "partition_max_gb": max_gb_partition,
-            "partition_recommended_instance": partition_instance_msg,
-            "overview_n_jobs": len(overview_res),
-            "overview_max_gb": max_gb_overview,
-            "overview_recommended_instance": overview_instance_msg,
-        }
-    ).to_frame(name="estimate").reset_index()
+    return (
+        pd.Series(
+            {
+                "res": res,
+                "file_res": file_res,
+                "chunk_res": chunk_res,
+                "n_files": n_files,
+                "n_rowgroups_per_file": n_rowgroups_per_file,
+                "n_rows_per_file": round(n_hex_per_file * n_pixels_per_hex)
+                if metrics == ["cnt"]
+                else n_hex_per_file,
+                "n_hex_per_file": n_hex_per_file,
+                "extract_n_jobs": n_jobs,
+                "extract_max_gb": max_gb_extract,
+                "extract_recommended_instance": extract_instance_msg,
+                "partition_n_jobs": n_files,
+                "partition_max_gb": max_gb_partition,
+                "partition_recommended_instance": partition_instance_msg,
+                "overview_n_jobs": len(overview_res),
+                "overview_max_gb": max_gb_overview,
+                "overview_recommended_instance": overview_instance_msg,
+            }
+        )
+        .to_frame(name="estimate")
+        .reset_index()
+    )
 
 
 _aws_r5_instance_types = {
