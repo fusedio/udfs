@@ -203,14 +203,15 @@ With those parameters, the ingestion will produce an H3 Parquet dataset consisti
     max_gb_extract = max_gb_extract * 2
     if max_gb_extract < 10:
         extract_instance_msg = "This should fit on a realtime instance."
+        extract_recommended_instance = "realtime"
     else:
-        recommended_instance = None
+        extract_recommended_instance = None
         for instance_type, memory_gb in _aws_r5_instance_types.items():
             if memory_gb >= max_gb_extract:
-                recommended_instance = instance_type
+                extract_recommended_instance = instance_type
                 break
-        if recommended_instance is not None:
-            extract_instance_msg = f"This might fail on a realtime instance. Consider using '{recommended_instance}'."
+        if extract_recommended_instance is not None:
+            extract_instance_msg = f"This might fail on a realtime instance. Consider using '{extract_recommended_instance}'."
         else:
             extract_instance_msg = "This is likely too large for any of the supported batch instances. Consider chunking up your data."
 
@@ -234,15 +235,16 @@ Step 1: extract
     max_gb_partition = max_gb_partition * 2
     if max_gb_partition < 10:
         partition_instance_msg = "This should fit on a realtime instance."
+        partition_recommended_instance = "realtime"
     else:
-        recommended_instance = None
+        partition_recommended_instance = None
         for instance_type, memory_gb in _aws_r5_instance_types.items():
             if memory_gb >= max_gb_partition:
-                recommended_instance = instance_type
+                partition_recommended_instance = instance_type
                 break
-        if recommended_instance is not None:
+        if partition_recommended_instance is not None:
             partition_instance_msg = (
-                f"Consider using an '{recommended_instance}' instance."
+                f"Consider using an '{partition_recommended_instance}' instance."
             )
         else:
             partition_instance_msg = "This is likely too large for any of the supported batch instances. Consider chunking up your data."
@@ -266,15 +268,16 @@ Step 2: partition
     )
     if max_gb_overview < 10:
         overview_instance_msg = "This should fit on a realtime instance."
+        overview_recommended_instance = "realtime"
     else:
-        recommended_instance = None
+        overview_recommended_instance = None
         for instance_type, memory_gb in _aws_r5_instance_types.items():
             if memory_gb >= max_gb_overview:
-                recommended_instance = instance_type
+                overview_recommended_instance = instance_type
                 break
-        if recommended_instance is not None:
+        if overview_recommended_instance is not None:
             overview_instance_msg = (
-                f"Consider using an '{recommended_instance}' instance."
+                f"Consider using an '{overview_recommended_instance}' instance."
             )
         else:
             overview_instance_msg = "This is likely too large for any of the supported batch instances. Consider chunking up your data."
@@ -288,7 +291,32 @@ Step 3: overview
   {overview_instance_msg}
 """)
 
-    return meta
+    return (
+        pd.Series(
+            {
+                "res": res,
+                "file_res": file_res,
+                "chunk_res": chunk_res,
+                "n_files": n_files,
+                "n_rowgroups_per_file": n_rowgroups_per_file,
+                "n_rows_per_file": round(n_hex_per_file * n_pixels_per_hex)
+                if metrics == ["cnt"]
+                else n_hex_per_file,
+                "n_hex_per_file": n_hex_per_file,
+                "extract_n_jobs": n_jobs,
+                "extract_max_gb": max_gb_extract,
+                "extract_recommended_instance": extract_instance_msg,
+                "partition_n_jobs": n_files,
+                "partition_max_gb": max_gb_partition,
+                "partition_recommended_instance": partition_instance_msg,
+                "overview_n_jobs": len(overview_res),
+                "overview_max_gb": max_gb_overview,
+                "overview_recommended_instance": overview_instance_msg,
+            }
+        )
+        .to_frame(name="estimate")
+        .reset_index()
+    )
 
 
 _aws_r5_instance_types = {
