@@ -333,8 +333,10 @@ _aws_r5_instance_types = {
 @fused.cache
 def get_pixel_area(src_path: str):
     # copied from fused.h3.ingest
+    import geopandas
     import pyproj
     import rasterio
+    import shapely
 
     with rasterio.open(src_path) as src:
         src_crs = pyproj.CRS(src.crs)
@@ -349,11 +351,12 @@ def get_pixel_area(src_path: str):
             )
         else:
             # approximate pixel area in m^2 at center of raster
-            transformer = pyproj.Transformer.from_crs(
-                src_crs, "EPSG:3857", always_xy=True
-            )
             x_center = (src.bounds.right + src.bounds.left) / 2
             y_center = (src.bounds.top + src.bounds.bottom) / 2
+            utm_crs = geopandas.GeoSeries(
+                [shapely.Point(x_center, y_center)], crs=src_crs
+            ).estimate_utm_crs()
+            transformer = pyproj.Transformer.from_crs(src_crs, utm_crs, always_xy=True)
             x1, y1 = transformer.transform(x_center, y_center)
             x2, y2 = transformer.transform(
                 x_center + (src.bounds.right - src.bounds.left) / src.width,
