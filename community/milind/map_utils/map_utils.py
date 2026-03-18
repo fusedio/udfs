@@ -51,7 +51,7 @@ DEFAULT_RASTER_STYLE = {
 # You can override this per-run via `deckgl_layers(..., fusedmaps_ref=...)`.
 #
 
-FUSEDMAPS_CDN_REF_DEFAULT = "d584f5f"
+FUSEDMAPS_CDN_REF_DEFAULT = "b1cee49"
 
 def _fusedmaps_cdn_urls(ref: typing.Optional[str] = None) -> tuple[str, str]:
     """Return (js_url, css_url) for a given fusedmaps git ref (commit/tag/branch)."""
@@ -309,6 +309,11 @@ def deckgl_layers(
                 )
             if (image_url or image_data is not None) and (bounds is None or len(bounds) != 4):
                 raise ValueError(f"Raster layer '{name}' with image_url/image_data requires bounds=[west,south,east,north].")
+        elif layer_type == "marker":
+            if df is None:
+                raise ValueError(
+                    f"Marker layer '{name}' requires data=<GeoDataFrame with Point geometry>."
+                )
         elif layer_type == "pmtiles":
             pmtiles_url = layer_def.get("pmtiles_url") or layer_def.get("pmtilesUrl")
             pmtiles_path = layer_def.get("pmtiles_path") or layer_def.get("pmtilesPath")
@@ -380,6 +385,15 @@ def deckgl_layers(
                 processed["group"] = str(group)
             if processed:
                 processed_layers.append(processed)
+
+        elif layer_type == "marker":
+            processed = _process_marker_layer(i, df, config, name, visible)
+            if processed and group:
+                processed["group"] = str(group)
+            if processed:
+                processed_layers.append(processed)
+                if auto_center is None and df is not None and len(df) > 0:
+                    auto_center = _compute_center_from_gdf(df)
         
         elif layer_type == "pmtiles":
             pmtiles_url = layer_def.get("pmtiles_url") or layer_def.get("pmtilesUrl")
@@ -788,6 +802,67 @@ def _process_pmtiles_layer(
         result["style"] = style
     if tile_opts:
         result["tile"] = tile_opts
+    if tooltip:
+        result["tooltip"] = tooltip
+
+    return result
+
+
+def _process_marker_layer(idx: int, df, config: dict, name: str, visible: bool) -> dict:
+    """Process a marker layer definition into FusedMaps new format.
+
+    Marker layers render point features as colored pin markers using Mapbox
+    symbol layers.  The GeoDataFrame should contain Point geometry (or the
+    function will compute centroids for polygon features).
+    """
+    if df is None:
+        return None
+
+    config = _parse_config(config)
+
+    # Reproject to EPSG:4326 if needed
+    if hasattr(df, "crs") and df.crs and getattr(df.crs, "to_epsg", lambda: None)() != 4326:
+        try:
+            df = df.to_crs(epsg=4326)
+        except:
+            pass
+
+    # Auto-convert polygon/line geometry to centroids
+    if hasattr(df, "geometry") and len(df) > 0:
+        first_geom_type = df.geometry.iloc[0].geom_type if df.geometry.iloc[0] else ""
+        if first_geom_type in ("Polygon", "MultiPolygon", "LineString", "MultiLineString"):
+            df = df.copy()
+            df["geometry"] = df.geometry.centroid
+
+    # Convert to GeoJSON
+    geojson_obj = {"type": "FeatureCollection", "features": []}
+    if hasattr(df, "to_json"):
+        try:
+            geojson_obj = json.loads(df.to_json())
+        except:
+            pass
+
+    # Sanitize properties
+    for feat in geojson_obj.get("features", []):
+        feat["properties"] = {k: _sanitize_value(v) for k, v in (feat.get("properties") or {}).items()}
+
+    tooltip = _extract_tooltip_columns(config, config.get("style", {}))
+
+    # Extract markerConfig
+    marker_config = config.get("markerConfig") or config.get("marker_config") or {}
+
+    result = {
+        "id": f"layer-{idx}",
+        "name": name,
+        "layerType": "marker",
+        "visible": visible,
+        "geojson": geojson_obj,
+    }
+
+    if marker_config:
+        result["markerConfig"] = marker_config
+    if config.get("style"):
+        result["style"] = _normalize_style(config["style"])
     if tooltip:
         result["tooltip"] = tooltip
 
