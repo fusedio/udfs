@@ -641,13 +641,16 @@ def _process_vector_layer(idx: int, df, config: dict, name: str, visible: bool) 
         except:
             pass
 
+    df = _coerce_serializable(df)
+
     # Convert to GeoJSON
     geojson_obj = {"type": "FeatureCollection", "features": []}
     if hasattr(df, "to_json"):
         try:
             geojson_obj = json.loads(df.to_json())
-        except:
-            pass
+        except Exception as e:
+            import warnings
+            warnings.warn(f"[map_utils] Failed to convert GeoDataFrame to GeoJSON: {e}")
 
     # Sanitize properties and add index
     for idx_f, feat in enumerate(geojson_obj.get("features", [])):
@@ -834,13 +837,16 @@ def _process_marker_layer(idx: int, df, config: dict, name: str, visible: bool) 
             df = df.copy()
             df["geometry"] = df.geometry.centroid
 
+    df = _coerce_serializable(df)
+
     # Convert to GeoJSON
     geojson_obj = {"type": "FeatureCollection", "features": []}
     if hasattr(df, "to_json"):
         try:
             geojson_obj = json.loads(df.to_json())
-        except:
-            pass
+        except Exception as e:
+            import warnings
+            warnings.warn(f"[map_utils] Failed to convert marker GeoDataFrame to GeoJSON: {e}")
 
     # Sanitize properties
     for feat in geojson_obj.get("features", []):
@@ -955,6 +961,28 @@ def _normalize_style(style: dict) -> dict:
         if key in style and isinstance(style[key], dict):
             style[key] = _normalize_color_config(style[key])
     return style
+
+
+def _coerce_serializable(df):
+    """Convert non-JSON-serializable column types (Decimal, etc.) to native Python types."""
+    from decimal import Decimal
+    if not hasattr(df, "columns"):
+        return df
+    copied = False
+    for col in df.columns:
+        if col == "geometry":
+            continue
+        if df[col].dtype == object:
+            non_null = df[col].dropna()
+            if len(non_null) == 0:
+                continue
+            sample = non_null.iloc[0]
+            if isinstance(sample, Decimal):
+                if not copied:
+                    df = df.copy()
+                    copied = True
+                df[col] = df[col].apply(lambda x: float(x) if isinstance(x, Decimal) else x)
+    return df
 
 
 _ATOMIC_STYLE_KEYS = {"fillColor", "lineColor"}
