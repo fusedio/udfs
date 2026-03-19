@@ -51,7 +51,7 @@ DEFAULT_RASTER_STYLE = {
 # You can override this per-run via `deckgl_layers(..., fusedmaps_ref=...)`.
 #
 
-FUSEDMAPS_CDN_REF_DEFAULT = "a938e29"
+FUSEDMAPS_CDN_REF_DEFAULT = "93cef7a"
 
 def _fusedmaps_cdn_urls(ref: typing.Optional[str] = None) -> tuple[str, str]:
     """Return (js_url, css_url) for a given fusedmaps git ref (commit/tag/branch)."""
@@ -154,7 +154,7 @@ def deckgl_layers(
     map_broadcast: typing.Optional[dict] = None,  # Viewport broadcast config: {"channel": "fused-bus", "dataset": "all"}
     map_sync: typing.Union[dict, bool, None] = None,  # Sync viewports between maps: True or {"channel": "my-sync-channel"}
     location_listener: typing.Union[dict, bool, None] = None,  # Listen for feature clicks: {"channel": "fused-bus", "idFields": ["GEOID", "id"]}, False to disable
-    sidebar: typing.Optional[str] = None,  # None | "show" | "hide"
+    sidebar: typing.Union[str, bool, None] = None,  # None | "show" | "hide" | False (suppresses entirely)
     fusedmaps_ref: typing.Optional[str] = None,  # override CDN ref (commit/tag/branch)
     # --- Widget positioning ---
     widgets: typing.Optional[dict] = None,  # Position/enable widgets: {"controls": "bottom-left", "legend": False, ...}
@@ -438,8 +438,8 @@ def deckgl_layers(
         }
         has_custom_view = False
     
-    if sidebar not in (None, "show", "hide"):
-        raise ValueError("sidebar must be one of: None, 'show', 'hide'")
+    if sidebar not in (None, False, "show", "hide"):
+        raise ValueError("sidebar must be one of: None, False, 'show', 'hide'")
 
     # Build config for FusedMaps
     fusedmaps_config = {
@@ -466,7 +466,7 @@ def deckgl_layers(
         fusedmaps_config["maxZoom"] = float(max_zoom)
 
     if sidebar is not None:
-        fusedmaps_config["sidebar"] = sidebar
+        fusedmaps_config["sidebar"] = False if sidebar is False else sidebar
 
     # AI UDF URL (backend prompt-to-SQL)
     if ai_udf_url:
