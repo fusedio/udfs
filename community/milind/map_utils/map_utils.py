@@ -51,7 +51,7 @@ DEFAULT_RASTER_STYLE = {
 # You can override this per-run via `deckgl_layers(..., fusedmaps_ref=...)`.
 #
 
-FUSEDMAPS_CDN_REF_DEFAULT = "93cef7a"
+FUSEDMAPS_CDN_REF_DEFAULT = "b8ffd02"
 
 def _fusedmaps_cdn_urls(ref: typing.Optional[str] = None) -> tuple[str, str]:
     """Return (js_url, css_url) for a given fusedmaps git ref (commit/tag/branch)."""
@@ -923,8 +923,20 @@ def _normalize_color_config(color_cfg):
 
     cats = result.get("categories")
     if isinstance(cats, dict):
-        result["categories"] = list(cats.keys())
-        if "palette" not in result:
+        cat_names = list(cats.keys())
+        cat_colors = []
+        for name in cat_names:
+            v = cats[name]
+            if isinstance(v, (list, tuple)) and len(v) >= 3:
+                cat_colors.append(f"rgb({int(v[0])},{int(v[1])},{int(v[2])})")
+            elif isinstance(v, str):
+                cat_colors.append(v)
+            else:
+                cat_colors.append(None)
+        result["categories"] = cat_names
+        if all(c is not None for c in cat_colors):
+            result["_customColors"] = cat_colors
+        elif "palette" not in result:
             result["palette"] = "Bold"
 
     if "type" not in result:
