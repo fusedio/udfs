@@ -51,7 +51,7 @@ DEFAULT_RASTER_STYLE = {
 # You can override this per-run via `deckgl_layers(..., fusedmaps_ref=...)`.
 #
 
-FUSEDMAPS_CDN_REF_DEFAULT = "e6344c0"
+FUSEDMAPS_CDN_REF_DEFAULT = "4b5ef5d"
 
 def _fusedmaps_cdn_urls(ref: typing.Optional[str] = None) -> tuple[str, str]:
     """Return (js_url, css_url) for a given fusedmaps git ref (commit/tag/branch)."""
@@ -412,7 +412,7 @@ def deckgl_layers(
             if processed:
                 processed_layers.append(processed)
     
-    # Attach custom legend and interactive flag to processed layers
+    # Attach custom legend, interactive flag, and filterAttrs to processed layers
     for p in processed_layers:
         layer_idx = int(p["id"].replace("layer-", "")) if p.get("id", "").startswith("layer-") else None
         if layer_idx is not None and layer_idx < len(layers):
@@ -424,6 +424,9 @@ def deckgl_layers(
                 p["customLegend"] = cl
             if orig.get("interactive") is False:
                 p["interactive"] = False
+            fa = orig.get("filterAttrs") or orig.get("filter_attrs") or orig.get("config", {}).get("filterAttrs") or orig.get("config", {}).get("filter_attrs")
+            if fa and isinstance(fa, (list, tuple)):
+                p["filterAttrs"] = list(fa)
 
     # Build initial view state
     if initialViewState:
