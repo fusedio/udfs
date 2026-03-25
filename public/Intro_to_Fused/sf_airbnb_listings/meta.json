@@ -105,7 +105,7 @@
             },
             "fused:udfType": "auto"
           },
-          "code": "@fused.udf\ndef udf(path: str = \"s3://fused-sample/demo_data/airbnb_listings_sf.parquet\"):\n    import pandas as pd\n    df = pd.read_parquet(path)\n    \n    # Remove .head(100) & press \"Shift + Enter\" to run\n    return df.head(100)\n",
+          "code": "@fused.udf\ndef udf():\n    import pandas as pd\n    df = pd.read_parquet(\"s3://fused-sample/demo_data/airbnb_listings_sf.parquet\")\n    \n    # Remove .head(100) & press \"Shift + Enter\" to run\n    return df.head(100)\n",
           "headers": []
         }
       }
