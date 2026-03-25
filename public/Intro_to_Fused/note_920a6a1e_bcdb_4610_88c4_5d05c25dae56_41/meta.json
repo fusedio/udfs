@@ -62,7 +62,7 @@
             "stickyNoteVersion": 3,
             "nodeTemplateScaleFactor": 2
           },
-          "code": "## 3 - Edit parameters",
+          "code": "## 3 - Edit query params",
           "headers": []
         }
       }

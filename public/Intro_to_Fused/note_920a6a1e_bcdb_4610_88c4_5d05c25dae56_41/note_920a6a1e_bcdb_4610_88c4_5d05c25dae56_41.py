@@ -1,1 +1,1 @@
-## 3 - Edit parameters
+## 3 - Edit query params
