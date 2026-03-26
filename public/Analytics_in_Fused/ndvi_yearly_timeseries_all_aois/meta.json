@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "ndvi_yearly_timeseries_all_aois",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "ndvi_yearly_timeseries_all_aois",
+            "fused:slug": "ndvi_yearly_timeseries_all_aois",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "Purp",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf\ndef udf(\n    year: int = 2024,\n    max_cloud_cover: int = 20,\n    resolution: int = 500,\n):\n    import pandas as pd\n\n    ndvi_udf = fused.load('ndvi_monthly_mean')\n\n    # 5 AOIs from us_counties_from_api (small counties, diverse climates)\n    AOIS = [\n        {\"state_fips\": \"53\", \"county_fips\": \"055\"},  # San Juan County, WA\n        {\"state_fips\": \"04\", \"county_fips\": \"023\"},  # Santa Cruz County, AZ\n        {\"state_fips\": \"19\", \"county_fips\": \"053\"},  # Decatur County, IA\n        {\"state_fips\": \"01\", \"county_fips\": \"087\"},  # Macon County, AL\n        {\"state_fips\": \"23\", \"county_fips\": \"013\"},  # Knox County, ME\n    ]\n\n    # Build arg list: 5 AOIs \u00d7 12 months = 60 jobs\n    arg_list = [\n        dict(\n            state_fips=aoi[\"state_fips\"],\n            county_fips=aoi[\"county_fips\"],\n            year=year,\n            month=m,\n            max_cloud_cover=max_cloud_cover,\n            resolution=resolution,\n        )\n        for aoi in AOIS\n        for m in range(1, 13)\n    ]\n\n    print(f\"Total jobs: {len(arg_list)}, running first 5 to test...\")\n\n    # pool = ndvi_udf.map(\n    #     arg_list[:5], \n    #     max_workers=6\n    # )\n    # results = pool.df()\n\n    results = fused.submit(\n        ndvi_udf,\n        arg_list,\n        max_workers=32, # Limiting to 30 calls at a time to prevent rate limiting from Microsot Planetary Computer\n        ignore_exceptions=True, # Don't break if there are any exceptions\n    )\n\n    return results",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "county_map",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "county_map",
+            "fused:slug": "county_map",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "BrwnYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf\ndef udf():\n    map_utils = fused.load(\"https://github.com/fusedio/udfs/tree/6800334/community/milind/map_utils/\")\n\n    data_udf = fused.load('us_counties_from_api')\n    gdf = data_udf() # Load the default values\n\n    return map_utils.deckgl_map(\n        gdf=gdf,\n        basemap=\"light\",\n        config={\n            \"vectorLayer\": {\n                \"stroked\": True,\n                \"filled\": True,\n                \"getFillColor\": [100, 160, 220, 80],\n                \"getLineColor\": [255, 0, 0, 220],\n                \"lineWidthMinPixels\": 3,\n            }\n        }\n    )\n",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

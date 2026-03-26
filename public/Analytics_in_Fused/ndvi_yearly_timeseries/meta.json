@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "ndvi_yearly_timeseries",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "ndvi_yearly_timeseries",
+            "fused:slug": "ndvi_yearly_timeseries",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "Purp",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf\ndef udf(\n    state_fips: str='53', \n    county_fips: str='033', \n    year: int=2024, \n    max_cloud_cover: int=20, \n    resolution: int=500\n):\n    import pandas as pd\n\n    ndvi_udf = fused.load('ndvi_monthly_mean')\n\n    # Build arg list for 12 months\n    arg_list = [\n        dict(state_fips=state_fips, county_fips=county_fips, year=year, month=m,\n             max_cloud_cover=max_cloud_cover, resolution=resolution)\n        for m in range(1, 13)\n    ]\n\n    # Run all 12 months in parallel\n    pool = ndvi_udf.map(\n        arg_list,\n        max_workers=6, # only do 6 requests at the same time to prevent rate limiting\n    )\n    results = pool.collect()\n\n    return results",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

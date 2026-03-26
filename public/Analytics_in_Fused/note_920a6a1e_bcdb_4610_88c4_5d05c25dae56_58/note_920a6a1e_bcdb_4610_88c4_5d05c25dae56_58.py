@@ -1,0 +1,1 @@
+Scaling to a 12 months period with .map() method

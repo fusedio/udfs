@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "fetch_ndvi_monthly",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "fetch_ndvi_monthly",
+            "fused:slug": "fetch_ndvi_monthly",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "BrwnYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf\ndef udf(\n    bounds: fused.types.Bounds = [-122.5, 47.3, -121.7, 47.8],  # King County, WA\n    year: int = 2024,\n    month: int = 6,\n    max_cloud_cover: int = 20,\n    resolution: int = 500,  # metres\n):\n    \"\"\"\n    Monthly cloud-free NDVI composite for a given bounds using\n    Sentinel-2 L2A from the Microsoft Planetary Computer.\n\n    Returns a numpy array of mean NDVI (float32, values -1 to 1).\n    \"\"\"\n    import numpy as np\n    import odc.stac\n    import planetary_computer\n    import pystac_client\n\n    # \u2500\u2500 STAC search \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    catalog = pystac_client.Client.open(\n        \"https://planetarycomputer.microsoft.com/api/stac/v1\",\n        modifier=planetary_computer.sign_inplace,\n    )\n\n    date_range = f\"{year}-{month:02d}-01/{year}-{month:02d}-28\"\n\n    @fused.cache\n    def search_items(bounds, date_range, max_cloud_cover):\n        items = catalog.search(\n            collections=[\"sentinel-2-l2a\"],\n            bbox=bounds,\n            datetime=date_range,\n            query={\"eo:cloud_cover\": {\"lt\": max_cloud_cover}},\n        ).item_collection()\n        print(f\"Found {len(items)} scenes for {date_range} (cloud < {max_cloud_cover}%)\")\n        return items\n\n    items = search_items(tuple(bounds), date_range, max_cloud_cover)\n\n    if len(items) == 0:\n        print(\"No scenes found \u2014 try raising max_cloud_cover or changing month/year.\")\n        return None\n\n    # \u2500\u2500 Load & compute NDVI (cached to avoid repeated Planetary Computer requests)\n    @fused.cache\n    def load_ndvi_composite(bounds, date_range, max_cloud_cover, resolution):\n        ds = odc.stac.load(\n            items,\n            bands=[\"B08\", \"B04\"],\n            crs=\"EPSG:4326\",\n            resolution=resolution / 111_320,  # degrees per pixel (approx)\n            bbox=list(bounds),\n            groupby=\"solar_day\",\n        )\n\n        nir_raw = ds[\"B08\"].astype(\"float32\")\n        red_raw = ds[\"B04\"].astype(\"float32\")\n\n        nir_raw = nir_raw.where(nir_raw > 0)\n        red_raw = red_raw.where(red_raw > 0)\n\n        nir = nir_raw / 10_000.0\n        red = red_raw / 10_000.0\n\n        ndvi = (nir - red) / (nir + red + 1e-6)\n        ndvi_composite = ndvi.median(dim=\"time\")\n        arr = ndvi_composite.values.astype(\"float32\")\n        return np.clip(arr, 0, 1)\n\n    arr = load_ndvi_composite(tuple(bounds), date_range, max_cloud_cover, resolution)\n    print(f\"NDVI array shape: {arr.shape}\")\n    valid = arr[~np.isnan(arr)]\n    print(f\"Valid pixels: {len(valid)} / {arr.size}  min={valid.min():.3f}  max={valid.max():.3f}  mean={valid.mean():.3f}\")\n\n    return arr\n",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
