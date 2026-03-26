@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "elev_temp_map",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "elev_temp_map",
+            "fused:slug": "elev_temp_map",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "PinkYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf(cache_max_age=0)\ndef udf(bounds: fused.types.Bounds = [-125, 32, -114, 42], res: int = 4, month: str = '2024-05'):\n    map_utils = fused.load(\"https://github.com/fusedio/udfs/tree/6800334/community/milind/map_utils/\")\n\n    \n    join_udf = fused.load(\"temp_elev_corr\")\n    data = join_udf(bounds=bounds, res=res, month=month)\n\n    elev_min = float(data[\"elevation_avg\"].min())\n    elev_max = float(data[\"elevation_avg\"].max())\n    temp_min = float(data[\"monthly_mean_temp\"].min())\n    temp_max = float(data[\"monthly_mean_temp\"].max())\n\n    config_elev = {\n        \"style\": {\n            \"fillColor\": {\n                \"type\": \"continuous\",\n                \"attr\": \"elevation_avg\",\n                \"domain\": [elev_min, elev_max],\n                \"steps\": 20,\n                \"palette\": \"Earth\",\n            },\n            \"filled\": True,\n            \"stroked\": False,\n            \"opacity\": 0.9,\n        },\n        \"tooltip\": [\"hex\", \"elevation_avg\", \"monthly_mean_temp\"],\n    }\n\n    config_temp = {\n        \"style\": {\n            \"fillColor\": {\n                \"type\": \"continuous\",\n                \"attr\": \"monthly_mean_temp\",\n                \"domain\": [temp_min, temp_max],\n                \"steps\": 20,\n                \"palette\": \"Temps\",\n            },\n            \"filled\": True,\n            \"stroked\": False,\n            \"opacity\": 0.9,\n        },\n        \"tooltip\": [\"hex\", \"elevation_avg\", \"monthly_mean_temp\"],\n    }\n\n    widgets = {\n        \"controls\": \"bottom-right\",\n        \"scale\": \"bottom-left\",\n        \"basemap\": \"bottom-right\",\n        \"layers\": {\"position\": \"top-right\", \"expanded\": True},\n        \"legend\": {\"position\": \"top-right\", \"expanded\": True},\n    }\n\n    html = map_utils.deckgl_layers(\n        layers=[\n            {\n                \"type\": \"hex\",\n                \"data\": data,\n                \"config\": config_elev,\n                \"visible\": True,\n                \"name\": \"Joined Datasets\",\n                \"legend\": False,\n            },\n        ],\n        basemap=\"dark\",\n        theme=\"dark\",\n        initialViewState=None,\n        widgets=widgets,\n        debug=False,\n    )\n    return html",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

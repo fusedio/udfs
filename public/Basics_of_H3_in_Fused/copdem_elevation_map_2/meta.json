@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "copdem_elevation_map_2",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "copdem_elevation_map_2",
+            "fused:slug": "copdem_elevation_map_2",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "OrYel",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf(cache_max_age=0)\ndef udf(bounds:fused.types.Bounds=[-125,32,-114,42]):\n    map_utils = fused.load(\"https://github.com/fusedio/udfs/tree/5c526cc/community/milind/map_utils/\")\n\n    era5_udf = fused.load(\"copdem_elevation\")\n    data = era5_udf(bounds=bounds)\n    \n    val_min = float(data[\"data_avg\"].min())\n    val_max = float(data[\"data_avg\"].max())\n\n    # Layer config for Census population data\n    config_census = {\n        \"style\": {\n            \"fillColor\": {\n                \"type\": \"continuous\",\n                \"attr\": \"data_avg\",\n                \"domain\": [val_min, val_max],\n                \"steps\": 20,\n                \"palette\": \"Earth\",\n            },\n            \"filled\": True,\n            \"stroked\": False,\n            \"opacity\": 0.9,\n        },\n        \"tooltip\": [\"hex\", \"data_avg\"],\n    }\n\n    widgets = {\n        \"controls\": \"bottom-right\",\n        \"scale\": \"bottom-left\",\n        \"basemap\": \"bottom-right\",\n        \"layers\": {\"position\": \"top-right\", \"expanded\": False},\n        \"legend\": {\"position\": \"top-right\", \"expanded\": True},\n    }\n\n    html = map_utils.deckgl_layers(\n        layers=[\n            {\n                \"type\": \"hex\",\n                \"data\": data,\n                \"config\": config_census,\n                \"visible\": True,\n                \"name\": \"Elevation\",\n            }\n        ],\n        basemap=\"dark\",\n        theme=\"dark\",\n        initialViewState=None,\n        widgets=widgets,\n        debug=False,\n    )\n    return html",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

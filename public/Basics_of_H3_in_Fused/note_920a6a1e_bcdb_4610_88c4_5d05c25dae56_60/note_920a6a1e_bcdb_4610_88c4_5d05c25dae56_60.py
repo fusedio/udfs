@@ -1,0 +1,1 @@
+Hover on any hex to see each one contains elevation *and* temperature

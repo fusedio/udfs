@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "nyc_noise_map_6",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "nyc_noise_map_6",
+            "fused:slug": "nyc_noise_map_6",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "Sunset",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf(cache_max_age=0)\ndef udf():\n    \"\"\"Daily Mean Temperature\"\"\"\n    map_utils = fused.load(\"https://github.com/fusedio/udfs/tree/751ce06/community/milind/map_utils/\")\n\n    # Layer config for hex data\n    config_hex = {\n        \"style\": {\n            \"fillColor\": {\n                \"type\": \"continuous\",\n                \"attr\": \"monthly_mean_temp\",\n                \"domain\": [-10, 30], # Hard coding to see highest areas\n                \"steps\": 20,\n                \"palette\": \"DarkMint\"\n            },\n            \"filled\": True,\n            \"stroked\": False,\n            \"opacity\": 0.9,\n            \"coverage\": 0.9,\n        },\n        \"tooltip\": [\"hex\", \"monthly_mean_temp\"]\n    }\n\n    widgets = {\n        \"controls\": \"bottom-right\",\n        \"scale\": \"bottom-left\",\n        \"basemap\": \"bottom-right\",\n        \"layers\": {\"position\": \"top-right\", \"expanded\": False},\n        \"legend\": {\"position\": \"top-right\", \"expanded\": True},\n    }\n\n    html = map_utils.deckgl_layers(\n        layers=[\n            {\n                \"type\": \"hex\",\n                \"parquetUrl\": \"https://unstable.udf.ai/fsh_4KJ70bZvE4xZskPQ9GS2aV.parquet\",\n                \"config\": config_hex,\n                \"visible\": True,\n                \"name\": \"Monthly Mean Temperatyure\",\n                \"sql\": \"\"\"SELECT \nhex, monthly_mean_temp\nFROM data \nWHERE monthly_mean_temp > 10\n                \"\"\",\n            }\n        ],\n        basemap=\"dark\",\n        theme=\"dark\",\n        initialViewState={\n          \"longitude\": -98.5795,\n          \"latitude\": 39.8283,\n          \"zoom\": 3,\n          \"pitch\": 0,\n          \"bearing\": 0,\n      },\n        widgets=widgets,\n        sidebar='show',\n    )\n    return html",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

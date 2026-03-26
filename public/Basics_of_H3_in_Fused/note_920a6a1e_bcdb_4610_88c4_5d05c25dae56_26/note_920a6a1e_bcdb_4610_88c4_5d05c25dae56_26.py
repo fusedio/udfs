@@ -1,0 +1,1 @@
+We can join different datasets by bringing them to the same H3 resolution and joining on the 'hex' column.

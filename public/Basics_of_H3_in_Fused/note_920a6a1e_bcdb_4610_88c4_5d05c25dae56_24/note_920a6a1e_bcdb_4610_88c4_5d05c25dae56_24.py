@@ -1,0 +1,1 @@
+## 1 - Calculate 1 month of daily temperature in the US

@@ -1,0 +1,68 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "cyan_jellyfish",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "cyan_jellyfish",
+            "fused:slug": "cyan_jellyfish",
+            "fused:hasDefaultName": true,
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "PurpOr",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf(cache_max_age = 0)\ndef udf():\n    points = fused.load('ny411_noise_points')\n    data = points()\n\n    map_utils = fused.load(\"https://github.com/fusedio/udfs/tree/5e293a4/community/milind/map_utils/\")\n\n    config = {\n        \"style\": {\n            \"pointRadius\": 2,\n        },\n    }\n\n    return map_utils.deckgl_layers(\n        layers=[{\n            \"type\": \"vector\",\n            \"data\": data.sample(5_000), # Visualise only a subet of points\n            \"config\": config,\n            \"name\": \"NYC 411 Calls\",\n        }],\n    )",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

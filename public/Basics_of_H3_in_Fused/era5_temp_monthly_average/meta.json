@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "era5_temp_monthly_average",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "era5_temp_monthly_average",
+            "fused:slug": "era5_temp_monthly_average",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "PurpOr",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf\ndef udf(month='2024-05',\n    bounds:fused.types.Bounds=[-125,32,-114,42]\n):\n    path = f's3://fused-asset/data/era5/t2m_daily_mean_v4_1000/month={month}/0.parquet'\n    \n    common = fused.load(\"https://github.com/fusedio/udfs/tree/56ec615/public/common/\")\n    con = common.duckdb_connect() \n\n    query = f\"\"\"\n       SELECT  \n            datestr as date,\n            round(avg(daily_mean) - 273.15, 2) as daily_avg_temp \n        FROM read_parquet('{path}')\n        WHERE 1=1\n        AND h3_cell_to_lng(hex) between {bounds[0]} and {bounds[2]} \n        AND h3_cell_to_lat(hex) between {bounds[1]} and {bounds[3]} \n        GROUP BY datestr\n        ORDER BY datestr\n    \"\"\" \n\n    data = con.execute(query).df()\n\n    print(f\"{data.shape=}\")\n    print(f\"{data.head(10)=}\")\n\n    return data",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

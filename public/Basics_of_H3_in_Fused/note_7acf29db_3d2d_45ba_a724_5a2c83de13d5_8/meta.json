@@ -1,0 +1,71 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "note_7acf29db_3d2d_45ba_a724_5a2c83de13d5_8",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "isNodeTemplate": true,
+            "nodeTemplateType": "textbox",
+            "nodeTemplateColor": "#A5DD6B",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "BurgYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "note_7acf29db_3d2d_45ba_a724_5a2c83de13d5_8",
+            "fused:name": "note_7acf29db_3d2d_45ba_a724_5a2c83de13d5_8",
+            "stickyNoteVersion": 3
+          },
+          "code": "# \ud83d\udca1 **Start small with** **parallel jobs**\n\nBefore running all 60 months in `era5_full_year`, test with 2-3 months first. Bugs are cheaper to catch on 3 jobs than 60, and you avoid wasting compute on a broken UDF.\n\n```python\nmonths[:3]  # Test on Jan\u2013Mar before running all 60\npool = monthly_udf.map([{'month': m, 'bounds': list(bounds)} for m in months[:3]])\n```",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

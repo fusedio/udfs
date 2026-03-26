@@ -1,0 +1,55 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "copdem_elevation",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "copdem_elevation",
+            "fused:slug": "copdem_elevation",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "hexLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "extruded": false,
+                "opacity": 1,
+                "coverage": 0.9,
+                "lineWidthMinPixels": 1,
+                "getHexagon": "@@=properties.hex",
+                "getFillColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "data_avg",
+                  "domain": [
+                    0,
+                    1000
+                  ],
+                  "steps": 20,
+                  "colors": "Earth"
+                }
+              }
+            },
+            "fused:udfType": "vector_tile"
+          },
+          "code": "@fused.udf\ndef udf(\n    # California \n    bounds:fused.types.Bounds=[-125,32,-114,42],\n    res: int = 6, \n):\n    path = \"s3://fused-asset/hex/copernicus-dem-90m/\"\n    \n    hex_reader = fused.load(\"https://github.com/fusedio/udfs/tree/8024b5c/community/joris/Read_H3_dataset/\")\n    df = hex_reader.read_h3_dataset(path, bounds, res=res)\n\n    return df",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
