@@ -1,0 +1,73 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_48",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "isNodeTemplate": true,
+            "nodeTemplateType": "textbox",
+            "nodeTemplateColor": "transparent",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "TealGrn",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_48",
+            "fused:name": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_48",
+            "stickyNoteVersion": 3,
+            "nodeTemplateAlignment": "left",
+            "nodeTemplateScaleFactor": 1
+          },
+          "code": "## **1.** Rolling up\n\n`h3_cell_to_parent` takes any hex at a fine resolution and find its parent at a coarser one:\n\n```\nh3_cell_to_parent(hex, 4)\n```\n\nThis maps every res\u201115 hex up to the res\u20114 hex that contains it. All the small hexes that share the same parent get grouped together.",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

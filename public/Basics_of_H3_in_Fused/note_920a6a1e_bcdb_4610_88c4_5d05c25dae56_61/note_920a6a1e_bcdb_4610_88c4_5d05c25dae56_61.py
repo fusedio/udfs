@@ -1,0 +1,1 @@
+Hex res 4 (close to ERA5 native resolution)

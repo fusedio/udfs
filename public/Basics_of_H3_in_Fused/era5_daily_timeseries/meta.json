@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "era5_daily_timeseries",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "era5_daily_timeseries",
+            "fused:slug": "era5_daily_timeseries",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "BluYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf\ndef udf(month='2024-05', bounds: fused.types.Bounds=[-125, 32, -114, 42]):\n    common = fused.load(\"https://github.com/fusedio/udfs/tree/9bad664/public/common/\")\n    import altair as alt\n    alt.data_transformers.enable('default')\n\n    parent_udf = fused.load('era5_temp_monthly_average')\n    df = parent_udf(month=month, bounds=bounds)\n\n    print(df.head())\n\n    chart = (\n        alt.Chart(df)\n        .mark_line(point=True, color='steelblue', strokeWidth=2)\n        .encode(\n            x=alt.X('date:T', title='Date'),\n            y=alt.Y('daily_avg_temp:Q', title='Avg Temperature (\\u00b0C)', scale=alt.Scale(zero=False)),\n            tooltip=[\n                alt.Tooltip('date:T', title='Date'),\n                alt.Tooltip('daily_avg_temp:Q', title='Temp (\u00b0C)', format='.2f'),\n            ]\n        )\n        .properties(\n            width='container',\n            height=300,\n            title=f'Daily Average Temperature \u2014 {month}'\n        )\n        .configure(background='white')\n    )\n\n    return chart.to_html(embed_options={\"renderer\": \"svg\"})",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

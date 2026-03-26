@@ -1,0 +1,73 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_52",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "isNodeTemplate": true,
+            "nodeTemplateType": "textbox",
+            "nodeTemplateColor": "transparent",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "TealGrn",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_52",
+            "fused:name": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_52",
+            "stickyNoteVersion": 3,
+            "nodeTemplateAlignment": "left",
+            "nodeTemplateScaleFactor": 1
+          },
+          "code": "The datasets we have are:\n\n- Temperature (ERA5, the closest H3 resolution to the original 27km resolution is hex 4)\n- Elevation (Copernicus 90m, the closest H3 resolution is hex 9)\n\nWe can join these datasets on the `hex` column if they are brought to the same resolutions. As shown in part B we can easily aggregate data to lower H3 resolutions so we will bring both dataset to hex res 4.\n\nDuckDB allows an efficient join on the `hex` column directly",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

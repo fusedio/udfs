@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "nyc_noise_map",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "nyc_noise_map",
+            "fused:slug": "nyc_noise_map",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "Sunset",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf(cache_max_age=0)\ndef udf():\n    \"\"\"NYC 311 Noise Hex Map\"\"\"\n    map_utils = fused.load(\"https://github.com/fusedio/udfs/tree/5c526cc/community/milind/map_utils/\")\n\n    print(fused.context.this_udf())\n    hex_udf = fused.load(\"ny411_noise_h3\")\n    data = hex_udf()\n    data = data[['hex', 'cnt']]\n\n    print(f\"Loaded {len(data)} hex cells\")\n    print(data.T)\n\n    # Layer config for hex data\n    config_hex = {\n        \"style\": {\n            \"fillColor\": {\n                \"type\": \"continuous\",\n                \"attr\": \"cnt\",\n                \"domain\": [0, 100], # Hard coding to see highest areas\n                \"steps\": 20,\n                \"palette\": \"OrYel\"\n            },\n            \"filled\": True,\n            \"stroked\": False,\n            \"opacity\": 0.9,\n            \"coverage\": 0.9\n        },\n        \"tooltip\": [\"hex\", \"cnt\"]\n    }\n\n    widgets = {\n        \"controls\": \"bottom-right\",\n        \"scale\": \"bottom-left\",\n        \"basemap\": \"bottom-right\",\n        \"layers\": {\"position\": \"top-right\", \"expanded\": False},\n        \"legend\": {\"position\": \"top-right\", \"expanded\": True},\n    }\n\n    html = map_utils.deckgl_layers(\n        layers=[\n            {\n                \"type\": \"hex\",\n                \"data\": data,\n                \"config\": config_hex,\n                \"visible\": True,\n                \"name\": \"411 Calls (noise complaints)\"\n            }\n        ],\n        basemap=\"dark\",\n        theme=\"dark\",\n        initialViewState=None,\n        widgets=widgets,\n    )\n    return html",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

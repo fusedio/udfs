@@ -1,0 +1,73 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_63",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "isNodeTemplate": true,
+            "nodeTemplateType": "textbox",
+            "nodeTemplateColor": "transparent",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "TealGrn",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_63",
+            "fused:name": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_63",
+            "stickyNoteVersion": 3,
+            "nodeTemplateAlignment": "left",
+            "nodeTemplateScaleFactor": 1
+          },
+          "code": "## **2. Choosing an aggregation method**\n\nWhen rolling up, multiple fine hexes collapse into one coarse hex so we need to decide *how* to combine their values:\n\n- **Average**: use when values are *measurements* (e.g. temperature).\n- **Sum**: use when values are *counts* (e.g. number of noise complaints in part A).\n\nSince our data is **temperature**, we use `AVG()` and round it to 2 digits",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

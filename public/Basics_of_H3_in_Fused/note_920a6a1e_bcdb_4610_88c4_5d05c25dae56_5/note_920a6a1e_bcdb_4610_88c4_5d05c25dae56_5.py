@@ -1,0 +1,1 @@
+Large point datasets aren't easily to visualise or analyse. Converting to H3 allows to aggregate data into heat maps, simpler to work with

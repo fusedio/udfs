@@ -1,0 +1,1 @@
+Fused also allows you to run many UDFs in parallel. This comes in handy to scale a job to large time series or big spatial extents
