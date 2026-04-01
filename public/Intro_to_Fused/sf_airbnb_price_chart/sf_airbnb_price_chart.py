@@ -1,11 +1,11 @@
-@fused.udf(cache_max_age=0)
+@fused.udf
 def udf():
     import altair as alt
     import pandas as pd
 
     # This loads the previous UDF and calls it
     parent_udf = fused.load('sf_airbnb_listings')
-    df = parent_udf(cache_max_age=0)
+    df = parent_udf()
     print(df.T)
 
     plot_df = df.dropna(subset=['price_in_dollar', 'number_of_reviews'])
