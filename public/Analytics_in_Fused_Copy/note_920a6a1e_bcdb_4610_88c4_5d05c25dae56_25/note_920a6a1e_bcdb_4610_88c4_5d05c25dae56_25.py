@@ -1,0 +1,1 @@
+We now need to calculate vegetation for the exact US county geometries, get the average value for the whole month and compute it over 12 months

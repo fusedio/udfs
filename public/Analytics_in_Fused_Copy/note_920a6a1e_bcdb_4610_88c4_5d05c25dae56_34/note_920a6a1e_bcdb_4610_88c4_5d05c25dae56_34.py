@@ -1,0 +1,1 @@
+We can scale the udf.map() call to run across the 5 different AOIs & 12 months (60 calls in total)

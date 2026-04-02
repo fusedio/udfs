@@ -1,0 +1,1 @@
+Load a monthly composite of vegetation index (NDVI) through a [STAC query](https://docs.fused.io/guide/data-input-outputs/import-connection/geospatial/stac/) on the Microsoft Planetary Computer

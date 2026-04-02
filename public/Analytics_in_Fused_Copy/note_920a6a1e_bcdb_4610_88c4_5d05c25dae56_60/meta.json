@@ -1,0 +1,73 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_60",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "isNodeTemplate": true,
+            "nodeTemplateType": "textbox",
+            "nodeTemplateColor": "transparent",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "TealGrn",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_60",
+            "fused:name": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_60",
+            "stickyNoteVersion": 3,
+            "nodeTemplateAlignment": "left",
+            "nodeTemplateScaleFactor": 2
+          },
+          "code": "NDVI time series across all 5 AOIs. Each line tracks monthly mean NDVI for one county. Notice unexpected dips (e.g. Knox, ME in August) \u2014 likely artifacts of missing data rather than real vegetation change. The next chart investigates why.",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "ndvi_timeseries_chart",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "ndvi_timeseries_chart",
+            "fused:slug": "ndvi_timeseries_chart",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "Teal",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf\ndef udf():\n    import altair as alt\n    alt.data_transformers.enable('default')\n\n    # Load timeseries data (cached from previous runs)\n    timeseries_udf = fused.load('ndvi_yearly_timeseries')\n    df = timeseries_udf() # Just loading default values from above UDF\n    df = df.reset_index(drop=True)\n\n    # Drop months with no data\n    df = df.dropna(subset=['mean_ndvi'])\n    print(df)\n\n    # Build line chart with mean NDVI only\n    base = alt.Chart(df).encode(\n        x=alt.X('month:O', title='Month', axis=alt.Axis(labelAngle=0)),\n    )\n\n    line = base.mark_line(color='green', strokeWidth=2.5).encode(\n        y=alt.Y('mean_ndvi:Q', title='NDVI', scale=alt.Scale(domain=[0, 1])),\n        tooltip=[\n            alt.Tooltip('month:O', title='Month'),\n            alt.Tooltip('mean_ndvi:Q', title='Mean NDVI', format='.3f'),\n        ]\n    )\n\n    points = base.mark_circle(color='green', size=50).encode(\n        y='mean_ndvi:Q',\n        tooltip=[\n            alt.Tooltip('month:O', title='Month'),\n            alt.Tooltip('mean_ndvi:Q', title='Mean NDVI', format='.3f'),\n        ]\n    )\n\n    chart = (line + points).properties(\n        width='container',\n        height=400,\n        title='NDVI Time Series',\n        background='white',\n    ).configure_axis(\n        labelColor='#333',\n        titleColor='#333',\n    ).configure_title(\n        color='#333',\n    ).configure_view(\n        strokeWidth=0,\n    )\n\n    return chart.to_html(embed_options={\"renderer\": \"svg\"})",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
