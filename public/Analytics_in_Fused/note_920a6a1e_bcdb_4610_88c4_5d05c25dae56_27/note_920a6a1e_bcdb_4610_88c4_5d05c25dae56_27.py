@@ -1,1 +1,1 @@
-This tutorial will show you how to create time series of vegetation index over a full year in 5 different areas, starting by load data from open sources online
+We're going to build a simple analysis of vegetation over a full year in 5 different areas. First we'll load data from open sources online

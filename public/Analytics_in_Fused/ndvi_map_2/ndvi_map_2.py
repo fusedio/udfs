@@ -41,7 +41,7 @@ def udf(
     return map_utils.deckgl_raster(
         image_data=rgba,
         bounds=list(bounds),
-        basemap="light",
+        basemap="dark",
         config={
             "rasterLayer": {"opacity": 0.85, "pickable": True},
         },

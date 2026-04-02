@@ -1,4 +1,4 @@
-@fused.udf
+@fused.udf(cache_max_age=0)
 def udf():
     import altair as alt
     alt.data_transformers.enable('default')
@@ -38,13 +38,6 @@ def udf():
         height=400,
         title=f'NDVI Time Series',
         background='white',
-    ).configure_axis(
-        labelColor='#333',
-        titleColor='#333',
-    ).configure_title(
-        color='#333',
-    ).configure_view(
-        strokeWidth=0,
     )
 
     return chart.to_html(embed_options={"renderer": "svg"})

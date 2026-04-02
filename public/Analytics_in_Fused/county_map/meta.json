@@ -57,7 +57,7 @@
             },
             "fused:udfType": "auto"
           },
-          "code": "@fused.udf\ndef udf():\n    map_utils = fused.load(\"https://github.com/fusedio/udfs/tree/6800334/community/milind/map_utils/\")\n\n    data_udf = fused.load('us_counties_from_api')\n    gdf = data_udf() # Load the default values\n\n    return map_utils.deckgl_map(\n        gdf=gdf,\n        basemap=\"light\",\n        config={\n            \"vectorLayer\": {\n                \"stroked\": True,\n                \"filled\": True,\n                \"getFillColor\": [100, 160, 220, 80],\n                \"getLineColor\": [255, 0, 0, 220],\n                \"lineWidthMinPixels\": 3,\n            }\n        }\n    )\n",
+          "code": "@fused.udf(cache_max_age=0)\ndef udf():\n    map_utils = fused.load(\"https://github.com/fusedio/udfs/tree/6800334/community/milind/map_utils/\")\n\n    data_udf = fused.load('us_counties_from_api')\n    gdf = data_udf() # Load the default values\n\n    return map_utils.deckgl_map(\n        gdf=gdf,\n        basemap=\"light\",\n        config={\n            \"vectorLayer\": {\n                \"stroked\": True,\n                \"filled\": True,\n                \"getFillColor\": [100, 160, 220, 80],\n                \"getLineColor\": [255, 0, 0, 220],\n                \"lineWidthMinPixels\": 3,\n            }\n        }\n    )\n",
           "headers": []
         }
       }

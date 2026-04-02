@@ -60,7 +60,8 @@
             "fused:slug": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_6",
             "fused:name": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_6",
             "stickyNoteVersion": 3,
-            "nodeTemplateScaleFactor": 2
+            "nodeTemplateScaleFactor": 2,
+            "fused:explorerTab": "self"
           },
           "code": "## 1 - Average monthly vegetation per location",
           "headers": []

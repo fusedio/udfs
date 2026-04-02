@@ -63,7 +63,7 @@
             "fused:name": "note_caef1f9e_aece_4834_9843_396b3a59f05f",
             "nodeTemplateScaleFactor": 2
           },
-          "code": "Cache [functions inside your UDF](https://docs.fused.io/guide/working-with-udfs/udf-best-practices/caching#fusedcache) with `@fused.cache` to avoid repeated API calls and speed up development.",
+          "code": "Cache [functions inside your UDF](https://docs.fused.io/guide/working-with-udfs/udf-best-practices/caching#fusedcache) with `@fused.cache` to avoid repeated API calls and speed up development",
           "headers": []
         }
       }

@@ -1,7 +1,7 @@
 @fused.udf
 def udf(state_fips: str = None, county_fips: str = None, resolution: str = "5m"):
     """
-    Return US county boundaries
+    Return US county boundaries.
 
     - If state_fips & county_fips are provided, return that single county.
     - Otherwise, return 5 small counties chosen for diverse climates & NDVI contrast:

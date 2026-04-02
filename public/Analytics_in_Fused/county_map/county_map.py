@@ -1,4 +1,4 @@
-@fused.udf
+@fused.udf(cache_max_age=0)
 def udf():
     map_utils = fused.load("https://github.com/fusedio/udfs/tree/6800334/community/milind/map_utils/")
 

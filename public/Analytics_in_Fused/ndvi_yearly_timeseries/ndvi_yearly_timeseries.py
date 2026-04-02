@@ -18,10 +18,15 @@ def udf(
     ]
 
     # Run all 12 months in parallel
-    pool = ndvi_udf.map(
+    # pool = ndvi_udf.map(
+    #     arg_list,
+    #     max_workers=6, # only do 6 requests at the same time to prevent rate limiting
+    # )
+    # results = pool.collect()
+    results = fused.submit(
+        ndvi_udf,
         arg_list,
         max_workers=6, # only do 6 requests at the same time to prevent rate limiting
     )
-    results = pool.collect()
 
     return results
