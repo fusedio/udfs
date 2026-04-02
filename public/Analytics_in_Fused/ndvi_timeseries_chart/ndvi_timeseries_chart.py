@@ -36,7 +36,7 @@ def udf():
     chart = (line + points).properties(
         width='container',
         height=400,
-        title=f'NDVI Time Series',
+        title='NDVI Time Series',
         background='white',
     ).configure_axis(
         labelColor='#333',

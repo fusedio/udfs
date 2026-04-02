@@ -16,7 +16,7 @@ def udf(
         year=year,
         month=month,
         max_cloud_cover=max_cloud_cover,
-        resolution=resolution,
+        resolution=resolution
     )
 
     if ndvi_arr is None:

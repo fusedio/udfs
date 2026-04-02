@@ -27,6 +27,7 @@ def udf(
 
     @fused.cache
     def search_items(bounds, date_range, max_cloud_cover):
+        
         items = catalog.search(
             collections=["sentinel-2-l2a"],
             bbox=bounds,
