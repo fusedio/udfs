@@ -31,19 +31,15 @@ def udf(
         for m in range(1, 13)
     ]
 
-    print(f"Total jobs: {len(arg_list)}, running first 5 to test...")
+    print(f"Total jobs: {len(arg_list)}")
 
-    # pool = ndvi_udf.map(
-    #     arg_list[:5], 
-    #     max_workers=6
-    # )
-    # results = pool.df()
 
-    results = fused.submit(
-        ndvi_udf,
+    pool = ndvi_udf.map(
         arg_list,
-        max_workers=32, # Limiting to 30 calls at a time to prevent rate limiting from Microsot Planetary Computer
-        ignore_exceptions=True, # Don't break if there are any exceptions
+        max_workers=30,  # Limit to 30 concurrent calls to prevent rate limiting from Microsoft Planetary Computer
     )
+    results = pool.results(return_exceptions=True)
 
-    return results
+    # Filter out any exceptions from failed jobs, then concatenate into a single DataFrame
+    valid = [r for r in results if isinstance(r, pd.DataFrame)]
+    return pd.concat(valid, ignore_index=True)

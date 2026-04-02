@@ -12,7 +12,6 @@ def udf(state_fips: str = None, county_fips: str = None, resolution: str = "5m")
     4. Macon County, AL      (~1,580 km² — SE Piedmont mixed forest)
     5. Knox County, ME       (~950 km² — coastal boreal/deciduous)
     """
-    import requests
     import geopandas as gpd
     import pandas as pd
 

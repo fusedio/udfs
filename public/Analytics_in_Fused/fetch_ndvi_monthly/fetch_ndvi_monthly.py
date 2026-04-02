@@ -27,6 +27,7 @@ def udf(
 
     @fused.cache
     def search_items(bounds, date_range, max_cloud_cover):
+        
         items = catalog.search(
             collections=["sentinel-2-l2a"],
             bbox=bounds,
@@ -44,7 +45,7 @@ def udf(
 
     # ── Load & compute NDVI (cached to avoid repeated Planetary Computer requests)
     @fused.cache
-    def load_ndvi_composite(bounds, date_range, max_cloud_cover, resolution):
+    def load_ndvi_composite(bounds, date_range, max_cloud_cover, resolution, items):
         ds = odc.stac.load(
             items,
             bands=["B08", "B04"],
@@ -68,7 +69,7 @@ def udf(
         arr = ndvi_composite.values.astype("float32")
         return np.clip(arr, 0, 1)
 
-    arr = load_ndvi_composite(tuple(bounds), date_range, max_cloud_cover, resolution)
+    arr = load_ndvi_composite(tuple(bounds), date_range, max_cloud_cover, resolution, items)
     print(f"NDVI array shape: {arr.shape}")
     valid = arr[~np.isnan(arr)]
     print(f"Valid pixels: {len(valid)} / {arr.size}  min={valid.min():.3f}  max={valid.max():.3f}  mean={valid.mean():.3f}")
