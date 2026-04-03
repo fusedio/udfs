@@ -1,6 +1,5 @@
 @fused.udf(cache_max_age=0)
 def udf(
-    noise_311_link: str = "https://gist.githubusercontent.com/kashuk/670a350ea1f9fc543c3f6916ab392f62/raw/4c5ced45cc94d5b00e3699dd211ad7125ee6c4d3/NYC311_noise.csv",
     res: int = 9
 ):
     # 1. Load points from above UDF 

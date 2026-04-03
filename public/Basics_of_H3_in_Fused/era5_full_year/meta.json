@@ -57,7 +57,7 @@
             },
             "fused:udfType": "auto"
           },
-          "code": "@fused.udf\ndef udf(bounds: fused.types.Bounds = [-125, 32, -114, 42]):\n    import pandas as pd\n\n    monthly_udf = fused.load('era5_temp_monthly_average')\n\n    # All months from 2019 to 2024\n    months = [f'{y}-{m:02d}' for y in range(2019, 2025) for m in range(1, 13)]\n\n    # Run all months in parallel\n    pool = monthly_udf.map([{\n        'month': m,\n        'bounds': list(bounds)\n    } for m in months])\n    df = pool.df()\n\n    df = df.reset_index(drop=True).sort_values('date').reset_index(drop=True)\n\n    print(f\"{df.shape=}\")\n    print(df.head())\n\n    return df",
+          "code": "@fused.udf\ndef udf(bounds: fused.types.Bounds = [-125, 32, -114, 42]):\n    import pandas as pd\n\n    monthly_udf = fused.load('era5_temp_monthly_average')\n\n    # All months from 2019 to 2024\n    months = [f'{y}-{m:02d}' for y in range(2019, 2025) for m in range(1, 13)]\n\n    # Run all months in parallel\n    pool = monthly_udf.map([{\n        'month': m,\n        'bounds': bounds\n    } for m in months])\n    df = pool.df()\n\n    df = df.reset_index(drop=True).sort_values('date').reset_index(drop=True)\n\n    print(f\"{df.shape=}\")\n    print(df.head())\n\n    return df",
           "headers": []
         }
       }
