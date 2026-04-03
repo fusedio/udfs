@@ -63,7 +63,7 @@ def udf(
     )
 
     clipped = ndvi_composite.copy()
-    clipped[~poly_mask] = np.nan  # zero out pixels outside county
+    clipped[~poly_mask] = np.nan  # mask out pixels outside county
 
     # ── 4. Return mean NDVI inside county ─────────────────────────────
     valid = clipped[~np.isnan(clipped)]
