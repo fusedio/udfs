@@ -1,5 +1,5 @@
 @fused.udf(cache_max_age=0)
-def udf(bounds:list=[-130,-50,-35,50]):
+def udf(bounds:fused.types.Bounds=[-130,-50,-35,50]):
     map_utils = fused.load("https://github.com/fusedio/udfs/tree/5c526cc/community/milind/map_utils/")
 
     era5_udf = fused.load("era5_temp_month_hex4")

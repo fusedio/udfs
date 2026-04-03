@@ -32,10 +32,10 @@ def udf(
         .mark_circle(size=40, opacity=0.5)
         .encode(
             x=alt.X('elevation_avg:Q', title='Elevation (m)'),
-            y=alt.Y('monthly_mean_temp:Q', title='Temperature (&deg;K)'),
+            y=alt.Y('monthly_mean_temp:Q', title='Temperature (°C)'),
             tooltip=[
                 alt.Tooltip('elevation_avg:Q', title='Elevation', format='.1f'),
-                alt.Tooltip('monthly_mean_temp:Q', title='Temp (K)', format='.2f'),
+                alt.Tooltip('monthly_mean_temp:Q', title='Temp (°C)', format='.2f'),
             ]
         )
     )

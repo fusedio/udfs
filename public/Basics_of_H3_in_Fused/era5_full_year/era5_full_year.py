@@ -10,7 +10,7 @@ def udf(bounds: fused.types.Bounds = [-125, 32, -114, 42]):
     # Run all months in parallel
     pool = monthly_udf.map([{
         'month': m,
-        'bounds': list(bounds)
+        'bounds': bounds
     } for m in months])
     df = pool.df()
 

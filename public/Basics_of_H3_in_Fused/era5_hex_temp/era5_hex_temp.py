@@ -2,14 +2,12 @@
 def udf():
     map_utils = fused.load("https://github.com/fusedio/udfs/tree/3eb82cb/community/milind/map_utils/")
 
-    import h3
     import geopandas as gpd
-    from shapely.geometry import Point
 
     hex_data = fused.load("era5_monthly_mean")
     data = hex_data()
 
-    # We can't visualize hex 15 hexagons, so turning to small points to visualixe
+    # We can't visualize hex 15 hexagons, so turning to small points to visualise
     gdf = data.copy()
     common = fused.load("https://github.com/fusedio/udfs/tree/9bad664/public/common/")
     con = common.duckdb_connect()

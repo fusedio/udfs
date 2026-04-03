@@ -1,6 +1,6 @@
 @fused.udf
 def udf(month='2024-05',
-    bounds:list=[-130, 25, -60, 50],
+    bounds:fused.types.Bounds=[-130, 25, -60, 50],
     hex_res: int = 4
 ):
     path = f's3://fused-asset/data/era5/t2m_daily_mean_v4_1000/month={month}/0.parquet'

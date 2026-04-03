@@ -15,7 +15,7 @@ def udf(
 
     # Call both with the same bounds
     df_elev = elev_udf(bounds=bounds, res=res)
-    df_temp = temp_udf(month=month, bounds=list(bounds))
+    df_temp = temp_udf(month=month, bounds=bounds)
 
     print("Elev columns:", df_elev.columns.tolist())
     print("Temp columns:", df_temp.columns.tolist())
