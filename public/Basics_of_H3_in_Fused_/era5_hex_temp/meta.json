@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "era5_hex_temp",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "era5_hex_temp",
+            "fused:slug": "era5_hex_temp",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "OrYel",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf\ndef udf():\n    map_utils = fused.load(\"https://github.com/fusedio/udfs/tree/3eb82cb/community/milind/map_utils/\")\n\n    import geopandas as gpd\n\n    hex_data = fused.load(\"era5_monthly_mean\")\n    data = hex_data()\n\n    # We can't visualize hex 15 hexagons, so turning to small points to visualise\n    gdf = data.copy()\n    common = fused.load(\"https://github.com/fusedio/udfs/tree/9bad664/public/common/\")\n    con = common.duckdb_connect()\n    gdf = con.sql(\"\"\"\n        SELECT *, \n            h3_cell_to_latlng(CAST(hex AS UBIGINT)) AS latlng\n        FROM gdf\n    \"\"\").df()\n    gdf['geometry'] = gpd.points_from_xy(\n        gdf['latlng'].apply(lambda x: x[1]),\n        gdf['latlng'].apply(lambda x: x[0])\n    )\n    gdf = gpd.GeoDataFrame(gdf.drop(columns=['latlng']), geometry='geometry', crs='EPSG:4326')\n    \n    print(f\"{data.T=}\")\n\n    val_min = data['monthly_mean_temp'].min()\n    val_max = data['monthly_mean_temp'].max()\n\n    # Layer config for Census population data\n    config_census = {\n        \"style\": {\n            \"fillColor\": {\n                \"type\": \"continuous\",\n                \"attr\": \"monthly_mean_temp\",\n                \"domain\": [val_min, val_max],\n                \"steps\": 20,\n                \"palette\": \"DarkMint\",\n            },\n            \"filled\": True,\n            \"stroked\": False,\n            \"opacity\": 0.9,\n            \"pointRadius\": 1,\n        },\n        \"tooltip\": [\"hex\", \"monthly_mean_temp\"],\n    }\n\n    widgets = {\n        \"controls\": \"bottom-right\",\n        \"scale\": \"bottom-left\",\n        \"basemap\": \"bottom-right\",\n        \"layers\": {\"position\": \"top-right\", \"expanded\": False},\n        \"legend\": {\"position\": \"top-right\", \"expanded\": True},\n    }\n\n    html = map_utils.deckgl_layers(\n        layers=[\n            {\n                \"type\": \"vector\",\n                \"data\": gdf,\n                \"config\": config_census,\n                \"visible\": True,\n                \"name\": \"Hex 15 Temperature\",\n            }\n        ],\n        basemap=\"dark\",\n        theme=\"dark\",\n        initialViewState=None,\n        widgets=widgets,\n    \n    )\n    return html",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

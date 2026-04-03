@@ -1,0 +1,72 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "note_34942601_0c27_44f4_9cb6_74a4a0ce3683",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "isNodeTemplate": true,
+            "nodeTemplateType": "textbox",
+            "nodeTemplateColor": "transparent",
+            "stickyNoteVersion": 3,
+            "nodeTemplateScaleFactor": 3,
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "BluYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "note_34942601_0c27_44f4_9cb6_74a4a0ce3683",
+            "fused:name": "note_34942601_0c27_44f4_9cb6_74a4a0ce3683"
+          },
+          "code": "**Dedicated Fused Docs ([Link](https://docs.fused.io/guide/h3-analytics/h3-overview) )**\n\n- [Resolution Guide](https://docs.fused.io/guide/h3-analytics/resolution-guide) Find. thebest matching H3 resolution to your dataset\n- Learn about ingesting large rasters into H3 with the [dedicated raster to H3](https://docs.fused.io/guide/h3-analytics/converting#raster-to-h3) pipeline",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

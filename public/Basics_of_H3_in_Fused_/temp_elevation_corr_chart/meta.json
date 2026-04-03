@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "temp_elevation_corr_chart",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "temp_elevation_corr_chart",
+            "fused:slug": "temp_elevation_corr_chart",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "Purp",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf(cache_max_age=0)\ndef udf(\n    bounds: fused.types.Bounds = [-125, 32, -114, 42],\n    res: int = 4,\n    month: str = '2024-05',\n):\n    common = fused.load(\"https://github.com/fusedio/udfs/tree/9bad664/public/common/\")\n    import pandas as pd\n    import altair as alt\n    alt.data_transformers.enable('default')\n\n    # Load joined elevation + temperature data\n    parent_udf = fused.load('temp_elev_corr')\n    df = parent_udf(bounds=bounds, res=res, month=month)\n\n    print(f\"{df.T=}\")\n\n    # Compute Pearson correlation\n    corr_val = df['monthly_mean_temp'].corr(df['elevation_avg'])\n    print(f\"Pearson r = {corr_val:.4f}\")\n\n    # Stratified sample for chart (bin by elevation, sample within each bin)\n    df['elev_bin'] = pd.cut(df['elevation_avg'], bins=50)\n    df_sample = df.groupby('elev_bin', observed=True).apply(\n        lambda g: g.sample(min(len(g), 80), random_state=42)\n    ).reset_index(drop=True).drop(columns='elev_bin')\n    print(f\"Sampled {len(df_sample)} rows from {len(df)} for chart\")\n\n    # Scatter plot: Temperature vs Elevation\n    scatter = (\n        alt.Chart(df_sample)\n        .mark_circle(size=40, opacity=0.5)\n        .encode(\n            x=alt.X('elevation_avg:Q', title='Elevation (m)'),\n            y=alt.Y('monthly_mean_temp:Q', title='Temperature (\u00b0C)'),\n            tooltip=[\n                alt.Tooltip('elevation_avg:Q', title='Elevation', format='.1f'),\n                alt.Tooltip('monthly_mean_temp:Q', title='Temp (\u00b0C)', format='.2f'),\n            ]\n        )\n    )\n\n    # Add regression line\n    regression = scatter.transform_regression(\n        'elevation_avg', 'monthly_mean_temp'\n    ).mark_line(color='red', strokeWidth=2)\n\n    chart = (\n        (scatter + regression)\n        .properties(\n            width=\"container\",\n            height=450,\n            title=f'Temperature vs Elevation (Pearson r = {corr_val:.3f})'\n        )\n        .configure(background='white')\n    )\n\n    return chart.to_html(embed_options={\"renderer\": \"svg\"})\n",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

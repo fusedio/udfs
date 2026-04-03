@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "era5_temp_month_hex4",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "era5_temp_month_hex4",
+            "fused:slug": "era5_temp_month_hex4",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "PurpOr",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf\ndef udf(month='2024-05',\n    bounds:fused.types.Bounds=[-130, 25, -60, 50],\n    hex_res: int = 4\n):\n    path = f's3://fused-asset/data/era5/t2m_daily_mean_v4_1000/month={month}/0.parquet'\n\n    # This loads DuckDB with the spatial & H3 extensions directly\n    common = fused.load(\"https://github.com/fusedio/udfs/tree/56ec615/public/common/\")\n    con = common.duckdb_connect() \n\n    query = f\"\"\"\n        SELECT  \n            h3_cell_to_parent(hex, {hex_res}) as hex,\n            round(avg(daily_mean) - 273.15, 2) as monthly_mean_temp\n        FROM read_parquet('{path}')\n        WHERE 1=1\n        AND h3_cell_to_lng(hex) between {bounds[0]} and {bounds[2]}\n        AND h3_cell_to_lat(hex) between {bounds[1]} and {bounds[3]} \n        GROUP BY 1\n    \"\"\" \n\n    data = con.execute(query).df()\n\n    print(f\"{data.T=}\")\n\n    return data\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n    ",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

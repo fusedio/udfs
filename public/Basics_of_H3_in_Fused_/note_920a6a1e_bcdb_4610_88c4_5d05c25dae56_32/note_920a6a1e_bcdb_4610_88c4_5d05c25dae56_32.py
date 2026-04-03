@@ -1,0 +1,1 @@
+Map visualisation of all points (5k points sample)

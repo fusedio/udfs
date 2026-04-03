@@ -1,0 +1,71 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "note_41b97d7b_26fa_4d21_af6b_4f5d7be8e2ae",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "isNodeTemplate": true,
+            "nodeTemplateType": "textbox",
+            "nodeTemplateColor": "transparent",
+            "stickyNoteVersion": 3,
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "Mint",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "note_41b97d7b_26fa_4d21_af6b_4f5d7be8e2ae",
+            "fused:name": "note_41b97d7b_26fa_4d21_af6b_4f5d7be8e2ae"
+          },
+          "code": "# ",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

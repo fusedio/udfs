@@ -1,0 +1,72 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "note_791db28f_29a7_4207_ad86_0d8a19f78815",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "isNodeTemplate": true,
+            "nodeTemplateType": "textbox",
+            "nodeTemplateColor": "transparent",
+            "stickyNoteVersion": 3,
+            "nodeTemplateGradient": false,
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "Peach",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "note_791db28f_29a7_4207_ad86_0d8a19f78815",
+            "fused:name": "note_791db28f_29a7_4207_ad86_0d8a19f78815"
+          },
+          "code": "H3 is a hexagonal grid system that divides the world into hex cells at different resolutions.Higher `res` = smaller hexagons = more detail.\n\n**This UDF:**\n\n1. **Loads point data** from `ny411_noise_points` (NYC 311 noise complaints with lat/lng)\n2. **Converts points \u2192 H3 cells** using DuckDB's `h3_latlng_to_cell(lat, lng, res)` \u2014 each point gets assigned to the hex cell it falls in. In this example hex res 9\n3. **Groups & counts** **\u2192**`GROUP BY hex` + `COUNT(*)` tells us how many noise complaints fall in each hexagon\n4. **Returns a DataFrame** with `hex` (the H3 cell ID) and `cnt` (number of complaints per cell)",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

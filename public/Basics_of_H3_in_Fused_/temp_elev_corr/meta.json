@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "temp_elev_corr",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "temp_elev_corr",
+            "fused:slug": "temp_elev_corr",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "PurpOr",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf\ndef udf(\n    # whole US\n    bounds: fused.types.Bounds = [-124.784, 24.396, -66.885, 49.384],\n    res: int = 4,\n    month: str = '2024-05',\n):\n    import pandas as pd\n\n    common = fused.load(\"https://github.com/fusedio/udfs/tree/f661b6d/public/common/\")\n\n    # Load both UDFs\n    elev_udf = fused.load(\"copdem_elevation\")\n    temp_udf = fused.load(\"era5_monthly_mean\")\n\n    # Call both with the same bounds\n    df_elev = elev_udf(bounds=bounds, res=res)\n    df_temp = temp_udf(month=month, bounds=bounds)\n\n    print(\"Elev columns:\", df_elev.columns.tolist())\n    print(\"Temp columns:\", df_temp.columns.tolist())\n    print(f\"Elev rows: {len(df_elev)}, Temp rows: {len(df_temp)}\")\n\n    # Aggregate temp to res 4 then join on hex\n    con = common.duckdb_connect()\n    qr = f\"\"\"\n        WITH temp_agg AS (\n            SELECT\n                h3_cell_to_parent(hex, {res}) AS hex,\n                avg(monthly_mean_temp) AS monthly_mean_temp\n            FROM df_temp\n            GROUP BY 1\n        )\n        SELECT\n            e.hex,\n            e.data_avg AS elevation_avg,\n            t.monthly_mean_temp\n        FROM df_elev e\n        JOIN temp_agg t ON e.hex = t.hex\n    \"\"\"\n    df_joined = con.query(qr).df()\n\n    print(f\"Joined rows: {len(df_joined)}\")\n    print(df_joined.T)\n\n    return df_joined\n",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

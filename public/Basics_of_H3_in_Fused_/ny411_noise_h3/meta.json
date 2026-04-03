@@ -1,0 +1,72 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "ny411_noise_h3",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "ny411_noise_h3",
+            "fused:slug": "ny411_noise_h3",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256,
+                "pickable": true
+              },
+              "hexLayer": {
+                "@@type": "H3HexagonLayer",
+                "stroked": false,
+                "filled": true,
+                "pickable": true,
+                "extruded": false,
+                "opacity": 1,
+                "coverage": 0.9,
+                "lineWidthMinPixels": 10,
+                "getHexagon": "@@=properties.hex",
+                "getFillColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "cnt",
+                  "domain": [
+                    200,
+                    0
+                  ],
+                  "colors": "OrYel",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getLineColor": [
+                  200,
+                  200,
+                  200
+                ],
+                "getElevation": {
+                  "@@function": "hasProp",
+                  "property": "cnt",
+                  "present": "@@=properties.cnt",
+                  "absent": 1
+                },
+                "elevationScale": 2
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf(cache_max_age=0)\ndef udf(\n    res: int = 9\n):\n    # 1. Load points from above UDF \n    points_udf = fused.load(\"ny411_noise_points\")\n    data = points_udf()\n    \n    # Load common utilities (loads DuckDB with spatial & H3 addons)\n    common = fused.load(\"https://github.com/fusedio/udfs/tree/9bad664/public/common/\")\n    con = common.duckdb_connect()\n\n    # Remove geometry to prevent error with DuckDB\n    del data['geometry']\n\n    # 2. Convert points to H3, \n    # 3. count total number of duplicated H3 cells (assign to `cnt`) & groupby unique H3 cells\n    qr = f\"\"\"\n    SELECT\n      h3_latlng_to_cell(lat, lng, {res}) AS hex,\n      COUNT(*) AS cnt,\n    FROM (SELECT lat, lng FROM data) AS data\n    GROUP BY 1\n    \"\"\"\n\n    df = con.sql(qr).df()\n    print(df.T)\n\n    return df",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
