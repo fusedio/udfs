@@ -1,0 +1,28 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "DOCX_File",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:description": "Preview a Word document (.docx) as plain text extracted from paragraphs and tables.\n\n<!-- fused:previewExt -->\nExtensions: `docx`",
+            "fused:udfType": "auto",
+            "fused:slug": "DOCX_File",
+            "fused:name": "DOCX_File",
+            "fused:id": null
+          },
+          "source": "DOCX_File.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
