@@ -1,0 +1,27 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Empty_Extension_File",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:description": "Extensionless file preview: sniff MIME/signatures from bytes and dispatch to the appropriate file UDF.\n\n<!-- fused:previewExt -->\nExtensions: ``",
+            "fused:udfType": "auto",
+            "fused:slug": "Empty_Extension_File",
+            "fused:name": "Empty_Extension_File"
+          },
+          "source": "Empty_Extension_File.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
