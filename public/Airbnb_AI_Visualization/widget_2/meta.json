@@ -1,0 +1,72 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "widget_2",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "isNodeTemplate": true,
+            "nodeTemplateType": "json_ui",
+            "nodeTemplateColor": "#141414",
+            "nodeTemplateGradient": false,
+            "stickyNoteVersion": 3,
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "PinkYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "widget_2",
+            "fused:name": "widget_2"
+          },
+          "code": "{\n  \"type\": \"render\",\n  \"props\": {\n    \"defaultValue\": {\n  \"type\": \"bar-chart\",\n  \"props\": {\n    \"sql\":\"SELECT neighbourhood_cleansed as label, ROUND(AVG(price_in_dollar), 2) as value FROM {{airbnb_data}} GROUP BY neighbourhood_cleansed ORDER BY value DESC LIMIT 15\",\n    \"title\": \"Top 15 Neighbourhoods\"\n  }\n},\n    \"showEditor\": true,\n    \"aiBuilderMode\": \"enabled\",\n    \"aiPanel\": \"right\"\n  }\n}",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
