@@ -8,13 +8,12 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "note_1d9f0a3e_9acf_45d9_bcc2_ddade2e6ab56_7",
+          "name": "loom_demo",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "isNodeTemplate": true,
-            "nodeTemplateType": "textbox",
-            "nodeTemplateColor": "#A8D5F7",
+            "fused:name": "loom_demo",
+            "fused:slug": "loom_demo",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -41,7 +40,7 @@
                     10
                   ],
                   "steps": 20,
-                  "colors": "RedOr",
+                  "colors": "DarkMint",
                   "nullColor": [
                     184,
                     184,
@@ -56,15 +55,9 @@
                 ]
               }
             },
-            "fused:udfType": "auto",
-            "fused:slug": "note_1d9f0a3e_9acf_45d9_bcc2_ddade2e6ab56_7",
-            "fused:name": "note_1d9f0a3e_9acf_45d9_bcc2_ddade2e6ab56_7",
-            "stickyNoteVersion": 3,
-            "nodeTemplateAlignment": "left",
-            "nodeTemplateGradient": true,
-            "nodeTemplateScaleFactor": 1.5
+            "fused:udfType": "auto"
           },
-          "code": "This UDF:\n\n- **Kept Visible:** AI Agent can visualise it\n- **Added Docstring**: So AI understand what it does\n- **Returns small amount of data**: So AI isn't overloaded with context",
+          "code": "@fused.udf\ndef udf():\n    return \"\"\"\n    <div style=\"position: relative; padding-bottom: 56.25%; height: 0;\"><iframe src=\"https://www.loom.com/embed/f8ace1d3f9ba4b1eb839dc0011d0edc3\" frameborder=\"0\" webkitallowfullscreen mozallowfullscreen allowfullscreen style=\"position: absolute; top: 0; left: 0; width: 100%; height: 100%;\"></iframe></div>\n    \"\"\"\n",
           "headers": []
         }
       }
