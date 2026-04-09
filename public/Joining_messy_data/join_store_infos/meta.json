@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "join_store_infos",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "join_store_infos",
+            "fused:slug": "join_store_infos",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "BluYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf\ndef udf(\n    num_reviews_min: float = 0,\n    num_reviews_max: float = 9999,\n    avg_rating_min: float = 0.0,\n    avg_rating_max: float = 5.0,\n    sentiment: str = \"All\",           # \"All\", \"Positive\", \"Negative\"\n    nps_min: float = -100.0,\n    nps_max: float = 100.0,\n    store_type: str = \"All\",          # \"All\", \"Distribution Hub\", \"Logistics Depot\", \"Processing Center\", \"Regional Office\", \"Retail Outlet\", \"Warehouse\"\n    staff_headcount_min: float = 0,\n    staff_headcount_max: float = 9999,\n):\n    \"\"\"\n    Joins three supplier data sources into a single GeoDataFrame and applies\n    optional filters to return a subset of store records.\n\n    Sources joined\n    --------------\n    - all_suppliers         : Core supplier records from Snowflake TPCH_SF1\n                              (S_SUPPKEY, S_NAME, S_ADDRESS, S_NATIONKEY,\n                               S_PHONE, S_ACCTBAL, S_COMMENT)\n    - suppliers_feedback    : Customer feedback aggregated per supplier\n                              (avg_rating, num_reviews, sentiment,\n                               primary_complaint, net_promoter_score,\n                               last_audit_date, audit_result,\n                               mystery_shopper_pct, on_time_delivery_pct,\n                               defect_rate_ppm)\n    - supplier_locations    : Physical store/facility metadata with geometry\n                              (store_type, latitude, longitude, country_code,\n                               sq_meters, staff_headcount, certification,\n                               date_established, facility_manager,\n                               annual_capacity_units)\n\n    Supplier IDs are normalised to a plain integer before joining, so\n    prefixed formats like \"S00000001\", \"SUPP-3\", \"SUP0000001\" all resolve\n    correctly. The final result is a GeoDataFrame in EPSG:4326.\n\n    Parameters\n    ----------\n    num_reviews_min : float, default 0\n        Minimum number of customer reviews a store must have.\n    num_reviews_max : float, default 9999\n        Maximum number of customer reviews a store may have.\n    avg_rating_min : float, default 0.0\n        Minimum average customer rating (0\u20135 scale).\n    avg_rating_max : float, default 5.0\n        Maximum average customer rating (0\u20135 scale).\n    sentiment : str, default \"All\"\n        Filter by overall review sentiment. Options: \"All\", \"Positive\",\n        \"Negative\". Case-insensitive match.\n    nps_min : float, default -100.0\n        Minimum Net Promoter Score (-100 to 100).\n    nps_max : float, default 100.0\n        Maximum Net Promoter Score (-100 to 100).\n    store_type : str, default \"All\"\n        Filter by facility type. Options: \"All\", \"Distribution Hub\",\n        \"Logistics Depot\", \"Processing Center\", \"Regional Office\",\n        \"Retail Outlet\", \"Warehouse\".\n    staff_headcount_min : float, default 0\n        Minimum number of staff employed at the store.\n    staff_headcount_max : float, default 9999\n        Maximum number of staff employed at the store.\n\n    Returns\n    -------\n    geopandas.GeoDataFrame\n        Filtered store records with all 32 columns from the three sources\n        plus a Point geometry column (EPSG:4326).\n    \"\"\"\n    import pandas as pd\n    import re\n\n    # \u2500\u2500 Load the three source UDFs \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    suppliers_udf   = fused.load(\"all_suppliers\")\n    feedback_udf    = fused.load(\"suppliers_feedback_gdrive\")\n    locations_udf   = fused.load(\"supplier_locations_csv\")\n\n    df_sup  = suppliers_udf()\n    df_fb   = feedback_udf()\n    df_loc  = locations_udf()\n\n    print(\"all_suppliers shape:\", df_sup.shape)\n    print(\"suppliers_feedback shape:\", df_fb.shape)\n    print(\"supplier_locations shape:\", df_loc.shape)\n\n    # \u2500\u2500 Normalize supplier IDs to a plain integer join key \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    # all_suppliers     \u2192 S_SUPPKEY is already an integer\n    # feedback          \u2192 supplier_id: \"S00000001\", \"SUPP-3\", etc.\n    # locations         \u2192 supplier_ref: \"SUP0000001\", etc.\n\n    def extract_int(s):\n        \"\"\"Strip any non-digit prefix/suffix and return int (NaN if none found).\"\"\"\n        m = re.search(r\"\\d+\", str(s))\n        return int(m.group()) if m else None\n\n    df_sup[\"_join_key\"] = df_sup[\"S_SUPPKEY\"].astype(int)\n    df_fb[\"_join_key\"]  = df_fb[\"supplier_id\"].apply(extract_int)\n    df_loc[\"_join_key\"] = df_loc[\"supplier_ref\"].apply(extract_int)\n\n    print(\"Sample join keys \u2014 suppliers:\", df_sup[\"_join_key\"].head(3).tolist())\n    print(\"Sample join keys \u2014 feedback: \", df_fb[\"_join_key\"].head(3).tolist())\n    print(\"Sample join keys \u2014 locations:\", df_loc[\"_join_key\"].head(3).tolist())\n\n    # \u2500\u2500 Join: suppliers \u2190 feedback \u2190 locations \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    # Suffix feedback columns to avoid clashes\n    df_merged = (\n        df_sup\n        .merge(df_fb,  on=\"_join_key\", how=\"left\", suffixes=(\"\", \"_fb\"))\n        .merge(df_loc, on=\"_join_key\", how=\"left\", suffixes=(\"\", \"_loc\"))\n    )\n\n    df_merged = df_merged.drop(columns=[\"_join_key\", \"S_ADDRESS\"])\n\n    # \u2500\u2500 Re-wrap as GeoDataFrame so geometry serializes correctly \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    import geopandas as gpd\n    gdf = gpd.GeoDataFrame(df_merged, geometry=\"geometry\", crs=\"EPSG:4326\")\n\n    print(\"Merged shape:\", gdf.shape)\n    print(gdf.dtypes)\n    print(gdf.head(3))\n\n    # \u2500\u2500 Apply filters \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    mask = (\n        (gdf[\"num_reviews\"].fillna(0) >= num_reviews_min) &\n        (gdf[\"num_reviews\"].fillna(0) <= num_reviews_max) &\n        (gdf[\"avg_rating\"].fillna(0) >= avg_rating_min) &\n        (gdf[\"avg_rating\"].fillna(0) <= avg_rating_max) &\n        (gdf[\"net_promoter_score\"].fillna(0) >= nps_min) &\n        (gdf[\"net_promoter_score\"].fillna(0) <= nps_max) &\n        (gdf[\"staff_headcount\"].fillna(0) >= staff_headcount_min) &\n        (gdf[\"staff_headcount\"].fillna(0) <= staff_headcount_max)\n    )\n    if sentiment != \"All\":\n        mask &= gdf[\"sentiment\"].str.lower() == sentiment.lower()\n    if store_type != \"All\":\n        mask &= gdf[\"store_type\"] == store_type\n\n    gdf = gdf[mask]\n    print(f\"After filters: {len(gdf)} rows\")\n\n    return gdf\n",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "all_suppliers",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "all_suppliers",
+            "fused:slug": "all_suppliers",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "DarkMint",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf\ndef udf(limit: int = 100):\n    \"\"\"\n    Returns all suppliers from Snowflake's TPCH_SF1 sample dataset (~10,000 rows).\n    \"\"\"\n    import snowflake.connector\n\n    # This requires your own DEMO APP in Snowflake + your own credentials\n    conn = snowflake.connector.connect(\n        user=\"DEMO_APP_USER\",\n        password=fused.secrets[\"snowflake_demo_access_token\"],\n        account=\"DINFVZH-WOB67667\",\n        warehouse=\"COMPUTE_WH\",\n        database=\"SNOWFLAKE_SAMPLE_DATA\",\n        schema=\"TPCH_SF1\",\n    )\n\n    cur = conn.cursor()\n    cur.execute(\"SELECT * FROM SUPPLIER LIMIT %s;\", (limit,))\n    results = cur.fetch_pandas_all()\n    print(f\"Returned {len(results)} rows\")\n    cur.close()\n    conn.close()\n    return results\n",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

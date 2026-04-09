@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "supplier_locations_csv",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:udfType": "auto",
+            "fused:slug": "supplier_locations_csv",
+            "fused:name": "supplier_locations_csv",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "PinkYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            }
+          },
+          "code": "@fused.udf\ndef udf():\n    import pandas as pd\n    import geopandas as gpd\n    from shapely.geometry import Point\n\n    path = 's3://fused-asset/demos/supplier_customer_joining/supplier_locations.csv'\n\n    df = pd.read_csv(path)\n\n    # Detect lat/lon columns (case-insensitive)\n    col_map = {c.lower(): c for c in df.columns}\n    lat_col = col_map.get('latitude') or col_map.get('lat')\n    lon_col = col_map.get('longitude') or col_map.get('lon') or col_map.get('lng')\n\n    geometry = [Point(xy) for xy in zip(df[lon_col], df[lat_col])]\n    gdf = gpd.GeoDataFrame(df, geometry=geometry, crs='EPSG:4326')\n    return gdf\n    ",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
