@@ -1,0 +1,74 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "note_1d9f0a3e_9acf_45d9_bcc2_ddade2e6ab56_4",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "isNodeTemplate": true,
+            "nodeTemplateType": "textbox",
+            "nodeTemplateColor": "#A8D5F7",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "RedOr",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "note_1d9f0a3e_9acf_45d9_bcc2_ddade2e6ab56_4",
+            "fused:name": "note_1d9f0a3e_9acf_45d9_bcc2_ddade2e6ab56_4",
+            "stickyNoteVersion": 3,
+            "nodeTemplateAlignment": "center",
+            "nodeTemplateGradient": true,
+            "nodeTemplateScaleFactor": 2
+          },
+          "code": "## 2. Geocode & Routing",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

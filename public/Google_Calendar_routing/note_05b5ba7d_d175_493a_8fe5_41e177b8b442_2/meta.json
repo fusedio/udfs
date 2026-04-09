@@ -1,0 +1,72 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "note_05b5ba7d_d175_493a_8fe5_41e177b8b442_2",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "isNodeTemplate": true,
+            "nodeTemplateType": "textbox",
+            "nodeTemplateColor": "#A5DD6B",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "BurgYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "note_05b5ba7d_d175_493a_8fe5_41e177b8b442_2",
+            "fused:name": "note_05b5ba7d_d175_493a_8fe5_41e177b8b442_2",
+            "stickyNoteVersion": 3,
+            "nodeTemplateGradient": false
+          },
+          "code": "# 2. Set your Google Calendar to Public\n\n1. Open [Google Calendar](https://calendar.google.com)\n2. Click the **\u22ee** next to your calendar \u2192 **Settings and sharing**\n3. Under **Access permissions**, check **Make available to public**\n4. Copy the **Calendar ID** (under *Integrate calendar*) \u2014 looks like `xxx@group.calendar.google.com`",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
