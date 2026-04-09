@@ -1,0 +1,72 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "top_10_stores",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "isNodeTemplate": true,
+            "nodeTemplateType": "json_ui",
+            "nodeTemplateColor": "#FFF9C4",
+            "nodeTemplateGradient": true,
+            "stickyNoteVersion": 3,
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "Sunset",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "top_10_stores",
+            "fused:name": "top_10_stores"
+          },
+          "code": "{\n  \"type\": \"bar-chart\",\n  \"props\": {\n    \"sql\": \"SELECT S_NAME AS label, avg_rating AS value FROM {{join_store_infos}} ORDER BY avg_rating DESC LIMIT 10\",\n    \"title\": \"Top 10 Best Performing Stores\",\n    \"barColor\": \"blue\",\n    \"barRadius\": 6\n  }\n}",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
