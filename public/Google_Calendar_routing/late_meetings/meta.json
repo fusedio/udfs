@@ -1,0 +1,72 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "late_meetings",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "isNodeTemplate": true,
+            "nodeTemplateType": "json_ui",
+            "nodeTemplateColor": "#F5A3B8",
+            "nodeTemplateGradient": true,
+            "stickyNoteVersion": 3,
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "Mint",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "late_meetings",
+            "fused:name": "late_meetings"
+          },
+          "code": "{\n  \"type\": \"div\",\n  \"props\": {\n    \"style\": \"display: flex; flex-direction: column; gap: 16px; padding: 16px;\"\n  },\n  \"children\": [\n    {\n      \"type\": \"sql-table\",\n      \"props\": {\n        \"title\": \"\ud83d\udea8 Meetings I'll Be Late To\",\n        \"sql\": \"SELECT to_meeting AS \\\"Meeting\\\", to_time AS \\\"Time\\\", to_location AS \\\"Location\\\", from_meeting AS \\\"Coming From\\\", travel_minutes AS \\\"Travel (min)\\\", gap_minutes AS \\\"Gap (min)\\\", buffer_minutes AS \\\"Buffer (min)\\\", status AS \\\"Status\\\" FROM {{nyc_meeting_routes}} WHERE status = 'Will Be Late' ORDER BY to_time\",\n        \"sortable\": true,\n        \"filterable\": false\n      }\n    },\n    {\n      \"type\": \"fused-map\",\n      \"props\": {\n        \"basemap\": \"mapbox://styles/mapbox/dark-v11\",\n        \"centerLng\": -73.98,\n        \"centerLat\": 40.75,\n        \"zoom\": 11,\n        \"showControls\": true,\n        \"showScale\": false,\n        \"showBasemapSwitcher\": true,\n        \"showLegend\": false,\n        \"showLayerPanel\": false,\n        \"style\": \"height: 300px; border-radius: 8px; overflow: hidden;\",\n        \"layers\": [\n          {\n            \"id\": \"late-meetings\",\n            \"name\": \"\ud83d\udd34 Will Be Late\",\n            \"type\": \"scatterplot\",\n            \"visible\": true,\n            \"sql\": \"SELECT g.title, g.location, g.latitude AS lat, g.longitude AS lng FROM {{gcal_events_geocode}} g INNER JOIN {{nyc_meeting_routes}} r ON g.title = r.to_meeting WHERE r.status = 'Will Be Late' AND g.latitude IS NOT NULL AND g.longitude IS NOT NULL\",\n            \"latColumn\": \"lat\",\n            \"lngColumn\": \"lng\",\n            \"tooltip\": [\"title\", \"location\"],\n            \"style\": {\n              \"fillColor\": [220, 53, 53],\n              \"lineColor\": [255, 255, 255],\n              \"pointRadius\": 10,\n              \"opacity\": 0.95\n            }\n          },\n          {\n            \"id\": \"ontime-meetings\",\n            \"name\": \"\ud83d\udfe2 On Time\",\n            \"type\": \"scatterplot\",\n            \"visible\": true,\n            \"sql\": \"SELECT g.title, g.location, g.latitude AS lat, g.longitude AS lng FROM {{gcal_events_geocode}} g INNER JOIN {{nyc_meeting_routes}} r ON g.title = r.to_meeting WHERE r.status = 'On Time' AND g.latitude IS NOT NULL AND g.longitude IS NOT NULL\",\n            \"latColumn\": \"lat\",\n            \"lngColumn\": \"lng\",\n            \"tooltip\": [\"title\", \"location\"],\n            \"style\": {\n              \"fillColor\": [34, 197, 94],\n              \"lineColor\": [255, 255, 255],\n              \"pointRadius\": 10,\n              \"opacity\": 0.95\n            }\n          }\n        ]\n      }\n    }\n  ]\n}",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

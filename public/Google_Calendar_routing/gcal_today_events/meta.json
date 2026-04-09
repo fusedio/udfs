@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "gcal_today_events",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "gcal_today_events",
+            "fused:slug": "gcal_today_events",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "PurpOr",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf(cache_max_age=0)\ndef udf(\n    calendar_url = \"https://calendar.google.com/calendar/u/3?cid=bWF4LmZ1c2VkLnRlc3RpbmdAZ21haWwuY29t\",\n    date: str = \"2026-04-08\"  # e.g. \"2026-04-08\", defaults to today\n):\n    import requests\n    import pandas as pd\n    from datetime import datetime, timedelta\n    from urllib.parse import urlparse, parse_qs\n    import base64 \n\n    try:\n        # CHANGE YOUR API KEY\n        google_api_key = fused.secrets[\"google_maps_api\"]\n    except Exception as e:\n        print(f\"Error getting API key: {e}\")\n        return pd.DataFrame({\"error\": [f\"Google API key not found in fused.secrets: {str(e)}\"]})\n    \n    \n    # Extract and decode calendar_id from the cid parameter\n    parsed_url = urlparse(calendar_url)\n    cid_param = parse_qs(parsed_url.query).get('cid', [None])[0]\n    \n    if not cid_param:\n        return pd.DataFrame({\"error\": [\"No calendar ID found in URL\"]})\n    \n    # Base64 decode the cid parameter\n    calendar_id = base64.b64decode(cid_param).decode('utf-8')\n    \n    # Use provided date or fall back to today\n    if date:\n        today = datetime.strptime(date, \"%Y-%m-%d\").date()\n    else:\n        today = datetime.utcnow().date()\n    time_min = datetime.combine(today, datetime.min.time()).isoformat() + \"Z\"\n    time_max = datetime.combine(today, datetime.max.time()).isoformat() + \"Z\"\n    \n    url = f\"https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events\"\n    print(f\"URL: {url}\")\n    print(f\"Calendar ID: {calendar_id}\")\n    print(f\"API Key: {google_api_key[:10]}***\")\n    \n    params = {\n        \"key\": google_api_key,\n        \"timeMin\": time_min,\n        \"timeMax\": time_max,\n        \"singleEvents\": True,\n        \"orderBy\": \"startTime\"\n    }\n    \n    try:\n        response = requests.get(url, params=params)\n        print(f\"Status Code: {response.status_code}\")\n        print(f\"Response Text: {response.text}\")\n        \n        data = response.json()\n        print(f\"Full JSON Response: {data}\")\n        \n        # Check if there's an error in the response\n        if 'error' in data:\n            error_msg = data['error']\n            print(f\"API Error Found: {error_msg}\")\n            \n            # Check for API_KEY_SERVICE_BLOCKED\n            if isinstance(error_msg, dict) and 'details' in error_msg:\n                for detail in error_msg.get('details', []):\n                    if isinstance(detail, dict) and detail.get('reason') == 'API_KEY_SERVICE_BLOCKED':\n                        project_id = detail.get('metadata', {}).get('consumer', 'unknown')\n                        return pd.DataFrame({\n                            \"status\": [\"API_KEY_SERVICE_BLOCKED\"],\n                            \"instruction\": [\n                                f\"Your API key from project {project_id} is blocked from calling Calendar API.\\n\\n\"\n                                f\"FIX: Go to Google Cloud Console > Project {project_id} > APIs & Services > Credentials\\n\"\n                                f\"1. Click on your API key\\n\"\n                                f\"2. Under 'API restrictions', add 'Google Calendar API' to the allowed list\\n\"\n                                f\"3. Or set API restrictions to 'None' to allow all APIs\\n\"\n                                f\"4. Save and retry\"\n                            ]\n                        })\n            \n            return pd.DataFrame({\n                \"error\": [str(error_msg)],\n                \"status_code\": [response.status_code],\n                \"details\": [str(data)]\n            })\n        \n        # Check if response raised an HTTP error\n        if response.status_code >= 400:\n            print(f\"HTTP Error {response.status_code}\")\n            return pd.DataFrame({\n                \"error\": [f\"HTTP {response.status_code}\"],\n                \"response\": [response.text]\n            })\n        \n        events = data.get('items', [])\n        print(f\"Number of events found: {len(events)}\")\n        \n        if not events:\n            return pd.DataFrame({\"message\": [f\"No events scheduled for today ({today})\"], \"calendar_id\": [calendar_id]})\n        \n        event_list = []\n        for event in events:\n            event_list.append({\n                'title': event.get('summary', 'No title'),\n                'start': event.get('start', {}).get('dateTime', event.get('start', {}).get('date')),\n                'end': event.get('end', {}).get('dateTime', event.get('end', {}).get('date')),\n                'description': event.get('description', ''),\n                'location': event.get('location', '')\n            })\n        \n        return pd.DataFrame(event_list)\n        \n    except Exception as e:\n        print(f\"Exception occurred: {type(e).__name__}: {str(e)}\")\n        import traceback\n        print(traceback.format_exc())\n        return pd.DataFrame({\n            \"error\": [f\"{type(e).__name__}: {str(e)}\"],\n            \"calendar_id\": [calendar_id],\n            \"url\": [url]\n        })",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

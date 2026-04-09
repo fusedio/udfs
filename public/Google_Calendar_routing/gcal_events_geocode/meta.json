@@ -1,0 +1,67 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "gcal_events_geocode",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:name": "gcal_events_geocode",
+            "fused:slug": "gcal_events_geocode",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "Magenta",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto"
+          },
+          "code": "@fused.udf(cache_max_age=0)\ndef udf(date: str = \"2026-04-08\"):  # e.g. \"2026-04-08\", defaults to today\n    import pandas as pd\n    from geopy.geocoders import Nominatim\n    import time\n    \n    gcal = fused.load(\"gcal_today_events\")\n    data = gcal(date=date)\n    \n    print(data.T)\n    \n    @fused.cache\n    def geocode_location(location):\n        if not location or not str(location).strip():\n            return None, None\n        try:\n            geocoder = Nominatim(user_agent=\"fused_geocoder\")\n            result = geocoder.geocode(str(location), timeout=10)\n            time.sleep(0.2)\n            if result:\n                return result.latitude, result.longitude\n            else:\n                return None, None\n        except Exception:\n            return None, None\n    \n    lats = []\n    lons = []\n    for location in data['location'].fillna(''):\n        lat, lon = geocode_location(location)\n        lats.append(lat)\n        lons.append(lon)\n    \n    data['latitude'] = lats\n    data['longitude'] = lons\n    \n    print(data.T)\n    return data",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "note_05b5ba7d_d175_493a_8fe5_41e177b8b442",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "isNodeTemplate": true,
+            "nodeTemplateType": "textbox",
+            "nodeTemplateColor": "#A5DD6B",
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "BurgYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "note_05b5ba7d_d175_493a_8fe5_41e177b8b442",
+            "fused:name": "note_05b5ba7d_d175_493a_8fe5_41e177b8b442",
+            "stickyNoteVersion": 3,
+            "nodeTemplateGradient": false
+          },
+          "code": "# 1. Google Maps API Requirements\n\n**Get & Manage API Keys:**\n\n- <https://console.cloud.google.com/apis/credentials>\n- Pass API Key in Fused Secrets `google_maps_api`\n\n**Enable APIs:**\n\n- Routes API: <https://console.cloud.google.com/apis/library/routes.googleapis.com>\n- Calendar API: <https://console.cloud.google.com/apis/library/calendar-json.googleapis.com>\n\n# ",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
