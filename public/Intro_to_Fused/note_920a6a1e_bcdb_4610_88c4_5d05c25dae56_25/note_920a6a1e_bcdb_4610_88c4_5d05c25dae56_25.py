@@ -1,1 +1,0 @@
-Fused UDFs can be shared anywhere, in any format. Take your Python code, and directly call it as an API with parameters!

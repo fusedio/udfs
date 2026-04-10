@@ -1,1 +1,0 @@
-If we rerun the *exact* same code here, it's a lot faster as Fused returns a cached version of our UDF by default
