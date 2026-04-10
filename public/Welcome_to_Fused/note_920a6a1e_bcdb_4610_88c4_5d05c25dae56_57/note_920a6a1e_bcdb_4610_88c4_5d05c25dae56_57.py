@@ -1,0 +1,1 @@
+You can use [Widgets](https://docs.fused.io/guide/data-input-outputs/import-connection/widgets) to visualise datasets

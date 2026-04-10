@@ -1,0 +1,72 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "chart_widget",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "isNodeTemplate": true,
+            "nodeTemplateType": "json_ui",
+            "nodeTemplateColor": "#FFF9C4",
+            "nodeTemplateGradient": true,
+            "stickyNoteVersion": 3,
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "BurgYl",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "chart_widget",
+            "fused:name": "chart_widget"
+          },
+          "code": "{\n  \"type\": \"scatter-chart\",\n  \"props\": {\n    \"sql\": \"SELECT number_of_reviews AS x, price_in_dollar AS y, room_type AS series, review_scores_rating AS size, name AS label FROM {{sf_airbnb_listings}} WHERE review_scores_rating IS NOT NULL AND price_in_dollar <= 2000 AND number_of_reviews <= 1000\",\n    \"title\": \"Price vs Reviews (filtered)\",\n    \"showLegend\": true,\n    \"pointOpacity\": 0.6,\n    \"defaultPointSize\": 50,\n    \"xMin\": 0,\n    \"yMin\": 0,\n    \"xMax\": 300,\n    \"yMax\": 500\n  }\n}",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
