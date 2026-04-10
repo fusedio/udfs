@@ -1,1 +1,0 @@
-Fused allows you to scale UDFs to thousands of jobs at once. Run UDFs in parallel to scale large tasks with just a few lines of code
