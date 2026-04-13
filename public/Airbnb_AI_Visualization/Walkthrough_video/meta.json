@@ -8,12 +8,15 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "loom_demo",
+          "name": "Walkthrough_video",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:name": "loom_demo",
-            "fused:slug": "loom_demo",
+            "isNodeTemplate": true,
+            "nodeTemplateType": "json_ui",
+            "nodeTemplateColor": "#FFF9C4",
+            "nodeTemplateGradient": true,
+            "stickyNoteVersion": 3,
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -55,9 +58,11 @@
                 ]
               }
             },
-            "fused:udfType": "auto"
+            "fused:udfType": "auto",
+            "fused:slug": "Walkthrough_video",
+            "fused:name": "Walkthrough_video"
           },
-          "code": "@fused.udf\ndef udf():\n    return \"\"\"\n    <div style=\"position: relative; padding-bottom: 56.25%; height: 0;\">\n        <iframe src=\"https://www.loom.com/embed/5b201deb4b1245f99de1da08a8198cef\"\n            frameborder=\"0\"\n            webkitallowfullscreen\n            mozallowfullscreen\n            allowfullscreen\n            style=\"position: absolute; top: 0; left: 0; width: 100%; height: 100%;\">\n        </iframe>\n    </div>\n    \"\"\"\n",
+          "code": "{\n  \"type\": \"iframe\",\n  \"props\": {\n    \"url\": \"https://www.loom.com/embed/5b201deb4b1245f99de1da08a8198cef\"\n  }\n}",
           "headers": []
         }
       }
