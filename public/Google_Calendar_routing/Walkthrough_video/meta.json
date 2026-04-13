@@ -8,13 +8,15 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "note_1d9f0a3e_9acf_45d9_bcc2_ddade2e6ab56_5",
+          "name": "Walkthrough_video",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
             "isNodeTemplate": true,
-            "nodeTemplateType": "textbox",
-            "nodeTemplateColor": "#A8D5F7",
+            "nodeTemplateType": "json_ui",
+            "nodeTemplateColor": "#FFF9C4",
+            "nodeTemplateGradient": true,
+            "stickyNoteVersion": 3,
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -41,7 +43,7 @@
                     10
                   ],
                   "steps": 20,
-                  "colors": "RedOr",
+                  "colors": "DarkMint",
                   "nullColor": [
                     184,
                     184,
@@ -57,14 +59,10 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "note_1d9f0a3e_9acf_45d9_bcc2_ddade2e6ab56_5",
-            "fused:name": "note_1d9f0a3e_9acf_45d9_bcc2_ddade2e6ab56_5",
-            "stickyNoteVersion": 3,
-            "nodeTemplateAlignment": "center",
-            "nodeTemplateGradient": true,
-            "nodeTemplateScaleFactor": 2
+            "fused:slug": "Walkthrough_video",
+            "fused:name": "Walkthrough_video"
           },
-          "code": "## Build this yourself\n\nDocs: [Step by step details](https://docs.fused.io/examples/google-calendar-meetings)",
+          "code": "{\n  \"type\": \"iframe\",\n  \"props\": {\n    \"url\": \"https://www.loom.com/embed/f8ace1d3f9ba4b1eb839dc0011d0edc3\"\n  }\n}",
           "headers": []
         }
       }

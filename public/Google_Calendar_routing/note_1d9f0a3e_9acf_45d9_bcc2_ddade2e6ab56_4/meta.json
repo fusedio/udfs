@@ -64,7 +64,7 @@
             "nodeTemplateGradient": true,
             "nodeTemplateScaleFactor": 2
           },
-          "code": "## 2. Geocode & Routing",
+          "code": "## 2. Geocode & route",
           "headers": []
         }
       }
