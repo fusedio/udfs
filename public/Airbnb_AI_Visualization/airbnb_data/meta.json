@@ -57,7 +57,7 @@
             },
             "fused:udfType": "auto"
           },
-          "code": "@fused.udf\ndef udf(path: str = \"s3://fused-sample/demo_data/airbnb_listings_sf.parquet\"):\n    import pandas as pd\n\n    @fused.cache\n    def load_data(file_path):\n        return pd.read_parquet(file_path)\n\n    df = load_data(path)\n    print(df.head())\n    print(df.dtypes)\n    print(df.shape)\n    return df",
+          "code": "@fused.udf\ndef udf():\n    import pandas as pd\n\n    @fused.cache\n    def load_data():\n        return pd.read_parquet(\"s3://fused-sample/demo_data/airbnb_listings_sf.parquet\")\n\n    df = load_data()\n    print(df.head())\n    print(df.dtypes)\n    print(df.shape)\n    return df",
           "headers": []
         }
       }
