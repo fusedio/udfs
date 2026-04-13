@@ -1,0 +1,1 @@
+Edit the URL to retun your DataFrame as JSON (or any [other format](https://docs.fused.io/guide/working-with-udfs/run-udfs-as-api))
