@@ -1,5 +1,5 @@
-@fused.udf
-def udf(date: str = "2026-04-08"):
+@fused.udf(cache_max_age=0)
+def udf(date: str = "2026-04-13"):
     """
     Computes driving routes between consecutive meetings on a given day.
 
