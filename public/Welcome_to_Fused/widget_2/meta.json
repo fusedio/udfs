@@ -8,12 +8,15 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "C_Run_UDFs_in_parallel",
+          "name": "widget_2",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:name": "C_Run_UDFs_in_parallel",
-            "fused:slug": "C_Run_UDFs_in_parallel",
+            "isNodeTemplate": true,
+            "nodeTemplateType": "json_ui",
+            "nodeTemplateColor": "#FFF9C4",
+            "nodeTemplateGradient": true,
+            "stickyNoteVersion": 3,
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -40,7 +43,7 @@
                     10
                   ],
                   "steps": 20,
-                  "colors": "BrwnYl",
+                  "colors": "Sunset",
                   "nullColor": [
                     184,
                     184,
@@ -55,9 +58,11 @@
                 ]
               }
             },
-            "fused:udfType": "auto"
+            "fused:udfType": "auto",
+            "fused:slug": "widget_2",
+            "fused:name": "widget_2"
           },
-          "code": "@fused.udf\ndef udf():\n    return \"\"\"\n<div style=\"position: relative; padding-bottom: 56.25%; height: 0;\"><iframe src=\"https://www.loom.com/embed/f9f8405e866b44dd90bb37f5e41825b6\" frameborder=\"0\" webkitallowfullscreen mozallowfullscreen allowfullscreen style=\"position: absolute; top: 0; left: 0; width: 100%; height: 100%;\"></iframe></div>\n    \"\"\"\n",
+          "code": "{\n  \"type\": \"iframe\",\n  \"props\": {\n    \"url\": \"https://www.loom.com/embed/11285fc1c8e4431896760a394e491cc1\"\n  }\n}",
           "headers": []
         }
       }
