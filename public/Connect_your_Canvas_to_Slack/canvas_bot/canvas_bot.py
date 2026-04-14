@@ -60,7 +60,7 @@ def udf(
         resp = requests.get(
             url, 
             timeout=30,
-            headers={"Authorization": f"{fused.api.auth_scheme()}  {fused.api.access_token()}"}
+            headers={"Authorization": f"{fused.api.auth_scheme()} {fused.api.access_token()}"}
         )
         result = resp.text[:8000]
         print(f"[Tool] Response: {len(resp.text)} chars")
@@ -106,7 +106,7 @@ def _fetch_spec(api_url):
     resp = requests.get(
         api_url, 
         timeout=15,
-        headers={"Authorization": f"{fused.api.auth_scheme()}  {fused.api.access_token()}"}
+        headers={"Authorization": f"{fused.api.auth_scheme()} {fused.api.access_token()}"}
     )
     resp.raise_for_status()
     return resp.json()
