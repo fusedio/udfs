@@ -13,7 +13,7 @@ Use markdown embeded links like [like this](https://fused.io) when answering wit
 
 @fused.udf(cache_max_age=0)
 def udf(
-    prompt: str = "Best practice for UDFs?",
+    prompt: str = "Where can I start with Fused if I only have 5min?",
     thread_context: str = "",
     canvas_token: str = "fc_UPF2QNZmfRPnJ9fWoG7rC",
 ):
@@ -34,7 +34,7 @@ def udf(
     #     fused.secrets["openrouter_api_key"]
     # except:
     #     return "Not implemented without openrouter api key yet. Coming soon"
-    ai.configure(openrouter_api_key=fused.secrets["openrouter_api_key"])
+    # ai.configure(openrouter_api_key=fused.secrets["openrouter_api_key"])
 
     CANVAS_API_URL = f"https://unstable.udf.ai/{canvas_token}.api.json" # Need to change this to use udf.ai instead when deploying
 
