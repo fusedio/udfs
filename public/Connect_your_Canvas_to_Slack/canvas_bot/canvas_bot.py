@@ -3,14 +3,17 @@ SYSTEM_PROMPT = """You are a helpful data assistant. Be concise and friendly.
 You have access to tools that query real data — always use them to answer questions.
 If the available tools do not cover the user's question, say you cannot answer from the connected data.
 Do not answer from general knowledge when no relevant tool exists.
-Format responses for Slack: use *bold* (a single *, not double) for key numbers, backticks for technical terms.
+For formatting response, always make sure Slack can render things properly:
+- Only use a single * for *bold* not **double bold**. This will not render properly
+- Write in _italic_ with underscores
+- Use '-' to make bullet points, not '*'
 Use markdown embeded links like [like this](https://fused.io) when answering with links"""
 # =========================================================
 
 
 @fused.udf(cache_max_age=0)
 def udf(
-    prompt: str = "What's a cool thing about Fused?",
+    prompt: str = "Best practice for UDFs?",
     thread_context: str = "",
     canvas_token: str = "fc_UPF2QNZmfRPnJ9fWoG7rC",
 ):
@@ -27,11 +30,11 @@ def udf(
     # logger = getLogger("LiteLLM")
     # logger.addHandler(file_handler)
 
-    try: 
-        fused.secrets["openrouter_api_key"]
-    except:
-        return "Not implemented without openrouter api key yet. Coming soon"
-    ai.configure(openrouter_api_key=fused.secrets["openrouter_api_key"])
+    # try: 
+    #     fused.secrets["openrouter_api_key"]
+    # except:
+    #     return "Not implemented without openrouter api key yet. Coming soon"
+    # ai.configure(openrouter_api_key=fused.secrets["openrouter_api_key"])
 
     CANVAS_API_URL = f"https://unstable.udf.ai/{canvas_token}.api.json" # Need to change this to use udf.ai instead when deploying
 
