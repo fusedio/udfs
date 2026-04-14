@@ -1,0 +1,71 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "widget_1",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "isNodeTemplate": true,
+            "nodeTemplateType": "json_ui",
+            "nodeTemplateColor": "#FFF9C4",
+            "stickyNoteVersion": 3,
+            "fused:vizConfig": {
+              "tileLayer": {
+                "@@type": "TileLayer",
+                "minZoom": 0,
+                "maxZoom": 19,
+                "tileSize": 256
+              },
+              "rasterLayer": {
+                "@@type": "BitmapLayer",
+                "pickable": true
+              },
+              "vectorLayer": {
+                "@@type": "GeoJsonLayer",
+                "stroked": true,
+                "filled": false,
+                "pickable": true,
+                "lineWidthMinPixels": 1,
+                "pointRadiusMinPixels": 1,
+                "getLineColor": {
+                  "@@function": "colorContinuous",
+                  "attr": "value",
+                  "domain": [
+                    0,
+                    10
+                  ],
+                  "steps": 20,
+                  "colors": "Emrld",
+                  "nullColor": [
+                    184,
+                    184,
+                    184
+                  ]
+                },
+                "getFillColor": [
+                  208,
+                  208,
+                  208,
+                  40
+                ]
+              }
+            },
+            "fused:udfType": "auto",
+            "fused:slug": "widget_1",
+            "fused:name": "widget_1"
+          },
+          "code": "{\n  \"type\": \"div\",\n  \"props\": {\n    \"style\": \"padding: 20px; background: #0f0f0f; min-height: 100%; font-family: sans-serif;\"\n  },\n  \"children\": [\n    {\n      \"type\": \"text\",\n      \"props\": {\n        \"content\": \"# Sales Dashboard\",\n        \"variant\": \"h2\",\n        \"style\": \"color: #E8FF59; margin-bottom: 4px;\"\n      }\n    },\n    {\n      \"type\": \"text\",\n      \"props\": {\n        \"content\": \"Category breakdown of total sales revenue\",\n        \"variant\": \"muted\",\n        \"style\": \"margin-bottom: 24px;\"\n      }\n    },\n    {\n      \"type\": \"div\",\n      \"props\": {\n        \"style\": \"display: flex; gap: 16px; margin-bottom: 24px;\"\n      },\n      \"children\": [\n        {\n          \"type\": \"big-number\",\n          \"props\": {\n            \"sql\": \"SELECT SUM(sales) FROM {{sales_data}}\",\n            \"label\": \"Total Revenue\",\n            \"prefix\": \"$\",\n            \"format\": \"compact\",\n            \"decimals\": 1,\n            \"size\": 36,\n            \"color\": \"#E8FF59\",\n            \"style\": \"background: #1a1a1a; border-radius: 12px; padding: 16px; flex: 1;\"\n          }\n        },\n        {\n          \"type\": \"big-number\",\n          \"props\": {\n            \"sql\": \"SELECT MAX(sales) FROM {{sales_data}}\",\n            \"label\": \"Top Category Sales\",\n            \"prefix\": \"$\",\n            \"format\": \"comma\",\n            \"decimals\": 0,\n            \"size\": 36,\n            \"color\": \"#7df0a0\",\n            \"style\": \"background: #1a1a1a; border-radius: 12px; padding: 16px; flex: 1;\"\n          }\n        },\n        {\n          \"type\": \"big-number\",\n          \"props\": {\n            \"sql\": \"SELECT COUNT(*) FROM {{sales_data}}\",\n            \"label\": \"Categories\",\n            \"format\": \"none\",\n            \"decimals\": 0,\n            \"size\": 36,\n            \"color\": \"#7eb8f7\",\n            \"style\": \"background: #1a1a1a; border-radius: 12px; padding: 16px; flex: 1;\"\n          }\n        }\n      ]\n    },\n    {\n      \"type\": \"bar-chart\",\n      \"props\": {\n        \"sql\": \"SELECT category AS label, sales AS value FROM {{sales_data}} ORDER BY sales DESC\",\n        \"title\": \"Sales by Category\",\n        \"barColor\": \"#E8FF59\",\n        \"hoverColor\": \"#b8cc30\",\n        \"barOpacity\": 1,\n        \"barRadius\": 6,\n        \"showGrid\": true,\n        \"rotateLabels\": false,\n        \"horizontal\": false,\n        \"showValues\": true,\n        \"sort\": \"none\",\n        \"xAxisFontSize\": 12,\n        \"yAxisFontSize\": 11,\n        \"beginAtZero\": true,\n        \"animationMs\": 400,\n        \"style\": \"background: #1a1a1a; border-radius: 12px; padding: 16px; height: 300px;\"\n      }\n    }\n  ]\n}",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
