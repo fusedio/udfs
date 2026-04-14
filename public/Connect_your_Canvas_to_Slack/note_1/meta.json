@@ -8,12 +8,16 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "Part_2_talk_to_UDF_debugging",
+          "name": "note_1",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:name": "Part_2_talk_to_UDF_debugging",
-            "fused:slug": "Part_2_talk_to_UDF_debugging",
+            "isNodeTemplate": true,
+            "nodeTemplateType": "textbox",
+            "nodeTemplateColor": "#A8D5F7",
+            "nodeTemplateGradient": true,
+            "stickyNoteVersion": 3,
+            "nodeTemplateScaleFactor": 2,
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -40,7 +44,7 @@
                     10
                   ],
                   "steps": 20,
-                  "colors": "Burg",
+                  "colors": "SunsetDark",
                   "nullColor": [
                     184,
                     184,
@@ -55,9 +59,11 @@
                 ]
               }
             },
-            "fused:udfType": "auto"
+            "fused:udfType": "auto",
+            "fused:slug": "note_1",
+            "fused:name": "note_1"
           },
-          "code": "@fused.udf\ndef udf():\n    return \"\"\"\n    <div style=\"position: relative; padding-bottom: 56.25%; height: 0;\"><iframe src=\"https://www.loom.com/embed/00d91a4976d34b89b75820fdba926b54\" frameborder=\"0\" webkitallowfullscreen mozallowfullscreen allowfullscreen style=\"position: absolute; top: 0; left: 0; width: 100%; height: 100%;\"></iframe></div>\n    \"\"\"\n\n",
+          "code": "1. Connect Fused to Slack\n2. Make a copy of this Canvas directly\n3. Add the \"fc\\_\\*\\*\\*/ slack_channel_router\"\n4. Go to any Canvas you want to share\n   1. Share -&gt; Connect to Slack\n   2. Give Slack channel ID. In Slack click in channel name to see details. At bottom copy \"Channel ID\". Usually \"C0...\"\n5. Ask questions with @Fused-bot!\n6. Approve bot joining & start asking questions",
           "headers": []
         }
       }

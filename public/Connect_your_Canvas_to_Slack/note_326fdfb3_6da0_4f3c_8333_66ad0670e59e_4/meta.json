@@ -8,13 +8,15 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_56",
+          "name": "note_326fdfb3_6da0_4f3c_8333_66ad0670e59e_4",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
             "isNodeTemplate": true,
             "nodeTemplateType": "textbox",
             "nodeTemplateColor": "transparent",
+            "stickyNoteVersion": 3,
+            "nodeTemplateGradient": false,
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -41,7 +43,7 @@
                     10
                   ],
                   "steps": 20,
-                  "colors": "TealGrn",
+                  "colors": "PurpOr",
                   "nullColor": [
                     184,
                     184,
@@ -57,13 +59,11 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_56",
-            "fused:name": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_56",
-            "stickyNoteVersion": 3,
-            "nodeTemplateAlignment": "left",
-            "nodeTemplateScaleFactor": 1.5
+            "fused:slug": "note_326fdfb3_6da0_4f3c_8333_66ad0670e59e_4",
+            "fused:name": "note_326fdfb3_6da0_4f3c_8333_66ad0670e59e_4",
+            "nodeTemplateScaleFactor": 2
           },
-          "code": "## Utils\n\n- Maps each tool visible in OpenAPI into a tool for AI\n- Define AI prompt for answers",
+          "code": "# Setup",
           "headers": []
         }
       }
