@@ -34,7 +34,7 @@ def udf(
     #     fused.secrets["openrouter_api_key"]
     # except:
     #     return "Not implemented without openrouter api key yet. Coming soon"
-    # ai.configure(openrouter_api_key=fused.secrets["openrouter_api_key"])
+    ai.configure(openrouter_api_key=fused.secrets["openrouter_api_key"])
 
     CANVAS_API_URL = f"https://unstable.udf.ai/{canvas_token}.api.json" # Need to change this to use udf.ai instead when deploying
 

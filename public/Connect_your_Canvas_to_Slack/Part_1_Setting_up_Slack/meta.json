@@ -8,15 +8,12 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "note_326fdfb3_6da0_4f3c_8333_66ad0670e59e_4",
+          "name": "Part_1_Setting_up_Slack",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "isNodeTemplate": true,
-            "nodeTemplateType": "textbox",
-            "nodeTemplateColor": "transparent",
-            "stickyNoteVersion": 3,
-            "nodeTemplateGradient": false,
+            "fused:name": "Part_1_Setting_up_Slack",
+            "fused:slug": "Part_1_Setting_up_Slack",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -43,7 +40,7 @@
                     10
                   ],
                   "steps": 20,
-                  "colors": "PurpOr",
+                  "colors": "Burg",
                   "nullColor": [
                     184,
                     184,
@@ -58,12 +55,9 @@
                 ]
               }
             },
-            "fused:udfType": "auto",
-            "fused:slug": "note_326fdfb3_6da0_4f3c_8333_66ad0670e59e_4",
-            "fused:name": "note_326fdfb3_6da0_4f3c_8333_66ad0670e59e_4",
-            "nodeTemplateScaleFactor": 2
+            "fused:udfType": "auto"
           },
-          "code": "# Setup",
+          "code": "@fused.udf\ndef udf():\n    return \"\"\"\n    <div style=\"position: relative; padding-bottom: 56.25%; height: 0;\"><iframe src=\"https://www.loom.com/embed/57eeade8806b4d0a99c94da7c5677c3b\" frameborder=\"0\" webkitallowfullscreen mozallowfullscreen allowfullscreen style=\"position: absolute; top: 0; left: 0; width: 100%; height: 100%;\"></iframe></div>\n    \"\"\"\n\n",
           "headers": []
         }
       }
