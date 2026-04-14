@@ -63,8 +63,8 @@
             "fused:name": "note_326fdfb3_6da0_4f3c_8333_66ad0670e59e_2",
             "nodeTemplateScaleFactor": 2
           },
-          "code": "# Setting up your Canvas to Slack",
-          "headers": []
+          "headers": [],
+          "source": "note_326fdfb3_6da0_4f3c_8333_66ad0670e59e_2.py"
         }
       }
     ],
