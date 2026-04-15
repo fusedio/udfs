@@ -8,16 +8,12 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "note_1",
+          "name": "slack_channel_name",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "isNodeTemplate": true,
-            "nodeTemplateType": "textbox",
-            "nodeTemplateColor": "#A5DD6B",
-            "nodeTemplateGradient": false,
-            "stickyNoteVersion": 3,
-            "nodeTemplateAlignment": "center",
+            "fused:name": "slack_channel_name",
+            "fused:slug": "slack_channel_name",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -59,12 +55,10 @@
                 ]
               }
             },
-            "fused:udfType": "auto",
-            "fused:slug": "note_1",
-            "fused:name": "note_1"
+            "fused:udfType": "auto"
           },
           "headers": [],
-          "source": "note_1.py"
+          "source": "slack_channel_name.py"
         }
       }
     ],

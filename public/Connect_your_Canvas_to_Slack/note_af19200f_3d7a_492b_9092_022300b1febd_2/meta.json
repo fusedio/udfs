@@ -8,16 +8,15 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "note_1",
+          "name": "note_af19200f_3d7a_492b_9092_022300b1febd_2",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
             "isNodeTemplate": true,
             "nodeTemplateType": "textbox",
-            "nodeTemplateColor": "#A5DD6B",
-            "nodeTemplateGradient": false,
+            "nodeTemplateColor": "#0b4a59",
             "stickyNoteVersion": 3,
-            "nodeTemplateAlignment": "center",
+            "nodeTemplateGradient": false,
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -44,7 +43,7 @@
                     10
                   ],
                   "steps": 20,
-                  "colors": "Sunset",
+                  "colors": "TealGrn",
                   "nullColor": [
                     184,
                     184,
@@ -60,11 +59,11 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "note_1",
-            "fused:name": "note_1"
+            "fused:slug": "note_af19200f_3d7a_492b_9092_022300b1febd_2",
+            "fused:name": "note_af19200f_3d7a_492b_9092_022300b1febd_2"
           },
           "headers": [],
-          "source": "note_1.py"
+          "source": "note_af19200f_3d7a_492b_9092_022300b1febd_2.py"
         }
       }
     ],
