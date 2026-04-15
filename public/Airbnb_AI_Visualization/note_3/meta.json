@@ -63,8 +63,8 @@
             "fused:slug": "note_3",
             "fused:name": "note_3"
           },
-          "code": "# Ask AI to visualise this dataset!",
-          "headers": []
+          "headers": [],
+          "source": "note_3.py"
         }
       }
     ],

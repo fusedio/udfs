@@ -62,8 +62,8 @@
             "fused:slug": "Walkthrough_video",
             "fused:name": "Walkthrough_video"
           },
-          "code": "{\n  \"type\": \"iframe\",\n  \"props\": {\n    \"url\": \"https://www.loom.com/embed/5b201deb4b1245f99de1da08a8198cef\"\n  }\n}",
-          "headers": []
+          "headers": [],
+          "source": "Walkthrough_video.py"
         }
       }
     ],

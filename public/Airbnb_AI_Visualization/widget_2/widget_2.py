@@ -1,5 +1,5 @@
 {
-  "type": "render",
+  "type": "widget-builder",
   "props": {
     "defaultValue": {
   "type": "bar-chart",
