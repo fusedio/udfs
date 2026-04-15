@@ -8,12 +8,12 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "Part_2_talk_to_UDF_debugging",
+          "name": "let_your_team_talk_to_your_canvas",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:name": "Part_2_talk_to_UDF_debugging",
-            "fused:slug": "Part_2_talk_to_UDF_debugging",
+            "fused:name": "let_your_team_talk_to_your_canvas",
+            "fused:slug": "let_your_team_talk_to_your_canvas",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -58,7 +58,7 @@
             "fused:udfType": "auto"
           },
           "headers": [],
-          "source": "Part_2_talk_to_UDF_debugging.py"
+          "source": "let_your_team_talk_to_your_canvas.py"
         }
       }
     ],

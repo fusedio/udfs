@@ -8,12 +8,12 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "Part_1_Setting_up_Slack",
+          "name": "1_time_slack_setup",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:name": "Part_1_Setting_up_Slack",
-            "fused:slug": "Part_1_Setting_up_Slack",
+            "fused:name": "1_time_slack_setup",
+            "fused:slug": "1_time_slack_setup",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -58,7 +58,7 @@
             "fused:udfType": "auto"
           },
           "headers": [],
-          "source": "Part_1_Setting_up_Slack.py"
+          "source": "1_time_slack_setup.py"
         }
       }
     ],
