@@ -1,4 +1,4 @@
-@fused.udf(cache_max_age='1m')
+@fused.udf(cache_max_age='10s')
 def udf(
     lookback_minutes: int = 15,          # How far back to look (in minutes)
     canvas_to_filter_for: str = "canvas_bot"
@@ -71,6 +71,7 @@ def udf(
 
     print("Done ✓")
     print(df.dtypes)
+    print(df['stderr'].iloc[3])
     return df
 
 

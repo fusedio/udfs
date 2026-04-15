@@ -63,8 +63,8 @@
             "nodeTemplateAlignment": "left",
             "nodeTemplateScaleFactor": 1.5
           },
-          "code": "## Routing Canvas &lt;-&gt; Slack Channel\n\nUser needs to connect Slack to Fused Bot (one time setup)",
-          "headers": []
+          "headers": [],
+          "source": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_57.py"
         }
       }
     ],

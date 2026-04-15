@@ -63,8 +63,8 @@
             "nodeTemplateAlignment": "left",
             "nodeTemplateScaleFactor": 1.5
           },
-          "code": "## Reading Slack channel names\n\nReturns the Slack channel name based on the channel id",
-          "headers": []
+          "headers": [],
+          "source": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_58.py"
         }
       }
     ],
