@@ -12,7 +12,8 @@ def udf(
     """
 
     # Filtering only for calls you, owner of this canvas, have made (all calls in Slack will go through this Canvas)
-    email_filter = fused.api.whoami()['name']
+    # email_filter = fused.api.whoami()['name']
+    email_filter = "max@fused.io" # Hardcoding for now to get logs from max, who owns the Slack
     
     import os
     import pandas as pd
@@ -71,7 +72,7 @@ def udf(
 
     print("Done ✓")
     print(df.dtypes)
-    print(df['stderr'].iloc[3])
+    # print(df['stderr'].iloc[3])
     return df
 
 

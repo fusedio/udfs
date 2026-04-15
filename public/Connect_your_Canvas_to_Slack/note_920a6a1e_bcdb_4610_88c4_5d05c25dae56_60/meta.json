@@ -8,7 +8,7 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_58",
+          "name": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_60",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
@@ -57,14 +57,14 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_58",
-            "fused:name": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_58",
+            "fused:slug": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_60",
+            "fused:name": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_60",
             "stickyNoteVersion": 3,
             "nodeTemplateAlignment": "left",
             "nodeTemplateScaleFactor": 1.5
           },
           "headers": [],
-          "source": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_58.py"
+          "source": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_60.py"
         }
       }
     ],
