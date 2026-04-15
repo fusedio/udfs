@@ -1,8 +1,5 @@
 @fused.udf(cache_max_age='10s')
-def udf(
-    lookback_minutes: int = 15,          # How far back to look (in minutes)
-    canvas_to_filter_for: str = "canvas_bot"
-):
+def udf():
     """
     Walk /mount/fused-system/logs for the last 1 hour, return all runs
     matching the given email filter.
@@ -11,9 +8,12 @@ def udf(
     Files read per run: udf.json (code extracted from .code field), metadata.json, stdout.log, stderr.log
     """
 
+    # Configuration
+    lookback_minutes= 15              # time in minutes
+    udf_to_filter_for = "canvas_bot"  # only keep logs for this UDF 
+
     # Filtering only for calls you, owner of this canvas, have made (all calls in Slack will go through this Canvas)
-    # email_filter = fused.api.whoami()['name']
-    email_filter = "max@fused.io" # Hardcoding for now to get logs from max, who owns the Slack
+    email_filter = fused.api.whoami()['name']
     
     import os
     import pandas as pd
@@ -68,7 +68,7 @@ def udf(
 
     df = pd.DataFrame(rows)
     df = df.sort_values("timestamp", ascending=False).reset_index(drop=True)
-    df = df[df["udf_name"] == canvas_to_filter_for].reset_index(drop=True)
+    df = df[df["udf_name"] == udf_to_filter_for].reset_index(drop=True)
 
     print("Done ✓")
     print(df.dtypes)
