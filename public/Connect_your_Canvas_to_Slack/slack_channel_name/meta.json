@@ -8,12 +8,12 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "list_Slack_channel_names",
+          "name": "slack_channel_name",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:name": "list_Slack_channel_names",
-            "fused:slug": "list_Slack_channel_names",
+            "fused:name": "slack_channel_name",
+            "fused:slug": "slack_channel_name",
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -40,7 +40,7 @@
                     10
                   ],
                   "steps": 20,
-                  "colors": "Mint",
+                  "colors": "Sunset",
                   "nullColor": [
                     184,
                     184,
@@ -58,7 +58,7 @@
             "fused:udfType": "auto"
           },
           "headers": [],
-          "source": "list_Slack_channel_names.py"
+          "source": "slack_channel_name.py"
         }
       }
     ],
