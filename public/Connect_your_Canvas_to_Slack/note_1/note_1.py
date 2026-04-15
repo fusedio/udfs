@@ -1,5 +1,2 @@
-# For Security purposes: 
 
-# 1. No need to make a shared canvas for this
-
-# 2. If sharing is required, scope it to "Team"
+# Dedicated [Docs](https://docs.fused.io/guide/data-input-outputs/export-api/slack#adding-a-new-canvas-to-slack) page
