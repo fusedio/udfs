@@ -63,8 +63,8 @@
             "nodeTemplateAlignment": "left",
             "nodeTemplateScaleFactor": 1.5
           },
-          "code": "## AI tool calling\n\n- This UDF maps creates a tool for each of the available UDFs in a given Canvas then passes to AI to best find ways to answer questions\n- Answers based on the UDF response",
-          "headers": []
+          "headers": [],
+          "source": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_56.py"
         }
       }
     ],

@@ -63,8 +63,8 @@
             "nodeTemplateAlignment": "left",
             "nodeTemplateScaleFactor": 1.5
           },
-          "code": "## Seeing last 15min logs\n\nReturns logs of UDF runs with parameters for the `canvas_bot` UDF. Use this for debugging calls made from Slack!",
-          "headers": []
+          "headers": [],
+          "source": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_59.py"
         }
       }
     ],

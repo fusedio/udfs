@@ -57,8 +57,8 @@
             },
             "fused:udfType": "auto"
           },
-          "code": "@fused.udf(cache_max_age=\"0s\")\ndef udf():\n    import pandas as pd\n    import json\n    import requests\n\n    # Load channel config\n    config = json.loads(fused.api.get(\"fd://fused-system/integrations/slack.json\"))\n    print(config)\n    channel_map = {r[\"channel_id\"]: r[\"canvas_id\"] for r in config}\n\n    # Look up channel names via Slack API\n    token = fused.secrets[\"SLACK_BOT_TOKEN\"]\n    rows = []\n    for channel_id, canvas_id in channel_map.items():\n        resp = requests.get(\n            \"https://slack.com/api/conversations.info\",\n            headers={\"Authorization\": f\"Bearer {token}\"},\n            params={\"channel\": channel_id},\n        )\n        data = resp.json()\n        if data.get(\"ok\"):\n            name = data[\"channel\"][\"name\"]\n        else:\n            name = f\"[error: {data.get('error', 'unknown')}]\"\n        rows.append({\"channel_id\": channel_id, \"channel_name\": name, \"canvas_id\": canvas_id})\n\n    df = pd.DataFrame(rows)\n    print(df)\n    return df\n",
-          "headers": []
+          "headers": [],
+          "source": "list_Slack_channel_names.py"
         }
       }
     ],

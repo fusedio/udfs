@@ -13,9 +13,9 @@ Use markdown embeded links like [like this](https://fused.io) when answering wit
 
 @fused.udf(cache_max_age=0)
 def udf(
-    prompt: str = "Where can I start with Fused if I only have 5min?",
+    prompt: str = "Internet speed in Tokyo?",
     thread_context: str = "",
-    canvas_token: str = "fc_UPF2QNZmfRPnJ9fWoG7rC",
+    canvas_token: str = "fc_4n7o5oPDhWcBTeLFRM3pKo",
 ):
     import json
     import requests
@@ -60,7 +60,7 @@ def udf(
         resp = requests.get(
             url, 
             timeout=30,
-            headers={"Authorization": f"{fused.api.auth_scheme()} {fused.api.access_token()}"}
+            headers={"Authorization": f"{fused.api.auth_scheme()}  {fused.api.access_token()}"}
         )
         result = resp.text[:8000]
         print(f"[Tool] Response: {len(resp.text)} chars")
@@ -106,7 +106,7 @@ def _fetch_spec(api_url):
     resp = requests.get(
         api_url, 
         timeout=15,
-        headers={"Authorization": f"{fused.api.auth_scheme()} {fused.api.access_token()}"}
+        headers={"Authorization": f"{fused.api.auth_scheme()}  {fused.api.access_token()}"}
     )
     resp.raise_for_status()
     return resp.json()
