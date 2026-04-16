@@ -8,12 +8,15 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "one_time_slack_setup",
+          "name": "Part_2",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:name": "one_time_slack_setup",
-            "fused:slug": "one_time_slack_setup",
+            "isNodeTemplate": true,
+            "nodeTemplateType": "json_ui",
+            "nodeTemplateColor": "#A5DD6B",
+            "nodeTemplateGradient": false,
+            "stickyNoteVersion": 3,
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -40,7 +43,7 @@
                     10
                   ],
                   "steps": 20,
-                  "colors": "Burg",
+                  "colors": "BrwnYl",
                   "nullColor": [
                     184,
                     184,
@@ -55,10 +58,12 @@
                 ]
               }
             },
-            "fused:udfType": "auto"
+            "fused:udfType": "auto",
+            "fused:slug": "Part_2",
+            "fused:name": "Part_2"
           },
           "headers": [],
-          "source": "one_time_slack_setup.py"
+          "source": "Part_2.py"
         }
       }
     ],
