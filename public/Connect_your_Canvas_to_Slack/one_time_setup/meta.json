@@ -8,12 +8,15 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "let_your_team_talk_to_your_canvas",
+          "name": "one_time_setup",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:name": "let_your_team_talk_to_your_canvas",
-            "fused:slug": "let_your_team_talk_to_your_canvas",
+            "isNodeTemplate": true,
+            "nodeTemplateType": "json_ui",
+            "nodeTemplateColor": "#A5DD6B",
+            "nodeTemplateGradient": false,
+            "stickyNoteVersion": 3,
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -40,7 +43,7 @@
                     10
                   ],
                   "steps": 20,
-                  "colors": "Burg",
+                  "colors": "BrwnYl",
                   "nullColor": [
                     184,
                     184,
@@ -55,10 +58,12 @@
                 ]
               }
             },
-            "fused:udfType": "auto"
+            "fused:udfType": "auto",
+            "fused:slug": "one_time_setup",
+            "fused:name": "one_time_setup"
           },
           "headers": [],
-          "source": "let_your_team_talk_to_your_canvas.py"
+          "source": "one_time_setup.py"
         }
       }
     ],
