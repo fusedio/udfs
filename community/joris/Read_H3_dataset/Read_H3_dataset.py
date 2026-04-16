@@ -142,7 +142,7 @@ def read_dataset(path, bounds, res, value, base_res=7, columns=None):
     # Get data and filter based on value and hex_bounds
     dataset = common.get_dataset_from_table(path, bounds)
     if columns is None:
-        # by defaultm, don't materialize those columns
+        # by default, don't materialize those columns
         columns = dataset.schema.names
         for col in ["source_url", "res"]:
             if col in columns:
@@ -219,21 +219,18 @@ def read_dataset(path, bounds, res, value, base_res=7, columns=None):
                 GROUP BY 1,2
             """
         else:
-            data_cols = []
-            if "data_sum" in df.columns:
-                data_cols.append("SUM(data_sum) as data_sum")
-            if "data_avg" in df.columns:
-                data_cols.append("AVG(data_avg) as data_avg")
-            if "data_min" in df.columns:
-                data_cols.append("MIN(data_min) as data_min")
-            if "data_max" in df.columns:
-                data_cols.append("AVG(data_max) as data_max")
+            metrics = {"_sum": "SUM", "_avg": "AVG", "_min": "MIN", "_max": "MAX"}
+            data_cols = [col for col in df.columns if col[-4:] in metrics.keys()]
 
-            data_cols_str = ", ".join(data_cols)
+            data_cols_aggr = []
+            for col in data_cols:
+                data_cols_aggr.append(f"{metrics[col[-4:]]}({col}) as {col}")
+
+            data_cols_aggr_str = ", ".join(data_cols_aggr)
             qr = f"""
                 SELECT
                     hex,
-                    {data_cols_str}
+                    {data_cols_aggr_str}
                 FROM ({qr}) 
                 GROUP BY 1
             """
