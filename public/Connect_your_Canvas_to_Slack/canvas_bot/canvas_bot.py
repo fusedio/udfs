@@ -13,9 +13,9 @@ Use markdown embeded links like [like this](https://fused.io) when answering wit
 
 @fused.udf(cache_max_age=0)
 def udf(
-    prompt: str = "Internet speed in Tokyo?",
+    prompt: str = "How many buildings are there in Florence, Italy within 50m?",
     thread_context: str = "",
-    canvas_token: str = "fc_4n7o5oPDhWcBTeLFRM3pKo",
+    canvas_token: str = "fc_1xbfCe5yTki5E1fbfUe30T",
 ):
     import json
     import requests
@@ -86,10 +86,13 @@ def udf(
     response = ai.run(
         prompt,
         system_prompt=system,
-        model=AiModel.GPT_OSS_120B,
+        # model=AiModel.GPT_OSS_120B,
+        model = AiModel.CLAUDE_SONNET_4_6,
         tools=tools,
         tool_handler=tool_handler,
     )
+
+    print(f"{response.text=}")
 
     if not tool_calls:
         return (
@@ -100,7 +103,7 @@ def udf(
     return response.text
 
 
-@fused.cache
+# @fused.cache
 def _fetch_spec(api_url):
     import requests
     resp = requests.get(
