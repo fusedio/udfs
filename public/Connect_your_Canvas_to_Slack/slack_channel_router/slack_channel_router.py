@@ -1,11 +1,11 @@
 @fused.udf(cache_max_age=0) # Setting cache to zero to always fetch latest tools
 def udf(
-    message_text: str = "What tools do you have access to?",
+    message_text: str = "what are the GERS IDs within 30m of the train station of Florence, Italy?",
     user_id: str = "",
-    channel_id: str = "", # Don't pass anything
+    channel_id: str = "C0ATJ4Y0L3B", # Don't pass anything
     team_id: str = "",
     thread_ts: str = "",
-    event_type: str = "",
+    event_type: str = "app_mention",
     raw_event: dict = {},
     debug: bool = False,
 ):
@@ -57,6 +57,7 @@ def udf(
         bool(thread_ts)
         and f"<@{bot_user_id}>" in message_text
     )
+    print(f"{is_thread_mention=}")
 
     # Check if the bot has already participated in this thread.
     # Run this for any event that has a thread_ts (don't gate on event_type=="message"
@@ -75,6 +76,7 @@ def udf(
         )
         if is_bot_in_thread:
             print(f"[Filter] Bot has already replied in thread {thread_ts} — allowing follow-up without @mention")
+    print(f"{is_bot_in_thread=}")
 
     if not is_mention and not is_thread_mention and not is_bot_in_thread:
         print(f"[Filter] Ignoring event_type='{event_type}' — not a mention (bot_user_id={bot_user_id})")
@@ -155,6 +157,7 @@ def udf(
             history_lines.append(f"user: {text}")
 
     thread_context = "\n".join(history_lines) if history_lines else ""
+    print(f"{thread_context=}")
     ai_response = ai_udf(prompt=message_text, thread_context=thread_context, canvas_token=canvas_token)
 
     if not debug:
