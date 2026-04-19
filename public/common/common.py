@@ -188,7 +188,8 @@ def new_file_tracker(path='s3://fused-asset/data/', exclude_hidden_files=True, s
 
 
 def jam_lock(lock_second=1, verbose=False):
-    import time    
+    import time
+    import os
     current_second = int(time.time()) // (lock_second)
     lock_file = f'/tmp/fused_lock_{current_second}'
     with mutex(lock_file + '_lock', wait=0.5, verbose=verbose):
