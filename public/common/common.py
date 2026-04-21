@@ -4112,37 +4112,44 @@ def gdf_to_map(gdf, color=[220, 255, 0], opacity=0.5, ai_position=None):
 
 
 def parquet_to_map(parquet_path, color=[220, 255, 0], opacity=0.5, ai_position="bottom"):
+    import json
+    json_obj = {
+        "type": "fused-map",
+        "props": {
+            "layers": [
+                {
+                    "sql": f"SELECT ST_AsGeoJSON(geometry) as geometry FROM read_parquet('{parquet_path}')",
+                    "style": {"opacity": opacity, "fillColor": color},
+                }
+            ]
+        },
+    }
+    json_str = json.dumps(json_obj)
+    return widget_builder(json_str, ai_position=ai_position, show_editor=show_editor)
+
+
+def widget_builder(json_str:str='{"type":"text","props":{"content":"Hello World"}}', ai_position='right', show_editor=True):
+    import json
+    import urllib
     if ai_position:
         ai_builder_mode = "enabled"
     else:
         ai_position = "bottom"
         ai_builder_mode = "disabled"
 
-    import json
-    import urllib.parse
-    import pandas as pd
-
     json_obj = {
         "type": "widget-builder",
         "props": {
-            "defaultValue": {
-                "type": "fused-map",
-                "props": {
-                    "layers": [
-                        {
-                            "sql": f"SELECT ST_AsGeoJSON(geometry) as geometry FROM read_parquet('{parquet_path}')",
-                            "style": {"opacity": opacity, "fillColor": color},
-                        }
-                    ]
-                },
-            },
-            "showEditor": True,
+            "defaultValue": json.loads(json_str),
+            "showEditor": show_editor,
             "aiBuilderMode": ai_builder_mode,
             "aiPanel": ai_position,
         },
     }
-    json_str = json.dumps(json_obj, separators=(",", ":"))
-    url_encoded = urllib.parse.quote(json_str, safe="")
-    url = get_canvas_url().replace("/canvas/", "/share/") + f"?widget={url_encoded}"
-    return url_to_html(url)
+    json_str=json.dumps(json_obj)
 
+    
+    common = fused.load("https://github.com/fusedio/udfs/tree/4cb01ef/public/common/")
+    url_encoded = urllib.parse.quote(json_str, safe="")
+    url = common.get_canvas_url().replace("/canvas/", "/share/") + f"?widget={url_encoded}"
+    return common.url_to_html(url)
