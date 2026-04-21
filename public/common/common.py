@@ -4104,7 +4104,7 @@ def show_table_chunks(table_path, color=[220, 255, 0], opacity=0.5):
 
 
 def gdf_to_map(gdf, color=[220, 255, 0], opacity=0.5, ai_position=None):
-    s3_path = common.s3_tmp_path("0.parquet")
+    s3_path = s3_tmp_path("0.parquet")
     gdf.to_parquet(s3_path)
     print(f"Saved to: {s3_path}")
     url = fused.api.sign_url(s3_path)
@@ -4143,6 +4143,6 @@ def parquet_to_map(parquet_path, color=[220, 255, 0], opacity=0.5, ai_position="
     }
     json_str = json.dumps(json_obj, separators=(",", ":"))
     url_encoded = urllib.parse.quote(json_str, safe="")
-    url = common.get_canvas_url().replace("/canvas/", "/share/") + f"?widget={url_encoded}"
-    return common.url_to_html(url)
+    url = get_canvas_url().replace("/canvas/", "/share/") + f"?widget={url_encoded}"
+    return url_to_html(url)
 
