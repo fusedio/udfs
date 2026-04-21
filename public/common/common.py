@@ -4097,3 +4097,52 @@ def _decode_mvt_tile(tile_data, z, x, y):
             features.append({"geometry": _transform_pmtile_geometry(feature["geometry"], z, x, y), **props})
     return features    
 
+
+def show_table_chunks(table_path, color=[220, 255, 0], opacity=0.5):
+    gdf = fused.get_chunks_metadata(table_path)[["geometry"]]
+    return gdf_to_map(gdf, color=color, opacity=opacity)
+
+
+def gdf_to_map(gdf, color=[220, 255, 0], opacity=0.5, ai_position=None):
+    s3_path = common.s3_tmp_path("0.parquet")
+    gdf.to_parquet(s3_path)
+    print(f"Saved to: {s3_path}")
+    url = fused.api.sign_url(s3_path)
+    return parquet_to_map(url, color=color, opacity=opacity, ai_position=ai_position)
+
+
+def parquet_to_map(parquet_path, color=[220, 255, 0], opacity=0.5, ai_position="bottom"):
+    if ai_position:
+        ai_builder_mode = "enabled"
+    else:
+        ai_position = "bottom"
+        ai_builder_mode = "disabled"
+
+    import json
+    import urllib.parse
+    import pandas as pd
+
+    json_obj = {
+        "type": "widget-builder",
+        "props": {
+            "defaultValue": {
+                "type": "fused-map",
+                "props": {
+                    "layers": [
+                        {
+                            "sql": f"SELECT ST_AsGeoJSON(geometry) as geometry FROM read_parquet('{parquet_path}')",
+                            "style": {"opacity": opacity, "fillColor": color},
+                        }
+                    ]
+                },
+            },
+            "showEditor": True,
+            "aiBuilderMode": ai_builder_mode,
+            "aiPanel": ai_position,
+        },
+    }
+    json_str = json.dumps(json_obj, separators=(",", ":"))
+    url_encoded = urllib.parse.quote(json_str, safe="")
+    url = common.get_canvas_url().replace("/canvas/", "/share/") + f"?widget={url_encoded}"
+    return common.url_to_html(url)
+
