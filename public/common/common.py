@@ -4103,15 +4103,15 @@ def show_table_chunks(table_path, color=[220, 255, 0], opacity=0.5):
     return gdf_to_map(gdf, color=color, opacity=opacity)
 
 
-def gdf_to_map(gdf, color=[220, 255, 0], opacity=0.5, ai_position=None):
+def gdf_to_map(gdf, color=[220, 255, 0], opacity=0.5, ai_position=None, show_editor=True):
     s3_path = s3_tmp_path("0.parquet")
     gdf.to_parquet(s3_path)
     print(f"Saved to: {s3_path}")
     url = fused.api.sign_url(s3_path)
-    return parquet_to_map(url, color=color, opacity=opacity, ai_position=ai_position)
+    return parquet_to_map(url, color=color, opacity=opacity, ai_position=ai_position, show_editor=show_editor)
 
 
-def parquet_to_map(parquet_path, color=[220, 255, 0], opacity=0.5, ai_position="bottom"):
+def parquet_to_map(parquet_path, color=[220, 255, 0], opacity=0.5, ai_position="bottom", show_editor=True):
     import json
     json_obj = {
         "type": "fused-map",
