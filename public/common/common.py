@@ -942,7 +942,13 @@ def frames_to_html(arr, format='mp4', fps=50):
     """Convert a sequence of frames to an HTML representation."""
     img_bytes = frames_to_bytes(arr, format=format, fps=fps)
     return bytes_to_html(img_bytes, format=format)
-    
+
+def job_id_to_html(job_id, verbose=True):
+    url = fused.options.base_url.rsplit("/server", 1)[0] + f"/job_status/{job_id}"
+    if verbose:
+        print(f"url: {url}")
+    return url_to_html(url)
+
 @fused.cache
 def read_shapefile(url):
     import geopandas as gpd
