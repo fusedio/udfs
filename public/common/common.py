@@ -4118,6 +4118,8 @@ def parquet_to_map(parquet_path, color=[220, 255, 0], opacity=0.5, ai_position="
         "props": {
             "layers": [
                 {
+                    "id": "data",
+                    "type": "geojson",
                     "sql": f"SELECT ST_AsGeoJSON(geometry) as geometry FROM read_parquet('{parquet_path}')",
                     "style": {"opacity": opacity, "fillColor": color},
                 }
