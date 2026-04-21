@@ -66,7 +66,11 @@ def pip_install(package="numpy", path="/tmp/uv_packages", verbose=False, test_im
         if not imported:
             print(f"Warning: Could not import {package_name} directly (tried: {', '.join(import_names)}). Package may still be functional as a plugin or extension.")
         
-        
+def get_canvas_url():
+    base_url = fused.options.base_url.rsplit("/server", 1)[0]
+    canvas_url = base_url + "/canvas/" + fused.context.this_udf().get_canvas_share_token()
+    return canvas_url
+
 def url_to_qr(url, title='Scan me 🥹', logo_url='https://www.fused.io/favicon.ico'):
     """
     Return an HTML page that shows a QR code for *url*.
