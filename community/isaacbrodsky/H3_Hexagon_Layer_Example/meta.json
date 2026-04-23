@@ -50,16 +50,16 @@
             "fused:assetUrl": "https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/H3_Hexagon_Layer_Example.png",
             "fused:tags": [
               {
-                "id": "Aggregation",
-                "label": "Aggregation"
+                "id": "aggregation",
+                "label": "aggregation"
               },
               {
-                "id": "H3-polygon",
-                "label": "H3-polygon"
+                "id": "h3-polygon",
+                "label": "h3-polygon"
               },
               {
-                "id": "NYC Open Data",
-                "label": "NYC Open Data"
+                "id": "nyc-open-data",
+                "label": "nyc-open-data"
               },
               {
                 "id": "parquet",
