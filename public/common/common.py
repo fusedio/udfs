@@ -2498,7 +2498,13 @@ def from_path(path: str):
             obj = pickle.load(f)
     
     return obj
-
+            
+def resolve_index(df):
+    df_columns = df.columns.tolist()
+    has_conflict = any(c is not None and c in df_columns for c in df.index.names)
+    if has_conflict:
+        df.index = df.index.set_names([n + '_index' if n is not None else n for n in df.index.names])
+    return df
 
 def parse_date(date_str: str, is_end: bool = False):
     """
