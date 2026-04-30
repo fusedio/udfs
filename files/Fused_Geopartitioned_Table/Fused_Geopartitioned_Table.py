@@ -1,9 +1,7 @@
 @fused.udf
 def udf(bounds: fused.types.Bounds=None, path: str="", preview: bool = False):
     use_columns = ["geometry"] if preview else None
-    common = fused.load(
-        "https://github.com/fusedio/udfs/tree/b41216d/public/common/"
-    ).utils
+    common = fused.load('https://github.com/fusedio/udfs/tree/b6786d6/public/common/')
     base_path = (
         path.rsplit("/", maxsplit=1)[0]
         if path.endswith("/_sample") or path.endswith("/_metadata")
