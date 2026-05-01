@@ -40,7 +40,7 @@ def udf(
     #     return "Not implemented without openrouter api key yet. Coming soon"
     # ai.configure(openrouter_api_key=fused.secrets["openrouter_api_key"])
 
-    CANVAS_API_URL = f"https://unstable.udf.ai/{canvas_token}.api.json" # Need to change this to use udf.ai instead when deploying
+    CANVAS_API_URL = f"https://udf.ai/{canvas_token}.api.json" # Need to change this to use udf.ai instead when deploying
 
     spec = _fetch_spec(CANVAS_API_URL)
     base_url = spec["servers"][0]["url"]
@@ -110,13 +110,25 @@ def udf(
 # @fused.cache
 def _fetch_spec(api_url):
     import requests
-    resp = requests.get(
-        api_url, 
-        timeout=15,
-        headers={"Authorization": f"{fused.api.auth_scheme()}  {fused.api.access_token()}"}
-    )
-    resp.raise_for_status()
-    return resp.json()
+    import json
+
+    EMPTY_SPEC = {
+        "info": {"title": "Empty Canvas"},
+        "servers": [{"url": "https://udf.ai"}],
+        "paths": {},
+    }
+
+    try:
+        resp = requests.get(
+            api_url,
+            timeout=15,
+            headers={"Authorization": f"{fused.api.auth_scheme()}  {fused.api.access_token()}"},
+        )
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as e:
+        print(f"[Warning] Could not fetch spec ({e}). Returning empty spec.")
+        return EMPTY_SPEC
 
 
 def _spec_to_tools(spec):
