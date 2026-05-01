@@ -36,10 +36,14 @@ def udf(
 
     pool = ndvi_udf.map(
         arg_list,
-        max_workers=30,  # Limit to 30 concurrent calls to prevent rate limiting from Microsoft Planetary Computer
+        max_workers=12,  # Limit to max 30 concurrent calls to prevent rate limiting from Microsoft Planetary Computer
     )
+    
+    pool.wait()
+
     results = pool.results(return_exceptions=True)
 
     # Filter out any exceptions from failed jobs, then concatenate into a single DataFrame
     valid = [r for r in results if isinstance(r, pd.DataFrame)]
+
     return pd.concat(valid, ignore_index=True)

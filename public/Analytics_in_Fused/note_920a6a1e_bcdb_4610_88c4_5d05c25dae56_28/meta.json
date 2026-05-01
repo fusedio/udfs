@@ -63,8 +63,8 @@
             "nodeTemplateScaleFactor": 3,
             "nodeTemplateGradient": true
           },
-          "code": "Topics to learn more about Fused:\n\n- [Writing UDFs](https://docs.fused.io/guide/working-with-udfs/writing-udfs/)\n\n- [Connect Fused to your database](https://docs.fused.io/guide/data-input-outputs/import-connection/databases)\n\n- [Run UDFs efficiently](https://docs.fused.io/guide/working-with-udfs/udf-best-practices/realtime)",
-          "headers": []
+          "headers": [],
+          "source": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_28.py"
         }
       }
     ],

@@ -63,8 +63,8 @@
             "nodeTemplateAlignment": "left",
             "nodeTemplateScaleFactor": 2
           },
-          "code": "NDVI time series across all 5 AOIs. Each line tracks monthly mean NDVI for one county. Notice unexpected dips (e.g. Knox, ME in August) \u2014 likely artifacts of missing data rather than real vegetation change. The next chart investigates why.",
-          "headers": []
+          "headers": [],
+          "source": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_60.py"
         }
       }
     ],

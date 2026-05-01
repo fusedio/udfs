@@ -63,8 +63,8 @@
             "nodeTemplateAlignment": "left",
             "nodeTemplateScaleFactor": 2
           },
-          "code": "Load a monthly composite of vegetation index (NDVI) through a [STAC query](https://docs.fused.io/guide/data-input-outputs/import-connection/geospatial/stac/) on the Microsoft Planetary Computer",
-          "headers": []
+          "headers": [],
+          "source": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_57.py"
         }
       }
     ],

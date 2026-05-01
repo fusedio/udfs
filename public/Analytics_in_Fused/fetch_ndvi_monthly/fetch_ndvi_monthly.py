@@ -22,7 +22,7 @@ def udf(
         "https://planetarycomputer.microsoft.com/api/stac/v1",
         modifier=planetary_computer.sign_inplace,
     )
-
+    
     date_range = f"{year}-{month:02d}-01/{year}-{month:02d}-28"
 
     @fused.cache
