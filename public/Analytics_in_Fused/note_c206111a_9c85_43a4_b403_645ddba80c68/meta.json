@@ -63,8 +63,8 @@
             "fused:slug": "note_c206111a_9c85_43a4_b403_645ddba80c68",
             "fused:name": "note_c206111a_9c85_43a4_b403_645ddba80c68"
           },
-          "code": "```\n    ...\n    @fused.cache\n    def load_data():\n         # Make a request to API\n    \n    df = load_data()\n```",
-          "headers": []
+          "headers": [],
+          "source": "note_c206111a_9c85_43a4_b403_645ddba80c68.py"
         }
       }
     ],

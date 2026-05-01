@@ -3,8 +3,8 @@ def udf(
     state_fips: str = "53",   # San Juan County, WA
     county_fips: str = "055",
     year: int = 2024,
-    month: int = 6,
-    max_cloud_cover: int = 20,
+    month: int = 12,
+    max_cloud_cover: int = 60,
     resolution: int = 500,    # metres
 ):
     """
@@ -73,6 +73,7 @@ def udf(
     pct_valid = len(valid) / clipped.size * 100
 
     print(f"Pixels inside county: {len(valid)} / {clipped.size} ({pct_valid:.1f}%)")
+    
     print(f"Mean NDVI: {mean_ndvi:.4f}, Min: {min_ndvi:.4f}, Max: {max_ndvi:.4f}")
 
     return pd.DataFrame({
