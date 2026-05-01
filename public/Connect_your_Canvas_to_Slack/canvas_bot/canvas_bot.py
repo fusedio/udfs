@@ -40,9 +40,11 @@ def udf(
     #     return "Not implemented without openrouter api key yet. Coming soon"
     # ai.configure(openrouter_api_key=fused.secrets["openrouter_api_key"])
 
-    CANVAS_API_URL = f"https://unstable.udf.ai/{canvas_token}.api.json" # Need to change this to use udf.ai instead when deploying
+    CANVAS_API_URL = f"https://udf.ai/{canvas_token}.api.json" # Need to change this to use udf.ai instead when deploying
 
     spec = _fetch_spec(CANVAS_API_URL)
+    if isinstance(spec, str):
+        return spec  # error message to surface to the user
     base_url = spec["servers"][0]["url"]
     tools, tool_routes = _spec_to_tools(spec)
 
@@ -110,12 +112,26 @@ def udf(
 # @fused.cache
 def _fetch_spec(api_url):
     import requests
+
     resp = requests.get(
-        api_url, 
+        api_url,
         timeout=15,
-        headers={"Authorization": f"{fused.api.auth_scheme()}  {fused.api.access_token()}"}
+        headers={"Authorization": f"{fused.api.auth_scheme()}  {fused.api.access_token()}"},
     )
-    resp.raise_for_status()
+    if not resp.ok:
+        print(f"[Error] Could not fetch spec for {api_url} (HTTP {resp.status_code}: {resp.reason})")
+        canvas_token = api_url.split("/")[-1].replace(".api.json", "")
+        return (
+            f"Warning: Can't connect to the data canvas.\n"
+            f"*Error:* HTTP {resp.status_code} {resp.reason}\n"
+            f"HTTPS error log: {resp.text}\n"
+            f"*Canvas token:* `{canvas_token}`\n"
+            f"*URL tried:* {api_url}\n\n"
+            f"Please check:\n"
+            f"• The canvas token is correct\n"
+            f"• The canvas is publicly shared (Share → Anyone with the link)\n"
+            f"• The canvas has at least one published UDF endpoint"
+        )
     return resp.json()
 
 
