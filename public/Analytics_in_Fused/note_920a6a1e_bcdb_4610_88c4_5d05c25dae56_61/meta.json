@@ -63,8 +63,8 @@
             "nodeTemplateAlignment": "left",
             "nodeTemplateScaleFactor": 2
           },
-          "code": "**Pixel coverage %** = valid pixels / total pixels per AOI per month.\n\nKnox, ME drops sharply in August (\\~5%), confirming the NDVI dip above is a data gap, likely due to heavy cloud cover.\n\nBaseline differences between counties reflect land cover: water-heavy AOIs (NDVI &lt; 0) naturally have lower coverage.",
-          "headers": []
+          "headers": [],
+          "source": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_61.py"
         }
       }
     ],

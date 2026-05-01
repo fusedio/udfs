@@ -63,8 +63,8 @@
             "nodeTemplateAlignment": "left",
             "nodeTemplateScaleFactor": 2
           },
-          "code": "You can [combine UDFs together](https://docs.fused.io/guide/working-with-udfs/udf-best-practices/realtime#calling-another-udf) by loading them & executing them in another UDF.\n\nThis UDF loads a specific US county and calculates the mean NDVI over it",
-          "headers": []
+          "headers": [],
+          "source": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_33.py"
         }
       }
     ],
