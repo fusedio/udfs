@@ -38,6 +38,7 @@ def udf(
         arg_list,
         max_workers=30,  # Limit to 30 concurrent calls to prevent rate limiting from Microsoft Planetary Computer
     )
+    pool.wait()
     results = pool.results(return_exceptions=True)
 
     # Filter out any exceptions from failed jobs, then concatenate into a single DataFrame

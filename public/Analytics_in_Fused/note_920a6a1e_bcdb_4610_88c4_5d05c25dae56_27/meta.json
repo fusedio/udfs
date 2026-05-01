@@ -62,8 +62,8 @@
             "stickyNoteVersion": 3,
             "nodeTemplateScaleFactor": 2
           },
-          "code": "This tutorial will show you how to create time series of vegetation index over a full year in 5 different areas, starting by loading data from open sources online",
-          "headers": []
+          "headers": [],
+          "source": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_27.py"
         }
       }
     ],
