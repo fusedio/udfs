@@ -27,11 +27,15 @@ def udf(
     #     "C0ATL1RJP8Q": "fc_UPF2QNZmfRPnJ9fWoG7rC"   # fused-docs-questions   -> Docs ragging
     # }
 
-    channel_routing = json.loads(fused.api.get(
-        # "s3://fused-users/fused/max/slack_canvas_routing/slack_canvas_channel_config.json"
-        "fd://fused-system/integrations/slack.json"
-    ))
-    CHANNEL_CONFIG = {item["channel_id"]: item["canvas_id"] for item in channel_routing}
+    try:
+        channel_routing = json.loads(fused.api.get(
+            # "s3://fused-users/fused/max/slack_canvas_routing/slack_canvas_channel_config.json"
+            "fd://fused-system/integrations/slack.json"
+        ))
+        CHANNEL_CONFIG = {item["channel_id"]: item["canvas_id"] for item in channel_routing}
+    except Exception as e:
+        print(f"[Router] Could not load slack.json (file may not exist yet): {e}")
+        CHANNEL_CONFIG = {}
 
     print(CHANNEL_CONFIG)
     
