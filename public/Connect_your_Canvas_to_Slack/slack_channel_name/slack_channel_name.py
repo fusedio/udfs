@@ -17,4 +17,5 @@ def udf(channel_id:str="C0ATL1RJP8Q"):
     if data.get("ok"):
         return data["channel"]["name"]
     else:
-        raise ValueError(f"Slack API error: {data.get('error', 'Unknown error')}")
+        print(f"Slack API error: {data.get('error', 'Unknown error')}")
+        return ""
