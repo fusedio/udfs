@@ -1,6 +1,6 @@
 @fused.udf
-def udf(path: str):
-    preview = False
+def udf(path: str, preview: Bool):
+    
     import imageio.v3 as iio
     import fsspec
 
