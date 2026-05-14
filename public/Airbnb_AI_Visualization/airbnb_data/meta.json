@@ -55,7 +55,8 @@
                 ]
               }
             },
-            "fused:udfType": "auto"
+            "fused:udfType": "auto",
+            "nodeDescription": "**Description**\n\nThis UDF loads an Airbnb listings dataset stored as a Parquet file in an S3 bucket, caches the loaded DataFrame for faster subsequent calls, and returns the DataFrame.  \n\nWhen executed, it prints the first few rows (`head()`), the data types of each column (`dtypes`), and the overall shape of the DataFrame (`shape`).  \n\nThe function uses **pandas** to read the Parquet file and relies on `fused.cache` to avoid re\u2011reading the file on repeated invocations."
           },
           "headers": [],
           "source": "airbnb_data.py"

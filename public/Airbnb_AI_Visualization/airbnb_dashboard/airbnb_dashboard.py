@@ -9,7 +9,7 @@
   }
 },
     "showEditor": true,
-    "aiBuilderMode": "enabled",
+    "aiBuilderMode": true,
     "aiPanel": "right"
   }
 }
