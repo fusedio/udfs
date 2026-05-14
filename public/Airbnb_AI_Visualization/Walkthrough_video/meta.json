@@ -14,9 +14,9 @@
           "metadata": {
             "isNodeTemplate": true,
             "nodeTemplateType": "json_ui",
-            "nodeTemplateColor": "#FFF9C4",
-            "nodeTemplateGradient": true,
-            "stickyNoteVersion": 3,
+            "nodeTemplateColor": "#2D2D2D",
+            "nodeTemplateGradient": false,
+            "stickyNoteVersion": 4,
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -60,7 +60,8 @@
             },
             "fused:udfType": "auto",
             "fused:slug": "Walkthrough_video",
-            "fused:name": "Walkthrough_video"
+            "fused:name": "Walkthrough_video",
+            "nodeDescription": "**UDF Description**\n\nThis user\u2011defined function (UDF) generates an iframe element that embeds a video from Loom. It takes a single property, `src`, which should be a valid Loom video URL, and creates an HTML `<iframe>` with that source. The iframe is ready to be inserted into a webpage, allowing the video to be displayed directly within the page."
           },
           "headers": [],
           "source": "Walkthrough_video.py"

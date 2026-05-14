@@ -8,15 +8,15 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "widget_2",
+          "name": "airbnb_dashboard",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
             "isNodeTemplate": true,
             "nodeTemplateType": "json_ui",
-            "nodeTemplateColor": "#141414",
+            "nodeTemplateColor": "#000000",
             "nodeTemplateGradient": false,
-            "stickyNoteVersion": 3,
+            "stickyNoteVersion": 4,
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -59,11 +59,12 @@
               }
             },
             "fused:udfType": "auto",
-            "fused:slug": "widget_2",
-            "fused:name": "widget_2"
+            "fused:slug": "airbnb_dashboard",
+            "fused:name": "airbnb_dashboard",
+            "nodeDescription": "The configuration creates a widget that displays a bar\u2011chart of Airbnb listings. It runs an SQL query that groups the data by `neighbourhood_cleansed`, calculates the average price in dollars for each neighbourhood, rounds the result to two decimal places, and then orders the results from highest to lowest average price, showing only the top 15 neighbourhoods.\n\nThe chart is given the title **\u201cTop 15 Neighbourhoods\u201d**, and the widget\u2019s default view is this bar\u2011chart. Users can edit the widget because `showEditor` is set to `true`. Additionally, the AI builder interface is enabled (`aiBuilderMode: true`) with the AI panel positioned on the right side of the screen."
           },
           "headers": [],
-          "source": "widget_2.py"
+          "source": "airbnb_dashboard.py"
         }
       }
     ],
