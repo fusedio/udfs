@@ -63,8 +63,8 @@
             "nodeTemplateScaleFactor": 3,
             "nodeTemplateGradient": true
           },
-          "code": "Dive deepeer into each topic\n\n- [Writing UDFs](https://docs.fused.io/guide/working-with-udfs/writing-udfs/)\n\n- [UDFs as API](https://docs.fused.io/guide/working-with-udfs/run-udfs-as-api)\n\n- [Efficiently caching](https://docs.fused.io/guide/working-with-udfs/udf-best-practices/caching)\n\n- [Scaling up in Fused](https://docs.fused.io/guide/working-with-udfs/udf-best-practices/scaling-out)",
-          "headers": []
+          "headers": [],
+          "source": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_28.py"
         }
       }
     ],

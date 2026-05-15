@@ -64,8 +64,8 @@
             "fused:name": "note_d6087a98_48e8_4552_9ffa_ef750b41a3d9",
             "nodeTemplateAlignment": "center"
           },
-          "code": "**Remove .head(100) line 7**\n\n**(Shift + Enter to rerun)**",
-          "headers": []
+          "headers": [],
+          "source": "note_d6087a98_48e8_4552_9ffa_ef750b41a3d9.py"
         }
       }
     ],

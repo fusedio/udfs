@@ -57,8 +57,8 @@
             },
             "fused:udfType": "auto"
           },
-          "code": "@fused.udf\ndef udf(n: int = 30):\n    import pandas as pd\n\n    # Load the slow compute UDF\n    slow_udf = fused.load(\"slow_compute_udf\")\n\n    # Run it n times in parallel with udf.map()\n    results = slow_udf.map(range(n))\n\n    return results.df().reset_index(drop=True)\n",
-          "headers": []
+          "headers": [],
+          "source": "parallel_runner_again.py"
         }
       }
     ],

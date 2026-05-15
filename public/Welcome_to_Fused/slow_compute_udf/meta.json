@@ -57,8 +57,8 @@
             },
             "fused:udfType": "auto"
           },
-          "code": "@fused.udf\ndef udf(val: int = 5):\n    import time\n    import pandas as pd\n\n    # Simulate heavy compute\n    time.sleep(5)\n\n    return pd.DataFrame({\"val\": [val], \"result\": [val * 10]})\n",
-          "headers": []
+          "headers": [],
+          "source": "slow_compute_udf.py"
         }
       }
     ],
