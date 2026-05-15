@@ -14,9 +14,9 @@
           "metadata": {
             "isNodeTemplate": true,
             "nodeTemplateType": "json_ui",
-            "nodeTemplateColor": "#FFF9C4",
-            "nodeTemplateGradient": true,
-            "stickyNoteVersion": 3,
+            "nodeTemplateColor": "#000000",
+            "nodeTemplateGradient": false,
+            "stickyNoteVersion": 4,
             "fused:vizConfig": {
               "tileLayer": {
                 "@@type": "TileLayer",
@@ -62,8 +62,8 @@
             "fused:slug": "widget_1",
             "fused:name": "widget_1"
           },
-          "code": "{\n  \"type\": \"iframe\",\n  \"props\": {\n    \"url\": \"https://www.loom.com/embed/c21af1e65e074bbc97d44bd77cad0b58\"\n  }\n}",
-          "headers": []
+          "headers": [],
+          "source": "widget_1.py"
         }
       }
     ],

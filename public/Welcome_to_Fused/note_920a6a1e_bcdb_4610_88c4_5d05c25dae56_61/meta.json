@@ -63,8 +63,8 @@
             "nodeTemplateAlignment": "left",
             "nodeTemplateScaleFactor": 2
           },
-          "code": "If we rerun the *exact* same code here, it's a lot faster as Fused returns a cached version of our UDF by default",
-          "headers": []
+          "headers": [],
+          "source": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_61.py"
         }
       }
     ],

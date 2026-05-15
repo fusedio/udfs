@@ -63,8 +63,8 @@
             "nodeTemplateAlignment": "left",
             "nodeTemplateScaleFactor": 2
           },
-          "code": "You can use [Widgets](https://docs.fused.io/guide/data-input-outputs/import-connection/widgets) to visualise datasets",
-          "headers": []
+          "headers": [],
+          "source": "note_920a6a1e_bcdb_4610_88c4_5d05c25dae56_57.py"
         }
       }
     ],
