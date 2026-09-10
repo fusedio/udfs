@@ -1,6 +1,6 @@
 # Note: This UDF is only for demo purposes. You may get `HTTP GET error` after several times calling it. This is the data retrieval issue caused by Cloudfront servers not responding.
 @fused.udf
-def udf(agg_factor=3, min_count=5):
+def udf(agg_factor: int = 3, min_count: int = 5):
     import duckdb
 
     common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
