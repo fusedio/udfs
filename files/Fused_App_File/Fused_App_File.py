@@ -1,5 +1,6 @@
 import html
 import json
+import struct
 
 import fused
 
@@ -7,25 +8,35 @@ MAX_README_CHARS = 200_000
 MAX_LISTED_FILES = 500
 MAX_ICON_BYTES = 2_000_000
 
+# v2 container header: magic, u16 version, u16 flags, u32 index size, u32
+# compressed index size. Then zlib(JSON index), then one zlib stream per file,
+# each at `offset` bytes into the data section.
+MAGIC = b"FUSEDAPP"
+V2_VERSION = 2
+V2_HEADER = struct.Struct("<8sHHII")
+MAX_INDEX_BYTES = 4 * 1024 * 1024
+
 
 @fused.udf(cache_max_age="30m")
 def udf(path: str, preview: bool = False):
     """Unpack a `.fused` app file and show what is inside it.
 
-    A `.fused` file is a zip holding `manifest.json` plus a `root` folder (by
-    convention `files/`) with the app's entry point, code and assets. This UDF
-    reads the archive through a seekable handle, so only the central directory
-    and the few members it shows are ever pulled — a 25 MB app file costs the
-    same as a 100 KB one.
-    """
-    import zipfile
+    Two physical formats carry the same thing. **v2** (`FUSEDAPP` magic) is an
+    opaque container: a versioned header, a deflated JSON index and one deflate
+    stream per file. **v1** was a zip with `manifest.json` plus a `root` folder
+    (by convention `files/`), which mail scanners classified by its `PK` bytes
+    and flagged; v2 exists to be unremarkable to a scanner. Both are read here,
+    since every v1 file already sent still has to open.
 
+    Either way the read goes through a seekable handle and pulls only the index
+    (or central directory) plus the two or three members shown — a 25 MB app
+    file costs about what a 100 KB one does.
+    """
     import fsspec
 
     try:
         with fsspec.open(path, "rb") as f:
-            with zipfile.ZipFile(f) as zf:
-                app = _read_app(zf)
+            app = _read_app_file(f)
     except Exception as e:  # noqa: BLE001 - surfaced to the viewer, not swallowed
         return _error(path, f"{type(e).__name__}: {e}")
 
@@ -41,8 +52,117 @@ def udf(path: str, preview: bool = False):
     return _page(path, app, download_url)
 
 
-def _read_app(zf):
-    """Pull the manifest, README, icon and file listing out of an open zip."""
+def _read_app_file(f):
+    """Read whichever format the bytes say this is. The magic decides — not the
+    extension, which is `.fused` for both."""
+    import zipfile
+
+    head = f.read(len(MAGIC))
+    f.seek(0)
+    if head == MAGIC:
+        return _read_v2(f)
+    with zipfile.ZipFile(f) as zf:
+        return _read_zip(zf)
+
+
+def _inflate(raw, cap):
+    """Decompress at most `cap + 1` bytes — one past the cap, so the caller can
+    tell "at the cap" from "over it" — and never the declared length, which the
+    file itself supplies and could claim to be a gigabyte."""
+    import zlib
+
+    return zlib.decompressobj().decompress(raw, cap + 1)
+
+
+def _read_v2(f):
+    """Pull the index, README, icon and file listing out of a v2 container.
+
+    Everything the header and index declare is file-supplied, so each number is
+    bounded before it is acted on: the index is capped before it inflates, and
+    a member is read only through its own `offset`/`csize` window.
+    """
+    head = f.read(V2_HEADER.size)
+    if len(head) < V2_HEADER.size:
+        raise ValueError("not a fused app file (truncated header)")
+    _magic, version, _flags, isize, icsize = V2_HEADER.unpack(head)
+    if version != V2_VERSION:
+        raise ValueError(f"unsupported .fused format version {version}")
+    if isize > MAX_INDEX_BYTES or icsize > MAX_INDEX_BYTES:
+        raise ValueError(f"file index is too large (> {MAX_INDEX_BYTES} bytes)")
+    cindex = f.read(icsize)
+    if len(cindex) != icsize:
+        raise ValueError("not a fused app file (truncated index)")
+    raw = _inflate(cindex, MAX_INDEX_BYTES)
+    if len(raw) != isize:
+        raise ValueError("file index does not match its declared size")
+    index = json.loads(raw)
+    if not isinstance(index, dict) or index.get("fused_app_file") != V2_VERSION:
+        raise ValueError("not a fused app file (index carries no fused_app_file: 2)")
+    members = index.get("files")
+    if not isinstance(members, list):
+        raise ValueError("invalid index: files is not a list")
+    for m in members:
+        if not isinstance(m, dict) or not isinstance(m.get("path"), str) or not m["path"]:
+            raise ValueError("invalid index: file entry has no path")
+        for key in ("offset", "size", "csize"):
+            v = m.get(key)
+            if not isinstance(v, int) or isinstance(v, bool) or v < 0:
+                raise ValueError(f"invalid index: {key} of {m['path']!r} is not a size")
+
+    data_start = V2_HEADER.size + icsize
+    readme = None
+    icon = None
+    for m in members:
+        rel = m["path"].lower()
+        if readme is None and rel in ("readme.md", "readme.markdown", "readme"):
+            body = _v2_member(f, data_start, m, MAX_README_CHARS)
+            if body is not None:
+                readme = body.decode("utf-8", "replace")[:MAX_README_CHARS]
+        if icon is None and rel in ("icon.svg", "preview.png", "icon.png"):
+            body = _v2_member(f, data_start, m, MAX_ICON_BYTES)
+            if body is not None:
+                icon = ("image/svg+xml" if rel.endswith(".svg") else "image/png", body)
+
+    files = sorted(
+        ({"name": m["path"], "size": m["size"]} for m in members),
+        key=lambda f: f["name"],
+    )
+    return {
+        "name": index.get("name") or "",
+        "entry": index.get("entry") or "",
+        "exported_at": index.get("exported_at") or "",
+        "is_app_file": True,
+        "readme": readme,
+        "icon": icon,
+        "files": files,
+        "total_size": sum(f["size"] for f in files),
+    }
+
+
+def _v2_member(f, data_start, entry, cap):
+    """One member's decompressed bytes, or None when it is larger than `cap` —
+    too big to show is not an error, it just leaves that panel empty. Corrupt
+    bytes are: a member that does not inflate to its declared size or hash is a
+    broken file, and saying so beats rendering half a README."""
+    import hashlib
+
+    if entry["size"] > cap:
+        return None
+    f.seek(data_start + entry["offset"])
+    raw = f.read(entry["csize"])
+    if len(raw) != entry["csize"]:
+        raise ValueError(f"{entry['path']!r} runs past the end of the file")
+    body = _inflate(raw, cap)
+    if len(body) != entry["size"]:
+        raise ValueError(f"{entry['path']!r} does not match its declared size")
+    if isinstance(entry.get("sha256"), str):
+        if hashlib.sha256(body).hexdigest() != entry["sha256"]:
+            raise ValueError(f"{entry['path']!r} does not match its recorded hash")
+    return body
+
+
+def _read_zip(zf):
+    """Pull the manifest, README, icon and file listing out of a v1 zip."""
     members = [i for i in zf.infolist() if not i.is_dir()]
 
     manifest = {}
@@ -77,7 +197,7 @@ def _read_app(zf):
     return {
         "name": manifest.get("name") or "",
         "entry": manifest.get("entry") or "",
-        "root": root,
+        "exported_at": manifest.get("exported_at") or "",
         "is_app_file": bool(manifest.get("fused_app_file")),
         "readme": readme,
         "icon": icon,
@@ -112,6 +232,11 @@ def _page(path, app, download_url):
     badge = "" if app["is_app_file"] else (
         '<span class="warn" title="manifest.json has no fused_app_file marker">'
         "not marked as an app file</span>"
+    )
+    # The stamp is ISO-8601 UTC; only the day is worth a header line.
+    exported = app.get("exported_at") or ""
+    exported = (
+        f' · exported {html.escape(exported[:10], quote=True)}' if exported[:4].isdigit() else ""
     )
     download = (
         f'<a class="dl" href="{html.escape(download_url, quote=True)}" download="{file_name}">'
@@ -181,7 +306,7 @@ def _page(path, app, download_url):
     <div>
       <h1>{title}</h1>
       <div class="sub">Entry <code class="entry">{entry}</code> ·
-        {len(app["files"])} files · <span id="total"></span> {badge}</div>
+        {len(app["files"])} files · <span id="total"></span>{exported} {badge}</div>
     </div>
   </header>
   <div class="bar">{download}</div>
@@ -238,8 +363,9 @@ def _error(path, message):
 <body style="margin:0; padding:24px; background:#1a1a1a; color:#cccccc;
              font-family: system-ui, -apple-system, sans-serif; line-height:1.6;">
   <h2 style="color:#ff6b6b;">Could not open this .fused file</h2>
-  <p>A <code>.fused</code> app file is a zip archive holding
-     <code>manifest.json</code> and the app's files. This one could not be read:</p>
+  <p>A <code>.fused</code> app file is an exported Fused app — either a
+     <code>FUSEDAPP</code> container or, for older exports, a zip. This one
+     could not be read:</p>
   <p><code>{html.escape(message, quote=True)}</code></p>
   <p><strong>Path:</strong> <code>{safe}</code></p>
 </body>
