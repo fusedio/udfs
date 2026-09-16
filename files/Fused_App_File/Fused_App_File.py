@@ -7,6 +7,13 @@ import fused
 MAX_README_CHARS = 200_000
 MAX_LISTED_FILES = 500
 MAX_ICON_BYTES = 2_000_000
+MAX_SHOT_BYTES = 6_000_000
+
+# An icon is the app's mark; a shot is a picture of the app running. They sit
+# side by side in the file list and nothing else about them is alike — the mark
+# belongs at 64px above the title, the shot belongs full width under it.
+ICON_NAMES = ("icon.svg", "icon.png")
+SHOT_NAMES = ("preview.png", "screenshot.png", "preview.jpg", "screenshot.jpg")
 
 # v2 container header: magic, u16 version, u16 flags, u32 index size, u32
 # compressed index size. Then zlib(JSON index), then one zlib stream per file,
@@ -112,16 +119,21 @@ def _read_v2(f):
     data_start = V2_HEADER.size + icsize
     readme = None
     icon = None
+    shot = None
     for m in members:
         rel = m["path"].lower()
         if readme is None and rel in ("readme.md", "readme.markdown", "readme"):
             body = _v2_member(f, data_start, m, MAX_README_CHARS)
             if body is not None:
                 readme = body.decode("utf-8", "replace")[:MAX_README_CHARS]
-        if icon is None and rel in ("icon.svg", "preview.png", "icon.png"):
+        if icon is None and rel in ICON_NAMES:
             body = _v2_member(f, data_start, m, MAX_ICON_BYTES)
             if body is not None:
-                icon = ("image/svg+xml" if rel.endswith(".svg") else "image/png", body)
+                icon = (_image_mime(rel), body)
+        if shot is None and rel in SHOT_NAMES:
+            body = _v2_member(f, data_start, m, MAX_SHOT_BYTES)
+            if body is not None:
+                shot = (_image_mime(rel), body)
 
     files = sorted(
         ({"name": m["path"], "size": m["size"]} for m in members),
@@ -134,6 +146,7 @@ def _read_v2(f):
         "is_app_file": True,
         "readme": readme,
         "icon": icon,
+        "shot": shot,
         "files": files,
         "total_size": sum(f["size"] for f in files),
     }
@@ -181,14 +194,15 @@ def _read_zip(zf):
 
     readme = None
     icon = None
+    shot = None
     for info in members:
         rel = in_app(info.filename).lower()
         if readme is None and rel in ("readme.md", "readme.markdown", "readme"):
             readme = zf.read(info.filename).decode("utf-8", "replace")[:MAX_README_CHARS]
-        if icon is None and rel in ("icon.svg", "preview.png", "icon.png"):
-            if info.file_size <= MAX_ICON_BYTES:
-                mime = "image/svg+xml" if rel.endswith(".svg") else "image/png"
-                icon = (mime, zf.read(info.filename))
+        if icon is None and rel in ICON_NAMES and info.file_size <= MAX_ICON_BYTES:
+            icon = (_image_mime(rel), zf.read(info.filename))
+        if shot is None and rel in SHOT_NAMES and info.file_size <= MAX_SHOT_BYTES:
+            shot = (_image_mime(rel), zf.read(info.filename))
 
     files = sorted(
         ({"name": in_app(i.filename), "size": i.file_size} for i in members),
@@ -201,6 +215,7 @@ def _read_zip(zf):
         "is_app_file": bool(manifest.get("fused_app_file")),
         "readme": readme,
         "icon": icon,
+        "shot": shot,
         "files": files,
         "total_size": sum(f["size"] for f in files),
     }
@@ -211,36 +226,52 @@ def _js(value):
     return json.dumps(value).replace("</", "<\\/")
 
 
-def _icon_markup(icon):
-    """SVG goes in an <img>, not inline: an <img> cannot run the file's scripts."""
-    if icon is None:
-        return '<div class="icon placeholder">.fused</div>'
+def _image_mime(rel):
+    """Mime from the name. Only the four extensions we accept reach here."""
+    if rel.endswith(".svg"):
+        return "image/svg+xml"
+    return "image/jpeg" if rel.endswith((".jpg", ".jpeg")) else "image/png"
+
+
+def _data_uri(image):
+    """An <img> src, not inline markup: an <img> cannot run the file's scripts."""
     import base64
 
-    mime, raw = icon
-    data = base64.b64encode(raw).decode("ascii")
-    return f'<img class="icon" src="data:{mime};base64,{data}" alt="app icon">'
+    mime, raw = image
+    return f"data:{mime};base64,{base64.b64encode(raw).decode('ascii')}"
 
 
 def _page(path, app, download_url):
     file_name = html.escape(path.rsplit("/", 1)[-1], quote=True)
     title = html.escape(app["name"] or path.rsplit("/", 1)[-1], quote=True)
-    entry = html.escape(app["entry"] or "—", quote=True)
     listed = app["files"][:MAX_LISTED_FILES]
     hidden = len(app["files"]) - len(listed)
 
-    badge = "" if app["is_app_file"] else (
-        '<span class="warn" title="manifest.json has no fused_app_file marker">'
-        "not marked as an app file</span>"
+    icon = (
+        f'<img class="mark" src="{_data_uri(app["icon"])}" alt="">'
+        if app.get("icon")
+        else '<div class="mark ph">.fused</div>'
     )
-    # The stamp is ISO-8601 UTC; only the day is worth a header line.
-    exported = app.get("exported_at") or ""
-    exported = (
-        f' · exported {html.escape(exported[:10], quote=True)}' if exported[:4].isdigit() else ""
+    # The screenshot is the whole point of a share page: someone deciding whether
+    # to download this wants to see it running, not read about it.
+    shot = (
+        f'<img class="shot" src="{_data_uri(app["shot"])}" alt="{title} screenshot">'
+        if app.get("shot")
+        else ""
     )
-    download = (
+
+    # The stamp is ISO-8601 UTC; only the day is worth showing.
+    stamp = app.get("exported_at") or ""
+    bits = [f'{len(app["files"])} files', '<span id="total"></span>']
+    if stamp[:4].isdigit():
+        bits.append(html.escape(stamp[:10], quote=True))
+    if not app["is_app_file"]:
+        bits.append('<span class="warn">not marked as an app file</span>')
+    meta = " · ".join(bits)
+
+    action = (
         f'<a class="dl" href="{html.escape(download_url, quote=True)}" download="{file_name}">'
-        f"Download {file_name}</a>"
+        f"Download <span class=\"fn\">{file_name}</span></a>"
         if download_url
         else '<span class="warn">Download unavailable — this path cannot be signed</span>'
     )
@@ -255,73 +286,103 @@ def _page(path, app, download_url):
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <style>
   * {{ box-sizing: border-box; }}
-  html, body {{ margin: 0; background: #1a1a1a; color: #cccccc; }}
+  html, body {{ margin: 0; background: #141414; color: #c9c9c9; }}
   body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          font-size: 15px; line-height: 1.65; }}
-  .page {{ max-width: 900px; margin: 0 auto; padding: 28px 24px 64px; }}
-  header {{ display: flex; gap: 18px; align-items: center; margin-bottom: 8px; }}
-  .icon {{ width: 72px; height: 72px; flex: none; object-fit: contain;
-           background: #2a2a2a; border-radius: 12px; padding: 6px; }}
-  .icon.placeholder {{ display: flex; align-items: center; justify-content: center;
-           color: #D1E550; font-family: ui-monospace, Menlo, monospace; font-size: 13px;
-           padding: 0; }}
-  h1 {{ color: #D1E550; font-size: 1.6em; margin: 0 0 4px; }}
-  .sub {{ color: #888; font-size: .9em; }}
-  .sub code {{ color: #cccccc; }}
-  .bar {{ display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 18px 0 28px; }}
-  .dl {{ background: #D1E550; color: #1a1a1a; text-decoration: none; font-weight: 600;
-         padding: 8px 16px; border-radius: 6px; }}
-  .dl:hover {{ background: #E8FF59; }}
-  .warn {{ color: #ff6b6b; font-size: .9em; }}
-  h2 {{ color: #D1E550; font-size: 1.1em; margin: 32px 0 10px;
-        border-bottom: 1px solid #333; padding-bottom: 6px; }}
-  table {{ border-collapse: collapse; width: 100%; font-size: .92em; }}
-  td {{ border-bottom: 1px solid #2a2a2a; padding: 6px 10px; }}
-  td.n {{ font-family: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
-          word-break: break-all; }}
-  td.s {{ text-align: right; color: #888; white-space: nowrap; width: 1%; }}
-  .entry {{ color: #D1E550; }}
-  .more {{ color: #888; font-size: .9em; padding: 8px 10px; }}
-  .doc h1, .doc h2, .doc h3, .doc h4 {{ color: #D1E550; margin: 24px 0 10px; line-height: 1.3; }}
-  .doc h1 {{ font-size: 1.5em; border: 0; }} .doc h2 {{ font-size: 1.25em; }}
+          font-size: 15px; line-height: 1.7; -webkit-font-smoothing: antialiased; }}
+  .page {{ max-width: 720px; margin: 0 auto; padding: 56px 24px 96px; }}
+
+  .hero {{ display: flex; flex-direction: column; align-items: center; text-align: center;
+           gap: 14px; }}
+  .mark {{ width: 64px; height: 64px; border-radius: 15px; object-fit: contain;
+           background: #202020; padding: 7px; }}
+  .mark.ph {{ display: flex; align-items: center; justify-content: center; padding: 0;
+           color: #D1E550; font-family: ui-monospace, Menlo, monospace; font-size: 12px; }}
+  h1 {{ font-size: 2.1em; font-weight: 650; letter-spacing: -.02em; color: #f2f2f2;
+        margin: 0; line-height: 1.15; }}
+  .meta {{ color: #7d7d7d; font-size: .88em; margin: -6px 0 4px; }}
+  .warn {{ color: #ff6b6b; }}
+  .dl {{ display: inline-block; background: #D1E550; color: #141414; text-decoration: none;
+         font-weight: 600; font-size: .95em; padding: 11px 22px; border-radius: 8px;
+         transition: background .15s ease; }}
+  .dl:hover {{ background: #E3FA62; }}
+  .dl .fn {{ font-family: ui-monospace, Menlo, monospace; font-size: .92em; opacity: .75; }}
+
+  .shot {{ display: block; width: 100%; margin: 48px 0 8px; border-radius: 12px;
+           border: 1px solid #2b2b2b; }}
+
+  .doc {{ margin-top: 48px; }}
+  .doc > :first-child {{ margin-top: 0; }}
+  .doc h1, .doc h2, .doc h3, .doc h4 {{ color: #f2f2f2; font-weight: 600;
+           letter-spacing: -.01em; margin: 34px 0 12px; line-height: 1.3; }}
+  .doc h1 {{ font-size: 1.45em; }} .doc h2 {{ font-size: 1.2em; }}
+  .doc h3 {{ font-size: 1.05em; }}
   .doc a {{ color: #D1E550; }}
-  .doc code {{ background: #2a2a2a; padding: 2px 6px; border-radius: 3px;
+  .doc strong {{ color: #e8e8e8; }}
+  .doc code {{ background: #232323; color: #d8d8d8; padding: 2px 6px; border-radius: 4px;
           font-family: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
-          font-size: .9em; }}
-  .doc pre {{ background: #2a2a2a; padding: 14px 16px; border-radius: 6px; overflow-x: auto; }}
+          font-size: .87em; }}
+  .doc pre {{ background: #1c1c1c; border: 1px solid #292929; padding: 14px 16px;
+          border-radius: 8px; overflow-x: auto; }}
   .doc pre code {{ background: none; padding: 0; }}
-  .doc blockquote {{ border-left: 4px solid #D1E550; margin: 16px 0; padding: 2px 0 2px 16px;
-          color: #999; }}
-  .doc table {{ margin: 16px 0; display: block; overflow-x: auto; }}
-  .doc th, .doc td {{ border: 1px solid #444; padding: 8px 12px; text-align: left; }}
-  .doc th {{ background: #2a2a2a; color: #D1E550; }}
-  .doc img {{ max-width: 100%; }}
-  .empty {{ color: #888; font-style: italic; }}
+  .doc blockquote {{ border-left: 3px solid #3a3a3a; margin: 16px 0;
+          padding: 2px 0 2px 16px; color: #8d8d8d; }}
+  .doc ul, .doc ol {{ padding-left: 22px; }}
+  .doc li {{ margin: 6px 0; }}
+  .doc table {{ border-collapse: collapse; margin: 16px 0; display: block;
+          overflow-x: auto; }}
+  .doc th, .doc td {{ border: 1px solid #333; padding: 8px 12px; text-align: left; }}
+  .doc th {{ background: #232323; color: #e8e8e8; }}
+  .doc img {{ max-width: 100%; border-radius: 8px; }}
+  .doc hr {{ border: 0; border-top: 1px solid #292929; margin: 32px 0; }}
+  .empty {{ color: #6f6f6f; font-style: italic; }}
+
+  .files {{ margin-top: 56px; border-top: 1px solid #262626; padding-top: 8px; }}
+  .files summary {{ cursor: pointer; color: #7d7d7d; font-size: .88em; padding: 10px 0;
+          list-style: none; user-select: none; }}
+  .files summary::-webkit-details-marker {{ display: none; }}
+  .files summary::before {{ content: "▸ "; color: #555; }}
+  .files[open] summary::before {{ content: "▾ "; }}
+  .files summary:hover {{ color: #b0b0b0; }}
+  table.list {{ border-collapse: collapse; width: 100%; font-size: .87em;
+          margin-bottom: 8px; }}
+  table.list td {{ border-bottom: 1px solid #222; padding: 7px 2px; }}
+  td.n {{ font-family: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+          color: #a8a8a8; word-break: break-all; }}
+  td.n.entry {{ color: #D1E550; }}
+  td.s {{ text-align: right; color: #6f6f6f; white-space: nowrap; width: 1%; }}
+  .more {{ color: #6f6f6f; font-size: .85em; padding: 6px 2px; }}
+
+  @media (max-width: 560px) {{
+    .page {{ padding: 36px 18px 64px; }}
+    h1 {{ font-size: 1.7em; }}
+    .shot {{ margin-top: 36px; }}
+  }}
 </style>
 </head>
 <body>
 <div class="page">
-  <header>
-    {_icon_markup(app["icon"])}
-    <div>
-      <h1>{title}</h1>
-      <div class="sub">Entry <code class="entry">{entry}</code> ·
-        {len(app["files"])} files · <span id="total"></span>{exported} {badge}</div>
-    </div>
-  </header>
-  <div class="bar">{download}</div>
+  <div class="hero">
+    {icon}
+    <h1>{title}</h1>
+    <div class="meta">{meta}</div>
+    {action}
+  </div>
 
-  <h2>README</h2>
+  {shot}
+
   <div class="doc" id="readme"></div>
 
-  <h2>Contents</h2>
-  <table id="files"></table>
-  {f'<div class="more">{hidden} more files not listed.</div>' if hidden > 0 else ""}
+  <details class="files">
+    <summary id="filesum">Files</summary>
+    <table class="list" id="files"></table>
+    {f'<div class="more">{hidden} more files not listed.</div>' if hidden > 0 else ""}
+  </details>
 </div>
 <script>
   var README = {_js(app["readme"])};
   var FILES = {_js(listed)};
   var ENTRY = {_js(app["entry"])};
+  var NAME = {_js(app["name"])};
   var TOTAL = {app["total_size"]};
 
   function human(n) {{
@@ -330,14 +391,26 @@ def _page(path, app, download_url):
     return (i === 0 ? n : n.toFixed(1)) + " " + u[i];
   }}
 
-  document.getElementById("total").textContent = human(TOTAL) + " unpacked";
+  document.getElementById("total").textContent = human(TOTAL);
+  document.getElementById("filesum").textContent =
+    FILES.length + " files · " + human(TOTAL);
 
   // The README is untrusted text: marked passes raw HTML through, so sanitise.
-  document.getElementById("readme").innerHTML = README === null
+  var doc = document.getElementById("readme");
+  doc.innerHTML = README === null
     ? '<span class="empty">This app file has no README.</span>'
     : DOMPurify.sanitize(marked.parse(README));
 
-  var rows = FILES.map(function (f) {{
+  // Nearly every README opens by repeating the app's name. The hero already
+  // said it, so a second copy two lines down reads as a mistake — drop it.
+  var lead = doc.firstElementChild;
+  if (lead && lead.tagName === "H1" && NAME &&
+      lead.textContent.trim().toLowerCase() === NAME.trim().toLowerCase()) {{
+    lead.remove();
+  }}
+
+  var table = document.getElementById("files");
+  FILES.forEach(function (f) {{
     var tr = document.createElement("tr");
     var name = document.createElement("td");
     name.className = "n" + (f.name === ENTRY ? " entry" : "");
@@ -347,10 +420,8 @@ def _page(path, app, download_url):
     size.textContent = human(f.size);
     tr.appendChild(name);
     tr.appendChild(size);
-    return tr;
+    table.appendChild(tr);
   }});
-  var table = document.getElementById("files");
-  rows.forEach(function (r) {{ table.appendChild(r); }});
 </script>
 </body>
 </html>"""
