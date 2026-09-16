@@ -1,0 +1,28 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Markdown_File",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:description": "Render a Markdown file as formatted prose.",
+            "fused:udfType": "auto",
+            "fused:slug": "Markdown_File",
+            "fused:name": "Markdown_File",
+            "fused:id": null
+          },
+          "source": "Markdown_File.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
