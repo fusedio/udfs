@@ -1,0 +1,28 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "HTML_File",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:description": "Render an HTML file as a page, in a sandboxed frame.",
+            "fused:udfType": "auto",
+            "fused:slug": "HTML_File",
+            "fused:name": "HTML_File",
+            "fused:id": null
+          },
+          "source": "HTML_File.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

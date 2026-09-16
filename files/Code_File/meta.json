@@ -1,0 +1,28 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Code_File",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:description": "Show a source file with syntax highlighting and line numbers.",
+            "fused:udfType": "auto",
+            "fused:slug": "Code_File",
+            "fused:name": "Code_File",
+            "fused:id": null
+          },
+          "source": "Code_File.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}

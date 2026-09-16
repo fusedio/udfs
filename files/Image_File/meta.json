@@ -1,0 +1,28 @@
+{
+  "version": "0.0.3",
+  "job_config": {
+    "version": "0.0.3",
+    "name": null,
+    "steps": [
+      {
+        "type": "udf",
+        "udf": {
+          "type": "geopandas_v2",
+          "name": "Image_File",
+          "entrypoint": "udf",
+          "parameters": {},
+          "metadata": {
+            "fused:description": "Show an image file in any format the browser decodes, including SVG, ICO and AVIF.",
+            "fused:udfType": "auto",
+            "fused:slug": "Image_File",
+            "fused:name": "Image_File",
+            "fused:id": null
+          },
+          "source": "Image_File.py",
+          "headers": []
+        }
+      }
+    ],
+    "metadata": null
+  }
+}
