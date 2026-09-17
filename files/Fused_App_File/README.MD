@@ -3,4 +3,4 @@ Extensions: `fused`
 Menu order: 1
 
 <!--fused:readme-->
-Unpack a `.fused` app file and show what is inside it: the app's icon, its README rendered as prose, the full list of packaged files with sizes, and a download link for the file itself.
+Share page for a `.fused` app file: an **Open in Render App** button (the `render-app://open?url=…` deeplink), a small download link for the file itself, and a Render App download offered when the deeplink finds no installed app. Below that, the app's icon, screenshot, README rendered as prose and the full list of packaged files with sizes.

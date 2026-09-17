@@ -1,6 +1,7 @@
 import html
 import json
 import struct
+import urllib.parse
 
 import fused
 
@@ -22,6 +23,17 @@ MAGIC = b"FUSEDAPP"
 V2_VERSION = 2
 V2_HEADER = struct.Struct("<8sHHII")
 MAX_INDEX_BYTES = 4 * 1024 * 1024
+
+# Render App (fusedio/fused-render-lite) registers the `render-app:` URL scheme
+# and opens `render-app://open?url=<https link to a .fused>`. Its release CI
+# publishes the DMG on CloudFront and a `latest.json` next to it naming the
+# newest one; that manifest is fetched by the page (CORS `*`, no-cache) so the
+# download link is never staler than the last release. The GitHub releases
+# page is the static fallback when JS or the fetch is unavailable.
+RENDER_APP_SCHEME = "render-app://open?url="
+RENDER_APP_MANIFEST = "https://d2ic19jpchjovp.cloudfront.net/render-app-dmgs/latest.json"
+RENDER_APP_DMG_PREFIX = "https://d2ic19jpchjovp.cloudfront.net/render-app-dmgs/"
+RENDER_APP_RELEASES = "https://github.com/fusedio/fused-render-lite/releases/latest"
 
 
 @fused.udf(cache_max_age="30m")
@@ -47,16 +59,21 @@ def udf(path: str, preview: bool = False):
     except Exception as e:  # noqa: BLE001 - surfaced to the viewer, not swallowed
         return _error(path, f"{type(e).__name__}: {e}")
 
-    # Signed URLs are what makes the download link work; mount paths cannot be
-    # signed, so the page drops the link rather than offering a broken one.
-    download_url = None
-    if not (path.startswith("/mount/") or path.startswith("gdrive://")):
+    # One https link serves both actions: Render App downloads the file from it
+    # when the deeplink fires, and the browser saves it on the small download
+    # link. A path that already is https is used as is; a bucket path is
+    # signed; mount paths cannot be signed, so the page drops both links
+    # rather than offering broken ones.
+    file_url = None
+    if path.startswith(("http://", "https://")):
+        file_url = path
+    elif not path.startswith(("/mount/", "gdrive://")):
         try:
-            download_url = fused.api.sign_url(path)
+            file_url = fused.api.sign_url(path)
         except Exception:  # noqa: BLE001 - a missing link is not a failed preview
-            download_url = None
+            file_url = None
 
-    return _page(path, app, download_url)
+    return _page(path, app, file_url)
 
 
 def _read_app_file(f):
@@ -241,7 +258,7 @@ def _data_uri(image):
     return f"data:{mime};base64,{base64.b64encode(raw).decode('ascii')}"
 
 
-def _page(path, app, download_url):
+def _page(path, app, file_url):
     file_name = html.escape(path.rsplit("/", 1)[-1], quote=True)
     title = html.escape(app["name"] or path.rsplit("/", 1)[-1], quote=True)
     listed = app["files"][:MAX_LISTED_FILES]
@@ -269,12 +286,25 @@ def _page(path, app, download_url):
         bits.append('<span class="warn">not marked as an app file</span>')
     meta = " · ".join(bits)
 
-    action = (
-        f'<a class="dl" href="{html.escape(download_url, quote=True)}" download="{file_name}">'
-        f"Download <span class=\"fn\">{file_name}</span></a>"
-        if download_url
-        else '<span class="warn">Download unavailable — this path cannot be signed</span>'
-    )
+    # Opening in Render App is the primary action; the file download is the
+    # small secondary one. The deeplink's `url` is percent-encoded whole
+    # (`safe=""`): a signed URL carries its own `?`/`&`/`=`, and Render App
+    # parses the deeplink with parse_qs, which would otherwise split it.
+    if file_url:
+        deeplink = RENDER_APP_SCHEME + urllib.parse.quote(file_url, safe="")
+        action = f"""<a class="open" id="open" href="{html.escape(deeplink, quote=True)}">Open in Render App</a>
+    <div class="sub">
+      <a class="dl" href="{html.escape(file_url, quote=True)}" download="{file_name}">Download <span class="fn">{file_name}</span></a>
+      <span class="sep">·</span>
+      <a class="get" id="get" href="{RENDER_APP_RELEASES}" target="_blank" rel="noopener">Need Render App?</a>
+    </div>
+    <div class="install" id="install" hidden>
+      <p><strong>Didn't open?</strong> You may need Render App first.</p>
+      <a class="dmg" id="dmg" href="{RENDER_APP_RELEASES}" target="_blank" rel="noopener">Download Render App for macOS</a>
+      <p class="hint" id="hint"></p>
+    </div>"""
+    else:
+        action = '<span class="warn">Open and download unavailable — this path cannot be signed</span>'
 
     return f"""<!DOCTYPE html>
 <html>
@@ -301,11 +331,25 @@ def _page(path, app, download_url):
         margin: 0; line-height: 1.15; }}
   .meta {{ color: #7d7d7d; font-size: .88em; margin: -6px 0 4px; }}
   .warn {{ color: #ff6b6b; }}
-  .dl {{ display: inline-block; background: #D1E550; color: #141414; text-decoration: none;
-         font-weight: 600; font-size: .95em; padding: 11px 22px; border-radius: 8px;
-         transition: background .15s ease; }}
-  .dl:hover {{ background: #E3FA62; }}
-  .dl .fn {{ font-family: ui-monospace, Menlo, monospace; font-size: .92em; opacity: .75; }}
+  .open {{ display: inline-block; background: #D1E550; color: #141414; text-decoration: none;
+           font-weight: 600; font-size: 1em; padding: 12px 26px; border-radius: 8px;
+           transition: background .15s ease; }}
+  .open:hover {{ background: #E3FA62; }}
+  .sub {{ color: #6f6f6f; font-size: .85em; margin-top: -4px; }}
+  .sub a {{ color: #9a9a9a; text-decoration: none; border-bottom: 1px solid #333; }}
+  .sub a:hover {{ color: #d8d8d8; border-color: #666; }}
+  .sub .sep {{ margin: 0 8px; color: #444; }}
+  .dl .fn {{ font-family: ui-monospace, Menlo, monospace; font-size: .92em; }}
+  .install {{ margin-top: 10px; padding: 16px 20px; border: 1px solid #2b2b2b; border-radius: 10px;
+              background: #1a1a1a; max-width: 440px; font-size: .92em; }}
+  .install[hidden] {{ display: none; }}
+  .install p {{ margin: 0 0 10px; color: #b5b5b5; }}
+  .install strong {{ color: #f2f2f2; }}
+  .dmg {{ display: inline-block; color: #D1E550; font-weight: 600; text-decoration: none;
+          border: 1px solid #3a3f1f; padding: 8px 16px; border-radius: 8px; }}
+  .dmg:hover {{ background: #1f2213; }}
+  .hint {{ font-size: .85em; color: #6f6f6f; margin: 10px 0 0 !important; }}
+  .hint:empty {{ display: none; }}
 
   .shot {{ display: block; width: 100%; margin: 48px 0 8px; border-radius: 12px;
            border: 1px solid #2b2b2b; }}
@@ -422,6 +466,55 @@ def _page(path, app, download_url):
     tr.appendChild(size);
     table.appendChild(tr);
   }});
+
+  // -- Render App -----------------------------------------------------------
+  var MANIFEST = {_js(RENDER_APP_MANIFEST)};
+  var DMG_PREFIX = {_js(RENDER_APP_DMG_PREFIX)};
+  var openLink = document.getElementById("open");
+  var install = document.getElementById("install");
+  var dmg = document.getElementById("dmg");
+  var get = document.getElementById("get");
+  var isMac = /^Mac/.test(navigator.platform || "") &&
+              !/iPhone|iPad/.test(navigator.userAgent || "");
+
+  // The DMG link starts at the releases page and is upgraded to the exact
+  // current DMG from the signed manifest Render App's own updater polls.
+  // Only the `url` is used and only when it sits under the release prefix,
+  // so a bad manifest can at worst leave the releases link in place.
+  if (openLink) {{
+    fetch(MANIFEST, {{ cache: "no-store" }})
+      .then(function (r) {{ return r.ok ? r.json() : null; }})
+      .then(function (m) {{
+        if (!m || m.schema !== 1 || typeof m.url !== "string") return;
+        if (m.url.indexOf(DMG_PREFIX) !== 0 || !/\\.dmg$/.test(m.url)) return;
+        dmg.href = m.url;
+        // The direct DMG is a Mac file; everyone else keeps the releases page.
+        if (isMac) get.href = m.url;
+        if (typeof m.version === "string" && /^[0-9.]+$/.test(m.version)) {{
+          dmg.textContent = "Download Render App " + m.version + " for macOS";
+        }}
+      }})
+      .catch(function () {{}});
+
+    if (!isMac) {{
+      // The DMG is macOS-only; say so up front instead of after a dead click.
+      document.getElementById("hint").textContent =
+        "Render App is currently available for macOS. The .fused file itself can still be downloaded above.";
+    }}
+
+    // A browser gives no answer to "is this URL scheme registered?", and the
+    // usual focus-loss heuristic misfires: Safari and Firefox pop their own
+    // "cannot open" dialog for an unknown scheme, which steals focus exactly
+    // like a real app launch would. So no guessing — a moment after the click
+    // the download is offered either way, worded so it is true whether the
+    // app opened or not (the Zoom/Slack join-page convention).
+    openLink.addEventListener("click", function () {{
+      setTimeout(function () {{
+        install.hidden = false;
+        install.scrollIntoView({{ block: "nearest", behavior: "smooth" }});
+      }}, 1800);
+    }});
+  }}
 </script>
 </body>
 </html>"""

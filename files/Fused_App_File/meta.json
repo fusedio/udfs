@@ -12,7 +12,7 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:description": "Unpack a .fused app file: icon, README, file listing and a download link.",
+            "fused:description": "Share page for a .fused app file: open it in Render App, download it, see its icon, README and file listing.",
             "fused:udfType": "auto",
             "fused:slug": "Fused_App_File",
             "fused:name": "Fused_App_File",
