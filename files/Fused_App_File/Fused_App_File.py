@@ -474,8 +474,13 @@ def _page(path, app, file_url):
   var install = document.getElementById("install");
   var dmg = document.getElementById("dmg");
   var get = document.getElementById("get");
-  var isMac = /^Mac/.test(navigator.platform || "") &&
-              !/iPhone|iPad/.test(navigator.userAgent || "");
+  // iPadOS Safari reports platform "MacIntel" and a desktop UA; touch points
+  // tell it apart (a Mac has none, an iPad has five). userAgentData, where a
+  // browser has it, is authoritative.
+  var uad = navigator.userAgentData;
+  var isMac = uad && uad.platform
+    ? uad.platform === "macOS"
+    : /^Mac/.test(navigator.platform || "") && (navigator.maxTouchPoints || 0) < 2;
 
   // The DMG link starts at the releases page and is upgraded to the exact
   // current DMG from the signed manifest Render App's own updater polls.
