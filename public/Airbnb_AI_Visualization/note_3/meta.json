@@ -8,16 +8,23 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "airbnb_data",
+          "name": "note_3",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
             "fused:udfType": "auto",
+            "nodeTemplateType": "textbox",
+            "isNodeTemplate": true,
+            "nodeTemplateColor": "#A8D5F7",
+            "nodeTemplateGradient": true,
+            "nodeTemplateScaleFactor": 1,
+            "nodeTemplateAlignment": "center",
             "fused:description": "Exported from Fused UDF Workbench",
-            "fused:title": "airbnb_data"
+            "fused:title": "note_3",
+            "stickyNoteVersion": 4
           },
           "headers": [],
-          "source": "airbnb_data.py"
+          "source": "note_3.py"
         }
       }
     ],

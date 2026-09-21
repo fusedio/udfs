@@ -8,16 +8,18 @@
         "type": "udf",
         "udf": {
           "type": "geopandas_v2",
-          "name": "airbnb_data",
+          "name": "widget_2",
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
             "fused:udfType": "auto",
+            "nodeTemplateType": "json_ui",
+            "isNodeTemplate": true,
             "fused:description": "Exported from Fused UDF Workbench",
-            "fused:title": "airbnb_data"
+            "fused:title": "widget_2"
           },
           "headers": [],
-          "source": "airbnb_data.py"
+          "source": "widget_2.py"
         }
       }
     ],

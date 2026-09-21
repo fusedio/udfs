@@ -1,0 +1,18 @@
+{
+  "type": "widget-builder",
+  "props": {
+    "defaultValue": {
+      "type": "bar-chart",
+      "props": {
+        "sql": "SELECT neighbourhood_cleansed as label, ROUND(AVG(price_in_dollar), 2) as value FROM {{airbnb_data}} GROUP BY neighbourhood_cleansed ORDER BY value DESC LIMIT 15",
+        "title": "Top 15 Neighbourhoods"
+      }
+    },
+    "showEditor": true,
+    "editorCollapsed": true,
+    "aiBuilderMode": true,
+    "aiModel": "Claude Sonnet 4.6",
+    "aiPanel": "right",
+    "allowedWidgetTypes": "all"
+  }
+}
