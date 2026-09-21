@@ -1,3 +1,1 @@
-<!--fused:readme-->
-Exported from Fused UDF Workbench
-
+H3 cells allow to easily convert a dataset from one spatial resolution to another while maintaining analytical accuracy

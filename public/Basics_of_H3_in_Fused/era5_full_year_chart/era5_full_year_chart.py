@@ -1,8 +1,7 @@
 @fused.udf
 def udf(bounds: fused.types.Bounds = [-125, 32, -114, 42]):
     common = fused.load("https://github.com/fusedio/udfs/tree/9bad664/public/common/")
-    import altair as alt
-    alt.data_transformers.enable('default')
+    import json
 
     full_year_udf = fused.load('era5_full_year')
     df = full_year_udf(bounds=bounds, cache_max_age='0s')
@@ -10,23 +9,64 @@ def udf(bounds: fused.types.Bounds = [-125, 32, -114, 42]):
     print(df.head())
     print(f"{df.shape=}")
 
-    chart = (
-        alt.Chart(df)
-        .mark_line(color='steelblue', strokeWidth=2)
-        .encode(
-            x=alt.X('date:T', title='Date'),
-            y=alt.Y('daily_avg_temp:Q', title='Avg Temperature (\u00b0C)', scale=alt.Scale(zero=False)),
-            tooltip=[
-                alt.Tooltip('date:T', title='Date'),
-                alt.Tooltip('daily_avg_temp:Q', title='Temp (\u00b0C)', format='.2f'),
-            ]
-        )
-        .properties(
-            width='container',
-            height=350,
-            title='Daily Average Temperature \u2014 2019\u20132024'
-        )
-        .configure(background='white')
-    )
+    # Prepare data for Chart.js
+    dates = df['date'].astype(str).tolist()
+    temps = df['daily_avg_temp'].round(2).tolist()
 
-    return chart.to_html(embed_options={"renderer": "svg"})
+    html_template = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    </head>
+    <body style="margin:0; padding:10px; font-family: sans-serif; background-color: white;">
+      <div style="width: 100%; height: 350px;">
+        <canvas id="tempChart"></canvas>
+      </div>
+      <script>
+        const ctx = document.getElementById('tempChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: JSON_DATES,
+            datasets: [{
+              label: 'Avg Temperature (&deg;C)',
+              data: JSON_TEMPS,
+              borderColor: 'steelblue',
+              borderWidth: 2,
+              fill: false,
+              pointRadius: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              title: {
+                display: true,
+                text: 'Daily Average Temperature &mdash; 2019&ndash;2024'
+              }
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: 'Date'
+                }
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: 'Temperature (&deg;C)'
+                }
+              }
+            }
+          }
+        });
+      </script>
+    </body>
+    </html>
+    """
+
+    html_content = html_template.replace("JSON_DATES", json.dumps(dates)).replace("JSON_TEMPS", json.dumps(temps))
+    return html_content

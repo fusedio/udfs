@@ -1,3 +1,1 @@
-<!--fused:readme-->
-Exported from Fused UDF Workbench
-
+We can also aggregate the dataset across time rather than space. This UDF calculates the mean temperature for every day across the whole US

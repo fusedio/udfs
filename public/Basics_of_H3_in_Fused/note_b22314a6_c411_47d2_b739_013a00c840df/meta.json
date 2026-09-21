@@ -12,59 +12,19 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "isNodeTemplate": true,
-            "nodeTemplateType": "textbox",
-            "nodeTemplateColor": "#A5DD6B",
-            "stickyNoteVersion": 3,
             "nodeTemplateGradient": false,
             "nodeTemplateAlignment": "center",
-            "fused:vizConfig": {
-              "tileLayer": {
-                "@@type": "TileLayer",
-                "minZoom": 0,
-                "maxZoom": 19,
-                "tileSize": 256
-              },
-              "rasterLayer": {
-                "@@type": "BitmapLayer",
-                "pickable": true
-              },
-              "vectorLayer": {
-                "@@type": "GeoJsonLayer",
-                "stroked": true,
-                "filled": false,
-                "pickable": true,
-                "lineWidthMinPixels": 1,
-                "pointRadiusMinPixels": 1,
-                "getLineColor": {
-                  "@@function": "colorContinuous",
-                  "attr": "value",
-                  "domain": [
-                    0,
-                    10
-                  ],
-                  "steps": 20,
-                  "colors": "BurgYl",
-                  "nullColor": [
-                    184,
-                    184,
-                    184
-                  ]
-                },
-                "getFillColor": [
-                  208,
-                  208,
-                  208,
-                  40
-                ]
-              }
-            },
+            "stickyNoteVersion": 3,
+            "nodeTemplateColor": "#A5DD6B",
             "fused:udfType": "auto",
-            "fused:slug": "note_b22314a6_c411_47d2_b739_013a00c840df",
-            "fused:name": "note_b22314a6_c411_47d2_b739_013a00c840df"
+            "nodeTemplateType": "textbox",
+            "isNodeTemplate": true,
+            "nodeTemplateScaleFactor": 1,
+            "fused:description": "Exported from Fused UDF Workbench",
+            "fused:title": "note_b22314a6_c411_47d2_b739_013a00c840df"
           },
-          "code": "## **Edit the threshold**\n\n## **to \"&gt; 20\"**",
-          "headers": []
+          "headers": [],
+          "source": "note_b22314a6_c411_47d2_b739_013a00c840df.py"
         }
       }
     ],
