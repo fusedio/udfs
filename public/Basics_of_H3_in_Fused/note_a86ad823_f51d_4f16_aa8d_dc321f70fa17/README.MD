@@ -1,3 +1,1 @@
-<!--fused:readme-->
-Exported from Fused UDF Workbench
-
+H3 is a **hierarchical** system: every hexagon at a high resolution (e.g. res 15) nests inside a larger, lower resolution hexagon (e.g. res 4).

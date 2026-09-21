@@ -1,3 +1,1 @@
-<!--fused:readme-->
-Exported from Fused UDF Workbench
-
+This data is **stored as H3 res 15** across time. This UDF loads one month of daily temperatures, filters to the Continental US, and averages them into a **monthly mean** per hex.

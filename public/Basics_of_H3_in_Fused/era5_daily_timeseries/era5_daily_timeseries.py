@@ -1,31 +1,107 @@
 @fused.udf
 def udf(month='2024-05', bounds: fused.types.Bounds=[-125, 32, -114, 42]):
     common = fused.load("https://github.com/fusedio/udfs/tree/9bad664/public/common/")
-    import altair as alt
-    alt.data_transformers.enable('default')
 
     parent_udf = fused.load('era5_temp_monthly_average')
     df = parent_udf(month=month, bounds=bounds)
 
-    print(df.head())
+    # Convert Timestamp objects to string to ensure JSON serializability
+    df['date'] = df['date'].astype(str)
 
-    chart = (
-        alt.Chart(df)
-        .mark_line(point=True, color='steelblue', strokeWidth=2)
-        .encode(
-            x=alt.X('date:T', title='Date'),
-            y=alt.Y('daily_avg_temp:Q', title='Avg Temperature (\u00b0C)', scale=alt.Scale(zero=False)),
-            tooltip=[
-                alt.Tooltip('date:T', title='Date'),
-                alt.Tooltip('daily_avg_temp:Q', title='Temp (°C)', format='.2f'),
-            ]
-        )
-        .properties(
-            width='container',
-            height=300,
-            title=f'Daily Average Temperature — {month}'
-        )
-        .configure(background='white')
-    )
+    # Convert dataframe to records for JS consumption
+    data_points = df[['date', 'daily_avg_temp']].to_dict(orient='records')
+    import json
+    data_json = json.dumps(data_points)
 
-    return chart.to_html(embed_options={"renderer": "svg"})
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                margin: 20px;
+                background-color: #ffffff;
+            }}
+            .chart-container {{
+                position: relative;
+                height: 350px;
+                width: 100%;
+                max-width: 800px;
+                margin: auto;
+            }}
+            h2 {{
+                text-align: center;
+                color: #333;
+                font-size: 1.2rem;
+                margin-bottom: 20px;
+            }}
+        </style>
+    </head>
+    <body>
+        <h2>Daily Average Temperature &mdash; {month}</h2>
+        <div class="chart-container">
+            <canvas id="tempChart"></canvas>
+        </div>
+        <script>
+            const rawData = {data_json};
+            const labels = rawData.map(d => d.date.split(' ')[0]);
+            const temps = rawData.map(d => d.daily_avg_temp);
+
+            const ctx = document.getElementById('tempChart').getContext('2d');
+            new Chart(ctx, {{
+                type: 'line',
+                data: {{
+                    labels: labels,
+                    datasets: [{{
+                        label: 'Avg Temperature (&deg;C)',
+                        data: temps,
+                        borderColor: '#4682b4',
+                        backgroundColor: 'rgba(70, 130, 180, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#4682b4',
+                        tension: 0.1,
+                        fill: true
+                    }}]
+                }},
+                options: {{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {{
+                        legend: {{
+                            display: false
+                        }},
+                        tooltip: {{
+                            callbacks: {{
+                                label: function(context) {{
+                                    return context.parsed.y.toFixed(2) + ' &deg;C';
+                                }}
+                            }}
+                        }}
+                    }},
+                    scales: {{
+                        x: {{
+                            grid: {{
+                                display: false
+                            }},
+                            title: {{
+                                display: true,
+                                text: 'Date'
+                            }}
+                        }},
+                        y: {{
+                            title: {{
+                                display: true,
+                                text: 'Temperature (&deg;C)'
+                            }}
+                        }}
+                    }}
+                }}
+            }});
+        </script>
+    </body>
+    </html>
+    """
+    return html_content

@@ -1,3 +1,1 @@
-<!--fused:readme-->
-Exported from Fused UDF Workbench
-
+Hex res 4 (close to ERA5 native resolution)

@@ -1,3 +1,1 @@
-<!--fused:readme-->
-Exported from Fused UDF Workbench
-
+Exaggerated visualisation of hex 15 hexagons
