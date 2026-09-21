@@ -1,4 +1,5 @@
 import html
+import json
 
 import fused
 
@@ -11,11 +12,24 @@ def udf(path: str, preview: bool = False):
 
     Text_File guesses whether a file is Markdown from its content; this UDF is
     claimed by extension, so `.md` renders without the guess.
-    """
-    if path.startswith("/mount/") or path.startswith("gdrive://"):
-        return _no_signed_url(path, "Markdown")
 
-    url = html.escape(fused.api.sign_url(path), quote=True)
+    The bytes are read here rather than fetched by the page from a signed URL.
+    A requester-pays bucket signs a URL that is only honoured alongside an
+    `x-amz-request-payer` header, which a browser fetch cannot add, so those
+    files came back 403. Reading server-side also means `/mount/` and
+    `gdrive://` paths, which cannot be signed at all, render like any other.
+    """
+    try:
+        raw = fused.api.get(path)
+    except Exception as e:  # noqa: BLE001 - surfaced to the viewer, not swallowed
+        return _error(path, "Markdown", f"{type(e).__name__}: {e}")
+
+    text = raw.decode("utf-8", "replace")
+    total = len(text)
+    truncated = total > MAX_CHARS
+    if truncated:
+        text = text[:MAX_CHARS]
+
     name = html.escape(path.rsplit("/", 1)[-1], quote=True)
     return f"""<!DOCTYPE html>
 <html>
@@ -51,48 +65,42 @@ def udf(path: str, preview: bool = False):
   .doc hr {{ border: 0; border-top: 1px solid #333; margin: 28px 0; }}
   .note {{ color: #D1E550; background: #2a2a2a; border-radius: 5px; padding: 10px;
           text-align: center; margin: 32px 0; }}
-  .err {{ color: #ff6b6b; }}
 </style>
 </head>
 <body>
-<div class="doc" id="doc">Loading {name}…</div>
+<div class="doc" id="doc"></div>
 <script>
-  var MAX = {MAX_CHARS};
-  fetch("{url}")
-    .then(function (r) {{
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.text();
-    }})
-    .then(function (text) {{
-      var note = "";
-      if (text.length > MAX) {{
-        note = '\\n\\n<div class="note">Truncated at ' + MAX.toLocaleString() +
-               ' of ' + text.length.toLocaleString() + ' characters.</div>';
-        text = text.slice(0, MAX);
-      }}
-      // The file is untrusted text: marked emits raw HTML verbatim, so sanitise.
-      document.getElementById("doc").innerHTML =
-        DOMPurify.sanitize(marked.parse(text) + note);
-    }})
-    .catch(function (e) {{
-      document.getElementById("doc").innerHTML =
-        '<h2 class="err">Could not load {name}</h2><p>' + e.message + '</p>';
-    }});
+  var TEXT = {_js(text)};
+  var TRUNCATED = {_js(truncated)};
+  var TOTAL = {total};
+
+  var note = TRUNCATED
+    ? '<div class="note">Truncated at ' + TEXT.length.toLocaleString() +
+      ' of ' + TOTAL.toLocaleString() + ' characters.</div>'
+    : '';
+  // The file is untrusted text: marked emits raw HTML verbatim, so sanitise.
+  // The note is ours, so it is appended after the sanitised markup.
+  document.getElementById("doc").innerHTML =
+    DOMPurify.sanitize(marked.parse(TEXT)) + note;
 </script>
 </body>
 </html>"""
 
 
-def _no_signed_url(path, label):
-    """Signed URLs are the only way the browser can reach the bytes."""
+def _js(value):
+    """Embed a value in a <script> without letting its text close the tag."""
+    return json.dumps(value).replace("</", "<\\/")
+
+
+def _error(path, label, message):
+    """The read failed, so there is nothing to show — say which path and why."""
     safe = html.escape(path, quote=True)
     return f"""<!DOCTYPE html>
 <html>
 <body style="margin:0; padding:24px; background:#1a1a1a; color:#cccccc;
              font-family: system-ui, -apple-system, sans-serif; line-height:1.6;">
-  <h2 style="color:#ff6b6b;">{label} preview not available</h2>
-  <p>Signed URLs are not supported for <code>/mount/</code> or <code>gdrive://</code>
-     paths, so this viewer cannot load the file from the browser.</p>
+  <h2 style="color:#ff6b6b;">Could not read this {label} file</h2>
+  <p><code>{html.escape(message, quote=True)}</code></p>
   <p><strong>Path:</strong> <code>{safe}</code></p>
 </body>
 </html>"""

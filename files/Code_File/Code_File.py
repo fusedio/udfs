@@ -1,4 +1,5 @@
 import html
+import json
 import os
 
 import fused
@@ -23,11 +24,24 @@ LANGUAGES = {
 
 @fused.udf(cache_max_age="30m")
 def udf(path: str, preview: bool = False):
-    """Show a source file with syntax highlighting and line numbers."""
-    if path.startswith("/mount/") or path.startswith("gdrive://"):
-        return _no_signed_url(path, "Code")
+    """Show a source file with syntax highlighting and line numbers.
 
-    url = html.escape(fused.api.sign_url(path), quote=True)
+    The bytes are read here rather than fetched by the page from a signed URL.
+    A requester-pays bucket signs a URL that is only honoured alongside an
+    `x-amz-request-payer` header, which a browser fetch cannot add, so those
+    files came back 403. Reading server-side also means `/mount/` and
+    `gdrive://` paths, which cannot be signed at all, render like any other.
+    """
+    try:
+        raw = fused.api.get(path)
+    except Exception as e:  # noqa: BLE001 - surfaced to the viewer, not swallowed
+        return _error(path, "code", f"{type(e).__name__}: {e}")
+
+    text = raw.decode("utf-8", "replace")
+    truncated = len(text) > MAX_CHARS
+    if truncated:
+        text = text[:MAX_CHARS]
+
     name = html.escape(path.rsplit("/", 1)[-1], quote=True)
     ext = os.path.splitext(path)[1].lstrip(".").lower()
     lang = LANGUAGES.get(ext, "plaintext")
@@ -53,57 +67,45 @@ def udf(path: str, preview: bool = False):
   pre {{ margin: 0; flex: 1 1 auto; min-width: 0; padding: 16px; overflow-x: auto; }}
   pre code.hljs {{ background: none; padding: 0; }}
   .note {{ color: #D1E550; padding: 12px 16px; }}
-  .err {{ color: #ff6b6b; padding: 24px;
-          font-family: system-ui, -apple-system, sans-serif; }}
 </style>
 </head>
 <body>
-<header><b>{name}</b> · <span id="meta">loading…</span></header>
+<header><b>{name}</b> · <span id="meta"></span></header>
 <div class="wrap"><div class="nums" id="nums"></div><pre><code id="code"
   class="language-{lang}"></code></pre></div>
 <script>
-  var MAX = {MAX_CHARS};
-  fetch("{url}")
-    .then(function (r) {{
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.text();
-    }})
-    .then(function (text) {{
-      var note = "";
-      if (text.length > MAX) {{
-        text = text.slice(0, MAX);
-        note = " · truncated";
-      }}
-      var lines = text.split("\\n");
-      // textContent, never innerHTML — the file is untrusted, and highlight.js
-      // escapes on its own only once it owns the node.
-      var code = document.getElementById("code");
-      code.textContent = text;
-      hljs.highlightElement(code);
-      document.getElementById("nums").textContent =
-        lines.map(function (_, i) {{ return i + 1; }}).join("\\n");
-      document.getElementById("meta").textContent =
-        lines.length.toLocaleString() + " lines · {lang}" + note;
-    }})
-    .catch(function (e) {{
-      document.body.innerHTML =
-        '<div class="err"><h2>Could not load {name}</h2><p>' + e.message + '</p></div>';
-    }});
+  var TEXT = {_js(text)};
+  var TRUNCATED = {_js(truncated)};
+
+  var lines = TEXT.split("\\n");
+  // textContent, never innerHTML — the file is untrusted, and highlight.js
+  // escapes on its own only once it owns the node.
+  var code = document.getElementById("code");
+  code.textContent = TEXT;
+  hljs.highlightElement(code);
+  document.getElementById("nums").textContent =
+    lines.map(function (_, i) {{ return i + 1; }}).join("\\n");
+  document.getElementById("meta").textContent =
+    lines.length.toLocaleString() + " lines · {lang}" + (TRUNCATED ? " · truncated" : "");
 </script>
 </body>
 </html>"""
 
 
-def _no_signed_url(path, label):
-    """Signed URLs are the only way the browser can reach the bytes."""
+def _js(value):
+    """Embed a value in a <script> without letting its text close the tag."""
+    return json.dumps(value).replace("</", "<\\/")
+
+
+def _error(path, label, message):
+    """The read failed, so there is nothing to show — say which path and why."""
     safe = html.escape(path, quote=True)
     return f"""<!DOCTYPE html>
 <html>
 <body style="margin:0; padding:24px; background:#1a1a1a; color:#cccccc;
              font-family: system-ui, -apple-system, sans-serif; line-height:1.6;">
-  <h2 style="color:#ff6b6b;">{label} preview not available</h2>
-  <p>Signed URLs are not supported for <code>/mount/</code> or <code>gdrive://</code>
-     paths, so this viewer cannot load the file from the browser.</p>
+  <h2 style="color:#ff6b6b;">Could not read this {label} file</h2>
+  <p><code>{html.escape(message, quote=True)}</code></p>
   <p><strong>Path:</strong> <code>{safe}</code></p>
 </body>
 </html>"""
