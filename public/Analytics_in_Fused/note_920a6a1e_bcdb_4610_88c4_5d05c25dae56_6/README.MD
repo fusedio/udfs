@@ -1,3 +1,1 @@
-<!--fused:readme-->
-Exported from Fused UDF Workbench
-
+## 1 - Average monthly vegetation per location

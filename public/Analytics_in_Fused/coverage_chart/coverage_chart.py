@@ -1,8 +1,6 @@
 @fused.udf
 def udf():
-    import altair as alt
-    alt.data_transformers.enable('default')
-
+    import json
     # Load timeseries data (same source as NDVI chart)
     timeseries_udf = fused.load('ndvi_yearly_timeseries_all_aois')
     df = timeseries_udf()
@@ -21,62 +19,111 @@ def udf():
 
     # Compute coverage percentage
     df['coverage_pct'] = (df['valid_pixels'] / df['total_pixels']) * 100
-    print(df[['county', 'month', 'valid_pixels', 'total_pixels', 'coverage_pct']])
+    
+    # Prepare data for Javascript ingestion
+    chart_data = df[['county', 'month', 'coverage_pct', 'valid_pixels', 'total_pixels']].to_dict(orient='records')
+    chart_data_json = json.dumps(chart_data)
 
-    # Build line chart matching NDVI chart style
-    color_scale = alt.Color('county:N', title='County',
-        scale=alt.Scale(scheme='tableau10'))
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>Pixel Coverage Chart</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                margin: 20px;
+                background-color: #ffffff;
+                color: #333333;
+            }}
+            .chart-container {{
+                position: relative;
+                height: 400px;
+                width: 100%;
+                max-width: 800px;
+                margin: auto;
+            }}
+            h2 {{
+                text-align: center;
+                font-size: 18px;
+                margin-bottom: 20px;
+            }}
+        </style>
+    </head>
+    <body>
+        <h2>Pixel Coverage % — All AOIs (valid / total pixels)</h2>
+        <div class="chart-container">
+            <canvas id="coverageChart"></canvas>
+        </div>
+        <script>
+            const rawData = {chart_data_json};
+            
+            // Extract distinct counties and months
+            const counties = [...new Set(rawData.map(d => d.county).filter(Boolean))];
+            const months = [...new Set(rawData.map(d => d.month))].sort((a, b) => a - b);
+            
+            const colors = [
+                'rgba(75, 192, 192, 1)',
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(153, 102, 255, 1)'
+            ];
 
-    base = alt.Chart(df).encode(
-        x=alt.X('month:O', title='Month', axis=alt.Axis(labelAngle=0)),
-    )
+            const datasets = counties.map((county, index) => {{
+                const countyData = months.map(m => {{
+                    const point = rawData.find(d => d.county === county && d.month === m);
+                    return point ? point.coverage_pct : null;
+                }});
+                
+                return {{
+                    label: county,
+                    data: countyData,
+                    borderColor: colors[index % colors.length],
+                    backgroundColor: colors[index % colors.length],
+                    borderWidth: 2.5,
+                    tension: 0.1,
+                    pointRadius: 4
+                }};
+            }});
 
-    line = base.mark_line(strokeWidth=2.5).encode(
-        y=alt.Y('coverage_pct:Q', title='Coverage %', scale=alt.Scale(domain=[0, 100])),
-        color=color_scale,
-        tooltip=[
-            alt.Tooltip('county:N', title='County'),
-            alt.Tooltip('month:O', title='Month'),
-            alt.Tooltip('coverage_pct:Q', title='Coverage %', format='.1f'),
-            alt.Tooltip('valid_pixels:Q', title='Valid Pixels', format=','),
-            alt.Tooltip('total_pixels:Q', title='Total Pixels', format=','),
-        ]
-    )
-
-    points = base.mark_circle(size=50).encode(
-        y='coverage_pct:Q',
-        color=color_scale,
-        tooltip=[
-            alt.Tooltip('county:N', title='County'),
-            alt.Tooltip('month:O', title='Month'),
-            alt.Tooltip('coverage_pct:Q', title='Coverage %', format='.1f'),
-            alt.Tooltip('valid_pixels:Q', title='Valid Pixels', format=','),
-            alt.Tooltip('total_pixels:Q', title='Total Pixels', format=','),
-        ]
-    )
-
-    # Add a reference line at 50% coverage
-    rule = alt.Chart({'values': [{'y': 50}]}).mark_rule(
-        strokeDash=[4, 4], color='red', opacity=0.5
-    ).encode(y='y:Q')
-
-    chart = (line + points + rule).properties(
-        width='container',
-        height=400,
-        title='Pixel Coverage % — All AOIs (valid / total pixels)',
-        background='white',
-    ).configure_legend(
-        titleFontSize=14,
-        labelFontSize=13,
-        symbolSize=150,
-        symbolStrokeWidth=3,
-    ).configure_axis(
-        labelColor='#333',
-        titleColor='#333',
-    ).configure_title(
-        color='#333',
-    ).configure_view(
-        strokeWidth=0,
-    )
-
-    return chart.to_html(embed_options={"renderer": "svg"})
+            const ctx = document.getElementById('coverageChart').getContext('2d');
+            new Chart(ctx, {{
+                type: 'line',
+                data: {{
+                    labels: months,
+                    datasets: datasets
+                }},
+                options: {{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {{
+                        y: {{
+                            min: 0,
+                            max: 100,
+                            title: {{
+                                display: true,
+                                text: 'Coverage %'
+                            }}
+                        }},
+                        x: {{
+                            title: {{
+                                display: true,
+                                text: 'Month'
+                            }}
+                        }}
+                    }},
+                    plugins: {{
+                        legend: {{
+                            position: 'top',
+                        }}
+                    }}
+                }}
+            }});
+        </script>
+    </body>
+    </html>
+    """
+    return html_content

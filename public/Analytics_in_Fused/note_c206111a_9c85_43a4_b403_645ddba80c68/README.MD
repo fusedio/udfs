@@ -1,3 +1,8 @@
-<!--fused:readme-->
-Exported from Fused UDF Workbench
-
+```
+    ...
+    @fused.cache
+    def load_data():
+         # Make a request to API
+    
+    df = load_data()
+```

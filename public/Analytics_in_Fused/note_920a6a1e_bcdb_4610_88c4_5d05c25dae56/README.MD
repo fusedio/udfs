@@ -1,3 +1,1 @@
-<!--fused:readme-->
-Exported from Fused UDF Workbench
-
+# Analytics in Fused: Vegation Index Timeseries

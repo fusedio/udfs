@@ -12,56 +12,16 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "isNodeTemplate": true,
-            "nodeTemplateType": "textbox",
             "nodeTemplateColor": "#A5DD6B",
+            "nodeTemplateScaleFactor": 2,
             "stickyNoteVersion": 3,
             "nodeTemplateGradient": false,
-            "nodeTemplateScaleFactor": 2,
-            "fused:vizConfig": {
-              "tileLayer": {
-                "@@type": "TileLayer",
-                "minZoom": 0,
-                "maxZoom": 19,
-                "tileSize": 256
-              },
-              "rasterLayer": {
-                "@@type": "BitmapLayer",
-                "pickable": true
-              },
-              "vectorLayer": {
-                "@@type": "GeoJsonLayer",
-                "stroked": true,
-                "filled": false,
-                "pickable": true,
-                "lineWidthMinPixels": 1,
-                "pointRadiusMinPixels": 1,
-                "getLineColor": {
-                  "@@function": "colorContinuous",
-                  "attr": "value",
-                  "domain": [
-                    0,
-                    10
-                  ],
-                  "steps": 20,
-                  "colors": "Peach",
-                  "nullColor": [
-                    184,
-                    184,
-                    184
-                  ]
-                },
-                "getFillColor": [
-                  208,
-                  208,
-                  208,
-                  40
-                ]
-              }
-            },
             "fused:udfType": "auto",
-            "fused:slug": "note_086766f3_0ca3_4438_8b30_53978e03c54e_7",
-            "fused:name": "note_086766f3_0ca3_4438_8b30_53978e03c54e_7"
+            "nodeTemplateType": "textbox",
+            "isNodeTemplate": true,
+            "nodeTemplateAlignment": "left",
+            "fused:description": "Exported from Fused UDF Workbench",
+            "fused:title": "note_086766f3_0ca3_4438_8b30_53978e03c54e_7"
           },
           "headers": [],
           "source": "note_086766f3_0ca3_4438_8b30_53978e03c54e_7.py"

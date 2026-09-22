@@ -1,3 +1,1 @@
-<!--fused:readme-->
-Exported from Fused UDF Workbench
-
+Cache [functions inside your UDF](https://docs.fused.io/guide/working-with-udfs/udf-best-practices/caching#fusedcache) with `@fused.cache` to avoid repeated API calls and speed up development.

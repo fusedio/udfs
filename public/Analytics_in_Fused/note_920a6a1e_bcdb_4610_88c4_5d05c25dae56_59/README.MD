@@ -1,3 +1,1 @@
-<!--fused:readme-->
-Exported from Fused UDF Workbench
-
+Visualise 12 month timeseries for San Juan County, WA

@@ -1,8 +1,5 @@
 @fused.udf
 def udf():
-    import altair as alt
-    alt.data_transformers.enable('default')
-
     # Load timeseries data (cached from previous runs)
     timeseries_udf = fused.load('ndvi_yearly_timeseries')
     df = timeseries_udf() # Just loading default values from above UDF
@@ -10,41 +7,103 @@ def udf():
 
     # Drop months with no data
     df = df.dropna(subset=['mean_ndvi'])
-    print(df)
+    
+    # Convert data for the chart
+    months = df['month'].tolist()
+    ndvi_values = df['mean_ndvi'].tolist()
 
-    # Build line chart with mean NDVI only
-    base = alt.Chart(df).encode(
-        x=alt.X('month:O', title='Month', axis=alt.Axis(labelAngle=0)),
-    )
-
-    line = base.mark_line(color='green', strokeWidth=2.5).encode(
-        y=alt.Y('mean_ndvi:Q', title='NDVI', scale=alt.Scale(domain=[0, 1])),
-        tooltip=[
-            alt.Tooltip('month:O', title='Month'),
-            alt.Tooltip('mean_ndvi:Q', title='Mean NDVI', format='.3f'),
-        ]
-    )
-
-    points = base.mark_circle(color='green', size=50).encode(
-        y='mean_ndvi:Q',
-        tooltip=[
-            alt.Tooltip('month:O', title='Month'),
-            alt.Tooltip('mean_ndvi:Q', title='Mean NDVI', format='.3f'),
-        ]
-    )
-
-    chart = (line + points).properties(
-        width='container',
-        height=400,
-        title='NDVI Time Series',
-        background='white',
-    ).configure_axis(
-        labelColor='#333',
-        titleColor='#333',
-    ).configure_title(
-        color='#333',
-    ).configure_view(
-        strokeWidth=0,
-    )
-
-    return chart.to_html(embed_options={"renderer": "svg"})
+    # Generate HTML with Chart.js to replace Altair
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                background-color: white;
+                margin: 0;
+                padding: 16px;
+            }}
+            .chart-container {{
+                position: relative;
+                width: 100%;
+                height: 400px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="chart-container">
+            <canvas id="ndviChart"></canvas>
+        </div>
+        <script>
+            const ctx = document.getElementById('ndviChart').getContext('2d');
+            new Chart(ctx, {{
+                type: 'line',
+                data: {{
+                    labels: {months},
+                    datasets: [{{
+                        label: 'Mean NDVI',
+                        data: {ndvi_values},
+                        borderColor: 'green',
+                        backgroundColor: 'rgba(0, 128, 0, 0.1)',
+                        borderWidth: 2.5,
+                        pointBackgroundColor: 'green',
+                        pointRadius: 4,
+                        tension: 0.1
+                    }}]
+                }},
+                options: {{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {{
+                        title: {{
+                            display: true,
+                            text: 'NDVI Time Series',
+                            font: {{
+                                size: 16,
+                                weight: 'bold'
+                            }},
+                            color: '#333'
+                        }},
+                        legend: {{
+                            display: false
+                        }}
+                    }},
+                    scales: {{
+                        y: {{
+                            min: 0,
+                            max: 1,
+                            title: {{
+                                display: true,
+                                text: 'NDVI',
+                                color: '#333'
+                            }},
+                            ticks: {{
+                                color: '#333'
+                            }},
+                            grid: {{
+                                color: '#f0f0f0'
+                            }}
+                        }},
+                        x: {{
+                            title: {{
+                                display: true,
+                                text: 'Month',
+                                color: '#333'
+                            }},
+                            ticks: {{
+                                color: '#333'
+                            }},
+                            grid: {{
+                                display: false
+                            }}
+                        }}
+                    }}
+                }}
+            }});
+        </script>
+    </body>
+    </html>
+    """
+    return html_content

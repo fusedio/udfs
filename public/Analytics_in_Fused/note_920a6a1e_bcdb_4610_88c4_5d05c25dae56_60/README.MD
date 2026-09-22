@@ -1,3 +1,1 @@
-<!--fused:readme-->
-Exported from Fused UDF Workbench
-
+NDVI time series across all 5 AOIs. Each line tracks monthly mean NDVI for one county. Notice unexpected dips (e.g. Knox, ME in August) — likely artifacts of missing data rather than real vegetation change. The next chart investigates why.

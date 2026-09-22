@@ -12,56 +12,16 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "isNodeTemplate": true,
-            "nodeTemplateType": "textbox",
-            "nodeTemplateColor": "#A5DD6B",
-            "stickyNoteVersion": 3,
             "nodeTemplateAlignment": "center",
-            "fused:vizConfig": {
-              "tileLayer": {
-                "@@type": "TileLayer",
-                "minZoom": 0,
-                "maxZoom": 19,
-                "tileSize": 256
-              },
-              "rasterLayer": {
-                "@@type": "BitmapLayer",
-                "pickable": true
-              },
-              "vectorLayer": {
-                "@@type": "GeoJsonLayer",
-                "stroked": true,
-                "filled": false,
-                "pickable": true,
-                "lineWidthMinPixels": 1,
-                "pointRadiusMinPixels": 1,
-                "getLineColor": {
-                  "@@function": "colorContinuous",
-                  "attr": "value",
-                  "domain": [
-                    0,
-                    10
-                  ],
-                  "steps": 20,
-                  "colors": "BluYl",
-                  "nullColor": [
-                    184,
-                    184,
-                    184
-                  ]
-                },
-                "getFillColor": [
-                  208,
-                  208,
-                  208,
-                  40
-                ]
-              }
-            },
+            "nodeTemplateColor": "#A5DD6B",
+            "nodeTemplateScaleFactor": 2,
+            "stickyNoteVersion": 3,
             "fused:udfType": "auto",
-            "fused:slug": "note_caef1f9e_aece_4834_9843_396b3a59f05f",
-            "fused:name": "note_caef1f9e_aece_4834_9843_396b3a59f05f",
-            "nodeTemplateScaleFactor": 2
+            "nodeTemplateType": "textbox",
+            "isNodeTemplate": true,
+            "nodeTemplateGradient": true,
+            "fused:description": "Exported from Fused UDF Workbench",
+            "fused:title": "note_caef1f9e_aece_4834_9843_396b3a59f05f"
           },
           "headers": [],
           "source": "note_caef1f9e_aece_4834_9843_396b3a59f05f.py"
