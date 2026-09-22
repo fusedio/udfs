@@ -1,3 +1,1 @@
-<!--fused:readme-->
-Exported from Fused UDF Workbench
-
+# Analysing all the Areas of Interest

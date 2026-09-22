@@ -12,56 +12,16 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "isNodeTemplate": true,
-            "nodeTemplateType": "textbox",
             "nodeTemplateColor": "#FFD966",
+            "nodeTemplateScaleFactor": 1,
             "stickyNoteVersion": 3,
             "nodeTemplateGradient": true,
-            "nodeTemplateScaleFactor": 1,
-            "fused:vizConfig": {
-              "tileLayer": {
-                "@@type": "TileLayer",
-                "minZoom": 0,
-                "maxZoom": 19,
-                "tileSize": 256
-              },
-              "rasterLayer": {
-                "@@type": "BitmapLayer",
-                "pickable": true
-              },
-              "vectorLayer": {
-                "@@type": "GeoJsonLayer",
-                "stroked": true,
-                "filled": false,
-                "pickable": true,
-                "lineWidthMinPixels": 1,
-                "pointRadiusMinPixels": 1,
-                "getLineColor": {
-                  "@@function": "colorContinuous",
-                  "attr": "value",
-                  "domain": [
-                    0,
-                    10
-                  ],
-                  "steps": 20,
-                  "colors": "BluYl",
-                  "nullColor": [
-                    184,
-                    184,
-                    184
-                  ]
-                },
-                "getFillColor": [
-                  208,
-                  208,
-                  208,
-                  40
-                ]
-              }
-            },
             "fused:udfType": "auto",
-            "fused:slug": "note_c206111a_9c85_43a4_b403_645ddba80c68",
-            "fused:name": "note_c206111a_9c85_43a4_b403_645ddba80c68"
+            "nodeTemplateType": "textbox",
+            "isNodeTemplate": true,
+            "nodeTemplateAlignment": "left",
+            "fused:description": "Exported from Fused UDF Workbench",
+            "fused:title": "note_c206111a_9c85_43a4_b403_645ddba80c68"
           },
           "headers": [],
           "source": "note_c206111a_9c85_43a4_b403_645ddba80c68.py"

@@ -1,8 +1,5 @@
 @fused.udf
 def udf():
-    import altair as alt
-    alt.data_transformers.enable('default')
-
     # Load timeseries data
     timeseries_udf = fused.load('ndvi_yearly_timeseries_all_aois')
     df = timeseries_udf() # Just loading default values from above UDF
@@ -20,53 +17,117 @@ def udf():
         '23_013': 'Knox, ME',
     }
     df['county'] = (df['state_fips'].astype(str) + '_' + df['county_fips'].astype(str)).map(county_names)
-    print(df)
+    df = df.dropna(subset=['county'])
 
-    # Build line chart with separate lines per AOI (mean only)
-    color_scale = alt.Color('county:N', title='County',
-        scale=alt.Scale(scheme='tableau10'))
+    # Prepare data for Chart.js
+    import json
+    
+    # Sort by month to ensure line order
+    df = df.sort_values('month')
+    months = sorted(df['month'].unique().tolist())
+    
+    # Generate colors for each unique county
+    colors = {
+        'San Juan, WA': 'rgba(31, 119, 180, 1)',
+        'Santa Cruz, AZ': 'rgba(255, 127, 14, 1)',
+        'Decatur, IA': 'rgba(44, 160, 44, 1)',
+        'Macon, AL': 'rgba(214, 39, 40, 1)',
+        'Knox, ME': 'rgba(148, 103, 189, 1)'
+    }
+    
+    datasets = []
+    for county, group in df.groupby('county'):
+        # Map monthly values, fill missing with None
+        month_to_val = dict(zip(group['month'], group['mean_ndvi']))
+        data = [month_to_val.get(m, None) for m in months]
+        
+        color = colors.get(county, 'rgba(128, 128, 128, 1)')
+        datasets.append({
+            "label": county,
+            "data": data,
+            "borderColor": color,
+            "backgroundColor": color.replace(', 1)', ', 0.1)'),
+            "borderWidth": 2.5,
+            "tension": 0.1,
+            "spanGaps": True
+        })
 
-    base = alt.Chart(df).encode(
-        x=alt.X('month:O', title='Month', axis=alt.Axis(labelAngle=0)),
-    )
-
-    line = base.mark_line(strokeWidth=2.5).encode(
-        y=alt.Y('mean_ndvi:Q', title='NDVI', scale=alt.Scale(domain=[0, 1])),
-        color=color_scale,
-        tooltip=[
-            alt.Tooltip('county:N', title='County'),
-            alt.Tooltip('month:O', title='Month'),
-            alt.Tooltip('mean_ndvi:Q', title='Mean NDVI', format='.3f'),
-        ]
-    )
-
-    points = base.mark_circle(size=50).encode(
-        y='mean_ndvi:Q',
-        color=color_scale,
-        tooltip=[
-            alt.Tooltip('county:N', title='County'),
-            alt.Tooltip('month:O', title='Month'),
-            alt.Tooltip('mean_ndvi:Q', title='Mean NDVI', format='.3f'),
-        ]
-    )
-
-    chart = (line + points).properties(
-        width='container',
-        height=400,
-        title='NDVI Time Series — All AOIs',
-        background='white',
-    ).configure_legend(
-        titleFontSize=14,
-        labelFontSize=13,
-        symbolSize=150,
-        symbolStrokeWidth=3,
-    ).configure_axis(
-        labelColor='#333',
-        titleColor='#333',
-    ).configure_title(
-        color='#333',
-    ).configure_view(
-        strokeWidth=0,
-    )
-
-    return chart.to_html(embed_options={"renderer": "svg"})
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                margin: 20px;
+                background-color: #ffffff;
+            }}
+            .chart-container {{
+                position: relative;
+                height: 400px;
+                width: 100%;
+                max-width: 800px;
+                margin: 0 auto;
+            }}
+            h2 {{
+                text-align: center;
+                color: #333;
+                margin-bottom: 20px;
+            }}
+        </style>
+    </head>
+    <body>
+        <h2>NDVI Time Series — All AOIs</h2>
+        <div class="chart-container">
+            <canvas id="ndviChart"></canvas>
+        </div>
+        <script>
+            const ctx = document.getElementById('ndviChart').getContext('2d');
+            new Chart(ctx, {{
+                type: 'line',
+                data: {{
+                    labels: {json.dumps(months)},
+                    datasets: {json.dumps(datasets)}
+                }},
+                options: {{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {{
+                        x: {{
+                            title: {{
+                                display: true,
+                                text: 'Month',
+                                color: '#333'
+                            }},
+                            grid: {{
+                                display: false
+                            }}
+                        }},
+                        y: {{
+                            min: 0,
+                            max: 1,
+                            title: {{
+                                display: true,
+                                text: 'NDVI',
+                                color: '#333'
+                            }}
+                        }}
+                    }},
+                    plugins: {{
+                        legend: {{
+                            position: 'top',
+                            labels: {{
+                                font: {{
+                                    size: 13
+                                }}
+                            }}
+                        }}
+                    }}
+                }}
+            }});
+        </script>
+    </body>
+    </html>
+    """
+    return html_content

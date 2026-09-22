@@ -12,50 +12,9 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "fused:name": "ndvi_timeseries_chart",
-            "fused:slug": "ndvi_timeseries_chart",
-            "fused:vizConfig": {
-              "tileLayer": {
-                "@@type": "TileLayer",
-                "minZoom": 0,
-                "maxZoom": 19,
-                "tileSize": 256
-              },
-              "rasterLayer": {
-                "@@type": "BitmapLayer",
-                "pickable": true
-              },
-              "vectorLayer": {
-                "@@type": "GeoJsonLayer",
-                "stroked": true,
-                "filled": false,
-                "pickable": true,
-                "lineWidthMinPixels": 1,
-                "pointRadiusMinPixels": 1,
-                "getLineColor": {
-                  "@@function": "colorContinuous",
-                  "attr": "value",
-                  "domain": [
-                    0,
-                    10
-                  ],
-                  "steps": 20,
-                  "colors": "Teal",
-                  "nullColor": [
-                    184,
-                    184,
-                    184
-                  ]
-                },
-                "getFillColor": [
-                  208,
-                  208,
-                  208,
-                  40
-                ]
-              }
-            },
-            "fused:udfType": "auto"
+            "fused:udfType": "auto",
+            "fused:description": "Exported from Fused UDF Workbench",
+            "fused:title": "ndvi_timeseries_chart"
           },
           "headers": [],
           "source": "ndvi_timeseries_chart.py"
