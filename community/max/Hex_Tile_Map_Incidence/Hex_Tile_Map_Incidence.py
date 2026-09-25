@@ -10,7 +10,18 @@ def udf(
     zoom: float = 13,
     tooltip_columns: list = None,
 ):
+    import json as _json
     import pandas as pd
+
+    # These land inside a <script> block. Neither repr() nor the {x!r} conversion
+    # escapes "</script>", which closes the tag before the browser parses any JS.
+    def _js(value):
+        return _json.dumps(value).replace("</", "<\\/")
+
+    mapbox_token_js = _js(str(mapbox_token))
+    tile_url_template_js = _js(str(tile_url_template))
+    config_json_js = _js(str(config_json))
+    tooltip_columns_js = _js(list(tooltip_columns) if tooltip_columns else [])
     
     data_preview = pd.read_parquet("https://udf.ai/UDF_JP_intersection_accidents/run/tiles/15/29103/12900?dtype_out_raster=png&dtype_out_vector=parquet")
     print(data_preview.T)
@@ -86,11 +97,11 @@ def udf(
   </div>
 
   <script>
-    const MAPBOX_TOKEN = {mapbox_token!r};
+    const MAPBOX_TOKEN = {mapbox_token_js};
     const STYLE_URL    = "mapbox://styles/mapbox/dark-v10";
-    const TPL          = {tile_url_template!r};
-    const CONFIG       = JSON.parse({config_json!r});
-    const TOOLTIP_COLUMNS = {tooltip_columns if tooltip_columns else []!r};
+    const TPL          = {tile_url_template_js};
+    const CONFIG       = JSON.parse({config_json_js});
+    const TOOLTIP_COLUMNS = {tooltip_columns_js};
 
     const {{ TileLayer, PolygonLayer, MapboxOverlay }} = deck;
     const H3HexagonLayer = deck.H3HexagonLayer || (deck.GeoLayers && deck.GeoLayers.H3HexagonLayer);
