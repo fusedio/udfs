@@ -24,16 +24,19 @@ V2_VERSION = 2
 V2_HEADER = struct.Struct("<8sHHII")
 MAX_INDEX_BYTES = 4 * 1024 * 1024
 
-# Render App (fusedio/fused-render-lite) registers the `render-app:` URL scheme
-# and opens `render-app://open?url=<https link to a .fused>`. Its release CI
-# publishes the DMG on CloudFront and a `latest.json` next to it naming the
-# newest one; that manifest is fetched by the page (CORS `*`, no-cache) so the
-# download link is never staler than the last release. The GitHub releases
-# page is the static fallback when JS or the fetch is unavailable.
-RENDER_APP_SCHEME = "render-app://open?url="
-RENDER_APP_MANIFEST = "https://d2ic19jpchjovp.cloudfront.net/render-app-dmgs/latest.json"
-RENDER_APP_DMG_PREFIX = "https://d2ic19jpchjovp.cloudfront.net/render-app-dmgs/"
-RENDER_APP_RELEASES = "https://github.com/fusedio/fused-render-lite/releases/latest"
+# fused-render (fusedio/fused-render) registers the `fused-render:` URL scheme
+# and opens `fused-render://open?url=<https link to a .fused>` (SPEC §26 DL-8):
+# it downloads the file into its managed downloads dir and opens it, no
+# confirm step. Its release CI publishes installers on CloudFront and the
+# download page's `latest.json` names the newest of each (`dmg_url`,
+# `windows_url`, `linux_url`, `version`); that manifest is fetched by the page
+# (CORS `*`) so the install link is never staler than the last release. The
+# download page itself is the static fallback when JS or the fetch is
+# unavailable.
+FUSED_RENDER_SCHEME = "fused-render://open?url="
+FUSED_RENDER_DOWNLOAD_PAGE = "https://render.fused.io"
+FUSED_RENDER_MANIFEST = "https://render.fused.io/latest.json"
+FUSED_RENDER_CDN_PREFIX = "https://d2ic19jpchjovp.cloudfront.net/fused-render-"
 
 
 @fused.udf(cache_max_age="30m")
@@ -59,7 +62,7 @@ def udf(path: str, preview: bool = False):
     except Exception as e:  # noqa: BLE001 - surfaced to the viewer, not swallowed
         return _error(path, f"{type(e).__name__}: {e}")
 
-    # One https link serves both actions: Render App downloads the file from it
+    # One https link serves both actions: fused-render downloads the file from it
     # when the deeplink fires, and the browser saves it on the small download
     # link. A path that already is https is used as is; a bucket path is
     # signed; mount paths cannot be signed, so the page drops both links
@@ -286,21 +289,21 @@ def _page(path, app, file_url):
         bits.append('<span class="warn">not marked as an app file</span>')
     meta = " · ".join(bits)
 
-    # Opening in Render App is the primary action; the file download is the
+    # Opening in fused-render is the primary action; the file download is the
     # small secondary one. The deeplink's `url` is percent-encoded whole
-    # (`safe=""`): a signed URL carries its own `?`/`&`/`=`, and Render App
-    # parses the deeplink with parse_qs, which would otherwise split it.
+    # (`safe=""`): a signed URL carries its own `?`/`&`/`=`, and fused-render
+    # takes the payload verbatim to end-of-string and unquotes it exactly once.
     if file_url:
-        deeplink = RENDER_APP_SCHEME + urllib.parse.quote(file_url, safe="")
-        action = f"""<a class="open" id="open" href="{html.escape(deeplink, quote=True)}">Open in Render App</a>
+        deeplink = FUSED_RENDER_SCHEME + urllib.parse.quote(file_url, safe="")
+        action = f"""<a class="open" id="open" href="{html.escape(deeplink, quote=True)}">Open in fused-render</a>
     <div class="sub">
       <a class="dl" href="{html.escape(file_url, quote=True)}" download="{file_name}">Download <span class="fn">{file_name}</span></a>
       <span class="sep">·</span>
-      <a class="get" id="get" href="{RENDER_APP_RELEASES}" target="_blank" rel="noopener">Need Render App?</a>
+      <a class="get" id="get" href="{FUSED_RENDER_DOWNLOAD_PAGE}" target="_blank" rel="noopener">Need fused-render?</a>
     </div>
     <div class="install" id="install" hidden>
-      <p><strong>Didn't open?</strong> You may need Render App first.</p>
-      <a class="dmg" id="dmg" href="{RENDER_APP_RELEASES}" target="_blank" rel="noopener">Download Render App for macOS</a>
+      <p><strong>Didn't open?</strong> You may need fused-render first.</p>
+      <a class="dmg" id="dmg" href="{FUSED_RENDER_DOWNLOAD_PAGE}" target="_blank" rel="noopener">Download fused-render</a>
       <p class="hint" id="hint"></p>
     </div>"""
     else:
@@ -467,44 +470,53 @@ def _page(path, app, file_url):
     table.appendChild(tr);
   }});
 
-  // -- Render App -----------------------------------------------------------
-  var MANIFEST = {_js(RENDER_APP_MANIFEST)};
-  var DMG_PREFIX = {_js(RENDER_APP_DMG_PREFIX)};
+  // -- fused-render ---------------------------------------------------------
+  var MANIFEST = {_js(FUSED_RENDER_MANIFEST)};
+  var CDN_PREFIX = {_js(FUSED_RENDER_CDN_PREFIX)};
   var openLink = document.getElementById("open");
   var install = document.getElementById("install");
   var dmg = document.getElementById("dmg");
   var get = document.getElementById("get");
   // iPadOS Safari reports platform "MacIntel" and a desktop UA; touch points
   // tell it apart (a Mac has none, an iPad has five). userAgentData, where a
-  // browser has it, is authoritative.
+  // browser has it, is authoritative. Anything that is not one of the three
+  // desktop platforms (a phone, a tablet) gets the download page, which
+  // explains itself.
   var uad = navigator.userAgentData;
-  var isMac = uad && uad.platform
-    ? uad.platform === "macOS"
-    : /^Mac/.test(navigator.platform || "") && (navigator.maxTouchPoints || 0) < 2;
+  var platform = uad && uad.platform ? uad.platform : (navigator.platform || "");
+  var touch = (navigator.maxTouchPoints || 0) >= 2;
+  var os = null;
+  if (/^mac/i.test(platform) && !touch) os = "mac";
+  else if (/^win/i.test(platform)) os = "windows";
+  else if (/linux/i.test(platform) && !touch && !/android/i.test(navigator.userAgent || "")) os = "linux";
+  var OS_LABEL = {{ mac: "macOS", windows: "Windows", linux: "Linux" }};
+  var OS_KEY = {{ mac: "dmg_url", windows: "windows_url", linux: "linux_url" }};
+  var OS_EXT = {{ mac: /\\.dmg$/, windows: /\\.exe$/, linux: /\\.AppImage$/ }};
 
-  // The DMG link starts at the releases page and is upgraded to the exact
-  // current DMG from the signed manifest Render App's own updater polls.
-  // Only the `url` is used and only when it sits under the release prefix,
-  // so a bad manifest can at worst leave the releases link in place.
+  // The install link starts at the download page and is upgraded to the
+  // exact current installer for this platform from the manifest the page
+  // publishes with every release. Only that one url is used and only when it
+  // sits under the release CDN prefix with the right extension, so a bad
+  // manifest can at worst leave the download page in place.
   if (openLink) {{
-    fetch(MANIFEST, {{ cache: "no-store" }})
-      .then(function (r) {{ return r.ok ? r.json() : null; }})
-      .then(function (m) {{
-        if (!m || m.schema !== 1 || typeof m.url !== "string") return;
-        if (m.url.indexOf(DMG_PREFIX) !== 0 || !/\\.dmg$/.test(m.url)) return;
-        dmg.href = m.url;
-        // The direct DMG is a Mac file; everyone else keeps the releases page.
-        if (isMac) get.href = m.url;
-        if (typeof m.version === "string" && /^[0-9.]+$/.test(m.version)) {{
-          dmg.textContent = "Download Render App " + m.version + " for macOS";
-        }}
-      }})
-      .catch(function () {{}});
-
-    if (!isMac) {{
-      // The DMG is macOS-only; say so up front instead of after a dead click.
+    if (os) {{
+      fetch(MANIFEST, {{ cache: "no-store" }})
+        .then(function (r) {{ return r.ok ? r.json() : null; }})
+        .then(function (m) {{
+          if (!m || typeof m[OS_KEY[os]] !== "string") return;
+          var url = m[OS_KEY[os]];
+          if (url.indexOf(CDN_PREFIX) !== 0 || !OS_EXT[os].test(url)) return;
+          dmg.href = url;
+          get.href = url;
+          var v = typeof m.version === "string" && /^[0-9.]+$/.test(m.version) ? " " + m.version : "";
+          dmg.textContent = "Download fused-render" + v + " for " + OS_LABEL[os];
+        }})
+        .catch(function () {{}});
+    }} else {{
+      // No desktop installer for this device; say so up front instead of
+      // after a dead click.
       document.getElementById("hint").textContent =
-        "Render App is currently available for macOS. The .fused file itself can still be downloaded above.";
+        "fused-render runs on macOS, Windows and Linux. The .fused file itself can still be downloaded above.";
     }}
 
     // A browser gives no answer to "is this URL scheme registered?", and the
