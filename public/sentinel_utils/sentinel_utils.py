@@ -138,22 +138,34 @@ def scl_classes(keep):
     if isinstance(keep, str):
         if keep in SCL_GROUPS:
             return SCL_GROUPS[keep]
-        return tuple(int(v) for v in keep.split(",") if v.strip())
-    return tuple(int(v) for v in keep)
+        try:
+            codes = tuple(int(v) for v in keep.split(",") if v.strip())
+        except ValueError:
+            raise ValueError(f"keep must be one of {list(SCL_GROUPS)} or SCL codes like '4,5', got {keep!r}") from None
+    else:
+        codes = tuple(int(v) for v in keep)
+    if not codes or any(c not in SCL for c in codes):
+        raise ValueError(f"SCL codes must be in 0..11, got {keep!r}")
+    return codes
 
 
 def bbox(aoi):
-    """An area of interest -> [w, s, e, n]. Accepts 'w,s,e,n', [w, s, e, n], a shapely geometry or a GeoDataFrame."""
+    """An area of interest -> [w, s, e, n] in degrees. Accepts 'w,s,e,n', [w, s, e, n], a shapely geometry or a
+    GeoDataFrame. An AOI that crosses 180° must be split into two."""
     value = aoi
     if isinstance(value, str):
         value = [v for v in value.replace("[", "").replace("]", "").split(",") if v.strip()]
     elif hasattr(value, "total_bounds"):
         value = value.to_crs(4326).total_bounds if value.crs else value.total_bounds
-    elif hasattr(value, "bounds") and not hasattr(value, "__len__"):
+    elif hasattr(value, "geom_type"):
         value = value.bounds
-    vals = [float(v) for v in value]
-    if len(vals) != 4 or vals[2] <= vals[0] or vals[3] <= vals[1]:
-        raise ValueError(f"aoi must be west,south,east,north with west < east and south < north, got {vals}")
+    try:
+        vals = [float(v) for v in value]
+    except (TypeError, ValueError):
+        raise ValueError(f"aoi must be 'w,s,e,n', [w, s, e, n], a shapely geometry or a GeoDataFrame, got {aoi!r}") from None
+    if len(vals) != 4 or not (-180 <= vals[0] < vals[2] <= 180 and -90 <= vals[1] < vals[3] <= 90):
+        raise ValueError(f"aoi must be west,south,east,north in degrees with west < east and south < north "
+                         f"(split an AOI that crosses 180°), got {vals}")
     return vals
 
 
@@ -161,7 +173,7 @@ def date_window(date, days=DAYS):
     """(start, end) of `date` ± `days` as YYYY-MM-DD strings."""
     import pandas as pd
 
-    d = pd.Timestamp(str(date)[:10])
+    d = pd.Timestamp(_day(date))
     half = pd.Timedelta(days=int(days))
     return (d - half).strftime("%Y-%m-%d"), (d + half).strftime("%Y-%m-%d")
 
@@ -174,7 +186,7 @@ def frequency(period):
 def utm_crs(bounds):
     """EPSG string of the UTM zone at the centre of [w, s, e, n]."""
     lon, lat = (bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2
-    return f"EPSG:{(32600 if lat >= 0 else 32700) + int((lon + 180) // 6) + 1}"
+    return f"EPSG:{(32600 if lat >= 0 else 32700) + int((lon + 180) // 6) % 60 + 1}"
 
 
 def size_m(bounds):
@@ -193,18 +205,27 @@ def auto_res(bounds, max_px, min_res=10):
 
 
 def geobox(aoi=None, res=10, crs="utm", shape=None, like=None):
-    """Output grid: the grid of `like` (GeoBox or xarray object), else `aoi` at `res` metres (or `shape`) in `crs`."""
+    """Output grid: the grid of `like` (GeoBox or xarray object), else `aoi` at `res` metres (or `shape`) in `crs`.
+
+    `res` is in the metres of a projected crs; for EPSG:3857 it is ground metres at the AOI's centre latitude.
+    A geographic crs (EPSG:4326), or a crs in other units (feet), needs `shape`.
+    """
+    import math
+    from odc.geo import CRS
     from odc.geo.geobox import GeoBox
     from rasterio.warp import transform_bounds
 
     if like is not None:
         return like if isinstance(like, GeoBox) else _odc(like).geobox
     bounds = bbox(aoi)
-    crs = utm_crs(bounds) if crs == "utm" else crs
-    bb = transform_bounds("EPSG:4326", crs, *bounds)
+    crs = CRS(utm_crs(bounds) if crs == "utm" else crs)
+    bb = transform_bounds("EPSG:4326", str(crs), *bounds)
     if shape:
-        return GeoBox.from_bbox(bb, crs=crs, shape=tuple(shape))
-    return GeoBox.from_bbox(bb, crs=crs, resolution=float(res))
+        return GeoBox.from_bbox(bb, crs=crs, shape=tuple(int(v) for v in shape))
+    if crs.geographic or crs.units[0] != "metre":
+        raise ValueError(f"res is in metres, but {crs} uses {crs.units[0]}; give shape= or use a metric crs")
+    step = float(res) / math.cos(math.radians((bounds[1] + bounds[3]) / 2)) if crs.epsg == 3857 else float(res)
+    return GeoBox.from_bbox(bb, crs=crs, resolution=step)
 
 
 def on_grid(values, like, name=None, attrs=None):
@@ -258,6 +279,15 @@ def _odc(obj):
     return obj.odc
 
 
+def _day(value):
+    import pandas as pd
+
+    try:
+        return pd.Timestamp(str(value)[:10]).strftime("%Y-%m-%d")
+    except ValueError:
+        raise ValueError(f"dates must be YYYY-MM-DD, got {value!r}") from None
+
+
 class BestFill:
     """Best-first pixel fill shared by tiles and exports.
 
@@ -291,11 +321,11 @@ class BestFill:
             self.dark_val[:, darker] = data[:, darker]
 
     def clear_share(self):
-        """Share of pixels with data that are clear (1.0 when nothing has data yet)."""
-        return float(self.filled[self.seen].mean()) if self.seen.any() else 1.0
+        """Share of the pixels with data that are clear (0.0 when no pixel has data)."""
+        return float(self.filled[self.seen].mean()) if self.seen.any() else 0.0
 
     def result(self):
-        """(data float32 (nb, H, W), alpha bool (H, W))."""
+        """(data float32 (nb, H, W), alpha bool (H, W)). Data is NaN where no observation has data."""
         import numpy as np
 
         holes = ~self.filled & self.seen
@@ -315,29 +345,37 @@ COMMON = "https://github.com/fusedio/udfs/tree/b6786d6/public/common/"
 SOURCES = ("auto", "c1", "coop", "legacy", "index")
 SOURCE_RANK = {"c1": 0, "coop": 0, "legacy": 1, "index": 2}
 SCENE_COLUMNS = ["id", "datetime", "date", "mgrs", "platform", "cloud_cover", "nodata_pct", "epsg", "baseline", "source", "offset"]
+STAC_PAGE = 200
 COARSE_MARGIN = 1.3
 
 
 def search(aoi, start, end, *, max_cloud=MAX_CLOUD, source="auto", limit=None):
-    """Scenes that touch `aoi` from `start` to `end` (YYYY-MM-DD, inclusive) with tile cloud <= max_cloud.
+    """Scenes that touch `aoi` with local solar `date` from `start` to `end` (YYYY-MM-DD, inclusive), tile cloud <=
+    max_cloud.
 
-    Returns a GeoDataFrame in time order with SCENE_COLUMNS + href_<asset> + geometry. `date` is the local solar date.
+    Returns a GeoDataFrame in time order with SCENE_COLUMNS + href_<asset> + geometry (the data footprint).
     source: auto | c1 | coop | legacy | index (see README.MD). `limit` keeps the first scenes and warns when it cuts.
     """
     import warnings
+    import pandas as pd
 
     if source not in SOURCES:
         raise ValueError(f"source must be one of {SOURCES}")
-    key = (tuple(round(v, 6) for v in bbox(aoi)), str(start)[:10], str(end)[:10], float(max_cloud))
+    start, end = _day(start), _day(end)
+    if end < start:
+        raise ValueError(f"end {end} is before start {start}")
+    lo = (pd.Timestamp(start) - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+    hi = (pd.Timestamp(end) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+    key = (tuple(round(v, 6) for v in bbox(aoi)), lo, hi, float(max_cloud))
     if source == "auto":
         parts = [_try(_search_c1, _search_coop, key)]
-        gap = (max(key[1], C1_GAP[0]), min(key[2], C1_GAP[1]))
+        gap = (max(lo, C1_GAP[0]), min(hi, C1_GAP[1]))
         if gap[0] <= gap[1]:
             parts.append(_try(_search_legacy, _search_index, (key[0], gap[0], gap[1], key[3])))
     else:
         reader = {"c1": _search_c1, "coop": _search_coop, "legacy": _search_legacy, "index": _search_index}[source]
         parts = [reader(*key)]
-    out = _finish(parts)
+    out = _finish(parts, start, end)
     if limit and len(out) > int(limit):
         warnings.warn(f"search found {len(out)} scenes; keeping the first {limit}")
         out = out.head(int(limit))
@@ -348,11 +386,13 @@ def rank(scenes, aoi=None, *, date=None, per_mgrs=None, order="clear"):
     """Scenes best first, at most `per_mgrs` per MGRS tile; each tile's best scene before any tile's second best.
 
     order: clear (most clear area first, then nearest `date`) | date (nearest date first, then clear area).
-    Adds clear_pct = (100 - nodata %) * (100 - cloud %) / 100, days_off and mgrs_rank.
+    Adds clear_pct = (100 - nodata %) * (100 - cloud %) / 100, days_off (solar days from `date`) and mgrs_rank.
     """
     import pandas as pd
     import shapely
 
+    if order not in ("clear", "date"):
+        raise ValueError("order must be clear or date")
     sc = scenes
     if aoi is not None and len(sc):
         sc = sc[sc.intersects(shapely.box(*bbox(aoi)))]
@@ -360,15 +400,14 @@ def rank(scenes, aoi=None, *, date=None, per_mgrs=None, order="clear"):
     if not len(sc):
         return sc.assign(clear_pct=[], days_off=[], mgrs_rank=[])
     sc["clear_pct"] = ((100 - sc["nodata_pct"].fillna(0)) * (100 - sc["cloud_cover"].fillna(100)) / 100).round(2)
-    target = pd.Timestamp(str(date)[:10], tz="UTC") if date else None
-    sc["days_off"] = (pd.to_datetime(sc["datetime"], utc=True) - target).abs().dt.days if target is not None else 0
+    sc["days_off"] = (pd.to_datetime(sc["date"]) - pd.Timestamp(_day(date))).abs().dt.days if date else 0
     sc["_unclear"] = -sc["clear_pct"]
     keys = ["_unclear", "days_off"] if order == "clear" else ["days_off", "_unclear"]
-    sc = sc.sort_values(keys)
+    sc = sc.sort_values(keys + ["id"])
     if per_mgrs:
         sc = sc.groupby("mgrs").head(int(per_mgrs))
     sc["mgrs_rank"] = sc.groupby("mgrs").cumcount()
-    return sc.sort_values(["mgrs_rank"] + keys).drop(columns="_unclear").reset_index(drop=True)
+    return sc.sort_values(["mgrs_rank"] + keys + ["id"]).drop(columns="_unclear").reset_index(drop=True)
 
 
 def dates(scenes):
@@ -382,14 +421,15 @@ def dates(scenes):
 
 
 def to_json(scenes, bands):
-    """Compact JSON for passing scenes to workers: SCENE_COLUMNS plus bbox and hrefs of `bands`."""
+    """Compact JSON for passing scenes to workers: SCENE_COLUMNS, the footprint and the hrefs of `bands`."""
     import json
+    import shapely
 
     names = band_names(bands)
     rows = []
     for _, r in scenes.iterrows():
         row = {c: (r[c].item() if hasattr(r[c], "item") else r[c]) for c in SCENE_COLUMNS}
-        row.update(bbox=[round(v, 6) for v in r.geometry.bounds], hrefs={n: r[f"href_{n}"] for n in names})
+        row.update(footprint=shapely.to_wkt(r.geometry, rounding_precision=6), hrefs={n: r[f"href_{n}"] for n in names})
         rows.append(row)
     return json.dumps(rows)
 
@@ -405,8 +445,8 @@ def from_json(text):
         return _empty_scenes()
     out = []
     for s in rows:
-        row = {k: v for k, v in s.items() if k not in ("hrefs", "bbox")}
-        row.update({f"href_{k}": v for k, v in s["hrefs"].items()}, geometry=shapely.box(*s["bbox"]))
+        row = {k: v for k, v in s.items() if k not in ("hrefs", "footprint")}
+        row.update({f"href_{k}": v for k, v in s["hrefs"].items()}, geometry=shapely.from_wkt(s["footprint"]))
         out.append(row)
     return gpd.GeoDataFrame(out, geometry="geometry", crs="EPSG:4326")
 
@@ -422,7 +462,7 @@ def _try(first, fallback, key):
         return fallback(*key)
 
 
-def _finish(parts):
+def _finish(parts, start, end):
     import geopandas as gpd
     import pandas as pd
 
@@ -433,10 +473,11 @@ def _finish(parts):
     lon = df["geometry"].map(lambda g: g.centroid.x)
     t = pd.to_datetime(df["datetime"], utc=True)
     df["date"] = (t + pd.to_timedelta(lon / 15, unit="h")).dt.strftime("%Y-%m-%d")
+    df = df[(df["date"] >= start) & (df["date"] <= end)]
     df = df.assign(_r=df["source"].map(SOURCE_RANK)).sort_values(["_r", "baseline"], ascending=[True, False]).drop_duplicates("id")
     acquisition = df["mgrs"] + "_" + df["date"] + "_" + df["platform"]
     df = df[df["_r"] == df.groupby(acquisition)["_r"].transform("min")]
-    df = df.drop(columns="_r").sort_values("datetime").reset_index(drop=True)
+    df = df.drop(columns="_r").sort_values(["datetime", "id"]).reset_index(drop=True)
     cols = SCENE_COLUMNS + [f"href_{a}" for a in ASSETS]
     return gpd.GeoDataFrame(df.reindex(columns=cols + ["geometry"]), geometry="geometry", crs="EPSG:4326")
 
@@ -447,13 +488,13 @@ def _empty_scenes():
     return gpd.GeoDataFrame({c: [] for c in SCENE_COLUMNS + [f"href_{a}" for a in ASSETS]}, geometry=[], crs="EPSG:4326")
 
 
-def _search_stac(bounds, start, end, max_cloud, collection, source, offset, max_pages=20):
+def _search_stac(bounds, start, end, max_cloud, collection, source, offset, max_pages=50):
     import pandas as pd
     import requests
     import shapely
 
     body = {"collections": [collection], "bbox": list(bounds), "datetime": f"{start}T00:00:00Z/{end}T23:59:59Z",
-            "query": {"eo:cloud_cover": {"lte": max_cloud}}, "limit": 500}
+            "query": {"eo:cloud_cover": {"lte": max_cloud}}, "limit": STAC_PAGE}
     rows, url = [], E84_API
     for _ in range(max_pages):
         r = requests.post(url, json=body, timeout=60)
@@ -474,7 +515,7 @@ def _search_stac(bounds, start, end, max_cloud, collection, source, offset, max_
         if not nxt:
             return pd.DataFrame(rows)
         url, body = nxt[0]["href"], nxt[0].get("body", body)
-    raise RuntimeError(f"more than {max_pages * 500} scenes: narrow the area or the dates")
+    raise RuntimeError(f"more than {max_pages * STAC_PAGE} scenes: narrow the area or the dates")
 
 
 @fused.cache(cache_max_age="24h")
@@ -489,13 +530,18 @@ def _search_legacy(bounds, start, end, max_cloud):
 
 @fused.cache(cache_max_age="24h")
 def _search_coop(bounds, start, end, max_cloud):
+    import datetime
     import math
     import duckdb
+    import pandas as pd
     import shapely
 
     w, s, e, n = bounds
+    years = range(max(int(start[:4]), 2015), min(int(end[:4]), datetime.datetime.now(datetime.timezone.utc).year) + 1)
+    if not len(years):
+        return pd.DataFrame()
     mlon = min(1.0 / max(math.cos(math.radians(max(abs(s), abs(n)))), 0.1) + 0.3, 20)
-    files = ", ".join(f"'{COOP}/year={y}/items.parquet'" for y in range(max(int(start[:4]), 2015), int(end[:4]) + 1))
+    files = ", ".join(f"'{COOP}/year={y}/items.parquet'" for y in years)
     hrefs = ", ".join(f"json_extract_string(assets, '$.{a}.href') AS href_{a}" for a in ASSETS)
     con = duckdb.connect()
     con.sql("INSTALL spatial; LOAD spatial; INSTALL httpfs; LOAD httpfs; SET TimeZone='UTC';")
@@ -551,23 +597,29 @@ def load(scenes, bands, aoi=None, *, res=10, crs="utm", shape=None, like=None, k
          max_pixels=MAX_PIXELS, threads=16):
     """Scenes (GeoDataFrame or to_json text) -> Dataset (time, y, x), one variable per band.
 
-    Reflectance is float32 DN * 0.0001 + the scene's own offset; mask bands (scl, cloud, snow) are class or
-    probability values. Nodata is NaN.
+    Reflectance is float32 DN * 0.0001 + the scene's own offset; nodata is NaN. Mask bands keep their values:
+    scl is the class code, cloud and snow are probabilities in % (0 is a value; NaN only outside the scene). Asking
+    for cloud or snow also loads scl.
     keep: an SCL group (clear, land, water ...) applies `mask()` and loads scl when needed.
     merge: "day" merges the scenes of each local solar day; None keeps one step per scene, with a `scene` coordinate.
     The grid is `like` (GeoBox or xarray object), else `aoi` (default: the scenes' extent) at `res` or `shape`.
     """
     import odc.stac
+    import pandas as pd
     import rasterio
     import xarray as xr
 
+    if merge not in ("day", None):
+        raise ValueError("merge must be 'day' or None")
     if isinstance(scenes, str):
         scenes = from_json(scenes)
-    names = band_names(bands) + (["scl"] if keep and "scl" not in band_names(bands) else [])
+    names = band_names(bands)
+    if (keep or {"cloud", "snow"} & set(names)) and "scl" not in names:
+        names.append("scl")
     missing = [n for n in names if f"href_{n}" not in scenes.columns]
     if missing:
         raise ValueError(f"scenes have no href for {missing}")
-    scenes = scenes[scenes[[f"href_{n}" for n in names]].notna().all(axis=1)].sort_values("datetime", kind="stable")
+    scenes = scenes[scenes[[f"href_{n}" for n in names]].notna().all(axis=1)].sort_values(["datetime", "id"], kind="stable")
     if not len(scenes):
         raise NoData("no scene has every requested band")
     gb = geobox(aoi if aoi is not None else list(scenes.total_bounds), res, crs, shape, like)
@@ -580,8 +632,8 @@ def load(scenes, bands, aoi=None, *, res=10, crs="utm", shape=None, like=None, k
     parts = []
     with rasterio.Env(**GDAL_ENV):
         for offset, group in scenes.groupby("offset"):
-            items = _items(group, names)
             got = []
+            items = _items(group, names)
             if refl:
                 ds = odc.stac.load(items, bands=refl, geobox=gb, dtype="float32", nodata=0, resampling="bilinear",
                                    groupby="id", pool=threads, fail_on_error=False)
@@ -591,8 +643,13 @@ def load(scenes, bands, aoi=None, *, res=10, crs="utm", shape=None, like=None, k
                                    groupby="id", pool=threads, fail_on_error=False)
                 got.append(dm.where(dm > 0).astype("float32"))
             part = xr.merge(got, compat="override")
-            if part.sizes["time"] == len(group):
-                part = part.assign_coords(scene=("time", list(group["id"])))
+            if part.sizes["time"] != len(group):
+                raise RuntimeError(f"odc-stac returned {part.sizes['time']} time steps for {len(group)} scenes")
+            times = pd.to_datetime(group["datetime"], utc=True).dt.tz_localize(None).values
+            part = part.assign_coords(time=times, scene=("time", list(group["id"])))
+            for b in ("cloud", "snow"):
+                if b in part:
+                    part[b] = part[b].fillna(0).where(part["scl"].notnull())
             parts.append(part)
     ds = xr.concat(parts, dim="time").sortby("time") if len(parts) > 1 else parts[0]
     if merge == "day":
@@ -617,33 +674,38 @@ def clear_mask(ds, keep="clear", *, cloud_prob=None, dilate=0, rescue=True):
     """Boolean DataArray (time, y, x): True where SCL is in `keep`.
 
     cloud_prob: also require the cloud probability band below this %. dilate: grow cloud (SCL 8, 9, 10) by this many
-    pixels in every direction (3 x 3 square). rescue: a pixel that is never usable (building shadow, bright roof) gets
-    back its SCL 1, 2, 3, 7, 11 values, so composites have no permanent holes; cloud and classes left out of `keep`
-    on purpose stay masked.
+    pixels in every direction (3 x 3 square). rescue: when `keep` holds every clear class (4, 5, 6), a pixel that is
+    never clear on any date (building shadow, bright roof) gets back its SCL 1, 2, 3, 7, 11 dates, so composites
+    have no permanent holes. Cloud stays masked, and a narrower `keep` (land, water) is never widened.
     """
     import numpy as np
 
     if "scl" not in ds:
         raise ValueError("load the scl band to mask (load(..., keep='clear') adds it)")
+    classes = scl_classes(keep)
     scl = ds["scl"]
-    ok = scl.isin(list(scl_classes(keep)))
-    if cloud_prob is not None and "cloud" in ds:
-        ok = ok & (ds["cloud"].fillna(0) < float(cloud_prob))
+    ok = scl.isin(list(classes))
+    if cloud_prob is not None:
+        if "cloud" not in ds:
+            raise ValueError("cloud_prob needs the cloud band: load it with the other bands")
+        ok = ok & (ds["cloud"] < float(cloud_prob))
     if dilate and int(dilate) > 0:
         from scipy.ndimage import binary_dilation
 
         cloud = scl.isin(list(SCL_GROUPS["cloud"])).values
         grown = np.stack([binary_dilation(c, structure=np.ones((3, 3), bool), iterations=int(dilate)) for c in cloud])
         ok = ok & ~ok.copy(data=grown)
-    if rescue:
-        ok = ok | (~ok.any("time") & scl.isin(list(RESCUE)))
+    if rescue and set(SCL_GROUPS["clear"]) <= set(classes):
+        never = ~scl.isin(list(classes)).any("time")
+        ok = ok | (never & scl.isin(list(RESCUE)))
     return ok
 
 
 def aoi_cloud(scenes, aoi, *, keep="clear", max_px=512):
     """Per solar date: clear, cloud, shadow, snow, water and covered % inside the AOI (SCL at a coarse grid).
 
-    The tile `cloud_cover` of a scene row is for the whole 110 km tile; this measures the AOI itself.
+    The tile `cloud_cover` of a scene row is for the whole 110 km tile; this measures the AOI itself. Long scene
+    lists are read in batches, so any time range works.
     """
     import pandas as pd
 
@@ -651,22 +713,35 @@ def aoi_cloud(scenes, aoi, *, keep="clear", max_px=512):
     if not len(scenes):
         return pd.DataFrame(columns=cols)
     bounds = bbox(aoi)
-    scl = load(scenes, "scl", bounds, res=auto_res(bounds, max_px, 20))["scl"]
-    seen = scl.notnull().sum(["x", "y"])
-    pct = lambda codes: (scl.isin(list(codes)).sum(["x", "y"]) / seen.clip(min=1) * 100).values.round(1)
-    out = pd.DataFrame({
-        "date": pd.to_datetime(scl["time"].values).strftime("%Y-%m-%d"),
-        "clear_pct": pct(scl_classes(keep)), "cloud_pct": pct(SCL_GROUPS["cloud"]),
-        "shadow_pct": pct(SCL_GROUPS["shadow"]), "snow_pct": pct((11,)), "water_pct": pct(SCL_GROUPS["water"]),
-        "covered_pct": (seen / (scl.sizes["x"] * scl.sizes["y"]) * 100).values.round(1),
-    })
+    res = auto_res(bounds, max_px, 20)
+    gb = geobox(bounds, res)
+    per_batch = max(1, MAX_PIXELS // (gb.shape[0] * gb.shape[1]))
+    days = sorted(scenes["date"].unique())
+    rows, batch, n = [], [], 0
+    for d in days + [None]:
+        k = int((scenes["date"] == d).sum()) if d is not None else 0
+        if d is None or (batch and n + k > per_batch):
+            scl = load(scenes[scenes["date"].isin(batch)], "scl", like=gb)["scl"]
+            seen = scl.notnull().sum(["x", "y"])
+            pct = lambda codes: (scl.isin(list(codes)).sum(["x", "y"]) / seen.clip(min=1) * 100).values.round(1)
+            rows.append(pd.DataFrame({
+                "date": pd.to_datetime(scl["time"].values).strftime("%Y-%m-%d"),
+                "clear_pct": pct(scl_classes(keep)), "cloud_pct": pct(SCL_GROUPS["cloud"]),
+                "shadow_pct": pct(SCL_GROUPS["shadow"]), "snow_pct": pct((11,)), "water_pct": pct(SCL_GROUPS["water"]),
+                "covered_pct": (seen / (scl.sizes["x"] * scl.sizes["y"]) * 100).values.round(1),
+            }))
+            batch, n = [], 0
+        if d is not None:
+            batch.append(d)
+            n += k
+    out = pd.concat(rows, ignore_index=True)
     out["tile_cloud"] = out["date"].map(scenes.groupby("date")["cloud_cover"].mean().round(1))
     return out[cols]
 
 
-def clear_scenes(scenes, aoi, *, min_clear=80, min_covered=50, keep="clear"):
+def clear_scenes(scenes, aoi, *, min_clear=80, min_covered=50, keep="clear", max_px=512):
     """Scenes whose solar date is at least `min_clear` % clear inside the AOI and covers `min_covered` % of it."""
-    stats = aoi_cloud(scenes, aoi, keep=keep)
+    stats = aoi_cloud(scenes, aoi, keep=keep, max_px=max_px)
     good = set(stats.loc[(stats["clear_pct"] >= min_clear) & (stats["covered_pct"] >= min_covered), "date"])
     return scenes[scenes["date"].isin(good)].reset_index(drop=True)
 
@@ -683,14 +758,15 @@ def scl_summary(ds):
 
 
 def pixel_series(lat, lng, start, end, bands="red,nir", *, max_cloud=MAX_CLOUD, source="auto", clear_only=False, threads=64):
-    """One row per solar date at a point: scl and `bands` (reflectance). One pixel read per scene and band.
+    """One row per solar date at a point: scl and `bands`. One pixel read per scene and band.
 
-    A 10 m band is stored in 1024 x 1024 blocks (~1.8 MB), so each read moves one block: this is bandwidth-bound.
-    clear_only reads SCL first (much smaller blocks), reads the bands only where SCL is clear, and drops the other
-    dates. Read errors other than "outside the scene" are raised, not stored as NaN.
+    Reflectance bands are scaled with each scene's offset; cloud and snow are probabilities in %. A 10 m band is
+    stored in 1024 x 1024 blocks (~1.8 MB), so each read moves one block: this is bandwidth-bound. clear_only reads
+    SCL first (much smaller blocks), reads the bands only where SCL is clear, and drops the other dates.
+    Read errors other than "outside the scene" are raised, not stored as NaN.
     """
     names = [n for n in band_names(bands) if n != "scl"]
-    return _pixel_series(round(float(lat), 6), round(float(lng), 6), str(start)[:10], str(end)[:10], ",".join(names),
+    return _pixel_series(round(float(lat), 6), round(float(lng), 6), _day(start), _day(end), ",".join(names),
                          float(max_cloud), source, bool(clear_only), int(threads))
 
 
@@ -701,7 +777,7 @@ def _pixel_series(lat, lng, start, end, bands, max_cloud, source, clear_only, th
     import pandas as pd
     import rasterio
 
-    names = bands.split(",")
+    names = [n for n in bands.split(",") if n]
     d = 1e-4
     scenes = search([lng - d, lat - d, lng + d, lat + d], start, end, max_cloud=max_cloud, source=source)
     cols = ["date", "datetime", "id", "mgrs", "source", "cloud_cover", "scl"] + names
@@ -713,20 +789,23 @@ def _pixel_series(lat, lng, start, end, bands, max_cloud, source, clear_only, th
         i, n = job
         href = rows.at[i, f"href_{n}"]
         v = _read_pixel(href, lat, lng) if isinstance(href, str) else np.nan
-        return i, n, v if (n == "scl" or v != v) else v * SCALE + float(rows.at[i, "offset"])
+        return i, n, v if (is_mask(n) or v != v) else v * SCALE + float(rows.at[i, "offset"])
 
     out = rows[["date", "datetime", "id", "mgrs", "source", "cloud_cover"]].copy()
     with rasterio.Env(**GDAL_ENV), ThreadPoolExecutor(threads) as ex:
         scl = list(ex.map(read, [(i, "scl") for i in range(len(rows))]))
         out["scl"] = [v for _, _, v in scl]
-        keep = [i for i, _, v in scl if v == v and int(v) in SCL_GROUPS["clear"]] if clear_only else range(len(rows))
+        keep = [i for i, _, v in scl if v == v and int(v) in SCL_GROUPS["clear"]] if clear_only else list(range(len(rows)))
         for n in names:
             out[n] = np.nan
         for i, n, v in ex.map(read, [(i, n) for i in keep for n in names]):
             out.at[i, n] = v
+    for n in names:
+        if n in ("cloud", "snow"):
+            out[n] = out[n].where(out[n].notna() | out["scl"].isna() | rows[f"href_{n}"].isna(), 0.0)
     if clear_only:
-        out = out.loc[list(keep)]
-    out["_valid"] = out[names].notnull().sum(axis=1)
+        out = out.loc[keep]
+    out["_valid"] = out[names].notnull().sum(axis=1) if names else out["scl"].notnull().astype(int)
     out = out.sort_values(["date", "_valid"], ascending=[True, False]).drop_duplicates("date").drop(columns="_valid")
     return out[cols].reset_index(drop=True)
 
@@ -756,16 +835,20 @@ def _read_pixel(href, lat, lng, retries=2):
 
 
 def _items(scenes, names):
-    from datetime import datetime, timezone
+    from datetime import datetime, timedelta, timezone
     import pystac
     import shapely
 
-    items = []
+    items, last = [], None
     for _, r in scenes.iterrows():
         dt = datetime.fromisoformat(str(r["datetime"]).replace("Z", "+00:00"))
+        dt = dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+        if last is not None and dt <= last:
+            dt = last + timedelta(microseconds=1)
+        last = dt
         bb = list(r.geometry.bounds)
-        item = pystac.Item(id=r["id"], geometry=shapely.geometry.mapping(shapely.box(*bb)), bbox=bb,
-                           datetime=dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc), properties={"proj:epsg": int(r["epsg"])})
+        item = pystac.Item(id=r["id"], geometry=shapely.geometry.mapping(shapely.box(*bb)), bbox=bb, datetime=dt,
+                           properties={"proj:epsg": int(r["epsg"])})
         for n in names:
             item.add_asset(n, pystac.Asset(href=r[f"href_{n}"], media_type="image/tiff; application=geotiff; profile=cloud-optimized", roles=["data"]))
         items.append(item)
@@ -785,7 +868,8 @@ def _by_day(ds, lon):
 ASI_URL = "https://raw.githubusercontent.com/awesome-spectral-indices/awesome-spectral-indices/1b032ca8ca1fdadfc730d1abec849bd337a8a05a/output"
 FORMULA_MAX_LEN = 1000
 FORMULA_MAX_NODES = 300
-FORMULA_FUNCS = ("where", "sqrt", "log", "log10", "exp", "abs", "tanh", "sin", "cos", "tan", "arctan", "min", "max", "clip")
+FORMULA_FUNCS = {"where": 3, "sqrt": 1, "log": 1, "log10": 1, "exp": 1, "abs": 1, "tanh": 1, "sin": 1, "cos": 1, "tan": 1,
+                 "arctan": 1, "min": 2, "max": 2, "clip": 3}
 INDEX_ALIASES = {"NDRE": "NDREI", "BSI": "BI"}
 _CATALOG = {}
 
@@ -793,38 +877,46 @@ _CATALOG = {}
 def index(ds, what, *, name=None, **constants):
     """One catalog index (Awesome Spectral Indices) or formula on a Dataset of reflectance. Returns a float32 DataArray.
 
-    Names in a formula resolve in this order: index band letters (A B G R RE1 RE2 RE3 N N2 WV S1 S2), constants
-    (catalog defaults or keyword arguments), wavelengths (lambdaN ... in nm), any band spelling (red, B04 ...).
-    A formula may use numbers, + - * / ** %, comparisons, and / or / not, `x if c else y` and FORMULA_FUNCS. It is
+    Names in a formula resolve in this order: index band letters in upper case (A B G R RE1 RE2 RE3 N N2 WV S1 S2),
+    constants (catalog defaults such as g, n, L, or keyword arguments), wavelengths (lambdaN ... in nm), then band
+    names and codes (red, nir, B04, b8a ...). A formula may use numbers, + - * / ** %, comparisons, and / or / not,
+    `x if c else y` and FORMULA_FUNCS. True is 1.0 and false is 0.0, so conditions can be added up. The formula is
     parsed with an allow-list and never passed to eval(). The result is NaN wherever an input band is NaN.
     The DataArray is named `name`, else the catalog name, else "value"; attrs hold the formula.
     """
-    key = _index_key(what)
-    indices_, const = index_catalog()
-    formula = indices_[key]["formula"] if key else str(what)
+    parts = _split(what)
+    if len(parts) != 1:
+        raise ValueError(f"index takes one index or formula, got {len(parts)}; use indices() for several")
+    key = _index_key(parts[0])
+    catalog, const = index_catalog()
+    formula = catalog[key]["formula"] if key else parts[0]
     da = _evaluate(ds, formula, {**const, **constants})
-    da.attrs = {"formula": formula, "long_name": indices_[key]["long_name"] if key else formula}
+    da.attrs = {"formula": formula, "long_name": catalog[key]["long_name"] if key else formula}
     return keep_crs(da.rename(name or key or "value"), ds)
 
 
-def indices(ds, names, **constants):
-    """Several catalog indices or formulas (list or comma string). Returns a Dataset, one variable per name."""
+def indices(ds, what, **constants):
+    """Several catalog indices or formulas (a list, or a comma string such as "NDVI, max(N, R)").
+
+    Returns a Dataset with one variable per item, named as written.
+    """
     import xarray as xr
 
-    names = [n.strip() for n in names.split(",")] if isinstance(names, str) else list(names)
-    out = xr.Dataset({n: index(ds, n, name=n, **constants) for n in names})
+    out = xr.Dataset({n: index(ds, n, name=n, **constants) for n in _split(what)})
     out.attrs = dict(ds.attrs)
     return keep_crs(out, ds)
 
 
 def needs(what, **constants):
-    """Bands to load for a preset, a catalog index, a formula, or a list / comma string of index names."""
+    """Bands to load for a preset, a catalog index, a formula, or a list / comma string of them."""
     if isinstance(what, str) and what in PRESETS:
         return list(PRESETS[what][0])
-    const = {**index_catalog()[1], **constants}
+    catalog, const = index_catalog()
+    const = {**const, **constants}
     out = []
-    for expr in _formulas(what):
-        for n in sorted(parse_formula(expr)[1]):
+    for part in _split(what):
+        key = _index_key(part)
+        for n in sorted(parse_formula(catalog[key]["formula"] if key else part)[1]):
             kind, v = _resolve(n, const)
             if kind == "band" and v not in out:
                 out.append(v)
@@ -832,8 +924,9 @@ def needs(what, **constants):
 
 
 def is_index(name):
-    """True if `name` is a catalog index (or alias)."""
-    return _index_key(name) is not None
+    """True if `name` is a catalog index (or alias). Raises ValueError for a name that matches two indices that differ
+    only in case (bai: BAI and BaI); write the exact name."""
+    return isinstance(name, str) and _index_key(name) is not None
 
 
 def index_catalog():
@@ -853,8 +946,8 @@ def index_info(name):
     key = _index_key(name)
     if not key:
         raise ValueError(f"unknown index {name!r}; see list_indices()")
-    indices_, const = index_catalog()
-    entry = indices_[key]
+    catalog, const = index_catalog()
+    entry = catalog[key]
     return {"index": key, **entry, "bands": needs(key),
             "constants": {n: const[n] for n in parse_formula(entry["formula"])[1] if n in const}}
 
@@ -882,7 +975,10 @@ def parse_formula(expr):
     expr = str(expr).strip()
     if not expr or len(expr) > FORMULA_MAX_LEN:
         raise ValueError(f"formula must be 1..{FORMULA_MAX_LEN} characters")
-    tree = ast.parse(expr, mode="eval")
+    try:
+        tree = ast.parse(expr, mode="eval")
+    except SyntaxError as e:
+        raise ValueError(f"cannot parse formula {expr!r}: {e.msg}") from None
     nodes = list(ast.walk(tree))
     if len(nodes) > FORMULA_MAX_NODES:
         raise ValueError(f"formula too long ({len(nodes)} nodes > {FORMULA_MAX_NODES})")
@@ -896,9 +992,11 @@ def parse_formula(expr):
         if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
             continue
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in FORMULA_FUNCS and not node.keywords:
+            if len(node.args) != FORMULA_FUNCS[node.func.id] or any(isinstance(a, ast.Starred) for a in node.args):
+                raise ValueError(f"{node.func.id}() takes {FORMULA_FUNCS[node.func.id]} arguments")
             funcs.add(node.func.id)
             continue
-        raise ValueError(f"not allowed in a formula: {type(node).__name__}; functions: {FORMULA_FUNCS}")
+        raise ValueError(f"not allowed in a formula: {type(node).__name__}; functions: {list(FORMULA_FUNCS)}")
     calls = {id(n.func) for n in nodes if isinstance(n, ast.Call)}
     return tree, {n.id for n in nodes if isinstance(n, ast.Name) and id(n) not in calls}, funcs
 
@@ -913,22 +1011,31 @@ def _download_catalog():
 
 
 def _index_key(name):
-    if not isinstance(name, str):
-        return None
     catalog = index_catalog()[0]
-    name = INDEX_ALIASES.get(name.upper(), name)
+    name = INDEX_ALIASES.get(str(name).upper(), str(name))
     if name in catalog:
         return name
-    return {k.lower(): k for k in catalog}.get(name.lower())
+    found = [k for k in catalog if k.lower() == name.lower()]
+    if len(found) > 1:
+        raise ValueError(f"{name!r} matches the indices {found}; write the exact name")
+    return found[0] if found else None
 
 
-def _formulas(what):
-    names = list(what) if isinstance(what, (list, tuple)) else None
-    if names is None and not any(ch in str(what) for ch in "()+-*/<>= "):
-        names = [p for p in str(what).replace(" ", "").split(",") if p]
-    if names is None:
-        return [str(what)]
-    return [index_catalog()[0][_index_key(n)]["formula"] if _index_key(n) else n for n in names]
+def _split(what):
+    import ast
+
+    if isinstance(what, (list, tuple)):
+        parts = [str(w).strip() for w in what]
+    else:
+        text = str(what).strip()
+        try:
+            node = ast.parse(text, mode="eval").body
+        except SyntaxError as e:
+            raise ValueError(f"cannot parse {text!r}: {e.msg}") from None
+        parts = [ast.get_source_segment(text, e).strip() for e in node.elts] if isinstance(node, ast.Tuple) else [text]
+    if not parts or not all(parts):
+        raise ValueError(f"nothing to compute in {what!r}")
+    return parts
 
 
 def _resolve(name, constants):
@@ -939,10 +1046,12 @@ def _resolve(name, constants):
         return "value", float(constants[name])
     if name.startswith("lambda") and name[6:] in letters:
         return "value", float(band_info(letters[name[6:]])["wavelength"])
+    if name.upper() in letters:
+        raise ValueError(f"{name!r} in a formula: write band letters in upper case ({name.upper()}), as in the catalog")
     try:
         return "band", band_name(name)
     except ValueError:
-        raise ValueError(f"unknown name {name!r} in formula: not a band and no value given for this constant")
+        raise ValueError(f"unknown name {name!r} in formula: not a band and no value given for this constant") from None
 
 
 def _evaluate(ds, expr, constants):
@@ -958,9 +1067,16 @@ def _evaluate(ds, expr, constants):
         if kind == "band" and v not in ds:
             raise ValueError(f"formula uses {n!r} (band {v!r}), which is not loaded; load {needs(expr, **constants)}")
         env[n] = v if kind == "value" else ds[v]
-    fns = {"where": xr.where, "sqrt": np.sqrt, "log": np.log, "log10": np.log10, "exp": np.exp, "abs": np.abs,
-           "tanh": np.tanh, "sin": np.sin, "cos": np.cos, "tan": np.tan, "arctan": np.arctan, "min": np.fmin,
-           "max": np.fmax, "clip": np.clip}
+
+    def num(b):
+        return b.astype("float32") if hasattr(b, "astype") else float(b)
+
+    def truth(v):
+        return v != 0
+
+    fns = {"where": lambda c, a, b: xr.where(truth(c), a, b), "sqrt": np.sqrt, "log": np.log, "log10": np.log10,
+           "exp": np.exp, "abs": np.abs, "tanh": np.tanh, "sin": np.sin, "cos": np.cos, "tan": np.tan,
+           "arctan": np.arctan, "min": np.fmin, "max": np.fmax, "clip": np.clip}
     bins = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul, ast.Div: op.truediv, ast.Pow: op.pow, ast.Mod: op.mod}
     cmps = {ast.Gt: op.gt, ast.Lt: op.lt, ast.GtE: op.ge, ast.LtE: op.le, ast.Eq: op.eq, ast.NotEq: op.ne}
 
@@ -975,25 +1091,32 @@ def _evaluate(ds, expr, constants):
             return bins[type(node.op)](ev(node.left), ev(node.right))
         if isinstance(node, ast.UnaryOp):
             v = ev(node.operand)
-            return {ast.USub: lambda: -v, ast.UAdd: lambda: v, ast.Not: lambda: ~v}[type(node.op)]()
+            if isinstance(node.op, ast.Not):
+                return num(np.logical_not(truth(v)))
+            return -v if isinstance(node.op, ast.USub) else v
         if isinstance(node, ast.Compare):
-            left, out = ev(node.left), None
+            left, out = ev(node.left), True
             for o, c in zip(node.ops, node.comparators):
                 right = ev(c)
-                out = cmps[type(o)](left, right) if out is None else out & cmps[type(o)](left, right)
+                out = np.logical_and(out, cmps[type(o)](left, right))
                 left = right
-            return out
+            return num(out)
         if isinstance(node, ast.BoolOp):
-            vals = [ev(v) for v in node.values]
+            join = np.logical_and if isinstance(node.op, ast.And) else np.logical_or
+            vals = [truth(ev(v)) for v in node.values]
             out = vals[0]
             for v in vals[1:]:
-                out = out & v if isinstance(node.op, ast.And) else out | v
-            return out
+                out = join(out, v)
+            return num(out)
         if isinstance(node, ast.IfExp):
-            return xr.where(ev(node.test), ev(node.body), ev(node.orelse))
+            return xr.where(truth(ev(node.test)), ev(node.body), ev(node.orelse))
         return fns[node.func.id](*[ev(a) for a in node.args])
 
-    out = ev(tree)
+    try:
+        with np.errstate(all="ignore"):
+            out = ev(tree)
+    except (ArithmeticError, TypeError) as e:
+        raise ValueError(f"cannot evaluate {expr!r}: {e}") from None
     if not hasattr(out, "dims"):
         raise ValueError("formula uses no band")
     valid = None
@@ -1027,7 +1150,7 @@ def composite(ds, method="median", period=None):
 def clear_count(ds):
     """Clear observations per pixel (from the first reflectance band). Returns a DataArray (y, x)."""
     data = reflectance(ds)
-    return keep_crs(data[list(data.data_vars)[0]].notnull().sum("time").rename("count"), ds)
+    return keep_crs(data[list(data.data_vars)[0]].notnull().sum("time").astype("int32").rename("count"), ds)
 
 
 def image(aoi, start, end, bands, *, res=10, crs="utm", shape=None, like=None, method="median", keep="clear",
@@ -1060,7 +1183,7 @@ def cube(aoi, start, end, what, *, period=None, method="median", res=60, crs="ut
     import xarray as xr
 
     bounds, grid, parts = bbox(aoi), None, []
-    t0, t1 = pd.Timestamp(start), pd.Timestamp(end)
+    t0, t1 = pd.Timestamp(_day(start)), pd.Timestamp(_day(end))
     for year in range(t0.year, t1.year + 1):
         ys = max(t0, pd.Timestamp(f"{year}-01-01")).strftime("%Y-%m-%d")
         ye = min(t1, pd.Timestamp(f"{year}-12-31")).strftime("%Y-%m-%d")
@@ -1090,8 +1213,11 @@ def _reduce(ds, method):
         return getattr(ds, method)("time", skipna=True, keep_attrs=True)
     if method == "count":
         return ds.notnull().sum("time").astype("float32")
-    if method.startswith("p") and method[1:].replace(".", "").isdigit():
-        return ds.reduce(lambda a, axis: nanquantile(a, float(method[1:]) / 100, axis), dim="time", keep_attrs=True)
+    if method.startswith("p") and method[1:].replace(".", "", 1).isdigit():
+        q = float(method[1:])
+        if not 0 <= q <= 100:
+            raise ValueError(f"percentile must be in p0..p100, got {method}")
+        return ds.reduce(lambda a, axis: nanquantile(a, q / 100, axis), dim="time", keep_attrs=True)
     if method in ("first", "last"):
         src = ds if method == "first" else ds.isel(time=slice(None, None, -1))
         return ds.isel(time=0, drop=True).assign({v: src[v].isel(time=src[v].notnull().argmax("time"), drop=True) for v in src.data_vars})
@@ -1119,21 +1245,23 @@ CHANGE_PRESETS = {
 def zone_labels(like, zones):
     """Label raster (y, x) on the grid of `like`: 0 outside, i + 1 inside row i of `zones`.
 
-    Zones may be in any CRS. A zone smaller than one pixel still gets the pixels it touches. Where zones overlap,
-    the later row wins the shared pixels.
+    Zones may be in any CRS. Where zones overlap, the later row wins the shared pixels. A zone that gets no pixel
+    that way (smaller than a pixel) takes the pixels it touches that are free or belong to an earlier row.
     """
     import numpy as np
     from rasterio.features import rasterize
 
     g = _odc(like).geobox
     z = (zones if zones.crs is not None else zones.set_crs(4326)).to_crs(str(g.crs))
-    lab = rasterize([(geom, i + 1) for i, geom in enumerate(z.geometry) if geom is not None and not geom.is_empty],
-                    out_shape=g.shape, transform=g.affine, fill=0, dtype="int32")
-    missing = sorted(set(range(1, len(z) + 1)) - set(np.unique(lab)))
+    shapes = [(geom, i + 1) for i, geom in enumerate(z.geometry) if geom is not None and not geom.is_empty]
+    if not shapes:
+        return np.zeros(g.shape, dtype="int32")
+    lab = rasterize(shapes, out_shape=g.shape, transform=g.affine, fill=0, dtype="int32")
+    missing = sorted({i for _, i in shapes} - set(np.unique(lab)))
     if missing:
         extra = rasterize([(z.geometry.iloc[i - 1], i) for i in missing], out_shape=g.shape, transform=g.affine,
                           fill=0, dtype="int32", all_touched=True)
-        lab = np.where((lab == 0) & (extra > 0), extra, lab)
+        lab = np.where((extra > 0) & (lab < extra), extra, lab)
     return lab
 
 
@@ -1141,40 +1269,50 @@ def zonal_stats(data, zones, stats="mean,median,std,count", *, id_col=None):
     """Statistics per zone, per date if `data` has time, for each variable of a Dataset (or one DataArray).
 
     stats: mean, median, std, min, max, count, pNN. Returns a long DataFrame:
-    zone, [time], variable, <stats>, pixels (zone size), valid_pct (count / pixels).
+    zone, [time], variable, <stats>, pixels (zone size), valid_pct (valid pixels / pixels). A zone with pixels but
+    no valid value on a date gets a row with valid_pct 0.
     """
     import numpy as np
     import pandas as pd
 
     stats = [s.strip() for s in stats.split(",")] if isinstance(stats, str) else list(stats)
+    for s in stats:
+        if s not in ("mean", "median", "std", "min", "max", "count") and not (s[:1] == "p" and s[1:].isdigit() and int(s[1:]) <= 100):
+            raise ValueError(f"unknown statistic {s!r}; use mean, median, std, min, max, count or pNN")
     ds = reflectance(_dataset(data))
     lab = zone_labels(ds, zones).ravel()
     inside = lab > 0
     size = np.bincount(lab[inside], minlength=len(zones) + 1)
+    present = np.flatnonzero(size)
     ids = zones[id_col].values if id_col else np.arange(len(zones))
+    has_time = "time" in ds.dims
+    lead = ["zone"] + (["time"] if has_time else []) + ["variable"]
     rows = []
-    for t in (list(ds["time"].values) if "time" in ds.dims else [None]):
-        sub = ds if t is None else ds.sel(time=t)
+    for i in range(ds.sizes["time"] if has_time else 1):
+        sub = ds.isel(time=i) if has_time else ds
         for v in sub.data_vars:
-            frame = pd.DataFrame({"zone": lab[inside], "v": sub[v].values.ravel()[inside]}).dropna()
-            if len(frame):
-                g = frame.groupby("zone")["v"]
-                agg = pd.DataFrame({s: g.count() if s == "count" else g.quantile(int(s[1:]) / 100) if s[0] == "p" and s[1:].isdigit()
-                                    else getattr(g, s)() for s in stats})
-                rows.append(agg.assign(variable=v, **({"time": pd.Timestamp(t)} if t is not None else {})))
-    lead = ["zone"] + (["time"] if "time" in ds.dims else []) + ["variable"]
-    if not rows:
-        return pd.DataFrame(columns=lead + stats + ["pixels"])
-    out = pd.concat(rows).reset_index()
+            frame = pd.DataFrame({"zone": lab[inside], "v": sub[v].values.ravel()[inside]})
+            g = frame.dropna().groupby("zone")["v"]
+            agg = pd.DataFrame({s: g.count() if s == "count" else g.quantile(int(s[1:]) / 100) if s[0] == "p" else getattr(g, s)()
+                                for s in stats}).reindex(present)
+            agg["_valid"] = g.count().reindex(present).fillna(0)
+            if "count" in agg:
+                agg["count"] = agg["count"].fillna(0).astype(int)
+            rows.append(agg.assign(variable=v, **({"time": pd.Timestamp(sub["time"].values)} if has_time else {})))
+    if not rows or not len(present):
+        return pd.DataFrame(columns=lead + stats + ["pixels", "valid_pct"])
+    out = pd.concat(rows).rename_axis("zone").reset_index()
     out["pixels"] = size[out["zone"].values]
-    if "count" in out:
-        out["valid_pct"] = (out["count"] / out["pixels"].clip(lower=1) * 100).round(1)
+    out["valid_pct"] = (out.pop("_valid") / out["pixels"] * 100).round(1)
     out["zone"] = ids[out["zone"].values - 1]
     return out[lead + [c for c in out.columns if c not in lead]].sort_values(lead).reset_index(drop=True)
 
 
 def sample(data, points, *, id_col=None, lat_col="lat", lng_col="lng"):
-    """Nearest-pixel values at points (GeoDataFrame, or DataFrame with lat / lng). One row per point and date."""
+    """Nearest-pixel values at points (GeoDataFrame, or DataFrame with lat / lng). One row per point and date.
+
+    `inside` is False for points outside the grid; their values are NaN.
+    """
     import geopandas as gpd
     import xarray as xr
 
@@ -1184,8 +1322,10 @@ def sample(data, points, *, id_col=None, lat_col="lat", lng_col="lng"):
     p = points.to_crs(str(_odc(ds).crs))
     vals = ds.sel(x=xr.DataArray(p.geometry.x.values, dims="point"), y=xr.DataArray(p.geometry.y.values, dims="point"), method="nearest")
     df = vals.drop_vars([c for c in vals.coords if c not in ("point", "time")]).to_dataframe().reset_index()
-    inside = (p.geometry.x.between(float(ds.x.min()), float(ds.x.max())) & p.geometry.y.between(float(ds.y.min()), float(ds.y.max()))).values
+    bb = _odc(ds).geobox.extent.boundingbox
+    inside = (p.geometry.x.between(bb.left, bb.right) & p.geometry.y.between(bb.bottom, bb.top)).values
     df["inside"] = inside[df["point"].values]
+    df.loc[~df["inside"], list(ds.data_vars)] = float("nan")
     if id_col:
         df["point"] = points[id_col].values[df["point"].values]
     return df
@@ -1194,18 +1334,24 @@ def sample(data, points, *, id_col=None, lat_col="lat", lng_col="lng"):
 def change(before, after, preset="burn", *, what=None, direction=None, breaks=None, labels=None):
     """Change of an index between two images. Returns a Dataset: before, after, delta, class (attrs labels, breaks).
 
+    `before` and `after` are 2-D Datasets on the same grid (a time axis of length 1 is dropped).
     preset: burn (dNBR, USGS severity), vegetation (dNDVI), water (dMNDWI), moisture (dNDMI), or None with your own
     `what` (index or formula), `direction` (drop = before - after, rise = after - before), `breaks` and `labels`.
     """
     import numpy as np
     import xarray as xr
 
-    p_what, p_dir, p_breaks, p_labels = CHANGE_PRESETS.get(preset, (None, "drop", [], None)) if preset else (None, "drop", [], None)
+    if preset and preset not in CHANGE_PRESETS:
+        raise ValueError(f"preset must be one of {list(CHANGE_PRESETS)} or None")
+    p_what, p_dir, p_breaks, p_labels = CHANGE_PRESETS[preset] if preset else (None, "drop", [], None)
     what, direction = what or p_what, direction or p_dir
+    if direction not in ("drop", "rise"):
+        raise ValueError("direction must be drop or rise")
     breaks = list(breaks if breaks is not None else p_breaks)
     labels = list(labels or p_labels or [f"class_{i}" for i in range(len(breaks) + 1)])
     if not what or len(labels) != len(breaks) + 1:
         raise ValueError("give a preset, or `what` with len(labels) == len(breaks) + 1")
+    before, after = _single(before, "before"), _single(after, "after")
     pre, post = index(before, what), index(after, what)
     delta = (pre - post) if direction == "drop" else (post - pre)
     cls = delta.copy(data=np.digitize(delta.values, breaks).astype("float32")).where(delta.notnull())
@@ -1216,19 +1362,49 @@ def change(before, after, preset="burn", *, what=None, direction=None, breaks=No
 
 
 def class_area(da, labels=None):
-    """km2 and share per class of a class raster on a metric grid. Labels come from `labels` or da.attrs["labels"]."""
+    """km2 and share per class of a class raster. Pixel areas are measured on the WGS84 ellipsoid (per row, at the
+    centre column), so any grid works (UTM, Web Mercator, degrees, feet). Labels come from `labels` or
+    da.attrs["labels"]."""
     import numpy as np
     import pandas as pd
 
     labels = labels or da.attrs.get("labels")
-    g = _odc(da).geobox
-    px_m2 = abs(g.resolution.x * g.resolution.y)
-    counts = pd.Series(da.values[~np.isnan(da.values)].astype(int)).value_counts().sort_index()
-    out = pd.DataFrame({"class": counts.index, "pixels": counts.values})
-    out["label"] = [labels[c] if labels and c < len(labels) else str(c) for c in out["class"]]
-    out["km2"] = (out["pixels"] * px_m2 / 1e6).round(3)
-    out["pct"] = (out["pixels"] / out["pixels"].sum() * 100).round(2)
+    v = np.asarray(da.values, dtype="float32")
+    ok = ~np.isnan(v)
+    area = np.broadcast_to(_pixel_area(da), v.shape)
+    codes = v[ok].astype(int)
+    out = pd.DataFrame({"class": codes, "m2": area[ok]}).groupby("class").agg(pixels=("m2", "size"), m2=("m2", "sum")).reset_index()
+    out["label"] = [labels[c] if labels and 0 <= c < len(labels) else str(c) for c in out["class"]]
+    out["km2"] = (out["m2"] / 1e6).round(3)
+    out["pct"] = (out["m2"] / out["m2"].sum() * 100).round(2) if len(out) else []
     return out[["class", "label", "pixels", "km2", "pct"]]
+
+
+def _single(ds, name):
+    if "time" in ds.dims:
+        if ds.sizes["time"] != 1:
+            raise ValueError(f"{name} has {ds.sizes['time']} time steps; composite it to one image first")
+        ds = ds.isel(time=0, drop=True)
+    return ds
+
+
+def _pixel_area(da):
+    import numpy as np
+    from pyproj import Geod, Transformer
+
+    g = _odc(da).geobox
+    a = g.affine
+    if g.crs.epsg is not None and (32601 <= g.crs.epsg <= 32660 or 32701 <= g.crs.epsg <= 32760):
+        return np.full((g.shape[0], 1), abs(a.a * a.e))
+    to_ll = Transformer.from_crs(g.crs.to_wkt(), "EPSG:4326", always_xy=True)
+    geod = Geod(ellps="WGS84")
+    tops = a.f + a.e * np.arange(g.shape[0])
+    x0 = a.c + a.a * (g.shape[1] // 2)
+    out = np.empty((g.shape[0], 1))
+    for i, top in enumerate(tops):
+        lon, lat = to_ll.transform([x0, x0 + a.a, x0 + a.a, x0], [top, top, top + a.e, top + a.e])
+        out[i, 0] = abs(geod.polygon_area_perimeter(lon, lat)[0])
+    return out
 
 
 def _dataset(data):
@@ -1327,32 +1503,41 @@ def train(feat, labels, *, groups=None, model="rf", per_class=500, test_frac=0.3
     """Fit a classifier on a stratified pixel sample. Returns (model, report).
 
     labels: class codes with attrs["labels"]. groups: optional raster of group ids (labels_from_zones(...)["zone"]);
-    then whole groups are held out, so pixels of one field cannot leak between train and test.
-    report: accuracy, kappa, per_class, confusion, importance, train_px, test_px, test_groups.
+    then whole groups are held out, so pixels of one field cannot leak between train and test. Pixels without a
+    group are used for training only.
+    report: accuracy, kappa, per_class, confusion, importance (rf only, else None), train_px, test_px, test_groups.
     """
     import numpy as np
     import pandas as pd
     from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
     from sklearn.metrics import accuracy_score, classification_report, cohen_kappa_score, confusion_matrix
 
-    names = labels.attrs.get("labels")
-    X, ok = _matrix(feat)
-    y = labels.values.ravel()
-    ok = ok & ~np.isnan(y)
-    rng = np.random.default_rng(seed)
-    idx = np.concatenate([rng.choice(m, min(per_class, len(m)), replace=False)
-                          for m in (np.flatnonzero(ok & (y == c)) for c in np.unique(y[ok]))])
-    g = groups.values.ravel() if groups is not None else None
-    if g is not None:
-        held = rng.choice(np.unique(g[idx]), max(1, int(len(np.unique(g[idx])) * test_frac)), replace=False)
-        is_test = np.isin(g[idx], held)
-    else:
-        is_test = rng.random(len(idx)) < test_frac
-    tr, te = idx[~is_test], idx[is_test]
     models = {"rf": lambda: RandomForestClassifier(n_estimators=n_estimators, n_jobs=-1, random_state=seed, class_weight="balanced"),
               "gbt": lambda: HistGradientBoostingClassifier(random_state=seed)}
     if model not in models:
         raise ValueError(f"model must be one of {list(models)}")
+    names = labels.attrs.get("labels")
+    X, ok = _matrix(feat)
+    y = labels.values.ravel()
+    ok = ok & ~np.isnan(y)
+    if len(np.unique(y[ok])) < 2:
+        raise NoData("train needs at least 2 classes with valid pixels")
+    rng = np.random.default_rng(seed)
+    idx = np.concatenate([rng.choice(m, min(per_class, len(m)), replace=False)
+                          for m in (np.flatnonzero(ok & (y == c)) for c in np.unique(y[ok]))])
+    held = []
+    if groups is not None:
+        g = groups.values.ravel()[idx]
+        found = np.unique(g[~np.isnan(g)])
+        if len(found) < 2:
+            raise ValueError("groups needs at least 2 groups with labelled pixels")
+        held = rng.choice(found, max(1, int(len(found) * test_frac)), replace=False)
+        is_test = np.isin(g, held)
+    else:
+        is_test = rng.random(len(idx)) < test_frac
+    tr, te = idx[~is_test], idx[is_test]
+    if not len(tr) or not len(te):
+        raise ValueError("the split left no training or no test pixels; change test_frac or per_class")
     clf = models[model]().fit(X[tr], y[tr].astype(int))
     pred, truth = clf.predict(X[te]), y[te].astype(int)
     codes = sorted(np.unique(np.concatenate([truth, pred])))
@@ -1362,10 +1547,10 @@ def train(feat, labels, *, groups=None, model="rf", per_class=500, test_frac=0.3
         "accuracy": round(float(accuracy_score(truth, pred)), 3), "kappa": round(float(cohen_kappa_score(truth, pred)), 3),
         "per_class": pd.DataFrame(classification_report(truth, pred, labels=codes, target_names=nm, output_dict=True, zero_division=0)).T.round(3),
         "confusion": pd.DataFrame(confusion_matrix(truth, pred, labels=codes), index=nm, columns=nm),
-        "test_groups": sorted(int(v) for v in held) if g is not None else [],
+        "importance": (pd.Series(clf.feature_importances_, index=list(feat["feature"].values)).sort_values(ascending=False).round(3)
+                       if hasattr(clf, "feature_importances_") else None),
+        "test_groups": sorted(int(v) for v in held),
     }
-    if hasattr(clf, "feature_importances_"):
-        report["importance"] = pd.Series(clf.feature_importances_, index=list(feat["feature"].values)).sort_values(ascending=False).round(3)
     clf.feature_names_, clf.labels_ = list(feat["feature"].values), names
     return clf, report
 
@@ -1402,13 +1587,15 @@ def vote(pred, zones):
 
 
 def vectorize(da, *, min_px=8, simplify=None, keep=None):
-    """Class raster -> polygons (EPSG:4326) with class, label, area_m2. Patches under `min_px` pixels are sieved first.
+    """Class raster -> polygons (EPSG:4326) with class, label, area_m2 (on the WGS84 ellipsoid). Patches under
+    `min_px` pixels are sieved first. `simplify` is a tolerance in the units of the raster's CRS.
 
     keep: class codes to return (default all).
     """
     import geopandas as gpd
     import numpy as np
     import shapely
+    from pyproj import Geod
     from rasterio.features import shapes, sieve
 
     g = _odc(da).geobox
@@ -1421,10 +1608,12 @@ def vectorize(da, *, min_px=8, simplify=None, keep=None):
     out = gpd.GeoDataFrame({"class": [c for _, c in parts]}, geometry=[geom for geom, _ in parts], crs=str(g.crs))
     names = da.attrs.get("labels")
     out["label"] = [names[c] if names and c < len(names) else str(c) for c in out["class"]]
-    out["area_m2"] = out.geometry.area.round(1)
     if simplify:
         out["geometry"] = out.geometry.simplify(float(simplify))
-    return out.to_crs(4326)
+    out = out.to_crs(4326)
+    geod = Geod(ellps="WGS84")
+    out["area_m2"] = [round(abs(geod.geometry_area_perimeter(geom)[0]), 1) for geom in out.geometry]
+    return out
 
 
 def _matrix(feat):
@@ -1457,6 +1646,7 @@ def regularize(x, period="10D", method="median"):
 def fill_gaps(x, max_gap=None):
     """Linear interpolation in time; leading / trailing gaps take the nearest value. Gaps longer than `max_gap`
     (like '60D') stay NaN."""
+    import numpy as np
     import pandas as pd
 
     if _is_series(x):
@@ -1464,8 +1654,14 @@ def fill_gaps(x, max_gap=None):
         if max_gap:
             y = y.where(_short_gaps(x, pd.Timedelta(max_gap)))
         return y.ffill(limit_area="outside").bfill(limit_area="outside")
-    y = x.interpolate_na("time", method="linear", max_gap=pd.Timedelta(max_gap) if max_gap else None, use_coordinate=True)
-    return y.copy(data=_edge_fill(y.values, y.get_axis_num("time")))
+    y = x.interpolate_na("time", method="linear", use_coordinate=True)
+    data = _edge_fill(y.values, y.get_axis_num("time"))
+    if max_gap:
+        days = np.asarray((pd.to_datetime(x["time"].values) - pd.Timestamp(x["time"].values[0])) / pd.Timedelta(days=1))
+        long = _long_gaps(np.moveaxis(np.isnan(np.asarray(x.values, dtype="float32")), y.get_axis_num("time"), 0), days,
+                          pd.Timedelta(max_gap) / pd.Timedelta(days=1))
+        data = np.where(np.moveaxis(long, 0, y.get_axis_num("time")), np.nan, data)
+    return y.copy(data=data)
 
 
 def smooth(x, window=5, poly=2):
@@ -1487,11 +1683,14 @@ def harmonic(x, n=2, period_days=365.25, trend=True):
     """Least-squares fit of mean (+ trend) + n annual harmonics, per pixel, skipping NaN. Returns (fitted, coefficients).
 
     coefficients: mean (level at mid-period), trend (per year), amplitude_k, phase_k (day of year of the maximum).
+    A cube is returned with time as its first axis.
     """
     import numpy as np
     import pandas as pd
     import xarray as xr
 
+    if not _is_series(x):
+        x = x.transpose("time", ...)
     t = pd.to_datetime(x.index if _is_series(x) else x["time"].values)
     days = ((t - t[0]) / pd.Timedelta(days=1)).values.astype("float64")
     w = 2 * np.pi * days / period_days
@@ -1513,8 +1712,8 @@ def harmonic(x, n=2, period_days=365.25, trend=True):
     if _is_series(x):
         return pd.Series(fitted, index=x.index, name="fit"), pd.Series({k: float(v[0]) for k, v in res.items()})
     space = x.isel(time=0)
-    return x.copy(data=fitted), xr.Dataset({k: (space.dims, v.reshape(space.shape)) for k, v in res.items()},
-                                           coords={d: x[d] for d in space.dims})
+    coefs = xr.Dataset({k: (space.dims, v.reshape(space.shape)) for k, v in res.items()}, coords={d: x[d] for d in space.dims})
+    return x.copy(data=fitted), keep_crs(coefs, x)
 
 
 def phenology(series, *, threshold=0.5, min_amplitude=0.15, prominence=0.15, min_length=20, period="5D", window=7):
@@ -1528,6 +1727,10 @@ def phenology(series, *, threshold=0.5, min_amplitude=0.15, prominence=0.15, min
     import pandas as pd
     from scipy.signal import find_peaks
 
+    cols = ["season", "sos", "peak_date", "eos", "length_days", "base", "peak", "amplitude", "integral", "sos_doy",
+            "peak_doy", "eos_doy"]
+    if series.dropna().empty:
+        return pd.DataFrame(columns=cols)
     x = smooth(fill_gaps(regularize(series.dropna(), period)), window=window)
     v, d = x.values, x.index
     step = (d[1] - d[0]).days if len(d) > 1 else 1
@@ -1549,8 +1752,7 @@ def phenology(series, *, threshold=0.5, min_amplitude=0.15, prominence=0.15, min
                      "amplitude": round(float(v[p] - base), 3),
                      "integral": round(float(np.clip(v[sos:eos + 1] - base, 0, None).sum() * step), 1),
                      "sos_doy": d[sos].dayofyear, "peak_doy": d[p].dayofyear, "eos_doy": d[eos].dayofyear})
-    return pd.DataFrame(rows, columns=["season", "sos", "peak_date", "eos", "length_days", "base", "peak", "amplitude",
-                                       "integral", "sos_doy", "peak_doy", "eos_doy"])
+    return pd.DataFrame(rows, columns=cols)
 
 
 def phenology_map(ts, *, threshold=0.5, min_amplitude=0.15):
@@ -1562,13 +1764,15 @@ def phenology_map(ts, *, threshold=0.5, min_amplitude=0.15):
     import pandas as pd
     import xarray as xr
 
-    v = ts.transpose("time", ...).values.astype("float32")
+    ts = ts.transpose("time", ...)
+    v = ts.values.astype("float32")
     nt = v.shape[0]
-    p = np.where(np.isnan(v), -np.inf, v).argmax(0)
+    has = ~np.isnan(v)
+    p = np.where(has, v, -np.inf).argmax(0)
     peak = np.take_along_axis(v, p[None], 0)[0]
-    idx = np.arange(nt)[:, None, None]
+    idx = np.arange(nt).reshape((nt,) + (1,) * (v.ndim - 1))
     before, after = idx <= p[None], idx >= p[None]
-    lb, rb = np.nanmin(np.where(before, v, np.inf), 0), np.nanmin(np.where(after, v, np.inf), 0)
+    lb, rb = np.where(before & has, v, np.inf).min(0), np.where(after & has, v, np.inf).min(0)
     below_l = before & (v < (lb + threshold * (peak - lb))[None])
     below_r = after & (v < (rb + threshold * (peak - rb))[None])
     sos = np.minimum(np.where(below_l.any(0), nt - np.argmax(below_l[::-1], 0), 0), p)
@@ -1577,7 +1781,8 @@ def phenology_map(ts, *, threshold=0.5, min_amplitude=0.15):
     doy = np.asarray(t.dayofyear, dtype="float32")
     days = np.asarray((t - t[0]).days, dtype="float32")
     base = (lb + rb) / 2
-    good = (peak - base >= min_amplitude) & np.isfinite(peak)
+    with np.errstate(invalid="ignore"):
+        good = has.any(0) & np.isfinite(base) & (peak - base >= min_amplitude)
     space = ts.isel(time=0)
     mk = lambda a: (space.dims, np.where(good, a, np.nan).astype("float32"))
     out = xr.Dataset({"sos_doy": mk(doy[sos]), "peak_doy": mk(doy[p]), "eos_doy": mk(doy[eos]), "length_days": mk(days[eos] - days[sos]),
@@ -1586,16 +1791,22 @@ def phenology_map(ts, *, threshold=0.5, min_amplitude=0.15):
 
 
 def climatology(x, baseline, by="month"):
-    """mean, std, min, max and count per month (or ISO week, by='week') over the `baseline` years."""
+    """mean, std (sample, ddof=1), min, max and count per month (or ISO week, by='week') over the `baseline` years."""
+    import warnings
     import xarray as xr
 
     if _is_series(x):
         base = x[x.index.year.isin(list(baseline))]
         return base.groupby(_key(base.index, by)).agg(["mean", "std", "min", "max", "count"])
     base = x.sel(time=x["time"].dt.year.isin(list(baseline)))
-    g = base.groupby(xr.DataArray(_key(base["time"].to_index(), by), dims="time", name=by))
-    return xr.Dataset({"mean": g.mean("time"), "std": g.std("time"), "min": g.min("time"), "max": g.max("time"),
-                       "count": base.notnull().groupby(xr.DataArray(_key(base["time"].to_index(), by), dims="time", name=by)).sum("time")})
+    key = xr.DataArray(_key(base["time"].to_index(), by), dims="time", name=by)
+    g = base.groupby(key)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "Degrees of freedom", RuntimeWarning)
+        warnings.filterwarnings("ignore", "Mean of empty slice", RuntimeWarning)
+        std = g.std("time", ddof=1)
+    return xr.Dataset({"mean": g.mean("time"), "std": std, "min": g.min("time"), "max": g.max("time"),
+                       "count": base.notnull().groupby(key).sum("time")})
 
 
 def anomaly(x, baseline, *, target_years=None, by="month", method="zscore", min_count=2, min_std=None):
@@ -1609,6 +1820,8 @@ def anomaly(x, baseline, *, target_years=None, by="month", method="zscore", min_
     import numpy as np
     import pandas as pd
 
+    if method not in ("zscore", "diff", "pct", "vci"):
+        raise ValueError("method must be zscore, diff, pct or vci")
     clim = climatology(x, baseline, by)
     if _is_series(x):
         tgt = x[x.index.year.isin(target_years or sorted(set(x.index.year) - set(baseline)))]
@@ -1619,11 +1832,10 @@ def anomaly(x, baseline, *, target_years=None, by="month", method="zscore", min_
         c = clim.reindex({by: _key(tgt["time"].to_index(), by)}).rename({by: "time"}).assign_coords(time=tgt["time"].values)
     c = c.where(c["count"] >= min_count)
     std = c["std"].clip(min_std) if min_std else c["std"]
-    val = {"zscore": (tgt - c["mean"]) / std, "diff": tgt - c["mean"], "pct": 100 * (tgt - c["mean"]) / abs(c["mean"]),
-           "vci": 100 * (tgt - c["min"]) / (c["max"] - c["min"])}
-    if method not in val:
-        raise ValueError(f"method must be one of {list(val)}")
-    out = val[method]
+    with np.errstate(divide="ignore", invalid="ignore"):
+        out = {"zscore": lambda: (tgt - c["mean"]) / std, "diff": lambda: tgt - c["mean"],
+               "pct": lambda: 100 * (tgt - c["mean"]) / abs(c["mean"]),
+               "vci": lambda: 100 * (tgt - c["min"]) / (c["max"] - c["min"])}[method]()
     if _is_series(x):
         return pd.DataFrame({"value": tgt, "baseline_mean": c["mean"], "anomaly": out.replace([np.inf, -np.inf], np.nan)})
     return keep_crs(out.where(np.isfinite(out)).rename(f"{method}_anomaly"), x)
@@ -1654,6 +1866,18 @@ def _short_gaps(x, max_gap):
         if b - a > max_gap:
             ok[(x.index > a) & (x.index < b)] = False
     return ok
+
+
+def _long_gaps(missing, days, max_days):
+    import numpy as np
+
+    n = missing.shape[0]
+    idx = np.arange(n).reshape((n,) + (1,) * (missing.ndim - 1))
+    prev = np.maximum.accumulate(np.where(~missing, idx, -1), axis=0)
+    nxt = np.minimum.accumulate(np.where(~missing, idx, n)[::-1], axis=0)[::-1]
+    inner = missing & (prev >= 0) & (nxt < n)
+    span = days[np.clip(nxt, 0, n - 1)] - days[np.clip(prev, 0, n - 1)]
+    return inner & (span > max_days)
 
 
 def _edge_fill(a, axis=0):
@@ -1697,6 +1921,8 @@ def load_embeddings(aoi=None, year=2024, *, res=10, crs="utm", shape=None, like=
     if 64 * H * W > AEF_MAX_VALUES:
         raise ValueError(f"64 x {H} x {W} values > {AEF_MAX_VALUES:,}; use a coarser res")
     w, s, e, n = transform_bounds(str(gb.crs), "EPSG:4326", *gb.extent.boundingbox)
+    if w > e:
+        raise ValueError("the grid crosses 180°; split it into two")
     idx = _aef_files(int(year))
     paths = idx.loc[(idx.wgs84_west < e) & (idx.wgs84_east > w) & (idx.wgs84_south < n) & (idx.wgs84_north > s), "path"]
     out = np.full((64, H, W), -128, dtype="int8")
@@ -1729,6 +1955,8 @@ def embedding_of(emb, zones):
     import numpy as np
 
     inside = zone_labels(emb.isel(feature=0), zones) > 0
+    if not inside.any():
+        raise NoData("the zones cover no pixel of the embeddings")
     return _unit(np.nanmean(emb.values[:, inside], axis=1))
 
 
@@ -1736,7 +1964,14 @@ def embedding_similarity(emb, ref=None, *, lat=None, lng=None, zones=None):
     """Cosine similarity of every pixel to a 64-vector `ref`, the pixel at lat / lng, or the mean of `zones`."""
     import numpy as np
 
-    r = embedding_of(emb, zones) if zones is not None else _unit(embedding_at(emb, lat, lng)) if lat is not None else _unit(ref)
+    if zones is not None:
+        r = embedding_of(emb, zones)
+    elif lat is not None and lng is not None:
+        r = _unit(embedding_at(emb, lat, lng))
+    elif ref is not None:
+        r = _unit(ref)
+    else:
+        raise ValueError("give ref, lat and lng, or zones")
     return on_grid(np.tensordot(r, emb.values, axes=1).astype("float32"), emb, "similarity")
 
 
@@ -1745,7 +1980,8 @@ def embedding_difference(a, b):
     import numpy as np
 
     den = np.linalg.norm(a.values, axis=0) * np.linalg.norm(b.values, axis=0)
-    d = 1 - (a.values * b.values).sum(0) / np.where(den > 0, den, np.nan)
+    with np.errstate(invalid="ignore"):
+        d = 1 - (a.values * b.values).sum(0) / np.where(den > 0, den, np.nan)
     return on_grid(d.astype("float32"), a, "difference", {"years": f"{a.attrs.get('year')}-{b.attrs.get('year')}"})
 
 
@@ -1862,6 +2098,8 @@ def render_style(what):
 
 def stretch(da, lo, hi, gamma=1.0):
     """Values -> uint8 with a linear stretch from lo to hi and a gamma. NaN -> 0."""
+    if hi == lo:
+        raise ValueError("stretch needs lo != hi")
     x = ((da - lo) / (hi - lo)).clip(0, 1)
     if gamma != 1.0:
         x = x ** (1.0 / gamma)
@@ -1869,33 +2107,42 @@ def stretch(da, lo, hi, gamma=1.0):
 
 
 def colorize(da, cmap="viridis", vmin=None, vmax=None):
-    """2-D values -> uint8 RGBA through a matplotlib colour map. vmin / vmax default to the 2nd / 98th percentile."""
+    """2-D values -> uint8 RGBA through a matplotlib colour map. vmin / vmax default to the 2nd / 98th percentile;
+    vmin > vmax reverses the ramp."""
     import matplotlib
     import numpy as np
 
     arr = np.asarray(da.values, dtype="float32")
-    valid = ~np.isnan(arr)
+    valid = np.isfinite(arr)
     if vmin is None or vmax is None:
-        lo, hi = np.nanpercentile(arr, [2, 98]) if valid.any() else (0.0, 1.0)
+        lo, hi = np.percentile(arr[valid], [2, 98]) if valid.any() else (0.0, 1.0)
         vmin, vmax = lo if vmin is None else vmin, hi if vmax is None else vmax
-    x = np.clip((arr - vmin) / max(vmax - vmin, 1e-9), 0, 1)
+    span = float(vmax) - float(vmin)
+    with np.errstate(invalid="ignore"):
+        x = np.clip((arr - vmin) / (span if span else 1e-9), 0, 1)
     rgba = (matplotlib.colormaps[cmap](np.nan_to_num(x)) * 255).astype("uint8")
     rgba[..., 3] = np.where(valid, 255, 0)
     return np.moveaxis(rgba, -1, 0)
 
 
 def colorize_classes(da, colors=None):
-    """Class codes (NaN = none) -> uint8 RGBA, one hex colour per code (default: tab10)."""
+    """Class codes (NaN = none) -> uint8 RGBA, one colour per code (any matplotlib colour; default tab10, or tab20
+    above 10 classes)."""
     import matplotlib
     import numpy as np
 
     arr = np.asarray(da.values, dtype="float32")
-    n = int(np.nanmax(arr)) + 1 if np.isfinite(arr).any() else 0
-    colors = colors or [matplotlib.colors.to_hex(matplotlib.colormaps["tab10"](i % 10)) for i in range(n)]
+    ok = np.isfinite(arr)
+    n = int(arr[ok].max()) + 1 if ok.any() else 0
+    if colors is None:
+        cmap = matplotlib.colormaps["tab10" if n <= 10 else "tab20"]
+        colors = [cmap(i % cmap.N) for i in range(n)]
+    elif len(colors) < n:
+        raise ValueError(f"{n} classes but {len(colors)} colours")
     out = np.zeros((4,) + arr.shape, dtype="uint8")
-    for i, hexc in enumerate(colors):
-        sel = arr == i
-        out[:3, sel] = np.array([int(hexc.lstrip("#")[k:k + 2], 16) for k in (0, 2, 4)], dtype="uint8")[:, None]
+    for i, c in enumerate(colors):
+        sel = ok & (arr == i)
+        out[:3, sel] = (np.array(matplotlib.colors.to_rgb(c)) * 255).round().astype("uint8")[:, None]
         out[3, sel] = 255
     return out
 
@@ -1904,6 +2151,7 @@ def css_gradient(cmap, n=6):
     """CSS linear-gradient of a matplotlib colour map (for legends in pages)."""
     import matplotlib
 
+    n = max(int(n), 2)
     stops = ",".join(matplotlib.colors.to_hex(matplotlib.colormaps[cmap](i / (n - 1))) for i in range(n))
     return f"linear-gradient(90deg,{stops})"
 
@@ -1914,15 +2162,15 @@ TILE_STOP_SHARE = {"high": 0.995, "low": 0.97}
 TILE_MAX_ROUNDS = {"high": 6, "low": 3}
 TILE_MAX_SCENES = 48
 TILE_PER_MGRS = 6
+MOSAIC_MAX_VALUES = 50_000_000
 
 
 def tile(z, x, y, date, *, days=DAYS, what="true_color", method="best", max_cloud=MAX_CLOUD, per_mgrs=TILE_PER_MGRS,
          order="clear", cloud_mask=True, size=256, cmap=None, vmin=None, vmax=None, min_zoom=6):
     """One uint8 RGBA (4, size, size) map tile of `what` (preset, index or formula) around `date` (± `days`).
 
-    Scenes are ranked once per zoom-8 region, so neighbouring tiles agree. Reads go out in rounds (each MGRS tile's
-    next best scene). Cloud (SCL 8, 9, 10) is filled from the next scene; reading stops when 99.5 % of the pixels
-    with data are clear (97 % below zoom 9). method: best, or median / mean / pNN of the clear values.
+    Scenes are ranked once per zoom-8 region, so neighbouring tiles agree, and read with `mosaic` (method best:
+    stop at 99.5 % done, 97 % below zoom 9; method median / mean / pNN: reduce the clear values).
     """
     import numpy as np
     import xarray as xr
@@ -1934,13 +2182,12 @@ def tile(z, x, y, date, *, days=DAYS, what="true_color", method="best", max_clou
     if not len(scenes):
         return empty
     bands = needs(what)
-    data, alpha, _ = mosaic_tile(scenes, x, y, z, bands, size=int(size), cloud_mask=cloud_mask, method=method)
-    if not alpha.any():
+    level = "low" if int(z) < TILE_LOW_ZOOM else "high"
+    data, _ = mosaic(scenes, bands, tile_geobox(z, x, y, size), cloud_mask=cloud_mask, method=method,
+                     stop=TILE_STOP_SHARE[level], max_rounds=TILE_MAX_ROUNDS[level], max_scenes=TILE_MAX_SCENES)
+    if np.isnan(data).all():
         return empty
-    ds = xr.Dataset({n: (("y", "x"), data[i]) for i, n in enumerate(bands)})
-    rgba = render(ds, what, cmap=cmap, vmin=vmin, vmax=vmax)
-    rgba[3] = np.where(alpha, rgba[3], 0)
-    return rgba
+    return render(xr.Dataset({n: (("y", "x"), data[i]) for i, n in enumerate(bands)}), what, cmap=cmap, vmin=vmin, vmax=vmax)
 
 
 def tile_scenes(z, x, y, date, *, days=DAYS, max_cloud=MAX_CLOUD, per_mgrs=TILE_PER_MGRS, order="clear"):
@@ -1953,85 +2200,16 @@ def tile_scenes(z, x, y, date, *, days=DAYS, max_cloud=MAX_CLOUD, per_mgrs=TILE_
     rbox = [round(v, 6) for v in region]
     start, end = date_window(date, days)
     ranked = rank(search(rbox, start, end, max_cloud=max_cloud), rbox, date=date, per_mgrs=per_mgrs, order=order)
-    tb = mercantile.bounds(t)
-    return ranked[ranked.intersects(shapely.box(*tb))].reset_index(drop=True) if len(ranked) else ranked
+    return ranked[ranked.intersects(shapely.box(*mercantile.bounds(t)))].reset_index(drop=True) if len(ranked) else ranked
 
 
-def mosaic_tile(scenes, x, y, z, bands, *, size=256, cloud_mask=True, method="best"):
-    """Pixels of ranked scenes for one tile. Returns (reflectance float32 (n, H, W), alpha bool (H, W), scenes read).
+def tile_geobox(z, x, y, size=256):
+    """The Web Mercator grid of map tile z/x/y with `size` x `size` pixels."""
+    import mercantile
+    from odc.geo.geobox import GeoBox
 
-    method best: first clear pixel in scene order, with the early stop of `tile`. method median / mean / pNN:
-    reduce the clear values of up to TILE_MAX_SCENES scenes.
-    """
-    from concurrent.futures import ThreadPoolExecutor
-    import numpy as np
-
-    level = "low" if int(z) < TILE_LOW_ZOOM else "high"
-    per_round = min(max(1, int(scenes["mgrs"].nunique())), 24) if len(scenes) else 1
-    scenes = scenes.head(min(TILE_MAX_ROUNDS[level] * per_round, TILE_MAX_SCENES))
-    fill, stack, used = BestFill(len(bands), (size, size)), [], 0
-    step = per_round if method == "best" else max(len(scenes), 1)
-    with ThreadPoolExecutor(48) as pool:
-        for i in range(0, len(scenes), step):
-            for res in read_tile(scenes.iloc[i:i + step], x, y, z, bands, size=size, cloud_mask=cloud_mask, pool=pool):
-                if res is not None:
-                    used += 1
-                    fill.add(*res)
-                    if method != "best":
-                        stack.append(np.where(res[2][None], res[0], np.nan))
-            if method == "best" and fill.clear_share() >= TILE_STOP_SHARE[level]:
-                break
-    if method == "best" or not stack:
-        return fill.result() + (used,)
-    arr = np.stack(stack)
-    if method == "mean":
-        out = np.nanmean(arr, axis=0).astype("float32")
-    elif method == "median" or (method.startswith("p") and method[1:].isdigit()):
-        out = nanquantile(arr, 0.5 if method == "median" else int(method[1:]) / 100)
-    else:
-        raise ValueError("method must be best, median, mean or pNN")
-    data, alpha = fill.result()
-    holes = np.isnan(out).any(0)
-    out[:, holes] = data[:, holes]
-    return out, alpha, used
-
-
-def read_tile(scenes, x, y, z, bands, *, size=256, cloud_mask=True, pool=None):
-    """Read `bands` (+ scl) of each scene for one tile. Returns [(reflectance (n, H, W), valid, clear) or None]."""
-    from concurrent.futures import ThreadPoolExecutor
-    import numpy as np
-    import rasterio
-
-    names = list(bands) + (["scl"] if cloud_mask else [])
-    rows = [scenes.iloc[i] for i in range(len(scenes))]
-    jobs = [(i, n) for i in range(len(rows)) for n in names]
-
-    def go(job):
-        i, n = job
-        href = rows[i].get(f"href_{n}")
-        return (i, n) + (_read_band(href, x, y, z, size, n == "scl") if isinstance(href, str) else (None, None))
-
-    with rasterio.Env(**GDAL_ENV):
-        if pool is not None:
-            got = list(pool.map(go, jobs))
-        else:
-            with ThreadPoolExecutor(min(32, max(1, len(jobs)))) as ex:
-                got = list(ex.map(go, jobs))
-    per = {}
-    for i, n, d, v in got:
-        per.setdefault(i, {})[n] = (d, v)
-    out = []
-    for i, r in enumerate(rows):
-        parts = per.get(i, {})
-        if any(parts.get(n, (None,))[0] is None for n in bands):
-            out.append(None)
-            continue
-        raw = np.stack([parts[n][0] for n in bands]).astype("float32")
-        valid = np.all([parts[n][1] for n in bands], axis=0) & np.all(raw > 0, axis=0)
-        has_scl = cloud_mask and parts.get("scl", (None,))[0] is not None
-        clear = valid & ~np.isin(parts["scl"][0], SCL_GROUPS["cloud"]) if has_scl else valid
-        out.append((raw * SCALE + float(r["offset"]), valid, clear))
-    return out
+    b = mercantile.xy_bounds(int(x), int(y), int(z))
+    return GeoBox.from_bbox((b.left, b.bottom, b.right, b.top), crs="EPSG:3857", shape=(int(size), int(size)))
 
 
 def bounds_to_tile(bounds):
@@ -2044,17 +2222,156 @@ def bounds_to_tile(bounds):
     return t.z, t.x, t.y
 
 
-def _read_band(href, x, y, z, size, nearest):
+def mosaic(scenes, bands, gb, *, cloud_mask=True, method="best", stop=0.995, max_rounds=6, max_scenes=TILE_MAX_SCENES,
+           keep_obs=True, key_band=0, threads=32):
+    """Pixels of ranked scenes (`rank`) on the grid `gb`. Returns (reflectance float32 (n, H, W), report).
+
+    method best: rounds of each MGRS tile's next best scene. The first clear pixel wins; cloud (SCL 8, 9, 10) is
+    filled from later rounds. Reading stops when at most 1 - `stop` of the grid is not yet clear where a later scene
+    still has data, or after `max_rounds`. A pixel that is never clear takes the median of its observations
+    (`keep_obs`) or its darkest value in band `key_band`. method median / mean / pNN: reduce the clear values of up
+    to `max_scenes` scenes. The result is NaN where no scene has data. Scenes are read in batches that keep about
+    MOSAIC_MAX_VALUES values in memory. `gb` must be north-up.
+    report: scenes (ids read, in order), clear_pct (share of pixels with data that are clear), rounds.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+    import warnings
+    import numpy as np
+
+    if gb.affine.e > 0 or gb.affine.b or gb.affine.d:
+        raise ValueError("mosaic needs a north-up grid without rotation")
+    bands = list(bands)
+    stat = method in ("mean", "median") or (method[:1] == "p" and method[1:].isdigit() and int(method[1:]) <= 100)
+    if method != "best" and not stat:
+        raise ValueError("method must be best, median, mean or pNN")
+    if method == "best":
+        if "mgrs_rank" not in scenes:
+            raise ValueError("method best needs ranked scenes: pass them through rank() first")
+        groups = [g for _, g in scenes.groupby("mgrs_rank", sort=True)][:int(max_rounds)]
+    else:
+        groups = [scenes]
+    kept, n = [], 0
+    for g in groups:
+        g = g.head(max(0, int(max_scenes) - n))
+        if len(g):
+            kept.append(g)
+            n += len(g)
+    fill = BestFill(len(bands), gb.shape, keep_obs=keep_obs, key_band=key_band)
+    reach = _reach(kept, gb) if method == "best" else None
+    stack, used, rounds = [], [], 0
+    batch = max(1, MOSAIC_MAX_VALUES // (gb.shape[0] * gb.shape[1] * (len(bands) + 1)))
+    with ThreadPoolExecutor(int(threads)) as pool:
+        for k, g in enumerate(kept):
+            rounds += 1
+            for i in range(0, len(g), batch):
+                for sid, got in read_scenes(g.iloc[i:i + batch], bands, gb, cloud_mask=cloud_mask, pool=pool):
+                    if got is None:
+                        continue
+                    used.append(sid)
+                    fill.add(*got)
+                    if stat:
+                        stack.append(np.where(got[2][None], got[0], np.nan))
+            if reach is not None and k + 1 < len(kept) and (reach[k + 1] & ~fill.filled).mean() <= 1 - float(stop):
+                break
+    data, alpha = fill.result()
+    if stat and stack:
+        arr = np.stack(stack)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            out = np.nanmean(arr, axis=0).astype("float32") if method == "mean" else nanquantile(arr, 0.5 if method == "median" else int(method[1:]) / 100)
+        holes = np.isnan(out).any(0)
+        out[:, holes] = data[:, holes]
+        data = out
+    data[:, ~alpha] = np.nan
+    return data, {"scenes": used, "clear_pct": round(fill.clear_share() * 100, 1), "rounds": rounds}
+
+
+def read_scenes(scenes, bands, gb, *, cloud_mask=True, pool=None):
+    """Read `bands` (+ scl) of each scene on the grid `gb`, in parallel.
+
+    Returns one (scene id, result) per scene, in order. result is (reflectance float32 (n, H, W) NaN outside the
+    data, valid bool (H, W), clear bool (H, W)), or None when the scene has no data on the grid. With cloud_mask,
+    a scene whose scl cannot be read has no clear pixel.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+    import numpy as np
+
+    names = list(bands) + (["scl"] if cloud_mask else [])
+    rows = [scenes.iloc[i] for i in range(len(scenes))]
+    jobs = [(i, n) for i in range(len(rows)) for n in names]
+
+    def go(job):
+        href = rows[job[0]].get(f"href_{job[1]}")
+        return _read_band(href, gb, job[1] == "scl") if isinstance(href, str) else (None, None)
+
+    if pool is None:
+        with ThreadPoolExecutor(min(32, max(1, len(jobs)))) as ex:
+            got = dict(zip(jobs, ex.map(go, jobs)))
+    else:
+        got = dict(zip(jobs, pool.map(go, jobs)))
+    out = []
+    for i, r in enumerate(rows):
+        parts = [got[(i, n)] for n in bands]
+        if any(d is None for d, _ in parts):
+            out.append((r["id"], None))
+            continue
+        raw = np.stack([d for d, _ in parts]).astype("float32")
+        valid = np.all([m for _, m in parts], axis=0) & np.all(raw > 0, axis=0)
+        if not valid.any():
+            out.append((r["id"], None))
+            continue
+        if cloud_mask:
+            scl = got[(i, "scl")][0]
+            clear = valid & ~np.isin(scl, SCL_GROUPS["cloud"]) if scl is not None else np.zeros_like(valid)
+        else:
+            clear = valid
+        out.append((r["id"], (np.where(valid[None], raw * SCALE + float(r["offset"]), np.nan).astype("float32"), valid, clear)))
+    return out
+
+
+def _reach(groups, gb):
+    import numpy as np
+    from rasterio.features import rasterize
+
+    res = abs(gb.resolution.x)
+    masks = []
+    for g in groups:
+        geoms = [geom for geom in g.geometry.to_crs(gb.crs.to_wkt()).buffer(-2 * res) if geom is not None and not geom.is_empty]
+        masks.append(rasterize([(geom, 1) for geom in geoms], out_shape=gb.shape, transform=gb.affine, fill=0, dtype="uint8") > 0
+                     if geoms else np.zeros(gb.shape, bool))
+    later, acc = [None] * len(masks), np.zeros(gb.shape, bool)
+    for k in range(len(masks) - 1, -1, -1):
+        acc = acc | masks[k]
+        later[k] = acc
+    return later
+
+
+def _read_band(href, gb, nearest, retries=2):
+    import time
+    import warnings
     import rasterio
+    from rasterio.crs import CRS
     from rio_tiler.errors import TileOutsideBounds
     from rio_tiler.io import Reader
 
-    try:
-        with Reader(href) as r:
-            img = r.tile(int(x), int(y), int(z), tilesize=int(size), resampling_method="nearest" if nearest else "bilinear")
-        return img.data[0], img.mask > 0
-    except (TileOutsideBounds, rasterio.errors.RasterioIOError):
-        return None, None
+    crs = CRS.from_wkt(gb.crs.to_wkt())
+    bb = gb.extent.boundingbox
+    how = "nearest" if nearest else "bilinear"
+    for attempt in range(retries + 1):
+        try:
+            with rasterio.Env(**GDAL_ENV), Reader(href) as r:
+                img = r.part((bb.left, bb.bottom, bb.right, bb.top), dst_crs=crs, bounds_crs=crs, width=gb.shape[1],
+                             height=gb.shape[0], max_size=None, resampling_method=how, reproject_method=how)
+            return img.data[0], img.mask > 0
+        except TileOutsideBounds:
+            return None, None
+        except rasterio.errors.RasterioIOError as e:
+            if any(s in str(e).lower() for s in ("404", "does not exist", "no such file")):
+                return None, None
+            if attempt == retries:
+                warnings.warn(f"read failed for {href}: {str(e)[:120]}")
+                return None, None
+            time.sleep(0.5 * (attempt + 1))
 
 
 EXPORT_MAX_PX = 4096
@@ -2065,12 +2382,14 @@ EXPORT_DIR = "fd://sentinel_utils/exports"
 def export(aoi, date, *, days=DAYS, kind="rgb", what="true_color", bands="blue,green,red,nir", method="best",
            cloud_mask=True, max_cloud=MAX_CLOUD, per_mgrs=6, max_px=EXPORT_MAX_PX, res=None, crs="utm", cmap=None,
            vmin=None, vmax=None, out_dir=EXPORT_DIR):
-    """Write `aoi` around `date` (± days) as one COG and return a dict: url (signed, 1 h), path, size, scenes, clear_pct.
+    """Write `aoi` around `date` (± days) as one COG. Returns a dict: url (signed for 1 h; None for a local out_dir),
+    path, size, scenes, clear_pct, seconds.
 
-    kind rgb: uint8 RGBA of `what` (preset, index or formula, with cmap / vmin / vmax). kind bands: `bands` as
-    uint16 DN = reflectance * 10000 + 1000 (nodata 0) with scale 0.0001 and offset -0.1 set, so GIS tools read
-    reflectance. method best picks pixels as `tile` does; a pixel that is never clear takes its darkest blue value.
-    Resolution: `res` metres, else the finest multiple of 10 m that keeps the long side under `max_px`.
+    kind rgb: uint8 RGBA of `what` (preset, index or formula, with cmap / vmin / vmax). kind bands: reflectance
+    `bands` as uint16 DN = reflectance * 10000 + 1000 (nodata 0) with scale 0.0001 and offset -0.1 set, so GIS tools
+    read reflectance. method best picks pixels as `tile` does (a pixel never clear takes its darkest blue value);
+    median, mean and pNN reduce the clear values of the best scenes that fit in EXPORT_MAX_VALUES. Resolution:
+    `res` metres, else the finest multiple of 10 m that keeps the long side at or under `max_px`.
     """
     import hashlib
     import json
@@ -2085,59 +2404,96 @@ def export(aoi, date, *, days=DAYS, kind="rgb", what="true_color", bands="blue,g
         raise ValueError("kind must be rgb or bands")
     if int(max_px) > EXPORT_MAX_PX:
         raise ValueError(f"max_px is limited to {EXPORT_MAX_PX}; for larger areas use save_tiles or run_blocks")
-    bounds = bbox(aoi)
-    res = float(res) if res else auto_res(bounds, max_px)
-    gb = geobox(bounds, res, crs)
     names = needs(what) if kind == "rgb" else band_names(bands)
+    if kind == "bands" and any(is_mask(n) for n in names):
+        raise ValueError("kind bands writes reflectance; leave out scl, cloud and snow")
+    bounds = bbox(aoi)
+    res, gb = _export_grid(bounds, res, crs, max_px)
     if gb.shape[0] * gb.shape[1] * (len(names) + 1) > EXPORT_MAX_VALUES:
         raise ValueError(f"{gb.shape[0]}x{gb.shape[1]} px x {len(names) + 1} bands is too large; raise res or lower max_px")
+    key = hashlib.sha1(json.dumps([bounds, _day(date), days, kind, what, names, method, cloud_mask, max_cloud, per_mgrs,
+                                   res, str(crs), cmap, vmin, vmax], default=str).encode()).hexdigest()[:12]
     start, end = date_window(date, days)
     scenes = rank(search(bounds, start, end, max_cloud=max_cloud), bounds, date=date, per_mgrs=per_mgrs)
     if not len(scenes):
         raise NoData("no scenes for this box and window")
+    px = gb.shape[0] * gb.shape[1]
+    opts = dict(cloud_mask=cloud_mask, keep_obs=False, key_band=names.index("blue") if "blue" in names else 0,
+                threads=max(4, min(32, EXPORT_MAX_VALUES // px)))
     if method == "best":
-        data, alpha, used, clear = _export_best(scenes, names, gb, cloud_mask, res)
+        data, rep = mosaic(scenes, names, gb, stop=0.97 if res >= 100 else 0.995, max_rounds=per_mgrs,
+                           max_scenes=len(scenes), **opts)
     else:
-        data, alpha, used, clear = _export_composite(scenes, names, gb, cloud_mask, method)
-    key = hashlib.sha1(json.dumps([bounds, date, days, kind, what, names, method, cloud_mask, max_cloud, per_mgrs, res, crs,
-                                   cmap, vmin, vmax]).encode()).hexdigest()[:12]
+        data, rep = mosaic(scenes, names, gb, method=method, max_scenes=max(1, EXPORT_MAX_VALUES // (px * len(names))), **opts)
+    if np.isnan(data).all():
+        raise NoData("no scene has data in this box")
+    used, clear = rep["scenes"], rep["clear_pct"]
     local = os.path.join(tempfile.mkdtemp(), f"s2_{kind}_{key}.tif")
     if kind == "rgb":
         rgba = render(xr.Dataset({n: (("y", "x"), data[i]) for i, n in enumerate(names)}), what, cmap=cmap, vmin=vmin, vmax=vmax)
-        rgba[3] = np.where(alpha, rgba[3], 0)
         _write_tif(local, gb, rgba, colorinterp="rgba")
     else:
         dn = np.where(np.isnan(data), 0, np.clip(np.round(data / SCALE + 1000), 1, 65535)).astype("uint16")
         _write_tif(local, gb, dn, nodata=0, names=names, scale=SCALE, offset=-0.1)
-    path = save_file(local, f"{out_dir.rstrip('/')}/{os.path.basename(local)}")
-    return {"url": fused.api.sign_url(fused.api.resolve(path)), "path": path, "kind": kind,
-            "what": what if kind == "rgb" else ",".join(names), "width": int(gb.shape[1]), "height": int(gb.shape[0]),
-            "res_m": res, "crs": f"EPSG:{gb.crs.epsg}" if gb.crs.epsg else str(gb.crs), "mb": round(os.path.getsize(local) / 1e6, 2),
+    path = save_file(local, f"{str(out_dir).rstrip('/')}/{os.path.basename(local)}")
+    url = fused.api.sign_url(fused.api.resolve(path)) if path.startswith(("fd://", "s3://")) else None
+    return {"url": url, "path": path, "kind": kind, "what": what if kind == "rgb" else ",".join(names),
+            "width": int(gb.shape[1]), "height": int(gb.shape[0]), "res_m": res,
+            "crs": f"EPSG:{gb.crs.epsg}" if gb.crs.epsg else str(gb.crs), "mb": round(os.path.getsize(local) / 1e6, 2),
             "scenes": ",".join(used), "clear_pct": clear, "seconds": round(time.time() - t0, 1)}
 
 
+def _export_grid(bounds, res, crs, max_px):
+    auto = not res
+    res = auto_res(bounds, max_px) if auto else float(res)
+    gb = geobox(bounds, res, crs)
+    while auto and max(gb.shape) > int(max_px):
+        res += 10
+        gb = geobox(bounds, res, crs)
+    if max(gb.shape) > int(max_px):
+        raise ValueError(f"{gb.shape[0]}x{gb.shape[1]} px is larger than max_px {max_px}; raise res")
+    return res, gb
+
+
 def to_cog(data, path, *, nodata=None):
-    """Write a 2-D DataArray, or a Dataset (one band per variable), as a COG. fd:// and s3:// paths are uploaded."""
+    """Write a 2-D DataArray, or a Dataset of 2-D variables (one band each, named), as a COG. fd:// and s3:// paths
+    are uploaded. Returns `path`."""
     import os
     import tempfile
+    import numpy as np
     import xarray as xr
-    from odc.geo.xr import write_cog
 
-    da = keep_crs(data.to_array("band") if isinstance(data, xr.Dataset) else data, data)
+    if isinstance(data, xr.Dataset):
+        names, arrs = list(data.data_vars), [data[v] for v in data.data_vars]
+    else:
+        names, arrs = [str(data.name or "value")], [data]
+    for a in arrs:
+        if set(a.dims) != {"y", "x"}:
+            raise ValueError(f"to_cog writes 2-D (y, x) layers; {a.name} has dims {a.dims}")
+    if _odc(data).crs is None:
+        raise ValueError("data has no CRS; set one with keep_crs or .odc.assign_crs")
+    arr = np.stack([np.asarray(a.transpose("y", "x").values) for a in arrs])
     local = os.path.join(tempfile.mkdtemp(), os.path.basename(path))
-    write_cog(da, local, overwrite=True, compress="deflate", blocksize=256, nodata=nodata)
+    _write_tif(local, _odc(data).geobox, arr, nodata=nodata, names=names)
     return save_file(local, path)
 
 
 def to_h3(da, h3_res=9, method="avg"):
-    """2-D DataArray -> DataFrame(hex, value, n): pixel centres aggregated per H3 cell with DuckDB (avg, min, max ...)."""
+    """2-D DataArray -> DataFrame(hex, value, n): pixel centres aggregated per H3 cell with DuckDB.
+
+    method: avg, min, max, sum, median or stddev.
+    """
     import duckdb
     import numpy as np
     import pandas as pd
     from rasterio.warp import transform
 
+    if method not in ("avg", "min", "max", "sum", "median", "stddev"):
+        raise ValueError("method must be avg, min, max, sum, median or stddev")
+    if not 0 <= int(h3_res) <= 15:
+        raise ValueError("h3_res must be 0..15")
     xs, ys = np.meshgrid(da["x"].values, da["y"].values)
-    v = np.asarray(da.values, dtype="float32").ravel()
+    v = np.asarray(da.transpose("y", "x").values, dtype="float32").ravel()
     ok = ~np.isnan(v)
     lng, lat = transform(str(_odc(da).crs), "EPSG:4326", xs.ravel()[ok], ys.ravel()[ok])
     df = pd.DataFrame({"lat": lat, "lng": lng, "v": v[ok]})
@@ -2148,47 +2504,17 @@ def to_h3(da, h3_res=9, method="avg"):
     return out
 
 
-def _export_best(scenes, names, gb, cloud_mask, res):
-    import numpy as np
-
-    need = names + (["scl"] if cloud_mask else [])
-    fill = BestFill(len(names), gb.shape, keep_obs=False, key_band=names.index("blue") if "blue" in names else 0)
-    per_load = max(1, int(EXPORT_MAX_VALUES // (gb.shape[0] * gb.shape[1] * len(need))))
-    used = []
-    for _, rnd in scenes.groupby("mgrs_rank", sort=True):
-        for i in range(0, len(rnd), per_load):
-            part = rnd.iloc[i:i + per_load]
-            ds = load(part, need, like=gb, merge=None)
-            ids = list(ds["scene"].values) if "scene" in ds.coords else list(part["id"])
-            for sid in part["id"]:
-                if sid not in ids:
-                    continue
-                step = ds.isel(time=ids.index(sid))
-                data = np.stack([step[n].values for n in names]).astype("float32")
-                valid = ~np.isnan(data).any(0)
-                clear = valid & ~np.isin(step["scl"].values, SCL_GROUPS["cloud"]) if cloud_mask else valid
-                fill.add(data, valid, clear)
-                used.append(sid)
-        if fill.clear_share() >= (0.97 if res >= 100 else 0.995):
-            break
-    data, alpha = fill.result()
-    return data, alpha, used, round(fill.clear_share() * 100, 1)
-
-
-def _export_composite(scenes, names, gb, cloud_mask, method):
-    import numpy as np
-
-    comp = composite(load(scenes, names, like=gb, keep="clear" if cloud_mask else None), method)
-    data = np.stack([comp[n].values for n in names]).astype("float32")
-    valid = ~np.isnan(data).any(0)
-    return data, valid, list(scenes["id"]), round(float(valid.mean()) * 100, 1)
-
-
 def _write_tif(path, gb, arr, *, nodata=None, colorinterp=None, names=None, scale=None, offset=None):
+    import numpy as np
     import rasterio
 
+    if arr.dtype == bool:
+        arr = arr.astype("uint8")
+    elif arr.dtype.kind in "iu" and arr.dtype.itemsize == 8:
+        arr = arr.astype("int32") if np.abs(arr).max(initial=0) < 2 ** 31 else arr.astype("float64")
+    floating = np.issubdtype(arr.dtype, np.floating)
     profile = dict(driver="COG", width=gb.shape[1], height=gb.shape[0], count=arr.shape[0], dtype=str(arr.dtype),
-                   crs=str(gb.crs), transform=gb.affine, compress="deflate", predictor=2, blocksize=512,
+                   crs=str(gb.crs), transform=gb.affine, compress="deflate", predictor=3 if floating else 2, blocksize=512,
                    overview_resampling="average", BIGTIFF="IF_SAFER", nodata=nodata)
     with rasterio.open(path, "w", **profile) as dst:
         dst.write(arr)
@@ -2217,7 +2543,8 @@ def block_grid(aoi, zoom=12):
 
 
 def run_fanout(worker, args, *, max_workers=64, on_error="report"):
-    """fused.submit `worker` over a list of argument dicts and wait. Returns the concatenated DataFrame of successes.
+    """fused.submit `worker` over a list of argument dicts and wait. Returns the concatenated DataFrame of successes,
+    in argument order.
 
     worker: a UDF, or the name of a worker in this file (block_worker, tile_worker, frame_worker).
     on_error: report (warn with the first failure and continue) | raise | ignore.
@@ -2225,6 +2552,10 @@ def run_fanout(worker, args, *, max_workers=64, on_error="report"):
     import warnings
     import pandas as pd
 
+    if on_error not in ("report", "raise", "ignore"):
+        raise ValueError("on_error must be report, raise or ignore")
+    if not len(args):
+        return pd.DataFrame()
     name = worker if isinstance(worker, str) else getattr(worker, "name", None) or "udf"
     job = fused.submit(worker_udf(worker) if isinstance(worker, str) else worker, args, max_workers=int(max_workers), collect=False)
     job.wait()
@@ -2239,18 +2570,24 @@ def run_fanout(worker, args, *, max_workers=64, on_error="report"):
 
 
 def worker_udf(name):
-    """A worker of this file as a UDF for fused.submit. Its code is this whole file, so it can call every function.
-
-    The cache time comes from the worker's own @fused.udf decorator.
-    """
-    import linecache
-
-    code = "".join(linecache.getlines(worker_udf.__code__.co_filename))
-    if f"def {name}(" not in code:
-        raise RuntimeError(f"cannot find the code of {name}; load this file with fused.load(...) before a fan-out")
-    base = fused.load(code, import_globals=False)
+    """A worker of this file as a UDF for fused.submit. Its code is this whole file (the copy that was loaded), so it
+    can call every function. The cache time comes from the worker's own @fused.udf decorator."""
+    if name not in ("block_worker", "tile_worker", "frame_worker"):
+        raise ValueError("worker must be block_worker, tile_worker or frame_worker")
+    if f"def {name}(" not in _SOURCE:
+        raise RuntimeError("the source of this file is not available; load it with fused.load(...) before a fan-out")
+    base = fused.load(_SOURCE, import_globals=False)
     return type(base).model_validate({**base.model_dump(), "entrypoint": name, "name": name, "cache_max_age": None},
                                      context={"import_globals": False, "load_parameter_list": True})
+
+
+def _module_source():
+    import linecache
+
+    return "".join(linecache.getlines(_module_source.__code__.co_filename))
+
+
+_SOURCE = _module_source()
 
 
 @fused.udf(cache_max_age="0s")
@@ -2279,11 +2616,11 @@ def run_blocks(aoi, start, end, *, zoom=13, bands="red,green,blue", method="medi
 
     With `out_dir`, each block is also written as a COG. Workers that write files are not cached.
     """
+    names = band_names(bands)
     blocks = block_grid(aoi, zoom)
     scenes = search(aoi, start, end, max_cloud=max_cloud)
-    need = band_names(bands) + ["scl"]
-    args = [{"bounds": b.bounds, "name": b.name, "scenes_json": to_json(scenes[scenes.intersects(b.geometry)], need),
-             "bands": ",".join(band_names(bands)), "method": method, "px": int(px), "out_path": out_dir} for b in blocks.itertuples()]
+    args = [{"bounds": b.bounds, "name": b.name, "scenes_json": to_json(scenes[scenes.intersects(b.geometry)], names + ["scl"]),
+             "bands": ",".join(names), "method": method, "px": int(px), "out_path": out_dir} for b in blocks.itertuples()]
     return run_fanout("block_worker", args, max_workers=max_workers)
 
 
@@ -2298,47 +2635,65 @@ def tile_worker(tile_zxy: str = "13/2412/3078", date: str = "2024-07-01", days: 
     from PIL import Image
 
     z, x, y = [int(v) for v in tile_zxy.split("/")]
-    rgba = tile(z, x, y, date, days=int(days), what=what, max_cloud=float(max_cloud))
+    rgba = tile(z, x, y, date, days=int(days), what=what, max_cloud=float(max_cloud), min_zoom=0)
     row = {"tile": tile_zxy, "path": "", "empty": bool(rgba[3].max() == 0)}
     if not row["empty"]:
         local = os.path.join(tempfile.mkdtemp(), f"{y}.{fmt}")
-        Image.fromarray(np.moveaxis(rgba, 0, -1)).save(local, format="WEBP" if fmt == "webp" else "PNG", quality=85)
+        Image.fromarray(np.moveaxis(rgba, 0, -1)).save(local, format=fmt.upper(), quality=85)
         row["path"] = save_file(local, f"{out_dir.rstrip('/')}/{z}/{x}/{y}.{fmt}")
     return pd.DataFrame([row])
 
 
 def save_tiles(aoi, zooms, date, out_dir, *, days=DAYS, what="true_color", max_cloud=MAX_CLOUD, fmt="webp",
                max_tiles=2000, max_workers=64):
-    """Write a static XYZ pyramid {out_dir}/{z}/{x}/{y}.{fmt} for `aoi` and a zoom range, one worker per tile.
-
-    Any static file host can then serve it (a bucket behind a MapLibre raster source, QGIS XYZ, a CDN).
-    """
+    """Write a static XYZ pyramid {out_dir}/{z}/{x}/{y}.{fmt} (webp or png) for `aoi` and a zoom (or (min, max) zoom
+    range), one worker per tile. Any static file host can then serve it (a bucket behind a MapLibre raster source,
+    QGIS XYZ, a CDN). Empty tiles are not written."""
     import mercantile
 
-    z0, z1 = (int(zooms), int(zooms)) if isinstance(zooms, (int, float)) else (int(zooms[0]), int(zooms[1]))
+    if fmt not in ("webp", "png"):
+        raise ValueError("fmt must be webp or png")
+    z0, z1 = (int(zooms), int(zooms)) if isinstance(zooms, (int, float, str)) else (int(zooms[0]), int(zooms[-1]))
+    if not 0 <= z0 <= z1 <= 22:
+        raise ValueError(f"zooms must be 0..22 with min <= max, got {zooms!r}")
     tiles = [t for z in range(z0, z1 + 1) for t in mercantile.tiles(*bbox(aoi), zooms=z)]
     if len(tiles) > int(max_tiles):
         raise ValueError(f"{len(tiles)} tiles > max_tiles={max_tiles}; cut the AOI or the zoom range")
-    args = [{"tile_zxy": f"{t.z}/{t.x}/{t.y}", "date": str(date), "days": int(days), "what": what, "max_cloud": float(max_cloud),
+    args = [{"tile_zxy": f"{t.z}/{t.x}/{t.y}", "date": _day(date), "days": int(days), "what": what, "max_cloud": float(max_cloud),
              "out_dir": out_dir, "fmt": fmt} for t in tiles]
     return run_fanout("tile_worker", args, max_workers=max_workers)
 
 
+SEASONS = {12: "DJF", 3: "MAM", 6: "JJA", 9: "SON"}
+
+
 def period_ranges(start, end, period="month"):
-    """[(label, start, end)] covering start..end in time order: month, quarter, season, year or a pandas frequency."""
+    """[(label, start, end)] covering start..end in time order. period: month, quarter, season (DJF, MAM, JJA, SON),
+    year, or a number of days such as 10D. The first and last ranges are cut at start and end."""
+    import re
     import pandas as pd
 
-    freq = frequency(period)
-    step = pd.tseries.frequencies.to_offset(freq)
-    t0, t1 = pd.Timestamp(start), pd.Timestamp(end)
+    t0, t1 = pd.Timestamp(_day(start)), pd.Timestamp(_day(end))
+    if t1 < t0:
+        raise ValueError(f"end {t1:%Y-%m-%d} is before start {t0:%Y-%m-%d}")
     out = []
-    for a in pd.date_range(t0 - step, t1, freq=freq):
-        lo, hi = max(a, t0), min(a + step - pd.Timedelta(days=1), t1)
-        if lo > hi:
-            continue
-        label = {"year": f"{a.year}", "quarter": f"{a.year} Q{a.quarter}",
-                 "season": f"{a.year} " + {12: "DJF", 3: "MAM", 6: "JJA", 9: "SON"}.get(a.month, "")}.get(period)
-        out.append((label or (a.strftime("%Y-%m") if freq == "MS" else f"{lo:%Y-%m-%d}"), f"{lo:%Y-%m-%d}", f"{hi:%Y-%m-%d}"))
+    if period in ("month", "quarter", "season", "year"):
+        freq = {"month": "M", "quarter": "Q", "season": "Q-NOV", "year": "Y"}[period]
+        for p in pd.period_range(t0, t1, freq=freq):
+            a, b = p.start_time, p.end_time.normalize()
+            label = {"month": lambda: f"{a:%Y-%m}", "quarter": lambda: f"{a.year} Q{a.quarter}",
+                     "season": lambda: f"{a.year} {SEASONS[a.month]}", "year": lambda: f"{a.year}"}[period]()
+            out.append((label, f"{max(a, t0):%Y-%m-%d}", f"{min(b, t1):%Y-%m-%d}"))
+        return out
+    m = re.fullmatch(r"(\d+)D", str(period))
+    if not m or int(m.group(1)) < 1:
+        raise ValueError("period must be month, quarter, season, year or a number of days such as 10D")
+    step = pd.Timedelta(days=int(m.group(1)))
+    a = t0
+    while a <= t1:
+        b = min(a + step - pd.Timedelta(days=1), t1)
+        out.append((f"{a:%Y-%m-%d}", f"{a:%Y-%m-%d}", f"{b:%Y-%m-%d}"))
+        a = a + step
     return out
 
 
@@ -2346,7 +2701,8 @@ def period_ranges(start, end, period="month"):
 def frame_worker(bounds: list = [-118.62, 34.02, -118.50, 34.10], label: str = "frame", scenes_json: str = "",
                  what: str = "true_color", method: str = "median", size: int = 512, keep: str = "clear",
                  cmap: str = "", vmin: str = "", vmax: str = ""):
-    """One timelapse frame: composite the given scenes on a Web Mercator grid, render, return a PNG (base64)."""
+    """One timelapse frame: composite the given scenes on a Web Mercator grid (long side `size` px), render, return a
+    PNG (base64)."""
     import base64
     import io
     import numpy as np
@@ -2357,7 +2713,7 @@ def frame_worker(bounds: list = [-118.62, 34.02, -118.50, 34.10], label: str = "
     scenes = from_json(scenes_json)
     if not len(scenes):
         return pd.DataFrame([row])
-    ds = load(scenes, needs(what), bounds, crs="EPSG:3857", shape=(int(size), int(size)), keep=keep)
+    ds = load(scenes, needs(what), bounds, crs="EPSG:3857", shape=_mercator_shape(bounds, size), keep=keep)
     rgba = render(composite(ds, method), what, cmap=cmap or None, vmin=float(vmin) if vmin else None, vmax=float(vmax) if vmax else None)
     buf = io.BytesIO()
     Image.fromarray(np.moveaxis(rgba, 0, -1)).save(buf, format="PNG")
@@ -2377,15 +2733,17 @@ def timelapse(aoi, start, end, *, period="month", what="true_color", method="med
     import numpy as np
     from PIL import Image
 
+    if fmt not in ("webp", "gif"):
+        raise ValueError("fmt must be webp or gif")
     bounds = bbox(aoi)
+    plan = period_ranges(start, end, period)
     scenes = search(bounds, start, end, max_cloud=max_cloud)
-    if months:
+    if months and len(scenes):
         scenes = scenes[scenes["date"].str[5:7].astype(int).isin([int(m) for m in months])]
     bands = needs(what) + ["scl"]
-    plan = period_ranges(start, end, period)
     args = []
     for label, lo, hi in plan:
-        sub = scenes[(scenes["date"] >= lo) & (scenes["date"] <= hi)]
+        sub = scenes[(scenes["date"] >= lo) & (scenes["date"] <= hi)] if len(scenes) else scenes
         if len(sub):
             args.append({"bounds": bounds, "label": label, "scenes_json": to_json(sub, bands), "what": what, "method": method,
                          "size": int(size), "keep": keep, "cmap": cmap or "", "vmin": "" if vmin is None else str(vmin),
@@ -2405,11 +2763,20 @@ def timelapse(aoi, start, end, *, period="month", what="true_color", method="med
 
 
 def animate(frames, labels=None, fps=2, fmt="webp", quality=75, background=(255, 255, 255)):
-    """uint8 RGBA (4, H, W) frames -> animated WebP or GIF bytes, with an optional label in the top-left corner."""
+    """uint8 RGBA (4, H, W) frames of one size -> animated WebP or GIF bytes, with an optional label in the top-left
+    corner."""
     import io
     import numpy as np
     from PIL import Image, ImageDraw, ImageFont
 
+    if fmt not in ("webp", "gif"):
+        raise ValueError("fmt must be webp or gif")
+    if not len(frames):
+        raise ValueError("animate needs at least one frame")
+    if len({np.shape(f) for f in frames}) > 1:
+        raise ValueError(f"frames must have one size, got {sorted({np.shape(f) for f in frames})}")
+    if labels is not None and len(labels) != len(frames):
+        raise ValueError("give one label per frame")
     out = []
     for i, f in enumerate(frames):
         rgba = Image.fromarray(np.moveaxis(np.asarray(f, dtype="uint8"), 0, -1), "RGBA")
@@ -2421,9 +2788,10 @@ def animate(frames, labels=None, fps=2, fmt="webp", quality=75, background=(255,
                 font = ImageFont.load_default(size=max(12, im.width // 22))
             except TypeError:
                 font = ImageFont.load_default()
-            pad, box = max(4, im.width // 100), d.textbbox((0, 0), labels[i], font=font)
+            text = str(labels[i])
+            pad, box = max(4, im.width // 100), d.textbbox((0, 0), text, font=font)
             d.rectangle([0, 0, box[2] + 2 * pad, box[3] + 2 * pad], fill=(0, 0, 0))
-            d.text((pad, pad), labels[i], fill=(255, 255, 255), font=font)
+            d.text((pad, pad), text, fill=(255, 255, 255), font=font)
         out.append(im.convert("P", palette=Image.ADAPTIVE, colors=255) if fmt == "gif" else im)
     buf = io.BytesIO()
     extra = {} if fmt == "gif" else {"quality": int(quality)}
@@ -2441,3 +2809,11 @@ def animation_html(anim, title=""):
     head = f"<p style='font:14px sans-serif;margin:8px 0'>{html.escape(title)}</p>" if title else ""
     return (f"<!doctype html><html><body style='margin:0;padding:12px;background:#111;color:#eee'>{head}"
             f"<img style='max-width:100%' src='data:{mime};base64,{base64.b64encode(anim).decode()}'></body></html>")
+
+
+def _mercator_shape(bounds, size):
+    from rasterio.warp import transform_bounds
+
+    l, b, r, t = transform_bounds("EPSG:4326", "EPSG:3857", *bbox(bounds))
+    w, h = r - l, t - b
+    return (int(size), max(1, round(int(size) * w / h))) if h >= w else (max(1, round(int(size) * h / w)), int(size))

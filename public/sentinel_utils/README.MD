@@ -48,7 +48,7 @@ Pin a commit in the URL. Then your UDF does not change when this file changes.
 | Time series | `regularize`, `fill_gaps`, `smooth`, `harmonic`, `phenology`, `phenology_map`, `climatology`, `anomaly` |
 | Embeddings (AlphaEarth) | `load_embeddings`, `embedding_at`, `embedding_of`, `embedding_similarity`, `embedding_difference`, `embedding_preview` |
 | Render | `render(ds, what)`, `render_style`, `stretch`, `colorize`, `colorize_classes`, `css_gradient` |
-| Map tiles | `tile(z, x, y, date)`, `tile_scenes`, `mosaic_tile`, `read_tile`, `bounds_to_tile` |
+| Map tiles and pixels | `tile(z, x, y, date)`, `tile_scenes`, `tile_geobox`, `mosaic`, `read_scenes`, `bounds_to_tile` |
 | Export | `export(aoi, date)`, `to_cog`, `to_h3` |
 | Large areas | `block_grid`, `run_fanout`, `worker_udf`, `run_blocks`, `save_tiles`, `block_worker`, `tile_worker` |
 | Timelapse | `timelapse(aoi, start, end)`, `period_ranges`, `animate`, `animation_html`, `frame_worker` |
@@ -87,8 +87,8 @@ Follow these rules when you add a function. Then people can combine any two func
 
 | Meaning | Name | Notes |
 |---|---|---|
-| place | `aoi` | `'w,s,e,n'`, a list, a shapely geometry or a GeoDataFrame. Only tile functions take `bounds` or `z, x, y`. |
-| time range | `start`, `end` | `YYYY-MM-DD`, inclusive |
+| place | `aoi` | `'w,s,e,n'` in degrees, a list, a shapely geometry or a GeoDataFrame. Split an AOI that crosses 180°. Only tile functions take `bounds` or `z, x, y`. |
+| time range | `start`, `end` | `YYYY-MM-DD`, inclusive, as local solar dates |
 | time window | `date`, `days` | `date` ± `days` |
 | grouping | `period` | `month`, `quarter`, `season`, `year`, or a pandas frequency |
 | bands | `bands` | a list or a comma string; any spelling (B04, red, R) |
@@ -96,7 +96,7 @@ Follow these rules when you add a function. Then people can combine any two func
 | reducer | `method` | |
 | SCL classes to keep | `keep` | `clear`, `land`, `water`, ... |
 | quality | `max_cloud`, `min_clear` | percent |
-| grid | `res` (m), `crs`, `shape`, `like` | `like` takes the grid of another result |
+| grid | `res` (m), `crs`, `shape`, `like` | `res` is metres on the ground in any projected CRS; a geographic CRS needs `shape`. `like` takes the grid of another result. |
 | work | `threads` (in process), `max_workers` (`fused.submit`) | |
 
 - The first 3 or 4 parameters are positional. All others are keyword-only.
@@ -113,28 +113,29 @@ Follow these rules when you add a function. Then people can combine any two func
 | tables | a long DataFrame; `time` is datetime64; percents end in `_pct` |
 | images | uint8 RGBA (4, H, W) |
 | class rasters | carry their class names in `attrs["labels"]` |
+| areas | km² or m² on the WGS84 ellipsoid, for any grid |
 | two results | a tuple only as `(result, report)` |
 
 **Errors**
-- A bad argument raises `ValueError` that lists the allowed values.
+- A bad argument raises `ValueError` that lists the allowed values. This includes bad formulas.
 - "No scene" or "no valid pixel" raises `NoData`, which is a `ValueError`.
 - Catch only specific exceptions. Library code warns; it never prints.
 
 **Code**
 - Imports go inside function bodies, so the file loads fast and anywhere.
 - Private helpers start with `_`. Workers for `fused.submit` end in `_worker`, carry `@fused.udf(cache_max_age=...)`, and never take parameters named `x`, `y` or `z` (Fused reads those as a map tile call).
-- `run_fanout("block_worker", args)` sends the whole file with each worker, so a worker can call every function here.
+- `run_fanout("block_worker", args)` sends the copy of this file that you loaded with each worker, so a worker can call every function here.
 - "Tile" means a map tile only. A Sentinel-2 granule is an `mgrs` tile.
 
 ## Data rules
 
-1. **Sources.** `search` uses the Element84 STAC API for Collection 1 (about 0.5 s). If that API fails, it reads the source.coop STAC GeoParquet. Collection 1 is almost empty for January to November 2022, so that window comes from the older `sentinel-2-l2a` collection, or from a Fused-hosted index if that API fails. Where two sources have the same acquisition, the better source wins.
+1. **Sources.** `search` uses the Element84 STAC API for Collection 1 (about 0.5 s). If that API fails, it reads the source.coop STAC GeoParquet. Collection 1 is almost empty for January to November 2022, so that window comes from the older `sentinel-2-l2a` collection, or from a Fused-hosted index if that API fails. Where two sources have the same acquisition, the better source wins. `start` and `end` select the local solar `date` of each scene, so an AOI east of 160°E gets the right day.
 2. **Offset.** Each scene row has its own `offset`. Reflectance = DN × 0.0001 + offset. Collection 1 DNs include +1000, so its offset is −0.1. Legacy DNs do not, so their offset is 0, although their STAC metadata gives −0.1. `load` applies the offset per scene before it merges the scenes of one local solar day.
 3. **AOI cloud.** A scene's `cloud_cover` is for the whole 110 km tile. `aoi_cloud` and `clear_scenes` measure the clear share inside your AOI from SCL.
-4. **Masks.** `keep="clear"` keeps SCL 4, 5 and 6. `dilate` grows cloud (SCL 8, 9, 10) only. `rescue` gives back SCL 1, 2, 3, 7 and 11 to pixels that are never clear (building shadows, bright roofs), so composites have no holes. Use `keep="land"` for burn or vegetation change.
-5. **Formulas.** `index` parses formulas with an allow-list and never calls `eval`. The result is NaN wherever an input band is NaN, also for comparisons. The catalog is Awesome Spectral Indices at a pinned commit.
-6. **Tiles and exports.** Scenes are ranked once per zoom-8 region by clear area, (100 − nodata %) × (100 − cloud %). Each MGRS tile's best scene comes before any second best, so no seam shows at tile edges. Cloud (SCL 8, 9, 10) is filled from the next scene. Cloud shadow is not masked, because SCL marks dark water as shadow. Reading stops at 99.5 % clear (97 % below zoom 9). Exported band files store DN with scale 0.0001 and offset −0.1, so GIS tools read reflectance.
-7. **Size guards.** `load` stops above 200 M values. `export` is limited to 4096 px. Use a coarser `res`, `rank(per_mgrs=)`, `clear_scenes`, or `cube` for long time ranges.
+4. **Masks.** `keep="clear"` keeps SCL 4, 5 and 6. `dilate` grows cloud (SCL 8, 9, 10) only. `rescue` gives back SCL 1, 2, 3, 7 and 11 to pixels that are never clear (building shadows, bright roofs), so composites have no holes; it never widens a narrower `keep` such as `land` or `water`. Use `keep="land"` for burn or vegetation change. The `cloud` and `snow` bands are probabilities in %: 0 is a value, and NaN means outside the scene.
+5. **Formulas.** `index` parses formulas with an allow-list and never calls `eval`. Band letters are upper case, as in the catalog (`N`, `R`, `S1`); lower-case `g` and `n` are catalog constants. True is 1.0 and false is 0.0, so `(R > 0.1) + (N > 0.1)` counts. The result is NaN wherever an input band is NaN, also for comparisons. The catalog is Awesome Spectral Indices at a pinned commit.
+6. **Tiles and exports.** Both use `mosaic`. Scenes are ranked once per zoom-8 region by clear area, (100 − nodata %) × (100 − cloud %). Each MGRS tile's best scene comes before any second best, so no seam shows at tile edges. Every scene is read on the exact output grid and kept with its own id. Cloud (SCL 8, 9, 10) is filled from later scenes. Cloud shadow is not masked, because SCL marks dark water as shadow. Reading stops when less than 0.5 % of the grid (3 % below zoom 9) is still not clear where a later scene has data, so a scene that covers only part of the grid never stops the read early. Exported band files store DN with scale 0.0001 and offset −0.1, so GIS tools read reflectance.
+7. **Size guards.** `load` stops above 200 M values. `export` is limited to 4096 px. Use a coarser `res`, `rank(per_mgrs=)`, `clear_scenes`, or `cube` for long time ranges. `aoi_cloud` and `clear_scenes` read SCL in batches, so they work for any time range.
 
 ## Speed (remote engine)
 
@@ -143,7 +144,7 @@ Follow these rules when you add a function. Then people can combine any two func
 | scene search, new / cached | 0.4–0.6 s / 0.05 s |
 | one map tile, zoom 11–15 | 0.3–1.8 s |
 | one map tile, zoom 7 | 5–6.5 s (the tile layer caches results for 7 days) |
-| export of a 15 × 13 km box at 10 m | about 6 s |
+| export of a 10 × 9 km box at 10 m (1024 × 901 px) | about 2 s |
 
 A point series is limited by bandwidth: a 10 m band is stored in 1024 × 1024 blocks (about 1.8 MB), and one pixel costs one block per band and date. `pixel_series(clear_only=True)` reads the small SCL blocks first and skips cloudy dates.
 
