@@ -16,6 +16,9 @@ fused.load by name loads every sibling again (su_download alone makes 60 loads, 
 
 MODULES = ("su_constants", "su_geometry", "su_time", "su_catalog", "su_reader", "su_process", "su_statistical",
            "su_areas", "su_indices", "su_embeddings", "su_download", "su_collection")
+SENTINEL2_L2A = "sentinel-2-l2a"
+DEM = "cop-dem-glo-30"
+AEF = "alphaearth-embeddings"
 _HELD = {}
 
 try:

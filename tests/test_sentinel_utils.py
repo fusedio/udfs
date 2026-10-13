@@ -113,6 +113,7 @@ def test_band_names_and_collections(su, mod):
                                      "wavelength": 865}
     assert su.band_info("B11")["alias"] == "swir1"
     assert su.get_available_collections() == ["sentinel-2-l2a", "cop-dem-glo-30", "alphaearth-embeddings"]
+    assert [su.SENTINEL2_L2A, su.DEM, su.AEF] == su.get_available_collections()
     assert su.collection_info(c.DEM)["resolution"] == 30 and len(su.collection_info(c.AEF)["bands"]) == 64
 
 

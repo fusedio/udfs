@@ -64,7 +64,7 @@ Each name has the same meaning in all functions.
 | `area` | place in EPSG:4326: `"w,s,e,n"`, `[w, s, e, n]`, shapely geometry, GeoDataFrame or GeoJSON dict. Split an area that crosses 180°. |
 | `date` | one day `"2024-07-01"`, or `(start, end)`; also `"20240701"`, `"NOW"`, `"NOW-30DAYS"` |
 | `bands` | list or comma string in any spelling: `B04`, `red`, `b4`; also `SCL`, `CLD`, `SNW`, `dataMask` |
-| `collection` | `"sentinel-2-l2a"` (default), `"cop-dem-glo-30"`, `"alphaearth-embeddings"` (`date` is the year) |
+| `collection` | `su.SENTINEL2_L2A` (default), `su.DEM`, `su.AEF` (`date` is the year) |
 | `resolution` / `size` / `crs` | metres / `(width, height)` px / default is the UTM zone of the area |
 | `cloud_cover` | maximum scene cloud in percent, 0 to 100 |
 | `mosaic_order` | `least_cloudy` (default), `newest`, `oldest` |
