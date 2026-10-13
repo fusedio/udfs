@@ -63,7 +63,7 @@ scenes = s2.search(box, "2024-06-01", "2024-08-31")
 best = s2.rank(scenes, box, date="2024-07-15", per_mgrs=2)
 cloud = s2.aoi_cloud(scenes, box)
 
-ds = s2.load(best, "red,nir", box, res=20, keep="clear")
+ds = s2.load(best, "red,nir,green,swir16", box, res=20, keep="clear")
 ndvi = s2.index(ds, "NDVI")
 water = s2.index(ds, "(G - S1) / (G + S1) > 0", name="water")
 
