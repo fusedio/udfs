@@ -2,165 +2,136 @@
 <p align="center"><img src="https://fused-magic.s3.us-west-2.amazonaws.com/thumbnails/udfs-staging/Fused_Logo.png" width="600" alt="UDF preview image"></p>
 
 <!--fused:tags-->
-Tags: `sentinel-2` `raster` `stac` `spectral-index` `composite` `tiles` `utilities`
+Tags: `sentinel-2` `raster` `stac` `dem` `embeddings` `spectral-index` `utilities`
 
 <!--fused:readme-->
 ## Overview
 
-Utilities to search, load, mask, index, composite, analyse, classify, render, tile and export Sentinel-2 L2A from the cloud. Every function is a plain Python function. Load the file once and call the functions, as with `common`.
+`sentinel_utils` reads Sentinel-2 L2A, the Copernicus DEM (30 m) and AlphaEarth embeddings on Fused. The API follows
+[sentinelhub-py](https://github.com/sentinel-hub/sentinelhub-py): process and statistical requests, area splitters
+and a download client. The search follows sentinelsat. All names are snake_case.
 
-The UDF of this file is a world map tile layer: the least cloudy Sentinel-2 pixels for any place and date, made on request and not stored.
+`sentinel_utils.py` is the main file. The 12 `su_*.py` files are modules. `meta.json` lists them as headers, so
+`fused.load` of this folder loads all of them. Each function of the main file calls the function of the same name in
+its module. `su.module("su_constants")` gives one module.
 
 ## Quick start
 
-```python
-@fused.udf
-def udf(aoi: str = "-73.99,40.76,-73.95,40.80"):
-    s2 = fused.load("https://github.com/fusedio/udfs/tree/<commit>/public/sentinel_utils/")
-    summer = s2.image(aoi, "2024-06-01", "2024-08-31", s2.needs("NDVI"), res=20)
-    ndvi = s2.index(summer, "NDVI")
-    return float(ndvi.mean())
-```
-
-A tile UDF of your own:
+Always pin a commit in the URL. Then your code does not change when this folder changes.
 
 ```python
-@fused.udf
-def udf(bounds: fused.types.Bounds, date: str = "2024-07-01", what: str = "NDVI"):
-    s2 = fused.load("https://github.com/fusedio/udfs/tree/<commit>/public/sentinel_utils/")
-    z, x, y = s2.bounds_to_tile(bounds)
-    return s2.tile(z, x, y, date, what=what)
+import json
+import fused
+
+su = fused.load("https://github.com/fusedio/udfs/tree/<commit>/public/sentinel_utils/")
+area = [-118.62, 34.02, -118.50, 34.10]
+
+scenes = su.query(area, ("2024-06-01", "2024-08-31"), cloud_cover=20)
+req = su.process_request(area, ("2024-06-01", "2024-08-31"), ["B04", "B03", "B02"], resolution=10,
+                         mask="clear", reducer="median")
+ds = su.get_data(req)
+stats = su.get_data(su.statistical_request(area, ("2024-01-01", "2024-12-31"), index="NDVI",
+                                           aggregation_interval="P1M"))
+ndvi = su.collection().filter_bounds(area).filter_date("2024-06-01", "2024-08-31").median().index("NDVI").get_data()
+su.api()
 ```
 
-Pin a commit in the URL. Then your UDF does not change when this file changes.
+`su.api()` gives a table of the 76 public functions with their signatures. `fused.run(su)` gives the same table.
 
-## Functions
+## Modules
 
-| Group | Functions |
+| Module | Functions |
 |---|---|
-| Bands and places | `band_name`, `band_names`, `band_info`, `is_mask`, `scl_classes`, `bbox`, `date_window`, `frequency`, `utm_crs`, `size_m`, `auto_res`, `geobox`, `on_grid`, `keep_crs`, `reflectance`, `nanquantile`, `save_file`, `BestFill`, `NoData` |
-| Search | `search(aoi, start, end)`, `rank`, `dates`, `to_json`, `from_json` |
-| Load and mask | `load(scenes, bands, aoi, keep=)`, `mask`, `clear_mask`, `aoi_cloud`, `clear_scenes`, `scl_summary`, `pixel_series` |
-| Indices | `index(ds, what)`, `indices`, `needs`, `is_index`, `index_catalog`, `index_info`, `list_indices`, `parse_formula` |
-| Composites | `composite(ds, method, period)`, `clear_count`, `image(aoi, start, end, bands)`, `cube(aoi, start, end, what)` |
-| Statistics | `zonal_stats`, `zone_labels`, `sample`, `change`, `class_area` |
-| Classification | `features`, `cluster`, `train`, `predict`, `vote`, `labels_worldcover`, `labels_from_zones`, `vectorize` |
-| Time series | `regularize`, `fill_gaps`, `smooth`, `harmonic`, `phenology`, `phenology_map`, `climatology`, `anomaly` |
-| Embeddings (AlphaEarth) | `load_embeddings`, `embedding_at`, `embedding_of`, `embedding_similarity`, `embedding_difference`, `embedding_preview` |
-| Render | `render(ds, what)`, `render_style`, `stretch`, `colorize`, `colorize_classes`, `css_gradient` |
-| Map tiles and pixels | `tile(z, x, y, date)`, `tile_scenes`, `tile_geobox`, `mosaic`, `read_scenes`, `bounds_to_tile` |
-| Export | `export(aoi, date)`, `to_cog`, `to_h3` |
-| Large areas | `block_grid`, `run_fanout`, `worker_udf`, `run_blocks`, `save_tiles`, `block_worker`, `tile_worker` |
-| Timelapse | `timelapse(aoi, start, end)`, `period_ranges`, `animate`, `animation_html`, `frame_worker` |
+| `su_constants` | collections, band names, `MASKS`, `NoDataError`: `band_names`, `band_info`, `collection_info` |
+| `su_geometry` | `to_bbox`, `to_geometry`, `get_utm_crs`, `bbox_to_dimensions`, `make_geobox`, `area_km2` |
+| `su_time` | `parse_time`, `parse_time_interval`, `filter_times`, `split_time_interval` |
+| `su_catalog` | `query`, `count`, `get_product`, `get_timestamps`, `to_geojson`, `rank` |
+| `su_reader` | pixel engine: `read_stack`, map `tile`, `export`, `to_cog`, `render` |
+| `su_process` | `process_request`, `run_process`: mosaics, composites, indices, DEM, embeddings |
+| `su_statistical` | `statistical_request`, `run_statistical`: statistics per interval in a polygon |
+| `su_areas` | splitters: `bbox_splitter`, `osm_splitter`, `utm_grid_splitter`, `utm_zone_splitter`, `tile_splitter`, `custom_grid_splitter` |
+| `su_indices` | NDVI, NDWI, MNDWI, NDMI, NBR, NDSI, NDRE, EVI, SAVI, BSI; `normalized_difference` |
+| `su_embeddings` | AlphaEarth: `load_embeddings`, `embedding_similarity`, `embedding_difference`, `embedding_preview` |
+| `su_download` | `get_data`, `download`, `iter_download`, `save_data`, `to_payload`, `from_payload` |
+| `su_collection` | `collection()`: a lazy chain in Earth Engine style |
+
+## Parameters
+
+Each name has the same meaning in all functions.
+
+| Name | Values |
+|---|---|
+| `area` | place in EPSG:4326: `"w,s,e,n"`, `[w, s, e, n]`, shapely geometry, GeoDataFrame or GeoJSON dict. Split an area that crosses 180°. |
+| `date` | one day `"2024-07-01"`, or `(start, end)`; also `"20240701"`, `"NOW"`, `"NOW-30DAYS"` |
+| `bands` | list or comma string in any spelling: `B04`, `red`, `b4`; also `SCL`, `CLD`, `SNW`, `dataMask` |
+| `collection` | `"sentinel-2-l2a"` (default), `"cop-dem-glo-30"`, `"alphaearth-embeddings"` (`date` is the year) |
+| `resolution` / `size` / `crs` | metres / `(width, height)` px / default is the UTM zone of the area |
+| `cloud_cover` | maximum scene cloud in percent, 0 to 100 |
+| `mosaic_order` | `least_cloudy` (default), `newest`, `oldest` |
+| `mask` | `clear` (SCL 4, 5, 6), `land`, `water`, `snow`, ...; other pixels become NaN |
+| `reducer` | `median`, `mean`, `min`, `max`, `count` over all dates |
+| `index` | `NDVI`, `NDWI`, `MNDWI`, `NDMI`, `NBR`, `NDSI`, `NDRE`, `EVI`, `SAVI`, `BSI` |
+| `output` | `dataset` (default), `array` (H, W, B), `geotiff` (COG bytes), `png` |
+| `aggregation_interval` | ISO 8601: `P1D` (each acquisition), `P10D`, `P1M`, `P1Y` |
+
+A bad value raises `ValueError`, and the message lists the allowed values. No scene or no valid pixel raises
+`NoDataError` (a `ValueError`). Indices use reflectance clipped at 0.
+
+## Many requests
+
+A request is a plain JSON dict. Make it only with `process_request` or `statistical_request`. Workers refuse other
+dicts.
+
+```python
+results = su.download([req_1, req_2, req_3])
+for i, result in su.iter_download([req_1, req_2, req_3]):
+    show(i, result)
+```
+
+- `download` runs the requests in parallel on remote workers (`.map`) and gives the results in request order.
+- `iter_download` gives `(i, result)` when request `i` is done, so the first result shows before the last is ready.
+  Use `break` to stop. The open workers stop too.
+- A remote job that fails (for example a timeout) runs one more time. A `NoDataError` or a `ValueError` is final.
+  A request that still fails raises `RuntimeError` ("request i of n failed: ..."). With `ignore_errors=True` you get
+  `None` for that request and one warning at the end.
+- Keep one request under about 60 s. Use a coarser `resolution` or a smaller `size`, or split the area with
+  `su.utm_zone_splitter(area, 20_000)`.
+
+## Run one request on Fused
+
+```python
+result = su.from_payload(fused.run(su, request=json.dumps(req), engine="remote"))
+```
+
+`fused.run` gives a small table. `su.from_payload` makes the same object that `su.get_data(req)` gives. For this
+path your app needs only `fused`, pandas, shapely, odc-geo, xarray and nest_asyncio. A UDF that runs on Fused cannot
+load a local path: use the GitHub URL.
+
+## Accounts
+
+All work runs on the Fused account of the caller: images, statistics, `download` workers, caches and saved files.
+The package needs no UDF, token, secret or file of the author. `fd://` paths (for example `save_data`) are in the
+team bucket of the caller. Do not call the share links of a workbench canvas from an app. Those run as the canvas
+owner.
 
 ## Examples
 
-```python
-s2 = fused.load("https://github.com/fusedio/udfs/tree/<commit>/public/sentinel_utils/")
-box = [-118.62, 34.02, -118.50, 34.10]
-
-scenes = s2.search(box, "2024-06-01", "2024-08-31")
-best = s2.rank(scenes, box, date="2024-07-15", per_mgrs=2)
-cloud = s2.aoi_cloud(scenes, box)
-
-ds = s2.load(best, "red,nir,green,swir16", box, res=20, keep="clear")
-ndvi = s2.index(ds, "NDVI")
-water = s2.index(ds, "(G - S1) / (G + S1) > 0", name="water")
-
-before = s2.image(box, "2024-11-15", "2025-01-06", "nir,swir22", res=20, keep="land")
-after = s2.image(box, "2025-01-20", "2025-03-15", "nir,swir22", res=20, keep="land")
-burn = s2.change(before, after, "burn")
-km2 = s2.class_area(burn["class"])
-
-monthly = s2.cube(box, "2020-01-01", "2024-12-31", "NDVI", period="month", res=60)
-z = s2.anomaly(monthly, baseline=[2020, 2021, 2023], target_years=[2024])
-
-info = s2.export(box, "2024-07-01", kind="bands", bands="blue,green,red,nir")
-anim, frames = s2.timelapse(box, "2024-10-01", "2025-06-30", period="month")
-```
-
-## The standard
-
-Follow these rules when you add a function. Then people can combine any two functions without reading the code.
-
-**Parameters**
-
-| Meaning | Name | Notes |
-|---|---|---|
-| place | `aoi` | `'w,s,e,n'` in degrees, a list, a shapely geometry or a GeoDataFrame. Split an AOI that crosses 180°. Only tile functions take `bounds` or `z, x, y`. |
-| time range | `start`, `end` | `YYYY-MM-DD`, inclusive, as local solar dates |
-| time window | `date`, `days` | `date` ± `days` |
-| grouping | `period` | `month`, `quarter`, `season`, `year`, or a pandas frequency |
-| bands | `bands` | a list or a comma string; any spelling (B04, red, R) |
-| what to compute or draw | `what` | a preset, a catalog index or a formula |
-| reducer | `method` | |
-| SCL classes to keep | `keep` | `clear`, `land`, `water`, ... |
-| quality | `max_cloud`, `min_clear` | percent |
-| grid | `res` (m), `crs`, `shape`, `like` | `res` is metres on the ground in any projected CRS; a geographic CRS needs `shape`. `like` takes the grid of another result. |
-| work | `threads` (in process), `max_workers` (`fused.submit`) | |
-
-- The first 3 or 4 parameters are positional. All others are keyword-only.
-- Library code uses `None` for "not set". Only UDF parameters use `""`.
-- Defaults are module constants: `MAX_CLOUD = 80`, `DAYS = 30`, `MAX_PIXELS`.
-
-**Return types**
-
-| Result | Type |
-|---|---|
-| scenes | a GeoDataFrame with the columns of `SCENE_COLUMNS` (also when empty) |
-| bands | `xarray.Dataset` (time, y, x), reflectance, with the CRS attached |
-| one quantity | `xarray.DataArray` |
-| tables | a long DataFrame; `time` is datetime64; percents end in `_pct` |
-| images | uint8 RGBA (4, H, W) |
-| class rasters | carry their class names in `attrs["labels"]` |
-| areas | km² or m² on the WGS84 ellipsoid, for any grid |
-| two results | a tuple only as `(result, report)` |
-
-**Errors**
-- A bad argument raises `ValueError` that lists the allowed values. This includes bad formulas.
-- "No scene" or "no valid pixel" raises `NoData`, which is a `ValueError`.
-- Catch only specific exceptions. Library code warns; it never prints.
-
-**Code**
-- Imports go inside function bodies, so the file loads fast and anywhere.
-- Private helpers start with `_`. Workers for `fused.submit` end in `_worker`, carry `@fused.udf(cache_max_age=...)`, and never take parameters named `x`, `y` or `z` (Fused reads those as a map tile call).
-- `run_fanout("block_worker", args)` sends the copy of this file that you loaded with each worker, so a worker can call every function here.
-- "Tile" means a map tile only. A Sentinel-2 granule is an `mgrs` tile.
-
-## Data rules
-
-1. **Sources.** `search` uses the Element84 STAC API for Collection 1 (about 0.5 s). If that API fails, it reads the source.coop STAC GeoParquet. Collection 1 is almost empty for January to November 2022, so that window comes from the older `sentinel-2-l2a` collection, or from a Fused-hosted index if that API fails. Where two sources have the same acquisition, the better source wins. `start` and `end` select the local solar `date` of each scene, so an AOI east of 160°E gets the right day.
-2. **Offset.** Each scene row has its own `offset`. Reflectance = DN × 0.0001 + offset. Collection 1 DNs include +1000, so its offset is −0.1. Legacy DNs do not, so their offset is 0, although their STAC metadata gives −0.1. `load` applies the offset per scene before it merges the scenes of one local solar day.
-3. **AOI cloud.** A scene's `cloud_cover` is for the whole 110 km tile. `aoi_cloud` and `clear_scenes` measure the clear share inside your AOI from SCL.
-4. **Masks.** `keep="clear"` keeps SCL 4, 5 and 6. `dilate` grows cloud (SCL 8, 9, 10) only. `rescue` gives back SCL 1, 2, 3, 7 and 11 to pixels that are never clear (building shadows, bright roofs), so composites have no holes; it never widens a narrower `keep` such as `land` or `water`. Use `keep="land"` for burn or vegetation change. The `cloud` and `snow` bands are probabilities in %: 0 is a value, and NaN means outside the scene.
-5. **Formulas.** `index` parses formulas with an allow-list and never calls `eval`. Band letters are upper case, as in the catalog (`N`, `R`, `S1`); lower-case `g` and `n` are catalog constants. True is 1.0 and false is 0.0, so `(R > 0.1) + (N > 0.1)` counts. The result is NaN wherever an input band is NaN, also for comparisons. The catalog is Awesome Spectral Indices at a pinned commit.
-6. **Tiles and exports.** Both use `mosaic`. Scenes are ranked once per zoom-8 region by clear area, (100 − nodata %) × (100 − cloud %). Each MGRS tile's best scene comes before any second best, so no seam shows at tile edges. Every scene is read on the exact output grid and kept with its own id. Cloud (SCL 8, 9, 10) is filled from later scenes. Cloud shadow is not masked, because SCL marks dark water as shadow. Reading stops when less than 0.5 % of the grid (3 % below zoom 9) is still not clear where a later scene has data, so a scene that covers only part of the grid never stops the read early. Exported band files store DN with scale 0.0001 and offset −0.1, so GIS tools read reflectance.
-7. **Size guards.** `load` stops above 200 M values. `export` is limited to 4096 px. Use a coarser `res`, `rank(per_mgrs=)`, `clear_scenes`, or `cube` for long time ranges. `aoi_cloud` and `clear_scenes` read SCL in batches, so they work for any time range.
-
-## Speed (remote engine)
-
-| Step | Time |
-|---|---|
-| scene search, new / cached | 0.4–0.6 s / 0.05 s |
-| one map tile, zoom 11–15 | 0.3–1.8 s |
-| one map tile, zoom 7 | 5–6.5 s (the tile layer caches results for 7 days) |
-| export of a 10 × 9 km box at 10 m (1024 × 901 px) | about 2 s |
-
-A point series is limited by bandwidth: a 10 m band is stored in 1024 × 1024 blocks (about 1.8 MB), and one pixel costs one block per band and date. `pixel_series(clear_only=True)` reads the small SCL blocks first and skips cloudy dates.
+The workbench canvas [Sentinel2_Toolkit](https://www.fused.io/workbench/aman/Sentinel2_Toolkit) has examples (ports
+of the sentinelhub-py examples, time series, timelapse, classification, change detection, embeddings) and a world
+viewer.
 
 ## Tests
-
-`tests/test_sentinel_utils.py` holds fast tests on synthetic data and live tests on real data:
 
 ```bash
 pytest tests/test_sentinel_utils.py
 SENTINEL_UTILS_LIVE=1 pytest tests/test_sentinel_utils.py
 ```
 
-## External links
+## Data and credits
 
-- [Sentinel-2 L2A on AWS (Element84 Earth Search)](https://element84.com/earth-search/)
-- [Sentinel-2 STAC GeoParquet on source.coop](https://source.coop/tge-labs/s2-stac-geoparquet)
-- [Awesome Spectral Indices](https://github.com/awesome-spectral-indices/awesome-spectral-indices)
-- [AlphaEarth Foundations embeddings on source.coop](https://source.coop/tge-labs/aef)
-- [ESA WorldCover](https://esa-worldcover.org/)
+- Scene search: [Earth Search by Element84](https://element84.com/earth-search/) first, then the
+  [Sentinel-2 STAC GeoParquet on source.coop](https://source.coop/tge-labs/s2-stac-geoparquet). Collection 1 and the
+  older collection are merged; Collection 1 wins for the same acquisition.
+- Imagery: "Contains modified Copernicus Sentinel data [year]".
+- Terrain: Copernicus DEM GLO-30.
+- Embeddings: [AlphaEarth Foundations embeddings on source.coop](https://source.coop/tge-labs/aef).
