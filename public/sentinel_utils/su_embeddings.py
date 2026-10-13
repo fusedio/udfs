@@ -102,9 +102,11 @@ def embedding_of(emb, area):
     gb = _odc(emb).geobox
     geom = Geometry(geometry.to_geometry(area), crs="EPSG:4326").to_crs(gb.crs).geom
     inside = geometry_mask([geom], out_shape=gb.shape, transform=gb.affine, invert=True, all_touched=True)
-    if not inside.any():
-        raise constants.NoDataError("the area covers no pixel of the embeddings")
-    return _unit(np.nanmean(emb.values[:, inside], axis=1))
+    values = emb.values[:, inside]
+    values = values[:, ~np.isnan(values).any(axis=0)]
+    if not values.size:
+        raise constants.NoDataError("the area covers no valid pixel of the embeddings")
+    return _unit(values.mean(axis=1))
 
 
 def embedding_similarity(emb, ref):

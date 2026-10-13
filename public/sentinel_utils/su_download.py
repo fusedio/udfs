@@ -64,17 +64,10 @@ def download(requests, *, max_workers=16, engine="remote", ignore_errors=False):
     """Returns the results in request order; engine remote runs each on a Fused worker (worker()), local in threads."""
     import warnings
 
-    checked, workers = _prepare(requests, max_workers, engine)
-    outcomes = [(None, None)] * len(checked)
-    stream = _stream(checked, workers, engine)
-    try:
-        for index, result, err in stream:
-            outcomes[index] = (result, err)
-    finally:
-        stream.close()
+    outcomes = _collect(requests, max_workers, engine)
     failed = [(i, err) for i, (_, err) in enumerate(outcomes) if err is not None]
     if failed:
-        msg = _failures(failed, len(checked))
+        msg = _failures(failed, len(outcomes))
         if not ignore_errors:
             raise RuntimeError(msg)
         warnings.warn(msg)
@@ -205,6 +198,22 @@ def _prepare(requests, max_workers, engine):
         raise ValueError("requests must be a list of request dicts; put one request in a list")
     checked = [check_request(r) for r in requests]
     return checked, max(1, min(int(max_workers), len(checked) or 1))
+
+
+def _collect(requests, max_workers, engine):
+    checked, workers = _prepare(requests, max_workers, engine)
+    outcomes = [(None, None)] * len(checked)
+    stream = _stream(checked, workers, engine)
+    try:
+        for index, result, err in stream:
+            outcomes[index] = (result, err)
+    finally:
+        stream.close()
+    return outcomes
+
+
+def _no_data(err):
+    return isinstance(err, constants.NoDataError) or "NoDataError" in str(err)
 
 
 def _progressive(requests, workers, engine, ignore_errors):

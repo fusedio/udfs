@@ -175,6 +175,8 @@ class _Image:
     def reduce_regions(self, features, reducer="mean", resolution=None, max_workers=16, engine="remote"):
         import pandas as pd
 
+        if getattr(features, "crs", None) is not None:
+            features = features.to_crs(4326)
         shapes, ids = ((list(features.geometry), list(features.index)) if hasattr(features, "geometry")
                        else (list(features), list(range(len(features)))))
         requests = [self._region_request(reducer, shape, resolution) for shape in shapes]
@@ -210,8 +212,14 @@ class _ImageList(tuple):
         import pandas as pd
 
         requests = [image._region_request(reducer, area, resolution) for image in self]
-        images = download.download(requests, max_workers=max_workers, engine=engine)
-        tables = [_region_table(ds, r, image._outputs(r), reducer) for ds, r, image in zip(images, requests, self)]
+        outcomes = download._collect(requests, max_workers, engine)
+        failed = [(i, err) for i, (_, err) in enumerate(outcomes) if err is not None and not download._no_data(err)]
+        if failed:
+            raise RuntimeError(download._failures(failed, len(requests)))
+        tables = [_region_table(ds, r, image._outputs(r), reducer)
+                  for (ds, err), r, image in zip(outcomes, requests, self) if err is None]
+        if not tables:
+            raise constants.NoDataError("no interval has data in the area")
         return pd.concat(tables, ignore_index=True)
 
 

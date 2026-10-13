@@ -478,6 +478,54 @@ def test_embedding_year(su):
         su.embedding_year(2016)
 
 
+def _embeddings():
+    values = np.full((2, 4, 4), np.nan, dtype="float32")
+    values[0, :, 2:], values[1, :, 2:] = 3.0, 4.0
+    coords = {"band": ["A00", "A01"], "y": 34.095 - 0.01 * np.arange(4), "x": -118.595 + 0.01 * np.arange(4)}
+    return xr.DataArray(values, dims=("band", "y", "x"), coords=coords).odc.assign_crs("EPSG:4326")
+
+
+def test_embedding_of_uses_only_valid_pixels(su, mod):
+    emb = _embeddings()
+    assert np.allclose(su.embedding_of(emb, [-118.6, 34.06, -118.56, 34.1]), [0.6, 0.8])
+    with pytest.raises(mod["su_constants"].NoDataError, match="no valid pixel"):
+        su.embedding_of(emb, [-118.599, 34.061, -118.581, 34.099])
+
+
+def test_reduce_regions_reprojects_the_features(su, mod, monkeypatch):
+    sent = []
+
+    def fake_download(requests, **kwargs):
+        sent.extend(requests)
+        raise StopIteration
+
+    collection = mod["su_collection"]
+    monkeypatch.setattr(collection.download, "download", fake_download)
+    features = gpd.GeoDataFrame(geometry=[shapely.box(*LA)], crs="EPSG:4326").to_crs(3857)
+    image = su.collection().filter_date("2024-06-01", "2024-06-30").median()
+    with pytest.raises(StopIteration):
+        image.reduce_regions(features)
+    assert np.allclose(su.to_bbox(sent[0]["area"]), LA, atol=1e-6)
+
+
+def test_aggregate_skips_intervals_with_no_data(su, mod, monkeypatch):
+    collection, download = mod["su_collection"], mod["su_download"]
+    months = su.collection().filter_bounds(LA).filter_date("2024-01-01", "2024-03-31").aggregate("P1M")
+    no_data = RuntimeError("NoDataError: no scene in the area")
+
+    def run(outcomes):
+        monkeypatch.setattr(download, "_collect", lambda requests, max_workers, engine: outcomes)
+        return months.reduce_region()
+
+    monkeypatch.setitem(type(months).reduce_region.__globals__, "_region_table",
+                        lambda ds, request, names, reducer: pd.DataFrame({"interval_from": [request["date"][0]]}))
+    assert list(run([("a", None), (None, no_data), ("c", None)])["interval_from"]) == ["2024-01-01", "2024-03-01"]
+    with pytest.raises(RuntimeError, match="1 of 3 requests failed; first: request 1: TimeoutError"):
+        run([("a", None), (None, TimeoutError("worker timed out")), ("c", None)])
+    with pytest.raises(mod["su_constants"].NoDataError, match="no interval has data"):
+        run([(None, no_data)] * 3)
+
+
 def _fake_get_data(mod, monkeypatch, delays):
     download = mod["su_download"]
 
@@ -630,6 +678,18 @@ def test_live_iter_download_remote(su):
     bad = su.process_request(OCEAN, "2023-06-10", resolution=60)
     with pytest.raises(RuntimeError, match="request 1 of 2 failed: .*NoDataError"):
         list(su.iter_download([requests[0], bad], engine="remote"))
+
+
+@live
+def test_live_download_inside_a_running_event_loop(su):
+    import asyncio
+
+    requests = [su.process_request(LA, day, resolution=60) for day in ("2023-06-22", "2023-07-02")]
+
+    async def notebook_cell():
+        return su.download(requests, engine="remote")
+
+    assert [dict(ds.sizes) for ds in asyncio.run(notebook_cell())] == [{"y": 152, "x": 188}] * 2
 
 
 @live
