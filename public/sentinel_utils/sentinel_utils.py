@@ -203,6 +203,10 @@ def rank(*args, **kwargs):
     return module("su_catalog").rank(*args, **kwargs)
 
 
+def clearest_days(*args, **kwargs):
+    return module("su_catalog").clearest_days(*args, **kwargs)
+
+
 def read_stack(*args, **kwargs):
     return module("su_reader").read_stack(*args, **kwargs)
 

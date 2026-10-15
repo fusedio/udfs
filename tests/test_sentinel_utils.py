@@ -76,11 +76,11 @@ def test_meta_lists_the_twelve_modules_as_headers():
     assert all(os.path.exists(os.path.join(PACKAGE, f"{m}.py")) for m in MODULES)
 
 
-def test_api_lists_76_functions(su):
+def test_api_lists_77_functions(su):
     table = su.api()
-    assert list(table.columns) == ["module", "name", "signature", "doc"] and len(table) == 76
+    assert list(table.columns) == ["module", "name", "signature", "doc"] and len(table) == 77
     assert table.groupby("module").size().to_dict() == {
-        "su_areas": 6, "su_catalog": 8, "su_collection": 1, "su_constants": 6, "su_download": 8, "su_embeddings": 7,
+        "su_areas": 6, "su_catalog": 9, "su_collection": 1, "su_constants": 6, "su_download": 8, "su_embeddings": 7,
         "su_geometry": 11, "su_indices": 3, "su_process": 3, "su_reader": 15, "su_statistical": 3, "su_time": 5}
     assert not table["name"].str.startswith("_").any() and table["doc"].str.len().gt(0).all()
     listing = fused.run(su, engine="local")
@@ -120,7 +120,7 @@ def test_band_names_and_collections(su, mod):
 def test_constants_and_allowed_values(mod):
     c = mod["su_constants"]
     assert c.MASKS["clear"] == (4, 5, 6) and c.MASKS["water"] == (6,) and c.SCL_CLASSES[10] == "thin_cirrus"
-    assert c.MOSAIC_ORDERS == ("least_cloudy", "newest", "oldest")
+    assert c.MOSAIC_ORDERS == ("least_cloudy", "clearest_day", "newest", "oldest")
     assert c.OUTPUTS == ("dataset", "array", "geotiff", "png")
     assert issubclass(c.NoDataError, ValueError)
     assert c.check_choice("units", "dn", c.UNITS) == "dn"
@@ -233,7 +233,7 @@ def test_process_request_defaults_and_json_round_trip(su):
 
 @pytest.mark.parametrize("kwargs, allowed", [
     ({"output": "tiff"}, "['dataset', 'array', 'geotiff', 'png']"),
-    ({"mosaic_order": "leastCC"}, "['least_cloudy', 'newest', 'oldest']"),
+    ({"mosaic_order": "leastCC"}, "['least_cloudy', 'clearest_day', 'newest', 'oldest']"),
     ({"mosaicking": "tile"}, "['simple', 'orbit']"),
     ({"units": "DN"}, "['reflectance', 'dn']"),
     ({"resampling": "lanczos"}, "['nearest', 'bilinear', 'cubic']"),
@@ -437,6 +437,77 @@ def test_scene_table_merge_and_rank(su, mod):
     assert list(ranked["id"]) == ["a1", "a2"] and list(ranked["clear_pct"]) == [95.0, 80.0]
     by_date = su.rank(products, date="2023-06-01", order="date")
     assert list(by_date["id"]) == ["a0", "a2", "a1"] and list(by_date["days_off"]) == [0, 2, 1]
+
+
+FUJI = [138.6, 35.3, 138.85, 35.42]
+WEST, EAST = shapely.box(138.0, 35.0, 138.9, 36.0), shapely.box(138.8, 35.0, 140.0, 36.0)
+
+
+def _two_tile_days(cat):
+    rows = [_scene(id=i, tile_id=t, cloud_cover=c, datetime=f"{d}T01:30:00Z", geometry=g)
+            for i, t, c, d, g in [("feb_west", "54STE", 0.28, "2026-02-15", WEST),
+                                  ("feb_east", "54SUE", 0.76, "2026-02-15", EAST),
+                                  ("jan_west", "54STE", 2.4, "2026-01-16", WEST),
+                                  ("jan_east", "54SUE", 0.08, "2026-01-16", EAST),
+                                  ("mar_east", "54SUE", 0.0, "2026-03-01", EAST)]]
+    return cat._finish(rows, "2026-01-01", "2026-03-31", shapely.box(*FUJI))
+
+
+def test_clearest_days_prefer_one_day_over_the_whole_area(su, mod):
+    products = _two_tile_days(mod["su_catalog"])
+    days = su.clearest_days(products, FUJI)
+    assert list(days["date"]) == ["2026-02-15", "2026-01-16", "2026-03-01"] and list(days["scenes"]) == [2, 2, 1]
+    assert list(days["cover_pct"][:2]) == [100.0, 100.0] and 15 < days["cover_pct"][2] < 25
+    assert days["cloud_cover"][0] == 0.28 and 0.08 < days["cloud_cover"][1] < 2.4
+    assert days["clear_pct"].is_monotonic_decreasing
+    assert su.clearest_days(products.iloc[:0], FUJI).empty
+    by_clear = su.rank(products, FUJI)
+    assert list(by_clear["id"][:2]) == ["mar_east", "feb_west"]
+    by_day = su.rank(products, FUJI, order="day")
+    assert list(by_day["id"]) == ["feb_west", "feb_east", "jan_east", "jan_west", "mar_east"]
+    assert list(by_day["day_clear_pct"]) == [days["clear_pct"][0]] * 2 + [days["clear_pct"][1]] * 2 + [
+        days["clear_pct"][2]]
+    naive = gpd.GeoDataFrame(products.drop(columns="geometry"), geometry=list(products.geometry))
+    assert naive.crs is None and su.clearest_days(naive, FUJI).equals(days)
+    line = shapely.LineString([(138.62, 35.35), (138.84, 35.36)])
+    assert list(su.rank(products, line, order="day")["id"][:2]) == ["feb_west", "feb_east"]
+    assert list(su.clearest_days(products, shapely.Point(138.7, 35.36))["date"][:2]) == ["2026-02-15", "2026-01-16"]
+
+
+def test_clearest_days_count_overlapping_tiles_once(su, mod):
+    rows = [_scene(id=i, tile_id=t, cloud_cover=c, datetime=f"{d}T01:30:00Z", geometry=g)
+            for i, t, c, d, g in [("d1_west", "54STE", 0.0, "2026-02-01", WEST),
+                                  ("d1_east", "54SUE", 60.0, "2026-02-01", EAST),
+                                  ("d2_east", "54SUE", 20.0, "2026-02-11", EAST)]]
+    overlap = [138.81, 35.3, 138.89, 35.42]
+    products = mod["su_catalog"]._finish(rows, "2026-02-01", "2026-02-28", shapely.box(*overlap))
+    days = su.clearest_days(products, overlap)
+    assert list(days["date"]) == ["2026-02-01", "2026-02-11"] and list(days["clear_pct"]) == [100.0, 80.0]
+    assert list(su.rank(products, overlap, order="day")["id"]) == ["d1_west", "d1_east", "d2_east"]
+
+
+def test_clearest_day_mosaic_reads_the_best_day_first(su, mod, monkeypatch):
+    process, reader = mod["su_process"], mod["su_reader"]
+    products = _two_tile_days(mod["su_catalog"])
+    gb = su.make_geobox(FUJI, resolution=200)
+    ordered = reader._ordered(reader._scene_table(products), "clearest_day", gb)
+    assert sorted(ordered, key=ordered.get) == ["feb_west", "feb_east", "jan_east", "jan_west", "mar_east"]
+    ordered = reader._ordered(reader._scene_table(products), "least_cloudy", gb)
+    assert sorted(ordered, key=ordered.get)[:2] == ["mar_east", "jan_east"]
+    groups = []
+
+    def read_stack(scenes, names, geobox, **kw):
+        groups.append(sorted(scenes["id"]))
+        full = np.ones(geobox.shape, "float32")
+        return xr.Dataset({"B04": (("y", "x"), full), "dataMask": (("y", "x"), full.astype("uint8"))},
+                          attrs={"scenes": len(scenes)})
+
+    fake = type("FakeReader", (), {"read_stack": staticmethod(read_stack), "reach": staticmethod(reader.reach)})
+    monkeypatch.setitem(process._simple.__globals__, "reader", fake)
+    for order, first in [("clearest_day", ["feb_east", "feb_west"]), ("least_cloudy", ["feb_west", "mar_east"])]:
+        groups.clear()
+        req = process.process_request(FUJI, ("2026-01-01", "2026-03-31"), resolution=200, mosaic_order=order)
+        assert process._simple(products, ["B04"], gb, req).attrs["scenes"] == 2 and groups == [first]
 
 
 def test_payload_round_trip(su):
@@ -651,7 +722,7 @@ def test_live_remote_run_equals_local(su):
     remote = su.from_payload(payload)
     assert isinstance(remote, xr.Dataset) and remote.identical(su.get_data(request))
     listing = fused.run(su, engine="remote", cache_max_age="0s")
-    assert len(listing) == 76 and "process_request" in set(listing["name"])
+    assert len(listing) == 77 and "process_request" in set(listing["name"])
 
 
 @live

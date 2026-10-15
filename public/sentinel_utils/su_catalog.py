@@ -115,27 +115,63 @@ def get_collections():
 
 
 def rank(products, area=None, *, date=None, per_tile=None, order="clear"):
-    """Products best first with clear_pct, days_off and tile_rank; each tile's best before any tile's second."""
+    """Products best first with clear_pct, days_off and tile_rank; each tile's best first (order "day": day by day)."""
     import pandas as pd
 
-    order = constants.check_choice("order", order, ("clear", "date"))
+    order = constants.check_choice("order", order, ("clear", "date", "day"))
     sc = products
     if area is not None and len(sc):
         sc = sc[sc.intersects(geometry.to_geometry(area))]
     sc = sc.copy()
     if not len(sc):
-        return sc.assign(clear_pct=[], days_off=[], tile_rank=[])
+        return sc.assign(clear_pct=[], days_off=[], tile_rank=[], **({"day_clear_pct": []} if order == "day" else {}))
     clear = (100 - sc["nodata_pct"].fillna(0)) * (100 - sc["cloud_cover"].fillna(100)) / 100
     sc["clear_pct"] = clear.round(2)
     day = pd.Timestamp(time.parse_time(date).strftime("%Y-%m-%d")) if date is not None else None
     sc["days_off"] = (pd.to_datetime(sc["date"]) - day).abs().dt.days if day is not None else 0
     sc["_unclear"] = -clear
-    keys = ["_unclear", "days_off"] if order == "clear" else ["days_off", "_unclear"]
+    keys = {"clear": ["_unclear", "days_off"], "date": ["days_off", "_unclear"],
+            "day": ["_day", "cloud_cover", "days_off"]}[order]
+    if order == "day":
+        days = clearest_days(sc, area if area is not None else sc)
+        sc["day_clear_pct"] = sc["date"].map(dict(zip(days["date"], days["clear_pct"])))
+        sc["_day"] = sc["date"].map({d: i for i, d in enumerate(days["date"])})
     sc = sc.sort_values(keys + ["datetime", "id"], kind="stable")
     if per_tile:
         sc = sc.groupby("tile_id").head(int(per_tile))
     sc["tile_rank"] = sc.groupby("tile_id").cumcount()
-    return sc.sort_values(["tile_rank"] + keys + ["datetime", "id"], kind="stable").drop(columns="_unclear")
+    return (sc if order == "day" else sc.sort_values("tile_rank", kind="stable")).drop(columns=["_unclear", "_day"],
+                                                                                         errors="ignore")
+
+
+def clearest_days(products, area):
+    """DataFrame of the days best first: date, scenes, cover_pct of the area, cloud_cover by area, clear_pct."""
+    import geopandas as gpd
+    import pandas as pd
+    import shapely
+
+    columns = ["date", "scenes", "cover_pct", "cloud_cover", "clear_pct"]
+    shape = geometry.to_geometry(area)
+    sc = products[products.intersects(shape)] if len(products) else products
+    if not len(sc):
+        return pd.DataFrame(columns=columns)
+    crs = geometry.to_utm_bbox(shape)[1]
+    aoi = gpd.GeoSeries([shape], crs="EPSG:4326").to_crs(crs).iloc[0]
+    aoi = aoi if aoi.area > 0 else aoi.buffer(1.0)
+    parts = (sc.geometry if sc.crs else sc.geometry.set_crs("EPSG:4326")).to_crs(crs).intersection(aoi).values
+    clouds = sc["cloud_cover"].fillna(100).values
+    rows = []
+    for day, idx in sc.groupby("date").indices.items():
+        covered, cloudy = shapely.Polygon(), 0.0
+        for k in sorted(idx, key=lambda k: clouds[k]):
+            cloudy += parts[k].difference(covered).area * clouds[k]
+            covered = covered.union(parts[k])
+        cloud = cloudy / covered.area if covered.area > 0 else 100.0
+        cover = min(100.0, covered.area / aoi.area * 100)
+        rows.append({"date": day, "scenes": len(idx), "cover_pct": round(cover, 2), "cloud_cover": round(cloud, 2),
+                     "clear_pct": round(cover * (100 - cloud) / 100, 2)})
+    out = pd.DataFrame(rows, columns=columns)
+    return out.sort_values(["clear_pct", "date"], ascending=[False, True], kind="stable").reset_index(drop=True)
 
 
 def _cloud_range(value):

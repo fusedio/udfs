@@ -6,7 +6,7 @@ SCALE = 0.0001
 MAX_PIXELS = 200_000_000
 
 MOSAICKING = ("simple", "orbit")
-MOSAIC_ORDERS = ("least_cloudy", "newest", "oldest")
+MOSAIC_ORDERS = ("least_cloudy", "clearest_day", "newest", "oldest")
 UNITS = ("reflectance", "dn")
 RESAMPLING = ("nearest", "bilinear", "cubic")
 OUTPUTS = ("dataset", "array", "geotiff", "png")
