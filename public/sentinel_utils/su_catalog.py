@@ -140,8 +140,11 @@ def rank(products, area=None, *, date=None, per_tile=None, order="clear"):
     if per_tile:
         sc = sc.groupby("tile_id").head(int(per_tile))
     sc["tile_rank"] = sc.groupby("tile_id").cumcount()
-    return (sc if order == "day" else sc.sort_values("tile_rank", kind="stable")).drop(columns=["_unclear", "_day"],
-                                                                                         errors="ignore")
+    if order == "day":
+        sc = sc.assign(_dup=sc.groupby(["date", "tile_id"]).cumcount()).sort_values(["_day", "_dup"], kind="stable")
+    else:
+        sc = sc.sort_values("tile_rank", kind="stable")
+    return sc.drop(columns=["_unclear", "_day", "_dup"], errors="ignore")
 
 
 def clearest_days(products, area):

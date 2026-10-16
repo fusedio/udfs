@@ -486,6 +486,32 @@ def test_clearest_days_count_overlapping_tiles_once(su, mod):
     assert list(su.rank(products, overlap, order="day")["id"]) == ["d1_west", "d1_east", "d2_east"]
 
 
+def test_clearest_day_reads_each_tile_of_the_best_day_first(su, mod, monkeypatch):
+    process = mod["su_process"]
+    rows = [_scene(id=i, tile_id=t, cloud_cover=c, datetime=f"2026-02-15T{h}:30:00Z", geometry=g)
+            for i, t, c, h, g in [("west_a", "54STE", 0.1, "01", WEST), ("west_b", "54STE", 0.2, "02", WEST),
+                                  ("east", "54SUE", 0.3, "01", EAST)]]
+    products = mod["su_catalog"]._finish(rows, "2026-02-01", "2026-02-28", shapely.box(*FUJI))
+    assert list(su.rank(products, FUJI, order="day")["id"]) == ["west_a", "east", "west_b"]
+    groups = []
+
+    def read_stack(scenes, names, geobox, **kw):
+        groups.append(sorted(scenes["id"]))
+        full = np.ones(geobox.shape, "float32")
+        return xr.Dataset({"B04": (("y", "x"), full), "dataMask": (("y", "x"), full.astype("uint8"))},
+                          attrs={"scenes": len(scenes)})
+
+    fake = type("FakeReader", (), {"read_stack": staticmethod(read_stack), "reach": staticmethod(lambda g, gb: [
+        np.ones(gb.shape, bool)] * len(g))})
+    monkeypatch.setitem(process._simple.__globals__, "reader", fake)
+    monkeypatch.setitem(process._simple.__globals__, "_max_scenes", lambda names, gb, mask: 2)
+    req = process.process_request(FUJI, ("2026-02-01", "2026-02-28"), resolution=200, mosaic_order="clearest_day")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        process._simple(products, ["B04"], su.make_geobox(FUJI, resolution=200), req)
+    assert groups == [["east", "west_a"]]
+
+
 def test_clearest_day_mosaic_reads_the_best_day_first(su, mod, monkeypatch):
     process, reader = mod["su_process"], mod["su_reader"]
     products = _two_tile_days(mod["su_catalog"])
