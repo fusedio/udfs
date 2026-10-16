@@ -129,8 +129,8 @@ def read_stack(products, bands, geobox, *, units="reflectance", resampling="near
     if mask:
         ok = ds["SCL"].isin(constants.MASKS[mask])
         ds = ds.assign({n: ds[n].where(ok) for n in names})
-    ordered = _ordered(scenes, mosaic_order)
-    ds = ds[names].isel(time=np.argsort([ordered[s] for s in ds["scene"].values], kind="stable"))
+    ordered = _ordered(scenes, mosaic_order, geobox)
+    ds = ds[names].isel(time=np.argsort([ordered.get(s, len(ordered)) for s in ds["scene"].values], kind="stable"))
     if mosaicking == "simple":
         valid = np.all([ds[n].notnull().values for n in names], axis=0)
         first = valid.argmax(axis=0)[None]
@@ -469,8 +469,13 @@ def _var(ds, asset):
     return next((ds[k] for k in (asset, info["name"]) if k in ds), None)
 
 
-def _ordered(scenes, mosaic_order):
-    if mosaic_order == "least_cloudy":
+def _ordered(scenes, mosaic_order, geobox):
+    if mosaic_order == "clearest_day":
+        if "day_clear_pct" not in scenes:
+            scenes = catalog.rank(scenes, geobox.extent.to_crs("EPSG:4326").geom, order="day")
+        sc = scenes.sort_values(["day_clear_pct", "date", "cloud_cover", "datetime", "id"],
+                                ascending=[False, True, True, True, True], kind="stable")
+    elif mosaic_order == "least_cloudy":
         sc = scenes.sort_values(["cloud_cover", "datetime", "id"], kind="stable")
     else:
         sc = scenes.sort_values(["datetime", "id"], ascending=mosaic_order == "oldest", kind="stable")

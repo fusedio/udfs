@@ -36,7 +36,7 @@ ndvi = su.collection().filter_bounds(area).filter_date("2024-06-01", "2024-08-31
 su.api()
 ```
 
-`su.api()` gives a table of the 76 public functions with their signatures. `fused.run(su)` gives the same table.
+`su.api()` gives a table of the 77 public functions with their signatures. `fused.run(su)` gives the same table.
 
 ## Modules
 
@@ -45,7 +45,7 @@ su.api()
 | `su_constants` | collections, band names, `MASKS`, `NoDataError`: `band_names`, `band_info`, `collection_info` |
 | `su_geometry` | `to_bbox`, `to_geometry`, `get_utm_crs`, `bbox_to_dimensions`, `make_geobox`, `area_km2` |
 | `su_time` | `parse_time`, `parse_time_interval`, `filter_times`, `split_time_interval` |
-| `su_catalog` | `query`, `count`, `get_product`, `get_timestamps`, `to_geojson`, `rank` |
+| `su_catalog` | `query`, `count`, `get_product`, `get_timestamps`, `to_geojson`, `rank`, `clearest_days` |
 | `su_reader` | pixel engine: `read_stack`, map `tile`, `export`, `to_cog`, `render` |
 | `su_process` | `process_request`, `run_process`: mosaics, composites, indices, DEM, embeddings |
 | `su_statistical` | `statistical_request`, `run_statistical`: statistics per interval in a polygon |
@@ -67,7 +67,7 @@ Each name has the same meaning in all functions.
 | `collection` | `su.SENTINEL2_L2A` (default), `su.DEM`, `su.AEF` (`date` is the year) |
 | `resolution` / `size` / `crs` | metres / `(width, height)` px / default is the UTM zone of the area |
 | `cloud_cover` | maximum scene cloud in percent, 0 to 100 |
-| `mosaic_order` | `least_cloudy` (default), `newest`, `oldest` |
+| `mosaic_order` | `least_cloudy` (default), `clearest_day`, `newest`, `oldest`. `clearest_day` fills the area from the one day that is the clearest over all of it (`su.clearest_days`), then fills gaps from the next days. `least_cloudy` takes the clearest scene of each tile, so two tiles can show two dates. |
 | `mask` | `clear` (SCL 4, 5, 6), `land`, `water`, `snow`, ...; other pixels become NaN |
 | `reducer` | `median`, `mean`, `min`, `max`, `count` over all dates |
 | `index` | `NDVI`, `NDWI`, `MNDWI`, `NDMI`, `NBR`, `NDSI`, `NDRE`, `EVI`, `SAVI`, `BSI` |

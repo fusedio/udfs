@@ -210,9 +210,9 @@ def _clearest(products, names, gb, req):
 
 
 def _order(products, req):
-    if req["mosaic_order"] != "least_cloudy":
+    if req["mosaic_order"] in ("newest", "oldest"):
         return products.sort_values(["datetime", "id"], ascending=req["mosaic_order"] == "oldest", kind="stable")
-    return catalog.rank(products, req["area"], order="clear")
+    return catalog.rank(products, req["area"], order="day" if req["mosaic_order"] == "clearest_day" else "clear")
 
 
 def _simple(products, names, gb, req):
@@ -220,7 +220,8 @@ def _simple(products, names, gb, req):
 
     scenes = _order(products, req)
     last = min(len(scenes), _max_scenes(names, gb, req["mask"]))
-    stops, size = [0], scenes["tile_id"].nunique()
+    stops, size = [0], (scenes["date"].isin(scenes["date"].head(1)).sum() if req["mosaic_order"] == "clearest_day"
+                        else scenes["tile_id"].nunique())
     while stops[-1] < last:
         stops.append(min(stops[-1] + size, last))
         size = max(size, min(2 * size, SIMPLE_BATCH))
