@@ -12,16 +12,16 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
+            "nodeTemplateColor": "#A8D5F7",
+            "nodeTemplateAlignment": "center",
+            "nodeTemplateGradient": true,
+            "nodeTemplateScaleFactor": 1,
+            "stickyNoteVersion": 4,
             "fused:udfType": "auto",
             "nodeTemplateType": "textbox",
             "isNodeTemplate": true,
-            "nodeTemplateColor": "#A8D5F7",
-            "nodeTemplateGradient": true,
-            "nodeTemplateScaleFactor": 1,
-            "nodeTemplateAlignment": "center",
             "fused:description": "Exported from Fused UDF Workbench",
-            "fused:title": "note_3",
-            "stickyNoteVersion": 4
+            "fused:title": "note_3"
           },
           "headers": [],
           "source": "note_3.py"
