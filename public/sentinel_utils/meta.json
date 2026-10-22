@@ -19,52 +19,16 @@
           "source": "sentinel_utils.py",
           "headers": [
             {
-              "module_name": "su_constants",
-              "source_file": "su_constants.py"
+              "module_name": "su_search",
+              "source_file": "su_search.py"
             },
             {
-              "module_name": "su_geometry",
-              "source_file": "su_geometry.py"
+              "module_name": "su_read",
+              "source_file": "su_read.py"
             },
             {
-              "module_name": "su_time",
-              "source_file": "su_time.py"
-            },
-            {
-              "module_name": "su_catalog",
-              "source_file": "su_catalog.py"
-            },
-            {
-              "module_name": "su_reader",
-              "source_file": "su_reader.py"
-            },
-            {
-              "module_name": "su_process",
-              "source_file": "su_process.py"
-            },
-            {
-              "module_name": "su_statistical",
-              "source_file": "su_statistical.py"
-            },
-            {
-              "module_name": "su_areas",
-              "source_file": "su_areas.py"
-            },
-            {
-              "module_name": "su_indices",
-              "source_file": "su_indices.py"
-            },
-            {
-              "module_name": "su_embeddings",
-              "source_file": "su_embeddings.py"
-            },
-            {
-              "module_name": "su_download",
-              "source_file": "su_download.py"
-            },
-            {
-              "module_name": "su_collection",
-              "source_file": "su_collection.py"
+              "module_name": "su_analysis",
+              "source_file": "su_analysis.py"
             }
           ]
         }

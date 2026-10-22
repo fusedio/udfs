@@ -11,9 +11,10 @@ Tags: `sentinel-2` `raster` `stac` `dem` `embeddings` `spectral-index` `utilitie
 [sentinelhub-py](https://github.com/sentinel-hub/sentinelhub-py): process and statistical requests, area splitters
 and a download client. The search follows sentinelsat. All names are snake_case.
 
-`sentinel_utils.py` is the main file. The 12 `su_*.py` files are modules. `meta.json` lists them as headers, so
+`sentinel_utils.py` is the main file. The three `su_*.py` files are modules. `meta.json` lists them as headers, so
 `fused.load` of this folder loads all of them. Each function of the main file calls the function of the same name in
-its module. `su.module("su_constants")` gives one module.
+its module. `su.module("su_search")` gives one module. The names of the older twelve modules (`su_constants`,
+`su_reader` and the rest) still work and return the module that holds them now.
 
 ## Quick start
 
@@ -42,18 +43,9 @@ su.api()
 
 | Module | Functions |
 |---|---|
-| `su_constants` | collections, band names, `MASKS`, `NoDataError`: `band_names`, `band_info`, `collection_info` |
-| `su_geometry` | `to_bbox`, `to_geometry`, `get_utm_crs`, `bbox_to_dimensions`, `make_geobox`, `area_km2` |
-| `su_time` | `parse_time`, `parse_time_interval`, `filter_times`, `split_time_interval` |
-| `su_catalog` | `query`, `count`, `get_product`, `get_timestamps`, `to_geojson`, `rank`, `clearest_days` |
-| `su_reader` | pixel engine: `read_stack`, map `tile`, `export`, `to_cog`, `render` |
-| `su_process` | `process_request`, `run_process`: mosaics, composites, indices, DEM, embeddings |
-| `su_statistical` | `statistical_request`, `run_statistical`: statistics per interval in a polygon |
-| `su_areas` | splitters: `bbox_splitter`, `osm_splitter`, `utm_grid_splitter`, `utm_zone_splitter`, `tile_splitter`, `custom_grid_splitter` |
-| `su_indices` | NDVI, NDWI, MNDWI, NDMI, NBR, NDSI, NDRE, EVI, SAVI, BSI; `normalized_difference` |
-| `su_embeddings` | AlphaEarth: `load_embeddings`, `embedding_similarity`, `embedding_difference`, `embedding_preview` |
-| `su_download` | `get_data`, `download`, `iter_download`, `save_data`, `to_payload`, `from_payload` |
-| `su_collection` | `collection()`: a lazy chain in Earth Engine style |
+| `su_search` | constants and bands (`band_names`, `band_info`, `collection_info`, `MASKS`, `NoDataError`), areas (`to_bbox`, `to_geometry`, `get_utm_crs`, `bbox_to_dimensions`, `make_geobox`, `area_km2`), dates (`parse_time`, `parse_time_interval`, `filter_times`, `split_time_interval`) and scene search (`query`, `count`, `get_product`, `get_timestamps`, `to_geojson`, `rank`, `clearest_days`) |
+| `su_read` | `process_request`, `run_process` (mosaics, composites, indices, DEM, embeddings), the pixel engine (`read_stack`, map `tile`, `export`, `to_cog`, `render`), the indices (NDVI, NDWI, MNDWI, NDMI, NBR, NDSI, NDRE, EVI, SAVI, BSI; `normalized_difference`) and AlphaEarth (`load_embeddings`, `embedding_similarity`, `embedding_difference`, `embedding_preview`) |
+| `su_analysis` | `statistical_request`, `run_statistical` (statistics per interval in a polygon), the splitters (`bbox_splitter`, `osm_splitter`, `utm_grid_splitter`, `utm_zone_splitter`, `tile_splitter`, `custom_grid_splitter`), `collection()` (a lazy chain in Earth Engine style) and the download client (`get_data`, `download`, `iter_download`, `save_data`, `to_payload`, `from_payload`) |
 
 ## Parameters
 
