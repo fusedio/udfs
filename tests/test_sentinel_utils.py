@@ -37,8 +37,9 @@ JUNE = ("2023-06-01", "2023-06-30")
 FIELD = {"type": "Polygon", "coordinates": [[[-119.27, 36.05], [-119.26, 36.05], [-119.26, 36.058], [-119.27, 36.058],
                                              [-119.27, 36.05]]]}
 TRIANGLE = shapely.Polygon([(-118.6, 34.0), (-118.2, 34.0), (-118.6, 34.3)])
-MODULES = ["su_constants", "su_geometry", "su_time", "su_catalog", "su_reader", "su_process", "su_statistical",
-           "su_areas", "su_indices", "su_embeddings", "su_download", "su_collection"]
+MODULES = ["su_search", "su_read", "su_analysis"]
+OLD_MODULES = ["su_constants", "su_geometry", "su_time", "su_catalog", "su_reader", "su_process", "su_statistical",
+               "su_areas", "su_indices", "su_embeddings", "su_download", "su_collection"]
 SCENE_COLUMNS = ["id", "datetime", "date", "tile_id", "platform", "cloud_cover", "nodata_pct", "crs", "source",
                  "offset", "assets", "geometry"]
 TIMES = {}
@@ -52,7 +53,7 @@ def su():
 
 @pytest.fixture(scope="module")
 def mod(su):
-    return {name: su.module(name) for name in MODULES}
+    return {name: su.module(name) for name in OLD_MODULES}
 
 
 def teardown_module():
@@ -67,7 +68,7 @@ def _timed(name, fn):
     return out
 
 
-def test_meta_lists_the_twelve_modules_as_headers():
+def test_meta_lists_the_three_modules_as_headers():
     meta = json.load(open(os.path.join(PACKAGE, "meta.json")))
     udf = meta["job_config"]["steps"][0]["udf"]
     assert udf["source"] == "sentinel_utils.py" and udf["entrypoint"] == "udf"
@@ -79,16 +80,14 @@ def test_meta_lists_the_twelve_modules_as_headers():
 def test_api_lists_77_functions(su):
     table = su.api()
     assert list(table.columns) == ["module", "name", "signature", "doc"] and len(table) == 77
-    assert table.groupby("module").size().to_dict() == {
-        "su_areas": 6, "su_catalog": 9, "su_collection": 1, "su_constants": 6, "su_download": 8, "su_embeddings": 7,
-        "su_geometry": 11, "su_indices": 3, "su_process": 3, "su_reader": 15, "su_statistical": 3, "su_time": 5}
+    assert table.groupby("module").size().to_dict() == {"su_analysis": 18, "su_read": 28, "su_search": 31}
     assert not table["name"].str.startswith("_").any() and table["doc"].str.len().gt(0).all()
     listing = fused.run(su, engine="local")
     assert list(listing["name"]) == list(table["name"])
 
 
 def test_module_names_are_checked(su):
-    with pytest.raises(ValueError, match="su_collection"):
+    with pytest.raises(ValueError, match="su_analysis"):
         su.module("su_worker")
 
 
@@ -501,9 +500,8 @@ def test_clearest_day_reads_each_tile_of_the_best_day_first(su, mod, monkeypatch
         return xr.Dataset({"B04": (("y", "x"), full), "dataMask": (("y", "x"), full.astype("uint8"))},
                           attrs={"scenes": len(scenes)})
 
-    fake = type("FakeReader", (), {"read_stack": staticmethod(read_stack), "reach": staticmethod(lambda g, gb: [
-        np.ones(gb.shape, bool)] * len(g))})
-    monkeypatch.setitem(process._simple.__globals__, "reader", fake)
+    monkeypatch.setitem(process._simple.__globals__, "read_stack", read_stack)
+    monkeypatch.setitem(process._simple.__globals__, "reach", lambda g, gb: [np.ones(gb.shape, bool)] * len(g))
     monkeypatch.setitem(process._simple.__globals__, "_max_scenes", lambda names, gb, mask: 2)
     req = process.process_request(FUJI, ("2026-02-01", "2026-02-28"), resolution=200, mosaic_order="clearest_day")
     with warnings.catch_warnings():
@@ -528,8 +526,7 @@ def test_clearest_day_mosaic_reads_the_best_day_first(su, mod, monkeypatch):
         return xr.Dataset({"B04": (("y", "x"), full), "dataMask": (("y", "x"), full.astype("uint8"))},
                           attrs={"scenes": len(scenes)})
 
-    fake = type("FakeReader", (), {"read_stack": staticmethod(read_stack), "reach": staticmethod(reader.reach)})
-    monkeypatch.setitem(process._simple.__globals__, "reader", fake)
+    monkeypatch.setitem(process._simple.__globals__, "read_stack", read_stack)
     for order, first in [("clearest_day", ["feb_east", "feb_west"]), ("least_cloudy", ["feb_west", "mar_east"])]:
         groups.clear()
         req = process.process_request(FUJI, ("2026-01-01", "2026-03-31"), resolution=200, mosaic_order=order)
@@ -597,7 +594,7 @@ def test_reduce_regions_reprojects_the_features(su, mod, monkeypatch):
         raise StopIteration
 
     collection = mod["su_collection"]
-    monkeypatch.setattr(collection.download, "download", fake_download)
+    monkeypatch.setattr(collection, "download", fake_download)
     features = gpd.GeoDataFrame(geometry=[shapely.box(*LA)], crs="EPSG:4326").to_crs(3857)
     image = su.collection().filter_date("2024-06-01", "2024-06-30").median()
     with pytest.raises(StopIteration):
