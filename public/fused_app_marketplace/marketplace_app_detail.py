@@ -1,4 +1,4 @@
-@fused.udf(cache_max_age="60s")
+@fused.udf(cache_max_age="10m")
 def udf(slug: str = "sine-starter", client_version: str = ""):
     """One app: its catalog row plus the readme and file list at the approved
     commit, and its releases (newest first). Unknown slug → app_not_found."""

@@ -1,4 +1,4 @@
-@fused.udf(cache_max_age="60s")
+@fused.udf(cache_max_age="10m")
 def udf(q: str = "", category: str = "", cursor: str = "", limit: int = 24, client_version: str = ""):
     """Search the catalog: every word of `q` must match the name/slug, a tag
     or the description (case-insensitive substring); name beats tags beats

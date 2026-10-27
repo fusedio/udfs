@@ -1,4 +1,4 @@
-@fused.udf(cache_max_age="60s")
+@fused.udf(cache_max_age="10m")
 def udf():
     """The index's blocklist.json as ONE self-describing row (§18.3,
     contract 5): {generated_at, catalog_version, stale, entries: [{slug,

@@ -1,4 +1,4 @@
-@fused.udf(cache_max_age="60s")
+@fused.udf(cache_max_age="10m")
 def udf(new_and_updated_limit: int = 12):
     """Home shelves: collections.json's featured list and shelves, plus a
     synthesized "new_and_updated" shelf (apps by newest release date)."""

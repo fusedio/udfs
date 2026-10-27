@@ -1,4 +1,4 @@
-@fused.udf(cache_max_age="60s")
+@fused.udf(cache_max_age="10m")
 def udf():
     """Install and view counts per listed app (§18.12): one row per slug in the
     index — installs (fused-render asked fused_app_install), views (the

@@ -1,4 +1,4 @@
-@fused.udf(cache_max_age="60s")
+@fused.udf(cache_max_age="10m")
 def udf(client_version: str = ""):
     """The reviewed marketplace catalog: one row per app listed in the index
     (apps/<slug>.json), pinned to its approved commit. Serve with
