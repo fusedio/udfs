@@ -1,4 +1,4 @@
-@fused.udf(cache_max_age="60s")
+@fused.udf(cache_max_age="10m")
 def udf():
     """The index's categories.json with live app counts, by `order`."""
     try:

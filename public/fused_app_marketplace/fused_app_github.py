@@ -9,7 +9,7 @@ FUSED_RENDER_GIT_LINK = "fused-render://open?git=https://github.com/{repo}"
 FUSED_RENDER_DOWNLOAD_PAGE = "https://www.fused.io/render"
 
 
-@fused.udf(cache_max_age="0s")
+@fused.udf(cache_max_age="10m")
 def udf(repo: str = "vasu2001/sine-starter"):
     """Show a landing page for a public GitHub repo that *is* a Fused app.
 
