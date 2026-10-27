@@ -1,0 +1,166 @@
+type = "canvas"
+version = 2
+
+[canvas]
+comments = []
+edges = []
+
+[[canvas.nodes]]
+udfName = "Landing pages"
+x = 0
+y = 0
+zIndex = 0
+width = 1555
+height = 615
+type = "udf-folder"
+title = "Landing pages"
+folderName = "Landing pages"
+folderColor = "#4682B440"
+childUdfOrder = ["fused_app_github", "fused_app_listing"]
+
+[[canvas.nodes]]
+udfName = "fused_app_github"
+x = 40
+y = 75
+zIndex = 1
+width = 700
+height = 500
+title = "fused_app_github"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Install, moderation & stats"
+x = 0
+y = 1955
+zIndex = 0
+width = 2330
+height = 615
+type = "udf-folder"
+title = "Install, moderation & stats"
+folderName = "Install, moderation & stats"
+folderColor = "#FF8C0040"
+childUdfOrder = ["fused_app_install", "marketplace_blocklist", "marketplace_stats"]
+
+[[canvas.nodes]]
+udfName = "fused_app_install"
+x = 40
+y = 75
+zIndex = 2
+width = 700
+height = 500
+title = "fused_app_install"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "fused_app_listing"
+x = 815
+y = 75
+zIndex = 3
+width = 700
+height = 500
+title = "fused_app_listing"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Catalog API"
+x = 0
+y = 690
+zIndex = 0
+width = 2330
+height = 1190
+type = "udf-folder"
+title = "Catalog API"
+folderName = "Catalog API"
+folderColor = "#3CB37140"
+childUdfOrder = ["marketplace_catalog", "marketplace_search", "marketplace_categories", "marketplace_collections", "marketplace_app_detail"]
+
+[[canvas.nodes]]
+udfName = "marketplace_app_detail"
+x = 815
+y = 650
+zIndex = 4
+width = 700
+height = 500
+title = "marketplace_app_detail"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "marketplace_blocklist"
+x = 815
+y = 75
+zIndex = 5
+width = 700
+height = 500
+title = "marketplace_blocklist"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "marketplace_catalog"
+x = 40
+y = 75
+zIndex = 6
+width = 700
+height = 500
+title = "marketplace_catalog"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "marketplace_categories"
+x = 1590
+y = 75
+zIndex = 7
+width = 700
+height = 500
+title = "marketplace_categories"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "marketplace_collections"
+x = 40
+y = 650
+zIndex = 8
+width = 700
+height = 500
+title = "marketplace_collections"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "marketplace_search"
+x = 815
+y = 75
+zIndex = 9
+width = 700
+height = 500
+title = "marketplace_search"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "marketplace_stats"
+x = 1590
+y = 75
+zIndex = 10
+width = 700
+height = 500
+title = "marketplace_stats"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[canvas.viewport]
+x = 74.00000000000006
+y = 75.06437768240346
+zoom = 0.3244635193133047
+
+[canvas.viewportBounds]
+minX = -228.06878306878326
+minY = -231.34920634920644
+maxX = 2330
+maxY = 3041.746031746032
