@@ -5,6 +5,7 @@ import uuid
 import fused
 import geopandas as gpd
 import geopandas.testing as gpd_testing
+import numpy as np
 import pandas as pd
 import pandas.testing as pd_testing
 import pytest
@@ -183,6 +184,7 @@ def test_loading_netcdf_single_band(
     arr, bounds = fused.run(udf, path=file_path, engine="local", cache=False)
     gc.collect()  # Release the raster file handle before temp cleanup.
     assert arr.shape == (8, 8)
+    assert np.array_equal(np.unique(arr), np.arange(64))
     if georeferenced:
         assert bounds == pytest.approx((0.0, 0.0, 8.0, 8.0))
     else:
