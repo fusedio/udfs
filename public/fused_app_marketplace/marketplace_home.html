@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Fused Community</title>
+<style>
+/* Same tokens as fused_app_listing._CSS so the two pages read as one site. */
+:root{--bg:#131417;--bg-alt:#1b1d21;--fg:#e8eaed;--fg-muted:#9aa0a6;--fg-faint:#7a7e83;--border:#2a2d33;--accent:#E5FF44;--accent-rgb:229,255,68;--on-accent:#10131a;--accent-soft:#c9d95e;--success-bright:#3fca6b;--error:#ff6b6b;--error-rgb:255,107,107;--warning:#d29922;--warning-rgb:210,153,34;--tint:255,255,255;--icon-shadow:0 8px 20px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.3);--icon-ring:rgba(255,255,255,.09)}
+@media (prefers-color-scheme:light){:root{--bg:#ffffff;--bg-alt:#f4f5f7;--fg:#1f2023;--fg-muted:#61656c;--fg-faint:#84878d;--border:#d8dade;--accent:#5f7300;--accent-rgb:95,115,0;--on-accent:#ffffff;--accent-soft:#5f7300;--success-bright:#1a8f45;--error:#c62828;--error-rgb:198,40,40;--warning:#8f6a10;--warning-rgb:143,106,16;--tint:0,0,0;--icon-shadow:0 8px 18px rgba(16,24,40,.14),0 1px 4px rgba(16,24,40,.08);--icon-ring:rgba(0,0,0,.07)}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg)}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+.page{max-width:1080px;margin:0 auto;padding:28px 20px 72px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:24px;margin:0 0 36px}
+.brand{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--fg-muted);text-decoration:none}
+.brand:hover{color:var(--fg)}
+.brand-dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.toplink{display:inline-flex;align-items:center;gap:3px;font-size:12.5px;font-weight:550;color:var(--fg-muted);text-decoration:none;white-space:nowrap}
+.toplink:hover{color:var(--fg)}
+.hero{max-width:640px;margin:0 0 28px}
+.hero h1{margin:0;font-size:34px;font-weight:700;line-height:1.1;letter-spacing:-.025em}
+.hero p{margin:10px 0 0;font-size:16px;line-height:1.5;color:var(--fg-muted)}
+.search{position:relative;max-width:560px;margin:22px 0 0}
+.search svg{position:absolute;top:50%;left:14px;width:16px;height:16px;color:var(--fg-faint);transform:translateY(-50%);pointer-events:none}
+.search input{width:100%;height:44px;padding:0 40px 0 40px;font:inherit;font-size:15px;color:var(--fg);background:var(--bg-alt);border:1px solid var(--border);border-radius:12px;outline:none;transition:border-color 120ms ease-out,box-shadow 120ms ease-out}
+.search input::placeholder{color:var(--fg-faint)}
+.search input:focus{border-color:rgba(var(--accent-rgb),.6);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.14)}
+.search .clear{position:absolute;top:50%;right:8px;display:none;width:28px;height:28px;padding:0;color:var(--fg-muted);background:none;border:none;border-radius:8px;cursor:pointer;transform:translateY(-50%)}
+.search .clear:hover{color:var(--fg);background:rgba(var(--tint),.06)}
+.search.has-q .clear{display:grid;place-items:center}
+.bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin:0 0 20px;padding-bottom:0;border-bottom:1px solid var(--border)}
+.tabs{display:flex;gap:2px;margin:0;padding:0;list-style:none}
+.tab{position:relative;display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 12px;font:inherit;font-size:14px;font-weight:550;color:var(--fg-muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;margin-bottom:-1px}
+.tab:hover{color:var(--fg)}
+.tab[aria-selected=true]{color:var(--fg);border-bottom-color:var(--accent)}
+.tab .n{padding:1px 7px;font-size:11px;font-weight:650;color:var(--fg-muted);background:rgba(var(--tint),.07);border-radius:999px}
+.tab[aria-selected=true] .n{color:var(--on-accent);background:var(--accent)}
+.tab svg{width:14px;height:14px}
+.filters{display:flex;align-items:center;gap:8px;padding-bottom:8px}
+.sel{height:32px;padding:0 30px 0 12px;font:inherit;font-size:13px;font-weight:550;color:var(--fg);background:var(--bg-alt) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239aa0a6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>") no-repeat right 10px center;border:1px solid var(--border);border-radius:9px;outline:none;appearance:none;-webkit-appearance:none;cursor:pointer}
+.sel:focus{border-color:rgba(var(--accent-rgb),.6)}
+.meta{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 14px;font-size:12.5px;color:var(--fg-muted)}
+.meta b{font-weight:650;color:var(--fg)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin:0;padding:0;list-style:none}
+.card{position:relative;display:flex;gap:14px;padding:16px;background:var(--bg-alt);border:1px solid var(--border);border-radius:16px;text-decoration:none;color:inherit;transition:border-color 120ms ease-out,transform 120ms ease-out,box-shadow 120ms ease-out}
+.card:hover{border-color:rgba(var(--tint),.22);transform:translateY(-1px);box-shadow:0 10px 24px rgba(0,0,0,.18)}
+.card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.icon{position:relative;flex:none;display:grid;place-items:center;width:64px;height:64px;overflow:hidden;border-radius:16px;background:var(--bg);box-shadow:var(--icon-shadow);color:var(--accent-soft);font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:700}
+.icon img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover}
+.icon::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px var(--icon-ring);pointer-events:none}
+.card-body{flex:1;min-width:0}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.card-name{margin:0;font-size:15.5px;font-weight:650;line-height:1.3;letter-spacing:-.012em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.verified{display:inline-block;width:.82em;height:.82em;margin-left:.28em;vertical-align:-.06em;color:var(--success-bright)}
+.card-author{margin:1px 0 0;font-size:12.5px;color:var(--fg-muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.card-desc{display:-webkit-box;margin:7px 0 0;font-size:13.5px;line-height:1.45;color:var(--fg-muted);overflow:hidden;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.card-foot{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:10px 0 0;font-size:12px;color:var(--fg-faint)}
+.card-foot .stat{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.card-foot .stat svg{width:13px;height:13px}
+.card-foot .stat.hot{color:var(--fg);font-weight:600}
+.tag{padding:2px 8px;font-size:11px;font-weight:550;color:var(--fg-muted);background:rgba(var(--tint),.06);border-radius:999px;white-space:nowrap}
+.badge{flex:none;padding:2px 8px;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:999px}
+.badge.featured{color:var(--accent-soft);background:rgba(var(--accent-rgb),.14)}
+.badge.soft{color:var(--warning);background:rgba(var(--warning-rgb),.14)}
+.rank{position:absolute;top:-8px;left:-8px;display:grid;place-items:center;min-width:26px;height:26px;padding:0 7px;font-size:12px;font-weight:700;color:var(--on-accent);background:var(--accent);border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.rank.quiet{color:var(--fg-muted);background:var(--bg-alt);border:1px solid var(--border);box-shadow:none}
+.state{max-width:520px;margin:64px auto 0;text-align:center}
+.state h2{margin:0 0 8px;font-size:20px;font-weight:700;letter-spacing:-.02em}
+.state p{margin:0 0 16px;font-size:14px;color:var(--fg-muted);overflow-wrap:anywhere}
+.state .err{color:var(--error)}
+.pill{display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 16px;font-size:13.5px;font-weight:650;white-space:nowrap;text-decoration:none;color:var(--fg);background:rgba(var(--tint),.08);border:none;border-radius:999px;cursor:pointer;font-family:inherit}
+.pill:hover{filter:brightness(1.1)}
+.skel{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.skel div{height:118px;background:var(--bg-alt);border:1px solid var(--border);border-radius:16px;animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.foot{margin-top:56px;padding-top:16px;font-size:12px;color:var(--fg-faint);border-top:1px solid var(--border)}
+.foot a{color:var(--fg-muted);text-decoration:none}
+.foot a:hover{color:var(--fg)}
+[hidden]{display:none!important}
+@media (max-width:640px){.page{padding:20px 14px 56px}.hero h1{font-size:28px}.bar{flex-direction:column;align-items:stretch}.tabs{overflow-x:auto}.filters{justify-content:flex-start}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top">
+    <a class="brand" href="https://www.fused.io/render" target="_blank" rel="noopener"><span class="brand-dot"></span>Fused Community</a>
+    <a class="toplink" href="https://www.fused.io/render" target="_blank" rel="noopener">Get fused-render
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a>
+  </div>
+
+  <div class="hero">
+    <h1>Apps built by the community</h1>
+    <p>Open-source apps for fused-render, reviewed before they are listed. Browse, search, and install in one click.</p>
+    <div class="search" id="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Search apps, tags, authors…" autocomplete="off" spellcheck="false" aria-label="Search apps">
+      <button class="clear" id="clear" type="button" aria-label="Clear search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="bar">
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-tab="all" aria-selected="true">All <span class="n" id="n-all">–</span></button>
+      <button class="tab" role="tab" data-tab="trending" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>
+        Trending</button>
+      <button class="tab" role="tab" data-tab="new" aria-selected="false">New</button>
+      <button class="tab" role="tab" data-tab="featured" aria-selected="false">Featured <span class="n" id="n-featured">–</span></button>
+    </div>
+    <div class="filters">
+      <select class="sel" id="category" aria-label="Category"><option value="">All categories</option></select>
+    </div>
+  </div>
+
+  <div class="meta"><span id="meta-left">Loading…</span><span id="meta-right"></span></div>
+
+  <div class="skel" id="skel"><div></div><div></div><div></div><div></div><div></div><div></div></div>
+  <ul class="grid" id="grid" hidden></ul>
+  <div class="state" id="state" hidden></div>
+
+  <div class="foot">Every listed app is reviewed by Fused at the commit you install. Install links open in <a href="https://www.fused.io/render" target="_blank" rel="noopener">fused-render</a>.</div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var VERIFIED = '<svg class="verified" viewBox="0 0 24 24" role="img" aria-label="Reviewed by Fused" focusable="false"><title>Reviewed by Fused</title><path fill="currentColor" fill-opacity="0.16" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M12 2.2l2.1 1.7 2.7-.5 1.1 2.5 2.5 1.1-.5 2.7L21.8 12l-1.7 2.1.5 2.7-2.5 1.1-1.1 2.5-2.7-.5L12 21.8l-2.1-1.7-2.7.5-1.1-2.5-2.5-1.1.5-2.7L2.2 12l1.7-2.1-.5-2.7 2.5-1.1 1.1-2.5 2.7.5z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M8.2 12.3l2.6 2.6 5.2-5.4"/></svg>';
+  var DL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M4 20h16"/></svg>';
+  var FLAME = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
+
+  // --- data ---------------------------------------------------------------
+  // Inside the canvas, fused.runPython runs a connected UDF. Served from the
+  // canvas share or the public path, the siblings answer as <udf>.json next
+  // to this page, so a relative URL resolves on either host.
+  var IN_CANVAS = !!(window.fused && typeof window.fused.runPython === "function");
+  // The canonical public canvas (fused_render/backend_canvas.py): links the
+  // page builds inside the canvas iframe (where location is not a udf.ai URL).
+  var PUBLIC_BASE = "https://udf.ai/fc_public/fused_app_marketplace/";
+  function rows(r) {
+    if (Array.isArray(r)) return r;
+    if (r && Array.isArray(r.rows)) return r.rows;
+    if (r && Array.isArray(r.data)) return r.data;
+    if (r && Array.isArray(r.features)) return r.features.map(function (f) { return f.properties || f; });
+    throw new Error("unexpected answer shape: " + JSON.stringify(r).slice(0, 200));
+  }
+  function load(name) {
+    if (IN_CANVAS) {
+      return window.fused.runPython(name, {}).then(rows);
+    }
+    var url = new URL(name + ".json", location.href);
+    return fetch(url.toString(), { credentials: "omit" }).then(function (res) {
+      if (!res.ok) throw new Error(name + " answered " + res.status);
+      return res.json();
+    }).then(rows);
+  }
+  function errorOf(list) {
+    var r = list && list[0];
+    return r && r.error_code ? (r.error_message || r.error_code) : null;
+  }
+  function listingHref(slug) {
+    var rel = "fused_app_listing.html?slug=" + encodeURIComponent(slug);
+    try { return new URL(rel, IN_CANVAS ? PUBLIC_BASE : location.href).toString(); }
+    catch (e) { return PUBLIC_BASE + rel; }
+  }
+  var LINK_ATTRS = IN_CANVAS ? ' target="_blank" rel="noopener"' : "";
+
+  // --- state --------------------------------------------------------------
+  var apps = [], tab = "all", q = "", cat = "";
+  var tabsEl = $("tabs"), grid = $("grid"), state = $("state"), skel = $("skel");
+
+  function fmt(n) { n = Number(n) || 0; return n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "k" : String(n); }
+  function words(s) { return String(s || "").toLowerCase().split(/\s+/).filter(Boolean); }
+  function matches(a, terms) {
+    if (!terms.length) return true;
+    var hay = [a.name, a.slug, a.description, a.category, (a.author && a.author.name) || "", (a.author && a.author.github) || ""]
+      .concat(a.tags || []).join(" ").toLowerCase();
+    return terms.every(function (t) { return hay.indexOf(t) >= 0; });
+  }
+  function byName(x, y) { return (x.name || "").localeCompare(y.name || "", undefined, { sensitivity: "base" }); }
+  function sorted(list) {
+    list = list.slice();
+    if (tab === "trending") list.sort(function (x, y) { return (y.installs_7d - x.installs_7d) || (y.installs_30d - x.installs_30d) || (y.installs - x.installs) || byName(x, y); });
+    else if (tab === "new") list.sort(function (x, y) { return String(y.published_at || "").localeCompare(String(x.published_at || "")) || byName(x, y); });
+    else list.sort(function (x, y) { return (y.featured === true) - (x.featured === true) || byName(x, y); });
+    return list;
+  }
+  function visible() {
+    var terms = words(q);
+    return sorted(apps.filter(function (a) {
+      if (tab === "featured" && !a.featured) return false;
+      if (cat && a.category !== cat) return false;
+      return matches(a, terms);
+    }));
+  }
+
+  function card(a, i) {
+    var initials = esc((a.name || "?").split(/\s+/).map(function (w) { return w[0]; }).join("").slice(0, 2).toUpperCase());
+    var badge = a.blocked === "soft" ? '<span class="badge soft">Flagged</span>' : (a.featured ? '<span class="badge featured">Featured</span>' : "");
+    var rank = tab === "trending" ? '<span class="rank' + (a.installs_7d > 0 ? "" : " quiet") + '">#' + (i + 1) + "</span>" : "";
+    var stat = tab === "trending"
+      ? '<span class="stat' + (a.installs_7d > 0 ? " hot" : "") + '">' + FLAME + fmt(a.installs_7d) + " this week</span>"
+      : '<span class="stat">' + DL + fmt(a.installs) + " install" + (a.installs === 1 ? "" : "s") + "</span>";
+    var tags = (a.tags || []).slice(0, 3).map(function (t) { return '<span class="tag">' + esc(t) + "</span>"; }).join("");
+    var author = a.author && (a.author.name || a.author.github);
+    var icon = a.icon_url ? '<img src="' + esc(a.icon_url) + '" alt="" loading="lazy" onerror="this.remove()">' : "";
+    return '<li><a class="card" href="' + esc(listingHref(a.slug)) + '"' + LINK_ATTRS + ">" + rank +
+      '<span class="icon">' + initials + icon + "</span>" +
+      '<span class="card-body"><span class="card-head"><h3 class="card-name">' + esc(a.name) + VERIFIED + "</h3>" + badge + "</span>" +
+      (author ? '<p class="card-author">by ' + esc(author) + (a.version ? " · v" + esc(a.version) : "") + "</p>" : "") +
+      '<p class="card-desc">' + esc(a.description) + "</p>" +
+      '<span class="card-foot">' + stat + tags + "</span></span></a></li>";
+  }
+
+  function render() {
+    var list = visible();
+    skel.hidden = true;
+    grid.hidden = list.length === 0;
+    state.hidden = list.length !== 0;
+    grid.innerHTML = list.map(card).join("");
+    if (!list.length) {
+      state.innerHTML = "<h2>No apps match</h2><p>Try fewer words, or clear the filters.</p><button class=\"pill\" id=\"reset\" type=\"button\">Clear search</button>";
+      $("reset").onclick = function () { q = ""; cat = ""; $("q").value = ""; $("category").value = ""; $("search").classList.remove("has-q"); render(); };
+    }
+    var label = { all: "apps", trending: "apps by installs in the last 7 days", new: "apps, newest first", featured: "featured apps" }[tab];
+    $("meta-left").innerHTML = "<b>" + list.length + "</b> " + label + (q ? ' matching "' + esc(q) + '"' : "") + (cat ? " in " + esc(cat) : "");
+  }
+
+  function setTab(t) {
+    tab = t;
+    Array.prototype.forEach.call(tabsEl.querySelectorAll(".tab"), function (b) { b.setAttribute("aria-selected", String(b.dataset.tab === t)); });
+    try { history.replaceState(null, "", t === "all" ? location.pathname + location.search : "#" + t); } catch (e) {}
+    render();
+  }
+
+  tabsEl.addEventListener("click", function (e) { var b = e.target.closest(".tab"); if (b) setTab(b.dataset.tab); });
+  $("q").addEventListener("input", function () { q = this.value.trim(); $("search").classList.toggle("has-q", !!q); render(); });
+  $("clear").addEventListener("click", function () { q = ""; $("q").value = ""; $("search").classList.remove("has-q"); $("q").focus(); render(); });
+  $("category").addEventListener("change", function () { cat = this.value; render(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "/" && document.activeElement !== $("q")) { e.preventDefault(); $("q").focus(); } });
+
+  function fail(msg) {
+    skel.hidden = true; grid.hidden = true; state.hidden = false;
+    state.innerHTML = "<h2>The Community is unreachable</h2><p class=\"err\">" + esc(msg) + "</p><button class=\"pill\" type=\"button\" onclick=\"location.reload()\">Try again</button>";
+    $("meta-left").textContent = "";
+  }
+
+  Promise.all([load("marketplace_catalog"), load("marketplace_stats").catch(function () { return []; })]).then(function (got) {
+    var catalog = got[0], stats = got[1];
+    var err = errorOf(catalog);
+    if (err) return fail(err);
+    var week = {};
+    stats.forEach(function (s) { if (s && s.slug) week[s.slug] = Number(s.installs_7d) || 0; });
+    apps = catalog.filter(function (a) { return a && a.slug && a.blocked !== "hard"; }).map(function (a) {
+      a.installs = Number(a.installs) || 0;
+      a.installs_30d = Number(a.installs_30d) || 0;
+      a.installs_7d = week[a.slug] || 0;
+      return a;
+    });
+    var cats = {};
+    apps.forEach(function (a) { if (a.category) cats[a.category] = (cats[a.category] || 0) + 1; });
+    var sel = $("category");
+    Object.keys(cats).sort().forEach(function (c) { var o = document.createElement("option"); o.value = c; o.textContent = c + " (" + cats[c] + ")"; sel.appendChild(o); });
+    $("n-all").textContent = apps.length;
+    $("n-featured").textContent = apps.filter(function (a) { return a.featured; }).length;
+    var stamp = catalog[0] && catalog[0].generated_at;
+    $("meta-right").textContent = stamp ? "Index " + (catalog[0].catalog_version || "") + (catalog[0].stale ? " · last known copy" : "") : "";
+    var h = (location.hash || "").replace("#", "");
+    setTab(["trending", "new", "featured"].indexOf(h) >= 0 ? h : "all");
+  }).catch(function (e) { fail(e && e.message ? e.message : String(e)); });
+})();
+</script>
+</body>
+</html>
