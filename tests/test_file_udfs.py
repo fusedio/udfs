@@ -1,15 +1,18 @@
+import gc
 import os
 import uuid
-import pandas as pd
+
 import fused
 import geopandas as gpd
 import geopandas.testing as gpd_testing
+import pandas as pd
 import pandas.testing as pd_testing
 import pytest
 from file_udf_helpers import (
     get_sample_file_from_dataframe,
     get_sample_file_from_gdf,
     get_sample_file_from_text,
+    get_sample_single_band_netcdf,
 )
 
 FILES_PATH = os.path.join(os.path.abspath(os.curdir), "files")
@@ -135,7 +138,9 @@ def test_loading_gpx(sample_gpx_file: str):
         ("parquet", "Metadata_Parquet"),
     ],
 )
-def test_loading_metadata(sample_dataframe: pd.DataFrame, temp_directory: str, file_format: str, udf_name: str):
+def test_loading_metadata(
+    sample_dataframe: pd.DataFrame, temp_directory: str, file_format: str, udf_name: str
+):
     """
     Tests loading and processing metadata files using Metadata UDFs.
     Verifies that the UDF can load and process metadata files without errors.
@@ -148,4 +153,40 @@ def test_loading_metadata(sample_dataframe: pd.DataFrame, temp_directory: str, f
     fused.run(udf, path=file_path, engine="local", cache=False)
 
 
-# TODO: add tests for `Fused_Geopartitioned_Table`, `ImageIO_FIle`, `Join_with_Overture` and `NetCDF_File`
+class _StubUtils:
+    """Minimal stand-in for the remote utils module loaded by the UDF."""
+
+    @staticmethod
+    def arr_to_plasma(data, min_max=None):
+        return data
+
+
+class _StubCommon:
+    utils = _StubUtils
+
+
+@pytest.mark.parametrize("georeferenced", [True, False])
+def test_loading_netcdf_single_band(
+    temp_directory: str, monkeypatch, georeferenced: bool
+):
+    """
+    Tests loading a single-band NetCDF file, which rioxarray opens as an
+    xarray.DataArray instead of an xarray.Dataset.
+    Verifies that the UDF handles both xarray object types.
+    """
+    file_path = get_sample_single_band_netcdf(
+        temp_directory, georeferenced=georeferenced
+    )
+    udf = fused.load(os.path.join(FILES_PATH, "NetCDF_File"))
+    # Stub the remote utils module so this test only covers the raster opener.
+    monkeypatch.setattr(fused, "load", lambda *args, **kwargs: _StubCommon())
+    arr, bounds = fused.run(udf, path=file_path, engine="local", cache=False)
+    gc.collect()  # Release the raster file handle before temp cleanup.
+    assert arr.shape == (8, 8)
+    if georeferenced:
+        assert bounds == pytest.approx((0.0, 0.0, 8.0, 8.0))
+    else:
+        assert bounds == pytest.approx((-0.5, -1.0, 0.5, 1.0))
+
+
+# TODO: add tests for `Fused_Geopartitioned_Table`, `ImageIO_FIle`, `Join_with_Overture`
