@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 #: Everything durable lives under here: index/, facts/, catalog/, listings/,
 #: stats/. Overridable without a code change by the env var or Fused secret
 #: MARKETPLACE_S3_PREFIX.
-S3_PREFIX = "s3://fused-users/fused/vasu/fused-render-marketplace/"
+S3_PREFIX = "s3://fused-asset/fused-render-marketplace/"
 #: The rolling window the `*_30d` counts cover.
 STATS_WINDOW_DAYS = 30
 #: Event kinds the stats keep. "installs": fused-render asked
