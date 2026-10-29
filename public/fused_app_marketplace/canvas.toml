@@ -3,7 +3,7 @@ version = 2
 
 [canvas]
 comments = []
-edges = [["marketplace_catalog", "marketplace_home"], ["marketplace_stats", "marketplace_home"]]
+edges = [["marketplace_catalog", "marketplace_home"], ["marketplace_stats", "marketplace_home"], ["market_common", "market_stats_store"], ["market_stats_store", "market_index"], ["market_index", "fused_app_install"], ["market_index", "fused_app_listing"], ["market_index", "marketplace_app_detail"], ["market_index", "marketplace_blocklist"], ["market_index", "marketplace_catalog"], ["market_index", "marketplace_categories"], ["market_index", "marketplace_collections"], ["market_index", "marketplace_search"], ["market_index", "marketplace_stats"], ["app_page_ui", "fused_app_github"], ["app_page_ui", "fused_app_listing"]]
 
 [[canvas.nodes]]
 udfName = "Landing pages"
@@ -165,13 +165,70 @@ title = "marketplace_stats"
 visible = true
 nodeDescriptionScaleFactor = 1.5
 
+[[canvas.nodes]]
+udfName = "utils"
+x = 0
+y = 2645
+zIndex = 0
+width = 3105
+height = 615
+type = "udf-folder"
+title = "utils"
+folderName = "utils"
+folderColor = "#80808040"
+childUdfOrder = ["market_common", "market_stats_store", "market_index", "app_page_ui"]
+
+[[canvas.nodes]]
+udfName = "market_common"
+x = 40
+y = 75
+zIndex = 12
+width = 700
+height = 500
+title = "market_common"
+visible = false
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "market_stats_store"
+x = 815
+y = 75
+zIndex = 13
+width = 700
+height = 500
+title = "market_stats_store"
+visible = false
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "market_index"
+x = 1590
+y = 75
+zIndex = 14
+width = 700
+height = 500
+title = "market_index"
+visible = false
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "app_page_ui"
+x = 2365
+y = 75
+zIndex = 15
+width = 700
+height = 500
+title = "app_page_ui"
+visible = false
+nodeDescriptionScaleFactor = 1.5
+
 [canvas.viewport]
-x = 183.22857142857143
-y = -72.20000000000005
-zoom = 0.5942857142857143
+x = 160.111060465563
+y = 165.54281280820388
+zoom = 0.14288319497989663
 
 [canvas.viewportBounds]
-minX = -308.3173076923077
-minY = 121.49038461538468
-maxX = 1088.3173076923076
-maxY = 1908.5096153846155
+minX = -1120.5730701087018
+minY = -1158.5884038462004
+maxX = 3946.502873299936
+maxY = 5784.145485465082
