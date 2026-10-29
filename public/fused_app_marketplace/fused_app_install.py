@@ -175,7 +175,6 @@ def _index_refs(repo):
     within REFS_OK_S and every archive below is fetched BY SHA (immutable).
     This is what keeps the index fresh: no cache sits on top of another."""
     import time
-    import requests
     now = time.monotonic()
     m = _REFS_MEMO.get(repo)
     if m and now - m["at"] < (REFS_OK_S if m["ok"] else REFS_FAIL_S):
@@ -183,22 +182,31 @@ def _index_refs(repo):
             return m["value"]
         raise ValueError(m["value"])
     try:
-        r = requests.get(f"https://github.com/{repo}.git/info/refs?service=git-upload-pack",
-                         timeout=10, headers={"User-Agent": "fused-marketplace"})
-        if r.status_code in (401, 404):
-            raise ValueError(f"the index repo {repo} was not found or is not public")
-        r.raise_for_status()
-        refs = {name.decode(): sha.decode()
-                for sha, name in re.findall(rb"([0-9a-f]{40}) ([^\s\x00]+)", r.content)}
-        head = refs.get("HEAD") or refs.get("refs/heads/main")
-        if not head:
-            raise ValueError(f"the index repo {repo} has no commits")
-        value = (head, refs.get("refs/heads/reviews", ""))
+        value = tuple(json.loads(_index_refs_cached(repo)))
     except Exception as e:
         _REFS_MEMO[repo] = {"at": now, "ok": False, "value": str(e)}
         raise
     _REFS_MEMO[repo] = {"at": now, "ok": True, "value": value}
     return value
+
+
+@fused.cache(cache_max_age="15s")
+def _index_refs_cached(repo):
+    """`_index_refs`'s GitHub read, shared across workers for REFS_OK_S:
+    the memo above never survives a request, so without this every answer
+    paid the round trip. A failure raises (never cached)."""
+    import requests
+    r = requests.get(f"https://github.com/{repo}.git/info/refs?service=git-upload-pack",
+                     timeout=10, headers={"User-Agent": "fused-marketplace"})
+    if r.status_code in (401, 404):
+        raise ValueError(f"the index repo {repo} was not found or is not public")
+    r.raise_for_status()
+    refs = {name.decode(): sha.decode()
+            for sha, name in re.findall(rb"([0-9a-f]{40}) ([^\s\x00]+)", r.content)}
+    head = refs.get("HEAD") or refs.get("refs/heads/main")
+    if not head:
+        raise ValueError(f"the index repo {repo} has no commits")
+    return json.dumps([head, refs.get("refs/heads/reviews", "")]).encode("utf-8")
 
 
 #: Per worker: {sha: (monotonic time, reason)} of archive fetches that
@@ -320,6 +328,26 @@ def _archive_at(zf):
 _INDEX_WRITTEN = {}
 
 
+class _NotYet(Exception):
+    """`_s3_has`: the object is there but at another version (or absent)."""
+
+
+@fused.cache(cache_max_age="24h")
+def _s3_has(rel, version, reviews_version):
+    """True once S3's `rel` carries exactly (version, reviews_version) — and
+    only True is ever cached: a mismatch raises `_NotYet` and a failed read
+    raises too, so the caller re-reads next request and a later write is
+    seen. One S3 read per index version instead of one per request (the
+    per-worker memos never survive a request)."""
+    cur = _s3_read_json(rel)
+    if cur is _S3_ERROR:
+        raise ValueError(f"{rel} could not be read")
+    if isinstance(cur, dict) and (cur.get("version"), cur.get("reviews_version") or "") == \
+            (version, reviews_version):
+        return True
+    raise _NotYet(rel)
+
+
 def _persist_index(idx):
     """index/current.json = the newest index read from GitHub; every new
     version also lands in index/history/<generated_at>-<version>.json.
@@ -329,6 +357,15 @@ def _persist_index(idx):
     v = f"{idx['version']}+{idx.get('reviews_version') or '-'}"
     if _INDEX_WRITTEN.get(v):
         return
+    try:
+        if _s3_has("index/current.json", idx["version"], idx.get("reviews_version") or ""):
+            _INDEX_WRITTEN[v] = True
+            return
+    except _NotYet:
+        pass
+    except Exception as e:
+        print(f"persist index: {e}")
+        return  # try again on the next request
     cur = _s3_read_json("index/current.json")
     if cur is _S3_ERROR:
         return  # try again on the next request
@@ -661,12 +698,27 @@ def _persist_catalog(idx, rows):
     v = f"{idx['version']}+{idx.get('reviews_version') or '-'}"
     if _CATALOG_WRITTEN.get(v) or idx.get("stale") or idx.get("reviews_stale"):
         return
-    ok = _s3_put_json("catalog/current.json",
-                      {"version": idx["version"], "reviews_version": idx.get("reviews_version"),
-                       "generated_at": idx["generated_at"], "apps": rows})
-    for r in rows:
-        ok = _s3_put_json(f"listings/{r['slug']}.json", r) and ok
-    if ok:
+    # The memo never survives a request (each one runs the UDF in a fresh
+    # namespace), so the 18 writes repeated on EVERY request. `_s3_has`
+    # (fused.cache, shared across workers) answers "already written" from
+    # one S3 read per version instead; a failed read just tries again.
+    try:
+        if _s3_has("catalog/current.json", idx["version"], idx.get("reviews_version") or ""):
+            _CATALOG_WRITTEN[v] = True
+            return
+    except _NotYet:
+        pass
+    except Exception as e:
+        print(f"persist catalog: {e}")
+        return
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(8) as pool:
+        ok = all(list(pool.map(lambda r: _s3_put_json(f"listings/{r['slug']}.json", r), rows)))
+    # current.json last: its version is the probe above, so it must only
+    # say "written" once every listing is.
+    if ok and _s3_put_json("catalog/current.json",
+                           {"version": idx["version"], "reviews_version": idx.get("reviews_version"),
+                            "generated_at": idx["generated_at"], "apps": rows}):
         _CATALOG_WRITTEN[v] = True
 
 
@@ -824,14 +876,30 @@ def _stats_all():
     last = _STATS_MEMO["value"] or {}
     out = {}
     for kind in STATS_KINDS:
-        got = _s3_read_json(f"stats/{kind}/current.json")
-        if got is _S3_ERROR or (got is not None and not isinstance(got, dict)):
+        try:
+            got = json.loads(_stats_current(kind))
+        except Exception as e:  # the read failed (never cached): keep the last value
+            print(f"stats {kind}: {e}")
             out[kind] = last.get(kind) or {"totals": {}, "window": {}}
             continue
-        got = got or {}
         out[kind] = {"totals": got.get("totals") or {}, "window": got.get("window") or {}}
     _STATS_MEMO.update(at=now, value=out)
     return out
+
+
+@fused.cache(cache_max_age="2m")
+def _stats_current(kind):
+    """stats/<kind>/current.json as JSON bytes (`{}` when absent), shared
+    across workers for 2 min: the per-worker memo above never survives a
+    request (each request runs the UDF in a fresh namespace), so without
+    this every catalog answer paid one S3 read per kind. Raises on a failed
+    read, which fused.cache does not store."""
+    got = _s3_read_json(f"stats/{kind}/current.json")
+    if got is _S3_ERROR:
+        raise ValueError(f"stats/{kind}/current.json could not be read")
+    if got is not None and not isinstance(got, dict):
+        raise ValueError(f"stats/{kind}/current.json is not an object")
+    return json.dumps(got or {}).encode("utf-8")
 
 
 def _stats_for(slug):
