@@ -184,7 +184,11 @@ def test_loading_netcdf_single_band(
     arr, bounds = fused.run(udf, path=file_path, engine="local", cache=False)
     gc.collect()  # Release the raster file handle before temp cleanup.
     assert arr.shape == (8, 8)
-    assert np.array_equal(np.unique(arr), np.arange(64))
+    expected = np.arange(64).reshape(8, 8)
+    if not georeferenced:
+        # Without a transform, rows stay in rasterio's bottom-up order.
+        expected = expected[::-1]
+    assert np.array_equal(arr, expected)
     if georeferenced:
         assert bounds == pytest.approx((0.0, 0.0, 8.0, 8.0))
     else:
