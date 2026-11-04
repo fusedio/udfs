@@ -23,7 +23,8 @@ def udf(date: str = "2026-04-08"):  # e.g. "2026-04-08", defaults to today
                 return None, None
         except Exception:
             return None, None
-    
+    if 'location' not in data.columns or data['location'].dropna().empty:
+        return pd.DataFrame({"Info": ["No location data available"]})
     lats = []
     lons = []
     for location in data['location'].fillna(''):

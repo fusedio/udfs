@@ -12,60 +12,12 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "isNodeTemplate": true,
-            "nodeTemplateType": "textbox",
-            "nodeTemplateColor": "#A8D5F7",
-            "fused:vizConfig": {
-              "tileLayer": {
-                "@@type": "TileLayer",
-                "minZoom": 0,
-                "maxZoom": 19,
-                "tileSize": 256
-              },
-              "rasterLayer": {
-                "@@type": "BitmapLayer",
-                "pickable": true
-              },
-              "vectorLayer": {
-                "@@type": "GeoJsonLayer",
-                "stroked": true,
-                "filled": false,
-                "pickable": true,
-                "lineWidthMinPixels": 1,
-                "pointRadiusMinPixels": 1,
-                "getLineColor": {
-                  "@@function": "colorContinuous",
-                  "attr": "value",
-                  "domain": [
-                    0,
-                    10
-                  ],
-                  "steps": 20,
-                  "colors": "RedOr",
-                  "nullColor": [
-                    184,
-                    184,
-                    184
-                  ]
-                },
-                "getFillColor": [
-                  208,
-                  208,
-                  208,
-                  40
-                ]
-              }
-            },
             "fused:udfType": "auto",
-            "fused:slug": "note_1d9f0a3e_9acf_45d9_bcc2_ddade2e6ab56_5",
-            "fused:name": "note_1d9f0a3e_9acf_45d9_bcc2_ddade2e6ab56_5",
-            "stickyNoteVersion": 3,
-            "nodeTemplateAlignment": "center",
-            "nodeTemplateGradient": true,
-            "nodeTemplateScaleFactor": 2
+            "nodeTemplateType": "textbox",
+            "isNodeTemplate": true
           },
-          "code": "## Build this yourself\n\nDocs: [Step by step details](https://docs.fused.io/examples/google-calendar-meetings)",
-          "headers": []
+          "headers": [],
+          "source": "note_1d9f0a3e_9acf_45d9_bcc2_ddade2e6ab56_5.py"
         }
       }
     ],

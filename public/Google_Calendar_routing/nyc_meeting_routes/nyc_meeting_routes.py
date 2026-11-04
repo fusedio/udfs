@@ -22,8 +22,9 @@ def udf(date: str = "2026-04-13"):
     # Load NYC meeting locations from the other UDF
     geocode = fused.load("gcal_events_geocode")
     meetings_df = geocode(date=date)
-    
-    # Filter out meetings without valid coordinates (lat/lon)
+
+    if not meetings_df.get('latitude'):
+        return pd.DataFrame({"info":["no location available"]})
     meetings_df = meetings_df[
         (meetings_df['latitude'].notna()) & 
         (meetings_df['longitude'].notna())
