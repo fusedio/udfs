@@ -525,28 +525,7 @@ def udf():
         function initMap() {
             map = new maplibregl.Map({
                 container: 'map',
-                style: {
-                    version: 8,
-                    sources: {
-                        'carto-dark': {
-                            type: 'raster',
-                            tiles: [
-                                'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-                                'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-                                'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'
-                            ],
-                            tileSize: 256,
-                            attribution: '© CARTO © OpenStreetMap contributors'
-                        }
-                    },
-                    layers: [{
-                        id: 'carto-dark-layer',
-                        type: 'raster',
-                        source: 'carto-dark',
-                        minzoom: 0,
-                        maxzoom: 22
-                    }]
-                },
+                style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
                 center: [-122.4194, 37.7749],
                 zoom: 12
             });

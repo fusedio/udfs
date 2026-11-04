@@ -18,22 +18,14 @@ def udf(
     circle_radius_min: float = 1.0,   # reduced size
     circle_radius_max: float = 4.0,   # reduced size
 
-    # Dark basemap (Carto Dark Matter raster tiles)
-    dark_tiles: list = None,
-    basemap_attribution: str = "© OpenStreetMap contributors, © CARTO"
+    # Dark basemap (Carto Dark Matter vector style)
+    basemap_style_url: str = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
 ):
     """
     MapLibre + dark basemap + points loaded via @blue_moth token (single parquet read).
     - Data: fetched with fused.run() using the shared token.
     - Center/zoom: automatically calculated from the data bounds.
     """
-    if dark_tiles is None:
-        dark_tiles = [
-            "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-            "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-            "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-        ]
-
     # ----------------------------------------------------------------------
     # 1️⃣ Load data via @blue_moth token (single parquet read)
     # ----------------------------------------------------------------------
@@ -117,8 +109,7 @@ def udf(
     <div class="labels"><span>{{ bedrooms_min }}</span><span>{{ bedrooms_max }}</span></div>
   </div>
   <script>
-    const DARK_TILES   = {{ dark_tiles | tojson }};
-    const ATTRIB       = {{ basemap_attribution | tojson }};
+    const BASEMAP_STYLE = {{ basemap_style_url | tojson }};
     const CENTER       = [{{ center_lng }}, {{ center_lat }}];
     const ZOOM         = {{ zoom }};
     const MINZOOM      = {{ minzoom }};
@@ -129,26 +120,9 @@ def udf(
     const DATA_BOUNDS  = [[{{ minx }}, {{ miny }}], [{{ maxx }}, {{ maxy }}]];
     const GEOJSON      = {{ geojson | tojson }};
 
-    // Inline dark raster basemap style
-    const DARK_STYLE = {
-      version: 8,
-      sources: {
-        "carto-dark": {
-          type: "raster",
-          tiles: DARK_TILES,
-          tileSize: 256,
-          attribution: ATTRIB,
-          maxzoom: 19
-        }
-      },
-      layers: [
-        { id: "carto-dark", type: "raster", source: "carto-dark" }
-      ]
-    };
-
     const map = new maplibregl.Map({
       container: 'map',
-      style: DARK_STYLE,
+      style: BASEMAP_STYLE,
       center: CENTER,
       zoom: ZOOM
     });
@@ -214,8 +188,7 @@ def udf(
 </body>
 </html>
 """).render(
-        dark_tiles=dark_tiles,
-        basemap_attribution=basemap_attribution,
+        basemap_style_url=basemap_style_url,
         center_lng=center_lng,
         center_lat=center_lat,
         zoom=zoom,
