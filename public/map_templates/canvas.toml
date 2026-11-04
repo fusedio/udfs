@@ -1,0 +1,329 @@
+type = "canvas"
+version = 2
+
+[canvas]
+edges = []
+
+[[canvas.nodes]]
+udfName = "Blank_Basemap"
+x = 0
+y = 0
+zIndex = 1
+width = 700
+height = 500
+title = "Blank_Basemap"
+description = "## Overview\n\nThis UDF is a blank vector tile. You can set its color in the Visualize tab."
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Carto_Basemap"
+x = 775
+y = 0
+zIndex = 2
+width = 700
+height = 500
+title = "Carto_Basemap"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Carto_Basemap_single_file"
+x = 1550
+y = 0
+zIndex = 3
+width = 700
+height = 500
+title = "Carto_Basemap_single_file"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Category_Based_Color_Map"
+x = 0
+y = 681.5
+zIndex = 4
+width = 700
+height = 500
+title = "Category_Based_Color_Map"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Continuous_Color_Scale"
+x = 775
+y = 681.5
+zIndex = 5
+width = 700
+height = 500
+title = "Continuous_Color_Scale"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Deck_GL_3d"
+x = 1550
+y = 681.5
+zIndex = 6
+width = 700
+height = 500
+title = "Deck_GL_3d"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Folium_Dual"
+x = 0
+y = 1300
+zIndex = 7
+width = 700
+height = 500
+title = "Folium_Dual"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Folium_Raster_Layer"
+x = 775
+y = 1300
+zIndex = 8
+width = 700
+height = 500
+title = "Folium_Raster_Layer"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Geojson_Visualise_wkb"
+x = 1550
+y = 1300
+zIndex = 9
+width = 700
+height = 500
+title = "Geojson_Visualise_wkb"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "H3_Deck_UDF"
+x = 0
+y = 1918.5
+zIndex = 10
+width = 700
+height = 500
+title = "H3_Deck_UDF"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "H3_Hex_Tile_Mapbox"
+x = 775
+y = 1918.5
+zIndex = 11
+width = 700
+height = 500
+title = "H3_Hex_Tile_Mapbox"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "H3_Hexagon_Mapbox_Tile_With_Config"
+x = 1550
+y = 1918.5
+zIndex = 12
+width = 700
+height = 500
+title = "H3_Hexagon_Mapbox_Tile_With_Config"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "HTML_Overture_Map"
+x = 0
+y = 2537
+zIndex = 13
+width = 700
+height = 500
+title = "HTML_Overture_Map"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Hardcoded_Color_Map"
+x = 775
+y = 2537
+zIndex = 14
+width = 700
+height = 500
+title = "Hardcoded_Color_Map"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Hex_Tile_Map_Incidence"
+x = 1550
+y = 2537
+zIndex = 15
+width = 700
+height = 500
+title = "Hex_Tile_Map_Incidence"
+description = "## Map Template for Hex Visualization"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Hex_Tile_Map_Template"
+x = 0
+y = 3155.5
+zIndex = 16
+width = 700
+height = 500
+title = "Hex_Tile_Map_Template"
+description = "## Map Template for Hex Visualization"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "MapLibre_Terrain"
+x = 775
+y = 3155.5
+zIndex = 17
+width = 700
+height = 500
+title = "MapLibre_Terrain"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Mapbox_Raster_UDF"
+x = 1550
+y = 3155.5
+zIndex = 18
+width = 700
+height = 500
+title = "Mapbox_Raster_UDF"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Mapbox_Vector_Overture"
+x = 0
+y = 3774
+zIndex = 19
+width = 700
+height = 500
+title = "Mapbox_Vector_Overture"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Maplibre_Simple"
+x = 775
+y = 3774
+zIndex = 20
+width = 700
+height = 500
+title = "Maplibre_Simple"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Point_Cloud_Layer_Example"
+x = 1550
+y = 3774
+zIndex = 21
+width = 700
+height = 500
+title = "Point_Cloud_Layer_Example"
+description = "This UDF shows how to use the [PointCloudLayer](https://deck.gl/docs/api-reference/layers/point-cloud-layer) to render 3D sample data within Fused Workbench."
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Property_Based_Color"
+x = 0
+y = 4455.5
+zIndex = 22
+width = 700
+height = 500
+title = "Property_Based_Color"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Semiconductor_Story"
+x = 775
+y = 4455.5
+zIndex = 23
+width = 700
+height = 500
+title = "Semiconductor_Story"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "Simple_Basemap"
+x = 1550
+y = 4455.5
+zIndex = 24
+width = 700
+height = 500
+title = "Simple_Basemap"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "map_window"
+x = 0
+y = 5074
+zIndex = 25
+width = 700
+height = 500
+title = "map_window"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "plan_maps"
+x = 775
+y = 5074
+zIndex = 26
+width = 700
+height = 500
+title = "plan_maps"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
+
+[[canvas.nodes]]
+udfName = "points_toggle"
+x = 1550
+y = 5074
+zIndex = 27
+width = 700
+height = 500
+title = "points_toggle"
+description = "Exported from Fused UDF Workbench"
+visible = true
+nodeDescriptionScaleFactor = 1.5
