@@ -12,58 +12,12 @@
           "entrypoint": "udf",
           "parameters": {},
           "metadata": {
-            "isNodeTemplate": true,
-            "nodeTemplateType": "json_ui",
-            "nodeTemplateColor": "#FFF9C4",
-            "nodeTemplateGradient": true,
-            "stickyNoteVersion": 3,
-            "fused:vizConfig": {
-              "tileLayer": {
-                "@@type": "TileLayer",
-                "minZoom": 0,
-                "maxZoom": 19,
-                "tileSize": 256
-              },
-              "rasterLayer": {
-                "@@type": "BitmapLayer",
-                "pickable": true
-              },
-              "vectorLayer": {
-                "@@type": "GeoJsonLayer",
-                "stroked": true,
-                "filled": false,
-                "pickable": true,
-                "lineWidthMinPixels": 1,
-                "pointRadiusMinPixels": 1,
-                "getLineColor": {
-                  "@@function": "colorContinuous",
-                  "attr": "value",
-                  "domain": [
-                    0,
-                    10
-                  ],
-                  "steps": 20,
-                  "colors": "DarkMint",
-                  "nullColor": [
-                    184,
-                    184,
-                    184
-                  ]
-                },
-                "getFillColor": [
-                  208,
-                  208,
-                  208,
-                  40
-                ]
-              }
-            },
             "fused:udfType": "auto",
-            "fused:slug": "Walkthrough_video",
-            "fused:name": "Walkthrough_video"
+            "nodeTemplateType": "json_ui",
+            "isNodeTemplate": true
           },
-          "code": "{\n  \"type\": \"iframe\",\n  \"props\": {\n    \"url\": \"https://www.loom.com/embed/f8ace1d3f9ba4b1eb839dc0011d0edc3\"\n  }\n}",
-          "headers": []
+          "headers": [],
+          "source": "Walkthrough_video.py"
         }
       }
     ],
