@@ -1,0 +1,1 @@
+# Hexagonify seismic hazard raster
