@@ -11,12 +11,12 @@ def udf(
     SELECT
       h3_latlng_to_cell(lat, lng, {res}) AS hex,
       COUNT(*) AS cnt
-    FROM read_csv_auto('{noise_311_link}')
+    FROM read_csv_auto(?)
     WHERE lat IS NOT NULL AND lng IS NOT NULL
     GROUP BY 1
     """
 
-    df = con.sql(qr).df()
+    df = con.execute(qr, [noise_311_link]).df()
 
     # Debugging: print the resulting DataFrame schema
     print(df.T)

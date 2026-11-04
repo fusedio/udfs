@@ -6,14 +6,14 @@ def udf(path: str = "s3://fused-sample/demo_data/nyc_taxi/yellow_tripdata_2025-0
     common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")    
     con = common.duckdb_connect()
     
-    df = con.execute(f"""
+    df = con.execute("""
         SELECT 
             EXTRACT(hour FROM tpep_pickup_datetime) as pickup_hour,
             COUNT(*) as pickup_count
-        FROM read_parquet('{path}') 
+        FROM read_parquet(?) 
         GROUP BY EXTRACT(hour FROM tpep_pickup_datetime)
         ORDER BY pickup_hour
-    """).df()
+    """, [path]).df()
     
     data = df.to_dict('records')
     

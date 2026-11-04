@@ -15,6 +15,13 @@ def udf(
   version: str = "4.4.1",
   device_pixel_ratio: float = 2.0,
 ):
+  # version picks the CDN script the page loads and background lands in CSS:
+  # keep both to a known-safe shape rather than passing them through.
+  import re as _re
+  if not _re.fullmatch(r"[0-9]+(\.[0-9]+)*", str(version)):
+      raise ValueError(f"version must be a dotted version number, got {version!r}")
+  if not _re.fullmatch(r"[A-Za-z0-9#(),.%\s-]{0,64}", str(background)):
+      raise ValueError(f"background must be a plain CSS colour, got {background!r}")
   import json
 
   try:

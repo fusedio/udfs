@@ -3,6 +3,8 @@ def udf(bounds: fused.types.Bounds = [-92.317,-64.329,116.124,79.475]):
 
     # Load pinned versions of utility functions.
     common = fused.load("https://github.com/fusedio/udfs/tree/3991434/public/common/")
+    # bounds only guarantees four elements, not four numbers.
+    bounds = [float(v) for v in bounds]
     zoom = common.estimate_zoom(bounds)
 
     file_path='s3://ookla-open-data/parquet/performance/type=mobile/year=2024/quarter=3/2024-07-01_performance_mobile_tiles.parquet'
